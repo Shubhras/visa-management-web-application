@@ -63,11 +63,11 @@ urlpatterns = [
     path('departments/<uuid:uuid>/update/', DepartmentUpdateAPIView.as_view(), name='department-update'),
     path('departments/<uuid:uuid>/delete/', DepartmentDeleteAPIView.as_view(), name='department-delete'),
 
-    path('employeetype/',EmployeeTypeListAPIView.as_view(), name='department-list'),
-    path('employeetype/create/', EmployeeTypeCreateAPIView.as_view(), name='department-create'),
-    path('employeetype/<uuid:uuid>/', EmployeeTypeRetrieveAPIView.as_view(), name='department-detail'),
-    path('employeetype/<uuid:uuid>/update/', EmployeeTypeUpdateAPIView.as_view(), name='department-update'),
-    path('employeetype/<uuid:uuid>/delete/', EmployeeTypeDeleteAPIView.as_view(), name='department-delete'),
+    path('employeetype/',EmployeeTypeListAPIView.as_view(), name='employeetype-list'),
+    path('employeetype/create/', EmployeeTypeCreateAPIView.as_view(), name='employeetype-create'),
+    path('employeetype/<uuid:uuid>/', EmployeeTypeRetrieveAPIView.as_view(), name='employeetype-detail'),
+    path('employeetype/<uuid:uuid>/update/', EmployeeTypeUpdateAPIView.as_view(), name='employeetype-update'),
+    path('employeetype/<uuid:uuid>/delete/', EmployeeTypeDeleteAPIView.as_view(), name='employeetype-delete'),
 
     path('company-types/', CompanyTypeListAPIView.as_view(), name='companytype-list'),
     path('company-types/create/', CompanyTypeCreateAPIView.as_view(), name='companytype-create'),
@@ -95,33 +95,33 @@ urlpatterns = [
     path('stakeholder-types/<uuid:uuid>/delete/', StakeholderTypeDeleteAPIView.as_view(), name='stakeholdertype-delete'),
 
     path("accreditation-category/create/", AccreditationCategoryCreateAPIView.as_view(), name='accreditation-list'),
-    path("accreditation-category/list/", AccreditationCategoryListAPIView.as_view(), name='accreditation-create'),
+    path("accreditation-category/", AccreditationCategoryListAPIView.as_view(), name='accreditation-create'),
     path("accreditation-category/<uuid:uuid>/", AccreditationCategoryRetrieveAPIView.as_view(), name='accreditation-detail'),
     path("accreditation-category/<uuid:uuid>/update/", AccreditationCategoryUpdateAPIView.as_view(), name='accreditation-update'),
     path("accreditation-category/delete/<uuid:uuid>/", AccreditationCategoryDeleteAPIView.as_view(), name='accreditation-delete'),
 
     # Accreditation Name
     path("accreditation-name/create/", AccreditationNameCreateAPIView.as_view(), name='stakeholdertype-list'),
-    path("accreditation-name/list/", AccreditationNameListAPIView.as_view(), name='stakeholdertype-list'),
+    path("accreditation-name/", AccreditationNameListAPIView.as_view(), name='stakeholdertype-list'),
     path("accreditation-name/<uuid:uuid>/", AccreditationNameRetrieveAPIView.as_view(), name='stakeholdertype-detail'),
     path("accreditation-name/<uuid:uuid>/update/", AccreditationNameUpdateAPIView.as_view(), name='stakeholdertype-update'),
     path("accreditation-name/delete/<uuid:uuid>/", AccreditationNameDeleteAPIView.as_view(), name='stakeholdertype-delete'),
 
 
     path("BankAccountType/create/", BankAccountTypeCreateAPIView.as_view(), name='BankAccountType-create'),
-    path("BankAccountType/list/", BankAccountTypeListAPIView.as_view(), name='BankAccountType-list'),
+    path("BankAccountType/", BankAccountTypeListAPIView.as_view(), name='BankAccountType-list'),
     path("BankAccountType/<uuid:uuid>/", BankAccountTypeRetrieveAPIView.as_view(), name='BankAccountType-detail'),
     path("BankAccountType/<uuid:uuid>/update/", BankAccountTypeUpdateAPIView.as_view(), name='BankAccountType-update'),
     path("BankAccountType/delete/<uuid:uuid>/", BankAccountTypeDeleteAPIView.as_view(), name='BankAccountType-delete'),
 
     path("license-name/create/", LicenseNameCreateAPIView.as_view(),name='licensename-create'),
-    path("license-name/list/", LicenseNameListAPIView.as_view(),name='licensename-list'),
+    path("license-name/", LicenseNameListAPIView.as_view(),name='licensename-list'),
     path("license-name/<uuid:uuid>/", LicenseNameRetrieveAPIView.as_view(),name='licensename-detail'),
     path("license-name/update/<uuid:uuid>/", LicenseNameUpdateAPIView.as_view(),name='licensename-update'),
     path("license-name/delete/<uuid:uuid>/", LicenseNameDeleteAPIView.as_view(),name='licensename-delete'),
 
     path("LeadSource/create/", LeadSourceCreateAPIView.as_view(), name='LeadSource-create'),
-    path("LeadSource/list/", LeadSourceListAPIView.as_view(), name='LeadSource-list'),
+    path("LeadSource/", LeadSourceListAPIView.as_view(), name='LeadSource-list'),
     path("LeadSource/<uuid:uuid>/", LeadSourceRetrieveAPIView.as_view(), name='LeadSource-detail'),
     path("LeadSource/<uuid:uuid>/update/", LeadSourceUpdateAPIView.as_view(), name='LeadSource-update'),
     path("LeadSource/delete/<uuid:uuid>/", LeadSourceDeleteAPIView.as_view(), name='LeadSource-delete'),
@@ -145,17 +145,17 @@ urlpatterns = [
     path("Tags/<uuid:uuid>/update/", TagsUpdateAPIView.as_view(), name='Tags-update'),
     path("Tags/delete/<uuid:uuid>/", TagsDeleteAPIView.as_view(), name='Tags-delete'),
 
-    path("ActivityType/create/", BankAccountTypeCreateAPIView.as_view(), name='Tags-create'),
-    path("ActivityType/list/", BankAccountTypeListAPIView.as_view(), name='Tags-list'),
-    path("ActivityType/<uuid:uuid>/", BankAccountTypeRetrieveAPIView.as_view(), name='Tags-detail'),
-    path("ActivityType/<uuid:uuid>/update/", BankAccountTypeUpdateAPIView.as_view(), name='Tags-update'),
-    path("ActivityType/delete/<uuid:uuid>/", BankAccountTypeDeleteAPIView.as_view(), name='Tags-delete'),
+    path("ActivityType/create/", ActivityTypeCreateAPIView.as_view(), name='ActivityType-create'),
+    path("ActivityType/list/", ActivityTypeListAPIView.as_view(), name='ActivityType-list'),
+    path("ActivityType/<uuid:uuid>/", ActivityTypeRetrieveAPIView.as_view(), name='ActivityType-detail'),
+    path("ActivityType/<uuid:uuid>/update/", ActivityTypeUpdateAPIView.as_view(), name='ActivityType-update'),
+    path("ActivityType/delete/<uuid:uuid>/", ActivityTypeDeleteAPIView.as_view(), name='ActivityType-delete'),
 
-    path("LostReason/create/", BankAccountTypeCreateAPIView.as_view(), name='BankAccountType-create'),
-    path("LostReason/list/", BankAccountTypeListAPIView.as_view(), name='BankAccountType-list'),
-    path("LostReason/<uuid:uuid>/", BankAccountTypeRetrieveAPIView.as_view(), name='BankAccountType-detail'),
-    path("LostReason/<uuid:uuid>/update/", BankAccountTypeUpdateAPIView.as_view(), name='BankAccountType-update'),
-    path("LostReason/delete/<uuid:uuid>/", BankAccountTypeDeleteAPIView.as_view(), name='BankAccountType-delete'),
+    path("LostReason/create/", LostReasonCreateAPIView.as_view(), name='LostReason-create'),
+    path("LostReason/list/", LostReasonListAPIView.as_view(), name='LostReason-list'),
+    path("LostReason/<uuid:uuid>/", LostReasonRetrieveAPIView.as_view(), name='LostReason-detail'),
+    path("LostReason/<uuid:uuid>/update/", LostReasonUpdateAPIView.as_view(), name='LostReason-update'),
+    path("LostReason/delete/<uuid:uuid>/", LostReasonDeleteAPIView.as_view(), name='LostReason-delete'),
 
 
 

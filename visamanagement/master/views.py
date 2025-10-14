@@ -7,17 +7,19 @@ from .serializers import  *
 from django.core.paginator import Paginator
 from django.db.models import Q
 import uuid
-from rest_framework.permissions import AllowAny, IsAuthenticated ,BasePermission 
+from rest_framework.permissions import IsAuthenticated ,AllowAny ,BasePermission 
 from django.shortcuts import get_object_or_404
 from .pagination import  *
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.exceptions import ValidationError
+from rest_framework_simplejwt.exceptions import TokenError  
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 
-class IsAdministrator(BasePermission):
+class IsAdminUser(BasePermission):
     def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.role and request.user.role.name == "administrator"
-
+        return bool(request.user and request.user.is_authenticated and request.user.is_superuser)
+    
 
 class MasterTokenLoginAPIView(APIView):
     permission_classes = (AllowAny,)
@@ -71,9 +73,49 @@ class MasterTokenLoginAPIView(APIView):
 
 
 
+class AdminLogoutView(APIView):
+    authentication_classes = [JWTAuthentication] 
+    permission_classes = [IsAuthenticated]  
+
+    def post(self, request):
+        ip = request.META.get("REMOTE_ADDR")
+        user_agent = request.META.get("HTTP_USER_AGENT", "unknown")
+        user = request.user
+
+        try:
+            refresh_token = request.data.get("refresh_token")  
+
+           
+            if not refresh_token:
+                return Response(
+                    {"statusCode": 400, "status": False, "message": "Refresh token is required"},
+                    status=status.HTTP_200_OK
+                )
+
+            token = RefreshToken(refresh_token)
+            token.blacklist()  
+
+            return Response(
+                    {"statusCode": 200, "status": True, "message": "Successfully logged out"},
+                    status=status.HTTP_200_OK
+                )
+
+        except TokenError as e:
+            return Response(
+                {"statusCode": 400, "status": False, "message": "Invalid or expired refresh token"},
+                status=status.HTTP_200_OK
+            )
+
+        except Exception as e:
+            return Response(
+                {"statusCode": 500, "status": False, "message": "An unexpected error occurred", "error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
 
 
 class GenderListAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def get(self, request):
         search = request.GET.get("search", "")
         queryset = Gender.objects.filter(is_deleted=False)
@@ -366,7 +408,7 @@ class ContinentsCreateAPIView(APIView):
             "status": True,
             "message": "Gender created successfully",
             "data": {
-                "id": continents.id,
+                "id": continents.uuid,
                 "name": continents.name,
                 "description": continents.description
             }
@@ -392,7 +434,7 @@ class ContinentsListAPIView(APIView):
 
         data = [
             {
-                "id": m.id,
+                "id": m.uuid,
                 "name": m.name,
                 "description": m.description
             }
@@ -444,7 +486,7 @@ class ContinentsUpdateAPIView(APIView):
             "status": True,
             "message": "Continents updated successfully",
             "data": {
-                "id": continent.id,
+                "id": continent.uuid,
                 "name": continent.name,
                 "description": continent.description
             }
@@ -470,11 +512,6 @@ class  ContinentsDeleteAPIView(APIView):
             "status": True,
             "message": "continents deleted successfully"
         }, status=status.HTTP_200_OK)
-
-
-
-
-
 
 #-------------------------------------------country---------------------------------
 
@@ -534,7 +571,7 @@ class CountryCreateAPIView(APIView):
                 "status": True,
                 "message": "Country created successfully",
                 "data": {
-                    "id": country.id,
+                    "id": country.uuid,
                     "name": country.name,
                     "continent": country.continent.name if country.continent else None,
                     "shortName": country.shortName,
@@ -575,7 +612,7 @@ class CountryListAPIView(APIView):
 
         data = [
             {
-                "id": c.id,
+                "id": c.uuid,
                 "name": c.name,
                 "continent": c.continent.name if c.continent else None,
                 "shortName": c.shortName,
@@ -613,7 +650,7 @@ class CountryDetailAPIView(APIView):
             }, status=status.HTTP_404_NOT_FOUND)
 
         data = {
-            "id": country.id,
+            "id": country.uuid,
             "name": country.name,
             "continent": country.continent.name if country.continent else None,
             "shortName": country.shortName,
@@ -725,7 +762,7 @@ class CountriesByContinentAPIView(APIView):
         data = []
         for country in countries:
             data.append({
-                "id": str(country.id),
+                "id": str(country.uuid),
                 "name": country.name,
                 "shortName": country.shortName,
                 "fullName": country.fullName
@@ -790,7 +827,7 @@ class StateCreateAPIView(APIView):
                 "status": True,
                 "message": "State created successfully",
                 "data": {
-                    "id": state.id,
+                    "id": state.uuid,
                     "name": state.stateName,
                     "country": state.countryName.name if state.countryName else None,
                     "stateshortName": state.stateshortName,
@@ -825,7 +862,7 @@ class StateListAPIView(APIView):
 
         data = [
             {
-                "id": s.id,
+                "id": s.uuid,
                 "name": s.stateName,
                 "continent": s.countryName.name if s.countryName else None,
                 "shortName": s.stateshortName,
@@ -933,7 +970,7 @@ class StateByCountryAPIView(APIView):
         data = []
         for state in states:
             data.append({
-                "id": str(state.id),
+                "id": str(state.uuid),
                 "name": state.stateName,
                 "shortName": state.stateshortName,
                 "fullName": state.description
@@ -1014,7 +1051,7 @@ class DistrictCreateAPIView(APIView):
                 "status": True,
                 "message":"District createed sucessfully",
                 "data":{
-                    "id": str(district.id),
+                    "id": str(district.uuid),
                     "districtName": district.districtName,
                     "country": district.countryName.name if district.countryName else None,
                     "state": district.stateName.stateName if district.stateName else None,
@@ -1047,7 +1084,7 @@ class DistrictListAPIView(APIView):
         data = []
         for district in districts:
             data.append({
-                "id": str(district.id),
+                "id": str(district.uuid),
                 "districtName": district.districtName,
                 "country": district.countryName.name if district.countryName else None,
                 "state": district.stateName.stateName if district.stateName else None,
@@ -1099,7 +1136,7 @@ class DistrictUpdateAPIView(APIView):
             "status": True,
             "message":"District updated successfully",
             "data":{
-                "id": str(district.id),
+                "id": str(district.uuid),
                 "districtName": district.districtName,
                 "country": district.countryName.name if district.countryName else None,
                 "state": district.stateName.stateName if district.stateName else None,
@@ -1127,51 +1164,6 @@ class DistrictDeleteAPIView(APIView):
 
 
 
-class DistrictByStateAPIView(APIView):
-    def get(self, request):
-        country_id = request.GET.get("country_id")
-        if not country_id:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "country_id is required"
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-
-        try:
-            country_uuid = uuid.UUID(country_id)
-        except ValueError:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Invalid UUID format for country_id"
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            country = Country.objects.get(id=country_id)
-        except Country.DoesNotExist:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "Invalid Country ID"
-            }, status=status.HTTP_404_NOT_FOUND)
-
-        states = State.objects.filter(countryName=country)
-        data = []
-        for state in states:
-            data.append({
-                "id": str(state.id),
-                "name": state.stateName,
-                "shortName": state.stateshortName,
-                "fullName": state.description
-            })
-
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"State for country '{state.stateName}' fetched successfully",
-            "data": data
-        }, status=status.HTTP_200_OK)
 
 
 
@@ -1287,7 +1279,7 @@ class CityCreateAPIView(APIView):
                 "status": True,
                 "message":"City created sucessfully",
                 "data":{
-                "id": str(city.id),
+                "id": str(city.uuid),
                 "cityName": city.cityName,
                 "country": city.countryName.name if city.countryName else None,
                 "state": city.stateName.stateName if city.stateName else None,
@@ -1317,7 +1309,7 @@ class CityListAPIView(APIView):
 
         data = [
             {
-                "id": c.id,
+                "id": c.uuid,
                 "cityName": c.cityName,
                 "country": c.countryName.name if c.countryName else None,
                 "state": c.stateName.stateName if c.stateName else None,
@@ -1380,7 +1372,7 @@ class CityUpdateAPIView(APIView):
             "status": True,
             "message":"City updated  successfully",
             "data":{
-                "id": str(city.id),
+                "id": str(city.uuid),
                 "cityName": city.cityName,
                 "country": city.countryName.name if city.countryName else None,
                 "state": city.stateName.stateName if city.stateName else None,
@@ -1447,7 +1439,7 @@ class RelationCreateAPIView(APIView):
                 "status": True,
                 "message": "Relation created successfully",
                 "data": {
-                    "id": str(relation.id),
+                    "id": str(relation.uuid),
                     "relation": relation.relation,
                     "description": relation.description
                 }
@@ -1479,7 +1471,7 @@ class RelationListAPIView(APIView):
             data = []
             for rel in page_obj:
                 data.append({
-                    "id": str(rel.id),
+                    "id": str(rel.uuid),
                     "relation": rel.relation,
                     "description": rel.description
                 })
@@ -1565,7 +1557,7 @@ class RelationUpdateAPIView(APIView):
                 "status": True,
                 "message": "Relation updated successfully",
                 "data": {
-                    "id": str(relation.id),
+                    "id": str(relation.uuid),
                     "relation": relation.relation,
                     "description": relation.description
                 }
@@ -1641,7 +1633,7 @@ class TimezoneCreateAPIView(APIView):
                 "status": True,
                 "message": "Timezone created successfully",
                 "data": {
-                    "id": str(timezone_obj.id),
+                    "id": str(timezone_obj.uuid),
                     "Timezone": timezone_obj.Timezone,
                     "country": timezone_obj.countryName.name if timezone_obj.countryName else None,
                     "state": timezone_obj.stateName.stateName if timezone_obj.stateName else None,
@@ -1673,7 +1665,7 @@ class TimezoneListAPIView(APIView):
         data = []
         for tz in page_obj:
             data.append({
-                "id": str(tz.id),
+                "id": str(tz.uuid),
                 "Timezone": tz.Timezone,
                 "country": tz.countryName.name if tz.countryName else None,
                 "state": tz.stateName.stateName if tz.stateName else None,
@@ -1723,7 +1715,7 @@ class TimezoneUpdateAPIView(APIView):
                 "status": True,
                 "message": "Timezone updated successfully",
                 "data": {
-                    "id": str(timezone_obj.id),
+                    "id": str(timezone_obj.uuid),
                     "Timezone": timezone_obj.Timezone,
                     "country": timezone_obj.countryName.name if timezone_obj.countryName else None,
                     "state": timezone_obj.stateName.stateName if timezone_obj.stateName else None,
@@ -1779,13 +1771,23 @@ class DepartmentListAPIView(APIView):
         queryset = Department.objects.filter(is_deleted=False).order_by('-created_at')
         search = request.GET.get('search')
         if search:
-            queryset = queryset.filter(name__icontains=search) | queryset.filter(description__icontains=search)
+            queryset = queryset.filter(
+                Q(name__icontains=search) | Q(description__icontains=search)
+            )
 
         paginator = StandardResultsSetPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = DepartmentSerializer(result_page, many=True)
-        return paginator.get_paginated_response(serializer.data)
 
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": "Departments retrieved successfully",
+            "count": paginator.page.paginator.count,
+            "next": paginator.get_next_link(),
+            "previous": paginator.get_previous_link(),
+            "data": serializer.data
+        })
 
 class DepartmentCreateAPIView(APIView):
     def post(self, request):
@@ -1899,23 +1901,28 @@ class DepartmentDeleteAPIView(APIView):
 
 
 
-
-
-
 class EmployeeTypeListAPIView(APIView):
     def get(self, request):
-        queryset = EmployeeType.objects.filter(is_deleted=False).order_by('-created_at')
-        search = request.GET.get('search')
+        search = request.GET.get("search", "")
+        page = int(request.GET.get("page", 1))
+        per_page = int(request.GET.get("per_page", 10))
+        
+        queryset = EmployeeType.objects.filter(is_deleted=False)
+
         if search:
             queryset = queryset.filter(Q(name__icontains=search) | Q(description__icontains=search))
 
-        paginator = StandardResultsSetPagination()
-        result_page = paginator.paginate_queryset(queryset, request)
-        serializer = EmployeeTypeSerializer(result_page, many=True)
-        return paginator.get_paginated_response({
+        paginator = Paginator(queryset, per_page)
+        page_obj = paginator.get_page(page)
+        serializer = EmployeeTypeSerializer(page_obj, many=True)
+
+        return Response({
             "statusCode": 200,
             "status": True,
-            "message": "Employee types retrieved successfully",
+            "message": "employee types retrieved successfully",
+            "total": paginator.count,
+            "total_pages": paginator.num_pages,
+            "current_page": page,
             "data": serializer.data
         })
 
@@ -3102,14 +3109,14 @@ class LeadSourceRetrieveAPIView(APIView):
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "Lead Source  not found"
+                "message": "Lead Source not found"
             }, status=status.HTTP_404_NOT_FOUND)
 
         serializer = LeadSourceSerializer(leadsource)
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": "Lead Source  retrieved successfully",
+            "message": "Lead Source retrieved successfully",
             "data": serializer.data
         }, status=status.HTTP_200_OK)
 
@@ -3231,11 +3238,11 @@ class InterestLevelRetrieveAPIView(APIView):
     def get(self, request, uuid):
         try:
             interestlevel = InterestLevel.objects.get(uuid=uuid, is_deleted=False)
-        except LeadSource.DoesNotExist:
+        except InterestLevel.DoesNotExist:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "Lead Source  not found"
+                "message": "Interest Level  not found"
             }, status=status.HTTP_404_NOT_FOUND)
 
         serializer = InterestLevelSerializer(interestlevel)
@@ -3287,7 +3294,7 @@ class InterestLevelDeleteAPIView(APIView):
     def delete(self, request, uuid):
         try:
             category = InterestLevel.objects.get(uuid=uuid, is_deleted=False)
-        except LeadSource.DoesNotExist:
+        except InterestLevel.DoesNotExist:
             return Response({
                 "statusCode": 404,
                 "status": False,
@@ -3418,7 +3425,7 @@ class PriorityDeleteAPIView(APIView):
     def delete(self, request, uuid):
         try:
             category = Priority.objects.get(uuid=uuid, is_deleted=False)
-        except LeadSource.DoesNotExist:
+        except Priority.DoesNotExist:
             return Response({
                 "statusCode": 404,
                 "status": False,
@@ -3438,6 +3445,7 @@ class PriorityDeleteAPIView(APIView):
 
 
 class TagsCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def post(self, request):
         serializer = TagsSerializer(data=request.data)
         if serializer.is_valid():
@@ -3464,6 +3472,7 @@ class TagsCreateAPIView(APIView):
 
 
 class TagsListAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def get(self, request):
         search = request.GET.get("search", "")
         page = int(request.GET.get("page", 1))
@@ -3481,7 +3490,7 @@ class TagsListAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": "Priority retrieved successfully",
+            "message": "Tags retrieved successfully",
             "total": paginator.count,
             "total_pages": paginator.num_pages,
             "current_page": page,
@@ -3490,6 +3499,7 @@ class TagsListAPIView(APIView):
 
 
 class TagsRetrieveAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def get(self, request, uuid):
         try:
             tag = Tags.objects.get(uuid=uuid, is_deleted=False)
@@ -3510,6 +3520,7 @@ class TagsRetrieveAPIView(APIView):
 
 
 class TagsUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def put(self, request, uuid):
         try:
             category = Tags.objects.get(uuid=uuid, is_deleted=False)
@@ -3546,6 +3557,7 @@ class TagsUpdateAPIView(APIView):
 
 
 class TagsDeleteAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def delete(self, request, uuid):
         try:
             category = Tags.objects.get(uuid=uuid, is_deleted=False)
@@ -3562,5 +3574,279 @@ class TagsDeleteAPIView(APIView):
             "statusCode": 200,
             "status": True,
             "message": "Tags  deleted successfully"
+        }, status=status.HTTP_200_OK)
+    
+
+#-------------------------------------------ActivityType---------------------------------
+
+
+
+class ActivityTypeCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    def post(self, request):
+        serializer = ActivityTypeSerializer(data=request.data)
+        if serializer.is_valid():
+            if ActivityType.objects.filter(name=serializer.validated_data['name'], is_deleted=False).exists():
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Activity Type  with this name already exists"
+                }, status=status.HTTP_400_BAD_REQUEST)
+            serializer.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "Activity Type created successfully",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK)
+
+
+        return Response({
+            "statusCode": 400,
+            "status": False,
+            "message": serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ActivityTypeListAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    def get(self, request):
+        search = request.GET.get("search", "")
+        page = int(request.GET.get("page", 1))
+        per_page = int(request.GET.get("per_page", 10))
+
+        categories = ActivityType.objects.filter(is_deleted=False)
+        if search:
+            categories = categories.filter(name__icontains=search)
+
+        paginator = Paginator(categories, per_page)
+        page_obj = paginator.get_page(page)
+
+        serializer = ActivityTypeSerializer(page_obj, many=True)
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": "Activity Type retrieved successfully",
+            "total": paginator.count,
+            "total_pages": paginator.num_pages,
+            "current_page": page,
+            "data": serializer.data
+        }, status=status.HTTP_200_OK)
+
+
+class ActivityTypeRetrieveAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    def get(self, request, uuid):
+        try:
+            activitytype = ActivityType.objects.get(uuid=uuid, is_deleted=False)
+        except ActivityType.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "Activity Type  not found"
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = ActivityTypeSerializer(activitytype)
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": "Activity Type  retrieved successfully",
+            "data": serializer.data
+        }, status=status.HTTP_200_OK)
+
+
+class ActivityTypeUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    def put(self, request, uuid):
+        try:
+            category = ActivityType.objects.get(uuid=uuid, is_deleted=False)
+        except ActivityType.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "Activity Type not found"
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = ActivityTypeSerializer(category, data=request.data, partial=True)
+        if serializer.is_valid():
+            new_name = serializer.validated_data.get("name", category.name)
+            if ActivityType.objects.filter(name=new_name).exclude(uuid=uuid).exists():
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Activity Type with this name already exists"
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            serializer.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "Activity Type details updated successfully",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK)
+
+        return Response({
+            "statusCode": 400,
+            "status": False,
+            "message": serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ActivityTypeDeleteAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    def delete(self, request, uuid):
+        try:
+            category = ActivityType.objects.get(uuid=uuid, is_deleted=False)
+        except ActivityType.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "Activity Type not found"
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        category.is_deleted = True
+        category.save()
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": "Activity Type  deleted successfully"
+        }, status=status.HTTP_200_OK)
+    
+
+
+#-------------------------------------------LostReasonSerializer---------------------------------
+
+
+class LostReasonCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    def post(self, request):
+        serializer = LostReasonSerializer(data=request.data)
+        if serializer.is_valid():
+            if LostReason.objects.filter(name=serializer.validated_data['name'], is_deleted=False).exists():
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Lost Reason  with this name already exists"
+                }, status=status.HTTP_400_BAD_REQUEST)
+            serializer.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "Lost Reason created successfully",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK)
+
+
+        return Response({
+            "statusCode": 400,
+            "status": False,
+            "message": serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class LostReasonListAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    def get(self, request):
+        search = request.GET.get("search", "")
+        page = int(request.GET.get("page", 1))
+        per_page = int(request.GET.get("per_page", 10))
+
+        categories = LostReason.objects.filter(is_deleted=False)
+        if search:
+            categories = categories.filter(name__icontains=search)
+
+        paginator = Paginator(categories, per_page)
+        page_obj = paginator.get_page(page)
+
+        serializer = LostReasonSerializer(page_obj, many=True)
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": "Lost Reason retrieved successfully",
+            "total": paginator.count,
+            "total_pages": paginator.num_pages,
+            "current_page": page,
+            "data": serializer.data
+        }, status=status.HTTP_200_OK)
+
+
+class LostReasonRetrieveAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    def get(self, request, uuid):
+        try:
+            lostreason = LostReason.objects.get(uuid=uuid, is_deleted=False)
+        except LostReason.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "Lost Reason  not found"
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = LostReasonSerializer(lostreason)
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": "Lost Reason  retrieved successfully",
+            "data": serializer.data
+        }, status=status.HTTP_200_OK)
+
+
+class LostReasonUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    def put(self, request, uuid):
+        try:
+            category = LostReason.objects.get(uuid=uuid, is_deleted=False)
+        except LostReason.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "Lost Reason not found"
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = LostReasonSerializer(category, data=request.data, partial=True)
+        if serializer.is_valid():
+            new_name = serializer.validated_data.get("name", category.name)
+            if LostReason.objects.filter(name=new_name).exclude(uuid=uuid).exists():
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Lost Reason with this name already exists"
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            serializer.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "Lost Reason  details updated successfully",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK)
+
+        return Response({
+            "statusCode": 400,
+            "status": False,
+            "message": serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class LostReasonDeleteAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    def delete(self, request, uuid):
+        try:
+            category = LostReason.objects.get(uuid=uuid, is_deleted=False)
+        except LostReason.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "Lost Reason not found"
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        category.is_deleted = True
+        category.save()
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": "Lost Reason  deleted successfully"
         }, status=status.HTTP_200_OK)
     
