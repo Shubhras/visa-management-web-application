@@ -2,6 +2,8 @@ from django.urls import path
 from .views import *
 
 urlpatterns = [
+
+    path("login/", MasterTokenLoginAPIView.as_view(), name="master-login"),
     path('genders/create/', GenderCreateAPIView.as_view()),
     path('gender/list/', GenderListAPIView.as_view()),
     path('genders/<uuid:uuid>/', GenderDetailAPIView.as_view()),

@@ -7,8 +7,68 @@ from .serializers import  *
 from django.core.paginator import Paginator
 from django.db.models import Q
 import uuid
+from rest_framework.permissions import AllowAny, IsAuthenticated ,BasePermission 
 from django.shortcuts import get_object_or_404
 from .pagination import  *
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.exceptions import ValidationError
+
+
+class IsAdministrator(BasePermission):
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and request.user.role and request.user.role.name == "administrator"
+
+
+class MasterTokenLoginAPIView(APIView):
+    permission_classes = (AllowAny,)
+
+    def post(self, request):
+        serializer = AdminUserLoginSerializer(data=request.data)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            # Safe extraction of error message
+            if isinstance(e.detail, dict):
+                message = next(iter(e.detail.values()))[0]
+            elif isinstance(e.detail, list):
+                message = e.detail[0]
+            else:
+                message = str(e.detail)
+
+            return Response({
+                "status": False,
+                "statusCode": status.HTTP_401_UNAUTHORIZED,
+                "message": message
+            }, status=status.HTTP_401_UNAUTHORIZED)
+
+        user = serializer.validated_data['user']
+
+        # Generate JWT tokens
+        refresh = RefreshToken.for_user(user)
+        refresh["email"] = user.email
+        refresh["role"] = user.role.name if getattr(user, "role", None) else None
+        refresh["user_type"] = "admin"
+        refresh["admin_id"] = user.id
+
+        return Response({
+            "status": True,
+            "statusCode": status.HTTP_200_OK,
+            "message": "Login successful",
+            "data": {
+                "access": str(refresh.access_token),
+                "refresh": str(refresh),
+                "user": {
+                    "id": user.id,
+                    "name": getattr(user, "name", ""),
+                    "email": user.email,
+                    "role": user.role.name if getattr(user, "role", None) else None,
+                    "user_type": "admin",
+                    "is_master": user.is_superuser
+                }
+            }
+        }, status=status.HTTP_200_OK)
+
+
 
 
 
@@ -3322,7 +3382,7 @@ class PriorityUpdateAPIView(APIView):
     def put(self, request, uuid):
         try:
             category = Priority.objects.get(uuid=uuid, is_deleted=False)
-        except InterestLevel.DoesNotExist:
+        except Priority.DoesNotExist:
             return Response({
                 "statusCode": 404,
                 "status": False,
@@ -3379,19 +3439,19 @@ class PriorityDeleteAPIView(APIView):
 
 class TagsCreateAPIView(APIView):
     def post(self, request):
-        serializer = PrioritySerializer(data=request.data)
+        serializer = TagsSerializer(data=request.data)
         if serializer.is_valid():
-            if Priority.objects.filter(name=serializer.validated_data['name'], is_deleted=False).exists():
+            if Tags.objects.filter(name=serializer.validated_data['name'], is_deleted=False).exists():
                 return Response({
                     "statusCode": 400,
                     "status": False,
-                    "message": "Priority  with this name already exists"
+                    "message": "Tags  with this name already exists"
                 }, status=status.HTTP_400_BAD_REQUEST)
             serializer.save()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "Priority created successfully",
+                "message": "Tags created successfully",
                 "data": serializer.data
             }, status=status.HTTP_200_OK)
 
@@ -3409,14 +3469,14 @@ class TagsListAPIView(APIView):
         page = int(request.GET.get("page", 1))
         per_page = int(request.GET.get("per_page", 10))
 
-        categories = Priority.objects.filter(is_deleted=False)
+        categories = Tags.objects.filter(is_deleted=False)
         if search:
             categories = categories.filter(name__icontains=search)
 
         paginator = Paginator(categories, per_page)
         page_obj = paginator.get_page(page)
 
-        serializer = PrioritySerializer(page_obj, many=True)
+        serializer = TagsSerializer(page_obj, many=True)
 
         return Response({
             "statusCode": 200,
@@ -3432,19 +3492,19 @@ class TagsListAPIView(APIView):
 class TagsRetrieveAPIView(APIView):
     def get(self, request, uuid):
         try:
-            priority = Priority.objects.get(uuid=uuid, is_deleted=False)
-        except Priority.DoesNotExist:
+            tag = Tags.objects.get(uuid=uuid, is_deleted=False)
+        except Tags.DoesNotExist:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "Priority  not found"
+                "message": "Tags  not found"
             }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = PrioritySerializer(priority)
+        serializer = TagsSerializer(tag)
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": "Priority  retrieved successfully",
+            "message": "Tags  retrieved successfully",
             "data": serializer.data
         }, status=status.HTTP_200_OK)
 
@@ -3452,29 +3512,29 @@ class TagsRetrieveAPIView(APIView):
 class TagsUpdateAPIView(APIView):
     def put(self, request, uuid):
         try:
-            category = Priority.objects.get(uuid=uuid, is_deleted=False)
-        except InterestLevel.DoesNotExist:
+            category = Tags.objects.get(uuid=uuid, is_deleted=False)
+        except Tags.DoesNotExist:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "Priority not found"
+                "message": "Tags not found"
             }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = PrioritySerializer(category, data=request.data, partial=True)
+        serializer = TagsSerializer(category, data=request.data, partial=True)
         if serializer.is_valid():
             new_name = serializer.validated_data.get("name", category.name)
-            if Priority.objects.filter(name=new_name).exclude(uuid=uuid).exists():
+            if Tags.objects.filter(name=new_name).exclude(uuid=uuid).exists():
                 return Response({
                     "statusCode": 400,
                     "status": False,
-                    "message": "Priority with this name already exists"
+                    "message": "Tags with this name already exists"
                 }, status=status.HTTP_400_BAD_REQUEST)
 
             serializer.save()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "Priority details updated successfully",
+                "message": "Tags details updated successfully",
                 "data": serializer.data
             }, status=status.HTTP_200_OK)
 
@@ -3488,12 +3548,12 @@ class TagsUpdateAPIView(APIView):
 class TagsDeleteAPIView(APIView):
     def delete(self, request, uuid):
         try:
-            category = Priority.objects.get(uuid=uuid, is_deleted=False)
-        except LeadSource.DoesNotExist:
+            category = Tags.objects.get(uuid=uuid, is_deleted=False)
+        except Tags.DoesNotExist:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "Priority not found"
+                "message": "Tags not found"
             }, status=status.HTTP_404_NOT_FOUND)
 
         category.is_deleted = True
@@ -3501,6 +3561,6 @@ class TagsDeleteAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": "Priority  deleted successfully"
+            "message": "Tags  deleted successfully"
         }, status=status.HTTP_200_OK)
     

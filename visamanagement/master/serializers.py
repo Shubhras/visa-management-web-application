@@ -1,9 +1,36 @@
-# serializers.py
+from django.contrib.auth import authenticate,get_user_model
 from rest_framework import serializers
 from .models import *
+from rest_framework_simplejwt.tokens import RefreshToken
 
 
+User = get_user_model()
 
+class AdminUserLoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
+
+    def validate(self, data):
+        email = data.get("email")
+        password = data.get("password")
+
+        # Look up user by email
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("Invalid email or password.")
+
+        # Authenticate using username (Django default)
+        user = authenticate(username=user.username, password=password)
+        if not user:
+            raise serializers.ValidationError("Invalid email or password.")
+
+        # Only allow superuser/staff
+        if not (user.is_staff or user.is_superuser):
+            raise serializers.ValidationError("User is not an admin.")
+
+        data['user'] = user
+        return data
 
 class GenderSerializer(serializers.ModelSerializer):
     class Meta:
