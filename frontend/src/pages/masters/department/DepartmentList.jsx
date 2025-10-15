@@ -140,8 +140,7 @@ const DepartmentList = () => {
       const searchLower = searchTerm.toLowerCase();
       const matchesSearch =
         dept.name.toLowerCase().includes(searchLower) ||
-        dept.invoice.toLowerCase().includes(searchLower) ||
-        dept.amount.toLowerCase().includes(searchLower);
+        dept.description.toLowerCase().includes(searchLower)
       return matchesStatus && matchesSearch;
     });
   }, [departments, statusFilter, searchTerm]);
