@@ -7,6 +7,10 @@ import { get, post, put } from "./api_service";
 export const postLogin = data => post(url.POST_LOGIN, data);
 export const logoutUserAPI = (data) => post(url.POST_LOGOUT, data)
 
+
+export const getDepartmentListData = () => get(url.GET_DEPARTMENT_LIST);
+
+
 // export const forgetPasswordAPI = data => put(url.FORGET_PASSWORD_URL, data);
 // export const resetPasswordAPI = data => put(url.RESET_PASSWORD_URL, data);
 // export const twoStepVerificationAPI = data => post(url.TWO_STEP_VERIFICATION, data);

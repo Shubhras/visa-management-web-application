@@ -480,17 +480,7 @@ const LeadsList = () => {
                         </td>
                         <td style={{ padding: '16px', verticalAlign: 'middle' }}>
                           <div className="d-flex align-items-center gap-3">
-                            <img
-                              src={dept.image}
-                              alt={dept.name}
-                              style={{
-                                width: '40px',
-                                height: '40px',
-                                objectFit: 'cover',
-                                borderRadius: '4px',
-                                backgroundColor: '#e9ecef'
-                              }}
-                            />
+                           
                             <span style={{ fontSize: '14px', color: '#212529', fontWeight: '500' }}>
                               {dept.name}
                             </span>

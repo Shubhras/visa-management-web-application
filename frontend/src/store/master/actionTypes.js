@@ -1,0 +1,3 @@
+export const DEPARTMENT_LIST = "DEPARTMENT_LIST"
+
+

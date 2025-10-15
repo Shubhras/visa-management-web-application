@@ -2,6 +2,10 @@
 //LOGIN
 export const POST_LOGIN = "/api/users/login";
 export const POST_LOGOUT = "/api/users/logout";
+
+export const GET_DEPARTMENT_LIST = "";
+
+
 // // export const TWO_STEP_VERIFICATION = 'api/national-admin/national-admin-verifyOtpAdmin'
 // export const TWO_STEP_VERIFICATION = '/api/users/verifyUser'
 // export const FORGET_PASSWORD_URL = '/api/national-admin/forgotpassword/'

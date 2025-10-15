@@ -2,9 +2,7 @@
 
 // Authentication module
 export * from "./auth/login/actions";
-// export * from "./auth/profile/actions";
+export * from "./master/actions";
 
-// //dashboard
-// export * from "./dashboard/actions";
 
 
