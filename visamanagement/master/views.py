@@ -18,6 +18,8 @@ from import_export.formats.base_formats import CSV, XLSX
 from tablib import Dataset
 from django.http import HttpResponse
 from uuid import UUID
+import datetime
+
 
 
 class IsAdminUser(BasePermission):
@@ -1959,30 +1961,41 @@ class DepartmentDeleteAPIView(APIView):
             "message": f"{count} department(s) deleted successfully.",
         }, status=status.HTTP_200_OK)
 
+
 class DepartmentExportAPIView(APIView):
-    # permission_classes = [IsAuthenticated]  # Uncomment and adjust as needed
 
     def get(self, request):
         format_type = request.GET.get('format', 'csv').lower()
+        fields = request.GET.get('fields')  # e.g., "name,description,uuid"
+        
+        # Default fields if none provided
+        if fields:
+            field_list = [f.strip() for f in fields.split(',')]
+        else:
+            field_list = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+
         dataset = Dataset()
-        dataset.headers = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+        dataset.headers = field_list
 
         for dept in Department.objects.all():
-            dataset.append([
-                str(dept.uuid),
-                dept.name or '',  # Handle potential None
-                dept.description or '',
-                int(dept.is_deleted),
-                dept.created_at.strftime("%Y-%m-%d %H:%M:%S") if dept.created_at else '',
-                dept.updated_at.strftime("%Y-%m-%d %H:%M:%S") if dept.updated_at else ''
-            ])
+            row = []
+            for field in field_list:
+                value = getattr(dept, field, '')  # get attribute dynamically
+                # Format datetime fields
+                if isinstance(value, datetime.datetime):
+                    value = value.strftime("%Y-%m-%d %H:%M:%S")
+                # Convert boolean to int
+                if isinstance(value, bool):
+                    value = int(value)
+                row.append(value if value is not None else '')
+            dataset.append(row)
 
         if format_type == 'xlsx':
-            data = XLSX().export_data(dataset)  # Returns bytes
+            data = XLSX().export_data(dataset)
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'departments.xlsx'
         else:
-            data = CSV().export_data(dataset)  # Returns bytes (ensure UTF-8)
+            data = CSV().export_data(dataset)
             content_type = 'text/csv; charset=utf-8'
             file_name = 'departments.csv'
 
