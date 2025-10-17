@@ -1,0 +1,16 @@
+# Python bytecode files
+*.pyc
+*.pyo
+__pycache__/
+
+# Environment variables
+.env
+
+# Virtual environment folder (agar aapka venv folder hai)
+venv/
+env/
+.venv/
+
+# Django migrations
+*/migrations/
+!*/migrations/__init__.py       
