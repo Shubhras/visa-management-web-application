@@ -1,4 +1,4 @@
-import { call, put, takeEvery, takeLatest } from "redux-saga/effects";
+import { call, takeEvery } from "redux-saga/effects";
 import {  LOGIN_USER} from "./actionTypes";
 // import { apiError } from "./actions";
 import {  postLogin,  } from "../../../service/api_helper";
@@ -7,11 +7,15 @@ function* loginUser({ payload: { user, history }, callback },) {
   try {
     const response = yield call(postLogin, user);
     if (response?.status === 200) {
+      console.log('aaaaaaaaaaaaaaaaaaaaaaaaaaaa',response?.data)
+      // callback(response?.data)
       callback(response)
     }
   } catch (error) {
-    callback(null, error)
+    //console.log('bbbbbbbbbbbbbbbbbbbbbbbbbbb',error?.response?.data)
+    // callback(null, error?.response?.data)
     //yield put(apiError(error?.response?.data?.message));
+     callback(null, error)
   }
 }
 

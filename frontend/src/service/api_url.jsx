@@ -1,9 +1,31 @@
 
 //LOGIN
-export const POST_LOGIN = "/api/users/login";
+export const POST_LOGIN = "api/v1/master/login/";
 export const POST_LOGOUT = "/api/users/logout";
 
-export const GET_DEPARTMENT_LIST = "";
+//departments 
+export const GET_DEPARTMENT_LIST = "/api/v1/master/departments/";
+export const ADD_DEPARTMENT_API = "/api/v1/master/departments/create/";
+export const EDIT_DEPARTMENT_API = "api/v1/master/departments/";
+export const DELETE_DEPARTMENT_API = "api/v1/master/departments/";
+export const EXPORT_DEPARTMENT_API = "api/v1/master/departments/export/";
+export const IMPORT_DEPARTMENT_API = "api/v1/master/departments/import/";
+
+
+//EMPLOYEE_TYPE 
+export const GET_EMPLOYEE_TYPE_LIST = "/api/v1/master/employeetype/";
+export const ADD_EMPLOYEE_TYPE_API = "/api/v1/master/employeetype/create/";
+export const EDIT_EMPLOYEE_TYPE_API = "api/v1/master/employeetype/";
+export const DELETE_EMPLOYEE_TYPE_API = "api/v1/master/employeetype/";
+export const EXPORT_EMPLOYEE_TYPE_API = "api/v1/master/employeetype/export/";
+export const IMPORT_EMPLOYEE_TYPE_API = "api/v1/master/employeetype/import/";
+
+
+
+
+
+
+
 
 
 // // export const TWO_STEP_VERIFICATION = 'api/national-admin/national-admin-verifyOtpAdmin'

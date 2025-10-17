@@ -116,7 +116,7 @@ const MasterLayout = ({ children }) => {
         </button>
         <div>
           <Link to='/' className='sidebar-logo'>
-            <img
+            {/* <img
               src='assets/images/logo.png'
               alt='site logo'
               className='light-logo'
@@ -130,7 +130,7 @@ const MasterLayout = ({ children }) => {
               src='assets/images/logo-icon.png'
               alt='site logo'
               className='logo-icon'
-            />
+            /> */}
           </Link>
         </div>
         <div className='sidebar-menu-area'>

@@ -157,18 +157,26 @@ const SignInLayer = () => {
     }),
     onSubmit: (values) => {
       // Dispatch Redux action
+      const sendPayload = {
+        email: values.email,
+        password: values.password,
+
+      }
       setLoading(true);
       dispatch(
-        loginUser(values, navigate, (response, error) => {
+        loginUser(sendPayload, navigate, (response, error) => {
+          console.log("11111111111111111111:", response);
           if (response?.status === 200) {
             setLoading(false);
-            console.log("Login successful:", response);
-             toast.success('Login successful');
+            localStorage.setItem("authUser", JSON.stringify(response?.data));
+            toast.success('Login successful');
             // Navigate to a path
             navigate('/')
           } else if (error) {
+
+            toast.error(error?.message);
             setLoading(false);
-            console.error("Login error:", error);
+            console.error("Login error:", error?.message);
           }
         })
       );
@@ -211,8 +219,8 @@ const SignInLayer = () => {
                 type="email"
                 name="email"
                 className={`form-control h-56-px bg-neutral-50 radius-12 ${validation.touched.email && validation.errors.email
-                    ? "is-invalid"
-                    : ""
+                  ? "is-invalid"
+                  : ""
                   }`}
                 placeholder="Email"
                 onChange={validation.handleChange}
@@ -237,8 +245,8 @@ const SignInLayer = () => {
                   type={showPassword ? "text" : "password"}
                   name="password"
                   className={`form-control h-56-px bg-neutral-50 radius-12 ${validation.touched.password && validation.errors.password
-                      ? "is-invalid"
-                      : ""
+                    ? "is-invalid"
+                    : ""
                     }`}
                   placeholder="Password"
                   onChange={validation.handleChange}

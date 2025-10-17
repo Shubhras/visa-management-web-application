@@ -1,22 +1,24 @@
 import React, { useState, useEffect } from 'react'
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { Link } from 'react-router-dom';
-
+import { useDispatch } from "react-redux";
+import { departmentEdit } from '../../../store/master/actions';
+import { toast } from "react-toastify";
 const EditDepartment = ({ show, handleCloseEdit, rowSelectData }) => {
-    // IMPORTANT: All hooks must be declared BEFORE any conditional returns
+    const [loading, setLoading] = useState(false);
+    const dispatch = useDispatch();
     // Form state
     const [formData, setFormData] = useState({
-        id: '',
-        departmentName: '',
+        uuid: '',
+        name: '',
         description: '',
-        // status: 'active'
     });
 
     useEffect(() => {
         if (rowSelectData) {
             setFormData({
-                id: rowSelectData.id || '',
-                departmentName: rowSelectData.name || '',
+                uuid: rowSelectData.uuid || '',
+                name: rowSelectData.name || '',
                 description: rowSelectData.description || '',
                 // status: rowSelectData.status || 'active'
             })
@@ -25,7 +27,7 @@ const EditDepartment = ({ show, handleCloseEdit, rowSelectData }) => {
 
     // Validation errors state
     const [errors, setErrors] = useState({
-        departmentName: '',
+        name: '',
         description: '',
         // status: ''
     });
@@ -53,8 +55,8 @@ const EditDepartment = ({ show, handleCloseEdit, rowSelectData }) => {
         let isValid = true;
 
         // Department Name validation
-        if (!formData.departmentName.trim()) {
-            newErrors.departmentName = 'Department Name is required';
+        if (!formData.name.trim()) {
+            newErrors.name = 'Department Name is required';
             isValid = false;
         }
 
@@ -64,12 +66,6 @@ const EditDepartment = ({ show, handleCloseEdit, rowSelectData }) => {
             isValid = false;
         }
 
-        // Status validation
-        // if (!formData.status) {
-        //   newErrors.status = 'Please select a status';
-        //   isValid = false;
-        // }
-
         setErrors(newErrors);
         return isValid;
     };
@@ -77,23 +73,49 @@ const EditDepartment = ({ show, handleCloseEdit, rowSelectData }) => {
     // Handle form submission
     const handleSubmit = (e) => {
         e.preventDefault();
-
         if (validateForm()) {
-            // Form is valid, proceed with submission
-            console.log('Form submitted:', formData);
+            const sendPayload = {
+                uuid: formData.uuid,
+                name: formData.name,
+                description: formData.description,
 
-            // Add your API call or form submission logic here
-            // Example: await api.EditDepartment(formData);
+            };
+            dispatch(departmentEdit(sendPayload, (response, error) => {
+                setLoading(false);
+                if (error) {
+                    toast.error(error?.response?.data?.message || "server error");
+                } else {
+                    if (response?.statusCode === 200 && response?.status === true) {
+                        toast.success(response?.message);
+                        setFormData({
+                            uuid: '',
+                            name: '',
+                            description: '',
+                            // status: 'active'
+                        });
+                        setErrors({});
+                        handleCloseEdit();
+                    } else {
+                        toast.error("Something went wrong.");
+                    }
+                }
+            }));
 
-            // Reset form and close modal
-            setFormData({
-                id: '',
-                departmentName: '',
-                description: '',
-                // status: 'active'
-            });
-            setErrors({});
-            handleCloseEdit();
+            // // Form is valid, proceed with submission
+            // console.log('Form submitted:', formData);
+
+            // // Add your API call or form submission logic here
+            // // Example: await api.EditDepartment(formData);
+
+            // // Reset form and close modal
+            // setFormData({
+            //     id: '',
+            //     name: '',
+            //     description: '',
+            //     // status: 'active'
+            // });
+            // setErrors({});
+            // handleCloseEdit();
         }
     };
 
@@ -102,7 +124,7 @@ const EditDepartment = ({ show, handleCloseEdit, rowSelectData }) => {
         // Reset form and errors
         setFormData({
             id: '',
-            departmentName: '',
+            name: '',
             description: '',
             // status: 'active'
         });
@@ -147,15 +169,15 @@ const EditDepartment = ({ show, handleCloseEdit, rowSelectData }) => {
                                         </label>
                                         <input
                                             type="text"
-                                            name="departmentName"
-                                            value={formData.departmentName}
+                                            name="name"
+                                            value={formData.name}
                                             onChange={handleChange}
-                                            className={`form-control radius-8 ${errors.departmentName ? 'is-invalid' : ''}`}
+                                            className={`form-control radius-8 ${errors.name ? 'is-invalid' : ''}`}
                                             placeholder="Enter Department Name"
                                         />
-                                        {errors.departmentName && (
+                                        {errors.name && (
                                             <div className="text-danger text-sm mt-1">
-                                                {errors.departmentName}
+                                                {errors.name}
                                             </div>
                                         )}
                                     </div>

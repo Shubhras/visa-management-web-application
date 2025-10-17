@@ -7,19 +7,18 @@ const initialState = {
   loading: false,
 }
 
-const departmentListReduser = (state = initialState, action) => {
+const MastertReducer = (state = initialState, action) => {
   switch (action.type) {
     case DEPARTMENT_LIST:
-      state = {
+      return {
         ...state,
-        loading: true,
-      }
-       break
+      };
     default:
-      state = { ...state }
-      break
+      return state;
   }
-  return state
 }
 
-export default departmentListReduser
+export default MastertReducer
+
+
+

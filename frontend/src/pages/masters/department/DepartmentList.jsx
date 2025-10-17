@@ -1,245 +1,163 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useEffect } from 'react'
+import { useDispatch } from "react-redux";
 import MasterLayout from "../../../masterLayout/MasterLayout";
 import Breadcrumb from "../../../components/Breadcrumb";
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { Link } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
+import { toast } from "react-toastify";
 import AddDepartment from './AddDepartment';
 import EditDepartment from './EditDepartment';
+import { departmentList, departmentDelete, departmentExportData } from '../../../store/master/actions';
+import AddImportModal from './AddImportModal';
+
 const DepartmentList = () => {
-  // State management
-  const [departments, setDepartments] = useState([
-    {
-      id: 1,
-      name: 'John Doe',
-      issuedDate: '25-10-2025',
-      status: 'Active',
-      description: 'success'
-    },
-    {
-      id: 2,
-      name: 'Jane Smith',
-      issuedDate: '24-10-2025',
-      status: 'Inactive',
-      description: 'danger'
-    },
-    {
-      id: 3,
-      name: 'Mike Johnson',
-      issuedDate: '23-10-2025',
-      status: 'Active',
-      description: 'success'
-    },
-    {
-      id: 4,
-      name: 'Sarah Williams',
-      issuedDate: '22-10-2025',
-      status: 'Pending',
-      description: 'warning'
-    },
-    {
-      id: 5,
-      name: 'Tom Brown',
-      issuedDate: '21-10-2025',
-      status: 'Active',
-      description: 'success'
-    },
-    {
-      id: 6,
-      name: 'Emily Davis',
-      issuedDate: '20-10-2025',
-      status: 'Inactive',
-      description: 'danger'
-    },
-    {
-      id: 7,
-      name: 'David Wilson',
-      issuedDate: '19-10-2025',
-      status: 'Active',
-      description: 'success'
-    },
-    {
-      id: 8,
-      name: 'Lisa Anderson',
-      issuedDate: '18-10-2025',
-      status: 'Pending',
-      description: 'warning'
-    },
-    {
-      id: 9,
-      name: 'Robert Taylor',
-      issuedDate: '17-10-2025',
-      status: 'Active',
-      description: 'success'
-    },
-    {
-      id: 10,
-      name: 'Maria Garcia',
-      issuedDate: '16-10-2025',
-      status: 'Active',
-      description: 'success'
-    },
-    {
-      id: 11,
-      name: 'James Martinez',
-      issuedDate: '15-10-2025',
-      status: 'Inactive',
-      description: 'danger'
-    },
-    {
-      id: 12,
-      name: 'Patricia Lee',
-      issuedDate: '14-10-2025',
-      status: 'Active',
-      description: 'success'
-    },
-    {
-      id: 13,
-      name: 'Michael Brown',
-      issuedDate: '13-10-2025',
-      status: 'Pending',
-      description: 'warning'
-    },
-    {
-      id: 14,
-      name: 'Jennifer Wilson',
-      issuedDate: '12-10-2025',
-      status: 'Active',
-      description: 'success'
-    },
-    {
-      id: 15,
-      name: 'William Moore',
-      issuedDate: '11-10-2025',
-      status: 'Inactive',
-      description: 'danger'
-    }
-  ]);
+  const dispatch = useDispatch();
+
   const [show, setShow] = useState(false);
   const handleShow = () => setShow(true);
-  const handleClose = () => setShow(false);
+  const handleClose = () => {
+    setShow(false);
+    fetchDepartmentList();
+  };
+
   const [showEdit, setShowEdit] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [rowSelectData, setRowSelectData] = useState({});
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All');
-  const [pageLength, setPageLength] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
   const [selectedRows, setSelectedRows] = useState([]);
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
-  const [selectedFile, setSelectedFile] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
-  // Get unique statuses
-  const uniqueStatuses = ['All', ...new Set(departments.map(dept => dept.status))];
+  const [departments, setDepartments] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [loadingExport, setLoadingExport] = useState(false);
+  // Merged state for filters and pagination
+  const [tableState, setTableState] = useState({
+    page: 1,
+    limit: 10,
+    search: '',
+    status: '',
+    total: 0,
+    totalPages: 0,
+    currentPage: 1,
+    hasNext: false,
+    hasPrevious: false
+  });
 
-  // Filter and search
-  const filteredDepartments = useMemo(() => {
-    return departments.filter(dept => {
-      const matchesStatus = statusFilter === 'All' || dept.status === statusFilter;
-      const searchLower = searchTerm.toLowerCase();
-      const matchesSearch =
-        dept.name.toLowerCase().includes(searchLower) ||
-        dept.description.toLowerCase().includes(searchLower)
-      return matchesStatus && matchesSearch;
-    });
-  }, [departments, statusFilter, searchTerm]);
-
-  // Sorting
-  const sortedDepartments = useMemo(() => {
-    if (!sortConfig.key) return filteredDepartments;
-
-    return [...filteredDepartments].sort((a, b) => {
-      const aValue = a[sortConfig.key];
-      const bValue = b[sortConfig.key];
-
-      if (aValue < bValue) {
-        return sortConfig.direction === 'asc' ? -1 : 1;
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (tableState.search !== undefined) {
+        fetchDepartmentList();
       }
-      if (aValue > bValue) {
-        return sortConfig.direction === 'asc' ? 1 : -1;
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [tableState.search]);
+
+  useEffect(() => {
+    fetchDepartmentList();
+  }, [tableState.page, tableState.limit, tableState.status]);
+
+  const fetchDepartmentList = () => {
+    setLoading(true);
+    const params = {
+      page: tableState.page,
+      limit: tableState.limit,
+      search: tableState.search || '',
+      status: tableState.status || ''
+    };
+
+    dispatch(departmentList(params, (response, error) => {
+      setLoading(false);
+      if (response?.statusCode === 200 && response?.status === true) {
+        //console.log('Response data:', response);
+
+        // Extract pagination from the nested pagination object
+        const paginationData = response?.pagination || {};
+
+        setDepartments(response?.data || []);
+        setTableState(prev => ({
+          ...prev,
+          total: paginationData.totalItems || 0,
+          totalPages: paginationData.totalPages || 0,
+          currentPage: paginationData.currentPage || 1,
+          hasNext: paginationData.nextPage || false,
+          hasPrevious: paginationData.previousPage || false
+        }));
+      } else {
+        setDepartments([]);
+        setTableState(prev => ({
+          ...prev,
+          total: 0,
+          totalPages: 0,
+          currentPage: 1,
+          hasNext: false,
+          hasPrevious: false
+        }));
       }
-      return 0;
-    });
-  }, [filteredDepartments, sortConfig]);
-
-  // Pagination
-  const totalPages = Math.ceil(sortedDepartments.length / pageLength);
-  const startIndex = (currentPage - 1) * pageLength;
-  const endIndex = startIndex + pageLength;
-  const currentDepartments = sortedDepartments.slice(startIndex, endIndex);
-
-  // Reset to page 1 when filters change
-  const handleSearchChange = (value) => {
-    setSearchTerm(value);
-    setCurrentPage(1);
-  };
-
-  const handleStatusChange = (value) => {
-    setStatusFilter(value);
-    setCurrentPage(1);
-  };
-
-  const handlePageLengthChange = (value) => {
-    setPageLength(Number(value));
-    setCurrentPage(1);
-  };
-
-  // Sorting handler
-  const handleSort = (key) => {
-    setSortConfig(prev => ({
-      key,
-      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
     }));
   };
 
+  const handleSearchChange = (value) => {
+    setTableState(prev => ({
+      ...prev,
+      search: value,
+      page: 1
+    }));
+  };
 
+  const handleStatusChange = (value) => {
+    setTableState(prev => ({
+      ...prev,
+      status: value === 'All' ? '' : value,
+      page: 1
+    }));
+  };
 
-  // Handle select all
+  const handlePageLengthChange = (value) => {
+    setTableState(prev => ({
+      ...prev,
+      limit: Number(value),
+      page: 1
+    }));
+  };
+
   const handleSelectAll = (e) => {
     const checked = e.target.checked;
     if (checked) {
-      setSelectedRows(currentDepartments.map(dept => dept.id));
+      setSelectedRows(departments.map(dept => dept.uuid));
     } else {
       setSelectedRows([]);
     }
   };
 
-  // Handle individual row selection
-  const handleRowSelect = (id) => {
+  const handleRowSelect = (uuid) => {
     setSelectedRows(prev => {
-      if (prev.includes(id)) {
-        return prev.filter(rowId => rowId !== id);
+      if (prev.includes(uuid)) {
+        return prev.filter(rowId => rowId !== uuid);
       } else {
-        return [...prev, id];
+        return [...prev, uuid];
       }
     });
   };
 
-  // Check if all current page rows are selected
-  const isAllSelected = currentDepartments.length > 0 &&
-    currentDepartments.every(dept => selectedRows.includes(dept.id));
+  const isAllSelected = departments.length > 0 &&
+    departments.every(dept => selectedRows.includes(dept.uuid));
 
-  // Handle bulk delete
-  const handleBulkDelete = () => {
-    if (selectedRows.length === 0) {
-      alert('Please select rows to delete');
-      return;
-    }
-    if (window.confirm(`Are you sure you want to delete ${selectedRows.length} item(s)?`)) {
-      setDepartments(prevDepts => prevDepts.filter(dept => !selectedRows.includes(dept.id)));
-      setSelectedRows([]);
-    }
-  };
-
-  // Pagination controls
   const goToPage = (page) => {
-    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+    if (page >= 1 && page <= tableState.totalPages) {
+      setTableState(prev => ({
+        ...prev,
+        page: page
+      }));
+    }
   };
 
   const getPaginationNumbers = () => {
     const pages = [];
     const maxVisible = 5;
+    const totalPages = tableState.totalPages;
+    const currentPage = tableState.currentPage;
 
     if (totalPages <= maxVisible) {
       for (let i = 1; i <= totalPages; i++) {
@@ -265,120 +183,155 @@ const DepartmentList = () => {
     return pages;
   };
 
+  const handleCloseEdit = () => {
+    setShowEdit(false);
+    fetchDepartmentList();
+  };
 
-  const handleCloseEdit = () => setShowEdit(false);
   const handleShowEdit = (rowData) => {
     setShowEdit(true);
     setRowSelectData(rowData);
   };
 
-
-  const handleDelete = (id) => {
-    setDeleteId(id);
+  const handleDelete = (uuid) => {
+    setDeleteId(uuid);
     setShowDeleteConfirm(true);
   };
+
+  // Handle bulk delete
+  const handleBulkDelete = () => {
+    if (selectedRows.length === 0) {
+      alert('Please select rows to delete');
+      return;
+    }
+    setShowDeleteConfirm(true);
+
+  };
   const confirmDelete = () => {
-    setDepartments(prevDepts => prevDepts.filter(dept => dept.id !== deleteId));
-    setSelectedRows(prevSelected => prevSelected.filter(rowId => rowId !== deleteId));
-    setShowDeleteConfirm(false);
-  }
-  const cancelDelete = () => {
-    setDeleteId(null);
-    setShowDeleteConfirm(false);
-  };
-  const handleExport = () => {
-    // Prepare export data (you can modify columns as needed)
-    const exportData = departments.map((dept, index) => ({
-      SL: index + 1,
-      Name: dept.name,
-      Description: dept.description,
-      Date: dept.issuedDate,
-      Status: dept.status,
-    }));
+    // Determine which IDs to send — either single deleteId or multiple selectedRows
+    const sendPayload = deleteId ? [deleteId] : selectedRows;
+    console.log('Deleting departments:', sendPayload);
 
-    // Create a new workbook and sheet
-    const worksheet = XLSX.utils.json_to_sheet(exportData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Departments");
-
-    // Export as Excel file
-    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
-    const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
-    saveAs(blob, `Department_List_${new Date().toISOString().split('T')[0]}.xlsx`);
-  };
-
-
-  const handleImport = async () => {
-    if (!selectedFile) {
-      alert("Please select a file first!");
+    if (!sendPayload || sendPayload.length === 0) {
+      toast.error("No department selected for deletion.");
       return;
     }
 
-    const formData = new FormData();
-    formData.append("file", selectedFile);
+    dispatch(departmentDelete(sendPayload, (response, error) => {
 
-    try {
-      // const response = await fetch("https://your-api.com/api/department/import", {
-      //   method: "POST",
-      //   body: formData,
-      // });
+      if (error) {
+        toast.error(error?.response?.data?.message || "server error");
+      } else {
+        if (response?.statusCode === 200 && response?.status === true) {
+          toast.success(response?.message);
+          setDepartments(prevDepts => prevDepts.filter(dept => dept.uuid !== deleteId));
+          setSelectedRows(prevSelected => prevSelected.filter(rowId => rowId !== deleteId));
+          setShowDeleteConfirm(false);
+          setSelectedRows([])
+          setDeleteId(null);
+          fetchDepartmentList();
 
-      // if (!response.ok) throw new Error("Failed to import file");
-
-      // const result = await response.json();
-      // console.log("Import success:", result);
-      alert("File imported successfully!");
-      setSelectedFile(null);
-    } catch (error) {
-      console.error("Import error:", error);
-      alert("Failed to import file");
-    }
+        } else {
+          toast.error("Something went wrong.");
+        }
+      }
+    }));
   };
+
+  const cancelDelete = () => {
+    setShowDeleteConfirm(false);
+    setDeleteId(null);
+    setSelectedRows([])
+  };
+
+  const handleCloseImport = () => {
+    setShowImport(false);
+    fetchDepartmentList();
+  };
+
+  const handleShowImport = () => {
+    setShowImport(true);
+  };
+
+
+  const handleExport = () => {
+    const sendPayload = {
+      file: "csv"
+    };
+    setLoadingExport(true);
+
+    dispatch(departmentExportData(sendPayload, (response, error) => {
+      if (error) {
+        setLoadingExport(false);
+        toast.error(error?.response?.message || "server error");
+      } else {
+        setLoadingExport(false);
+        if (response?.status === 200) {
+          // Create a Blob from the CSV data
+          const blob = new Blob([response.data], { type: 'text/csv' });
+
+          // Create a temporary download link
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `departments_${new Date().toISOString().split('T')[0]}.csv`;
+
+          // Trigger download
+          document.body.appendChild(link);
+          link.click();
+
+          // Cleanup
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+
+          toast.success("Export successful");
+        } else {
+          toast.error("Something went wrong.");
+        }
+      }
+    }));
+  };
+  const startIndex = (tableState.currentPage - 1) * tableState.limit;
+  const statusOptions = ['All', 'Active', 'Inactive'];
 
   return (
     <>
       <MasterLayout>
         <Breadcrumb title="Department" subTitle="List" />
 
-        {/* Sub Header with Import/Export */}
         <div className="mb-20" style={{ backgroundColor: '#e8e8e0', padding: '12px 24px' }}>
           <div className="d-flex align-items-center gap-3">
-            {/* <h6 className="mb-0 fw-semibold text-neutral-900">Department</h6> */}
             <div className="d-flex align-items-center gap-3">
-              <input
-                type="file"
-                accept=".xlsx,.xls,.csv"
-                onChange={(e) => setSelectedFile(e.target.files[0])}
-                className="form-control w-auto  form-control-lg"
-                id="basic-upload"
-              />
+
               <button
                 className="btn btn-sm px-3 py-1 text-white fw-medium"
                 style={{ backgroundColor: '#5a6c5b' }}
-                onClick={handleImport}
+                onClick={handleShowImport}
+              // disabled={!selectedFile}
               >
                 Import
               </button>
             </div>
-            {/* <button className="btn btn-sm px-3 py-1 text-white fw-medium" style={{ backgroundColor: '#5a6c5b' }}>
-              Import
-            </button> */}
-            <button className="btn btn-sm px-3 py-1 text-white fw-medium" style={{ backgroundColor: '#5a6c5b' }} onClick={handleExport}>
+            <button
+              className="btn btn-sm px-3 py-1 text-white fw-medium"
+              style={{ backgroundColor: '#5a6c5b' }}
+              onClick={handleExport}
+              disabled={loadingExport}
+            >
               Export
             </button>
-            {/* {selectedRows.length > 0 && (
+            {selectedRows.length > 0 && (
               <button
                 onClick={handleBulkDelete}
                 className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
               >
                 Delete Selected ({selectedRows.length})
               </button>
-            )} */}
+            )}
           </div>
         </div>
 
         <div className="card basic-data-table">
-          {/* Filter Section */}
           <div className="card-body" style={{ backgroundColor: '#f5f5ef', paddingBottom: '16px' }}>
             <div className="row align-items-center">
               <div className="col-md-6">
@@ -386,7 +339,7 @@ const DepartmentList = () => {
                   <select
                     className="form-select form-select-sm"
                     style={{ width: 'auto', minWidth: '100px' }}
-                    value={pageLength}
+                    value={tableState.limit}
                     onChange={(e) => handlePageLengthChange(e.target.value)}
                   >
                     <option value={10}>Show 10</option>
@@ -405,39 +358,30 @@ const DepartmentList = () => {
                       type="text"
                       className="form-control form-control-sm ps-5"
                       placeholder="Search..."
-                      value={searchTerm}
+                      value={tableState.search}
                       onChange={(e) => handleSearchChange(e.target.value)}
                     />
                   </div>
                   <select
                     className="form-select form-select-sm"
                     style={{ width: 'auto', minWidth: '130px' }}
-                    value={statusFilter}
+                    value={tableState.status || 'All'}
                     onChange={(e) => handleStatusChange(e.target.value)}
                   >
-                    {uniqueStatuses.map(status => (
+                    {statusOptions.map(status => (
                       <option key={status} value={status}>{status}</option>
                     ))}
                   </select>
                 </div>
               </div>
               <div className="col-md-6 text-end">
-                <button className="btn btn-sm text-white fw-medium px-3 py-1"
-                  style={{ backgroundColor: '#5a6c5b' }} onClick={handleShow}>
+                <button
+                  className="btn btn-sm text-white fw-medium px-3 py-1"
+                  style={{ backgroundColor: '#5a6c5b' }}
+                  onClick={handleShow}
+                >
                   + ADD New
                 </button>
-                {/* <button
-                  type="button"
-                  className="btn btn-primary text-sm btn-sm px-12 py-12 radius-8 d-flex align-items-center gap-2"
-                  data-bs-toggle="modal"
-                  data-bs-target="#departmentModal" style={{ backgroundColor: '#5a6c5b' }}
-                >
-                  <Icon
-                    icon="ic:baseline-plus"
-                    className="icon text-xl line-height-1"
-                  />
-                  Add New Role
-                </button> */}
               </div>
             </div>
           </div>
@@ -455,45 +399,47 @@ const DepartmentList = () => {
                           checked={isAllSelected}
                           onChange={handleSelectAll}
                           style={{ cursor: 'pointer' }}
+                          disabled={departments.length === 0}
                         />
                         <span>S.L</span>
-                        <Icon icon="ph:caret-up-down" width="16" style={{ color: '#6c757d', opacity: 0.5 }} />
                       </div>
                     </th>
-                    <th scope="col" onClick={() => handleSort('invoice')} style={{ cursor: 'pointer', padding: '16px', fontWeight: '600', color: '#495057', fontSize: '14px' }}>
-                      <div className="d-flex align-items-center gap-2">
-                        Name
-                        <Icon icon={sortConfig.key === 'invoice' ? (sortConfig.direction === 'asc' ? 'ph:caret-up-fill' : 'ph:caret-down-fill') : 'ph:caret-up-down'} width="16" style={{ color: '#6c757d' }} />
-                      </div>
+                    <th scope="col" style={{ padding: '16px', fontWeight: '600', color: '#495057', fontSize: '14px' }}>
+                      Name
                     </th>
-                    <th scope="col" onClick={() => handleSort('invoice')} style={{ cursor: 'pointer', padding: '16px', fontWeight: '600', color: '#495057', fontSize: '14px' }}>
-                      <div className="d-flex align-items-center gap-2">
-                        Description
-                        <Icon icon={sortConfig.key === 'invoice' ? (sortConfig.direction === 'asc' ? 'ph:caret-up-fill' : 'ph:caret-down-fill') : 'ph:caret-up-down'} width="16" style={{ color: '#6c757d' }} />
-                      </div>
+                    <th scope="col" style={{ padding: '16px', fontWeight: '600', color: '#495057', fontSize: '14px' }}>
+                      Description
                     </th>
-                    <th scope="col" onClick={() => handleSort('issuedDate')} style={{ cursor: 'pointer', padding: '16px', fontWeight: '600', color: '#495057', fontSize: '14px' }}>
-                      <div className="d-flex align-items-center gap-2">
-                        Date
-                        <Icon icon={sortConfig.key === 'issuedDate' ? (sortConfig.direction === 'asc' ? 'ph:caret-up-fill' : 'ph:caret-down-fill') : 'ph:caret-up-down'} width="16" style={{ color: '#6c757d' }} />
-                      </div>
+                    <th scope="col" style={{ padding: '16px', fontWeight: '600', color: '#495057', fontSize: '14px' }}>
+                      Created At
                     </th>
-
-
-                    <th scope="col" style={{ width: '150px', padding: '16px', fontWeight: '600', color: '#495057', fontSize: '14px' }}>Action</th>
+                    <th scope="col" style={{ width: '150px', padding: '16px', fontWeight: '600', color: '#495057', fontSize: '14px' }}>
+                      Action
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {currentDepartments.length > 0 ? (
-                    currentDepartments.map((dept, index) => (
-                      <tr key={dept.id} style={{ borderBottom: '1px solid #f0f0f0' }}>
+                  {loading ? (
+                    <tr>
+                      <td colSpan="5" style={{ textAlign: 'center', padding: '32px', color: '#6c757d', fontSize: '14px' }}>
+                        <div className="d-flex justify-content-center align-items-center gap-2">
+                          <div className="spinner-border spinner-border-sm" role="status">
+                            <span className="visually-hidden">Loading...</span>
+                          </div>
+                          Loading...
+                        </div>
+                      </td>
+                    </tr>
+                  ) : departments.length > 0 ? (
+                    departments.map((dept, index) => (
+                      <tr key={dept.uuid} style={{ borderBottom: '1px solid #f0f0f0' }}>
                         <td style={{ padding: '16px', verticalAlign: 'middle' }}>
                           <div className="d-flex align-items-center gap-2">
                             <input
                               className="form-check-input"
                               type="checkbox"
-                              checked={selectedRows.includes(dept.id)}
-                              onChange={() => handleRowSelect(dept.id)}
+                              checked={selectedRows.includes(dept.uuid)}
+                              onChange={() => handleRowSelect(dept.uuid)}
                               style={{ cursor: 'pointer' }}
                             />
                             <span style={{ fontSize: '14px', color: '#6c757d' }}>
@@ -501,44 +447,25 @@ const DepartmentList = () => {
                             </span>
                           </div>
                         </td>
-
                         <td style={{ padding: '16px', verticalAlign: 'middle' }}>
-                          <div className="d-flex align-items-center gap-3">
-
-                            <span style={{ fontSize: '14px', color: '#212529', fontWeight: '500' }}>
-                              {dept.name}
-                            </span>
-                          </div>
+                          <span style={{ fontSize: '14px', color: '#212529', fontWeight: '500' }}>
+                            {dept.name}
+                          </span>
                         </td>
                         <td style={{ padding: '16px', verticalAlign: 'middle' }}>
-                          <div className="d-flex align-items-center gap-3">
-
-                            <span style={{ fontSize: '14px', color: '#212529', fontWeight: '500' }}>
-                              {dept.description}
-                            </span>
-                          </div>
+                          <span style={{ fontSize: '14px', color: '#212529', fontWeight: '500' }}>
+                            {dept.description}
+                          </span>
                         </td>
                         <td style={{ padding: '16px', verticalAlign: 'middle', fontSize: '14px', color: '#495057' }}>
-                          {dept.issuedDate}
+                          {new Date(dept.created_at).toLocaleDateString('en-GB', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric'
+                          })}
                         </td>
                         <td style={{ padding: '16px', verticalAlign: 'middle' }}>
                           <div className="d-flex align-items-center gap-2">
-                            <Link
-                              to="#"
-                              style={{
-                                width: '36px',
-                                height: '36px',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                borderRadius: '50%',
-                                backgroundColor: '#e0e7ff',
-                                transition: 'all 0.2s'
-                              }}
-                              onClick={() => handleShowEdit(dept)}
-                            >
-                              <Icon icon="iconamoon:eye-light" width="18" style={{ color: '#6366f1' }} />
-                            </Link>
                             <Link
                               to="#"
                               style={{
@@ -551,12 +478,15 @@ const DepartmentList = () => {
                                 backgroundColor: '#d1fae5',
                                 transition: 'all 0.2s'
                               }}
-                              onClick={() => handleShowEdit(dept)}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                handleShowEdit(dept);
+                              }}
                             >
                               <Icon icon="lucide:edit" width="18" style={{ color: '#059669' }} />
                             </Link>
                             <button
-                              onClick={() => handleDelete(dept.id)}
+                              onClick={() => handleDelete(dept.uuid)}
                               style={{
                                 width: '36px',
                                 height: '36px',
@@ -578,7 +508,7 @@ const DepartmentList = () => {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="7" style={{ textAlign: 'center', padding: '32px', color: '#6c757d', fontSize: '14px' }}>
+                      <td colSpan="5" style={{ textAlign: 'center', padding: '32px', color: '#6c757d', fontSize: '14px' }}>
                         No records found
                       </td>
                     </tr>
@@ -586,37 +516,38 @@ const DepartmentList = () => {
                 </tbody>
               </table>
 
-              {/* Pagination */}
-              {sortedDepartments.length > 0 && (
+              {tableState.total > 0 && (
                 <div className="d-flex justify-content-between align-items-center px-4 py-3" style={{ borderTop: '1px solid #e8e8e8' }}>
                   <div style={{ fontSize: '14px', color: '#6c757d' }}>
-                    {/* Showing {startIndex + 1} to {Math.min(endIndex, sortedDepartments.length)} of {sortedDepartments.length} entries */}
+                    Showing {startIndex + 1} to {Math.min(startIndex + tableState.limit, tableState.total)} of {tableState.total} entries
                   </div>
                   <nav>
                     <ul className="pagination mb-0" style={{ gap: '4px' }}>
-                      <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                      <li className={`page-item ${!tableState.hasPrevious ? 'disabled' : ''}`}>
                         <button
                           className="page-link border-0 bg-transparent"
                           onClick={() => goToPage(1)}
-                          disabled={currentPage === 1}
+                          disabled={!tableState.hasPrevious}
                           style={{
                             padding: '6px 10px',
-                            color: currentPage === 1 ? '#ccc' : '#6c757d',
-                            fontSize: '18px'
+                            color: !tableState.hasPrevious ? '#ccc' : '#6c757d',
+                            fontSize: '18px',
+                            cursor: !tableState.hasPrevious ? 'not-allowed' : 'pointer'
                           }}
                         >
                           «
                         </button>
                       </li>
-                      <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                      <li className={`page-item ${!tableState.hasPrevious ? 'disabled' : ''}`}>
                         <button
                           className="page-link border-0 bg-transparent"
-                          onClick={() => goToPage(currentPage - 1)}
-                          disabled={currentPage === 1}
+                          onClick={() => goToPage(tableState.currentPage - 1)}
+                          disabled={!tableState.hasPrevious}
                           style={{
                             padding: '6px 10px',
-                            color: currentPage === 1 ? '#ccc' : '#6c757d',
-                            fontSize: '18px'
+                            color: !tableState.hasPrevious ? '#ccc' : '#6c757d',
+                            fontSize: '18px',
+                            cursor: !tableState.hasPrevious ? 'not-allowed' : 'pointer'
                           }}
                         >
                           ‹
@@ -642,10 +573,11 @@ const DepartmentList = () => {
                               style={{
                                 padding: '6px 12px',
                                 minWidth: '36px',
-                                backgroundColor: page === currentPage ? '#487fff' : 'transparent',
-                                color: page === currentPage ? '#fff' : '#6c757d',
+                                backgroundColor: page === tableState.currentPage ? '#487fff' : 'transparent',
+                                color: page === tableState.currentPage ? '#fff' : '#6c757d',
                                 borderRadius: '4px',
-                                fontWeight: page === currentPage ? '600' : '400'
+                                fontWeight: page === tableState.currentPage ? '600' : '400',
+                                cursor: 'pointer'
                               }}
                             >
                               {page}
@@ -653,29 +585,31 @@ const DepartmentList = () => {
                           )}
                         </li>
                       ))}
-                      <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                      <li className={`page-item ${!tableState.hasNext ? 'disabled' : ''}`}>
                         <button
                           className="page-link border-0 bg-transparent"
-                          onClick={() => goToPage(currentPage + 1)}
-                          disabled={currentPage === totalPages}
+                          onClick={() => goToPage(tableState.currentPage + 1)}
+                          disabled={!tableState.hasNext}
                           style={{
                             padding: '6px 10px',
-                            color: currentPage === totalPages ? '#ccc' : '#6c757d',
-                            fontSize: '18px'
+                            color: !tableState.hasNext ? '#ccc' : '#6c757d',
+                            fontSize: '18px',
+                            cursor: !tableState.hasNext ? 'not-allowed' : 'pointer'
                           }}
                         >
                           ›
                         </button>
                       </li>
-                      <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                      <li className={`page-item ${!tableState.hasNext ? 'disabled' : ''}`}>
                         <button
                           className="page-link border-0 bg-transparent"
-                          onClick={() => goToPage(totalPages)}
-                          disabled={currentPage === totalPages}
+                          onClick={() => goToPage(tableState.totalPages)}
+                          disabled={!tableState.hasNext}
                           style={{
                             padding: '6px 10px',
-                            color: currentPage === totalPages ? '#ccc' : '#6c757d',
-                            fontSize: '18px'
+                            color: !tableState.hasNext ? '#ccc' : '#6c757d',
+                            fontSize: '18px',
+                            cursor: !tableState.hasNext ? 'not-allowed' : 'pointer'
                           }}
                         >
                           »
@@ -688,9 +622,12 @@ const DepartmentList = () => {
             </div>
           </div>
         </div>
-        {/* Modal Start */}
+
         <AddDepartment show={show} handleClose={handleClose} />
         <EditDepartment show={showEdit} handleCloseEdit={handleCloseEdit} rowSelectData={rowSelectData} />
+        {showImport && (
+          <AddImportModal show={showImport} handleClose={handleCloseImport} />)}
+
         {showDeleteConfirm && (
           <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
             <div className="modal-dialog modal-dialog-centered">
@@ -722,8 +659,6 @@ const DepartmentList = () => {
             </div>
           </div>
         )}
-
-        {/* Modal End */}
       </MasterLayout>
     </>
   );

@@ -1,19 +1,86 @@
-import axios from "axios";
+// import axios from "axios";
 
 import * as url from "./api_url";
-import { get, post, put } from "./api_service";
+import { get, post, put, del ,delWithPayload,getExportData} from "./api_service";
 
 // auth
 export const postLogin = data => post(url.POST_LOGIN, data);
 export const logoutUserAPI = (data) => post(url.POST_LOGOUT, data)
 
 
-export const getDepartmentListData = () => get(url.GET_DEPARTMENT_LIST);
+export const getDepartmentListDataAPI = (data) => {
+    const apiUrl = `${url.GET_DEPARTMENT_LIST}?search=${data?.search}&page=${data?.page}`;
+    return get(apiUrl)
+};
+
+export const addDepartmentDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_DEPARTMENT_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editDepartmentDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_DEPARTMENT_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteDepartmentDataAPI = (payload) => {
+    const prapareDATA = {
+        id: payload
+    }
+    const apiUrl = `${url.DELETE_DEPARTMENT_API}delete/`;
+    return delWithPayload(apiUrl, prapareDATA);
+};
 
 
-// export const forgetPasswordAPI = data => put(url.FORGET_PASSWORD_URL, data);
-// export const resetPasswordAPI = data => put(url.RESET_PASSWORD_URL, data);
-// export const twoStepVerificationAPI = data => post(url.TWO_STEP_VERIFICATION, data);
+export const exportDepartmentDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_DEPARTMENT_API}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importDepartmentDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_DEPARTMENT_API}`;
+    return post(apiUrl, payload);
+};
+
+
+
+//EMPLOYEE_TYPE 
+export const getEmployeeTypeListDataAPI = (data) => {
+    const apiUrl = `${url.GET_EMPLOYEE_TYPE_LIST}?search=${data?.search}&page=${data?.page}`;
+    return get(apiUrl)
+};
+
+export const addEmployeeTypeDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_EMPLOYEE_TYPE_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editEmployeeTypeDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_EMPLOYEE_TYPE_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteEmployeeTypeDataAPI = (payload) => {
+    const prapareDATA = {
+        id: payload
+    }
+    const apiUrl = `${url.DELETE_EMPLOYEE_TYPE_API}delete/`;
+    return delWithPayload(apiUrl, prapareDATA);
+};
+
+
+export const exportEmployeeTypeDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_EMPLOYEE_TYPE_API}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importEmployeeTypeDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_EMPLOYEE_TYPE_API}`;
+    return post(apiUrl, payload);
+};
+
+
+
 
 
 // //international admin

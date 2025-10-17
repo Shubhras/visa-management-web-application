@@ -6,7 +6,7 @@ import {
   // API_ERROR,
   // TWO_STEP_VERIFICATION,
   // FORGET_PASSWORD,
-  RESET_PASSWORD,
+  // RESET_PASSWORD,
 } from "./actionTypes"
 
 export const loginUser = (user, history, callback) => {

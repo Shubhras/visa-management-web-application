@@ -1,10 +1,14 @@
 import React, { useState } from 'react'
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { Link } from 'react-router-dom';
-
+import { useDispatch } from "react-redux";
+import { departmentAdd } from '../../../store/master/actions';
+import { toast } from "react-toastify";
 const AddDepartment = ({ show, handleClose }) => {
+  const dispatch = useDispatch();
+  const [loading, setLoading] = useState(false);
   // IMPORTANT: All hooks must be declared BEFORE any conditional returns
-  
+
   // Form state
   const [formData, setFormData] = useState({
     departmentName: '',
@@ -26,7 +30,7 @@ const AddDepartment = ({ show, handleClose }) => {
       ...prev,
       [name]: value
     }));
-    
+
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
@@ -53,12 +57,6 @@ const AddDepartment = ({ show, handleClose }) => {
       isValid = false;
     }
 
-    // Status validation
-    // if (!formData.status) {
-    //   newErrors.status = 'Please select a status';
-    //   isValid = false;
-    // }
-
     setErrors(newErrors);
     return isValid;
   };
@@ -66,22 +64,32 @@ const AddDepartment = ({ show, handleClose }) => {
   // Handle form submission
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     if (validateForm()) {
-      // Form is valid, proceed with submission
-      console.log('Form submitted:', formData);
-      
-      // Add your API call or form submission logic here
-      // Example: await api.addDepartment(formData);
-      
-      // Reset form and close modal
-      setFormData({
-        departmentName: '',
-        description: '',
-        // status: 'active'
-      });
-      setErrors({});
-      handleClose();
+      const sendPayload = {
+        name: formData.departmentName,
+        description: formData.description,
+
+      };
+      dispatch(departmentAdd(sendPayload, (response, error) => {
+        setLoading(false);
+        if (error) {
+          toast.error(error?.response?.data?.message || "server error");
+        } else {
+          if (response?.statusCode === 200 && response?.status === true) {
+            toast.success(response?.message);
+            setFormData({
+              departmentName: '',
+              description: '',
+              // status: 'active'
+            });
+            setErrors({});
+            handleClose();
+          } else {
+            toast.error("Something went wrong.");
+          }
+        }
+      }));
     }
   };
 
