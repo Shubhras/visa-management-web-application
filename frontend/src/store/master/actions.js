@@ -6,6 +6,17 @@ import {
   EXPORT_DEPARTMENT,
   IMPORT_DEPARTMENT,
 
+COUNTRY_LIST,
+ADD_COUNTRY,
+EDIT_COUNTRY,
+DELETE_COUNTRY,
+EXPORT_COUNTRY,
+IMPORT_COUNTRY,
+
+  
+
+
+
     EMPLOYEE_TYPE_LIST,
   ADD_EMPLOYEE_TYPE,
   EDIT_EMPLOYEE_TYPE,
@@ -47,6 +58,46 @@ export const departmentImportData = (data, callback) => ({
     data,
     callback,
 });
+
+
+
+export const countryList = (data, callback) => ({
+    type: COUNTRY_LIST,
+    data,
+    callback,
+});
+
+export const countryAdd = (data, callback) => ({
+    type: ADD_COUNTRY,
+    data,
+    callback,
+});
+export const countryEdit = (data, callback) => ({
+    type: EDIT_COUNTRY,
+    data,
+    callback,
+});
+
+export const countryDelete = (data, callback) => ({
+    type: DELETE_COUNTRY,
+    data,
+    callback,
+});
+
+export const countryExportData = (data, callback) => ({
+    type: EXPORT_COUNTRY,
+    data,
+    callback,
+});
+export const countryImportData = (data, callback) => ({
+    type: IMPORT_COUNTRY,
+    data,
+    callback,
+});
+
+
+
+
 
 
 

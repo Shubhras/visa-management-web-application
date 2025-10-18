@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { useDispatch } from "react-redux";
 import { departmentEdit } from '../../../store/master/actions';
 import { toast } from "react-toastify";
+
 const EditDepartment = ({ show, handleCloseEdit, rowSelectData }) => {
     const [loading, setLoading] = useState(false);
     const dispatch = useDispatch();

@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom';
 import { useDispatch } from "react-redux";
 import { departmentAdd } from '../../../store/master/actions';
 import { toast } from "react-toastify";
+
+
 const AddDepartment = ({ show, handleClose }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
