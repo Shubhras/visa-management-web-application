@@ -346,7 +346,7 @@ import BlankPagePage from "./pages/BlankPagePage";
 // master 
 import DepartmentList from "./pages/masters/department/DepartmentList";
 import CountryList from "./pages/masters/country/CountryList";
-//import StateList from "./pages/masters/country/StateList";
+import StateList from "./pages/masters/state/StateList";
 
 // from "./pages/masters/department/DepartmentList";
 // EmployeeTypeList
@@ -464,6 +464,8 @@ function App() {
         <Route exact path='/leads' element={<LeadsList />} />
         <Route exact path='/department' element={<DepartmentList />} />
         <Route exact path='/country' element={<CountryList/>} />
+        <Route exact path ='/state' element={<StateList/>} />
+
         {/*         <Route exact path='/state' element={<StateList/>} />
  */ }
         {/* <Route exact path='/employeetype' element={<EmployeeTypeList />} /> */}

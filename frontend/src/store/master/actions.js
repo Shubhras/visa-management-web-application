@@ -13,6 +13,13 @@ DELETE_COUNTRY,
 EXPORT_COUNTRY,
 IMPORT_COUNTRY,
 
+STATE_LIST,
+ADD_STATE,
+EDIT_STATE,
+DELETE_STATE,
+EXPORT_STATE,
+IMPORT_STATE,
+
   
 
 
@@ -91,6 +98,43 @@ export const countryExportData = (data, callback) => ({
 });
 export const countryImportData = (data, callback) => ({
     type: IMPORT_COUNTRY,
+    data,
+    callback,
+});
+
+
+
+//STATE TYPE
+export const stateList = (data, callback) => ({
+    type: STATE_LIST,
+    data,
+    callback,
+});
+
+export const stateAdd = (data, callback) => ({
+    type: ADD_STATE,
+    data,
+    callback,
+});
+export const stateEdit = (data, callback) => ({
+    type: EDIT_STATE,
+    data,
+    callback,
+});
+
+export const stateDelete = (data, callback) => ({
+    type: DELETE_STATE,
+    data,
+    callback,
+});
+
+export const stateExportData = (data, callback) => ({
+    type: EXPORT_STATE,
+    data,
+    callback,
+});
+export const stateImportData = (data, callback) => ({
+    type: IMPORT_STATE,
     data,
     callback,
 });
