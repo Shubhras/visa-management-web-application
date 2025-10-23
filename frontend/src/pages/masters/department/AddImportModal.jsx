@@ -183,8 +183,7 @@ const AddImportModal = ({ show, handleClose }) => {
         const formData = new FormData();
         formData.append('file', file);
         if (selectedSheet) {
-            //formData.append('sheet_name', selectedSheet);
-             formData.append('name', selectedSheet);
+            formData.append('sheet_name', selectedSheet);
         }
 
         setLoading(true);

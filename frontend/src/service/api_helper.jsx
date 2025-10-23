@@ -9,7 +9,7 @@ export const logoutUserAPI = (data) => post(url.POST_LOGOUT, data)
 
 
 export const getDepartmentListDataAPI = (data) => {
-    const apiUrl = `${url.GET_DEPARTMENT_LIST}?search=${data?.search}&page=${data?.page}`;
+    const apiUrl = `${url.GET_DEPARTMENT_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}`;
     return get(apiUrl)
 };
 
@@ -33,7 +33,7 @@ export const deleteDepartmentDataAPI = (payload) => {
 
 
 export const exportDepartmentDataAPI = (payload) => {
-    const apiUrl = `${url.EXPORT_DEPARTMENT_API}`;
+    const apiUrl = `${url.EXPORT_DEPARTMENT_API}?fields=${payload?.fields}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -46,7 +46,7 @@ export const importDepartmentDataAPI = (payload) => {
 
 //EMPLOYEE_TYPE 
 export const getEmployeeTypeListDataAPI = (data) => {
-    const apiUrl = `${url.GET_EMPLOYEE_TYPE_LIST}?search=${data?.search}&page=${data?.page}`;
+    const apiUrl = `${url.GET_EMPLOYEE_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}`;
     return get(apiUrl)
 };
 
