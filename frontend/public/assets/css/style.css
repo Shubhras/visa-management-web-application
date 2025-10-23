@@ -15727,3 +15727,14 @@ td.fc-header-center {
 }
 
 /* === footer css end === */
+
+
+/* custum css */
+.basic-data-table tr th{
+   color: #495057 !important;
+}
+.basic-data-table tr td{
+   color: #495057 !important;
+   font-size: '14px';
+   vertical-align: middle;
+}
