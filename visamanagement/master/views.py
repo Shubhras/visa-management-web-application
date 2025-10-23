@@ -2005,9 +2005,10 @@ class DepartmentExportAPIView(APIView):
 
 
 class DepartmentImportAPIView(APIView):
-    
     def post(self, request):
         file = request.FILES.get('file')
+        sheet_name = request.data.get('sheet_name')  # <-- User se sheet name lena
+
         if not file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -2016,27 +2017,61 @@ class DepartmentImportAPIView(APIView):
 
         try:
             if format_type == 'xlsx':
-                dataset.load(file.read(), format='xlsx')
-            else:  # default CSV
+                # Load workbook to check available sheets
+                wb = openpyxl.load_workbook(file, read_only=True)
+                available_sheets = wb.sheetnames
+
+                if not sheet_name:
+                    return Response({
+                        'error': 'Please provide sheet_name',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                if sheet_name not in available_sheets:
+                    return Response({
+                        'error': f'Sheet "{sheet_name}" not found in uploaded file',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                ws = wb[sheet_name]
+                data = []
+                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    data.append(dict(zip(headers, row)))
+
+                # Save data into DB
+                for row in data:
+                    Department.objects.update_or_create(
+                        name=row.get('name'),
+                        defaults={
+                            'description': row.get('description', ''),
+                            'is_deleted': row.get('is_deleted', False)
+                        }
+                    )
+
+            else:  # CSV
                 dataset.load(file.read().decode('utf-8'), format='csv')
+                for row in dataset.dict:
+                    Department.objects.update_or_create(
+                        name=row.get('name'),
+                        defaults={
+                            'description': row.get('description', ''),
+                            'is_deleted': row.get('is_deleted', False)
+                        }
+                    )
+
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-        for row in dataset.dict:
-            Department.objects.update_or_create(
-                name=row.get('name'),
-                defaults={
-                    'description': row.get('description', ''),
-                    'is_deleted': row.get('is_deleted', False)
-                }
-            )
 
         return Response({
             "statusCode": 200,
             "status": True,
-            'message': 'Import successful'}, status=status.HTTP_200_OK)
-    
+            'message': f'Sheet "{sheet_name}" imported successfully' if sheet_name else 'Import successful'
+        }, status=status.HTTP_200_OK)
 
+
+
+        
 class EmployeeTypeListAPIView(APIView):    
 
     def get(self, request):
