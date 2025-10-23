@@ -15365,7 +15365,8 @@ td.fc-header-center {
 }
 @media (min-width: 1650px) {
   .sidebar {
-    width: 19.5rem;
+    /* width: 19.5rem; */
+     width: 0rem;
   }
 }
 .sidebar-close-btn {
@@ -15418,7 +15419,8 @@ td.fc-header-center {
 }
 @media (min-width: 1650px) {
   .sidebar.active:hover {
-    width: 19.5rem;
+    /* width: 19.5rem; */
+    width: 0rem;
   }
 }
 .sidebar.active:hover .sidebar-logo img.light-logo {
@@ -15698,7 +15700,8 @@ td.fc-header-center {
 }
 @media (min-width: 1650px) {
   .dashboard-main {
-    margin-inline-start: 19.5rem;
+    /* margin-inline-start: 19.5rem; */
+     margin-inline-start: 0rem;
   }
 }
 .dashboard-main-body {

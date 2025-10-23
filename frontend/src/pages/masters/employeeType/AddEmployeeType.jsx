@@ -47,7 +47,7 @@ const AddEmployeeType = ({ show, handleClose }) => {
 
     // Department Name validation
     if (!formData.departmentName.trim()) {
-      newErrors.departmentName = 'Department Name is required';
+      newErrors.departmentName = 'Name is required';
       isValid = false;
     }
 
@@ -115,14 +115,14 @@ const AddEmployeeType = ({ show, handleClose }) => {
         style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}
         tabIndex={-1}
         role="dialog"
-        aria-labelledby="departmentModalLabel"
+        aria-labelledby="employeeModalLabel"
         aria-hidden={!show}
       >
         <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
           <div className="modal-content radius-16 bg-base">
             <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-              <h1 className="modal-title fs-5" id="departmentModalLabel">
-                Add New Department
+              <h1 className="modal-title fs-5" id="employeeModalLabel">
+                Add New Employee Type
               </h1>
               <button
                 type="button"
@@ -135,10 +135,10 @@ const AddEmployeeType = ({ show, handleClose }) => {
             <div className="modal-body p-24">
               <form onSubmit={handleSubmit}>
                 <div className="row">
-                  {/* Department Name */}
+                  {/*  Name */}
                   <div className="col-12 mb-20">
                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                      Department Name <span className="text-danger">*</span>
+                      Name <span className="text-danger">*</span>
                     </label>
                     <input
                       type="text"
@@ -146,7 +146,7 @@ const AddEmployeeType = ({ show, handleClose }) => {
                       value={formData.departmentName}
                       onChange={handleChange}
                       className={`form-control radius-8 ${errors.departmentName ? 'is-invalid' : ''}`}
-                      placeholder="Enter Department Name"
+                      placeholder="Enter Name"
                     />
                     {errors.departmentName && (
                       <div className="text-danger text-sm mt-1">
