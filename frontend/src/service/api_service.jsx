@@ -1,8 +1,9 @@
 import axios from "axios";
 
 //apply base url for axios
-const API_URL = "http://192.168.0.156:8000"//import.meta.env.VITE_API_BASE_URL_USERS_MANAGEMENT_SERVICE;
-
+//const API_URL = "http://192.168.0.156:8000"//import.meta.env.VITE_API_BASE_URL_USERS_MANAGEMENT_SERVICE;
+const API_URL = "https://visaadmin.digiprima.co"//import.meta.env.VITE_API_BASE_URL_USERS_MANAGEMENT_SERVICE;
+       
 const axiosApi = axios.create({
   baseURL: API_URL,
 });
@@ -39,7 +40,7 @@ axiosApi.interceptors.request.use(
     if (authUser) {
       try {
         const parsedUser = JSON.parse(authUser);
-        token = parsedUser?.data?.access || null;  // Safely extract token if available
+        token = parsedUser?.access || null;  // Safely extract token if available
       } catch (e) {
         console.error("Error parsing authUser:", e);
       }

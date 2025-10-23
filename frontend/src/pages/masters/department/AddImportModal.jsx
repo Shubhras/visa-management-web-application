@@ -66,7 +66,7 @@ const AddImportModal = ({ show, handleClose }) => {
                 <div className="modal-content radius-16 bg-base">
                     <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
                         <h1 className="modal-title fs-5" id="departmentModalLabel">
-                            Upload Department File
+                            Upload Department
                         </h1>
                         <button
                             type="button"

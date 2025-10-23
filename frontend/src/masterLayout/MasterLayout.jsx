@@ -178,7 +178,7 @@ const MasterLayout = ({ children }) => {
             </div>
             <div className='col-auto'>
               <div className='d-flex flex-wrap align-items-center gap-3'>
-                <ThemeToggleButton />
+                {/* <ThemeToggleButton /> */}
 
                 <div className='dropdown'>
                   <button
@@ -212,7 +212,7 @@ const MasterLayout = ({ children }) => {
                     data-bs-toggle='dropdown'
                   >
                     <img
-                      src='assets/images/user.png'
+                      src='assets/images/users/avatar-4.jpg'
                       alt='image_user'
                       className='w-40-px h-40-px object-fit-cover rounded-circle'
                     />

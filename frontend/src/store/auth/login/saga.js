@@ -6,8 +6,8 @@ import {  postLogin,  } from "../../../service/api_helper";
 function* loginUser({ payload: { user, history }, callback },) {
   try {
     const response = yield call(postLogin, user);
-    if (response?.status === 200) {
-      console.log('aaaaaaaaaaaaaaaaaaaaaaaaaaaa',response?.data)
+    if (response?.statusCode === 200) {
+      //console.log('aaaaaaaaaaaaaaaaaaaaaaaaaaaa',response?.data)
       // callback(response?.data)
       callback(response)
     }

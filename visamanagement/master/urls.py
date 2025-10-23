@@ -61,76 +61,99 @@ urlpatterns = [
     path('departments/create/', DepartmentCreateAPIView.as_view(), name='department-create'),
     path('departments/<uuid:uuid>/', DepartmentRetrieveAPIView.as_view(), name='department-detail'),
     path('departments/<uuid:uuid>/update/', DepartmentUpdateAPIView.as_view(), name='department-update'),
-    path('departments/<uuid:uuid>/delete/', DepartmentDeleteAPIView.as_view(), name='department-delete'),
+    path('departments/delete/', DepartmentDeleteAPIView.as_view(), name='department-delete'),
+    path('departments/export/', DepartmentExportAPIView.as_view(), name='department-export'),
+    path('departments/import/', DepartmentImportAPIView.as_view(), name='department-import'),
 
     path('employeetype/',EmployeeTypeListAPIView.as_view(), name='employeetype-list'),
     path('employeetype/create/', EmployeeTypeCreateAPIView.as_view(), name='employeetype-create'),
     path('employeetype/<uuid:uuid>/', EmployeeTypeRetrieveAPIView.as_view(), name='employeetype-detail'),
     path('employeetype/<uuid:uuid>/update/', EmployeeTypeUpdateAPIView.as_view(), name='employeetype-update'),
-    path('employeetype/<uuid:uuid>/delete/', EmployeeTypeDeleteAPIView.as_view(), name='employeetype-delete'),
+    path('employeetype/delete/', EmployeeTypeDeleteAPIView.as_view(), name='employeetype-delete'),
+    path('employeetype/export/', EmployeeTypeExportAPIView.as_view(), name='employeetype-export'),
+    path('employeetype/import/', EmployeeTypeImportAPIView.as_view(), name='employeetype-import'),
+
 
     path('company-types/', CompanyTypeListAPIView.as_view(), name='companytype-list'),
     path('company-types/create/', CompanyTypeCreateAPIView.as_view(), name='companytype-create'),
     path('company-types/<uuid:uuid>/', CompanyTypeDetailAPIView.as_view(), name='companytype-detail'),
     path('company-types/<uuid:uuid>/update/', CompanyTypeUpdateAPIView.as_view(), name='companytype-update'),
-    path('company-types/<uuid:uuid>/delete/', CompanyTypeDeleteAPIView.as_view(), name='companytype-delete'),
+    path('company-types/delete/', CompanyTypeDeleteAPIView.as_view(), name='companytype-delete'),
+    path('company-types/export/',  CompanyTypeExportAPIView.as_view(), name='companytype-export'),
+    path('company-types/import/',  CompanyTypeImportAPIView.as_view(), name='companytype-import'),
+
 
     path('ownership-types/', OwnershipTypeListAPIView.as_view(), name='ownershiptype-list'),
     path('ownership-types/create/', OwnershipTypeCreateAPIView.as_view(), name='ownershiptype-create'),
     path('ownership-types/<uuid:uuid>/', OwnershipTypeDetailAPIView.as_view(), name='ownershiptype-detail'),
     path('ownership-types/<uuid:uuid>/update/', OwnershipTypeUpdateAPIView.as_view(), name='ownershiptype-update'),
-    path('ownership-types/<uuid:uuid>/delete/', OwnershipTypeDeleteAPIView.as_view(), name='ownershiptype-delete'),
+    path('ownership-types/delete/', OwnershipTypeDeleteAPIView.as_view(), name='ownershiptype-delete'),
+    path('Ownership-types/export/',  OwnershipTypeExportAPIView.as_view(), name='ownershiptype-export'),
+    path('Ownership-types/import/',  OwnershipTypeImportAPIView.as_view(), name='ownershiptype-import'),
+
+
 
     path('stakeholder-categories/', StakeholderCategoryListAPIView.as_view(), name='stakeholdercategory-list'),
     path('stakeholder-categories/create/', StakeholderCategoryCreateAPIView.as_view(), name='stakeholdercategory-create'),
     path('stakeholder-categories/<uuid:uuid>/', StakeholderCategoryDetailAPIView.as_view(), name='stakeholdercategory-detail'),
     path('stakeholder-categories/<uuid:uuid>/update/', StakeholderCategoryUpdateAPIView.as_view(), name='stakeholdercategory-update'),
-    path('stakeholder-categories/<uuid:uuid>/delete/', StakeholderCategoryDeleteAPIView.as_view(), name='stakeholdercategory-delete'),
+    path('stakeholder-categories/delete/', StakeholderCategoryDeleteAPIView.as_view(), name='stakeholdercategory-delete'),
+    path('stakeholder-categories/export/',  StakeholderCategoryExportAPIView.as_view(), name='stakeholdercategory-export'),
+    path('stakeholder-categories/import/',  StakeholderCategoryImportAPIView.as_view(), name='stakeholdercategory-import'),
 
     # Stakeholder Type
     path('stakeholder-types/', StakeholderTypeListAPIView.as_view(), name='stakeholdertype-list'),
     path('stakeholder-types/create/', StakeholderTypeCreateAPIView.as_view(), name='stakeholdertype-create'),
     path('stakeholder-types/<uuid:uuid>/', StakeholderTypeDetailAPIView.as_view(), name='stakeholdertype-detail'),
     path('stakeholder-types/<uuid:uuid>/update/', StakeholderTypeUpdateAPIView.as_view(), name='stakeholdertype-update'),
-    path('stakeholder-types/<uuid:uuid>/delete/', StakeholderTypeDeleteAPIView.as_view(), name='stakeholdertype-delete'),
+    path('stakeholder-types/delete/', StakeholderTypeDeleteAPIView.as_view(), name='stakeholdertype-delete'),
 
     path("accreditation-category/create/", AccreditationCategoryCreateAPIView.as_view(), name='accreditation-list'),
     path("accreditation-category/", AccreditationCategoryListAPIView.as_view(), name='accreditation-create'),
     path("accreditation-category/<uuid:uuid>/", AccreditationCategoryRetrieveAPIView.as_view(), name='accreditation-detail'),
     path("accreditation-category/<uuid:uuid>/update/", AccreditationCategoryUpdateAPIView.as_view(), name='accreditation-update'),
-    path("accreditation-category/delete/<uuid:uuid>/", AccreditationCategoryDeleteAPIView.as_view(), name='accreditation-delete'),
+    path("accreditation-category/delete/", AccreditationCategoryDeleteAPIView.as_view(), name='accreditation-delete'),
+    path('accreditation-category/export/',  AccreditationCategoryExportAPIView.as_view(), name=' accreditation-export'),
+    path('accreditation-category/import/',  AccreditationCategoryImportAPIView.as_view(), name='accreditation-import'),
 
     # Accreditation Name
     path("accreditation-name/create/", AccreditationNameCreateAPIView.as_view(), name='stakeholdertype-list'),
     path("accreditation-name/", AccreditationNameListAPIView.as_view(), name='stakeholdertype-list'),
     path("accreditation-name/<uuid:uuid>/", AccreditationNameRetrieveAPIView.as_view(), name='stakeholdertype-detail'),
     path("accreditation-name/<uuid:uuid>/update/", AccreditationNameUpdateAPIView.as_view(), name='stakeholdertype-update'),
-    path("accreditation-name/delete/<uuid:uuid>/", AccreditationNameDeleteAPIView.as_view(), name='stakeholdertype-delete'),
+    path("accreditation-name/delete/", AccreditationNameDeleteAPIView.as_view(), name='stakeholdertype-delete'),
 
 
     path("BankAccountType/create/", BankAccountTypeCreateAPIView.as_view(), name='BankAccountType-create'),
     path("BankAccountType/", BankAccountTypeListAPIView.as_view(), name='BankAccountType-list'),
     path("BankAccountType/<uuid:uuid>/", BankAccountTypeRetrieveAPIView.as_view(), name='BankAccountType-detail'),
     path("BankAccountType/<uuid:uuid>/update/", BankAccountTypeUpdateAPIView.as_view(), name='BankAccountType-update'),
-    path("BankAccountType/delete/<uuid:uuid>/", BankAccountTypeDeleteAPIView.as_view(), name='BankAccountType-delete'),
+    path("BankAccountType/delete/", BankAccountTypeDeleteAPIView.as_view(), name='BankAccountType-delete'),
+    path('BankAccountType/export/',   BankAccountTypeExportAPIView.as_view(), name=' BankAccountType-export'),
+    path('BankAccountType/import/',   BankAccountTypeImportAPIView.as_view(), name=' BankAccountType-import'),
+
 
     path("license-name/create/", LicenseNameCreateAPIView.as_view(),name='licensename-create'),
     path("license-name/", LicenseNameListAPIView.as_view(),name='licensename-list'),
     path("license-name/<uuid:uuid>/", LicenseNameRetrieveAPIView.as_view(),name='licensename-detail'),
     path("license-name/update/<uuid:uuid>/", LicenseNameUpdateAPIView.as_view(),name='licensename-update'),
-    path("license-name/delete/<uuid:uuid>/", LicenseNameDeleteAPIView.as_view(),name='licensename-delete'),
-
+    path("license-name/delete/", LicenseNameDeleteAPIView.as_view(),name='licensename-delete'),
+   
     path("LeadSource/create/", LeadSourceCreateAPIView.as_view(), name='LeadSource-create'),
     path("LeadSource/", LeadSourceListAPIView.as_view(), name='LeadSource-list'),
     path("LeadSource/<uuid:uuid>/", LeadSourceRetrieveAPIView.as_view(), name='LeadSource-detail'),
     path("LeadSource/<uuid:uuid>/update/", LeadSourceUpdateAPIView.as_view(), name='LeadSource-update'),
-    path("LeadSource/delete/<uuid:uuid>/", LeadSourceDeleteAPIView.as_view(), name='LeadSource-delete'),
+    path("LeadSource/delete/", LeadSourceDeleteAPIView.as_view(), name='LeadSource-delete'),
+    path('LeadSource/export/',   LeadSourceExportAPIView.as_view(), name=' LeadSource-export'),
+    path('LeadSource/import/',   LeadSourceImportAPIView.as_view(), name=' LeadSource-import'),
 
     path("InterestLevel/create/", InterestLevelCreateAPIView.as_view(), name='InterestLevel-create'),
     path("InterestLevel/list/", InterestLevelListAPIView.as_view(), name='InterestLevel-list'),
     path("InterestLevel/<uuid:uuid>/", InterestLevelRetrieveAPIView.as_view(), name='InterestLevel-detail'),
     path("InterestLevel/<uuid:uuid>/update/", InterestLevelUpdateAPIView.as_view(), name='InterestLevel-update'),
-    path("InterestLevel/delete/<uuid:uuid>/", InterestLevelDeleteAPIView.as_view(), name='InterestLevel-delete'),
+    path("InterestLevel/delete/", InterestLevelDeleteAPIView.as_view(), name='InterestLevel-delete'),
+    path('InterestLevel/export/',   InterestLevelExportAPIView.as_view(), name=' InterestLevel-export'),
+    path('InterestLevel/import/',  InterestLevelImportAPIView.as_view(), name=' InterestLevel-import'),
 
 
     path("Priority/create/", PriorityCreateAPIView.as_view(), name='Priority-create'),
@@ -138,24 +161,35 @@ urlpatterns = [
     path("Priority/<uuid:uuid>/", PriorityRetrieveAPIView.as_view(), name='Priority-detail'),
     path("Priority/<uuid:uuid>/update/", PriorityUpdateAPIView.as_view(), name='Priority-update'),
     path("Priority/delete/<uuid:uuid>/", PriorityDeleteAPIView.as_view(), name='Priority-delete'),
+    path('Priority/export/',   PriorityExportAPIView.as_view(), name=' Priority-export'),
+    path('Priority/import/',  PriorityImportAPIView.as_view(), name=' InterPriorityestLevel-import'),
 
     path("Tags/create/", TagsCreateAPIView.as_view(), name='Tags-create'),
     path("Tags/list/", TagsListAPIView.as_view(), name='Tags-list'),
     path("Tags/<uuid:uuid>/", TagsRetrieveAPIView.as_view(), name='Tags-detail'),
     path("Tags/<uuid:uuid>/update/", TagsUpdateAPIView.as_view(), name='Tags-update'),
-    path("Tags/delete/<uuid:uuid>/", TagsDeleteAPIView.as_view(), name='Tags-delete'),
+    path("Tags/delete/", TagsDeleteAPIView.as_view(), name='Tags-delete'),
+    path('Tags/export/',  TagsExportAPIView.as_view(), name=' Tags-export'),
+    path('Tags/import/',  TagsImportAPIView.as_view(), name=' Tags-import'),
+
 
     path("ActivityType/create/", ActivityTypeCreateAPIView.as_view(), name='ActivityType-create'),
     path("ActivityType/list/", ActivityTypeListAPIView.as_view(), name='ActivityType-list'),
     path("ActivityType/<uuid:uuid>/", ActivityTypeRetrieveAPIView.as_view(), name='ActivityType-detail'),
     path("ActivityType/<uuid:uuid>/update/", ActivityTypeUpdateAPIView.as_view(), name='ActivityType-update'),
-    path("ActivityType/delete/<uuid:uuid>/", ActivityTypeDeleteAPIView.as_view(), name='ActivityType-delete'),
+    path("ActivityType/delete/", ActivityTypeDeleteAPIView.as_view(), name='ActivityType-delete'),
+    path('ActivityType/export/', ActivityTypeExportAPIView.as_view(), name=' ActivityType-export'),
+    path('ActivityType/import/',  ActivityTypeImportAPIView.as_view(), name=' ActivityType-import'),
+
 
     path("LostReason/create/", LostReasonCreateAPIView.as_view(), name='LostReason-create'),
     path("LostReason/list/", LostReasonListAPIView.as_view(), name='LostReason-list'),
     path("LostReason/<uuid:uuid>/", LostReasonRetrieveAPIView.as_view(), name='LostReason-detail'),
     path("LostReason/<uuid:uuid>/update/", LostReasonUpdateAPIView.as_view(), name='LostReason-update'),
-    path("LostReason/delete/<uuid:uuid>/", LostReasonDeleteAPIView.as_view(), name='LostReason-delete'),
+    path("LostReason/delete/", LostReasonDeleteAPIView.as_view(), name='LostReason-delete'),
+    path('LostReason/export/', LostReasonExportAPIView.as_view(), name=' LostReason-export'),
+    path('LostReason/import/',  LostReasonImportAPIView.as_view(), name=' LostReason-import'),
+
 
 
 

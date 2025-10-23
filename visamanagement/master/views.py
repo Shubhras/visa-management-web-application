@@ -14,6 +14,12 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.exceptions import ValidationError
 from rest_framework_simplejwt.exceptions import TokenError  
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from import_export.formats.base_formats import CSV, XLSX
+from tablib import Dataset
+from django.http import HttpResponse
+from uuid import UUID
+import datetime
+
 
 
 class IsAdminUser(BasePermission):
@@ -115,7 +121,6 @@ class AdminLogoutView(APIView):
 
 
 class GenderListAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
     def get(self, request):
         search = request.GET.get("search", "")
         queryset = Gender.objects.filter(is_deleted=False)
@@ -136,11 +141,11 @@ class GenderCreateAPIView(APIView):
         if serializer.is_valid():
             serializer.save()
             return Response({
-                "statusCode": 201,
+                "statusCode": 200,
                 "status": True,
                 "message": "Gender created successfully",
                 "data": serializer.data
-            }, status=status.HTTP_201_CREATED)
+            }, status=status.HTTP_200_OK)
         
 
         errors = serializer.errors
@@ -284,11 +289,11 @@ class MaritalstatusCreateAPIView(APIView):
         if serializer.is_valid():
             serializer.save()
             return Response({
-                "statusCode": 201,
+                "statusCode": 200,
                 "status": True,
                 "message": "Maritalstatus created successfully",
                 "data": serializer.data
-            }, status=status.HTTP_201_CREATED)
+            }, status=status.HTTP_200_OK)
 
 
         errors = serializer.errors
@@ -567,7 +572,7 @@ class CountryCreateAPIView(APIView):
             )
 
             return Response({
-                "statusCode": 201,
+                "statusCode": 200,
                 "status": True,
                 "message": "Country created successfully",
                 "data": {
@@ -582,7 +587,7 @@ class CountryCreateAPIView(APIView):
                     "currencyCode": country.currencyCode,
                     "status": country.status,
                 }
-            }, status=status.HTTP_201_CREATED)
+            }, status=status.HTTP_200_OK)
 
         except Exception as e:
             return Response({
@@ -823,7 +828,7 @@ class StateCreateAPIView(APIView):
             )
 
             return Response({
-                "statusCode": 201,
+                "statusCode": 200,
                 "status": True,
                 "message": "State created successfully",
                 "data": {
@@ -834,7 +839,7 @@ class StateCreateAPIView(APIView):
                     "description": state.description,
                     "status": state.is_active,
                 }
-            }, status=status.HTTP_201_CREATED)
+            }, status=status.HTTP_200_OK)
 
         except Exception as e:
             return Response({
@@ -1058,7 +1063,7 @@ class DistrictCreateAPIView(APIView):
                     "description": district.description
                 }
                 
-            }, status=status.HTTP_201_CREATED)
+            }, status=status.HTTP_200_OK)
 
         except Exception as e:
             return Response({
@@ -1285,7 +1290,7 @@ class CityCreateAPIView(APIView):
                 "state": city.stateName.stateName if city.stateName else None,
                 "district": city.districtName.districtName if city.districtName else None,
                 "description": city.description
-            }}, status=status.HTTP_201_CREATED)
+            }}, status=status.HTTP_200_OK)
         
 
         except Exception as e:
@@ -1435,7 +1440,7 @@ class RelationCreateAPIView(APIView):
             )
 
             return Response({
-                "statusCode": 201,
+                "statusCode": 200,
                 "status": True,
                 "message": "Relation created successfully",
                 "data": {
@@ -1443,7 +1448,7 @@ class RelationCreateAPIView(APIView):
                     "relation": relation.relation,
                     "description": relation.description
                 }
-            }, status=status.HTTP_201_CREATED)
+            }, status=status.HTTP_200_OK)
 
         except Exception as e:
             return Response({
@@ -1629,7 +1634,7 @@ class TimezoneCreateAPIView(APIView):
             )
 
             return Response({
-                "statusCode": 201,
+                "statusCode": 200,
                 "status": True,
                 "message": "Timezone created successfully",
                 "data": {
@@ -1639,7 +1644,7 @@ class TimezoneCreateAPIView(APIView):
                     "state": timezone_obj.stateName.stateName if timezone_obj.stateName else None,
                     "description": timezone_obj.description
                 }
-            }, status=status.HTTP_201_CREATED)
+            }, status=status.HTTP_200_OK)
 
         except Exception as e:
             return Response({
@@ -1768,42 +1773,67 @@ class TimezoneDeleteAPIView(APIView):
 
 class DepartmentListAPIView(APIView):
     def get(self, request):
-        queryset = Department.objects.filter(is_deleted=False).order_by('-created_at')
-        search = request.GET.get('search')
+        search = request.GET.get('search', '').strip()
+        queryset = Department.objects.filter(is_deleted=False)
+
         if search:
             queryset = queryset.filter(
-                Q(name__icontains=search) | Q(description__icontains=search)
+                Q(name__icontains=search) |
+                Q(description__icontains=search)
             )
 
-        paginator = StandardResultsSetPagination()
+        queryset = queryset.order_by('-created_at')
+
+        paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = DepartmentSerializer(result_page, many=True)
 
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": "Departments retrieved successfully",
-            "count": paginator.page.paginator.count,
-            "next": paginator.get_next_link(),
-            "previous": paginator.get_previous_link(),
-            "data": serializer.data
-        })
+        return paginator.get_paginated_response(serializer.data)
+
+
+
 
 class DepartmentCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
     def post(self, request):
+        name = request.data.get("name").strip()  # get name from request
+
+        # Check if a department with this name exists
+        existing = Department.objects.filter(name__iexact=name).first()
+
+        if existing:
+            if existing.is_deleted:
+                # Reactivate the deleted department
+                existing.is_deleted = False
+                existing.description = request.data.get("description", existing.description)
+                existing.save()
+                serializer = DepartmentSerializer(existing)
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": "Department reactivated successfully",
+                    "data": serializer.data
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Department with this name already exists."
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+        # If it doesn't exist, create new
         serializer = DepartmentSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response({
-                "statusCode": 201,
+                "statusCode": 200,
                 "status": True,
                 "message": "Department created successfully",
                 "data": serializer.data
-            }, status=status.HTTP_201_CREATED)
+            }, status=status.HTTP_200_OK)
         else:
-
             errors = serializer.errors
-
             messages = []
             for field, msgs in errors.items():
                 messages.extend(msgs)
@@ -1813,12 +1843,12 @@ class DepartmentCreateAPIView(APIView):
                 "statusCode": 400,
                 "status": False,
                 "message": message_text,
-               
             }, status=status.HTTP_400_BAD_REQUEST)
 
 
 
 class DepartmentRetrieveAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def get(self, request, uuid):
         try:
             department = Department.objects.get(uuid=uuid, is_deleted=False)
@@ -1840,6 +1870,7 @@ class DepartmentRetrieveAPIView(APIView):
 
 
 class DepartmentUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def put(self, request, uuid):
         try:
             department = Department.objects.get(uuid=uuid, is_deleted=False)
@@ -1877,54 +1908,189 @@ class DepartmentUpdateAPIView(APIView):
 
 
 
-
 class DepartmentDeleteAPIView(APIView):
-    def delete(self, request, uuid):
-        try:
-            department = Department.objects.get(uuid=uuid, is_deleted=False)
-        except Department.DoesNotExist:
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def delete(self, request):
+        uuids = request.data.get('id', [])
+
+        # Validate input
+        if not uuids or not isinstance(uuids, list):
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Please provide a list of UUIDs in 'uuids' field.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Filter valid UUIDs
+        valid_uuids = []
+        invalid_uuids = []
+        for u in uuids:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(u)
+
+        if not valid_uuids:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "No valid UUIDs provided.",
+                "data": {"invalid_uuids": invalid_uuids}
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Fetch departments that exist and are not deleted
+        departments = Department.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+        count = departments.count()
+
+        if count == 0:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "Department not found",
-                "data": None
+                "message": "No matching departments found.",
+                "data": {"invalid_uuids": invalid_uuids}
             }, status=status.HTTP_404_NOT_FOUND)
 
-        department.is_deleted = True
-        department.save()
-        return Response({
-            "statusCode": 204,
-            "status": True,
-            "message": "Department deleted successfully",
-            "data": None
-        }, status=status.HTTP_204_NO_CONTENT)
-
-
-
-class EmployeeTypeListAPIView(APIView):
-    def get(self, request):
-        search = request.GET.get("search", "")
-        page = int(request.GET.get("page", 1))
-        per_page = int(request.GET.get("per_page", 10))
-        
-        queryset = EmployeeType.objects.filter(is_deleted=False)
-
-        if search:
-            queryset = queryset.filter(Q(name__icontains=search) | Q(description__icontains=search))
-
-        paginator = Paginator(queryset, per_page)
-        page_obj = paginator.get_page(page)
-        serializer = EmployeeTypeSerializer(page_obj, many=True)
+        # Soft delete
+        departments.update(is_deleted=True)
 
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": "employee types retrieved successfully",
-            "total": paginator.count,
-            "total_pages": paginator.num_pages,
-            "current_page": page,
-            "data": serializer.data
-        })
+            "message": f"{count} department(s) deleted successfully.",
+        }, status=status.HTTP_200_OK)
+
+
+class DepartmentExportAPIView(APIView):
+
+    def get(self, request):
+        format_type = request.GET.get('format', 'csv').lower()
+        fields = request.GET.get('fields')  # e.g., "name,description,uuid"
+        
+        # Default fields if none provided
+        if fields:
+            field_list = [f.strip() for f in fields.split(',')]
+        else:
+            field_list = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+
+        dataset = Dataset()
+        dataset.headers = field_list
+
+        for dept in Department.objects.all():
+            row = []
+            for field in field_list:
+                value = getattr(dept, field, '')  # get attribute dynamically
+                # Format datetime fields
+                if isinstance(value, datetime.datetime):
+                    value = value.strftime("%Y-%m-%d %H:%M:%S")
+                # Convert boolean to int
+                if isinstance(value, bool):
+                    value = int(value)
+                row.append(value if value is not None else '')
+            dataset.append(row)
+
+        if format_type == 'xlsx':
+            data = XLSX().export_data(dataset)
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'departments.xlsx'
+        else:
+            data = CSV().export_data(dataset)
+            content_type = 'text/csv; charset=utf-8'
+            file_name = 'departments.csv'
+
+        response = HttpResponse(data, content_type=content_type)
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        return response
+
+
+class DepartmentImportAPIView(APIView):
+    def post(self, request):
+        file = request.FILES.get('file')
+        sheet_name = request.data.get('sheet_name')  # <-- User se sheet name lena
+
+        if not file:
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+
+        format_type = file.name.split('.')[-1].lower()
+        dataset = Dataset()
+
+        try:
+            if format_type == 'xlsx':
+                # Load workbook to check available sheets
+                wb = openpyxl.load_workbook(file, read_only=True)
+                available_sheets = wb.sheetnames
+
+                if not sheet_name:
+                    return Response({
+                        'error': 'Please provide sheet_name',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                if sheet_name not in available_sheets:
+                    return Response({
+                        'error': f'Sheet "{sheet_name}" not found in uploaded file',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                ws = wb[sheet_name]
+                data = []
+                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    data.append(dict(zip(headers, row)))
+
+                # Save data into DB
+                for row in data:
+                    Department.objects.update_or_create(
+                        name=row.get('name'),
+                        defaults={
+                            'description': row.get('description', ''),
+                            'is_deleted': row.get('is_deleted', False)
+                        }
+                    )
+
+            else:  # CSV
+                dataset.load(file.read().decode('utf-8'), format='csv')
+                for row in dataset.dict:
+                    Department.objects.update_or_create(
+                        name=row.get('name'),
+                        defaults={
+                            'description': row.get('description', ''),
+                            'is_deleted': row.get('is_deleted', False)
+                        }
+                    )
+
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            'message': f'Sheet "{sheet_name}" imported successfully' if sheet_name else 'Import successful'
+        }, status=status.HTTP_200_OK)
+
+
+
+        
+class EmployeeTypeListAPIView(APIView):    
+
+    def get(self, request):
+        search = request.GET.get('search', '').strip()
+        queryset = EmployeeType.objects.filter(is_deleted=False)
+
+        if search:
+            queryset = queryset.filter(
+                Q(name__icontains=search) |
+                Q(description__icontains=search)
+            )
+
+        queryset = queryset.order_by('-created_at')
+
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = EmployeeTypeSerializer(result_page, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
 
 
 class EmployeeTypeCreateAPIView(APIView):
@@ -1933,11 +2099,11 @@ class EmployeeTypeCreateAPIView(APIView):
         if serializer.is_valid():
             serializer.save()
             return Response({
-                "statusCode": 201,
+                "statusCode": 200,
                 "status": True,
                 "message": "Employee type created successfully",
                 "data": serializer.data
-            }, status=status.HTTP_201_CREATED)
+            }, status=status.HTTP_200_OK)
         else:
 
             errors = serializer.errors
@@ -2013,57 +2179,166 @@ class EmployeeTypeUpdateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
-
 class EmployeeTypeDeleteAPIView(APIView):
-    def delete(self, request, uuid):
-        try:
-            emp_type = EmployeeType.objects.get(uuid=uuid, is_deleted=False)
-        except EmployeeType.DoesNotExist:
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def delete(self, request, uuid=None):
+        uuids = request.data.get('id', [])
+
+        
+        if uuid:
+            try:
+                emp_type = EmployeeType.objects.get(uuid=uuid, is_deleted=False)
+                emp_type.is_deleted = True
+                emp_type.save()
+                return Response({
+                    "statusCode": 204,
+                    "status": True,
+                    "message": "Employee type deleted successfully",
+                    "data": None
+                }, status=status.HTTP_204_NO_CONTENT)
+            except EmployeeType.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "Employee type not found",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+
+        # ✅ Case 2: Multiple UUIDs passed in request body
+        if not uuids or not isinstance(uuids, list):
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Please provide a list of UUIDs in 'uuids' field.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validate UUIDs
+        valid_uuids = []
+        invalid_uuids = []
+        for u in uuids:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(u)
+
+        if not valid_uuids:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "No valid UUIDs provided.",
+                "data": {"invalid_uuids": invalid_uuids}
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Fetch employee types that exist and are not deleted
+        emp_types = EmployeeType.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+        count = emp_types.count()
+
+        if count == 0:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "Employee type not found",
-                "data": None
+                "message": "No matching employee types found.",
+                "data": {"invalid_uuids": invalid_uuids}
             }, status=status.HTTP_404_NOT_FOUND)
 
-        emp_type.is_deleted = True
-        emp_type.save()
-        return Response({
-            "statusCode": 204,
-            "status": True,
-            "message": "Employee type deleted successfully",
-            "data": None
-        }, status=status.HTTP_204_NO_CONTENT)
-
-
-
-
-
-
-
-class CompanyTypeListAPIView(APIView):
-    def get(self, request):
-        search = request.GET.get("search", "")
-        page = int(request.GET.get("page", 1))
-        per_page = int(request.GET.get("per_page", 10))
-
-        queryset = CompanyType.objects.filter(is_deleted=False)
-        if search:
-            queryset = queryset.filter(name__icontains=search)
-
-        paginator = Paginator(queryset, per_page)
-        page_obj = paginator.get_page(page)
-        serializer = CompanyTypeSerializer(page_obj, many=True)
+        # Soft delete
+        emp_types.update(is_deleted=True)
 
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": "Company types retrieved successfully",
-            "total": paginator.count,
-            "total_pages": paginator.num_pages,
-            "current_page": page,
-            "data": serializer.data
-        })
+            "message": f"{count} employee type(s) deleted successfully.",
+            "data": {"invalid_uuids": invalid_uuids}
+        }, status=status.HTTP_200_OK)
+
+class EmployeeTypeExportAPIView(APIView):
+    # permission_classes = [IsAuthenticated]  # Uncomment and adjust as needed
+
+    def get(self, request):
+        format_type = request.GET.get('format', 'csv').lower()
+        dataset = Dataset()
+        dataset.headers = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+
+        for dept in EmployeeType.objects.all():
+            dataset.append([
+                str(dept.uuid),
+                dept.name or '',  # Handle potential None
+                dept.description or '',
+                int(dept.is_deleted),
+                dept.created_at.strftime("%Y-%m-%d %H:%M:%S") if dept.created_at else '',
+                dept.updated_at.strftime("%Y-%m-%d %H:%M:%S") if dept.updated_at else ''
+            ])
+
+        if format_type == 'xlsx':
+            data = XLSX().export_data(dataset)  # Returns bytes
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'departments.xlsx'
+        else:
+            data = CSV().export_data(dataset)  # Returns bytes (ensure UTF-8)
+            content_type = 'text/csv; charset=utf-8'
+            file_name = 'departments.csv'
+
+        response = HttpResponse(data, content_type=content_type)
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        return response
+
+
+
+class EmployeeTypeImportAPIView(APIView):
+    
+    def post(self, request):
+        file = request.FILES.get('file')
+        if not file:
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+
+        format_type = file.name.split('.')[-1].lower()
+        dataset = Dataset()
+
+        try:
+            if format_type == 'xlsx':
+                dataset.load(file.read(), format='xlsx')
+            else:  # default CSV
+                dataset.load(file.read().decode('utf-8'), format='csv')
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        for row in dataset.dict:
+            EmployeeType.objects.update_or_create(
+                name=row.get('name'),
+                defaults={
+                    'description': row.get('description', ''),
+                    'is_deleted': row.get('is_deleted', False)
+                }
+            )
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            'message': 'Import successful'}, status=status.HTTP_200_OK)
+    
+
+
+
+class CompanyTypeListAPIView(APIView):    
+    def get(self, request):
+        search = request.GET.get('search', '').strip()
+        queryset = CompanyType.objects.filter(is_deleted=False)
+
+        if search:
+            queryset = queryset.filter(
+                Q(name__icontains=search) |
+                Q(description__icontains=search)
+            )
+
+        queryset = queryset.order_by('-created_at')
+
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = CompanyTypeSerializer(result_page, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
 
 class CompanyTypeCreateAPIView(APIView):
     def post(self, request):
@@ -2071,11 +2346,11 @@ class CompanyTypeCreateAPIView(APIView):
         if serializer.is_valid():
             serializer.save()
             return Response({
-                "statusCode": 201,
+                "statusCode": 200,
                 "status": True,
                 "message": "Company type created successfully",
                 "data": serializer.data
-            }, status=status.HTTP_201_CREATED)
+            }, status=status.HTTP_200_OK)
 
         errors = serializer.errors
         messages = []
@@ -2143,52 +2418,172 @@ class CompanyTypeUpdateAPIView(APIView):
             "data": None
         }, status=status.HTTP_400_BAD_REQUEST)
 
+
 class CompanyTypeDeleteAPIView(APIView):
-    def delete(self, request, uuid):
-        try:
-            company_type = CompanyType.objects.get(uuid=uuid, is_deleted=False)
-        except CompanyType.DoesNotExist:
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def delete(self, request, uuid=None):
+        uuids = request.data.get('id', [])
+
+        # ✅ Case 1: Single delete (UUID passed in URL)
+        if uuid:
+            try:
+                company_type = CompanyType.objects.get(uuid=uuid, is_deleted=False)
+                company_type.is_deleted = True
+                company_type.save()
+                return Response({
+                    "statusCode": 204,
+                    "status": True,
+                    "message": "Company type deleted successfully",
+                    "data": None
+                }, status=status.HTTP_204_NO_CONTENT)
+            except CompanyType.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "Company type not found",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+
+        # ✅ Case 2: Multiple delete (UUIDs in request body)
+        if not uuids or not isinstance(uuids, list):
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Please provide a list of UUIDs in 'uuids' field.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validate UUIDs
+        valid_uuids = []
+        invalid_uuids = []
+        for u in uuids:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(u)
+
+        if not valid_uuids:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "No valid UUIDs provided.",
+                "data": {"invalid_uuids": invalid_uuids}
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Fetch company types that exist and are not deleted
+        company_types = CompanyType.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+        count = company_types.count()
+
+        if count == 0:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "Company type not found",
-                "data": None
+                "message": "No matching company types found.",
+                "data": {"invalid_uuids": invalid_uuids}
             }, status=status.HTTP_404_NOT_FOUND)
 
-        company_type.is_deleted = True
-        company_type.save()
-        return Response({
-            "statusCode": 204,
-            "status": True,
-            "message": "Company type deleted successfully",
-            "data": None
-        }, status=status.HTTP_204_NO_CONTENT)
-
-
-
-class OwnershipTypeListAPIView(APIView):
-    def get(self, request):
-        search = request.GET.get("search", "")
-        page = int(request.GET.get("page", 1))
-        per_page = int(request.GET.get("per_page", 10))
-
-        queryset = OwnershipType.objects.filter(is_deleted=False)
-        if search:
-            queryset = queryset.filter(Q(name__icontains=search) | Q(description__icontains=search))
-
-        paginator = Paginator(queryset, per_page)
-        page_obj = paginator.get_page(page)
-        serializer = OwnershipTypeSerializer(page_obj, many=True)
+        # Soft delete
+        company_types.update(is_deleted=True)
 
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": "Ownership types retrieved successfully",
-            "total": paginator.count,
-            "total_pages": paginator.num_pages,
-            "current_page": page,
-            "data": serializer.data
-        })
+            "message": f"{count} company type(s) deleted successfully.",
+            
+        }, status=status.HTTP_200_OK)
+
+class CompanyTypeExportAPIView(APIView):
+    # permission_classes = [IsAuthenticated]  # Uncomment and adjust as needed
+
+    def get(self, request):
+        format_type = request.GET.get('format', 'csv').lower()
+        dataset = Dataset()
+        dataset.headers = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+
+        for dept in CompanyType.objects.all():
+            dataset.append([
+                str(dept.uuid),
+                dept.name or '',  # Handle potential None
+                dept.description or '',
+                int(dept.is_deleted),
+                dept.created_at.strftime("%Y-%m-%d %H:%M:%S") if dept.created_at else '',
+                dept.updated_at.strftime("%Y-%m-%d %H:%M:%S") if dept.updated_at else ''
+            ])
+
+        if format_type == 'xlsx':
+            data = XLSX().export_data(dataset)  # Returns bytes
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'departments.xlsx'
+        else:
+            data = CSV().export_data(dataset)  # Returns bytes (ensure UTF-8)
+            content_type = 'text/csv; charset=utf-8'
+            file_name = 'departments.csv'
+
+        response = HttpResponse(data, content_type=content_type)
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        return response
+
+
+
+class CompanyTypeImportAPIView(APIView):
+    
+    def post(self, request):
+        file = request.FILES.get('file')
+        if not file:
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+
+        format_type = file.name.split('.')[-1].lower()
+        dataset = Dataset()
+
+        try:
+            if format_type == 'xlsx':
+                dataset.load(file.read(), format='xlsx')
+            else:  # default CSV
+                dataset.load(file.read().decode('utf-8'), format='csv')
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        for row in dataset.dict:
+            CompanyType.objects.update_or_create(
+                name=row.get('name'),
+                defaults={
+                    'description': row.get('description', ''),
+                    'is_deleted': row.get('is_deleted', False)
+                }
+            )
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            'message': 'Import successful'}, status=status.HTTP_200_OK)
+    
+
+
+
+
+
+
+
+
+class OwnershipTypeListAPIView(APIView):    
+    def get(self, request):
+        search = request.GET.get('search', '').strip()
+        queryset = OwnershipType.objects.filter(is_deleted=False)
+
+        if search:
+            queryset = queryset.filter(
+                Q(name__icontains=search) |
+                Q(description__icontains=search)
+            )
+
+        queryset = queryset.order_by('-created_at')
+
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = OwnershipTypeSerializer(result_page, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
 
 class OwnershipTypeCreateAPIView(APIView):
     def post(self, request):
@@ -2196,11 +2591,11 @@ class OwnershipTypeCreateAPIView(APIView):
         if serializer.is_valid():
             serializer.save()
             return Response({
-                "statusCode": 201,
+                "statusCode": 200,
                 "status": True,
                 "message": "Ownership type created successfully",
                 "data": serializer.data
-            }, status=status.HTTP_201_CREATED)
+            }, status=status.HTTP_200_OK)
 
         errors = serializer.errors
         messages = []
@@ -2269,25 +2664,145 @@ class OwnershipTypeUpdateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 class OwnershipTypeDeleteAPIView(APIView):
-    def delete(self, request, uuid):
-        try:
-            ownership = OwnershipType.objects.get(uuid=uuid, is_deleted=False)
-        except OwnershipType.DoesNotExist:
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def delete(self, request, uuid=None):
+        uuids = request.data.get('id', [])
+
+        # ✅ Case 1: Single delete (UUID in URL)
+        if uuid:
+            try:
+                ownership = OwnershipType.objects.get(uuid=uuid, is_deleted=False)
+                ownership.is_deleted = True
+                ownership.save()
+                return Response({
+                    "statusCode": 204,
+                    "status": True,
+                    "message": "Ownership type deleted successfully",
+                    "data": None
+                }, status=status.HTTP_204_NO_CONTENT)
+            except OwnershipType.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "Ownership type not found",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+
+        # ✅ Case 2: Multiple delete (UUIDs in request body)
+        if not uuids or not isinstance(uuids, list):
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Please provide a list of UUIDs in 'uuids' field.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validate UUIDs
+        valid_uuids = []
+        invalid_uuids = []
+        for u in uuids:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(u)
+
+        if not valid_uuids:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "No valid UUIDs provided.",
+                "data": {"invalid_uuids": invalid_uuids}
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Fetch ownership types that exist and are not deleted
+        ownerships = OwnershipType.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+        count = ownerships.count()
+
+        if count == 0:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "Ownership type not found",
-                "data": None
+                "message": "No matching ownership types found.",
+                "data": {"invalid_uuids": invalid_uuids}
             }, status=status.HTTP_404_NOT_FOUND)
 
-        ownership.is_deleted = True
-        ownership.save()
+        # Soft delete
+        ownerships.update(is_deleted=True)
+
         return Response({
-            "statusCode": 204,
+            "statusCode": 200,
             "status": True,
-            "message": "Ownership type deleted successfully",
-            "data": None
-        }, status=status.HTTP_204_NO_CONTENT)
+            "message": f"{count} ownership type(s) deleted successfully.",
+            "data": {"invalid_uuids": invalid_uuids}
+        }, status=status.HTTP_200_OK)
+
+
+class OwnershipTypeExportAPIView(APIView):
+    # permission_classes = [IsAuthenticated]  # Uncomment and adjust as needed
+
+    def get(self, request):
+        format_type = request.GET.get('format', 'csv').lower()
+        dataset = Dataset()
+        dataset.headers = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+
+        for dept in OwnershipType.objects.all():
+            dataset.append([
+                str(dept.uuid),
+                dept.name or '',  # Handle potential None
+                dept.description or '',
+                int(dept.is_deleted),
+                dept.created_at.strftime("%Y-%m-%d %H:%M:%S") if dept.created_at else '',
+                dept.updated_at.strftime("%Y-%m-%d %H:%M:%S") if dept.updated_at else ''
+            ])
+
+        if format_type == 'xlsx':
+            data = XLSX().export_data(dataset)  # Returns bytes
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'departments.xlsx'
+        else:
+            data = CSV().export_data(dataset)  # Returns bytes (ensure UTF-8)
+            content_type = 'text/csv; charset=utf-8'
+            file_name = 'departments.csv'
+
+        response = HttpResponse(data, content_type=content_type)
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        return response
+
+
+class OwnershipTypeImportAPIView(APIView):
+    
+    def post(self, request):
+        file = request.FILES.get('file')
+        if not file:
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+
+        format_type = file.name.split('.')[-1].lower()
+        dataset = Dataset()
+
+        try:
+            if format_type == 'xlsx':
+                dataset.load(file.read(), format='xlsx')
+            else:  # default CSV
+                dataset.load(file.read().decode('utf-8'), format='csv')
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        for row in dataset.dict:
+            OwnershipType.objects.update_or_create(
+                name=row.get('name'),
+                defaults={
+                    'description': row.get('description', ''),
+                    'is_deleted': row.get('is_deleted', False)
+                }
+            )
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            'message': 'Import successful'}, status=status.HTTP_200_OK)
+    
+
 
 
 
@@ -2322,37 +2837,25 @@ class StakeholderCategoryCreateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
-class StakeholderCategoryListAPIView(APIView):
+class StakeholderCategoryListAPIView(APIView):    
     def get(self, request):
-        try:
-            search = request.GET.get("search", "")
-            page = int(request.GET.get("page", 1))
-            per_page = int(request.GET.get("per_page", 10))
+        search = request.GET.get('search', '').strip()
+        queryset = StakeholderCategory.objects.filter(is_deleted=False)
 
-            queryset = StakeholderCategory.objects.filter(is_deleted=False)
-            if search:
-                queryset = queryset.filter(name__icontains=search)
+        if search:
+            queryset = queryset.filter(
+                Q(name__icontains=search) |
+                Q(description__icontains=search)
+            )
 
-            paginator = Paginator(queryset, per_page)
-            page_obj = paginator.get_page(page)
-            serializer = StakeholderCategorySerializer(page_obj, many=True)
+        queryset = queryset.order_by('-created_at')
 
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": "Stakeholder Categories retrieved successfully",
-                "total": paginator.count,
-                "total_pages": paginator.num_pages,
-                "current_page": page,
-                "data": serializer.data
-            }, status=status.HTTP_200_OK)
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = StakeholderCategorySerializer(result_page, many=True)
 
-        except ValueError:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Invalid pagination parameters"
-            }, status=status.HTTP_400_BAD_REQUEST)
+        return paginator.get_paginated_response(serializer.data)
+
 
 
 class StakeholderCategoryDetailAPIView(APIView):
@@ -2397,15 +2900,135 @@ class StakeholderCategoryUpdateAPIView(APIView):
 
 
 class StakeholderCategoryDeleteAPIView(APIView):
-    def delete(self, request, uuid):
-        category = get_object_or_404(StakeholderCategory, uuid=uuid, is_deleted=False)
-        category.is_deleted = True
-        category.save()
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def delete(self, request, uuid=None):
+        uuids = request.data.get('id', [])
+
+        if uuid:
+            category = get_object_or_404(StakeholderCategory, uuid=uuid, is_deleted=False)
+            category.is_deleted = True
+            category.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "Stakeholder Category deleted successfully",
+                "data": None
+            }, status=status.HTTP_200_OK)
+
+        if not uuids or not isinstance(uuids, list):
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Please provide a list of UUIDs in 'uuids' field.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validate UUIDs
+        valid_uuids = []
+        invalid_uuids = []
+        for u in uuids:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(u)
+
+        if not valid_uuids:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "No valid UUIDs provided.",
+                "data": {"invalid_uuids": invalid_uuids}
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Fetch categories that exist and are not deleted
+        categories = StakeholderCategory.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+        count = categories.count()
+
+        if count == 0:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "No matching stakeholder categories found.",
+                "data": {"invalid_uuids": invalid_uuids}
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        # Soft delete
+        categories.update(is_deleted=True)
+
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": "Stakeholder Category deleted successfully"
+            "message": f"{count} Stakeholder Category(s) deleted successfully.",
+        
         }, status=status.HTTP_200_OK)
+
+
+
+class StakeholderCategoryExportAPIView(APIView):
+    # permission_classes = [IsAuthenticated]  # Uncomment and adjust as needed
+
+    def get(self, request):
+        format_type = request.GET.get('format', 'csv').lower()
+        dataset = Dataset()
+        dataset.headers = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+
+        for dept in StakeholderCategory.objects.all():
+            dataset.append([
+                str(dept.uuid),
+                dept.name or '',  # Handle potential None
+                dept.description or '',
+                int(dept.is_deleted),
+                dept.created_at.strftime("%Y-%m-%d %H:%M:%S") if dept.created_at else '',
+                dept.updated_at.strftime("%Y-%m-%d %H:%M:%S") if dept.updated_at else ''
+            ])
+
+        if format_type == 'xlsx':
+            data = XLSX().export_data(dataset)  # Returns bytes
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'departments.xlsx'
+        else:
+            data = CSV().export_data(dataset)  # Returns bytes (ensure UTF-8)
+            content_type = 'text/csv; charset=utf-8'
+            file_name = 'departments.csv'
+
+        response = HttpResponse(data, content_type=content_type)
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        return response
+
+
+class StakeholderCategoryImportAPIView(APIView):
+    
+    def post(self, request):
+        file = request.FILES.get('file')
+        if not file:
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+
+        format_type = file.name.split('.')[-1].lower()
+        dataset = Dataset()
+
+        try:
+            if format_type == 'xlsx':
+                dataset.load(file.read(), format='xlsx')
+            else:  # default CSV
+                dataset.load(file.read().decode('utf-8'), format='csv')
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        for row in dataset.dict:
+            StakeholderCategory.objects.update_or_create(
+                name=row.get('name'),
+                defaults={
+                    'description': row.get('description', ''),
+                    'is_deleted': row.get('is_deleted', False)
+                }
+            )
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            'message': 'Import successful'}, status=status.HTTP_200_OK)
+    
 
 
 
@@ -2436,27 +3059,22 @@ class StakeholderTypeCreateAPIView(APIView):
 
 class StakeholderTypeListAPIView(APIView):
     def get(self, request):
-        search = request.GET.get("search", "")
-        page = int(request.GET.get("page", 1))
-        per_page = int(request.GET.get("per_page", 10))
-
+        search = request.GET.get('search', '').strip()
         queryset = StakeholderType.objects.filter(is_deleted=False)
+
         if search:
-            queryset = queryset.filter(name__icontains=search)
+            queryset = queryset.filter(
+                Q(name__icontains=search) |
+                Q(description__icontains=search)
+            )
 
-        paginator = Paginator(queryset, per_page)
-        page_obj = paginator.get_page(page)
-        serializer = StakeholderTypeSerializer(page_obj, many=True)
+        queryset = queryset.order_by('-created_at')
 
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": "Stakeholder Types retrieved successfully",
-            "total": paginator.count,
-            "total_pages": paginator.num_pages,
-            "current_page": page,
-            "data": serializer.data
-        }, status=status.HTTP_200_OK)
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = StakeholderTypeSerializer(result_page, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
 
 
 class StakeholderTypeDetailAPIView(APIView):
@@ -2498,16 +3116,70 @@ class StakeholderTypeUpdateAPIView(APIView):
 
 
 class StakeholderTypeDeleteAPIView(APIView):
-    def delete(self, request, uuid):
-        stakeholder_type = get_object_or_404(StakeholderType, uuid=uuid, is_deleted=False)
-        stakeholder_type.is_deleted = True
-        stakeholder_type.save()
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def delete(self, request, uuid=None):
+        uuids = request.data.get('id', [])
+
+        # ✅ Case 1: Single delete (UUID in URL)
+        if uuid:
+            stakeholder_type = get_object_or_404(StakeholderType, uuid=uuid, is_deleted=False)
+            stakeholder_type.is_deleted = True
+            stakeholder_type.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "Stakeholder Type deleted successfully",
+                "data": None
+            }, status=status.HTTP_200_OK)
+
+        # ✅ Case 2: Multiple delete (UUIDs in request body)
+        if not uuids or not isinstance(uuids, list):
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Please provide a list of UUIDs in 'uuids' field.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validate UUIDs
+        valid_uuids = []
+        invalid_uuids = []
+        for u in uuids:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(u)
+
+        if not valid_uuids:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "No valid UUIDs provided.",
+                "data": {"invalid_uuids": invalid_uuids}
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Fetch stakeholder types that exist and are not deleted
+        stakeholder_types = StakeholderType.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+        count = stakeholder_types.count()
+
+        if count == 0:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "No matching stakeholder types found.",
+                "data": {"invalid_uuids": invalid_uuids}
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        # Soft delete
+        stakeholder_types.update(is_deleted=True)
+
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": "Stakeholder Type deleted successfully"
+            "message": f"{count} Stakeholder Type(s) deleted successfully.",
+          
         }, status=status.HTTP_200_OK)
-
 
 
 
@@ -2537,30 +3209,24 @@ class AccreditationCategoryCreateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
-class AccreditationCategoryListAPIView(APIView):
+class AccreditationCategoryListAPIView(APIView):    
     def get(self, request):
-        search = request.GET.get("search", "")
-        page = int(request.GET.get("page", 1))
-        per_page = int(request.GET.get("per_page", 10))
+        search = request.GET.get('search', '').strip()
+        queryset = AccreditationCategory.objects.filter(is_deleted=False)
 
-        categories = AccreditationCategory.objects.filter(is_deleted=False)
         if search:
-            categories = categories.filter(name__icontains=search)
+            queryset = queryset.filter(
+                Q(name__icontains=search) |
+                Q(description__icontains=search)
+            )
 
-        paginator = Paginator(categories, per_page)
-        page_obj = paginator.get_page(page)
+        queryset = queryset.order_by('-created_at')
 
-        serializer = AccreditationCategorySerializer(page_obj, many=True)
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = AccreditationCategorySerializer(result_page, many=True)
 
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": "Accreditation Categories retrieved successfully",
-            "total": paginator.count,
-            "total_pages": paginator.num_pages,
-            "current_page": page,
-            "data": serializer.data
-        }, status=status.HTTP_200_OK)
+        return paginator.get_paginated_response(serializer.data)
 
 
 class AccreditationCategoryRetrieveAPIView(APIView):
@@ -2618,25 +3284,148 @@ class AccreditationCategoryUpdateAPIView(APIView):
             "message": serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
 
-
 class AccreditationCategoryDeleteAPIView(APIView):
-    def delete(self, request, uuid):
-        try:
-            category = AccreditationCategory.objects.get(uuid=uuid, is_deleted=False)
-        except AccreditationCategory.DoesNotExist:
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def delete(self, request, uuid=None):
+        uuids = request.data.get('uuids', [])
+
+        # ✅ Case 1: Single delete (UUID in URL)
+        if uuid:
+            try:
+                category = AccreditationCategory.objects.get(uuid=uuid, is_deleted=False)
+                category.is_deleted = True
+                category.save()
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": "Accreditation Category deleted successfully",
+                    "data": None
+                }, status=status.HTTP_200_OK)
+            except AccreditationCategory.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "Accreditation Category not found",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+
+        # ✅ Case 2: Multiple delete (UUIDs in request body)
+        if not uuids or not isinstance(uuids, list):
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Please provide a list of UUIDs in 'uuids' field.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validate UUIDs
+        valid_uuids = []
+        invalid_uuids = []
+        for u in uuids:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(u)
+
+        if not valid_uuids:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "No valid UUIDs provided.",
+                "data": {"invalid_uuids": invalid_uuids}
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Fetch categories that exist and are not deleted
+        categories = AccreditationCategory.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+        count = categories.count()
+
+        if count == 0:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "Accreditation Category not found"
+                "message": "No matching accreditation categories found.",
+                "data": {"invalid_uuids": invalid_uuids}
             }, status=status.HTTP_404_NOT_FOUND)
 
-        category.is_deleted = True
-        category.save()
+        # Soft delete
+        categories.update(is_deleted=True)
+
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": "Accreditation Category deleted successfully"
+            "message": f"{count} Accreditation Category(s) deleted successfully.",
+            "data": {"invalid_uuids": invalid_uuids}
         }, status=status.HTTP_200_OK)
+
+
+
+class AccreditationCategoryExportAPIView(APIView):
+    # permission_classes = [IsAuthenticated]  # Uncomment and adjust as needed
+
+    def get(self, request):
+        format_type = request.GET.get('format', 'csv').lower()
+        dataset = Dataset()
+        dataset.headers = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+
+        for dept in StakeholderCategory.objects.all():
+            dataset.append([
+                str(dept.uuid),
+                dept.name or '',  # Handle potential None
+                dept.description or '',
+                int(dept.is_deleted),
+                dept.created_at.strftime("%Y-%m-%d %H:%M:%S") if dept.created_at else '',
+                dept.updated_at.strftime("%Y-%m-%d %H:%M:%S") if dept.updated_at else ''
+            ])
+
+        if format_type == 'xlsx':
+            data = XLSX().export_data(dataset)  # Returns bytes
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'departments.xlsx'
+        else:
+            data = CSV().export_data(dataset)  # Returns bytes (ensure UTF-8)
+            content_type = 'text/csv; charset=utf-8'
+            file_name = 'departments.csv'
+
+        response = HttpResponse(data, content_type=content_type)
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        return response
+
+
+class AccreditationCategoryImportAPIView(APIView):
+    
+    def post(self, request):
+        file = request.FILES.get('file')
+        if not file:
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+
+        format_type = file.name.split('.')[-1].lower()
+        dataset = Dataset()
+
+        try:
+            if format_type == 'xlsx':
+                dataset.load(file.read(), format='xlsx')
+            else:  # default CSV
+                dataset.load(file.read().decode('utf-8'), format='csv')
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        for row in dataset.dict:
+            StakeholderCategory.objects.update_or_create(
+                name=row.get('name'),
+                defaults={
+                    'description': row.get('description', ''),
+                    'is_deleted': row.get('is_deleted', False)
+                }
+            )
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            'message': 'Import successful'}, status=status.HTTP_200_OK)
+    
+
+
 
 
 
@@ -2673,30 +3462,25 @@ class AccreditationNameCreateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
-class AccreditationNameListAPIView(APIView):
+
+class AccreditationNameListAPIView(APIView):    
     def get(self, request):
-        search = request.GET.get("search", "")
-        page = int(request.GET.get("page", 1))
-        per_page = int(request.GET.get("per_page", 10))
+        search = request.GET.get('search', '').strip()
+        queryset = AccreditationName.objects.filter(is_deleted=False)
 
-        names = AccreditationName.objects.filter(is_deleted=False)
         if search:
-            names = names.filter(full_name__icontains=search)
+            queryset = queryset.filter(
+                Q(name__icontains=search) |
+                Q(description__icontains=search)
+            )
 
-        paginator = Paginator(names, per_page)
-        page_obj = paginator.get_page(page)
+        queryset = queryset.order_by('-created_at')
 
-        serializer = AccreditationNameSerializer(page_obj, many=True)
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": "Accreditation Names retrieved successfully",
-            "total": paginator.count,
-            "total_pages": paginator.num_pages,
-            "current_page": page,
-            "data": serializer.data
-        }, status=status.HTTP_200_OK)
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = AccreditationNameSerializer(result_page, many=True)
 
+        return paginator.get_paginated_response(serializer.data)
 
 class AccreditationNameRetrieveAPIView(APIView):
     def get(self, request, uuid):
@@ -2758,23 +3542,59 @@ class AccreditationNameUpdateAPIView(APIView):
 
 
 class AccreditationNameDeleteAPIView(APIView):
-    def delete(self, request, uuid):
-        try:
-            name = AccreditationName.objects.get(uuid=uuid, is_deleted=False)
-        except AccreditationName.DoesNotExist:
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def delete(self, request, uuid=None):
+        uuids = request.data.get('uuids', [])
+
+        # ✅ Case 1: Single delete (UUID in URL)
+        if uuid:
+            try:
+                name = AccreditationName.objects.get(uuid=uuid, is_deleted=False)
+            except AccreditationName.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "Accreditation Name not found"
+                }, status=status.HTTP_404_NOT_FOUND)
+
+            name.is_deleted = True
+            name.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "Accreditation Name deleted successfully"
+            }, status=status.HTTP_200_OK)
+
+        # ✅ Case 2: Multiple delete (UUIDs in request body)
+        if not uuids or not isinstance(uuids, list):
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Please provide a list of UUIDs in 'uuids' field.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        names = AccreditationName.objects.filter(uuid__in=uuids, is_deleted=False)
+
+        if not names.exists():
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "Accreditation Name not found"
+                "message": "No matching accreditation names found.",
+                "data": None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        name.is_deleted = True
-        name.save()
+        deleted_count = names.count()
+        names.update(is_deleted=True)
+
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": "Accreditation Name deleted successfully"
+            "message": f"{deleted_count} Accreditation Name(s) deleted successfully.",
+            "data": None
         }, status=status.HTTP_200_OK)
+
 
 
 #-------------------------------------------bankAccount---------------------------------
@@ -2806,30 +3626,25 @@ class BankAccountTypeCreateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
-class BankAccountTypeListAPIView(APIView):
+class BankAccountTypeListAPIView(APIView):    
     def get(self, request):
-        search = request.GET.get("search", "")
-        page = int(request.GET.get("page", 1))
-        per_page = int(request.GET.get("per_page", 10))
+        search = request.GET.get('search', '').strip()
+        queryset = BankAccountType.objects.filter(is_deleted=False)
 
-        categories = BankAccountType.objects.filter(is_deleted=False)
         if search:
-            categories = categories.filter(name__icontains=search)
+            queryset = queryset.filter(
+                Q(name__icontains=search) |
+                Q(description__icontains=search)
+            )
 
-        paginator = Paginator(categories, per_page)
-        page_obj = paginator.get_page(page)
+        queryset = queryset.order_by('-created_at')
 
-        serializer = BankAccountTypeSerializer(page_obj, many=True)
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = BankAccountTypeSerializer(result_page, many=True)
 
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": "Bank Account retrieved successfully",
-            "total": paginator.count,
-            "total_pages": paginator.num_pages,
-            "current_page": page,
-            "data": serializer.data
-        }, status=status.HTTP_200_OK)
+        return paginator.get_paginated_response(serializer.data)
+
 
 
 class BankAccountTypeRetrieveAPIView(APIView):
@@ -2889,23 +3704,148 @@ class BankAccountTypeUpdateAPIView(APIView):
 
 
 class BankAccountTypeDeleteAPIView(APIView):
-    def delete(self, request, uuid):
-        try:
-            category = BankAccountType.objects.get(uuid=uuid, is_deleted=False)
-        except BankAccountType.DoesNotExist:
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def delete(self, request, uuid=None):
+        uuids = request.data.get('uuids', [])
+
+        # ✅ Case 1: Single delete (UUID in URL)
+        if uuid:
+            try:
+                category = BankAccountType.objects.get(uuid=uuid, is_deleted=False)
+                category.is_deleted = True
+                category.save()
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": "Bank Account Type deleted successfully",
+                    "data": None
+                }, status=status.HTTP_200_OK)
+            except BankAccountType.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "Bank Account Type not found",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+
+        # ✅ Case 2: Multiple delete (UUIDs in request body)
+        if not uuids or not isinstance(uuids, list):
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Please provide a list of UUIDs in 'uuids' field.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validate UUIDs
+        valid_uuids = []
+        invalid_uuids = []
+        for u in uuids:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(u)
+
+        if not valid_uuids:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "No valid UUIDs provided.",
+                "data": {"invalid_uuids": invalid_uuids}
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Fetch BankAccountTypes that exist and are not deleted
+        categories = BankAccountType.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+        count = categories.count()
+
+        if count == 0:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "Bank Account Type  not found"
+                "message": "No matching Bank Account Types found.",
+                "data": {"invalid_uuids": invalid_uuids}
             }, status=status.HTTP_404_NOT_FOUND)
 
-        category.is_deleted = True
-        category.save()
+        # Soft delete
+        categories.update(is_deleted=True)
+
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": "Bank Account Type  deleted successfully"
+            "message": f"{count} Bank Account Type(s) deleted successfully."
         }, status=status.HTTP_200_OK)
+
+
+
+class BankAccountTypeExportAPIView(APIView):
+    # permission_classes = [IsAuthenticated]  # Uncomment and adjust as needed
+
+    def get(self, request):
+        format_type = request.GET.get('format', 'csv').lower()
+        dataset = Dataset()
+        dataset.headers = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+
+        for dept in BankAccountType.objects.all():
+            dataset.append([
+                str(dept.uuid),
+                dept.name or '',  # Handle potential None
+                dept.description or '',
+                int(dept.is_deleted),
+                dept.created_at.strftime("%Y-%m-%d %H:%M:%S") if dept.created_at else '',
+                dept.updated_at.strftime("%Y-%m-%d %H:%M:%S") if dept.updated_at else ''
+            ])
+
+        if format_type == 'xlsx':
+            data = XLSX().export_data(dataset)  # Returns bytes
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'departments.xlsx'
+        else:
+            data = CSV().export_data(dataset)  # Returns bytes (ensure UTF-8)
+            content_type = 'text/csv; charset=utf-8'
+            file_name = 'departments.csv'
+
+        response = HttpResponse(data, content_type=content_type)
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        return response
+
+
+class BankAccountTypeImportAPIView(APIView):
+    
+    def post(self, request):
+        file = request.FILES.get('file')
+        if not file:
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+
+        format_type = file.name.split('.')[-1].lower()
+        dataset = Dataset()
+
+        try:
+            if format_type == 'xlsx':
+                dataset.load(file.read(), format='xlsx')
+            else:  # default CSV
+                dataset.load(file.read().decode('utf-8'), format='csv')
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        for row in dataset.dict:
+            BankAccountType.objects.update_or_create(
+                name=row.get('name'),
+                defaults={
+                    'description': row.get('description', ''),
+                    'is_deleted': row.get('is_deleted', False)
+                }
+            )
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            'message': 'Import successful'}, status=status.HTTP_200_OK)
+    
+
+
+
+
 
 
 
@@ -2939,29 +3879,25 @@ class LicenseNameCreateAPIView(APIView):
 
 
 
-class LicenseNameListAPIView(APIView):
+
+class LicenseNameListAPIView(APIView):    
     def get(self, request):
-        search = request.GET.get("search", "")
-        page = int(request.GET.get("page", 1))
-        per_page = int(request.GET.get("per_page", 10))
+        search = request.GET.get('search', '').strip()
+        queryset = LicenseName.objects.filter(is_deleted=False)
 
-        licenses = LicenseName.objects.filter(is_deleted=False)
         if search:
-            licenses = licenses.filter(full_name__icontains=search)
+            queryset = queryset.filter(
+                Q(name__icontains=search) |
+                Q(description__icontains=search)
+            )
 
-        paginator = Paginator(licenses, per_page)
-        page_obj = paginator.get_page(page)
-        serializer = LicenseNameSerializer(page_obj, many=True)
+        queryset = queryset.order_by('-created_at')
 
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": "License Names retrieved successfully",
-            "total": paginator.count,
-            "total_pages": paginator.num_pages,
-            "current_page": page,
-            "data": serializer.data
-        }, status=status.HTTP_200_OK)
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = LicenseNameSerializer(result_page, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
 
 
 
@@ -3024,23 +3960,59 @@ class LicenseNameUpdateAPIView(APIView):
 
 
 class LicenseNameDeleteAPIView(APIView):
-    def delete(self, request, uuid):
-        try:
-            license_obj = LicenseName.objects.get(uuid=uuid, is_deleted=False)
-        except LicenseName.DoesNotExist:
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def delete(self, request, uuid=None):
+        uuids = request.data.get('uuids', [])
+
+        # ✅ Case 1: Single delete (UUID in URL)
+        if uuid:
+            try:
+                license_obj = LicenseName.objects.get(uuid=uuid, is_deleted=False)
+            except LicenseName.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "License Name not found"
+                }, status=status.HTTP_404_NOT_FOUND)
+
+            license_obj.is_deleted = True
+            license_obj.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "License Name deleted successfully"
+            }, status=status.HTTP_200_OK)
+
+        # ✅ Case 2: Multiple delete (UUIDs in request body)
+        if not uuids or not isinstance(uuids, list):
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Please provide a list of UUIDs in 'uuids' field.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        license_objs = LicenseName.objects.filter(uuid__in=uuids, is_deleted=False)
+
+        if not license_objs.exists():
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "License Name not found"
+                "message": "No matching License Names found.",
+                "data": None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        license_obj.is_deleted = True
-        license_obj.save()
+        deleted_count = license_objs.count()
+        license_objs.update(is_deleted=True)
+
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": "License Name deleted successfully"
+            "message": f"{deleted_count} License Name(s) deleted successfully.",
+            "data": None
         }, status=status.HTTP_200_OK)
+
 
 
 
@@ -3075,30 +4047,26 @@ class LeadSourceCreateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
-class LeadSourceListAPIView(APIView):
+    
+
+class LeadSourceListAPIView(APIView):    
     def get(self, request):
-        search = request.GET.get("search", "")
-        page = int(request.GET.get("page", 1))
-        per_page = int(request.GET.get("per_page", 10))
+        search = request.GET.get('search', '').strip()
+        queryset = LeadSource.objects.filter(is_deleted=False)
 
-        categories = LeadSource.objects.filter(is_deleted=False)
         if search:
-            categories = categories.filter(name__icontains=search)
+            queryset = queryset.filter(
+                Q(name__icontains=search) |
+                Q(description__icontains=search)
+            )
 
-        paginator = Paginator(categories, per_page)
-        page_obj = paginator.get_page(page)
+        queryset = queryset.order_by('-created_at')
 
-        serializer = LeadSourceSerializer(page_obj, many=True)
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = LeadSourceSerializer(result_page, many=True)
 
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": "Lead Source retrieved successfully",
-            "total": paginator.count,
-            "total_pages": paginator.num_pages,
-            "current_page": page,
-            "data": serializer.data
-        }, status=status.HTTP_200_OK)
+        return paginator.get_paginated_response(serializer.data)
 
 
 class LeadSourceRetrieveAPIView(APIView):
@@ -3178,6 +4146,74 @@ class LeadSourceDeleteAPIView(APIView):
     
 
 
+
+class LeadSourceExportAPIView(APIView):
+    # permission_classes = [IsAuthenticated]  # Uncomment and adjust as needed
+
+    def get(self, request):
+        format_type = request.GET.get('format', 'csv').lower()
+        dataset = Dataset()
+        dataset.headers = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+
+        for dept in LeadSource.objects.all():
+            dataset.append([
+                str(dept.uuid),
+                dept.name or '',  # Handle potential None
+                dept.description or '',
+                int(dept.is_deleted),
+                dept.created_at.strftime("%Y-%m-%d %H:%M:%S") if dept.created_at else '',
+                dept.updated_at.strftime("%Y-%m-%d %H:%M:%S") if dept.updated_at else ''
+            ])
+
+        if format_type == 'xlsx':
+            data = XLSX().export_data(dataset)  # Returns bytes
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'departments.xlsx'
+        else:
+            data = CSV().export_data(dataset)  # Returns bytes (ensure UTF-8)
+            content_type = 'text/csv; charset=utf-8'
+            file_name = 'departments.csv'
+
+        response = HttpResponse(data, content_type=content_type)
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        return response
+
+
+class LeadSourceImportAPIView(APIView):
+    
+    def post(self, request):
+        file = request.FILES.get('file')
+        if not file:
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+
+        format_type = file.name.split('.')[-1].lower()
+        dataset = Dataset()
+
+        try:
+            if format_type == 'xlsx':
+                dataset.load(file.read(), format='xlsx')
+            else:  # default CSV
+                dataset.load(file.read().decode('utf-8'), format='csv')
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        for row in dataset.dict:
+            LeadSource.objects.update_or_create(
+                name=row.get('name'),
+                defaults={
+                    'description': row.get('description', ''),
+                    'is_deleted': row.get('is_deleted', False)
+                }
+            )
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            'message': 'Import successful'}, status=status.HTTP_200_OK)
+    
+
+
+
 #-------------------------------------------InterestLevel---------------------------------
 
 
@@ -3208,31 +4244,24 @@ class InterestLevelCreateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
-class InterestLevelListAPIView(APIView):
+class InterestLevelListAPIView(APIView):    
     def get(self, request):
-        search = request.GET.get("search", "")
-        page = int(request.GET.get("page", 1))
-        per_page = int(request.GET.get("per_page", 10))
+        search = request.GET.get('search', '').strip()
+        queryset = InterestLevel.objects.filter(is_deleted=False)
 
-        categories = InterestLevel.objects.filter(is_deleted=False)
         if search:
-            categories = categories.filter(name__icontains=search)
+            queryset = queryset.filter(
+                Q(name__icontains=search) |
+                Q(description__icontains=search)
+            )
 
-        paginator = Paginator(categories, per_page)
-        page_obj = paginator.get_page(page)
+        queryset = queryset.order_by('-created_at')
 
-        serializer = InterestLevelSerializer(page_obj, many=True)
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = InterestLevelSerializer(result_page, many=True)
 
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": "Interest Level retrieved successfully",
-            "total": paginator.count,
-            "total_pages": paginator.num_pages,
-            "current_page": page,
-            "data": serializer.data
-        }, status=status.HTTP_200_OK)
-
+        return paginator.get_paginated_response(serializer.data)
 
 class InterestLevelRetrieveAPIView(APIView):
     def get(self, request, uuid):
@@ -3291,24 +4320,148 @@ class InterestLevelUpdateAPIView(APIView):
 
 
 class InterestLevelDeleteAPIView(APIView):
-    def delete(self, request, uuid):
-        try:
-            category = InterestLevel.objects.get(uuid=uuid, is_deleted=False)
-        except InterestLevel.DoesNotExist:
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def delete(self, request, uuid=None):
+        uuids = request.data.get('uuids', [])
+
+        # ✅ Case 1: Single delete (UUID in URL)
+        if uuid:
+            try:
+                interest = InterestLevel.objects.get(uuid=uuid, is_deleted=False)
+                interest.is_deleted = True
+                interest.save()
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": "Interest Level deleted successfully",
+                    "data": None
+                }, status=status.HTTP_200_OK)
+            except InterestLevel.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "Interest Level not found",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+
+        # ✅ Case 2: Multiple delete (UUIDs in request body)
+        if not uuids or not isinstance(uuids, list):
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Please provide a list of UUIDs in 'uuids' field.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validate UUIDs
+        valid_uuids = []
+        invalid_uuids = []
+        for u in uuids:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(u)
+
+        if not valid_uuids:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "No valid UUIDs provided.",
+                "data": {"invalid_uuids": invalid_uuids}
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Fetch InterestLevel entries that exist and are not deleted
+        interests = InterestLevel.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+        count = interests.count()
+
+        if count == 0:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "Interest Level Type  not found"
+                "message": "No matching Interest Levels found.",
+                "data": {"invalid_uuids": invalid_uuids}
             }, status=status.HTTP_404_NOT_FOUND)
 
-        category.is_deleted = True
-        category.save()
+        # Soft delete
+        interests.update(is_deleted=True)
+
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": "Interest Level Type  deleted successfully"
+            "message": f"{count} Interest Level(s) deleted successfully.",
+        
         }, status=status.HTTP_200_OK)
+
+
+class InterestLevelExportAPIView(APIView):
+    # permission_classes = [IsAuthenticated]  # Uncomment and adjust as needed
+
+    def get(self, request):
+        format_type = request.GET.get('format', 'csv').lower()
+        dataset = Dataset()
+        dataset.headers = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+
+        for dept in InterestLevel.objects.all():
+            dataset.append([
+                str(dept.uuid),
+                dept.name or '',  # Handle potential None
+                dept.description or '',
+                int(dept.is_deleted),
+                dept.created_at.strftime("%Y-%m-%d %H:%M:%S") if dept.created_at else '',
+                dept.updated_at.strftime("%Y-%m-%d %H:%M:%S") if dept.updated_at else ''
+            ])
+
+        if format_type == 'xlsx':
+            data = XLSX().export_data(dataset)  # Returns bytes
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'departments.xlsx'
+        else:
+            data = CSV().export_data(dataset)  # Returns bytes (ensure UTF-8)
+            content_type = 'text/csv; charset=utf-8'
+            file_name = 'departments.csv'
+
+        response = HttpResponse(data, content_type=content_type)
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        return response
+
+
+class InterestLevelImportAPIView(APIView):
     
+    def post(self, request):
+        file = request.FILES.get('file')
+        if not file:
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+
+        format_type = file.name.split('.')[-1].lower()
+        dataset = Dataset()
+
+        try:
+            if format_type == 'xlsx':
+                dataset.load(file.read(), format='xlsx')
+            else:  # default CSV
+                dataset.load(file.read().decode('utf-8'), format='csv')
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        for row in dataset.dict:
+            InterestLevel.objects.update_or_create(
+                name=row.get('name'),
+                defaults={
+                    'description': row.get('description', ''),
+                    'is_deleted': row.get('is_deleted', False)
+                }
+            )
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            'message': 'Import successful'}, status=status.HTTP_200_OK)
+    
+
+
+
+
 
 #-------------------------------------------Priority---------------------------------
 
@@ -3339,30 +4492,25 @@ class PriorityCreateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
-class PriorityListAPIView(APIView):
+
+class PriorityListAPIView(APIView):    
     def get(self, request):
-        search = request.GET.get("search", "")
-        page = int(request.GET.get("page", 1))
-        per_page = int(request.GET.get("per_page", 10))
+        search = request.GET.get('search', '').strip()
+        queryset = Priority.objects.filter(is_deleted=False)
 
-        categories = Priority.objects.filter(is_deleted=False)
         if search:
-            categories = categories.filter(name__icontains=search)
+            queryset = queryset.filter(
+                Q(name__icontains=search) |
+                Q(description__icontains=search)
+            )
 
-        paginator = Paginator(categories, per_page)
-        page_obj = paginator.get_page(page)
+        queryset = queryset.order_by('-created_at')
 
-        serializer = PrioritySerializer(page_obj, many=True)
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = PrioritySerializer(result_page, many=True)
 
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": "Priority retrieved successfully",
-            "total": paginator.count,
-            "total_pages": paginator.num_pages,
-            "current_page": page,
-            "data": serializer.data
-        }, status=status.HTTP_200_OK)
+        return paginator.get_paginated_response(serializer.data)
 
 
 class PriorityRetrieveAPIView(APIView):
@@ -3422,24 +4570,147 @@ class PriorityUpdateAPIView(APIView):
 
 
 class PriorityDeleteAPIView(APIView):
-    def delete(self, request, uuid):
-        try:
-            category = Priority.objects.get(uuid=uuid, is_deleted=False)
-        except Priority.DoesNotExist:
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def delete(self, request, uuid=None):
+        uuids = request.data.get('uuids', [])
+
+        # ✅ Case 1: Single delete (UUID in URL)
+        if uuid:
+            try:
+                priority = Priority.objects.get(uuid=uuid, is_deleted=False)
+                priority.is_deleted = True
+                priority.save()
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": "Priority deleted successfully",
+                    "data": None
+                }, status=status.HTTP_200_OK)
+            except Priority.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "Priority not found",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+
+        # ✅ Case 2: Multiple delete (UUIDs in request body)
+        if not uuids or not isinstance(uuids, list):
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Please provide a list of UUIDs in 'uuids' field.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validate UUIDs
+        valid_uuids = []
+        invalid_uuids = []
+        for u in uuids:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(u)
+
+        if not valid_uuids:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "No valid UUIDs provided.",
+                "data": {"invalid_uuids": invalid_uuids}
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Fetch priorities that exist and are not deleted
+        priorities = Priority.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+        count = priorities.count()
+
+        if count == 0:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "Priority not found"
+                "message": "No matching priorities found.",
+                "data": {"invalid_uuids": invalid_uuids}
             }, status=status.HTTP_404_NOT_FOUND)
 
-        category.is_deleted = True
-        category.save()
+        # Soft delete
+        priorities.update(is_deleted=True)
+
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": "Priority  deleted successfully"
+            "message": f"{count} Priority(s) deleted successfully.",
+            
         }, status=status.HTTP_200_OK)
+
+
+class PriorityExportAPIView(APIView):
+    # permission_classes = [IsAuthenticated]  # Uncomment and adjust as needed
+
+    def get(self, request):
+        format_type = request.GET.get('format', 'csv').lower()
+        dataset = Dataset()
+        dataset.headers = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+
+        for dept in Priority.objects.all():
+            dataset.append([
+                str(dept.uuid),
+                dept.name or '',  # Handle potential None
+                dept.description or '',
+                int(dept.is_deleted),
+                dept.created_at.strftime("%Y-%m-%d %H:%M:%S") if dept.created_at else '',
+                dept.updated_at.strftime("%Y-%m-%d %H:%M:%S") if dept.updated_at else ''
+            ])
+
+        if format_type == 'xlsx':
+            data = XLSX().export_data(dataset)  # Returns bytes
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'departments.xlsx'
+        else:
+            data = CSV().export_data(dataset)  # Returns bytes (ensure UTF-8)
+            content_type = 'text/csv; charset=utf-8'
+            file_name = 'departments.csv'
+
+        response = HttpResponse(data, content_type=content_type)
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        return response
+
+
+class PriorityImportAPIView(APIView):
     
+    def post(self, request):
+        file = request.FILES.get('file')
+        if not file:
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+
+        format_type = file.name.split('.')[-1].lower()
+        dataset = Dataset()
+
+        try:
+            if format_type == 'xlsx':
+                dataset.load(file.read(), format='xlsx')
+            else:  # default CSV
+                dataset.load(file.read().decode('utf-8'), format='csv')
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        for row in dataset.dict:
+            Priority.objects.update_or_create(
+                name=row.get('name'),
+                defaults={
+                    'description': row.get('description', ''),
+                    'is_deleted': row.get('is_deleted', False)
+                }
+            )
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            'message': 'Import successful'}, status=status.HTTP_200_OK)
+    
+
+
+
 
 #-------------------------------------------Tags---------------------------------
 
@@ -3471,31 +4742,26 @@ class TagsCreateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
-class TagsListAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
+
+
+class TagsListAPIView(APIView):    
     def get(self, request):
-        search = request.GET.get("search", "")
-        page = int(request.GET.get("page", 1))
-        per_page = int(request.GET.get("per_page", 10))
+        search = request.GET.get('search', '').strip()
+        queryset = Tags.objects.filter(is_deleted=False)
 
-        categories = Tags.objects.filter(is_deleted=False)
         if search:
-            categories = categories.filter(name__icontains=search)
+            queryset = queryset.filter(
+                Q(name__icontains=search) |
+                Q(description__icontains=search)
+            )
 
-        paginator = Paginator(categories, per_page)
-        page_obj = paginator.get_page(page)
+        queryset = queryset.order_by('-created_at')
 
-        serializer = TagsSerializer(page_obj, many=True)
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = TagsSerializer(result_page, many=True)
 
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": "Tags retrieved successfully",
-            "total": paginator.count,
-            "total_pages": paginator.num_pages,
-            "current_page": page,
-            "data": serializer.data
-        }, status=status.HTTP_200_OK)
+        return paginator.get_paginated_response(serializer.data)
 
 
 class TagsRetrieveAPIView(APIView):
@@ -3558,24 +4824,146 @@ class TagsUpdateAPIView(APIView):
 
 class TagsDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
-    def delete(self, request, uuid):
-        try:
-            category = Tags.objects.get(uuid=uuid, is_deleted=False)
-        except Tags.DoesNotExist:
+
+    def delete(self, request, uuid=None):
+        uuids = request.data.get('uuids', [])
+
+        # ✅ Case 1: Single delete (UUID in URL)
+        if uuid:
+            try:
+                tag = Tags.objects.get(uuid=uuid, is_deleted=False)
+                tag.is_deleted = True
+                tag.save()
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": "Tag deleted successfully",
+                    "data": None
+                }, status=status.HTTP_200_OK)
+            except Tags.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "Tag not found",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+
+        # ✅ Case 2: Multiple delete (UUIDs in request body)
+        if not uuids or not isinstance(uuids, list):
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Please provide a list of UUIDs in 'uuids' field.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validate UUIDs
+        valid_uuids = []
+        invalid_uuids = []
+        for u in uuids:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(u)
+
+        if not valid_uuids:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "No valid UUIDs provided.",
+                "data": {"invalid_uuids": invalid_uuids}
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Fetch Tags that exist and are not deleted
+        tags = Tags.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+        count = tags.count()
+
+        if count == 0:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "Tags not found"
+                "message": "No matching Tags found.",
+                "data": {"invalid_uuids": invalid_uuids}
             }, status=status.HTTP_404_NOT_FOUND)
 
-        category.is_deleted = True
-        category.save()
+        # Soft delete
+        tags.update(is_deleted=True)
+
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": "Tags  deleted successfully"
+            "message": f"{count} Tag(s) deleted successfully.",
+            
         }, status=status.HTTP_200_OK)
     
+
+class TagsExportAPIView(APIView):
+    # permission_classes = [IsAuthenticated]  # Uncomment and adjust as needed
+
+    def get(self, request):
+        format_type = request.GET.get('format', 'csv').lower()
+        dataset = Dataset()
+        dataset.headers = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+
+        for dept in Tags.objects.all():
+            dataset.append([
+                str(dept.uuid),
+                dept.name or '',  # Handle potential None
+                dept.description or '',
+                int(dept.is_deleted),
+                dept.created_at.strftime("%Y-%m-%d %H:%M:%S") if dept.created_at else '',
+                dept.updated_at.strftime("%Y-%m-%d %H:%M:%S") if dept.updated_at else ''
+            ])
+
+        if format_type == 'xlsx':
+            data = XLSX().export_data(dataset)  # Returns bytes
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'departments.xlsx'
+        else:
+            data = CSV().export_data(dataset)  # Returns bytes (ensure UTF-8)
+            content_type = 'text/csv; charset=utf-8'
+            file_name = 'departments.csv'
+
+        response = HttpResponse(data, content_type=content_type)
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        return response
+
+
+class TagsImportAPIView(APIView):
+    
+    def post(self, request):
+        file = request.FILES.get('file')
+        if not file:
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+
+        format_type = file.name.split('.')[-1].lower()
+        dataset = Dataset()
+
+        try:
+            if format_type == 'xlsx':
+                dataset.load(file.read(), format='xlsx')
+            else:  # default CSV
+                dataset.load(file.read().decode('utf-8'), format='csv')
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        for row in dataset.dict:
+            Tags.objects.update_or_create(
+                name=row.get('name'),
+                defaults={
+                    'description': row.get('description', ''),
+                    'is_deleted': row.get('is_deleted', False)
+                }
+            )
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            'message': 'Import successful'}, status=status.HTTP_200_OK)
+    
+
+
+
 
 #-------------------------------------------ActivityType---------------------------------
 
@@ -3608,33 +4996,26 @@ class ActivityTypeCreateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ActivityTypeListAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
+
+class ActivityTypeListAPIView(APIView):    
     def get(self, request):
-        search = request.GET.get("search", "")
-        page = int(request.GET.get("page", 1))
-        per_page = int(request.GET.get("per_page", 10))
+        search = request.GET.get('search', '').strip()
+        queryset = ActivityType.objects.filter(is_deleted=False)
 
-        categories = ActivityType.objects.filter(is_deleted=False)
         if search:
-            categories = categories.filter(name__icontains=search)
+            queryset = queryset.filter(
+                Q(name__icontains=search) |
+                Q(description__icontains=search)
+            )
 
-        paginator = Paginator(categories, per_page)
-        page_obj = paginator.get_page(page)
+        queryset = queryset.order_by('-created_at')
 
-        serializer = ActivityTypeSerializer(page_obj, many=True)
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = ActivityTypeSerializer(result_page, many=True)
 
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": "Activity Type retrieved successfully",
-            "total": paginator.count,
-            "total_pages": paginator.num_pages,
-            "current_page": page,
-            "data": serializer.data
-        }, status=status.HTTP_200_OK)
-
-
+        return paginator.get_paginated_response(serializer.data)
+    
 class ActivityTypeRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
     def get(self, request, uuid):
@@ -3695,24 +5076,144 @@ class ActivityTypeUpdateAPIView(APIView):
 
 class ActivityTypeDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
-    def delete(self, request, uuid):
-        try:
-            category = ActivityType.objects.get(uuid=uuid, is_deleted=False)
-        except ActivityType.DoesNotExist:
+
+    def delete(self, request, uuid=None):
+        uuids = request.data.get('uuids', [])
+
+        # ✅ Case 1: Single delete (UUID in URL)
+        if uuid:
+            try:
+                activity = ActivityType.objects.get(uuid=uuid, is_deleted=False)
+                activity.is_deleted = True
+                activity.save()
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": "Activity Type deleted successfully",
+                    "data": None
+                }, status=status.HTTP_200_OK)
+            except ActivityType.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "Activity Type not found",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+
+        # ✅ Case 2: Multiple delete (UUIDs in request body)
+        if not uuids or not isinstance(uuids, list):
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Please provide a list of UUIDs in 'uuids' field.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validate UUIDs
+        valid_uuids = []
+        invalid_uuids = []
+        for u in uuids:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(u)
+
+        if not valid_uuids:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "No valid UUIDs provided.",
+                "data": {"invalid_uuids": invalid_uuids}
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Fetch ActivityType entries that exist and are not deleted
+        activities = ActivityType.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+        count = activities.count()
+
+        if count == 0:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "Activity Type not found"
+                "message": "No matching Activity Types found.",
+                "data": {"invalid_uuids": invalid_uuids}
             }, status=status.HTTP_404_NOT_FOUND)
 
-        category.is_deleted = True
-        category.save()
+        # Soft delete
+        activities.update(is_deleted=True)
+
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": "Activity Type  deleted successfully"
+            "message": f"{count} Activity Type(s) deleted successfully.",
+            
         }, status=status.HTTP_200_OK)
+
+class ActivityTypeExportAPIView(APIView):
+    # permission_classes = [IsAuthenticated]  # Uncomment and adjust as needed
+
+    def get(self, request):
+        format_type = request.GET.get('format', 'csv').lower()
+        dataset = Dataset()
+        dataset.headers = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+
+        for dept in ActivityType.objects.all():
+            dataset.append([
+                str(dept.uuid),
+                dept.name or '',  # Handle potential None
+                dept.description or '',
+                int(dept.is_deleted),
+                dept.created_at.strftime("%Y-%m-%d %H:%M:%S") if dept.created_at else '',
+                dept.updated_at.strftime("%Y-%m-%d %H:%M:%S") if dept.updated_at else ''
+            ])
+
+        if format_type == 'xlsx':
+            data = XLSX().export_data(dataset)  # Returns bytes
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'departments.xlsx'
+        else:
+            data = CSV().export_data(dataset)  # Returns bytes (ensure UTF-8)
+            content_type = 'text/csv; charset=utf-8'
+            file_name = 'departments.csv'
+
+        response = HttpResponse(data, content_type=content_type)
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        return response
+
+
+class ActivityTypeImportAPIView(APIView):
     
+    def post(self, request):
+        file = request.FILES.get('file')
+        if not file:
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+
+        format_type = file.name.split('.')[-1].lower()
+        dataset = Dataset()
+
+        try:
+            if format_type == 'xlsx':
+                dataset.load(file.read(), format='xlsx')
+            else:  # default CSV
+                dataset.load(file.read().decode('utf-8'), format='csv')
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        for row in dataset.dict:
+            ActivityType.objects.update_or_create(
+                name=row.get('name'),
+                defaults={
+                    'description': row.get('description', ''),
+                    'is_deleted': row.get('is_deleted', False)
+                }
+            )
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            'message': 'Import successful'}, status=status.HTTP_200_OK)
+    
+
+
 
 
 #-------------------------------------------LostReasonSerializer---------------------------------
@@ -3745,31 +5246,24 @@ class LostReasonCreateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
-class LostReasonListAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
+class LostReasonListAPIView(APIView):    
     def get(self, request):
-        search = request.GET.get("search", "")
-        page = int(request.GET.get("page", 1))
-        per_page = int(request.GET.get("per_page", 10))
+        search = request.GET.get('search', '').strip()
+        queryset = LostReason.objects.filter(is_deleted=False)
 
-        categories = LostReason.objects.filter(is_deleted=False)
         if search:
-            categories = categories.filter(name__icontains=search)
+            queryset = queryset.filter(
+                Q(name__icontains=search) |
+                Q(description__icontains=search)
+            )
 
-        paginator = Paginator(categories, per_page)
-        page_obj = paginator.get_page(page)
+        queryset = queryset.order_by('-created_at')
 
-        serializer = LostReasonSerializer(page_obj, many=True)
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = LostReasonSerializer(result_page, many=True)
 
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": "Lost Reason retrieved successfully",
-            "total": paginator.count,
-            "total_pages": paginator.num_pages,
-            "current_page": page,
-            "data": serializer.data
-        }, status=status.HTTP_200_OK)
+        return paginator.get_paginated_response(serializer.data)
 
 
 class LostReasonRetrieveAPIView(APIView):
@@ -3830,23 +5324,143 @@ class LostReasonUpdateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
+
 class LostReasonDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
-    def delete(self, request, uuid):
-        try:
-            category = LostReason.objects.get(uuid=uuid, is_deleted=False)
-        except LostReason.DoesNotExist:
+
+    def delete(self, request, uuid=None):
+        uuids = request.data.get('uuids', [])
+
+        # ✅ Case 1: Single delete (UUID in URL)
+        if uuid:
+            try:
+                reason = LostReason.objects.get(uuid=uuid, is_deleted=False)
+                reason.is_deleted = True
+                reason.save()
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": "Lost Reason deleted successfully",
+                    "data": None
+                }, status=status.HTTP_200_OK)
+            except LostReason.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "Lost Reason not found",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+
+        # ✅ Case 2: Multiple delete (UUIDs in request body)
+        if not uuids or not isinstance(uuids, list):
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Please provide a list of UUIDs in 'uuids' field.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validate UUIDs
+        valid_uuids = []
+        invalid_uuids = []
+        for u in uuids:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(u)
+
+        if not valid_uuids:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "No valid UUIDs provided.",
+                "data": {"invalid_uuids": invalid_uuids}
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Fetch LostReason entries that exist and are not deleted
+        reasons = LostReason.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+        count = reasons.count()
+
+        if count == 0:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "Lost Reason not found"
+                "message": "No matching Lost Reasons found.",
+                "data": {"invalid_uuids": invalid_uuids}
             }, status=status.HTTP_404_NOT_FOUND)
 
-        category.is_deleted = True
-        category.save()
+        # Soft delete
+        reasons.update(is_deleted=True)
+
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": "Lost Reason  deleted successfully"
+            "message": f"{count} Lost Reason(s) deleted successfully.",
+          
         }, status=status.HTTP_200_OK)
+
+class LostReasonExportAPIView(APIView):
+    # permission_classes = [IsAuthenticated]  # Uncomment and adjust as needed
+
+    def get(self, request):
+        format_type = request.GET.get('format', 'csv').lower()
+        dataset = Dataset()
+        dataset.headers = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+
+        for dept in LostReason.objects.all():
+            dataset.append([
+                str(dept.uuid),
+                dept.name or '',  # Handle potential None
+                dept.description or '',
+                int(dept.is_deleted),
+                dept.created_at.strftime("%Y-%m-%d %H:%M:%S") if dept.created_at else '',
+                dept.updated_at.strftime("%Y-%m-%d %H:%M:%S") if dept.updated_at else ''
+            ])
+
+        if format_type == 'xlsx':
+            data = XLSX().export_data(dataset)  # Returns bytes
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'departments.xlsx'
+        else:
+            data = CSV().export_data(dataset)  # Returns bytes (ensure UTF-8)
+            content_type = 'text/csv; charset=utf-8'
+            file_name = 'departments.csv'
+
+        response = HttpResponse(data, content_type=content_type)
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        return response
+
+
+class LostReasonImportAPIView(APIView):
     
+    def post(self, request):
+        file = request.FILES.get('file')
+        if not file:
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+
+        format_type = file.name.split('.')[-1].lower()
+        dataset = Dataset()
+
+        try:
+            if format_type == 'xlsx':
+                dataset.load(file.read(), format='xlsx')
+            else:  # default CSV
+                dataset.load(file.read().decode('utf-8'), format='csv')
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        for row in dataset.dict:
+            LostReason.objects.update_or_create(
+                name=row.get('name'),
+                defaults={
+                    'description': row.get('description', ''),
+                    'is_deleted': row.get('is_deleted', False)
+                }
+            )
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            'message': 'Import successful'}, status=status.HTTP_200_OK)
+    
+
