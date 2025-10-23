@@ -166,7 +166,7 @@ const SignInLayer = () => {
       dispatch(
         loginUser(sendPayload, navigate, (response, error) => {
           console.log("11111111111111111111:", response);
-          if (response?.status === 200) {
+          if (response?.statusCode === 200) {
             setLoading(false);
             localStorage.setItem("authUser", JSON.stringify(response?.data));
             toast.success('Login successful');

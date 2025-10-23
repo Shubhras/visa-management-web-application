@@ -297,7 +297,7 @@ const EmployeeTypeList = () => {
   return (
     <>
       <MasterLayout>
-        <Breadcrumb title="Department" subTitle="List" />
+        <Breadcrumb title="Employeet Type" subTitle="List" />
 
         <div className="mb-20" style={{ backgroundColor: '#e8e8e0', padding: '12px 24px' }}>
           <div className="d-flex align-items-center gap-3">
