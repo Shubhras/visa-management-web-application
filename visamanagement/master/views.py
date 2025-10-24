@@ -2024,9 +2024,10 @@ class DepartmentImportAPIView(APIView):
         format_type = file.name.split('.')[-1].lower()
         dataset = Dataset()
 
+        duplicate_names = [] 
+
         try:
             if format_type == 'xlsx':
-                # Load workbook to check available sheets
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
 
@@ -2048,25 +2049,37 @@ class DepartmentImportAPIView(APIView):
                 for row in ws.iter_rows(min_row=2, values_only=True):
                     data.append(dict(zip(headers, row)))
 
-                # Save data into DB
                 for row in data:
-                    Department.objects.update_or_create(
-                        name=row.get('name'),
-                        defaults={
-                            'description': row.get('description', ''),
-                            'is_deleted': row.get('is_deleted', False)
-                        }
+                    name = str(row.get('name')).strip() if row.get('name') else None
+                    if not name:
+                        continue
+
+                    # Check for existing department
+                    if Department.objects.filter(name__iexact=name).exists():
+                        duplicate_names.append(name)
+                        continue  # skip adding duplicate
+
+                    Department.objects.create(
+                        name=name,
+                        description=row.get('description', ''),
+                        is_deleted=row.get('is_deleted', False)
                     )
 
             else:  # CSV
                 dataset.load(file.read().decode('utf-8'), format='csv')
                 for row in dataset.dict:
-                    Department.objects.update_or_create(
-                        name=row.get('name'),
-                        defaults={
-                            'description': row.get('description', ''),
-                            'is_deleted': row.get('is_deleted', False)
-                        }
+                    name = str(row.get('name')).strip() if row.get('name') else None
+                    if not name:
+                        continue
+
+                    if Department.objects.filter(name__iexact=name).exists():
+                        duplicate_names.append(name)
+                        continue
+
+                    Department.objects.create(
+                        name=name,
+                        description=row.get('description', ''),
+                        is_deleted=row.get('is_deleted', False)
                     )
 
         except Exception as e:
@@ -2075,10 +2088,9 @@ class DepartmentImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
+            "duplicates": list(set(duplicate_names)),
             'message': f'Sheet "{sheet_name}" imported successfully' if sheet_name else 'Import successful'
         }, status=status.HTTP_200_OK)
-
-
 
         
 class EmployeeTypeListAPIView(APIView):    
