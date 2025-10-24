@@ -27,10 +27,13 @@ const EmployeeTypeList = () => {
   const [rowSelectData, setRowSelectData] = useState({});
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
+  const [items, setItems] = useState(["name", "description"]); // All items
+  const [selectedItems, setSelectedItems] = useState([...items]); // Checked items
   // Merged state for filters and pagination
   const [tableState, setTableState] = useState({
     page: 1,
@@ -254,9 +257,70 @@ const EmployeeTypeList = () => {
   };
 
 
+  const handleExportTest = () => {
+    setShowExportPopop(true);
+  }
+
+  const cancelExportTest = () => {
+    setShowExportPopop(false);
+
+  };
+
+  const handleDragStart = (e, index) => {
+    e.dataTransfer.setData("dragIndex", index);
+  };
+
+  const handleDrop = (e, dropIndex) => {
+    const dragIndex = e.dataTransfer.getData("dragIndex");
+    const newItems = [...items];
+    const draggedItem = newItems.splice(dragIndex, 1)[0];
+    newItems.splice(dropIndex, 0, draggedItem);
+    setItems(newItems);
+
+    // Also reorder selectedItems to match
+    const newSelected = newItems.filter((item) => selectedItems.includes(item));
+    setSelectedItems(newSelected);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  const handleCheckboxChange = (item, checked) => {
+    if (checked) {
+      // Find the index of the item in the full items list
+      const indexInItems = items.indexOf(item);
+
+      // Insert it into selectedItems at the correct position
+      const newSelected = [...selectedItems];
+      // Find the first item in selectedItems that comes after this item
+      const insertIndex = newSelected.findIndex(
+        (i) => items.indexOf(i) > indexInItems
+      );
+      if (insertIndex === -1) {
+        newSelected.push(item); // If no item after, add at end
+      } else {
+        newSelected.splice(insertIndex, 0, item); // Insert at correct position
+      }
+      setSelectedItems(newSelected);
+    } else {
+      // Remove unchecked item
+      setSelectedItems(selectedItems.filter((i) => i !== item));
+    }
+  }
+
+
+
   const handleExport = () => {
+    if (selectedItems.length == 0) {
+      toast.error("Please select at least one field");
+      return
+    }
+    const fieldsString = selectedItems.join(',');
+
     const sendPayload = {
-      file: "csv"
+      file: "csv",
+      fields: fieldsString //"name,description"
     };
     setLoadingExport(true);
 
@@ -274,7 +338,7 @@ const EmployeeTypeList = () => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `employee_type_${new Date().toISOString().split('T')[0]}.csv`;
+          link.download = `departments_${new Date().toISOString().split('T')[0]}.csv`;
 
           // Trigger download
           document.body.appendChild(link);
@@ -285,57 +349,72 @@ const EmployeeTypeList = () => {
           window.URL.revokeObjectURL(url);
 
           toast.success("Export successful");
+          cancelExportTest();
         } else {
           toast.error("Something went wrong.");
         }
       }
     }));
   };
+
+
   const startIndex = (tableState.currentPage - 1) * tableState.limit;
   const statusOptions = ['All', 'Active', 'Inactive'];
+
+  const formatDateTime = (dateString) => {
+    const date = new Date(dateString);
+
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+
+    let hours = date.getHours();
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12 || 12; // Convert to 12-hour format
+    hours = String(hours).padStart(2, '0');
+
+    return `${day}-${month}-${year} ${hours}:${minutes}:${seconds} ${ampm}`
+  };
+
 
   return (
     <>
       <MasterLayout>
         <Breadcrumb title="Employeet Type" subTitle="List" />
-
-        <div className="mb-20" style={{ backgroundColor: '#e8e8e0', padding: '12px 24px' }}>
-          <div className="d-flex align-items-center gap-3">
-            <div className="d-flex align-items-center gap-3">
-
-              <button
-                className="btn btn-sm px-3 py-1 text-white fw-medium"
-                style={{ backgroundColor: '#5a6c5b' }}
-                onClick={handleShowImport}
-              // disabled={!selectedFile}
-              >
-                Import
-              </button>
-            </div>
-            <button
-              className="btn btn-sm px-3 py-1 text-white fw-medium"
-              style={{ backgroundColor: '#5a6c5b' }}
-              onClick={handleExport}
-              disabled={loadingExport}
-            >
-              Export
-            </button>
-            {selectedRows.length > 0 && (
-              <button
-                onClick={handleBulkDelete}
-                className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
-              >
-                Delete Selected ({selectedRows.length})
-              </button>
-            )}
-          </div>
-        </div>
-
         <div className="card basic-data-table">
           <div className="card-body" style={{ backgroundColor: '#f5f5ef', paddingBottom: '16px' }}>
-            <div className="row align-items-center">
-              <div className="col-md-6">
-                <div className="d-flex align-items-center gap-3">
+            <div className="row align-items-center g-3">
+              <div className="col-lg-9 col-md-8 col-12">
+                <div className="d-flex flex-wrap align-items-center gap-2 gap-md-3">
+                  <button
+                    className="btn btn-sm px-3 py-1 text-white fw-medium"
+                    style={{ backgroundColor: '#5a6c5b' }}
+                    onClick={handleShowImport}
+                  >
+                    Import
+                  </button>
+
+                  <button
+                    className="btn btn-sm px-3 py-1 text-white fw-medium"
+                    style={{ backgroundColor: '#5a6c5b' }}
+                    onClick={handleExportTest}
+                    disabled={loadingExport}
+                  >
+                    Export
+                  </button>
+
+                  {selectedRows.length > 0 && (
+                    <button
+                      onClick={handleBulkDelete}
+                      className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
+                    >
+                      Delete Selected ({selectedRows.length})
+                    </button>
+                  )}
+
                   <select
                     className="form-select form-select-sm"
                     style={{ width: 'auto', minWidth: '100px' }}
@@ -347,7 +426,8 @@ const EmployeeTypeList = () => {
                     <option value={50}>Show 50</option>
                     <option value={100}>Show 100</option>
                   </select>
-                  <div className="position-relative" style={{ flex: 1, maxWidth: '300px' }}>
+
+                  <div className="position-relative" style={{ flex: 1, minWidth: '200px', maxWidth: '300px' }}>
                     <Icon
                       icon="ion:search-outline"
                       className="position-absolute"
@@ -362,21 +442,12 @@ const EmployeeTypeList = () => {
                       onChange={(e) => handleSearchChange(e.target.value)}
                     />
                   </div>
-                  <select
-                    className="form-select form-select-sm"
-                    style={{ width: 'auto', minWidth: '130px' }}
-                    value={tableState.status || 'All'}
-                    onChange={(e) => handleStatusChange(e.target.value)}
-                  >
-                    {statusOptions.map(status => (
-                      <option key={status} value={status}>{status}</option>
-                    ))}
-                  </select>
                 </div>
               </div>
-              <div className="col-md-6 text-end">
+
+              <div className="col-lg-3 col-md-4 col-12 text-md-end text-end">
                 <button
-                  className="btn btn-sm text-white fw-medium px-3 py-1"
+                  className="btn btn-sm text-white fw-medium px-3 py-1 w-md-auto"
                   style={{ backgroundColor: '#5a6c5b' }}
                   onClick={handleShow}
                 >
@@ -385,13 +456,12 @@ const EmployeeTypeList = () => {
               </div>
             </div>
           </div>
-
           <div className="card-body pt-0" style={{ backgroundColor: '#f5f5ef' }}>
             <div style={{ backgroundColor: 'white', borderRadius: '8px', overflow: 'hidden' }}>
               <table className="table mb-0" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
                 <thead style={{ backgroundColor: '#f8f9fa', borderBottom: '2px solid #e9ecef' }}>
                   <tr>
-                    <th scope="col" style={{ width: '80px', padding: '16px', fontWeight: '600', color: '#495057', fontSize: '14px' }}>
+                    <th scope="col" style={{ width: '80px' }}>
                       <div className="d-flex align-items-center gap-2">
                         <input
                           className="form-check-input"
@@ -404,16 +474,16 @@ const EmployeeTypeList = () => {
                         <span>S.L</span>
                       </div>
                     </th>
-                    <th scope="col" style={{ padding: '16px', fontWeight: '600', color: '#495057', fontSize: '14px' }}>
+                    <th scope="col">
                       Name
                     </th>
-                    <th scope="col" style={{ padding: '16px', fontWeight: '600', color: '#495057', fontSize: '14px' }}>
+                    <th scope="col">
                       Description
                     </th>
-                    <th scope="col" style={{ padding: '16px', fontWeight: '600', color: '#495057', fontSize: '14px' }}>
+                    <th scope="col">
                       Created At
                     </th>
-                    <th scope="col" style={{ width: '150px', padding: '16px', fontWeight: '600', color: '#495057', fontSize: '14px' }}>
+                    <th scope="col" style={{ width: '150px' }}>
                       Action
                     </th>
                   </tr>
@@ -433,7 +503,7 @@ const EmployeeTypeList = () => {
                   ) : departments.length > 0 ? (
                     departments.map((dept, index) => (
                       <tr key={dept.uuid} style={{ borderBottom: '1px solid #f0f0f0' }}>
-                        <td style={{ padding: '16px', verticalAlign: 'middle' }}>
+                        <td>
                           <div className="d-flex align-items-center gap-2">
                             <input
                               className="form-check-input"
@@ -447,30 +517,26 @@ const EmployeeTypeList = () => {
                             </span>
                           </div>
                         </td>
-                        <td style={{ padding: '16px', verticalAlign: 'middle' }}>
-                          <span style={{ fontSize: '14px', color: '#212529', fontWeight: '500' }}>
+                        <td>
+                          <span>
                             {dept.name}
                           </span>
                         </td>
-                        <td style={{ padding: '16px', verticalAlign: 'middle' }}>
-                          <span style={{ fontSize: '14px', color: '#212529', fontWeight: '500' }}>
+                        <td>
+                          <span>
                             {dept.description}
                           </span>
                         </td>
-                        <td style={{ padding: '16px', verticalAlign: 'middle', fontSize: '14px', color: '#495057' }}>
-                          {new Date(dept.created_at).toLocaleDateString('en-GB', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric'
-                          })}
+                        <td >
+                          <span>{formatDateTime(dept.created_at)}</span>
                         </td>
-                        <td style={{ padding: '16px', verticalAlign: 'middle' }}>
+                        <td>
                           <div className="d-flex align-items-center gap-2">
                             <Link
                               to="#"
                               style={{
-                                width: '36px',
-                                height: '36px',
+                                width: '28px',
+                                height: '28px',
                                 display: 'inline-flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
@@ -483,13 +549,13 @@ const EmployeeTypeList = () => {
                                 handleShowEdit(dept);
                               }}
                             >
-                              <Icon icon="lucide:edit" width="18" style={{ color: '#059669' }} />
+                              <Icon icon="lucide:edit" width="16" style={{ color: '#059669' }} />
                             </Link>
                             <button
                               onClick={() => handleDelete(dept.uuid)}
                               style={{
-                                width: '36px',
-                                height: '36px',
+                                width: '28px',
+                                height: '28px',
                                 display: 'inline-flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
@@ -500,7 +566,7 @@ const EmployeeTypeList = () => {
                                 transition: 'all 0.2s'
                               }}
                             >
-                              <Icon icon="mingcute:delete-2-line" width="18" style={{ color: '#dc2626' }} />
+                              <Icon icon="mingcute:delete-2-line" width="16" style={{ color: '#dc2626' }} />
                             </button>
                           </div>
                         </td>
@@ -654,6 +720,81 @@ const EmployeeTypeList = () => {
                   >
                     Delete
                   </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        {showExportPopop && (
+          <div
+            className="modal fade show"
+            style={{ display: "block", backgroundColor: "rgba(0,0,0,0.5)" }}
+            tabIndex={-1}
+            role="dialog"
+          >
+            <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
+              <div className="modal-content radius-16 bg-base">
+                <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
+                  <h1 className="modal-title fs-5">Export Department</h1>
+                  <button
+                    type="button"
+                    className="btn-close"
+                    onClick={cancelExportTest}
+                    aria-label="Close"
+                  />
+                </div>
+                <div className="modal-body p-24">
+                  <div className="row">
+                    {/* Draggable List with Checkbox */}
+                    <div className="col-12 mb-20">
+                      {items.map((item, index) => (
+                        <div
+                          key={index}
+                          draggable
+                          onDragStart={(e) => handleDragStart(e, index)}
+                          onDrop={(e) => handleDrop(e, index)}
+                          onDragOver={handleDragOver}
+                          className="border p-2 mb-10 radius-8 d-flex align-items-center justify-content-start gap-2  cursor-pointer"
+                          style={{
+                            cursor: "grab",
+                            margin: "10px !important",
+                            height: "40px"
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            id={`item-${index}`}
+                            checked={selectedItems.includes(item)}
+                            onChange={(e) =>
+                              handleCheckboxChange(item, e.target.checked)
+                            }
+                            className="form-check-input"
+                            style={{ marginLeft: "5px" }}
+                          />
+                          <label htmlFor={`item-${index}`} className="mb-0">
+                            {item}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Buttons */}
+                    <div className="d-flex align-items-center justify-content-center gap-3 mt-24">
+                      <button
+                        type="button"
+                        onClick={cancelExportTest}
+                        className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-40 py-11 radius-8"
+                      >
+                        Cancel
+                      </button>
+                      <button onClick={handleExport}
+                        type="button"
+                        className="btn btn-primary border border-primary-600 text-md px-48 py-12 radius-8"
+                      >
+                        Submit
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
