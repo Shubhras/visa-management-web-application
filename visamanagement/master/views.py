@@ -16,6 +16,7 @@ from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from import_export.formats.base_formats import CSV, XLSX
 from tablib import Dataset
+import openpyxl
 from django.http import HttpResponse
 from uuid import UUID
 import datetime
