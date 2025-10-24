@@ -11,6 +11,24 @@ export const DELETE_DEPARTMENT_API = "api/v1/master/departments/";
 export const EXPORT_DEPARTMENT_API = "api/v1/master/departments/export/";
 export const IMPORT_DEPARTMENT_API = "api/v1/master/departments/import/";
 
+//country
+export const GET_COUNTRY_LIST = "/api/v1/master/country/";
+export const ADD_COUNTRY_API = "/api/v1/master/country/create/";
+export const EDIT_COUNTRY_API = "api/v1/master/country/";
+export const DELETE_COUNTRY_API = "api/v1/master/country/";
+export const EXPORT_COUNTRY_API = "api/v1/master/country/export/";
+export const IMPORT_COUNTRY_API = "api/v1/master/country/import/";
+
+//state
+export const GET_STATE_LIST = "/api/v1/master/state/";
+export const ADD_STATE_API = "/api/v1/master/state/create/";
+export const EDIT_STATE_API = "api/v1/master/state/";
+export const DELETE_STATE_API = "api/v1/master/state/";
+export const EXPORT_STATE_API = "api/v1/master/state/export/";
+export const IMPORT_STATE_API = "api/v1/master/state/import/";
+
+
+
 
 //EMPLOYEE_TYPE 
 export const GET_EMPLOYEE_TYPE_LIST = "/api/v1/master/employeetype/";

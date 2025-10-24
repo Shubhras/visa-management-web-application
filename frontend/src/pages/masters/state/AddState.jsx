@@ -116,7 +116,7 @@ const AddState = ({show,handleClose})=>{
             style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}
             tabIndex={-1}
             role="dialog"
-            aria-labelledby="departmentModalLabel"
+            aria-labelledby="stateModalLabel"
             aria-hidden={!show}
           >
             <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
@@ -136,7 +136,7 @@ const AddState = ({show,handleClose})=>{
                 <div className="modal-body p-24">
                   <form onSubmit={handleSubmit}>
                     <div className="row">
-                      {/* Department Name */}
+                      {/* state Name */}
                       <div className="col-12 mb-20">
                         <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                            Name <span className="text-danger">*</span>

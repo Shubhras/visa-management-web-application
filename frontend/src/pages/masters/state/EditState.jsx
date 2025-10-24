@@ -195,7 +195,7 @@ const [loading, setLoading] = useState(false);
                         <div className="modal-body p-24">
                             <form onSubmit={handleSubmit}>
                                 <div className="row">
-                                    {/* Department Name */}
+                                    {/* state Name */}
                                     <div className="col-12 mb-20">
                                         <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                                             Name <span className="text-danger">*</span>

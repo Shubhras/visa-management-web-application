@@ -43,6 +43,85 @@ export const importDepartmentDataAPI = (payload) => {
 };
 
 
+//Country
+export const getCountryListDataAPI = (data) => {
+    const apiUrl = `${url.GET_COUNTRY_LIST}?search=${data?.search}&page=${data?.page}`;
+    return get(apiUrl)
+};
+
+export const addCountryDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_COUNTRY_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editCountryDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_COUNTRY_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteCountryDataAPI = (payload) => {
+    const prapareDATA = {
+        id: payload
+    }
+    const apiUrl = `${url.DELETE_COUNTRY_API}delete/`;
+    return delWithPayload(apiUrl, prapareDATA);
+};
+
+
+export const exportCountryDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_COUNTRY_API}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importCountryDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_COUNTRY_API}`;
+    return post(apiUrl, payload);
+};
+
+//state
+export const getStateListDataAPI = (data) => {
+    const apiUrl = `${url.GET_STATE_LIST}?search=${data?.search}&page=${data?.page}`;
+    return get(apiUrl)
+};
+
+export const addStateDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_STATE_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editStateDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_STATE_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteStateDataAPI = (payload) => {
+    const prapareDATA = {
+        id: payload
+    }
+    const apiUrl = `${url.DELETE_STATE_API}delete/`;
+    return delWithPayload(apiUrl, prapareDATA);
+};
+
+
+export const exportStateDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_STATE_API}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importStateDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_STATE_API}`;
+    return post(apiUrl, payload);
+};
+
+
+
+
+
+
+
+
+
+
 
 //EMPLOYEE_TYPE 
 export const getEmployeeTypeListDataAPI = (data) => {

@@ -7,6 +7,23 @@ import {
   EXPORT_DEPARTMENT,
   IMPORT_DEPARTMENT,
 
+  COUNTRY_LIST ,
+  ADD_COUNTRY ,  
+  EDIT_COUNTRY,  
+  DELETE_COUNTRY,
+  EXPORT_COUNTRY,
+  IMPORT_COUNTRY,
+
+  STATE_LIST ,
+  ADD_STATE ,  
+  EDIT_STATE , 
+  DELETE_STATE,
+  EXPORT_STATE,
+  IMPORT_STATE,
+
+
+
+
   EMPLOYEE_TYPE_LIST,
   ADD_EMPLOYEE_TYPE,
   EDIT_EMPLOYEE_TYPE,
@@ -22,6 +39,27 @@ import {
   deleteDepartmentDataAPI,
   exportDepartmentDataAPI,
   importDepartmentDataAPI,
+
+
+  getCountryListDataAPI,
+  addCountryDataAPI,
+  editCountryDataAPI,
+  deleteCountryDataAPI,
+  exportCountryDataAPI,
+  importCountryDataAPI,
+
+  getStateListDataAPI,
+  addStateDataAPI,
+  editStateDataAPI,
+  deleteStateDataAPI,
+  exportStateDataAPI,
+  importStateDataAPI,
+
+
+
+
+
+
 
   getEmployeeTypeListDataAPI,
   addEmployeeTypeDataAPI,
@@ -108,6 +146,180 @@ function* departmentImportDataSaga(action) {
 }
 
 
+//COUNTRY
+
+function* countryListSaga(action) {
+  try {
+    const response = yield call(getCountryListDataAPI, action?.data);
+    if (action.callback) {
+      action.callback(response);
+    }
+  } catch (error) {
+    if (action.callback) {
+      action.callback(null, error);
+    }
+  }
+}
+function* countryAddSaga(action) {
+  try {
+    const response = yield call(addCountryDataAPI, action?.data);
+    if (action.callback) {
+      action.callback(response);
+    }
+  } catch (error) {
+    if (action.callback) {
+      action.callback(null, error);
+    }
+  }
+}
+function* countryEditSaga(action) {
+  try {
+    const response = yield call(editCountryDataAPI, action?.data);
+    if (action.callback) {
+      action.callback(response);
+    }
+  } catch (error) {
+    if (action.callback) {
+      action.callback(null, error);
+    }
+  }
+}
+function* countryDeleteSaga(action) {
+  try {
+    const response = yield call(deleteCountryDataAPI, action?.data);
+    if (action.callback) {
+      action.callback(response);
+    }
+  } catch (error) {
+    if (action.callback) {
+      action.callback(null, error);
+    }
+  }
+}
+
+function* countryExportDataSaga(action) {
+  try {
+    const response = yield call(exportCountryDataAPI, action?.data);
+    if (action.callback) {
+
+      action.callback(response);
+    }
+  } catch (error) {
+    if (action.callback) {
+      action.callback(null, error);
+    }
+  }
+}
+function* countryImportDataSaga(action) {
+  try {
+    const response = yield call(importCountryDataAPI, action?.data);
+    if (action.callback) {
+
+      action.callback(response);
+    }
+  } catch (error) {
+    if (action.callback) {
+      action.callback(null, error);
+    }
+  }
+}
+
+
+//state
+function* stateListSaga(action) {
+  try {
+    const response = yield call(getStateListDataAPI, action?.data);
+    if (action.callback) {
+      action.callback(response);
+    }
+  } catch (error) {
+    if (action.callback) {
+      action.callback(null, error);
+    }
+  }
+}
+function* stateAddSaga(action) {
+  try {
+    const response = yield call(addStateDataAPI, action?.data);
+    if (action.callback) {
+      action.callback(response);
+    }
+  } catch (error) {
+    if (action.callback) {
+      action.callback(null, error);
+    }
+  }
+}
+function* stateEditSaga(action) {
+  try {
+    const response = yield call(editStateDataAPI, action?.data);
+    if (action.callback) {
+      action.callback(response);
+    }
+  } catch (error) {
+    if (action.callback) {
+      action.callback(null, error);
+    }
+  }
+}
+function* stateDeleteSaga(action) {
+  try {
+    const response = yield call(deleteStateDataAPI, action?.data);
+    if (action.callback) {
+      action.callback(response);
+    }
+  } catch (error) {
+    if (action.callback) {
+      action.callback(null, error);
+    }
+  }
+}
+
+function* stateExportDataSaga(action) {
+  try {
+    const response = yield call(exportStateDataAPI, action?.data);
+    if (action.callback) {
+
+      action.callback(response);
+    }
+  } catch (error) {
+    if (action.callback) {
+      action.callback(null, error);
+    }
+  }
+}
+function* stateImportDataSaga(action) {
+  try {
+    const response = yield call(importStateDataAPI, action?.data);
+    if (action.callback) {
+
+      action.callback(response);
+    }
+  } catch (error) {
+    if (action.callback) {
+      action.callback(null, error);
+    }
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 //EMPLOYEE_TYPE 
 function* employeeTypeListSaga(action) {
   try {
@@ -186,6 +398,12 @@ function* employeeTypeImportDataSaga(action) {
 }
 
 
+
+
+
+
+
+
 function* masterSaga() {
   yield takeEvery(DEPARTMENT_LIST, departmentListSaga);
   yield takeEvery(ADD_DEPARTMENT, departmentAddSaga);
@@ -193,6 +411,18 @@ function* masterSaga() {
   yield takeEvery(DELETE_DEPARTMENT, departmentDeleteSaga);
   yield takeEvery(EXPORT_DEPARTMENT, departmentExportDataSaga);
   yield takeEvery(IMPORT_DEPARTMENT, departmentImportDataSaga);
+
+  //Country
+  yield takeEvery(COUNTRY_LIST, countryListSaga);
+  yield takeEvery(ADD_COUNTRY, countryAddSaga);
+  yield takeEvery(EDIT_COUNTRY, countryEditSaga);
+  yield takeEvery(DELETE_COUNTRY, countryDeleteSaga);
+  yield takeEvery(EXPORT_COUNTRY, countryExportDataSaga);
+  yield takeEvery(IMPORT_COUNTRY,countryImportDataSaga);
+
+
+
+
 
 
   //EMPLOYEE_TYPE 

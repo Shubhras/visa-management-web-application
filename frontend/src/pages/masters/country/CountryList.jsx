@@ -7,12 +7,12 @@ import { Link } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import { toast } from "react-toastify";
-import { countrytList, countryDelete, countryExportData } from '../../../store/master/actions';
+import { countryList, countryDelete, countryExportData } from '../../../store/master/actions';
 import AddImportCountryModal from './AddImportCountryModal';
 import AddCountry from './AddCountry';
 import EditCountry from './EditCountry';
 
-const fakeCountries = [
+/*const fakeCountries = [
     {
       uuid: 'fake-china-id',
       name: 'China',
@@ -38,7 +38,7 @@ const fakeCountries = [
         status: false,
       },
   ];
-  
+  */
   
  
   
@@ -49,6 +49,13 @@ const CountryList = () => {
   const dispatch = useDispatch();
 
   const [show, setShow] = useState(false);
+  const handleShow = () => setShow(true);
+  const handleClose = () => {
+    setShow(false);
+    fetchCountryList();
+  };
+
+
   const [showEdit, setShowEdit] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [rowSelectData, setRowSelectData] = useState({});
@@ -77,7 +84,7 @@ const CountryList = () => {
 
 
 
-  // Load data on mount
+  /* Load data on mount
   useEffect(() => {
     fetchCountryList();
   }, []);
@@ -88,9 +95,9 @@ const CountryList = () => {
     setShow(false);
     fetchCountryList(); // refresh list if needed after closing modal
   };
+*/
 
-
-/*useEffect(() => {
+useEffect(() => {
     const timer = setTimeout(() => {
       if (tableState.search !== undefined) {
         fetchCountryList();
@@ -98,18 +105,18 @@ const CountryList = () => {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [tableState.search]);*/
+  }, [tableState.search]);
 
-
+/*
   const fetchCountryList = () => {
     setLoading(true);
   
     // Filter the fake countries using the search term
-    const filtered = fakeCountries.filter((country) =>
+    /*const filtered = fakeCountries.filter((country) =>
       country.name.toLowerCase().includes(tableState.search.toLowerCase())
-    );
+    );*/
   
-    setCountries(filtered);
+   /* setCountries(filtered);
   
     setTableState(prev => ({
       ...prev,
@@ -125,20 +132,29 @@ const CountryList = () => {
 
 
 
-
+*/
 
 
 
   useEffect(() => {
     fetchCountryList();
   }, [tableState.page, tableState.limit, tableState.status]);
+  
+  const fetchCountryList = () => {
+    setLoading(true);
+    const params = {
+      page: tableState.page,
+      limit: tableState.limit,
+      search: tableState.search || '',
+      status: tableState.status || ''
+    };
 
   
 
 
 
 
-  /*  dispatch(CountryList(params, (response, error) => {
+    dispatch(countryList(params, (response, error) => {
       setLoading(false);
       if (response?.statusCode === 200 && response?.status === true) {
         //console.log('Response data:', response);
@@ -166,7 +182,8 @@ const CountryList = () => {
           hasPrevious: false
         }));
       }
-    }));*/
+    }));
+  };
   
 
   const handleSearchChange = (value) => {
@@ -337,7 +354,7 @@ const CountryList = () => {
     };
     setLoadingExport(true);
     
-    try {
+    /*try {
         // Convert countries data into a flat exportable format
         const exportData = countries.map((country, index) => ({
           "S.L.": index + 1,
@@ -373,7 +390,7 @@ const CountryList = () => {
       toast.error("Failed to export file.");
     }
   
-    setLoadingExport(false);
+    setLoadingExport(false); */
 
 
 
@@ -415,7 +432,7 @@ const CountryList = () => {
   const startIndex = (tableState.currentPage - 1) * tableState.limit;
   const statusOptions = ['All', 'True', 'False'];
 
-  const filteredCountries = countries.filter(dept => {
+ /* const filteredCountries = countries.filter(dept => {
     const matchesSearch = dept.name.toLowerCase().includes(tableState.search.toLowerCase());
     
     if (tableState.status === 'All' || !tableState.status) {
@@ -426,7 +443,7 @@ const CountryList = () => {
   
     return matchesSearch && dept.status === statusBool;
   });
-  
+  */
   
   return (
     <>
@@ -586,8 +603,8 @@ const CountryList = () => {
                         </div>
                       </td>
                     </tr>
-                  ) : filteredCountries.length > 0 ? (
-                    filteredCountries.map((dept, index) => (
+  ) : countries.length > 0 ? (
+                    countries.map((dept, index) => (
                       <tr key={dept.uuid} style={{ borderBottom: '1px solid #f0f0f0' }}>
                         <td style={{ padding: '16px', verticalAlign: 'middle' }}>
                           <div className="d-flex align-items-center gap-2">
@@ -857,4 +874,4 @@ const CountryList = () => {
   );
 };
 
-export default CountryList
+export default CountryList;

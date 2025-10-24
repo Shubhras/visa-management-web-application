@@ -187,7 +187,7 @@ const AddCountry =({show,handleClose})=>{
                     </label>
                     <input
                       type="text"
-                      name="name"
+                      name="continent"
                       value={formData.continent}
                       onChange={handleChange}
                       className={`form-control radius-8 ${errors.name ? 'is-invalid' : ''}`}
@@ -211,7 +211,7 @@ const AddCountry =({show,handleClose})=>{
                     </label>
                     <input
                       type="text"
-                      name="short Name"
+                      name="shortName"
                       value={formData.shortName}
                       onChange={handleChange}
                       className={`form-control radius-8 ${errors.shortName ? 'is-invalid' : ''}`}
@@ -235,7 +235,7 @@ const AddCountry =({show,handleClose})=>{
                     </label>
                     <input
                       type="text"
-                      name="Full Name"
+                      name="fullName"
                       value={formData.fullName}
                       onChange={handleChange}
                       className={`form-control radius-8 ${errors.fullName ? 'is-invalid' : ''}`}
@@ -259,7 +259,7 @@ const AddCountry =({show,handleClose})=>{
                     </label>
                     <input
                       type="text"
-                      name="official name"
+                      name="officialName"
                       value={formData.officialName}
                       onChange={handleChange}
                       className={`form-control radius-8 ${errors.officialName ? 'is-invalid' : ''}`}
@@ -282,7 +282,7 @@ const AddCountry =({show,handleClose})=>{
                     </label>
                     <input
                       type="text"
-                      name="Captial City"
+                      name="capitalCity"
                       value={formData.capitalCity}
                       onChange={handleChange}
                       className={`form-control radius-8 ${errors.capitalCity ? 'is-invalid' : ''}`}
@@ -305,7 +305,7 @@ const AddCountry =({show,handleClose})=>{
                     </label>
                     <input
                       type="text"
-                      name="Dial Code"
+                      name="dialCode"
                       value={formData.dialCode}
                       onChange={handleChange}
                       className={`form-control radius-8 ${errors.dialCode ? 'is-invalid' : ''}`}
@@ -328,7 +328,7 @@ const AddCountry =({show,handleClose})=>{
                     </label>
                     <input
                       type="text"
-                      name="Currency"
+                      name="currency"
                       value={formData.currency}
                       onChange={handleChange}
                       className={`form-control radius-8 ${errors.currency ? 'is-invalid' : ''}`}

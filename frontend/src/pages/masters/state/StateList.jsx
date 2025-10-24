@@ -7,12 +7,12 @@ import { Link } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import { toast } from "react-toastify";
-import { statetList, stateDelete, stateExportData } from '../../../store/master/actions';
+import { stateList, stateDelete, stateExportData } from '../../../store/master/actions';
 import AddImportStateModal from './AddImportStateModal';
 import AddState from './AddState'
 import EditState from './EditState';
 
-const fakeStates = [
+/*const fakeStates = [
     {
       
       
@@ -33,7 +33,7 @@ const fakeStates = [
       },
   ];
   
-  
+  */
  
   
 
@@ -43,6 +43,14 @@ const StateList = () => {
   const dispatch = useDispatch();
 
   const [show, setShow] = useState(false);
+  const handleShow = () => setShow(true);
+  const handleClose = () => {
+    setShow(false);
+    fetchStateList();
+  };
+
+
+
   const [showEdit, setShowEdit] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [rowSelectData, setRowSelectData] = useState({});
@@ -71,7 +79,7 @@ const StateList = () => {
 
 
 
-  // Load data on mount
+  /*Load data on mount
   useEffect(() => {
     fetchStateList();
   }, []);
@@ -81,20 +89,20 @@ const StateList = () => {
   const handleClose = () => {
     setShow(false);
     fetchStateList(); // refresh list if needed after closing modal
-  };
+  };*/
 
 
-/*useEffect(() => {
+useEffect(() => {
     const timer = setTimeout(() => {
       if (tableState.search !== undefined) {
-        fetchCountryList();
+        fetchStateList();
       }
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [tableState.search]);*/
+  }, [tableState.search]);
 
-
+ /* 
   const fetchStateList = () => {
     setLoading(true);
   
@@ -121,18 +129,25 @@ const StateList = () => {
 
 
 
-
+*/
 
   useEffect(() => {
     fetchStateList();
   }, [tableState.page, tableState.limit, tableState.status]);
 
-  
+  const fetchStateList = () => {
+    setLoading(true);
+    const params = {
+      page: tableState.page,
+      limit: tableState.limit,
+      search: tableState.search || '',
+      status: tableState.status || ''
+    };
 
 
 
 
-  /*  dispatch(CountryList(params, (response, error) => {
+    dispatch(stateList(params, (response, error) => {
       setLoading(false);
       if (response?.statusCode === 200 && response?.status === true) {
         //console.log('Response data:', response);
@@ -140,7 +155,7 @@ const StateList = () => {
         // Extract pagination from the nested pagination object
         const paginationData = response?.pagination || {};
 
-        setCountries(response?.data || []);
+        setStates(response?.data || []);
         setTableState(prev => ({
           ...prev,
           total: paginationData.totalItems || 0,
@@ -150,7 +165,7 @@ const StateList = () => {
           hasPrevious: paginationData.previousPage || false
         }));
       } else {
-        setCountries([]);
+        setStates([]);
         setTableState(prev => ({
           ...prev,
           total: 0,
@@ -160,8 +175,8 @@ const StateList = () => {
           hasPrevious: false
         }));
       }
-    }));*/
-  
+    }));
+  };
 
   const handleSearchChange = (value) => {
     setTableState(prev => ({
@@ -331,7 +346,7 @@ const StateList = () => {
     };
     setLoadingExport(true);
     
-    try {
+   /* try {
         // Convert countries data into a flat exportable format
         const exportData = states.map((state, index) => ({
           "S.L.": index + 1,
@@ -363,7 +378,7 @@ const StateList = () => {
       toast.error("Failed to export file.");
     }
   
-    setLoadingExport(false);
+    setLoadingExport(false);*/
 
 
 
@@ -405,7 +420,7 @@ const StateList = () => {
   const startIndex = (tableState.currentPage - 1) * tableState.limit;
   const statusOptions = ['All', 'True', 'False'];
 
-  const filteredStates = states.filter(dept => {
+  /*const filteredStates = states.filter(dept => {
     const matchesSearch = dept.name.toLowerCase().includes(tableState.search.toLowerCase());
     
     if (tableState.status === 'All' || !tableState.status) {
@@ -416,7 +431,7 @@ const StateList = () => {
   
     return matchesSearch && dept.status === statusBool;
   });
-  
+  */
   
   return (
     <>
@@ -486,7 +501,7 @@ const StateList = () => {
                       onChange={(e) => handleSearchChange(e.target.value)}
                     />
                   </div>
-            {/*      <select
+                <select
                     className="form-select form-select-sm"
                     style={{ width: 'auto', minWidth: '130px' }}
                     value={tableState.status || 'All'}
@@ -496,7 +511,7 @@ const StateList = () => {
                       <option key={status} value={status}>{status}</option>
                     ))}
                   </select>
-                  */}
+                  
 
                 </div>
               </div>
@@ -565,8 +580,8 @@ const StateList = () => {
                         </div>
                       </td>
                     </tr>
-                  ) : filteredStates.length > 0 ? (
-                    filteredStates.map((dept, index) => (
+                  ) : states.length > 0 ? (
+                    states.map((dept, index) => (
                       <tr key={dept.uuid} style={{ borderBottom: '1px solid #f0f0f0' }}>
                         <td style={{ padding: '16px', verticalAlign: 'middle' }}>
                           <div className="d-flex align-items-center gap-2">
