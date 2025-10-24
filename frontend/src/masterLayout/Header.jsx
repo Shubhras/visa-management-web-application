@@ -68,14 +68,18 @@ const Header = () => {
         },
         {
             name: 'Masters',
-            path: '/masters',
+            path: '/department',
             submenu: [
                 { name: 'Department', path: '/department' },
                 { name: 'Employee type', path: '/employeetype' },
+
                 {name:'country',path:'/country'},
                 {name:'State',path:'/state'},
 
                 // { name: 'Roles', path: '/masters/roles' }
+
+                { name: 'Company type', path: '/companytype' }
+
             ]
         }
     ];

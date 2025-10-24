@@ -7,19 +7,19 @@ import { Link } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import { toast } from "react-toastify";
-import AddDepartment from './AddDepartment';
-import EditDepartment from './EditDepartment';
-import { departmentList, departmentDelete, departmentExportData } from '../../../store/master/actions';
+import AddEmployeeType from './AddEmployeeType';
+import EditEmployeeType from './EditEmployeeType';
+import { employeeTypeList, employeeTypeDelete, employeeTypeExportData } from '../../../store/master/actions';
 import AddImportModal from './AddImportModal';
 
-const DepartmentList = () => {
+const EmployeeTypeList = () => {
   const dispatch = useDispatch();
 
   const [show, setShow] = useState(false);
   const handleShow = () => setShow(true);
   const handleClose = () => {
     setShow(false);
-    fetchDepartmentList();
+    fetchEmployeeTypeList();
   };
 
   const [showEdit, setShowEdit] = useState(false);
@@ -32,12 +32,8 @@ const DepartmentList = () => {
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-
   const [items, setItems] = useState(["name", "description"]); // All items
   const [selectedItems, setSelectedItems] = useState([...items]); // Checked items
-
-
-
   // Merged state for filters and pagination
   const [tableState, setTableState] = useState({
     page: 1,
@@ -54,7 +50,7 @@ const DepartmentList = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (tableState.search !== undefined) {
-        fetchDepartmentList();
+        fetchEmployeeTypeList();
       }
     }, 500);
 
@@ -62,10 +58,10 @@ const DepartmentList = () => {
   }, [tableState.search]);
 
   useEffect(() => {
-    fetchDepartmentList();
+    fetchEmployeeTypeList();
   }, [tableState.page, tableState.limit, tableState.status]);
 
-  const fetchDepartmentList = () => {
+  const fetchEmployeeTypeList = () => {
     setLoading(true);
     const params = {
       page: tableState.page,
@@ -74,7 +70,7 @@ const DepartmentList = () => {
       status: tableState.status || ''
     };
 
-    dispatch(departmentList(params, (response, error) => {
+    dispatch(employeeTypeList(params, (response, error) => {
       setLoading(false);
       if (response?.statusCode === 200 && response?.status === true) {
         //console.log('Response data:', response);
@@ -192,7 +188,7 @@ const DepartmentList = () => {
 
   const handleCloseEdit = () => {
     setShowEdit(false);
-    fetchDepartmentList();
+    fetchEmployeeTypeList();
   };
 
   const handleShowEdit = (rowData) => {
@@ -217,14 +213,14 @@ const DepartmentList = () => {
   const confirmDelete = () => {
     // Determine which IDs to send — either single deleteId or multiple selectedRows
     const sendPayload = deleteId ? [deleteId] : selectedRows;
-    console.log('Deleting departments:', sendPayload);
+    console.log('Deleting employeeType:', sendPayload);
 
     if (!sendPayload || sendPayload.length === 0) {
-      toast.error("No department selected for deletion.");
+      toast.error("No employeeType selected for deletion.");
       return;
     }
 
-    dispatch(departmentDelete(sendPayload, (response, error) => {
+    dispatch(employeeTypeDelete(sendPayload, (response, error) => {
 
       if (error) {
         toast.error(error?.response?.data?.message || "server error");
@@ -236,7 +232,7 @@ const DepartmentList = () => {
           setShowDeleteConfirm(false);
           setSelectedRows([])
           setDeleteId(null);
-          fetchDepartmentList();
+          fetchEmployeeTypeList();
 
         } else {
           toast.error("Something went wrong.");
@@ -253,7 +249,7 @@ const DepartmentList = () => {
 
   const handleCloseImport = () => {
     setShowImport(false);
-    fetchDepartmentList();
+    fetchEmployeeTypeList();
   };
 
   const handleShowImport = () => {
@@ -316,19 +312,19 @@ const DepartmentList = () => {
 
 
   const handleExport = () => {
-    if(selectedItems.length == 0){
-     toast.error("Please select at least one field");
+    if (selectedItems.length == 0) {
+      toast.error("Please select at least one field");
       return
     }
     const fieldsString = selectedItems.join(',');
-  
+
     const sendPayload = {
       file: "csv",
-      fields:fieldsString //"name,description"
+      fields: fieldsString //"name,description"
     };
     setLoadingExport(true);
 
-    dispatch(departmentExportData(sendPayload, (response, error) => {
+    dispatch(employeeTypeExportData(sendPayload, (response, error) => {
       if (error) {
         setLoadingExport(false);
         toast.error(error?.response?.message || "server error");
@@ -360,7 +356,7 @@ const DepartmentList = () => {
       }
     }));
   };
- 
+
 
   const startIndex = (tableState.currentPage - 1) * tableState.limit;
   const statusOptions = ['All', 'Active', 'Inactive'];
@@ -382,10 +378,12 @@ const DepartmentList = () => {
 
     return `${day}-${month}-${year} ${hours}:${minutes}:${seconds} ${ampm}`
   };
+
+
   return (
     <>
       <MasterLayout>
-        <Breadcrumb title="Department" subTitle="List" />
+        <Breadcrumb title="Company Type" subTitle="List" />
         <div className="card basic-data-table">
           <div className="card-body" style={{ backgroundColor: '#f5f5ef', paddingBottom: '16px' }}>
             <div className="row align-items-center g-3">
@@ -505,7 +503,7 @@ const DepartmentList = () => {
                   ) : departments.length > 0 ? (
                     departments.map((dept, index) => (
                       <tr key={dept.uuid} style={{ borderBottom: '1px solid #f0f0f0' }}>
-                        <td >
+                        <td>
                           <div className="d-flex align-items-center gap-2">
                             <input
                               className="form-check-input"
@@ -514,25 +512,25 @@ const DepartmentList = () => {
                               onChange={() => handleRowSelect(dept.uuid)}
                               style={{ cursor: 'pointer' }}
                             />
-                            <span>
+                            <span style={{ fontSize: '14px', color: '#6c757d' }}>
                               {String(startIndex + index + 1).padStart(2, '0')}
                             </span>
                           </div>
                         </td>
-                        <td >
-                          <span >
+                        <td>
+                          <span>
                             {dept.name}
                           </span>
                         </td>
-                        <td >
-                          <span >
+                        <td>
+                          <span>
                             {dept.description}
                           </span>
                         </td>
-                        <td>
+                        <td >
                           <span>{formatDateTime(dept.created_at)}</span>
                         </td>
-                        <td >
+                        <td>
                           <div className="d-flex align-items-center gap-2">
                             <Link
                               to="#"
@@ -691,8 +689,8 @@ const DepartmentList = () => {
           </div>
         </div>
 
-        <AddDepartment show={show} handleClose={handleClose} />
-        <EditDepartment show={showEdit} handleCloseEdit={handleCloseEdit} rowSelectData={rowSelectData} />
+        <AddEmployeeType show={show} handleClose={handleClose} />
+        <EditEmployeeType show={showEdit} handleCloseEdit={handleCloseEdit} rowSelectData={rowSelectData} />
         {showImport && (
           <AddImportModal show={showImport} handleClose={handleCloseImport} />)}
 
@@ -727,7 +725,6 @@ const DepartmentList = () => {
             </div>
           </div>
         )}
-
         {showExportPopop && (
           <div
             className="modal fade show"
@@ -808,4 +805,4 @@ const DepartmentList = () => {
   );
 };
 
-export default DepartmentList;
+export default EmployeeTypeList;

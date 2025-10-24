@@ -19,7 +19,7 @@ root.render(
   <React.StrictMode>
     <Provider store={store}>
       <App />
-       <ToastContainer position="top-right" autoClose={30000} hideProgressBar={false} newestOnTop={false} closeOnClick pauseOnFocusLoss draggable pauseOnHover />
+       <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop={false} closeOnClick pauseOnFocusLoss draggable pauseOnHover />
     </Provider>
   </React.StrictMode>
 );

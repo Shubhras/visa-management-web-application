@@ -354,6 +354,9 @@ import StateList from "./pages/masters/state/StateList";
 import EmployeeTypeList from "./pages/masters/employeeType/EmployeeTypeList";
 
 
+
+import CompanyTypeList from "./pages/masters/companyType/EmployeeTypeList";
+
 import LeadsList from "./pages/leads/LeadsList";
 
 function App() {
@@ -477,6 +480,7 @@ function App() {
         
 =======
         <Route exact path='/employeetype' element={<EmployeeTypeList />} />
+        <Route exact path='/companytype' element={<CompanyTypeList />} />
 
 
         <Route path='*' element={<ErrorPage />} />
