@@ -1,9 +1,9 @@
-import React, { useState, useEffect ,useParams} from 'react'
+import React, { useState, useEffect } from 'react'
 import { useDispatch } from "react-redux";
 import MasterLayout from "../../../masterLayout/MasterLayout";
 import Breadcrumb from "../../../components/Breadcrumb";
 import { Icon } from '@iconify/react/dist/iconify.js';
-import { Link } from 'react-router-dom';
+import { Link ,useParams} from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import { toast } from "react-toastify";
@@ -12,37 +12,9 @@ import AddImportCountryModal from './AddImportCountryModal';
 import AddCountry from './AddCountry';
 import EditCountry from './EditCountry';
 
-/*const fakeCountries = [
-    {
-      uuid: 'fake-china-id',
-      name: 'China',
-      continent: '360a4001-88ef-4312-9838-70c6dd3e96f5',
-      shortName: 'CN',
-      fullName: 'Republic of China',
-      officialName: 'China',
-      capitalCity: 'Beijing',
-      dialCodes: ['+35'],
-      currencyCode: 'Yuan',
-      status: true
-    },
-    {
-        uuid: '2',
-        name: 'Country B',
-        continent: 'Europe',
-        shortName: 'CB',
-        fullName: 'Country B Full',
-        officialName: 'Country B Official',
-        capitalCity: 'Capital B',
-        dialCodes: ['+44'],
-        currencyCode: 'GBP',
-        status: false,
-      },
-  ];
-  */
-  
+
  
   
-
 
 
 const CountryList = () => {
@@ -61,10 +33,19 @@ const CountryList = () => {
   const [rowSelectData, setRowSelectData] = useState({});
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+   const [showExportPopop, setShowExportPopop] = useState(false);
+ 
   const [deleteId, setDeleteId] = useState(null);
   const [countries, setCountries] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
+   const [items, setItems] = useState(["name", "continent","shortName","fullName","officialName","capitalCity","dialCodes","currencyCode","status"]); // All items
+  const [selectedItems, setSelectedItems] = useState([...items]); // Checked items
+  
+  
+  
+  
+  
   // Merged state for filters and pagination
   const [tableState, setTableState] = useState({
     page: 1,
@@ -107,32 +88,6 @@ useEffect(() => {
     return () => clearTimeout(timer);
   }, [tableState.search]);
 
-/*
-  const fetchCountryList = () => {
-    setLoading(true);
-  
-    // Filter the fake countries using the search term
-    /*const filtered = fakeCountries.filter((country) =>
-      country.name.toLowerCase().includes(tableState.search.toLowerCase())
-    );*/
-  
-   /* setCountries(filtered);
-  
-    setTableState(prev => ({
-      ...prev,
-      total: filtered.length,
-      totalPages: 1,
-      currentPage: 1,
-      hasNext: false,
-      hasPrevious: false,
-    }));
-  
-    setLoading(false);
-  };
-
-
-
-*/
 
 
 
@@ -343,16 +298,75 @@ useEffect(() => {
   };
 
 
-  const handleExport = () => {
-    if (!countries || countries.length === 0) {
-        toast.error("No data to export.");
-        return;
+  const handleExportTest = () =>{
+    setShowExportPopop(true);
+  }
+  const cancelExportTest = () =>{
+    setShowExportPopop(false);
+  }
+  const handleDragStart =(e,index) => {
+    e.dataTransfer.setData("dragIndex",index);
+  };
+  const handleDrop = (e,dropIndex) =>{
+    const dragIndex = e.dataTransfer.getData("dragIndex");
+     const newItems =[...items];
+     const draggedItem = newItems.splice(dragIndex,1)[0];
+     newItems.splice(dropIndex,0,draggedItem)
+     setItems(newItems);
+
+     //Also reorder selectedItems to match
+     const newSelected = newItems.filter((item)  => selectedItems.includes(item));
+      setSelectedItems(newSelected);
+
+  };
+  const handleDragOver = (e) =>{
+    e.preventDefault();
+  }
+
+  const handleCheckboxChange = (item, checked) => {
+    if (checked) {
+      // Find the index of the item in the full items list
+      const indexInItems = items.indexOf(item);
+
+      // Insert it into selectedItems at the correct position
+      const newSelected = [...selectedItems];
+      // Find the first item in selectedItems that comes after this item
+      const insertIndex = newSelected.findIndex(
+        (i) => items.indexOf(i) > indexInItems
+      );
+      if (insertIndex === -1) {
+        newSelected.push(item); // If no item after, add at end
+      } else {
+        newSelected.splice(insertIndex, 0, item); // Insert at correct position
       }
+      setSelectedItems(newSelected);
+    } else {
+      // Remove unchecked item
+      setSelectedItems(selectedItems.filter((i) => i !== item));
+    }
+  }
+
+
+
+
+  const handleExport = () => {
+      if(selectedItems.length == 0){
+       toast.error("Please select at least one field");
+        return
+      }
+      const fieldsString = selectedItems.join(',');
     
-    const sendPayload = {
-      file: "csv"
-    };
-    setLoadingExport(true);
+      const sendPayload = {
+        file: "csv",
+        fields:fieldsString //""
+      };
+      setLoadingExport(true);
+  
+
+
+
+
+
     
     /*try {
         // Convert countries data into a flat exportable format
@@ -450,43 +464,39 @@ useEffect(() => {
       <MasterLayout>
         <Breadcrumb title="Country" subTitle="List" />
 
-        <div className="mb-20" style={{ backgroundColor: '#e8e8e0', padding: '12px 24px' }}>
-          <div className="d-flex align-items-center gap-3">
-            <div className="d-flex align-items-center gap-3">
-
-              <button
-                className="btn btn-sm px-3 py-1 text-white fw-medium"
-                style={{ backgroundColor: '#5a6c5b' }}
-                onClick={handleShowImport}
-              // disabled={!selectedFile}
-              >
-                Import
-              </button>
-            </div>
-            <button
-              className="btn btn-sm px-3 py-1 text-white fw-medium"
-              style={{ backgroundColor: '#5a6c5b' }}
-              onClick={handleExport}
-              disabled={loadingExport}
-            >
-              Export
-            </button>
-            {selectedRows.length > 0 && (
-              <button
-                onClick={handleBulkDelete}
-                className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
-              >
-                Delete Selected ({selectedRows.length})
-              </button>
-            )}
-          </div>
-        </div>
 
         <div className="card basic-data-table">
+          <div className="card basic-data-table">
           <div className="card-body" style={{ backgroundColor: '#f5f5ef', paddingBottom: '16px' }}>
-            <div className="row align-items-center">
-              <div className="col-md-6">
-                <div className="d-flex align-items-center gap-3">
+            <div className="row align-items-center g-3">
+              <div className="col-lg-9 col-md-8 col-12">
+                <div className="d-flex flex-wrap align-items-center gap-2 gap-md-3">
+                  <button
+                    className="btn btn-sm px-3 py-1 text-white fw-medium"
+                    style={{ backgroundColor: '#5a6c5b' }}
+                    onClick={handleShowImport}
+                  >
+                    Import
+                  </button>
+
+                  <button
+                    className="btn btn-sm px-3 py-1 text-white fw-medium"
+                    style={{ backgroundColor: '#5a6c5b' }}
+                    onClick={handleExportTest}
+                    disabled={loadingExport}
+                  >
+                    Export
+                  </button>
+
+                  {selectedRows.length > 0 && (
+                    <button
+                      onClick={handleBulkDelete}
+                      className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
+                    >
+                      Delete Selected ({selectedRows.length})
+                    </button>
+                  )}
+
                   <select
                     className="form-select form-select-sm"
                     style={{ width: 'auto', minWidth: '100px' }}
@@ -498,7 +508,8 @@ useEffect(() => {
                     <option value={50}>Show 50</option>
                     <option value={100}>Show 100</option>
                   </select>
-                  <div className="position-relative" style={{ flex: 1, maxWidth: '300px' }}>
+
+                  <div className="position-relative" style={{ flex: 1, minWidth: '200px', maxWidth: '300px' }}>
                     <Icon
                       icon="ion:search-outline"
                       className="position-absolute"
@@ -513,21 +524,12 @@ useEffect(() => {
                       onChange={(e) => handleSearchChange(e.target.value)}
                     />
                   </div>
-                  <select
-                    className="form-select form-select-sm"
-                    style={{ width: 'auto', minWidth: '130px' }}
-                    value={tableState.status || 'All'}
-                    onChange={(e) => handleStatusChange(e.target.value)}
-                  >
-                    {statusOptions.map(status => (
-                      <option key={status} value={status}>{status}</option>
-                    ))}
-                  </select>
                 </div>
               </div>
-              <div className="col-md-6 text-end">
+
+              <div className="col-lg-3 col-md-4 col-12 text-md-end text-end">
                 <button
-                  className="btn btn-sm text-white fw-medium px-3 py-1"
+                  className="btn btn-sm text-white fw-medium px-3 py-1 w-md-auto"
                   style={{ backgroundColor: '#5a6c5b' }}
                   onClick={handleShow}
                 >
@@ -536,6 +538,8 @@ useEffect(() => {
               </div>
             </div>
           </div>
+
+
 
           <div className="card-body pt-0" style={{ backgroundColor: '#f5f5ef' }}>
             <div style={{ backgroundColor: 'white', borderRadius: '8px', overflow: 'hidden' }}>
@@ -832,7 +836,7 @@ useEffect(() => {
             </div>
           </div>
         </div>
-
+    </div>
         <AddCountry show={show} handleClose={handleClose} />
         <EditCountry show={showEdit} handleCloseEdit={handleCloseEdit} rowSelectData={rowSelectData} />
         {showImport && (
@@ -868,7 +872,86 @@ useEffect(() => {
               </div>
             </div>
           </div>
+
         )}
+             {showExportPopop && (
+              <div
+                className="modal fade show"
+                style={{ display: "block", backgroundColor: "rgba(0,0,0,0.5)" }}
+                tabIndex={-1}
+                role="dialog"
+              >
+                <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
+                  <div className="modal-content radius-16 bg-base">
+                    <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
+                      <h1 className="modal-title fs-5">Export Department</h1>
+                      <button
+                        type="button"
+                        className="btn-close"
+                        onClick={cancelExportTest}
+                        aria-label="Close"
+                      />
+                    </div>
+                    <div className="modal-body p-24">
+                      <div className="row">
+                        {/* Draggable List with Checkbox */}
+                        <div className="col-12 mb-20">
+                          {items.map((item, index) => (
+                            <div
+                              key={index}
+                              draggable
+                              onDragStart={(e) => handleDragStart(e, index)}
+                              onDrop={(e) => handleDrop(e, index)}
+                              onDragOver={handleDragOver}
+                              className="border p-2 mb-10 radius-8 d-flex align-items-center justify-content-start gap-2  cursor-pointer"
+                              style={{
+                                cursor: "grab",
+                                margin: "10px !important",
+                                height: "40px"
+                              }}
+                            >
+                              <input
+                                type="checkbox"
+                                id={`item-${index}`}
+                                checked={selectedItems.includes(item)}
+                                onChange={(e) =>
+                                  handleCheckboxChange(item, e.target.checked)
+                                }
+                                className="form-check-input"
+                                style={{ marginLeft: "5px" }}
+                              />
+                              <label htmlFor={`item-${index}`} className="mb-0">
+                                {item}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+    
+                        {/* Buttons */}
+                        <div className="d-flex align-items-center justify-content-center gap-3 mt-24">
+                          <button
+                            type="button"
+                            onClick={cancelExportTest}
+                            className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-40 py-11 radius-8"
+                          >
+                            Cancel
+                          </button>
+                          <button onClick={handleExport}
+                            type="button"
+                            className="btn btn-primary border border-primary-600 text-md px-48 py-12 radius-8"
+                          >
+                            Submit
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+
+                        )}
+
       </MasterLayout>
     </>
   );

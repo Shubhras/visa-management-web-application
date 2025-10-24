@@ -22,6 +22,7 @@ const DepartmentList = () => {
     fetchDepartmentList();
   };
 
+
   const [showEdit, setShowEdit] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [rowSelectData, setRowSelectData] = useState({});
@@ -328,6 +329,8 @@ const DepartmentList = () => {
     };
     setLoadingExport(true);
 
+
+
     dispatch(departmentExportData(sendPayload, (response, error) => {
       if (error) {
         setLoadingExport(false);
@@ -458,6 +461,8 @@ const DepartmentList = () => {
               </div>
             </div>
           </div>
+
+
           <div className="card-body pt-0" style={{ backgroundColor: '#f5f5ef' }}>
             <div style={{ backgroundColor: 'white', borderRadius: '8px', overflow: 'hidden' }}>
               <table className="table mb-0" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>

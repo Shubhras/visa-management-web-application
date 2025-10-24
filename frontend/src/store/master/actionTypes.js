@@ -13,11 +13,11 @@ export const EXPORT_COUNTRY = "EXPORT_COUNTRY";
 export const IMPORT_COUNTRY = "IMPORT_COUNTRY";
 
 export const STATE_LIST     =   "STATE_LIST";
-export const ADD_STATE   = "ADD_STATE";
-export const EDIT_STATE   = "EDIT_STATE";
-export const DELETE_STATE= "DELETE_STATE";
-export const EXPORT_STATE = "EXPORT_STATE";
-export const IMPORT_STATE = "IMPORT_STATE";
+export const ADD_STATE      = "ADD_STATE";
+export const EDIT_STATE     = "EDIT_STATE";
+export const DELETE_STATE   = "DELETE_STATE";
+export const EXPORT_STATE   = "EXPORT_STATE";
+export const IMPORT_STATE   = "IMPORT_STATE";
 
 
 
