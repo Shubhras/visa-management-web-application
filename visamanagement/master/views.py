@@ -534,6 +534,7 @@ class CountryCreateAPIView(APIView):
             currencyCode = request.data.get("currencyCode", "")
             status_flag = request.data.get("status", True)
 
+
             if not name:
                 return Response({
                     "statusCode": 400,
@@ -548,17 +549,18 @@ class CountryCreateAPIView(APIView):
                     "message": "Country name already exists"
                 }, status=status.HTTP_400_BAD_REQUEST)
 
+
             continent = None
             if continent_id:
                 try:
-                    continent = Continents.objects.get(id=continent_id, is_deleted=False)
+                    continent = Continents.objects.get(uuid=continent_id, is_deleted=False)
                 except Continents.DoesNotExist:
                     return Response({
                         "statusCode": 404,
                         "status": False,
                         "message": "Invalid continent ID"
                     }, status=status.HTTP_404_NOT_FOUND)
-
+            
             country = Country.objects.create(
                 uuid=uuid.uuid4(),
                 name=name,
