@@ -1967,17 +1967,25 @@ class DepartmentExportAPIView(APIView):
     def get(self, request):
         format_type = request.GET.get('format', 'csv').lower()
         fields = request.GET.get('fields')  # e.g., "name,description,uuid"
-        
+        uuids_param = request.GET.get('uuids', '')
+
+        uuids = [u.strip() for u in uuids_param.split(',') if u]
+
         # Default fields if none provided
         if fields:
             field_list = [f.strip() for f in fields.split(',')]
         else:
             field_list = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
 
+        if uuids:
+            queryset = Department.objects.filter(uuid__in=uuids)
+        else:
+            queryset = Department.objects.all()
+
         dataset = Dataset()
         dataset.headers = field_list
 
-        for dept in Department.objects.all():
+        for dept in queryset:
             row = []
             for field in field_list:
                 value = getattr(dept, field, '')  # get attribute dynamically
