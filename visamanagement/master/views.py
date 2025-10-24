@@ -560,7 +560,7 @@ class CountryCreateAPIView(APIView):
                     }, status=status.HTTP_404_NOT_FOUND)
 
             country = Country.objects.create(
-                id=uuid.uuid4(),
+                uuid=uuid.uuid4(),
                 name=name,
                 continent=continent,
                 shortName=shortName,
@@ -1768,13 +1768,21 @@ class TimezoneDeleteAPIView(APIView):
 
 
 
-
-
-
-
 class DepartmentListAPIView(APIView):
     def get(self, request):
         search = request.GET.get('search', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_order = request.GET.get('sortOrder', 'asc')
+
+
+        allowed_sort_fields = ['name', 'description', 'created_at']
+        if sort_by not in allowed_sort_fields:
+            sort_by = 'created_at'
+
+        if sort_order == 'desc':
+            sort_by = f'-{sort_by}'
+
+
         queryset = Department.objects.filter(is_deleted=False)
 
         if search:
@@ -1783,7 +1791,7 @@ class DepartmentListAPIView(APIView):
                 Q(description__icontains=search)
             )
 
-        queryset = queryset.order_by('-created_at')
+        queryset = queryset.order_by(sort_by)
 
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
