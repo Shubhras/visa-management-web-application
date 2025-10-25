@@ -1861,37 +1861,23 @@ class DepartmentListAPIView(APIView):
 
 
 
-
 class DepartmentCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
         name = request.data.get("name").strip()  # get name from request
 
-        # Check if a department with this name exists
-        existing = Department.objects.filter(name__iexact=name).first()
+        # Only check for active departments
+        existing = Department.objects.filter(name__iexact=name, is_deleted=False).first()
 
         if existing:
-            if existing.is_deleted:
-                # Reactivate the deleted department
-                existing.is_deleted = False
-                existing.description = request.data.get("description", existing.description)
-                existing.save()
-                serializer = DepartmentSerializer(existing)
-                return Response({
-                    "statusCode": 200,
-                    "status": True,
-                    "message": "Department reactivated successfully",
-                    "data": serializer.data
-                }, status=status.HTTP_200_OK)
-            else:
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "Department with this name already exists."
-                }, status=status.HTTP_400_BAD_REQUEST)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Department with this name already exists."
+            }, status=status.HTTP_400_BAD_REQUEST)
 
-        # If it doesn't exist, create new
+        # If no active department exists, create new (even if soft-deleted exists)
         serializer = DepartmentSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -1913,8 +1899,6 @@ class DepartmentCreateAPIView(APIView):
                 "status": False,
                 "message": message_text,
             }, status=status.HTTP_400_BAD_REQUEST)
-
-
 
 class DepartmentRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -2196,7 +2180,7 @@ class DepartmentImportAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-        
+
 
 # -----------------------employeeType---------------------------------
 class EmployeeTypeListAPIView(APIView):    
