@@ -133,7 +133,7 @@ class Timezone(models.Model):
 
 class Department(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=255, unique=True, verbose_name="Department Name", help_text="Name of the department")
+    name = models.CharField(max_length=255, verbose_name="Department Name", help_text="Name of the department")
     description = models.TextField(max_length=255, blank=True, verbose_name="Description", help_text="Optional description of the department")
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
