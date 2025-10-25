@@ -8,7 +8,7 @@ urlpatterns = [
     path('gender/list/', GenderListAPIView.as_view()),
     path('genders/<uuid:uuid>/', GenderDetailAPIView.as_view()),
     path('genders/update/<uuid:uuid>/', GenderUpdateAPIView.as_view()),
-    path('genders/<uuid:uuid>/delete/', GenderDeleteAPIView.as_view()),
+    path('genders/delete/', GenderDeleteAPIView.as_view()),
 
     path('Maritalstatus/create/', MaritalstatusCreateAPIView.as_view(),name='Maritalstatus-create'),
     path('Maritalstatus/list/', MaritalstatusListAPIView.as_view(),name='Maritalstatus-list'),
@@ -190,8 +190,81 @@ urlpatterns = [
     path('LostReason/export/', LostReasonExportAPIView.as_view(), name=' LostReason-export'),
     path('LostReason/import/',  LostReasonImportAPIView.as_view(), name=' LostReason-import'),
 
+    path('education-level-codes/create/', EducationLevelCodeCreateAPIView.as_view(), name='educationlevelcode-create'),
+    path('education-level-codes/<uuid:uuid>/', EducationLevelCodeRetrieveAPIView.as_view(), name='educationlevelcode-retrieve'),
+    path('education-level-codes/update/<uuid:uuid>/', EducationLevelCodeUpdateAPIView.as_view(), name='educationlevelcode-update'),
+    path('education-level-codes/delete/', EducationLevelCodeDeleteAPIView.as_view(), name='educationlevelcode-delete'),
+    path('education-level-codes/export/', EducationLevelCodeExportAPIView.as_view(), name='educationlevelcode-export'),
+    path('education-level-codes/import/', EducationLevelCodeImportAPIView.as_view(), name='educationlevelcode-import'),
+    
+    path('education-level/create/', EducationLevelCreateAPIView.as_view(), name='educationlevel-create'),
+    path('education-level/<uuid:uuid>/', EducationLevelRetrieveAPIView.as_view(), name='educationlevel-retrieve'),
+    path('education-level/update/<uuid:uuid>/', EducationLevelUpdateAPIView.as_view(), name='educationlevel-update'),
+    path('education-level/delete/', EducationLevelDeleteAPIView.as_view(), name='educationlevel-delete'),
+    path('education-level/export/', EducationLevelExportAPIView.as_view(), name='educationlevel-export'),
+    path('education-level/import/', EducationLevelImportAPIView.as_view(), name='educationlevel-import'),
+
+    path('education-duration/create/', EducationDurationCreateAPIView.as_view(), name='educationduration-create'),
+    path('education-duration/<uuid:uuid>/', EducationDurationRetrieveAPIView.as_view(), name='educationduration-retrieve'),
+    path('education-duration/update/<uuid:uuid>/', EducationDurationUpdateAPIView.as_view(), name='educationduration-update'),
+    path('education-duration/delete/', EducationDurationDeleteAPIView.as_view(), name='educationduration-delete'),
+    path('education-duration/export/', EducationDurationExportAPIView.as_view(), name='educationduration-export'),
+    path('education-duration/import/', EducationDurationImportAPIView.as_view(), name='educationduration-import'),
+
+    path('studymainarea/create/', StudymainareaCreateAPIView.as_view(), name='studymainarea-create'),
+    path('studymainarea/<uuid:uuid>/', StudymainareaRetrieveAPIView.as_view(), name='studymainarea-retrieve'),
+    path('studymainarea/update/<uuid:uuid>/', StudymainareaUpdateAPIView.as_view(), name='studymainarea-update'),
+    path('studymainarea/delete/', StudymainareaDeleteAPIView.as_view(), name='studymainarea-delete'),
+    path('studymainarea/export/', StudymainareaExportAPIView.as_view(), name='studymainarea-export'),
+    path('studymainarea/import/', StudymainareaImportAPIView.as_view(), name='studymainarea-import'),
+
+    path('studymajorarea/create/', StudymajorareaCreateAPIView.as_view(), name='studymajorarea-create'),
+    path('studymajorarea/<uuid:uuid>/', StudymajorareaRetrieveAPIView.as_view(), name='studymajorarea-retrieve'),
+    path('studymajorarea/update/<uuid:uuid>/', StudymajorareaUpdateAPIView.as_view(), name='studymajorarea-update'),
+    path('studymajorarea/delete/', StudymajorareaDeleteAPIView.as_view(), name='studymajorarea-delete'),
+    path('studymajorarea/export/', StudymajorareaExportAPIView.as_view(), name='studymajorarea-export'),
+    path('studymajorarea/import/', StudymajorareaImportAPIView.as_view(), name='studymajorarea-import'),
+
+    path('studyspecialisation/create/', StudySpecialisationCreateAPIView.as_view(), name='studyspecialisation-create'),
+    path('studyspecialisation/<uuid:uuid>/', StudySpecialisationRetrieveAPIView.as_view(), name='studyspecialisation-retrieve'),
+    path('studyspecialisation/update/<uuid:uuid>/', StudySpecialisationUpdateAPIView.as_view(), name='studyspecialisation-update'),
+    path('studyspecialisation/delete/', StudySpecialisationDeleteAPIView.as_view(), name='studyspecialisation-delete'),
+    path('studyspecialisation/export/', StudySpecialisationExportAPIView.as_view(), name='studyspecialisation-export'),
+    path('studyspecialisation/import/', StudySpecialisationImportAPIView.as_view(), name='studyspecialisation-import'),
+
+    path('academicresulttype/create/', AcademicResultTypeCreateAPIView.as_view(), name='academicresulttype-create'),
+    path('academicresulttype/<uuid:uuid>/', AcademicResultTypeRetrieveAPIView.as_view(), name='academicresulttype-retrieve'),
+    path('academicresulttype/update/<uuid:uuid>/', AcademicResultTypeUpdateAPIView.as_view(), name='academicresulttype-update'),
+    path('academicresulttype/delete/', AcademicResultTypeDeleteAPIView.as_view(), name='academicresulttype-delete'),
+    path('academicresulttype/export/', AcademicResultTypeExportAPIView.as_view(), name='academicresulttype-export'),
+    path('academicresulttype/import/', AcademicResultTypeImportAPIView.as_view(), name='academicresulttype-import'),
+
+    path('academicresult/create/', AcademicResultCreateAPIView.as_view(), name='academicresult-create'),
+    path('academicresult/<uuid:uuid>/', AcademicResultRetrieveAPIView.as_view(), name='academicresult-retrieve'),
+    path('academicresult/update/<uuid:uuid>/', AcademicResultUpdateAPIView.as_view(), name='academicresult-update'),
+    path('academicresult/delete/', AcademicResultDeleteAPIView.as_view(), name='academicresult-delete'),
+    path('academicresult/export/', AcademicResultExportAPIView.as_view(), name='academicresult-export'),
+    path('academicresult/import/', AcademicResultImportAPIView.as_view(), name='academicresult-import'),    
+
+     path('educationtype/create/', EducationTypeCreateAPIView.as_view(), name='educationtype-create'),
+    path('educationtype/<uuid:uuid>/', EducationTypeRetrieveAPIView.as_view(), name='educationtype-retrieve'),
+    path('educationtype/update/<uuid:uuid>/', EducationTypeUpdateAPIView.as_view(), name='educationtype-update'),
+    path('educationtype/delete/', EducationTypeDeleteAPIView.as_view(), name='educationtype-delete'),
+
+    path('mediumeducation/create/', MediumofEducationCreateAPIView.as_view(), name='mediumeducation-create'),
+    path('mediumeducation/<uuid:uuid>/', MediumofEducationRetrieveAPIView.as_view(), name='mediumeducation-retrieve'),
+    path('mediumeducation/update/<uuid:uuid>/', MediumofEducationUpdateAPIView.as_view(), name='mediumeducation-update'),
+    path('mediumeducation/delete/', MediumofEducationDeleteAPIView.as_view(), name='mediumeducation-delete'),
 
 
+    path('language/create/', LanguageCreateAPIView.as_view(), name='language-create'),
+    path('language/<uuid:uuid>/', LanguageRetrieveAPIView.as_view(), name='language-retrieve'),
+    path('language/update/<uuid:uuid>/', LanguageUpdateAPIView.as_view(), name='language-update'),
+    path('language/delete/', LanguageDeleteAPIView.as_view(), name='language-delete'),
+    path('language/list/', LanguageListAPIView.as_view(), name='language-list'),
+    path('language/export/', LanguageExportAPIView.as_view(), name='language-export'),
+    path('language/import/', LanguageImportAPIView.as_view(), name='language-import'),
 
 ]
+
 

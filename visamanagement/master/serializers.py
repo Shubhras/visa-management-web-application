@@ -51,6 +51,8 @@ class DepartmentSerializer(serializers.ModelSerializer):
         model = Department
         fields = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
 
+
+
 class EmployeeTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmployeeType
@@ -169,9 +171,220 @@ class EducationLevelCodeSerializer(serializers.ModelSerializer):
 
 
 
-# class BankAccountTypeSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = BankAccountType
-#         fields = ['uuid', 'name', 'description', 'created_at', 'updated_at']
+
+class EducationLevelSerializer(serializers.ModelSerializer):
+    # Optionally display the related LevelCode's code
+    level_code_detail = serializers.CharField(
+        source='level_code.Levelcode', read_only=True
+    )
+
+    class Meta:
+        model = EducationLevel
+        fields = [
+            'uuid', 
+            'level_code', 
+            'level_code_detail',  # optional for easy read
+            'educationlevel', 
+            'description', 
+            'is_deleted',
+            'created_at', 
+            'updated_at'
+        ]
+        read_only_fields = ['uuid', 'created_at', 'updated_at']
 
 
+class EducationDurationSerializer(serializers.ModelSerializer):
+    # Optionally display the related EducationLevel's name
+    educationlevel_detail = serializers.CharField(
+        source='educationlevel.educationlevel', read_only=True
+    )
+
+    class Meta:
+        model = EducationDuration
+        fields = [
+            'uuid',
+            'educationlevel',
+            'educationlevel_detail',  # optional for easy read
+            'durations',
+            'description',
+            'is_deleted',
+            'created_at',
+            'updated_at'
+        ]
+        read_only_fields = ['uuid', 'created_at', 'updated_at']
+
+
+
+class StudymainareaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Studymainarea
+        fields = [
+            'id',
+            'uuid',
+            'Mainarea',
+            'description',
+            'is_deleted',
+            'created_at',
+            'updated_at'
+        ]
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
+
+
+
+class StudymajorareaSerializer(serializers.ModelSerializer):
+    mainarea = StudymainareaSerializer(read_only=True)
+    mainarea_id = serializers.PrimaryKeyRelatedField(
+        queryset=Studymainarea.objects.all(),
+        source='mainarea',
+        write_only=True,
+        required=False,
+        allow_null=True
+    )
+
+    class Meta:
+        model = Studymajorarea
+        fields = [
+            'id',
+            'uuid',
+            'mainarea',
+            'mainarea_id',
+            'Majorarea',
+            'description',
+            'is_deleted',
+            'created_at',
+            'updated_at'
+        ]
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
+
+
+
+class StudySpecialisationSerializer(serializers.ModelSerializer):
+    mainarea = StudymainareaSerializer(read_only=True)
+    mainarea_id = serializers.PrimaryKeyRelatedField(
+        queryset=Studymainarea.objects.all(),
+        source='mainarea',
+        write_only=True,
+        required=False,
+        allow_null=True
+    )
+
+    Majorarea = StudymajorareaSerializer(read_only=True)
+    Majorarea_id = serializers.PrimaryKeyRelatedField(
+        queryset=Studymajorarea.objects.all(),
+        source='Majorarea',
+        write_only=True,
+        required=False,
+        allow_null=True
+    )
+
+    class Meta:
+        model = StudySpecialisation
+        fields = [
+            'id',
+            'uuid',
+            'mainarea',
+            'mainarea_id',
+            'Majorarea',
+            'Majorarea_id',
+            'studyspecialisation',
+            'description',
+            'is_deleted',
+            'created_at',
+            'updated_at'
+        ]
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
+
+
+class AcademicResultTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AcademicResultType
+        fields = [
+            'id',
+            'uuid',
+            'Academicresulttype',
+            'description',
+            'is_deleted',
+            'created_at',
+            'updated_at'
+        ]
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
+
+class AcademicResultSerializer(serializers.ModelSerializer):
+    AcademicResulttype = serializers.SerializerMethodField()
+    AcademicResulttype_id = serializers.PrimaryKeyRelatedField(
+        queryset=AcademicResultType.objects.all(),
+        source='AcademicResulttype',
+        write_only=True,
+        required=False,
+        allow_null=True
+    )
+
+    class Meta:
+        model = AcademicResult
+        fields = [
+            'id',
+            'uuid',
+            'AcademicResulttype',
+            'AcademicResulttype_id',
+            'Academicresult',
+            'description',
+            'is_deleted',
+            'created_at',
+            'updated_at'
+        ]
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
+    def get_AcademicResulttype(self, obj):
+        """Return a minimal representation of AcademicResultType."""
+        if obj.AcademicResulttype:
+            return {
+                "id": obj.AcademicResulttype.id,
+                "Academicresulttype": obj.AcademicResulttype.Academicresulttype
+            }
+        return None
+
+
+class EducationTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EducationType
+        fields = [
+            'uuid',
+            'educationType',
+            'Perticulars',
+            'is_deleted',
+            'created_at',
+            'updated_at'
+        ]
+        read_only_fields = ['uuid', 'created_at', 'updated_at']
+
+class MediumofEducationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MediumofEducation
+        fields = [
+            'uuid',  
+            'name',
+            'Perticulars',
+            'is_deleted',
+            'created_at',
+            'updated_at'
+        ]
+        read_only_fields = ['uuid', 'created_at', 'updated_at']
+
+
+
+class LanguageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Language
+        fields = [
+            'uuid',  
+            'name',
+            'description',
+            'is_deleted',
+            'created_at',
+            'updated_at'
+        ]
+        read_only_fields = ['uuid', 'created_at', 'updated_at']

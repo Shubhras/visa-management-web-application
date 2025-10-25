@@ -133,15 +133,17 @@ class Timezone(models.Model):
 
 class Department(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=255, unique=True, verbose_name="Department Name", help_text="Name of the department")
+    name = models.CharField(max_length=255, verbose_name="Department Name", help_text="Name of the department")
     description = models.TextField(max_length=255, blank=True, verbose_name="Description", help_text="Optional description of the department")
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        unique_together = ('name', 'is_deleted')
+
     def __str__(self):
         return self.name
-
 
 class EmployeeType(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -348,7 +350,7 @@ class EducationLevelCode(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     level_code = models.CharField(max_length=255, unique=True)
-    description = models.TextField(blank=True)
+    description = models.TextField(max_length=255,blank=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -367,7 +369,8 @@ class EducationLevel(models.Model):
         blank=True,
         null=True
     )
-    description = models.TextField(blank=True)
+    educationlevel= models.TextField(max_length=255,blank=True)
+    description = models.TextField(max_length=255,blank=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -379,12 +382,138 @@ class EducationLevel(models.Model):
 class  EducationDuration(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    educationlevel = models.ForeignKey(
+        EducationLevel,
+        on_delete=models.SET_NULL,
+        related_name="Education_duration",
+        blank=True,
+        null=True
+    )
     durations=models.IntegerField(null=True,blank=True)
-    description = models.TextField(blank=True)
+    description = models.TextField(max_length=255,blank=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.level_code.level_code if self.level_code else "No Level Code"
+        return self.durations 
     
+class Studymainarea(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    Mainarea=models.TextField(max_length=255,null=True,blank=True)
+    description = models.TextField(max_length=255,blank=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.Mainarea
+
+
+
+class Studymajorarea(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    mainarea=models.ForeignKey(Studymainarea, on_delete=models.SET_NULL,
+        related_name="Studymajor_area",
+        blank=True,
+        null=True)
+    majorarea=models.TextField(null=True,blank=True)
+    description = models.TextField(max_length=255,blank=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.Majorarea
+
+class StudySpecialisation(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    mainarea=models.ForeignKey(Studymainarea, on_delete=models.SET_NULL,
+        related_name="Study_Specialisation",
+        blank=True,
+        null=True)
+    majorarea=models.ForeignKey(Studymajorarea, on_delete=models.SET_NULL,
+        related_name="StudySpecialisation",
+        blank=True,
+        null=True)
+    studyspecialisation=models.TextField(max_length=255,blank=True,null=True)
+    description = models.TextField(max_length=255,blank=True,null=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.studyspecialisation
+
+
+class AcademicResultType(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    Academicresulttype=models.TextField(max_length=255,blank=True,null=True)
+    description = models.TextField(max_length=255,blank=True,null=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.Academicresulttype
+
+
+class AcademicResult(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    AcademicResulttype=models.ForeignKey(AcademicResultType, on_delete=models.SET_NULL,
+        related_name="Academic_result",
+        blank=True,
+        null=True)
+    Academicresult=models.TextField(max_length=255,blank=True,null=True)
+    description = models.TextField(max_length=255,blank=True,null=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.Academicresult
+
+
+class EducationType(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    educationType= models.TextField(max_length=255,blank=True,null=True)
+    Perticulars = models.TextField(max_length=255,blank=True,null=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.educationType
+
+class MediumofEducation(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    name= models.TextField(max_length=255,blank=True,null=True)
+    Perticulars = models.TextField(max_length=255,blank=True,null=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+
+
+
+class  Language(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    name= models.TextField(max_length=255,blank=True,null=True)
+    description = models.TextField(max_length=255,blank=True,null=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.educationType

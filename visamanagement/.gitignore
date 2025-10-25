@@ -5,6 +5,7 @@ __pycache__/
 
 # Environment variables
 .env
+/.env
 
 # Virtual environment folder (agar aapka venv folder hai)
 venv/
@@ -13,4 +14,12 @@ env/
 
 # Django migrations
 */migrations/
-!*/migrations/__init__.py       
+!*/migrations/__init__.py    
+
+
+# SQLite database
+db.sqlite3
+*.sqlite3
+
+# settings.py
+visamanagement/settings.py
