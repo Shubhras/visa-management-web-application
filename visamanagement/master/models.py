@@ -132,15 +132,16 @@ class Timezone(models.Model):
 
 
 class Department(models.Model):
-    id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=255)
-    description = models.TextField(blank=True, null=True)
+    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    nam
+e = models.CharField(max_length=255, unique=True, verbose_name="Department Name", help_text="Name of the department")
+    description = models.TextField(max_length=255, blank=True, verbose_name="Description", help_text="Optional description of the department")
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    class Meta:
-        unique_together = ('name', 'is_deleted')  # enforce uniqueness only among active records
+    def __str__(self):
+        return self.name
 
 class EmployeeType(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -429,11 +430,11 @@ class StudySpecialisation(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     mainarea=models.ForeignKey(Studymainarea, on_delete=models.SET_NULL,
-        related_name="StudySpecialisation",
+        related_name="Study_Specialisation",
         blank=True,
         null=True)
-    majorarea=models.ForeignKey(Studymainarea, on_delete=models.SET_NULL,
-        related_name="Study_Specialisation",
+    majorarea=models.ForeignKey(Studymajorarea, on_delete=models.SET_NULL,
+        related_name="StudySpecialisation",
         blank=True,
         null=True)
     studyspecialisation=models.TextField(max_length=255,blank=True,null=True)
