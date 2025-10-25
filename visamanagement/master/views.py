@@ -123,17 +123,37 @@ class AdminLogoutView(APIView):
 
 class GenderListAPIView(APIView):
     def get(self, request):
-        search = request.GET.get("search", "")
+        search = request.GET.get('search', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_order = request.GET.get('sortOrder', 'asc')
+
+        # Define allowed fields to sort
+        allowed_sort_fields = ['text', 'description', 'created_at']
+        if sort_by not in allowed_sort_fields:
+            sort_by = 'created_at'
+
+        if sort_order == 'desc':
+            sort_by = f'-{sort_by}'
+
+        # Filter out deleted entries
         queryset = Gender.objects.filter(is_deleted=False)
+
+        # Apply search filter if provided
         if search:
-            queryset = queryset.filter(Q(text__icontains=search) | Q(description__icontains=search))
-        serializer = GenderSerializer(queryset, many=True)
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": "Genders retrieved successfully",
-            "data": serializer.data
-        })
+            queryset = queryset.filter(
+                Q(text__icontains=search) |
+                Q(description__icontains=search)
+            )
+
+        # Apply ordering
+        queryset = queryset.order_by(sort_by)
+
+        # Apply pagination
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = GenderSerializer(result_page, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
 
 
 class GenderCreateAPIView(APIView):
@@ -299,39 +319,42 @@ class GenderDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+
+
 #-------------------------------maritalstatus--------------------------------
 class MaritalstatusListAPIView(APIView):
     def get(self, request):
         try:
-            search = request.GET.get("search", "")
-            page = int(request.GET.get("page", 1))
-            per_page = int(request.GET.get("per_page", 10))
+            search = request.GET.get('search', '').strip()
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'asc')
 
+            # Allowed fields to sort
+            allowed_sort_fields = ['text', 'description', 'created_at']
+            if sort_by not in allowed_sort_fields:
+                sort_by = 'created_at'
+            if sort_order == 'desc':
+                sort_by = f'-{sort_by}'
+
+            # Filter out deleted entries
             queryset = Maritalstatus.objects.filter(is_deleted=False)
+
+            # Apply search filter
             if search:
-                queryset = queryset.filter(Q(text__icontains=search) | Q(description__icontains=search))
+                queryset = queryset.filter(
+                    Q(text__icontains=search) |
+                    Q(description__icontains=search)
+                )
 
-            paginator = Paginator(queryset, per_page)
-            page_obj = paginator.get_page(page)
+            # Apply ordering
+            queryset = queryset.order_by(sort_by)
 
-            serializer = MaritalstatusSerializer(page_obj, many=True)
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": "Maritalstatus retrieved successfully",
-                "total": paginator.count,
-                "total_pages": paginator.num_pages,
-                "current_page": page,
-                "data": serializer.data
-            })
+            # Pagination
+            paginator = CustomPagination()
+            result_page = paginator.paginate_queryset(queryset, request)
+            serializer = MaritalstatusSerializer(result_page, many=True)
 
-        except ValueError:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Invalid page or per_page parameter",
-                "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
+            return paginator.get_paginated_response(serializer.data)
 
         except Exception as e:
             return Response({
@@ -340,6 +363,7 @@ class MaritalstatusListAPIView(APIView):
                 "message": str(e),
                 "data": None
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 class MaritalstatusCreateAPIView(APIView):
@@ -2620,7 +2644,7 @@ class CompanyTypeDeleteAPIView(APIView):
     def delete(self, request, uuid=None):
         ids = request.data.get('id', None)
 
-        # ✅ Case 1: Single delete (UUID passed in URL)
+        #  Case 1: Single delete (UUID passed in URL)
         if uuid:
             try:
                 company_type = CompanyType.objects.get(uuid=uuid, is_deleted=False)
@@ -2640,7 +2664,7 @@ class CompanyTypeDeleteAPIView(APIView):
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-        # ✅ Case 2: Delete all
+        #  Case 2: Delete all
         if ids == "all":
             company_types = CompanyType.objects.filter(is_deleted=False)
             count = company_types.count()
@@ -2659,7 +2683,7 @@ class CompanyTypeDeleteAPIView(APIView):
                 "data": None
             }, status=status.HTTP_200_OK)
 
-        # ✅ Case 3: Multiple delete (UUIDs in request body)
+        #  Case 3: Multiple delete (UUIDs in request body)
         if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
@@ -2957,7 +2981,7 @@ class OwnershipTypeDeleteAPIView(APIView):
     def delete(self, request, uuid=None):
         uuids = request.data.get('id', [])
 
-        # ✅ Case 1: Single delete (UUID in URL)
+        #  Case 1: Single delete (UUID in URL)
         if uuid:
             try:
                 ownership = OwnershipType.objects.get(uuid=uuid, is_deleted=False)
@@ -2977,7 +3001,7 @@ class OwnershipTypeDeleteAPIView(APIView):
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-        # ✅ Case 2: Multiple delete (UUIDs in request body)
+        #  Case 2: Multiple delete (UUIDs in request body)
         if not uuids or not isinstance(uuids, list):
             return Response({
                 "statusCode": 400,
@@ -3285,10 +3309,12 @@ class StakeholderCategoryExportAPIView(APIView):
         return response
 
 
+
 class StakeholderCategoryImportAPIView(APIView):
-    
     def post(self, request):
         file = request.FILES.get('file')
+        sheet_name = request.data.get('sheet_name')  # <-- User se sheet name lena
+
         if not file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -3297,29 +3323,55 @@ class StakeholderCategoryImportAPIView(APIView):
 
         try:
             if format_type == 'xlsx':
-                dataset.load(file.read(), format='xlsx')
-            else:  # default CSV
+                wb = openpyxl.load_workbook(file, read_only=True)
+                available_sheets = wb.sheetnames
+
+                if not sheet_name:
+                    return Response({
+                        'error': 'Please provide sheet_name',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                if sheet_name not in available_sheets:
+                    return Response({
+                        'error': f'Sheet "{sheet_name}" not found in uploaded file',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                ws = wb[sheet_name]
+                data = []
+                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    data.append(dict(zip(headers, row)))
+
+                for row in data:
+                    StakeholderCategory.objects.update_or_create(
+                        name=row.get('name'),
+                        defaults={
+                            'description': row.get('description', ''),
+                            'is_deleted': row.get('is_deleted', False)
+                        }
+                    )
+
+            else:  # CSV
                 dataset.load(file.read().decode('utf-8'), format='csv')
+                for row in dataset.dict:
+                    StakeholderCategory.objects.update_or_create(
+                        name=row.get('name'),
+                        defaults={
+                            'description': row.get('description', ''),
+                            'is_deleted': row.get('is_deleted', False)
+                        }
+                    )
+
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-        for row in dataset.dict:
-            StakeholderCategory.objects.update_or_create(
-                name=row.get('name'),
-                defaults={
-                    'description': row.get('description', ''),
-                    'is_deleted': row.get('is_deleted', False)
-                }
-            )
 
         return Response({
             "statusCode": 200,
             "status": True,
-            'message': 'Import successful'}, status=status.HTTP_200_OK)
-    
-
-
-
+            'message': f'Sheet "{sheet_name}" imported successfully' if sheet_name else 'Import successful'
+        }, status=status.HTTP_200_OK)
 
 class StakeholderTypeCreateAPIView(APIView):
     def post(self, request):
@@ -3409,7 +3461,7 @@ class StakeholderTypeDeleteAPIView(APIView):
     def delete(self, request, uuid=None):
         uuids = request.data.get('id', [])
 
-        # ✅ Case 1: Single delete (UUID in URL)
+        #  Case 1: Single delete (UUID in URL)
         if uuid:
             stakeholder_type = get_object_or_404(StakeholderType, uuid=uuid, is_deleted=False)
             stakeholder_type.is_deleted = True
@@ -3421,7 +3473,7 @@ class StakeholderTypeDeleteAPIView(APIView):
                 "data": None
             }, status=status.HTTP_200_OK)
 
-        # ✅ Case 2: Multiple delete (UUIDs in request body)
+        #  Case 2: Multiple delete (UUIDs in request body)
         if not uuids or not isinstance(uuids, list):
             return Response({
                 "statusCode": 400,
@@ -3578,7 +3630,7 @@ class AccreditationCategoryDeleteAPIView(APIView):
     def delete(self, request, uuid=None):
         uuids = request.data.get('uuids', [])
 
-        # ✅ Case 1: Single delete (UUID in URL)
+        #  Case 1: Single delete (UUID in URL)
         if uuid:
             try:
                 category = AccreditationCategory.objects.get(uuid=uuid, is_deleted=False)
@@ -3598,7 +3650,7 @@ class AccreditationCategoryDeleteAPIView(APIView):
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-        # ✅ Case 2: Multiple delete (UUIDs in request body)
+        #  Case 2: Multiple delete (UUIDs in request body)
         if not uuids or not isinstance(uuids, list):
             return Response({
                 "statusCode": 400,
@@ -3835,7 +3887,7 @@ class AccreditationNameDeleteAPIView(APIView):
     def delete(self, request, uuid=None):
         uuids = request.data.get('uuids', [])
 
-        # ✅ Case 1: Single delete (UUID in URL)
+        #  Case 1: Single delete (UUID in URL)
         if uuid:
             try:
                 name = AccreditationName.objects.get(uuid=uuid, is_deleted=False)
@@ -3854,7 +3906,7 @@ class AccreditationNameDeleteAPIView(APIView):
                 "message": "Accreditation Name deleted successfully"
             }, status=status.HTTP_200_OK)
 
-        # ✅ Case 2: Multiple delete (UUIDs in request body)
+        #  Case 2: Multiple delete (UUIDs in request body)
         if not uuids or not isinstance(uuids, list):
             return Response({
                 "statusCode": 400,
@@ -3997,7 +4049,7 @@ class BankAccountTypeDeleteAPIView(APIView):
     def delete(self, request, uuid=None):
         uuids = request.data.get('uuids', [])
 
-        # ✅ Case 1: Single delete (UUID in URL)
+        #  Case 1: Single delete (UUID in URL)
         if uuid:
             try:
                 category = BankAccountType.objects.get(uuid=uuid, is_deleted=False)
@@ -4017,7 +4069,7 @@ class BankAccountTypeDeleteAPIView(APIView):
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-        # ✅ Case 2: Multiple delete (UUIDs in request body)
+        #  Case 2: Multiple delete (UUIDs in request body)
         if not uuids or not isinstance(uuids, list):
             return Response({
                 "statusCode": 400,
@@ -4166,8 +4218,6 @@ class LicenseNameCreateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
-
-
 class LicenseNameListAPIView(APIView):    
     def get(self, request):
         search = request.GET.get('search', '').strip()
@@ -4253,7 +4303,7 @@ class LicenseNameDeleteAPIView(APIView):
     def delete(self, request, uuid=None):
         uuids = request.data.get('uuids', [])
 
-        # ✅ Case 1: Single delete (UUID in URL)
+        #  Case 1: Single delete (UUID in URL)
         if uuid:
             try:
                 license_obj = LicenseName.objects.get(uuid=uuid, is_deleted=False)
@@ -4272,7 +4322,7 @@ class LicenseNameDeleteAPIView(APIView):
                 "message": "License Name deleted successfully"
             }, status=status.HTTP_200_OK)
 
-        # ✅ Case 2: Multiple delete (UUIDs in request body)
+        #  Case 2: Multiple delete (UUIDs in request body)
         if not uuids or not isinstance(uuids, list):
             return Response({
                 "statusCode": 400,
@@ -4413,54 +4463,138 @@ class LeadSourceUpdateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
+
 class LeadSourceDeleteAPIView(APIView):
-    def delete(self, request, uuid):
-        try:
-            category = LeadSource.objects.get(uuid=uuid, is_deleted=False)
-        except LeadSource.DoesNotExist:
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def delete(self, request):
+        ids = request.data.get('id', None)
+
+        if not ids:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Please provide 'id' field (UUID list or 'all').",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Delete all
+        if ids == "all":
+            lead_sources = LeadSource.objects.filter(is_deleted=False)
+            count = lead_sources.count()
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No Lead Source Types found to delete.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+            lead_sources.update(is_deleted=True)
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"All {count} Lead Source Type(s) deleted successfully.",
+                "data": None
+            }, status=status.HTTP_200_OK)
+
+        # List of UUIDs
+        if not isinstance(ids, list):
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validate UUIDs
+        valid_uuids = []
+        invalid_uuids = []
+        for u in ids:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(u)
+
+        if not valid_uuids:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "No valid UUIDs provided.",
+                "data": {"invalid_uuids": invalid_uuids}
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Fetch Lead Sources that exist and are not deleted
+        lead_sources = LeadSource.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+        count = lead_sources.count()
+
+        if count == 0:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "Lead Source Type  not found"
+                "message": "No matching Lead Source Types found.",
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        category.is_deleted = True
-        category.save()
+        # Soft delete
+        lead_sources.update(is_deleted=True)
+
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": "Lead Source Type  deleted successfully"
+            "message": f"{count} Lead Source Type(s) deleted successfully.",
+            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         }, status=status.HTTP_200_OK)
-    
-
 
 
 class LeadSourceExportAPIView(APIView):
-    # permission_classes = [IsAuthenticated]  # Uncomment and adjust as needed
+    # permission_classes = [IsAuthenticated]  # Uncomment if needed
 
     def get(self, request):
         format_type = request.GET.get('format', 'csv').lower()
-        dataset = Dataset()
-        dataset.headers = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+        fields = request.GET.get('fields')  # optional comma-separated fields
+        uuids_param = request.GET.get('uuids', '')  # optional comma-separated uuids
 
-        for dept in LeadSource.objects.all():
-            dataset.append([
-                str(dept.uuid),
-                dept.name or '',  # Handle potential None
-                dept.description or '',
-                int(dept.is_deleted),
-                dept.created_at.strftime("%Y-%m-%d %H:%M:%S") if dept.created_at else '',
-                dept.updated_at.strftime("%Y-%m-%d %H:%M:%S") if dept.updated_at else ''
-            ])
+        # Parse UUIDs
+        uuids = [u.strip() for u in uuids_param.split(',') if u]
 
-        if format_type == 'xlsx':
-            data = XLSX().export_data(dataset)  # Returns bytes
-            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'departments.xlsx'
+        # Determine which fields to export
+        if fields:
+            field_list = [f.strip() for f in fields.split(',')]
         else:
-            data = CSV().export_data(dataset)  # Returns bytes (ensure UTF-8)
+            field_list = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+
+        # Filter queryset
+        if uuids:
+            queryset = LeadSource.objects.filter(uuid__in=uuids)
+        else:
+            queryset = LeadSource.objects.all()
+
+        # Prepare dataset
+        dataset = Dataset()
+        dataset.headers = field_list
+
+        for lead in queryset:
+            row = []
+            for field in field_list:
+                value = getattr(lead, field, '')
+                # Format datetime fields
+                if isinstance(value, datetime.datetime):
+                    value = value.strftime("%Y-%m-%d %H:%M:%S")
+                # Convert boolean to int
+                if isinstance(value, bool):
+                    value = int(value)
+                row.append(value if value is not None else '')
+            dataset.append(row)
+
+        # Export data
+        if format_type == 'xlsx':
+            data = XLSX().export_data(dataset)
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'lead_sources.xlsx'
+        else:
+            data = CSV().export_data(dataset)
             content_type = 'text/csv; charset=utf-8'
-            file_name = 'departments.csv'
+            file_name = 'lead_sources.csv'
 
         response = HttpResponse(data, content_type=content_type)
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
@@ -4468,9 +4602,10 @@ class LeadSourceExportAPIView(APIView):
 
 
 class LeadSourceImportAPIView(APIView):
-    
     def post(self, request):
         file = request.FILES.get('file')
+        sheet_name = request.data.get('sheet_name')  # <-- User se sheet name lena
+
         if not file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -4479,27 +4614,55 @@ class LeadSourceImportAPIView(APIView):
 
         try:
             if format_type == 'xlsx':
-                dataset.load(file.read(), format='xlsx')
-            else:  # default CSV
+                wb = openpyxl.load_workbook(file, read_only=True)
+                available_sheets = wb.sheetnames
+
+                if not sheet_name:
+                    return Response({
+                        'error': 'Please provide sheet_name',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                if sheet_name not in available_sheets:
+                    return Response({
+                        'error': f'Sheet "{sheet_name}" not found in uploaded file',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                ws = wb[sheet_name]
+                data = []
+                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    data.append(dict(zip(headers, row)))
+
+                for row in data:
+                    LeadSource.objects.update_or_create(
+                        name=row.get('name'),
+                        defaults={
+                            'description': row.get('description', ''),
+                            'is_deleted': row.get('is_deleted', False)
+                        }
+                    )
+
+            else:  # CSV
                 dataset.load(file.read().decode('utf-8'), format='csv')
+                for row in dataset.dict:
+                    LeadSource.objects.update_or_create(
+                        name=row.get('name'),
+                        defaults={
+                            'description': row.get('description', ''),
+                            'is_deleted': row.get('is_deleted', False)
+                        }
+                    )
+
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-        for row in dataset.dict:
-            LeadSource.objects.update_or_create(
-                name=row.get('name'),
-                defaults={
-                    'description': row.get('description', ''),
-                    'is_deleted': row.get('is_deleted', False)
-                }
-            )
 
         return Response({
             "statusCode": 200,
             "status": True,
-            'message': 'Import successful'}, status=status.HTTP_200_OK)
-    
-
+            'message': f'Sheet "{sheet_name}" imported successfully' if sheet_name else 'Import successful'
+        }, status=status.HTTP_200_OK)
 
 
 #-------------------------------------------InterestLevel---------------------------------
@@ -4611,9 +4774,9 @@ class InterestLevelDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
-        uuids = request.data.get('uuids', [])
+        uuids = request.data.get('uuids', None)
 
-        # ✅ Case 1: Single delete (UUID in URL)
+        #  Case 1: Single delete via URL parameter
         if uuid:
             try:
                 interest = InterestLevel.objects.get(uuid=uuid, is_deleted=False)
@@ -4633,12 +4796,31 @@ class InterestLevelDeleteAPIView(APIView):
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-        # ✅ Case 2: Multiple delete (UUIDs in request body)
+        #  Case 2: Delete all
+        if uuids == "all":
+            interests = InterestLevel.objects.filter(is_deleted=False)
+            count = interests.count()
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No Interest Levels found to delete.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+            interests.update(is_deleted=True)
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"All {count} Interest Level(s) deleted successfully.",
+                "data": None
+            }, status=status.HTTP_200_OK)
+
+        #  Case 3: Bulk delete via request body UUIDs
         if not uuids or not isinstance(uuids, list):
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Please provide a list of UUIDs in 'uuids' field.",
+                "message": "Please provide a list of UUIDs in 'uuids' field or 'all'.",
                 "data": None
             }, status=status.HTTP_400_BAD_REQUEST)
 
@@ -4668,7 +4850,7 @@ class InterestLevelDeleteAPIView(APIView):
                 "statusCode": 404,
                 "status": False,
                 "message": "No matching Interest Levels found.",
-                "data": {"invalid_uuids": invalid_uuids}
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
             }, status=status.HTTP_404_NOT_FOUND)
 
         # Soft delete
@@ -4678,8 +4860,9 @@ class InterestLevelDeleteAPIView(APIView):
             "statusCode": 200,
             "status": True,
             "message": f"{count} Interest Level(s) deleted successfully.",
-        
+            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         }, status=status.HTTP_200_OK)
+
 
 
 class InterestLevelExportAPIView(APIView):
@@ -4715,9 +4898,10 @@ class InterestLevelExportAPIView(APIView):
 
 
 class InterestLevelImportAPIView(APIView):
-    
     def post(self, request):
         file = request.FILES.get('file')
+        sheet_name = request.data.get('sheet_name')  # <-- User se sheet name lena
+
         if not file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -4726,28 +4910,55 @@ class InterestLevelImportAPIView(APIView):
 
         try:
             if format_type == 'xlsx':
-                dataset.load(file.read(), format='xlsx')
-            else:  # default CSV
+                wb = openpyxl.load_workbook(file, read_only=True)
+                available_sheets = wb.sheetnames
+
+                if not sheet_name:
+                    return Response({
+                        'error': 'Please provide sheet_name',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                if sheet_name not in available_sheets:
+                    return Response({
+                        'error': f'Sheet "{sheet_name}" not found in uploaded file',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                ws = wb[sheet_name]
+                data = []
+                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    data.append(dict(zip(headers, row)))
+
+                for row in data:
+                    InterestLevel.objects.update_or_create(
+                        name=row.get('name'),
+                        defaults={
+                            'description': row.get('description', ''),
+                            'is_deleted': row.get('is_deleted', False)
+                        }
+                    )
+
+            else:  # CSV
                 dataset.load(file.read().decode('utf-8'), format='csv')
+                for row in dataset.dict:
+                    InterestLevel.objects.update_or_create(
+                        name=row.get('name'),
+                        defaults={
+                            'description': row.get('description', ''),
+                            'is_deleted': row.get('is_deleted', False)
+                        }
+                    )
+
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-        for row in dataset.dict:
-            InterestLevel.objects.update_or_create(
-                name=row.get('name'),
-                defaults={
-                    'description': row.get('description', ''),
-                    'is_deleted': row.get('is_deleted', False)
-                }
-            )
 
         return Response({
             "statusCode": 200,
             "status": True,
-            'message': 'Import successful'}, status=status.HTTP_200_OK)
-    
-
-
+            'message': f'Sheet "{sheet_name}" imported successfully' if sheet_name else 'Import successful'
+        }, status=status.HTTP_200_OK)
 
 
 
@@ -4857,13 +5068,14 @@ class PriorityUpdateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
+
 class PriorityDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
-        uuids = request.data.get('uuids', [])
+        uuids = request.data.get('uuids', None)
 
-        # ✅ Case 1: Single delete (UUID in URL)
+        # ✅ Case 1: Single delete via URL UUID
         if uuid:
             try:
                 priority = Priority.objects.get(uuid=uuid, is_deleted=False)
@@ -4883,12 +5095,31 @@ class PriorityDeleteAPIView(APIView):
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-        # ✅ Case 2: Multiple delete (UUIDs in request body)
+        # ✅ Case 2: Delete all
+        if uuids == "all":
+            priorities = Priority.objects.filter(is_deleted=False)
+            count = priorities.count()
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No Priorities found to delete.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+            priorities.update(is_deleted=True)
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"All {count} Priority(s) deleted successfully.",
+                "data": None
+            }, status=status.HTTP_200_OK)
+
+        # ✅ Case 3: Bulk delete via UUIDs list
         if not uuids or not isinstance(uuids, list):
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Please provide a list of UUIDs in 'uuids' field.",
+                "message": "Please provide a list of UUIDs in 'uuids' field or 'all'.",
                 "data": None
             }, status=status.HTTP_400_BAD_REQUEST)
 
@@ -4917,8 +5148,8 @@ class PriorityDeleteAPIView(APIView):
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "No matching priorities found.",
-                "data": {"invalid_uuids": invalid_uuids}
+                "message": "No matching Priorities found.",
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
             }, status=status.HTTP_404_NOT_FOUND)
 
         # Soft delete
@@ -4928,36 +5159,61 @@ class PriorityDeleteAPIView(APIView):
             "statusCode": 200,
             "status": True,
             "message": f"{count} Priority(s) deleted successfully.",
-            
+            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         }, status=status.HTTP_200_OK)
 
 
+
+
 class PriorityExportAPIView(APIView):
-    # permission_classes = [IsAuthenticated]  # Uncomment and adjust as needed
+    # permission_classes = [IsAuthenticated]  # Uncomment if needed
 
     def get(self, request):
         format_type = request.GET.get('format', 'csv').lower()
-        dataset = Dataset()
-        dataset.headers = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+        fields = request.GET.get('fields')  # optional comma-separated fields
+        uuids_param = request.GET.get('uuids', '')  # optional comma-separated uuids
 
-        for dept in Priority.objects.all():
-            dataset.append([
-                str(dept.uuid),
-                dept.name or '',  # Handle potential None
-                dept.description or '',
-                int(dept.is_deleted),
-                dept.created_at.strftime("%Y-%m-%d %H:%M:%S") if dept.created_at else '',
-                dept.updated_at.strftime("%Y-%m-%d %H:%M:%S") if dept.updated_at else ''
-            ])
+        # Parse UUIDs
+        uuids = [u.strip() for u in uuids_param.split(',') if u]
 
-        if format_type == 'xlsx':
-            data = XLSX().export_data(dataset)  # Returns bytes
-            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'departments.xlsx'
+        # Determine fields
+        if fields:
+            field_list = [f.strip() for f in fields.split(',')]
         else:
-            data = CSV().export_data(dataset)  # Returns bytes (ensure UTF-8)
+            field_list = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+
+        # Filter queryset
+        if uuids:
+            queryset = Priority.objects.filter(uuid__in=uuids)
+        else:
+            queryset = Priority.objects.all()
+
+        # Prepare dataset
+        dataset = Dataset()
+        dataset.headers = field_list
+
+        for obj in queryset:
+            row = []
+            for field in field_list:
+                value = getattr(obj, field, '')
+                # Format datetime
+                if isinstance(value, datetime.datetime):
+                    value = value.strftime("%Y-%m-%d %H:%M:%S")
+                # Convert boolean to int
+                if isinstance(value, bool):
+                    value = int(value)
+                row.append(value if value is not None else '')
+            dataset.append(row)
+
+        # Export
+        if format_type == 'xlsx':
+            data = XLSX().export_data(dataset)
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'priorities.xlsx'
+        else:
+            data = CSV().export_data(dataset)
             content_type = 'text/csv; charset=utf-8'
-            file_name = 'departments.csv'
+            file_name = 'priorities.csv'
 
         response = HttpResponse(data, content_type=content_type)
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
@@ -4965,9 +5221,10 @@ class PriorityExportAPIView(APIView):
 
 
 class PriorityImportAPIView(APIView):
-    
     def post(self, request):
         file = request.FILES.get('file')
+        sheet_name = request.data.get('sheet_name')  # <-- User se sheet name lena
+
         if not file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -4976,28 +5233,55 @@ class PriorityImportAPIView(APIView):
 
         try:
             if format_type == 'xlsx':
-                dataset.load(file.read(), format='xlsx')
-            else:  # default CSV
+                wb = openpyxl.load_workbook(file, read_only=True)
+                available_sheets = wb.sheetnames
+
+                if not sheet_name:
+                    return Response({
+                        'error': 'Please provide sheet_name',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                if sheet_name not in available_sheets:
+                    return Response({
+                        'error': f'Sheet "{sheet_name}" not found in uploaded file',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                ws = wb[sheet_name]
+                data = []
+                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    data.append(dict(zip(headers, row)))
+
+                for row in data:
+                    Priority.objects.update_or_create(
+                        name=row.get('name'),
+                        defaults={
+                            'description': row.get('description', ''),
+                            'is_deleted': row.get('is_deleted', False)
+                        }
+                    )
+
+            else:  # CSV
                 dataset.load(file.read().decode('utf-8'), format='csv')
+                for row in dataset.dict:
+                    Priority.objects.update_or_create(
+                        name=row.get('name'),
+                        defaults={
+                            'description': row.get('description', ''),
+                            'is_deleted': row.get('is_deleted', False)
+                        }
+                    )
+
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-        for row in dataset.dict:
-            Priority.objects.update_or_create(
-                name=row.get('name'),
-                defaults={
-                    'description': row.get('description', ''),
-                    'is_deleted': row.get('is_deleted', False)
-                }
-            )
 
         return Response({
             "statusCode": 200,
             "status": True,
-            'message': 'Import successful'}, status=status.HTTP_200_OK)
-    
-
-
+            'message': f'Sheet "{sheet_name}" imported successfully' if sheet_name else 'Import successful'
+        }, status=status.HTTP_200_OK)
 
 
 #-------------------------------------------Tags---------------------------------
@@ -5116,7 +5400,7 @@ class TagsDeleteAPIView(APIView):
     def delete(self, request, uuid=None):
         uuids = request.data.get('uuids', [])
 
-        # ✅ Case 1: Single delete (UUID in URL)
+        #  Case 1: Single delete (UUID in URL)
         if uuid:
             try:
                 tag = Tags.objects.get(uuid=uuid, is_deleted=False)
@@ -5136,7 +5420,7 @@ class TagsDeleteAPIView(APIView):
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-        # ✅ Case 2: Multiple delete (UUIDs in request body)
+        #  Case 2: Multiple delete (UUIDs in request body)
         if not uuids or not isinstance(uuids, list):
             return Response({
                 "statusCode": 400,
@@ -5366,9 +5650,9 @@ class ActivityTypeDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
-        uuids = request.data.get('uuids', [])
+        uuids = request.data.get('uuids', None)
 
-        # ✅ Case 1: Single delete (UUID in URL)
+        # ✅ Case 1: Single delete via URL UUID
         if uuid:
             try:
                 activity = ActivityType.objects.get(uuid=uuid, is_deleted=False)
@@ -5388,12 +5672,31 @@ class ActivityTypeDeleteAPIView(APIView):
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-        # ✅ Case 2: Multiple delete (UUIDs in request body)
+        # ✅ Case 2: Delete all
+        if uuids == "all":
+            activities = ActivityType.objects.filter(is_deleted=False)
+            count = activities.count()
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No Activity Types found to delete.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+            activities.update(is_deleted=True)
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"All {count} Activity Type(s) deleted successfully.",
+                "data": None
+            }, status=status.HTTP_200_OK)
+
+        # ✅ Case 3: Bulk delete via UUIDs list
         if not uuids or not isinstance(uuids, list):
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Please provide a list of UUIDs in 'uuids' field.",
+                "message": "Please provide a list of UUIDs in 'uuids' field or 'all'.",
                 "data": None
             }, status=status.HTTP_400_BAD_REQUEST)
 
@@ -5423,7 +5726,7 @@ class ActivityTypeDeleteAPIView(APIView):
                 "statusCode": 404,
                 "status": False,
                 "message": "No matching Activity Types found.",
-                "data": {"invalid_uuids": invalid_uuids}
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
             }, status=status.HTTP_404_NOT_FOUND)
 
         # Soft delete
@@ -5433,9 +5736,8 @@ class ActivityTypeDeleteAPIView(APIView):
             "statusCode": 200,
             "status": True,
             "message": f"{count} Activity Type(s) deleted successfully.",
-            
+            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         }, status=status.HTTP_200_OK)
-
 class ActivityTypeExportAPIView(APIView):
     # permission_classes = [IsAuthenticated]  # Uncomment and adjust as needed
 
@@ -5469,9 +5771,10 @@ class ActivityTypeExportAPIView(APIView):
 
 
 class ActivityTypeImportAPIView(APIView):
-    
     def post(self, request):
         file = request.FILES.get('file')
+        sheet_name = request.data.get('sheet_name')  # <-- User se sheet name lena
+
         if not file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -5480,27 +5783,55 @@ class ActivityTypeImportAPIView(APIView):
 
         try:
             if format_type == 'xlsx':
-                dataset.load(file.read(), format='xlsx')
-            else:  # default CSV
+                wb = openpyxl.load_workbook(file, read_only=True)
+                available_sheets = wb.sheetnames
+
+                if not sheet_name:
+                    return Response({
+                        'error': 'Please provide sheet_name',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                if sheet_name not in available_sheets:
+                    return Response({
+                        'error': f'Sheet "{sheet_name}" not found in uploaded file',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                ws = wb[sheet_name]
+                data = []
+                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    data.append(dict(zip(headers, row)))
+
+                for row in data:
+                    ActivityType.objects.update_or_create(
+                        name=row.get('name'),
+                        defaults={
+                            'description': row.get('description', ''),
+                            'is_deleted': row.get('is_deleted', False)
+                        }
+                    )
+
+            else:  # CSV
                 dataset.load(file.read().decode('utf-8'), format='csv')
+                for row in dataset.dict:
+                    ActivityType.objects.update_or_create(
+                        name=row.get('name'),
+                        defaults={
+                            'description': row.get('description', ''),
+                            'is_deleted': row.get('is_deleted', False)
+                        }
+                    )
+
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-        for row in dataset.dict:
-            ActivityType.objects.update_or_create(
-                name=row.get('name'),
-                defaults={
-                    'description': row.get('description', ''),
-                    'is_deleted': row.get('is_deleted', False)
-                }
-            )
 
         return Response({
             "statusCode": 200,
             "status": True,
-            'message': 'Import successful'}, status=status.HTTP_200_OK)
-    
-
+            'message': f'Sheet "{sheet_name}" imported successfully' if sheet_name else 'Import successful'
+        }, status=status.HTTP_200_OK)
 
 
 
@@ -5617,9 +5948,9 @@ class LostReasonDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
-        uuids = request.data.get('uuids', [])
+        uuids = request.data.get('uuids', None)
 
-        # ✅ Case 1: Single delete (UUID in URL)
+        # ✅ Case 1: Single delete via URL UUID
         if uuid:
             try:
                 reason = LostReason.objects.get(uuid=uuid, is_deleted=False)
@@ -5639,12 +5970,31 @@ class LostReasonDeleteAPIView(APIView):
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-        # ✅ Case 2: Multiple delete (UUIDs in request body)
+        # ✅ Case 2: Delete all
+        if uuids == "all":
+            reasons = LostReason.objects.filter(is_deleted=False)
+            count = reasons.count()
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No Lost Reasons found to delete.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+            reasons.update(is_deleted=True)
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"All {count} Lost Reason(s) deleted successfully.",
+                "data": None
+            }, status=status.HTTP_200_OK)
+
+        # ✅ Case 3: Bulk delete via UUIDs list
         if not uuids or not isinstance(uuids, list):
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Please provide a list of UUIDs in 'uuids' field.",
+                "message": "Please provide a list of UUIDs in 'uuids' field or 'all'.",
                 "data": None
             }, status=status.HTTP_400_BAD_REQUEST)
 
@@ -5674,7 +6024,7 @@ class LostReasonDeleteAPIView(APIView):
                 "statusCode": 404,
                 "status": False,
                 "message": "No matching Lost Reasons found.",
-                "data": {"invalid_uuids": invalid_uuids}
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
             }, status=status.HTTP_404_NOT_FOUND)
 
         # Soft delete
@@ -5684,8 +6034,10 @@ class LostReasonDeleteAPIView(APIView):
             "statusCode": 200,
             "status": True,
             "message": f"{count} Lost Reason(s) deleted successfully.",
-          
+            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         }, status=status.HTTP_200_OK)
+
+
 
 class LostReasonExportAPIView(APIView):
     # permission_classes = [IsAuthenticated]  # Uncomment and adjust as needed
@@ -5720,9 +6072,10 @@ class LostReasonExportAPIView(APIView):
 
 
 class LostReasonImportAPIView(APIView):
-    
     def post(self, request):
         file = request.FILES.get('file')
+        sheet_name = request.data.get('sheet_name')  # <-- User se sheet name lena
+
         if not file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -5731,28 +6084,55 @@ class LostReasonImportAPIView(APIView):
 
         try:
             if format_type == 'xlsx':
-                dataset.load(file.read(), format='xlsx')
-            else:  # default CSV
+                wb = openpyxl.load_workbook(file, read_only=True)
+                available_sheets = wb.sheetnames
+
+                if not sheet_name:
+                    return Response({
+                        'error': 'Please provide sheet_name',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                if sheet_name not in available_sheets:
+                    return Response({
+                        'error': f'Sheet "{sheet_name}" not found in uploaded file',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                ws = wb[sheet_name]
+                data = []
+                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    data.append(dict(zip(headers, row)))
+
+                for row in data:
+                    LostReason.objects.update_or_create(
+                        name=row.get('name'),
+                        defaults={
+                            'description': row.get('description', ''),
+                            'is_deleted': row.get('is_deleted', False)
+                        }
+                    )
+
+            else:  # CSV
                 dataset.load(file.read().decode('utf-8'), format='csv')
+                for row in dataset.dict:
+                    LostReason.objects.update_or_create(
+                        name=row.get('name'),
+                        defaults={
+                            'description': row.get('description', ''),
+                            'is_deleted': row.get('is_deleted', False)
+                        }
+                    )
+
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-        for row in dataset.dict:
-            LostReason.objects.update_or_create(
-                name=row.get('name'),
-                defaults={
-                    'description': row.get('description', ''),
-                    'is_deleted': row.get('is_deleted', False)
-                }
-            )
 
         return Response({
             "statusCode": 200,
             "status": True,
-            'message': 'Import successful'}, status=status.HTTP_200_OK)
-    
-
-
+            'message': f'Sheet "{sheet_name}" imported successfully' if sheet_name else 'Import successful'
+        }, status=status.HTTP_200_OK)
 
 
 
