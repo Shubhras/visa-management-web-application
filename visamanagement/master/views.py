@@ -2032,7 +2032,7 @@ class DepartmentDeleteAPIView(APIView):
             }, status=status.HTTP_404_NOT_FOUND)
 
         # Soft delete
-        departments.update(is_deleted=True)
+        departments.delete()
 
         return Response({
             "statusCode": 200,
