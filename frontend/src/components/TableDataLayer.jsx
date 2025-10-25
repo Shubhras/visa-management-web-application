@@ -6,11 +6,23 @@ import { Link } from 'react-router-dom';
 
 const TableDataLayer = () => {
     useEffect(() => {
-        const table = $('#dataTable').DataTable({
-            pageLength: 10,
-        });
+        // Add a small delay to ensure DOM is ready
+        const timer = setTimeout(() => {
+            if ($.fn.DataTable.isDataTable('#dataTable')) {
+                $('#dataTable').DataTable().destroy();
+            }
+            
+            $('#dataTable').DataTable({
+                pageLength: 10,
+                destroy: true
+            });
+        }, 100);
+
         return () => {
-            table.destroy(true);
+            clearTimeout(timer);
+            if ($.fn.DataTable.isDataTable('#dataTable')) {
+                $('#dataTable').DataTable().destroy(true);
+            }
         };
     }, []);
     return (

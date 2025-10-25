@@ -4,8 +4,8 @@ import MasterLayout from "../../../masterLayout/MasterLayout";
 import Breadcrumb from "../../../components/Breadcrumb";
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { Link } from 'react-router-dom';
-import * as XLSX from 'xlsx';
-import { saveAs } from 'file-saver';
+// import * as XLSX from 'xlsx';
+// import { saveAs } from 'file-saver';
 import { toast } from "react-toastify";
 import AddDepartment from './AddDepartment';
 import EditDepartment from './EditDepartment';
@@ -27,23 +27,24 @@ const DepartmentList = () => {
   const [rowSelectData, setRowSelectData] = useState({});
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteConfirmMessage, setdeleteConfirmMessage] = useState("Are you sure you want to delete this department?");
   const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
 
-  const [items, setItems] = useState(["name", "description"]); // All items
-  const [selectedItems, setSelectedItems] = useState([...items]); // Checked items
+  const [items, setItems] = useState(["name", "description", "created_at"]);
+  const [selectedItems, setSelectedItems] = useState([...items]);
 
-
-
-  // Merged state for filters and pagination
+  // Updated state with sorting
   const [tableState, setTableState] = useState({
     page: 1,
-    limit: 10,
+    limit: 25,
     search: '',
     status: '',
+    sortBy: '', // Field to sort by
+    sortOrder: '', // 'asc' or 'desc'
     total: 0,
     totalPages: 0,
     currentPage: 1,
@@ -63,7 +64,7 @@ const DepartmentList = () => {
 
   useEffect(() => {
     fetchDepartmentList();
-  }, [tableState.page, tableState.limit, tableState.status]);
+  }, [tableState.page, tableState.limit, tableState.status, tableState.sortBy, tableState.sortOrder]);
 
   const fetchDepartmentList = () => {
     setLoading(true);
@@ -71,15 +72,14 @@ const DepartmentList = () => {
       page: tableState.page,
       limit: tableState.limit,
       search: tableState.search || '',
-      status: tableState.status || ''
+      status: tableState.status || '',
+      sortBy: tableState.sortBy || '',
+      sortOrder: tableState.sortOrder || ''
     };
 
     dispatch(departmentList(params, (response, error) => {
       setLoading(false);
       if (response?.statusCode === 200 && response?.status === true) {
-        //console.log('Response data:', response);
-
-        // Extract pagination from the nested pagination object
         const paginationData = response?.pagination || {};
 
         setDepartments(response?.data || []);
@@ -103,6 +103,33 @@ const DepartmentList = () => {
         }));
       }
     }));
+  };
+
+  // Handle sorting
+  const handleSort = (field) => {
+    setTableState(prev => {
+      // If clicking the same field, toggle between asc -> desc -> no sort
+      if (prev.sortBy === field) {
+        if (prev.sortOrder === 'asc') {
+          return { ...prev, sortOrder: 'desc', page: 1 };
+        } else if (prev.sortOrder === 'desc') {
+          return { ...prev, sortBy: '', sortOrder: '', page: 1 };
+        }
+      }
+      // If clicking a new field, start with asc
+      return { ...prev, sortBy: field, sortOrder: 'asc', page: 1 };
+    });
+  };
+
+  // Get sort icon for a column
+  const getSortIcon = (field) => {
+    if (tableState.sortBy !== field) {
+      return <Icon icon="ri:sort-line" width="16" style={{ color: '#999', marginLeft: '4px' }} />;
+    }
+    if (tableState.sortOrder === 'asc') {
+      return <Icon icon="ri:sort-asc" width="16" style={{ color: '#5a6c5b', marginLeft: '4px' }} />;
+    }
+    return <Icon icon="ri:sort-desc" width="16" style={{ color: '#5a6c5b', marginLeft: '4px' }} />;
   };
 
   const handleSearchChange = (value) => {
@@ -129,7 +156,18 @@ const DepartmentList = () => {
     }));
   };
 
+
+  // For "Select All" button
+  const handleSelectAllButton = () => {
+    if (isAllSelected) {
+      setSelectedRows([]);
+    } else {
+      setSelectedRows(departments.map(dept => dept.uuid));
+    }
+  };
+  // For checkbox in table header
   const handleSelectAll = (e) => {
+
     const checked = e.target.checked;
     if (checked) {
       setSelectedRows(departments.map(dept => dept.uuid));
@@ -137,6 +175,8 @@ const DepartmentList = () => {
       setSelectedRows([]);
     }
   };
+
+
 
   const handleRowSelect = (uuid) => {
     setSelectedRows(prev => {
@@ -205,27 +245,25 @@ const DepartmentList = () => {
     setShowDeleteConfirm(true);
   };
 
-  // Handle bulk delete
   const handleBulkDelete = () => {
     if (selectedRows.length === 0) {
       alert('Please select rows to delete');
       return;
     }
     setShowDeleteConfirm(true);
-
   };
-  const confirmDelete = () => {
-    // Determine which IDs to send — either single deleteId or multiple selectedRows
-    const sendPayload = deleteId ? [deleteId] : selectedRows;
-    console.log('Deleting departments:', sendPayload);
 
+  const confirmDelete = () => {
+
+    //const sendPayload = "all"//deleteId ? [deleteId] : selectedRows;
+     const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
+     
     if (!sendPayload || sendPayload.length === 0) {
       toast.error("No department selected for deletion.");
       return;
     }
 
     dispatch(departmentDelete(sendPayload, (response, error) => {
-
       if (error) {
         toast.error(error?.response?.data?.message || "server error");
       } else {
@@ -237,7 +275,6 @@ const DepartmentList = () => {
           setSelectedRows([])
           setDeleteId(null);
           fetchDepartmentList();
-
         } else {
           toast.error("Something went wrong.");
         }
@@ -260,14 +297,12 @@ const DepartmentList = () => {
     setShowImport(true);
   };
 
-
   const handleExportTest = () => {
     setShowExportPopop(true);
   }
 
   const cancelExportTest = () => {
     setShowExportPopop(false);
-
   };
 
   const handleDragStart = (e, index) => {
@@ -281,7 +316,6 @@ const DepartmentList = () => {
     newItems.splice(dropIndex, 0, draggedItem);
     setItems(newItems);
 
-    // Also reorder selectedItems to match
     const newSelected = newItems.filter((item) => selectedItems.includes(item));
     setSelectedItems(newSelected);
   };
@@ -292,39 +326,33 @@ const DepartmentList = () => {
 
   const handleCheckboxChange = (item, checked) => {
     if (checked) {
-      // Find the index of the item in the full items list
       const indexInItems = items.indexOf(item);
-
-      // Insert it into selectedItems at the correct position
       const newSelected = [...selectedItems];
-      // Find the first item in selectedItems that comes after this item
       const insertIndex = newSelected.findIndex(
         (i) => items.indexOf(i) > indexInItems
       );
       if (insertIndex === -1) {
-        newSelected.push(item); // If no item after, add at end
+        newSelected.push(item);
       } else {
-        newSelected.splice(insertIndex, 0, item); // Insert at correct position
+        newSelected.splice(insertIndex, 0, item);
       }
       setSelectedItems(newSelected);
     } else {
-      // Remove unchecked item
       setSelectedItems(selectedItems.filter((i) => i !== item));
     }
   }
 
-
-
   const handleExport = () => {
-    if(selectedItems.length == 0){
-     toast.error("Please select at least one field");
+    if (selectedItems.length == 0) {
+      toast.error("Please select at least one field");
       return
     }
     const fieldsString = selectedItems.join(',');
-  
+
     const sendPayload = {
       file: "csv",
-      fields:fieldsString //"name,description"
+      fields: fieldsString,
+      uuids: selectedRows
     };
     setLoadingExport(true);
 
@@ -335,23 +363,15 @@ const DepartmentList = () => {
       } else {
         setLoadingExport(false);
         if (response?.status === 200) {
-          // Create a Blob from the CSV data
           const blob = new Blob([response.data], { type: 'text/csv' });
-
-          // Create a temporary download link
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
           link.download = `departments_${new Date().toISOString().split('T')[0]}.csv`;
-
-          // Trigger download
           document.body.appendChild(link);
           link.click();
-
-          // Cleanup
           document.body.removeChild(link);
           window.URL.revokeObjectURL(url);
-
           toast.success("Export successful");
           cancelExportTest();
         } else {
@@ -360,132 +380,148 @@ const DepartmentList = () => {
       }
     }));
   };
- 
 
   const startIndex = (tableState.currentPage - 1) * tableState.limit;
   const statusOptions = ['All', 'Active', 'Inactive'];
 
   const formatDateTime = (dateString) => {
     const date = new Date(dateString);
-
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const year = date.getFullYear();
-
     let hours = date.getHours();
     const minutes = String(date.getMinutes()).padStart(2, '0');
     const seconds = String(date.getSeconds()).padStart(2, '0');
-
     const ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12 || 12; // Convert to 12-hour format
+    hours = hours % 12 || 12;
     hours = String(hours).padStart(2, '0');
-
     return `${day}-${month}-${year} ${hours}:${minutes}:${seconds} ${ampm}`
   };
+
   return (
     <>
       <MasterLayout>
         <Breadcrumb title="Department" subTitle="List" />
-        <div className="card basic-data-table">
-          <div className="card-body" style={{ backgroundColor: '#f5f5ef', paddingBottom: '16px' }}>
-            <div className="row align-items-center g-3">
-              <div className="col-lg-9 col-md-8 col-12">
-                <div className="d-flex flex-wrap align-items-center gap-2 gap-md-3">
-                  <button
-                    className="btn btn-sm px-3 py-1 text-white fw-medium"
-                    style={{ backgroundColor: '#5a6c5b' }}
-                    onClick={handleShowImport}
-                  >
-                    Import
-                  </button>
-
-                  <button
-                    className="btn btn-sm px-3 py-1 text-white fw-medium"
-                    style={{ backgroundColor: '#5a6c5b' }}
-                    onClick={handleExportTest}
-                    disabled={loadingExport}
-                  >
-                    Export
-                  </button>
-
-                  {selectedRows.length > 0 && (
+        <div className="card basic-data-table main-container-data">
+          <div className="card-body container-data">
+            <div className="card-body container-data">
+              <div className="row align-items-center gy-3 gx-2 flex-wrap">
+                {/* Left Section: Import / Export / Delete */}
+                <div className="col-xl-4 col-lg-4 col-md-12">
+                  <div className="d-flex flex-wrap align-items-center gap-2">
                     <button
-                      onClick={handleBulkDelete}
-                      className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
+                      className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
+                      onClick={handleShowImport}
                     >
-                      Delete Selected ({selectedRows.length})
+                      Import
                     </button>
-                  )}
 
-                  <select
-                    className="form-select form-select-sm"
-                    style={{ width: 'auto', minWidth: '100px' }}
-                    value={tableState.limit}
-                    onChange={(e) => handlePageLengthChange(e.target.value)}
-                  >
-                    <option value={10}>Show 10</option>
-                    <option value={25}>Show 25</option>
-                    <option value={50}>Show 50</option>
-                    <option value={100}>Show 100</option>
-                  </select>
+                    <button
+                      className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
+                      onClick={handleExportTest}
+                      disabled={loadingExport}
+                    >
+                      Export
+                    </button>
+                    <button
+                      onClick={handleSelectAllButton}
+                      className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
+                    >
+                      {isAllSelected ? 'Deselect All' : 'Select All'}
+                    </button>
+                    {selectedRows.length > 0 && (
+                      <button
+                        onClick={handleBulkDelete}
+                        className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
+                      >
+                        {isAllSelected
+                          ? `Delete All`
+                          : `Delete Selected (${selectedRows.length})`}
+                      </button>
+                    )}
 
-                  <div className="position-relative" style={{ flex: 1, minWidth: '200px', maxWidth: '300px' }}>
-                    <Icon
-                      icon="ion:search-outline"
-                      className="position-absolute"
-                      style={{ left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#999' }}
-                      width="18"
-                    />
-                    <input
-                      type="text"
-                      className="form-control form-control-sm ps-5"
-                      placeholder="Search..."
-                      value={tableState.search}
-                      onChange={(e) => handleSearchChange(e.target.value)}
-                    />
+                  </div>
+                </div>
+
+                {/* Right Section: Select / Search / +Add New */}
+                <div className="col-xl-8 col-lg-8 col-md-12">
+                  <div className="d-flex flex-wrap align-items-center justify-content-end gap-2">
+                    <select
+                      className="form-select form-select-sm"
+                      style={{ width: 'auto', minWidth: '100px' }}
+                      value={tableState.limit}
+                      onChange={(e) => handlePageLengthChange(e.target.value)}
+                    >
+                      <option value={10}>Show 10</option>
+                      <option value={25}>Show 25</option>
+                      <option value={50}>Show 50</option>
+                      <option value={100}>Show 100</option>
+                    </select>
+
+                    <div className="position-relative flex-grow-1" style={{ minWidth: '180px', maxWidth: '300px' }}>
+                      <Icon
+                        icon="ion:search-outline"
+                        className="position-absolute"
+                        style={{ left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#999' }}
+                        width="18"
+                      />
+                      <input
+                        type="text"
+                        className="form-control form-control-sm ps-5"
+                        placeholder="Search..."
+                        value={tableState.search}
+                        onChange={(e) => handleSearchChange(e.target.value)}
+                      />
+                    </div>
+
+                    <button
+                      className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
+                      onClick={handleShow}
+                    >
+                      + ADD New
+                    </button>
                   </div>
                 </div>
               </div>
-
-              <div className="col-lg-3 col-md-4 col-12 text-md-end text-end">
-                <button
-                  className="btn btn-sm text-white fw-medium px-3 py-1 w-md-auto"
-                  style={{ backgroundColor: '#5a6c5b' }}
-                  onClick={handleShow}
-                >
-                  + ADD New
-                </button>
-              </div>
             </div>
+
           </div>
-          <div className="card-body pt-0" style={{ backgroundColor: '#f5f5ef' }}>
-            <div style={{ backgroundColor: 'white', borderRadius: '8px', overflow: 'hidden' }}>
-              <table className="table mb-0" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
-                <thead style={{ backgroundColor: '#f8f9fa', borderBottom: '2px solid #e9ecef' }}>
+          <div className="card-body pt-0 container-table" >
+            <div className='container-table-div'>
+              <table className="table mb-0"  >
+                <thead >
                   <tr>
-                    <th scope="col" style={{ width: '80px' }}>
+                    <th scope="col" className='sl-numbar-th'>
                       <div className="d-flex align-items-center gap-2">
                         <input
                           className="form-check-input"
                           type="checkbox"
                           checked={isAllSelected}
                           onChange={handleSelectAll}
-                          style={{ cursor: 'pointer' }}
                           disabled={departments.length === 0}
                         />
                         <span>S.L</span>
                       </div>
                     </th>
-                    <th scope="col">
-                      Name
+                    <th scope="col" className='sorting-th'  onClick={() => handleSort('name')}>
+                      <div className="d-flex align-items-center">
+                        Name
+                        {getSortIcon('name')}
+                      </div>
                     </th>
-                    <th scope="col">
-                      Description
+                    <th scope="col" onClick={() => handleSort('description')}>
+                      <div className="d-flex align-items-center">
+                        Description
+                        {getSortIcon('description')}
+                      </div>
                     </th>
-                    <th scope="col">
-                      Created At
+                    <th scope="col" onClick={() => handleSort('created_at')}>
+                      <div className="d-flex align-items-center">
+                        Created At
+                        {getSortIcon('created_at')}
+                      </div>
                     </th>
-                    <th scope="col" style={{ width: '150px' }}>
+                    <th scope="col" className='action-th'>
                       Action
                     </th>
                   </tr>
@@ -504,7 +540,7 @@ const DepartmentList = () => {
                     </tr>
                   ) : departments.length > 0 ? (
                     departments.map((dept, index) => (
-                      <tr key={dept.uuid} style={{ borderBottom: '1px solid #f0f0f0' }}>
+                      <tr key={dept.uuid} >
                         <td >
                           <div className="d-flex align-items-center gap-2">
                             <input
@@ -512,7 +548,6 @@ const DepartmentList = () => {
                               type="checkbox"
                               checked={selectedRows.includes(dept.uuid)}
                               onChange={() => handleRowSelect(dept.uuid)}
-                              style={{ cursor: 'pointer' }}
                             />
                             <span>
                               {String(startIndex + index + 1).padStart(2, '0')}
@@ -536,39 +571,19 @@ const DepartmentList = () => {
                           <div className="d-flex align-items-center gap-2">
                             <Link
                               to="#"
-                              style={{
-                                width: '28px',
-                                height: '28px',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                borderRadius: '50%',
-                                backgroundColor: '#d1fae5',
-                                transition: 'all 0.2s'
-                              }}
+                              className='edit-btn-icone'
                               onClick={(e) => {
                                 e.preventDefault();
                                 handleShowEdit(dept);
                               }}
                             >
-                              <Icon icon="lucide:edit" width="16" style={{ color: '#059669' }} />
+                              <Icon icon="lucide:edit" width="18" style={{ color: '#059669' }} />
                             </Link>
                             <button
                               onClick={() => handleDelete(dept.uuid)}
-                              style={{
-                                width: '28px',
-                                height: '28px',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                borderRadius: '50%',
-                                backgroundColor: '#fee2e2',
-                                border: 'none',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s'
-                              }}
+                              className='delete-btn-icone'
                             >
-                              <Icon icon="mingcute:delete-2-line" width="16" style={{ color: '#dc2626' }} />
+                              <Icon icon="mingcute:delete-2-line" width="18" style={{ color: '#dc2626' }} />
                             </button>
                           </div>
                         </td>
@@ -585,7 +600,7 @@ const DepartmentList = () => {
               </table>
 
               {tableState.total > 0 && (
-                <div className="d-flex justify-content-between align-items-center px-4 py-3" style={{ borderTop: '1px solid #e8e8e8' }}>
+                <div className="d-flex justify-content-between align-items-center px-4 py-3" >
                   <div style={{ fontSize: '14px', color: '#6c757d' }}>
                     Showing {startIndex + 1} to {Math.min(startIndex + tableState.limit, tableState.total)} of {tableState.total} entries
                   </div>
@@ -593,7 +608,7 @@ const DepartmentList = () => {
                     <ul className="pagination mb-0" style={{ gap: '4px' }}>
                       <li className={`page-item ${!tableState.hasPrevious ? 'disabled' : ''}`}>
                         <button
-                          className="page-link border-0 bg-transparent"
+                          className="border-0 bg-transparent"
                           onClick={() => goToPage(1)}
                           disabled={!tableState.hasPrevious}
                           style={{
@@ -608,7 +623,7 @@ const DepartmentList = () => {
                       </li>
                       <li className={`page-item ${!tableState.hasPrevious ? 'disabled' : ''}`}>
                         <button
-                          className="page-link border-0 bg-transparent"
+                          className="border-0 bg-transparent"
                           onClick={() => goToPage(tableState.currentPage - 1)}
                           disabled={!tableState.hasPrevious}
                           style={{
@@ -625,7 +640,7 @@ const DepartmentList = () => {
                         <li key={idx} className="page-item">
                           {page === '...' ? (
                             <span
-                              className="page-link border-0 bg-transparent"
+                              className="border-0 bg-transparent"
                               style={{
                                 padding: '6px 12px',
                                 color: '#6c757d',
@@ -636,16 +651,17 @@ const DepartmentList = () => {
                             </span>
                           ) : (
                             <button
-                              className="page-link border-0"
+                              className="border-0 "
                               onClick={() => goToPage(page)}
                               style={{
                                 padding: '6px 12px',
                                 minWidth: '36px',
-                                backgroundColor: page === tableState.currentPage ? '#487fff' : 'transparent',
+                                backgroundColor: page === tableState.currentPage ? '#5a6c5b' : 'transparent',
                                 color: page === tableState.currentPage ? '#fff' : '#6c757d',
                                 borderRadius: '4px',
-                                fontWeight: page === tableState.currentPage ? '600' : '400',
-                                cursor: 'pointer'
+                                fontWeight: page === tableState.currentPage ? '500' : '400',
+                                cursor: 'pointer',
+                                fontSize: "16px"
                               }}
                             >
                               {page}
@@ -655,7 +671,7 @@ const DepartmentList = () => {
                       ))}
                       <li className={`page-item ${!tableState.hasNext ? 'disabled' : ''}`}>
                         <button
-                          className="page-link border-0 bg-transparent"
+                          className=" border-0 bg-transparent"
                           onClick={() => goToPage(tableState.currentPage + 1)}
                           disabled={!tableState.hasNext}
                           style={{
@@ -670,7 +686,7 @@ const DepartmentList = () => {
                       </li>
                       <li className={`page-item ${!tableState.hasNext ? 'disabled' : ''}`}>
                         <button
-                          className="page-link border-0 bg-transparent"
+                          className="border-0 bg-transparent"
                           onClick={() => goToPage(tableState.totalPages)}
                           disabled={!tableState.hasNext}
                           style={{
@@ -697,15 +713,18 @@ const DepartmentList = () => {
           <AddImportModal show={showImport} handleClose={handleCloseImport} />)}
 
         {showDeleteConfirm && (
-          <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal fade show common-ctl-popup">
             <div className="modal-dialog modal-dialog-centered">
               <div className="modal-content" style={{ borderRadius: '10px' }}>
                 <div className="modal-header">
-                  <h5 className="modal-title text-danger">Confirm Delete</h5>
+                  <h6 className="modal-title text-danger">Confirm Delete</h6>
                   <button type="button" className="btn-close" onClick={cancelDelete}></button>
                 </div>
                 <div className="modal-body">
-                  <p className="mb-0">Are you sure you want to delete this department?</p>
+                  {/* <p className="mb-0">Are you sure you want to delete this department?</p> */}
+                  {/* <p className="mb-0"> Are you sure you want to delete this department ({selectedRows.length})?</p> */}
+                  <p className="mb-0">{deleteConfirmMessage}</p>
+
                 </div>
                 <div className="modal-footer">
                   <button
@@ -730,12 +749,11 @@ const DepartmentList = () => {
 
         {showExportPopop && (
           <div
-            className="modal fade show"
-            style={{ display: "block", backgroundColor: "rgba(0,0,0,0.5)" }}
+            className="modal fade show common-ctl-popup"
             tabIndex={-1}
             role="dialog"
           >
-            <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
+            <div className="modal-dialog modal-lg modal-dialog-centered " role="document">
               <div className="modal-content radius-16 bg-base">
                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
                   <h1 className="modal-title fs-5">Export Department</h1>
@@ -748,7 +766,6 @@ const DepartmentList = () => {
                 </div>
                 <div className="modal-body p-24">
                   <div className="row">
-                    {/* Draggable List with Checkbox */}
                     <div className="col-12 mb-20">
                       {items.map((item, index) => (
                         <div
@@ -757,7 +774,7 @@ const DepartmentList = () => {
                           onDragStart={(e) => handleDragStart(e, index)}
                           onDrop={(e) => handleDrop(e, index)}
                           onDragOver={handleDragOver}
-                          className="border p-2 mb-10 radius-8 d-flex align-items-center justify-content-start gap-2  cursor-pointer"
+                          className="border p-2 mb-10 radius-8 d-flex align-items-center justify-content-start gap-2  cursor-pointer export-file"
                           style={{
                             cursor: "grab",
                             margin: "10px !important",
@@ -781,18 +798,17 @@ const DepartmentList = () => {
                       ))}
                     </div>
 
-                    {/* Buttons */}
                     <div className="d-flex align-items-center justify-content-center gap-3 mt-24">
                       <button
                         type="button"
                         onClick={cancelExportTest}
-                        className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-40 py-11 radius-8"
+                        className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-40 py-6 radius-8"
                       >
                         Cancel
                       </button>
                       <button onClick={handleExport}
                         type="button"
-                        className="btn btn-primary border border-primary-600 text-md px-48 py-12 radius-8"
+                        className="btn comman-btn-color border border-primary-600 text-md px-40 py-6 radius-8"
                       >
                         Submit
                       </button>
