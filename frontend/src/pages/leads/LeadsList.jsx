@@ -404,7 +404,7 @@ const LeadsList = () => {
             </div>
           </div>
 
-          <div className="card-body pt-0" style={{ backgroundColor: '#f5f5ef' }}>
+          <div className="card-body pt-0" >
             <div style={{ backgroundColor: 'white', borderRadius: '8px', overflow: 'hidden' }}>
               <table className="table mb-0" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
                 <thead style={{ backgroundColor: '#f8f9fa', borderBottom: '2px solid #e9ecef' }}>

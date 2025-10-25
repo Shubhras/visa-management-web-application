@@ -1,6 +1,4 @@
-import React, { useState } from 'react'
-import { Icon } from '@iconify/react/dist/iconify.js';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
 import { useDispatch } from "react-redux";
 import { departmentAdd } from '../../../store/master/actions';
 import { toast } from "react-toastify";
@@ -13,14 +11,12 @@ const AddDepartment = ({ show, handleClose }) => {
   const [formData, setFormData] = useState({
     departmentName: '',
     description: '',
-    // status: 'active'
   });
 
   // Validation errors state
   const [errors, setErrors] = useState({
     departmentName: '',
     description: '',
-    // status: ''
   });
 
   // Handle input changes
@@ -50,13 +46,6 @@ const AddDepartment = ({ show, handleClose }) => {
       newErrors.departmentName = 'Department Name is required';
       isValid = false;
     }
-
-    // Description validation
-    if (!formData.description.trim()) {
-      newErrors.description = 'Description is required';
-      isValid = false;
-    }
-
     setErrors(newErrors);
     return isValid;
   };
@@ -71,6 +60,7 @@ const AddDepartment = ({ show, handleClose }) => {
         description: formData.description,
 
       };
+      setLoading(true);
       dispatch(departmentAdd(sendPayload, (response, error) => {
         setLoading(false);
         if (error) {
@@ -81,7 +71,6 @@ const AddDepartment = ({ show, handleClose }) => {
             setFormData({
               departmentName: '',
               description: '',
-              // status: 'active'
             });
             setErrors({});
             handleClose();
@@ -99,10 +88,10 @@ const AddDepartment = ({ show, handleClose }) => {
     setFormData({
       departmentName: '',
       description: '',
-      // status: 'active'
     });
     setErrors({});
     handleClose();
+     setLoading(false);
   };
 
   // NOW we can do the conditional return - AFTER all hooks
@@ -111,8 +100,7 @@ const AddDepartment = ({ show, handleClose }) => {
   return (
     <>
       <div
-        className={`modal fade show`}
-        style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}
+        className={`modal fade show common-ctl-popup`}
         tabIndex={-1}
         role="dialog"
         aria-labelledby="departmentModalLabel"
@@ -161,7 +149,7 @@ const AddDepartment = ({ show, handleClose }) => {
                       htmlFor="desc"
                       className="form-label fw-semibold text-primary-light text-sm mb-8"
                     >
-                      Description <span className="text-danger">*</span>
+                      Description <span className="text-danger"></span>
                     </label>
                     <textarea
                       className={`form-control ${errors.description ? 'is-invalid' : ''}`}
@@ -173,78 +161,22 @@ const AddDepartment = ({ show, handleClose }) => {
                       cols={50}
                       placeholder="Description"
                     />
-                    {errors.description && (
-                      <div className="text-danger text-sm mt-1">
-                        {errors.description}
-                      </div>
-                    )}
                   </div>
-
-                  {/* Status */}
-                  {/* <div className="col-12 mb-20">
-                    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                      Status <span className="text-danger">*</span>
-                    </label>
-                    <div className="d-flex align-items-center flex-wrap gap-28">
-                      <div className="form-check checked-success d-flex align-items-center gap-2">
-                        <input
-                          className="form-check-input"
-                          type="radio"
-                          name="status"
-                          id="active"
-                          value="active"
-                          checked={formData.status === 'active'}
-                          onChange={handleChange}
-                        />
-                        <label
-                          className="form-check-label fw-medium text-secondary-light text-sm d-flex align-items-center gap-1"
-                          htmlFor="active"
-                        >
-                          <span className="w-8-px h-8-px bg-success-600 rounded-circle" />
-                          Active
-                        </label>
-                      </div>
-
-                      <div className="form-check checked-danger d-flex align-items-center gap-2">
-                        <input
-                          className="form-check-input"
-                          type="radio"
-                          name="status"
-                          id="inactive"
-                          value="inactive"
-                          checked={formData.status === 'inactive'}
-                          onChange={handleChange}
-                        />
-                        <label
-                          className="form-check-label fw-medium text-secondary-light text-sm d-flex align-items-center gap-1"
-                          htmlFor="inactive"
-                        >
-                          <span className="w-8-px h-8-px bg-danger-600 rounded-circle" />
-                          Inactive
-                        </label>
-                      </div>
-                    </div>
-                    {errors.status && (
-                      <div className="text-danger text-sm mt-1">
-                        {errors.status}
-                      </div>
-                    )}
-                  </div> */}
-
                   {/* Buttons */}
                   <div className="d-flex align-items-center justify-content-center gap-3 mt-24">
                     <button
                       type="button"
                       onClick={onClose}
-                      className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-40 py-11 radius-8"
+                      className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-40 py-6 radius-8"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      className="btn btn-primary border border-primary-600 text-md px-48 py-12 radius-8"
+                      className="btn comman-btn-color border border-primary-600 text-md px-40 py-6 radius-8"
+                       disabled={loading}
                     >
-                      Save
+                       {loading ? "Save" : "Save"}
                     </button>
                   </div>
                 </div>

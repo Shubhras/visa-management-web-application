@@ -15,53 +15,53 @@ const Header = () => {
         },
         {
             name: 'Sales',
-            path: '/sales',
+            path: '/',
             submenu: [
-                { name: 'All Sales', path: '/sales/all' },
+                { name: 'All Sales', path: '/' },
                 // { name: 'Add Sale', path: '/sales/add' },
                 // { name: 'Reports', path: '/sales/reports' }
             ]
         },
         {
             name: 'Clients',
-            path: '/clients',
+            path: '/',
             submenu: [
-                { name: 'All Clients', path: '/clients/all' },
+                { name: 'All Clients', path: '/' },
                 // { name: 'Add Client', path: '/clients/add' },
                 // { name: 'Active Clients', path: '/clients/active' }
             ]
         },
         {
             name: 'Stockholders',
-            path: '/stockholders',
+            path: '/',
             submenu: [
-                { name: 'All Stockholders', path: '/stockholders/all' },
+                { name: 'All Stockholders', path: '/' },
                 // { name: 'Add Stockholder', path: '/stockholders/add' }
             ]
         },
         {
             name: 'Visa',
-            path: '/visa',
+            path: '/',
             submenu: [
-                { name: 'Visa Applications', path: '/visa/applications' },
+                { name: 'Visa Applications', path: '/' },
                 // { name: 'Approved Visas', path: '/visa/approved' },
                 // { name: 'Pending Visas', path: '/visa/pending' }
             ]
         },
         {
             name: 'Package',
-            path: '/package',
+            path: '/',
             submenu: [
-                { name: 'All Packages', path: '/package/all' },
+                { name: 'All Packages', path: '/' },
                 // { name: 'Add Package', path: '/package/add' },
                 // { name: 'Package Types', path: '/package/types' }
             ]
         },
         {
             name: 'Subscriber',
-            path: '/subscriber',
+            path: '/',
             submenu: [
-                { name: 'All Subscribers', path: '/subscriber/all' },
+                { name: 'All Subscribers', path: '/' },
                 // { name: 'Active Plans', path: '/subscriber/active' },
                 // { name: 'Expired Plans', path: '/subscriber/expired' }
             ]
@@ -72,7 +72,7 @@ const Header = () => {
             submenu: [
                 { name: 'Department', path: '/department' },
                 { name: 'Employee type', path: '/employeetype' },
-                { name: 'Company type', path: '/companytype' }
+                // { name: 'Company type', path: '/companytype' }
             ]
         }
     ];
@@ -110,9 +110,9 @@ const Header = () => {
                     >
                         {item.name}
                         {item.submenu && (
-                            <Icon 
-                                icon='mingcute:down-line' 
-                                width='16' 
+                            <Icon
+                                icon='mingcute:down-line'
+                                width='16'
                                 height='16'
                                 style={{
                                     transition: 'transform 0.2s ease',

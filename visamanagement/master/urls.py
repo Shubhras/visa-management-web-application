@@ -5,9 +5,9 @@ urlpatterns = [
 
     path("login/", MasterTokenLoginAPIView.as_view(), name="master-login"),
     path('genders/create/', GenderCreateAPIView.as_view()),
-    path('gender/list/', GenderListAPIView.as_view()),
+    path('genders/', GenderListAPIView.as_view()),
     path('genders/<uuid:uuid>/', GenderDetailAPIView.as_view()),
-    path('genders/update/<uuid:uuid>/', GenderUpdateAPIView.as_view()),
+    path('genders/<uuid:uuid>/update/', GenderUpdateAPIView.as_view()),
     path('genders/delete/', GenderDeleteAPIView.as_view()),
 
     path('Maritalstatus/create/', MaritalstatusCreateAPIView.as_view(),name='Maritalstatus-create'),
@@ -136,7 +136,7 @@ urlpatterns = [
     path("license-name/create/", LicenseNameCreateAPIView.as_view(),name='licensename-create'),
     path("license-name/", LicenseNameListAPIView.as_view(),name='licensename-list'),
     path("license-name/<uuid:uuid>/", LicenseNameRetrieveAPIView.as_view(),name='licensename-detail'),
-    path("license-name/update/<uuid:uuid>/", LicenseNameUpdateAPIView.as_view(),name='licensename-update'),
+    path("license-name/<uuid:uuid>/update/", LicenseNameUpdateAPIView.as_view(),name='licensename-update'),
     path("license-name/delete/", LicenseNameDeleteAPIView.as_view(),name='licensename-delete'),
    
     path("LeadSource/create/", LeadSourceCreateAPIView.as_view(), name='LeadSource-create'),
@@ -148,7 +148,7 @@ urlpatterns = [
     path('LeadSource/import/',   LeadSourceImportAPIView.as_view(), name=' LeadSource-import'),
 
     path("InterestLevel/create/", InterestLevelCreateAPIView.as_view(), name='InterestLevel-create'),
-    path("InterestLevel/list/", InterestLevelListAPIView.as_view(), name='InterestLevel-list'),
+    path("InterestLevel/", InterestLevelListAPIView.as_view(), name='InterestLevel-list'),
     path("InterestLevel/<uuid:uuid>/", InterestLevelRetrieveAPIView.as_view(), name='InterestLevel-detail'),
     path("InterestLevel/<uuid:uuid>/update/", InterestLevelUpdateAPIView.as_view(), name='InterestLevel-update'),
     path("InterestLevel/delete/", InterestLevelDeleteAPIView.as_view(), name='InterestLevel-delete'),
@@ -157,7 +157,7 @@ urlpatterns = [
 
 
     path("Priority/create/", PriorityCreateAPIView.as_view(), name='Priority-create'),
-    path("Priority/list/", PriorityListAPIView.as_view(), name='Priority-list'),
+    path("Priority/", PriorityListAPIView.as_view(), name='Priority-list'),
     path("Priority/<uuid:uuid>/", PriorityRetrieveAPIView.as_view(), name='Priority-detail'),
     path("Priority/<uuid:uuid>/update/", PriorityUpdateAPIView.as_view(), name='Priority-update'),
     path("Priority/delete/<uuid:uuid>/", PriorityDeleteAPIView.as_view(), name='Priority-delete'),
@@ -165,7 +165,7 @@ urlpatterns = [
     path('Priority/import/',  PriorityImportAPIView.as_view(), name=' InterPriorityestLevel-import'),
 
     path("Tags/create/", TagsCreateAPIView.as_view(), name='Tags-create'),
-    path("Tags/list/", TagsListAPIView.as_view(), name='Tags-list'),
+    path("Tags/", TagsListAPIView.as_view(), name='Tags-list'),
     path("Tags/<uuid:uuid>/", TagsRetrieveAPIView.as_view(), name='Tags-detail'),
     path("Tags/<uuid:uuid>/update/", TagsUpdateAPIView.as_view(), name='Tags-update'),
     path("Tags/delete/", TagsDeleteAPIView.as_view(), name='Tags-delete'),
@@ -174,7 +174,7 @@ urlpatterns = [
 
 
     path("ActivityType/create/", ActivityTypeCreateAPIView.as_view(), name='ActivityType-create'),
-    path("ActivityType/list/", ActivityTypeListAPIView.as_view(), name='ActivityType-list'),
+    path("ActivityType/", ActivityTypeListAPIView.as_view(), name='ActivityType-list'),
     path("ActivityType/<uuid:uuid>/", ActivityTypeRetrieveAPIView.as_view(), name='ActivityType-detail'),
     path("ActivityType/<uuid:uuid>/update/", ActivityTypeUpdateAPIView.as_view(), name='ActivityType-update'),
     path("ActivityType/delete/", ActivityTypeDeleteAPIView.as_view(), name='ActivityType-delete'),
@@ -183,7 +183,7 @@ urlpatterns = [
 
 
     path("LostReason/create/", LostReasonCreateAPIView.as_view(), name='LostReason-create'),
-    path("LostReason/list/", LostReasonListAPIView.as_view(), name='LostReason-list'),
+    path("LostReason/", LostReasonListAPIView.as_view(), name='LostReason-list'),
     path("LostReason/<uuid:uuid>/", LostReasonRetrieveAPIView.as_view(), name='LostReason-detail'),
     path("LostReason/<uuid:uuid>/update/", LostReasonUpdateAPIView.as_view(), name='LostReason-update'),
     path("LostReason/delete/", LostReasonDeleteAPIView.as_view(), name='LostReason-delete'),

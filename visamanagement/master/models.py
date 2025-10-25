@@ -516,4 +516,49 @@ class  Language(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.educationType
+        return self.name
+
+
+class  LanguageTest(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    language=models.ForeignKey(Language, on_delete=models.SET_NULL, related_name="language_test", blank=True, null=True)
+    name=models.TextField(max_length=255,blank=True,null=True)
+    fullname= models.TextField(max_length=255,blank=True,null=True)
+    description = models.TextField(max_length=255,blank=True,null=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+
+
+class LanguagetestmoduleName(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    name=models.TextField(max_length=255,blank=True,null=True)
+    description = models.TextField(max_length=255,blank=True,null=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+
+
+class CLBLevel(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    name=models.TextField(max_length=255,blank=True,null=True)
+    description = models.TextField(max_length=255,blank=True,null=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+

@@ -12,7 +12,7 @@ const MasterLayout = ({ children }) => {
   const location = useLocation();
 
   const handleLogout = () => {
-   toast.success('Logout successful');
+    toast.success('Logout successful');
     // // 1. Clear user data (localStorage / sessionStorage / Redux)
     // localStorage.removeItem('userToken') // or whatever you use
     // localStorage.removeItem('userData')
@@ -106,6 +106,7 @@ const MasterLayout = ({ children }) => {
               ? "sidebar sidebar-open"
               : "sidebar"
         }
+        style={{ display: "none" }}
       >
         <button
           onClick={mobileMenuControl}
@@ -117,10 +118,15 @@ const MasterLayout = ({ children }) => {
         <div>
           <Link to='/' className='sidebar-logo'>
             <img
-              src='assets/images/Abrova 1@4xPNG.png'
+              src='assets/images/logo-test1.png'
               alt='site logo'
               className='light-logo'
             />
+            {/* <img
+              src='assets/images/logo-test11.jpg'
+              alt='site logo'
+              className='light-logo'
+            /> */}
             <img
               src='assets/images/logo-light.png'
               alt='site logo'
@@ -132,14 +138,14 @@ const MasterLayout = ({ children }) => {
               className='logo-icon'
             /> */}
             <img
-              src='assets/images/Abrova 3@4x_PNG.png'
+              src='assets/images/logo-test2.png'
               alt='site logo'
               className='logo-icon'
             />
           </Link>
         </div>
         <div className='sidebar-menu-area'>
-         {/* <ul className='sidebar-menu' id='sidebar-menu'>
+          {/* <ul className='sidebar-menu' id='sidebar-menu'>
                     <li className='dropdown'>
                       <Link to='#'>
                         <Icon
@@ -1300,11 +1306,11 @@ const MasterLayout = ({ children }) => {
       <main
         className={sidebarActive ? "dashboard-main active" : "dashboard-main"}
       >
-        <div className='navbar-header' style={{ backgroundColor: '#5a6c5b', padding: '12px 0' }}>
+        <div className='navbar-header' >
           <div className='row align-items-center justify-content-between' style={{ margin: '0' }}>
             <div className='col-auto'>
               <div className='d-flex align-items-center gap-3'>
-                <button
+                {/* <button
                   type='button'
                   className='sidebar-toggle'
                   onClick={sidebarControl}
@@ -1329,8 +1335,16 @@ const MasterLayout = ({ children }) => {
                   style={{ color: '#fff' }}
                 >
                   <Icon icon='heroicons:bars-3-solid' className='icon' />
-                </button>
-
+                </button> */}
+                <div>
+                   <img
+                  src='assets/images/logo-test1.png'
+                  alt='site logo'
+                  className='light-logo'
+                  style={{width:"100px"}}
+                />
+                </div>
+               
                 <Header />
 
               </div>
@@ -1428,11 +1442,11 @@ const MasterLayout = ({ children }) => {
         <footer className='d-footer'>
           <div className='row align-items-center justify-content-between'>
             <div className='col-auto'>
-              <p className='mb-0'>© 2025 Visa Management. All Rights Reserved.</p>
+              <p className='mb-0'>© 2025 Abrova. All Rights Reserved.</p>
             </div>
             <div className='col-auto'>
               <p className='mb-0'>
-                Made by <span className='text-primary-600'>Visa Management</span>
+                Made by <span className='text-primary-600'>Abrova</span>
               </p>
             </div>
           </div>
