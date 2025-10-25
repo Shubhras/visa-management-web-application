@@ -2111,10 +2111,11 @@ class DepartmentExportAPIView(APIView):
         return response
 
 
+
 class DepartmentImportAPIView(APIView):
     def post(self, request):
         file = request.FILES.get('file')
-        sheet_name = request.data.get('sheet_name')  # <-- User provides sheet name
+        sheet_name = request.data.get('sheet_name')
 
         if not file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
@@ -2124,10 +2125,12 @@ class DepartmentImportAPIView(APIView):
         duplicate_names = []
 
         try:
+            # ---------- XLSX Handling ----------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
 
+                # Validate sheet name
                 if not sheet_name:
                     return Response({
                         'error': 'Please provide sheet_name',
@@ -2141,32 +2144,46 @@ class DepartmentImportAPIView(APIView):
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 ws = wb[sheet_name]
-                data = []
                 headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                for row in ws.iter_rows(min_row=2, values_only=True):
-                    data.append(dict(zip(headers, row)))
+                data = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True)]
 
-            else:  # CSV
+            # ---------- CSV Handling ----------
+            elif format_type == 'csv':
                 dataset.load(file.read().decode('utf-8'), format='csv')
                 data = dataset.dict
 
-            # Process each row
+            else:
+                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # ---------- Process Each Row ----------
             for row in data:
                 name = str(row.get('name')).strip() if row.get('name') else None
+                description = str(row.get('description')).strip() if row.get('description') else ''
+
                 if not name:
-                    continue
+                    continue  # skip empty names
 
-                # Only skip if an active department exists
-                if Department.objects.filter(name__iexact=name, is_deleted=False).exists():
-                    duplicate_names.append(name)
-                    continue
+                existing = Department.objects.filter(name__iexact=name).first()
 
-                # Create a new department regardless of soft-deleted ones
-                Department.objects.create(
-                    name=name,
-                    description=row.get('description', ''),
-                    is_deleted=False  # Always create as active
-                )
+                if existing:
+                    if existing.is_deleted:
+                        # Create a new active record with same name
+                        Department.objects.create(
+                            name=name,
+                            description=description,
+                            is_deleted=False
+                        )
+                    else:
+                        # Already active — skip
+                        duplicate_names.append(name)
+                        continue
+                else:
+                    # No record exists — create new
+                    Department.objects.create(
+                        name=name,
+                        description=description,
+                        is_deleted=False
+                    )
 
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -2175,8 +2192,12 @@ class DepartmentImportAPIView(APIView):
             "statusCode": 200,
             "status": True,
             "duplicates": list(set(duplicate_names)),
-            'message': f'Sheet "{sheet_name}" imported successfully' if sheet_name else 'Import successful'
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
         }, status=status.HTTP_200_OK)
+
+
+        
+
 # -----------------------employeeType---------------------------------
 class EmployeeTypeListAPIView(APIView):    
 
