@@ -416,7 +416,7 @@ class Studymajorarea(models.Model):
         related_name="Studymajor_area",
         blank=True,
         null=True)
-    Majorarea=models.TextField(null=True,blank=True)
+    majorarea=models.TextField(null=True,blank=True)
     description = models.TextField(max_length=255,blank=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -432,8 +432,8 @@ class StudySpecialisation(models.Model):
         related_name="StudySpecialisation",
         blank=True,
         null=True)
-    Majorarea=models.ForeignKey(Studymainarea, on_delete=models.SET_NULL,
-        related_name="StudySpecialisation",
+    majorarea=models.ForeignKey(Studymainarea, on_delete=models.SET_NULL,
+        related_name="Study_Specialisation",
         blank=True,
         null=True)
     studyspecialisation=models.TextField(max_length=255,blank=True,null=True)
