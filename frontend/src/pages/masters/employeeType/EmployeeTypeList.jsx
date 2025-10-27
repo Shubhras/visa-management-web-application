@@ -30,7 +30,7 @@ const EmployeeTypeList = () => {
   const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this department?");
   const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
-  const [departments, setDepartments] = useState([]);
+  const [employeeTypeistData, setEmployeeTypeistData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
 
@@ -85,7 +85,7 @@ const EmployeeTypeList = () => {
         // Extract pagination from the nested pagination object
         const paginationData = response?.pagination || {};
 
-        setDepartments(response?.data || []);
+        setEmployeeTypeistData(response?.data || []);
         setTableState(prev => ({
           ...prev,
           total: paginationData.totalItems || 0,
@@ -95,7 +95,7 @@ const EmployeeTypeList = () => {
           hasPrevious: paginationData.previousPage || false
         }));
       } else {
-        setDepartments([]);
+        setEmployeeTypeistData([]);
         setTableState(prev => ({
           ...prev,
           total: 0,
@@ -171,7 +171,7 @@ const EmployeeTypeList = () => {
     if (isAllSelected) {
       setSelectedRows([]);
     } else {
-      setSelectedRows(departments.map(dept => dept.uuid));
+      setSelectedRows(employeeTypeistData.map(dept => dept.uuid));
     }
   };
   // For checkbox in table header
@@ -179,7 +179,7 @@ const EmployeeTypeList = () => {
 
     const checked = e.target.checked;
     if (checked) {
-      setSelectedRows(departments.map(dept => dept.uuid));
+      setSelectedRows(employeeTypeistData.map(dept => dept.uuid));
     } else {
       setSelectedRows([]);
     }
@@ -195,8 +195,8 @@ const EmployeeTypeList = () => {
     });
   };
 
-  const isAllSelected = departments.length > 0 &&
-    departments.every(dept => selectedRows.includes(dept.uuid));
+  const isAllSelected = employeeTypeistData.length > 0 &&
+    employeeTypeistData.every(dept => selectedRows.includes(dept.uuid));
 
   const goToPage = (page) => {
     if (page >= 1 && page <= tableState.totalPages) {
@@ -278,7 +278,7 @@ const EmployeeTypeList = () => {
       } else {
         if (response?.statusCode === 200 && response?.status === true) {
           toast.success(response?.message);
-          setDepartments(prevDepts => prevDepts.filter(dept => dept.uuid !== deleteId));
+          setEmployeeTypeistData(prevDepts => prevDepts.filter(dept => dept.uuid !== deleteId));
           setSelectedRows(prevSelected => prevSelected.filter(rowId => rowId !== deleteId));
           setShowDeleteConfirm(false);
           setSelectedRows([])
@@ -390,7 +390,7 @@ const EmployeeTypeList = () => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `departments_${new Date().toISOString().split('T')[0]}.csv`;
+          link.download = `employeeTypeistData_${new Date().toISOString().split('T')[0]}.csv`;
 
           // Trigger download
           document.body.appendChild(link);
@@ -537,7 +537,7 @@ const EmployeeTypeList = () => {
                           type="checkbox"
                           checked={isAllSelected}
                           onChange={handleSelectAll}
-                          disabled={departments.length === 0}
+                          disabled={employeeTypeistData.length === 0}
                         />
                         <span>S.L</span>
                       </div>
@@ -577,8 +577,8 @@ const EmployeeTypeList = () => {
                         </div>
                       </td>
                     </tr>
-                  ) : departments.length > 0 ? (
-                    departments.map((dept, index) => (
+                  ) : employeeTypeistData.length > 0 ? (
+                    employeeTypeistData.map((dept, index) => (
                       <tr key={dept.uuid} >
                         <td >
                           <div className="d-flex align-items-center gap-2">
