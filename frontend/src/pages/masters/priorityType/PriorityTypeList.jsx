@@ -7,19 +7,19 @@ import { Link } from 'react-router-dom';
 // import * as XLSX from 'xlsx';
 // import { saveAs } from 'file-saver';
 import { toast } from "react-toastify";
-import AddStakeholderCategories from './AddStakeholderCategories';
-import EditStakeholderCategories from './EditStakeholderCategories';
-import { stakeholderCategoryList, stakeholderCategoryDelete, stakeholderCategoryExportData } from '../../../store/master/actions';
+import AddPriorityType from './AddPriorityType';
+import EditPriorityType from './EditPriorityType';
+import { priorityTypeList, priorityTypeDelete, priorityTypeExportData } from '../../../store/master/actions';
 import AddImportModal from './AddImportModal';
 
-const StakeholderCategoriesList = () => {
+const PriorityTypeList = () => {
   const dispatch = useDispatch();
 
   const [show, setShow] = useState(false);
   const handleShow = () => setShow(true);
   const handleClose = () => {
     setShow(false);
-    fetchStakeholderCategoriesList();
+    fetchPriorityTypeList();
   };
 
   const [showEdit, setShowEdit] = useState(false);
@@ -55,7 +55,7 @@ const StakeholderCategoriesList = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (tableState.search !== undefined) {
-        fetchStakeholderCategoriesList();
+        fetchPriorityTypeList();
       }
     }, 500);
 
@@ -63,10 +63,10 @@ const StakeholderCategoriesList = () => {
   }, [tableState.search]);
 
   useEffect(() => {
-    fetchStakeholderCategoriesList();
+    fetchPriorityTypeList();
   }, [tableState.page, tableState.limit, tableState.status, tableState.sortBy, tableState.sortOrder]);
 
-  const fetchStakeholderCategoriesList = () => {
+  const fetchPriorityTypeList = () => {
     setLoading(true);
     const params = {
       page: tableState.page,
@@ -77,7 +77,7 @@ const StakeholderCategoriesList = () => {
       sortOrder: tableState.sortOrder || ''
     };
 
-    dispatch(stakeholderCategoryList(params, (response, error) => {
+    dispatch(priorityTypeList(params, (response, error) => {
       setLoading(false);
       if (response?.statusCode === 200 && response?.status === true) {
         const paginationData = response?.pagination || {};
@@ -236,7 +236,7 @@ const StakeholderCategoriesList = () => {
 
   const handleCloseEdit = () => {
     setShowEdit(false);
-    fetchStakeholderCategoriesList();
+    fetchPriorityTypeList();
   };
 
   const handleShowEdit = (rowData) => {
@@ -268,7 +268,7 @@ const StakeholderCategoriesList = () => {
       return;
     }
 
-    dispatch(stakeholderCategoryDelete(sendPayload, (response, error) => {
+    dispatch(priorityTypeDelete(sendPayload, (response, error) => {
       if (error) {
         toast.error(error?.response?.data?.message || "server error");
       } else {
@@ -279,7 +279,7 @@ const StakeholderCategoriesList = () => {
           setShowDeleteConfirm(false);
           setSelectedRows([])
           setDeleteId(null);
-          fetchStakeholderCategoriesList();
+          fetchPriorityTypeList();
         } else {
           toast.error("Something went wrong.");
         }
@@ -295,7 +295,7 @@ const StakeholderCategoriesList = () => {
 
   const handleCloseImport = () => {
     setShowImport(false);
-    fetchStakeholderCategoriesList();
+    fetchPriorityTypeList();
   };
 
   const handleShowImport = () => {
@@ -361,7 +361,7 @@ const StakeholderCategoriesList = () => {
     };
     setLoadingExport(true);
 
-    dispatch(stakeholderCategoryExportData(sendPayload, (response, error) => {
+    dispatch(priorityTypeExportData(sendPayload, (response, error) => {
       if (error) {
         setLoadingExport(false);
         toast.error(error?.response?.message || "server error");
@@ -412,7 +412,7 @@ const StakeholderCategoriesList = () => {
   return (
     <>
       <MasterLayout>
-        <Breadcrumb title="Stakeholder Categories" subTitle="List" />
+        <Breadcrumb title="Priority Type" subTitle="List" />
         <div className="card basic-data-table main-container-data">
           <div className="card-body container-data">
             <div className="card-body container-data">
@@ -718,8 +718,8 @@ const StakeholderCategoriesList = () => {
           </div>
         </div>
 
-        <AddStakeholderCategories show={show} handleClose={handleClose} />
-        <EditStakeholderCategories show={showEdit} handleCloseEdit={handleCloseEdit} rowSelectData={rowSelectData} />
+        <AddPriorityType show={show} handleClose={handleClose} />
+        <EditPriorityType show={showEdit} handleCloseEdit={handleCloseEdit} rowSelectData={rowSelectData} />
         {showImport && (
           <AddImportModal show={showImport} handleClose={handleCloseImport} />)}
         {showDeleteConfirm && (
@@ -834,4 +834,4 @@ const StakeholderCategoriesList = () => {
   );
 };
 
-export default StakeholderCategoriesList;
+export default PriorityTypeList;

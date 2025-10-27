@@ -19,13 +19,19 @@ import {
     DELETE_COMPANY,
     EXPORT_COMPANY,
     IMPORT_COMPANY,
-    
+
     STAKEHOLDER_CATEGORY_LIST,
     ADD_STAKEHOLDER_CATEGORY,
     EDIT_STAKEHOLDER_CATEGORY,
     DELETE_STAKEHOLDER_CATEGORY,
     EXPORT_STAKEHOLDER_CATEGORY,
     IMPORT_STAKEHOLDER_CATEGORY,
+    PRIORITY_TYPE_LIST,
+    ADD_PRIORITY_TYPE,
+    EDIT_PRIORITY_TYPE,
+    DELETE_PRIORITY_TYPE,
+    EXPORT_PRIORITY_TYPE,
+    IMPORT_PRIORITY_TYPE,
 } from "./actionTypes"
 
 export const departmentList = (data, callback) => ({
@@ -168,6 +174,43 @@ export const stakeholderCategoryExportData = (data, callback) => ({
 
 export const stakeholderCategoryImportData = (data, callback) => ({
     type: IMPORT_STAKEHOLDER_CATEGORY,
+    data,
+    callback,
+});
+
+// PRIORITY_TYPE
+export const priorityTypeList = (data, callback) => ({
+    type: PRIORITY_TYPE_LIST,
+    data,
+    callback,
+});
+
+export const priorityTypeAdd = (data, callback) => ({
+    type: ADD_PRIORITY_TYPE,
+    data,
+    callback,
+});
+
+export const priorityTypeEdit = (data, callback) => ({
+    type: EDIT_PRIORITY_TYPE,
+    data,
+    callback,
+});
+
+export const priorityTypeDelete = (data, callback) => ({
+    type: DELETE_PRIORITY_TYPE,
+    data,
+    callback,
+});
+
+export const priorityTypeExportData = (data, callback) => ({
+    type: EXPORT_PRIORITY_TYPE,
+    data,
+    callback,
+});
+
+export const priorityTypeImportData = (data, callback) => ({
+    type: IMPORT_PRIORITY_TYPE,
     data,
     callback,
 });

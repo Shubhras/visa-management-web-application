@@ -27,6 +27,13 @@ import {
   DELETE_STAKEHOLDER_CATEGORY,
   EXPORT_STAKEHOLDER_CATEGORY,
   IMPORT_STAKEHOLDER_CATEGORY,
+
+  PRIORITY_TYPE_LIST,
+  ADD_PRIORITY_TYPE,
+  EDIT_PRIORITY_TYPE,
+  DELETE_PRIORITY_TYPE,
+  EXPORT_PRIORITY_TYPE,
+  IMPORT_PRIORITY_TYPE,
 } from "./actionTypes";
 
 import {
@@ -50,12 +57,20 @@ import {
   deleteCompanyDataAPI,
   exportCompanyDataAPI,
   importCompanyDataAPI,
+
   getStakeholderCategoryListDataAPI,
   addStakeholderCategoryDataAPI,
   editStakeholderCategoryDataAPI,
   deleteStakeholderCategoryDataAPI,
   exportStakeholderCategoryDataAPI,
   importStakeholderCategoryDataAPI,
+
+  getPriorityTypeListDataAPI,
+  addPriorityTypeDataAPI,
+  editPriorityTypeDataAPI,
+  deletePriorityTypeDataAPI,
+  exportPriorityTypeDataAPI,
+  importPriorityTypeDataAPI,
 } from "../../service/api_helper";
 
 function* departmentListSaga(action) {
@@ -344,6 +359,62 @@ function* stakeholderCategoryImportDataSaga(action) {
   }
 }
 
+//Priority type
+function* priorityTypeListSaga(action) {
+  try {
+    const response = yield call(getPriorityTypeListDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* priorityTypeAddSaga(action) {
+  try {
+    const response = yield call(addPriorityTypeDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* priorityTypeEditSaga(action) {
+  try {
+    const response = yield call(editPriorityTypeDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* priorityTypeDeleteSaga(action) {
+  try {
+    const response = yield call(deletePriorityTypeDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* priorityTypeExportDataSaga(action) {
+  try {
+    const response = yield call(exportPriorityTypeDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* priorityTypeImportDataSaga(action) {
+  try {
+    const response = yield call(importPriorityTypeDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+
 function* masterSaga() {
   yield takeEvery(DEPARTMENT_LIST, departmentListSaga);
   yield takeEvery(ADD_DEPARTMENT, departmentAddSaga);
@@ -376,6 +447,14 @@ function* masterSaga() {
   yield takeEvery(DELETE_STAKEHOLDER_CATEGORY, stakeholderCategoryDeleteSaga);
   yield takeEvery(EXPORT_STAKEHOLDER_CATEGORY, stakeholderCategoryExportDataSaga);
   yield takeEvery(IMPORT_STAKEHOLDER_CATEGORY, stakeholderCategoryImportDataSaga);
+
+  //Priority type
+  yield takeEvery(PRIORITY_TYPE_LIST, priorityTypeListSaga);
+  yield takeEvery(ADD_PRIORITY_TYPE, priorityTypeAddSaga);
+  yield takeEvery(EDIT_PRIORITY_TYPE, priorityTypeEditSaga);
+  yield takeEvery(DELETE_PRIORITY_TYPE, priorityTypeDeleteSaga);
+  yield takeEvery(EXPORT_PRIORITY_TYPE, priorityTypeExportDataSaga);
+  yield takeEvery(IMPORT_PRIORITY_TYPE, priorityTypeImportDataSaga);
 
 }
 
