@@ -180,7 +180,7 @@ urlpatterns = [
     path("Priority/", PriorityListAPIView.as_view(), name='Priority-list'),
     path("Priority/<uuid:uuid>/", PriorityRetrieveAPIView.as_view(), name='Priority-detail'),
     path("Priority/<uuid:uuid>/update/", PriorityUpdateAPIView.as_view(), name='Priority-update'),
-    path("Priority/delete/<uuid:uuid>/", PriorityDeleteAPIView.as_view(), name='Priority-delete'),
+    path("Priority/delete/", PriorityDeleteAPIView.as_view(), name='Priority-delete'),
     path('Priority/export/',   PriorityExportAPIView.as_view(), name=' Priority-export'),
     path('Priority/import/',  PriorityImportAPIView.as_view(), name=' InterPriorityestLevel-import'),
 
