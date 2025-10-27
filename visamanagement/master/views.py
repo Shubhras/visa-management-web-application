@@ -5350,9 +5350,8 @@ class PriorityDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
-        uuids = request.data.get('uuids', None)
+        uuids = request.data.get('id', None)
 
-        # ✅ Case 1: Single delete via URL UUID
         if uuid:
             try:
                 priority = Priority.objects.get(uuid=uuid, is_deleted=False)
