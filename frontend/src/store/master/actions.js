@@ -1,17 +1,24 @@
 import {
-  DEPARTMENT_LIST,
-  ADD_DEPARTMENT,
-  EDIT_DEPARTMENT,
-  DELETE_DEPARTMENT,
-  EXPORT_DEPARTMENT,
-  IMPORT_DEPARTMENT,
+    DEPARTMENT_LIST,
+    ADD_DEPARTMENT,
+    EDIT_DEPARTMENT,
+    DELETE_DEPARTMENT,
+    EXPORT_DEPARTMENT,
+    IMPORT_DEPARTMENT,
 
     EMPLOYEE_TYPE_LIST,
-  ADD_EMPLOYEE_TYPE,
-  EDIT_EMPLOYEE_TYPE,
-  DELETE_EMPLOYEE_TYPE,
-  EXPORT_EMPLOYEE_TYPE,
-  IMPORT_EMPLOYEE_TYPE
+    ADD_EMPLOYEE_TYPE,
+    EDIT_EMPLOYEE_TYPE,
+    DELETE_EMPLOYEE_TYPE,
+    EXPORT_EMPLOYEE_TYPE,
+    IMPORT_EMPLOYEE_TYPE,
+
+    COMPANY_LIST,
+    ADD_COMPANY,
+    EDIT_COMPANY,
+    DELETE_COMPANY,
+    EXPORT_COMPANY,
+    IMPORT_COMPANY,
 } from "./actionTypes"
 
 export const departmentList = (data, callback) => ({
@@ -84,3 +91,40 @@ export const demployeeTypeImportData = (data, callback) => ({
     data,
     callback,
 });
+
+//Company Type
+export const companyList = (data, callback) => ({
+    type: COMPANY_LIST,
+    data,
+    callback,
+});
+
+export const companyAdd = (data, callback) => ({
+    type: ADD_COMPANY,
+    data,
+    callback,
+});
+export const companyEdit = (data, callback) => ({
+    type: EDIT_COMPANY,
+    data,
+    callback,
+});
+
+export const companyDelete = (data, callback) => ({
+    type: DELETE_COMPANY,
+    data,
+    callback,
+});
+
+export const companyExportData = (data, callback) => ({
+    type: EXPORT_COMPANY,
+    data,
+    callback,
+});
+export const dcompanyImportData = (data, callback) => ({
+    type: IMPORT_COMPANY,
+    data,
+    callback,
+});
+
+

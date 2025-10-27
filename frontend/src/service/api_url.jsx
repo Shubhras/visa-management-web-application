@@ -11,7 +11,6 @@ export const DELETE_DEPARTMENT_API = "api/v1/master/departments/";
 export const EXPORT_DEPARTMENT_API = "api/v1/master/departments/export/";
 export const IMPORT_DEPARTMENT_API = "api/v1/master/departments/import/";
 
-
 //EMPLOYEE_TYPE 
 export const GET_EMPLOYEE_TYPE_LIST = "/api/v1/master/employeetype/";
 export const ADD_EMPLOYEE_TYPE_API = "/api/v1/master/employeetype/create/";
@@ -19,9 +18,13 @@ export const EDIT_EMPLOYEE_TYPE_API = "api/v1/master/employeetype/";
 export const DELETE_EMPLOYEE_TYPE_API = "api/v1/master/employeetype/";
 export const EXPORT_EMPLOYEE_TYPE_API = "api/v1/master/employeetype/export/";
 export const IMPORT_EMPLOYEE_TYPE_API = "api/v1/master/employeetype/import/";
-
-
-
+//Company Type
+export const GET_COMPANY_LIST = "/api/v1/master/company-types/";
+export const ADD_COMPANY_API = "/api/v1/master/company-types/create/";
+export const EDIT_COMPANY_API = "api/v1/master/company-types/";
+export const DELETE_COMPANY_API = "api/v1/master/company-types/";
+export const EXPORT_COMPANY_API = "api/v1/master/company-types/export/";
+export const IMPORT_COMPANY_API = "api/v1/master/company-types/import/";
 
 
 
@@ -52,7 +55,7 @@ export const IMPORT_EMPLOYEE_TYPE_API = "api/v1/master/employeetype/import/";
 // export const CUSTOMERS_INTERNATIONAL = `api/national-admin/get-nationalAdmin_customer`;
 
 
-// //ADD NEW PAGE 
+// //ADD NEW PAGE
 // export const GET_COUNTRY_LIST = "/api/countries/list";
 // export const GET_LANGUAGE_LIST = "/api/languages";
 // export const GET_CURRENCIES_LIST = "/api/currencies"
