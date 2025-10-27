@@ -3157,7 +3157,7 @@ class OwnershipTypeListAPIView(APIView):
         # Apply descending order for 'desc'
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
-            
+
         queryset = OwnershipType.objects.filter(is_deleted=False)
 
         if search:
@@ -10136,3 +10136,4 @@ class EntranceTestNameImportAPIView(APIView):
 
         return Response({"statusCode": 200, "status": True, "duplicates": list(set(duplicate_names)), "message": f'Import successful'}, status=200)
 
+      
