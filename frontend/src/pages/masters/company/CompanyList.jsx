@@ -30,7 +30,7 @@ const CompanyList = () => {
     const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this department?");
     const [showExportPopop, setShowExportPopop] = useState(false);
     const [deleteId, setDeleteId] = useState(null);
-    const [departments, setDepartments] = useState([]);
+    const [companyListData, setCompanyListData] = useState([]);
     const [loading, setLoading] = useState(false);
     const [loadingExport, setLoadingExport] = useState(false);
 
@@ -82,7 +82,7 @@ const CompanyList = () => {
             if (response?.statusCode === 200 && response?.status === true) {
                 const paginationData = response?.pagination || {};
 
-                setDepartments(response?.data || []);
+                setCompanyListData(response?.data || []);
                 setTableState(prev => ({
                     ...prev,
                     total: paginationData.totalItems || 0,
@@ -92,7 +92,7 @@ const CompanyList = () => {
                     hasPrevious: paginationData.previousPage || false
                 }));
             } else {
-                setDepartments([]);
+                setCompanyListData([]);
                 setTableState(prev => ({
                     ...prev,
                     total: 0,
@@ -168,7 +168,7 @@ const CompanyList = () => {
         if (isAllSelected) {
             setSelectedRows([]);
         } else {
-            setSelectedRows(departments.map(dept => dept.uuid));
+            setSelectedRows(companyListData.map(dept => dept.uuid));
         }
     };
     // For checkbox in table header
@@ -176,7 +176,7 @@ const CompanyList = () => {
 
         const checked = e.target.checked;
         if (checked) {
-            setSelectedRows(departments.map(dept => dept.uuid));
+            setSelectedRows(companyListData.map(dept => dept.uuid));
         } else {
             setSelectedRows([]);
         }
@@ -192,8 +192,8 @@ const CompanyList = () => {
         });
     };
 
-    const isAllSelected = departments.length > 0 &&
-        departments.every(dept => selectedRows.includes(dept.uuid));
+    const isAllSelected = companyListData.length > 0 &&
+        companyListData.every(dept => selectedRows.includes(dept.uuid));
 
     const goToPage = (page) => {
         if (page >= 1 && page <= tableState.totalPages) {
@@ -274,7 +274,7 @@ const CompanyList = () => {
             } else {
                 if (response?.statusCode === 200 && response?.status === true) {
                     toast.success(response?.message);
-                    setDepartments(prevDepts => prevDepts.filter(dept => dept.uuid !== deleteId));
+                    setCompanyListData(prevDepts => prevDepts.filter(dept => dept.uuid !== deleteId));
                     setSelectedRows(prevSelected => prevSelected.filter(rowId => rowId !== deleteId));
                     setShowDeleteConfirm(false);
                     setSelectedRows([])
@@ -372,7 +372,7 @@ const CompanyList = () => {
                     const url = window.URL.createObjectURL(blob);
                     const link = document.createElement('a');
                     link.href = url;
-                    link.download = `departments_${new Date().toISOString().split('T')[0]}.csv`;
+                    link.download = `companyListData_${new Date().toISOString().split('T')[0]}.csv`;
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
@@ -503,7 +503,7 @@ const CompanyList = () => {
                                                     type="checkbox"
                                                     checked={isAllSelected}
                                                     onChange={handleSelectAll}
-                                                    disabled={departments.length === 0}
+                                                    disabled={companyListData.length === 0}
                                                 />
                                                 <span>S.L</span>
                                             </div>
@@ -543,8 +543,8 @@ const CompanyList = () => {
                                                 </div>
                                             </td>
                                         </tr>
-                                    ) : departments.length > 0 ? (
-                                        departments.map((dept, index) => (
+                                    ) : companyListData.length > 0 ? (
+                                        companyListData.map((dept, index) => (
                                             <tr key={dept.uuid} >
                                                 <td >
                                                     <div className="d-flex align-items-center gap-2">
