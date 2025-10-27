@@ -50,9 +50,9 @@ const EditStakeholderCategories = ({ show, handleCloseEdit, rowSelectData }) => 
         const newErrors = {};
         let isValid = true;
 
-        // Department Name validation
+        // Name validation
         if (!formData.name.trim()) {
-            newErrors.name = 'Department Name is required';
+            newErrors.name = 'Name is required';
             isValid = false;
         }
         setErrors(newErrors);
@@ -119,15 +119,15 @@ const EditStakeholderCategories = ({ show, handleCloseEdit, rowSelectData }) => 
                 className={`modal fade show common-ctl-popup`}
                 tabIndex={-1}
                 role="dialog"
-                aria-labelledby="departmentModalLabel"
+                aria-labelledby="stakeholderModalLabel"
                 aria-hidden={!show}
                 onClick={handleBackdropClick}
             >
                 <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
                     <div className="modal-content radius-16 bg-base">
                         <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                            <h1 className="modal-title fs-5" id="departmentModalLabel">
-                                Edit Department
+                            <h1 className="modal-title fs-5" id="stakeholderModalLabel">
+                                Edit Stakeholder Categories
                             </h1>
                             <button
                                 type="button"
@@ -140,10 +140,10 @@ const EditStakeholderCategories = ({ show, handleCloseEdit, rowSelectData }) => 
                         <div className="modal-body p-24">
                             <form onSubmit={handleSubmit}>
                                 <div className="row">
-                                    {/* Department Name */}
+                                    {/*  Name */}
                                     <div className="col-12 mb-20">
                                         <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                                            Department Name <span className="text-danger">*</span>
+                                            Name <span className="text-danger">*</span>
                                         </label>
                                         <input
                                             type="text"
@@ -151,7 +151,7 @@ const EditStakeholderCategories = ({ show, handleCloseEdit, rowSelectData }) => 
                                             value={formData.name}
                                             onChange={handleChange}
                                             className={`form-control radius-8 ${errors.name ? 'is-invalid' : ''}`}
-                                            placeholder="Enter Department Name"
+                                            placeholder="Enter Name"
                                         />
                                         {errors.name && (
                                             <div className="text-danger text-sm mt-1">
