@@ -119,7 +119,39 @@ export const importCompanyDataAPI = (payload) => {
 
 };
 
+// STAKEHOLDER_CATEGORY
+export const getStakeholderCategoryListDataAPI = (data) => {
+    const apiUrl = `${url.GET_STAKEHOLDER_CATEGORY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
 
+export const addStakeholderCategoryDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_STAKEHOLDER_CATEGORY_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editStakeholderCategoryDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_STAKEHOLDER_CATEGORY_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteStakeholderCategoryDataAPI = (payload) => {
+    const prepareDATA = {
+        id: payload
+    };
+    const apiUrl = `${url.DELETE_STAKEHOLDER_CATEGORY_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportStakeholderCategoryDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_STAKEHOLDER_CATEGORY_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importStakeholderCategoryDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_STAKEHOLDER_CATEGORY_API}`;
+    return post(apiUrl, payload);
+};
 
 
 

@@ -26,7 +26,13 @@ export const DELETE_COMPANY_API = "api/v1/master/company-types/";
 export const EXPORT_COMPANY_API = "api/v1/master/company-types/export/";
 export const IMPORT_COMPANY_API = "api/v1/master/company-types/import/";
 
-
+// STAKEHOLDER_CATEGORY
+export const GET_STAKEHOLDER_CATEGORY_LIST = "/api/v1/master/stakeholder-categories/";
+export const ADD_STAKEHOLDER_CATEGORY_API = "/api/v1/master/stakeholder-categories/create/";
+export const EDIT_STAKEHOLDER_CATEGORY_API = "api/v1/master/stakeholder-categories/";
+export const DELETE_STAKEHOLDER_CATEGORY_API = "api/v1/master/stakeholder-categories/";
+export const EXPORT_STAKEHOLDER_CATEGORY_API = "api/v1/master/stakeholder-categories/export/";
+export const IMPORT_STAKEHOLDER_CATEGORY_API = "api/v1/master/stakeholder-categories/import/";
 
 
 

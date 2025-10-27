@@ -19,6 +19,13 @@ import {
     DELETE_COMPANY,
     EXPORT_COMPANY,
     IMPORT_COMPANY,
+    
+    STAKEHOLDER_CATEGORY_LIST,
+    ADD_STAKEHOLDER_CATEGORY,
+    EDIT_STAKEHOLDER_CATEGORY,
+    DELETE_STAKEHOLDER_CATEGORY,
+    EXPORT_STAKEHOLDER_CATEGORY,
+    IMPORT_STAKEHOLDER_CATEGORY,
 } from "./actionTypes"
 
 export const departmentList = (data, callback) => ({
@@ -128,3 +135,39 @@ export const dcompanyImportData = (data, callback) => ({
 });
 
 
+// STAKEHOLDER_CATEGORY
+export const stakeholderCategoryList = (data, callback) => ({
+    type: STAKEHOLDER_CATEGORY_LIST,
+    data,
+    callback,
+});
+
+export const stakeholderCategoryAdd = (data, callback) => ({
+    type: ADD_STAKEHOLDER_CATEGORY,
+    data,
+    callback,
+});
+
+export const stakeholderCategoryEdit = (data, callback) => ({
+    type: EDIT_STAKEHOLDER_CATEGORY,
+    data,
+    callback,
+});
+
+export const stakeholderCategoryDelete = (data, callback) => ({
+    type: DELETE_STAKEHOLDER_CATEGORY,
+    data,
+    callback,
+});
+
+export const stakeholderCategoryExportData = (data, callback) => ({
+    type: EXPORT_STAKEHOLDER_CATEGORY,
+    data,
+    callback,
+});
+
+export const stakeholderCategoryImportData = (data, callback) => ({
+    type: IMPORT_STAKEHOLDER_CATEGORY,
+    data,
+    callback,
+});

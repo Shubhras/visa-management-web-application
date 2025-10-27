@@ -4,22 +4,22 @@ import MasterLayout from "../../../masterLayout/MasterLayout";
 import Breadcrumb from "../../../components/Breadcrumb";
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { Link } from 'react-router-dom';
-import * as XLSX from 'xlsx';
-import { saveAs } from 'file-saver';
+// import * as XLSX from 'xlsx';
+// import { saveAs } from 'file-saver';
 import { toast } from "react-toastify";
-import AddEmployeeType from './AddEmployeeType';
-import EditEmployeeType from './EditEmployeeType';
-import { employeeTypeList, employeeTypeDelete, employeeTypeExportData } from '../../../store/master/actions';
+import AddDepartment from './AddDepartment';
+import EditDepartment from './EditDepartment';
+import { stakeholderCategoryList, stakeholderCategoryDelete, stakeholderCategoryExportData } from '../../../store/master/actions';
 import AddImportModal from './AddImportModal';
 
-const EmployeeTypeList = () => {
+const StakeholderCategoriesList = () => {
   const dispatch = useDispatch();
 
   const [show, setShow] = useState(false);
   const handleShow = () => setShow(true);
   const handleClose = () => {
     setShow(false);
-    fetchEmployeeTypeList();
+    fetchStakeholderCategoriesList();
   };
 
   const [showEdit, setShowEdit] = useState(false);
@@ -55,7 +55,7 @@ const EmployeeTypeList = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (tableState.search !== undefined) {
-        fetchEmployeeTypeList();
+        fetchStakeholderCategoriesList();
       }
     }, 500);
 
@@ -63,10 +63,10 @@ const EmployeeTypeList = () => {
   }, [tableState.search]);
 
   useEffect(() => {
-    fetchEmployeeTypeList();
+    fetchStakeholderCategoriesList();
   }, [tableState.page, tableState.limit, tableState.status, tableState.sortBy, tableState.sortOrder]);
 
-  const fetchEmployeeTypeList = () => {
+  const fetchStakeholderCategoriesList = () => {
     setLoading(true);
     const params = {
       page: tableState.page,
@@ -77,12 +77,9 @@ const EmployeeTypeList = () => {
       sortOrder: tableState.sortOrder || ''
     };
 
-    dispatch(employeeTypeList(params, (response, error) => {
+    dispatch(stakeholderCategoryList(params, (response, error) => {
       setLoading(false);
       if (response?.statusCode === 200 && response?.status === true) {
-        //console.log('Response data:', response);
-
-        // Extract pagination from the nested pagination object
         const paginationData = response?.pagination || {};
 
         setDepartments(response?.data || []);
@@ -239,7 +236,7 @@ const EmployeeTypeList = () => {
 
   const handleCloseEdit = () => {
     setShowEdit(false);
-    fetchEmployeeTypeList();
+    fetchStakeholderCategoriesList();
   };
 
   const handleShowEdit = (rowData) => {
@@ -252,7 +249,6 @@ const EmployeeTypeList = () => {
     setShowDeleteConfirm(true);
   };
 
-  // Handle bulk delete
   const handleBulkDelete = () => {
     if (selectedRows.length === 0) {
       alert('Please select rows to delete');
@@ -262,17 +258,17 @@ const EmployeeTypeList = () => {
     setDeleteConfirmMessage(`Are you sure you want to delete this department (${maggase})?`);
     setShowDeleteConfirm(true);
   };
-  const confirmDelete = () => {
-     //const sendPayload = "all"//deleteId ? [deleteId] : selectedRows;
 
+  const confirmDelete = () => {
+    //const sendPayload = "all"//deleteId ? [deleteId] : selectedRows;
     const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
+
     if (!sendPayload || sendPayload.length === 0) {
-      toast.error("No employeeType selected for deletion.");
+      toast.error("No department selected for deletion.");
       return;
     }
 
-    dispatch(employeeTypeDelete(sendPayload, (response, error) => {
-
+    dispatch(stakeholderCategoryDelete(sendPayload, (response, error) => {
       if (error) {
         toast.error(error?.response?.data?.message || "server error");
       } else {
@@ -283,8 +279,7 @@ const EmployeeTypeList = () => {
           setShowDeleteConfirm(false);
           setSelectedRows([])
           setDeleteId(null);
-          fetchEmployeeTypeList();
-
+          fetchStakeholderCategoriesList();
         } else {
           toast.error("Something went wrong.");
         }
@@ -300,13 +295,12 @@ const EmployeeTypeList = () => {
 
   const handleCloseImport = () => {
     setShowImport(false);
-    fetchEmployeeTypeList();
+    fetchStakeholderCategoriesList();
   };
 
   const handleShowImport = () => {
     setShowImport(true);
   };
-
 
   const handleExportTest = () => {
     setShowExportPopop(true);
@@ -314,7 +308,6 @@ const EmployeeTypeList = () => {
 
   const cancelExportTest = () => {
     setShowExportPopop(false);
-
   };
 
   const handleDragStart = (e, index) => {
@@ -328,7 +321,6 @@ const EmployeeTypeList = () => {
     newItems.splice(dropIndex, 0, draggedItem);
     setItems(newItems);
 
-    // Also reorder selectedItems to match
     const newSelected = newItems.filter((item) => selectedItems.includes(item));
     setSelectedItems(newSelected);
   };
@@ -339,28 +331,21 @@ const EmployeeTypeList = () => {
 
   const handleCheckboxChange = (item, checked) => {
     if (checked) {
-      // Find the index of the item in the full items list
       const indexInItems = items.indexOf(item);
-
-      // Insert it into selectedItems at the correct position
       const newSelected = [...selectedItems];
-      // Find the first item in selectedItems that comes after this item
       const insertIndex = newSelected.findIndex(
         (i) => items.indexOf(i) > indexInItems
       );
       if (insertIndex === -1) {
-        newSelected.push(item); // If no item after, add at end
+        newSelected.push(item);
       } else {
-        newSelected.splice(insertIndex, 0, item); // Insert at correct position
+        newSelected.splice(insertIndex, 0, item);
       }
       setSelectedItems(newSelected);
     } else {
-      // Remove unchecked item
       setSelectedItems(selectedItems.filter((i) => i !== item));
     }
   }
-
-
 
   const handleExport = () => {
     if (selectedItems.length == 0) {
@@ -368,38 +353,30 @@ const EmployeeTypeList = () => {
       return
     }
     const fieldsString = selectedItems.join(',');
+
     const sendPayload = {
       file: "csv",
       fields: fieldsString,
       uuids: selectedRows
     };
-
     setLoadingExport(true);
 
-    dispatch(employeeTypeExportData(sendPayload, (response, error) => {
+    dispatch(stakeholderCategoryExportData(sendPayload, (response, error) => {
       if (error) {
         setLoadingExport(false);
         toast.error(error?.response?.message || "server error");
       } else {
         setLoadingExport(false);
         if (response?.status === 200) {
-          // Create a Blob from the CSV data
           const blob = new Blob([response.data], { type: 'text/csv' });
-
-          // Create a temporary download link
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
           link.download = `departments_${new Date().toISOString().split('T')[0]}.csv`;
-
-          // Trigger download
           document.body.appendChild(link);
           link.click();
-
-          // Cleanup
           document.body.removeChild(link);
           window.URL.revokeObjectURL(url);
-
           toast.success("Export successful");
           cancelExportTest();
         } else {
@@ -409,38 +386,33 @@ const EmployeeTypeList = () => {
     }));
   };
 
-
   const startIndex = (tableState.currentPage - 1) * tableState.limit;
   const statusOptions = ['All', 'Active', 'Inactive'];
 
   const formatDateTime = (dateString) => {
     const date = new Date(dateString);
-
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const year = date.getFullYear();
-
     let hours = date.getHours();
     const minutes = String(date.getMinutes()).padStart(2, '0');
     const seconds = String(date.getSeconds()).padStart(2, '0');
-
     const ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12 || 12; // Convert to 12-hour format
+    hours = hours % 12 || 12;
     hours = String(hours).padStart(2, '0');
-
     return `${day}-${month}-${year} ${hours}:${minutes}:${seconds} ${ampm}`
   };
-  // Handle backdrop click for modals
+
+   // Handle backdrop click for modals
   const handleBackdropClick = (e, closeFunction) => {
     if (e.target === e.currentTarget) {
       closeFunction();
     }
   }
-
   return (
     <>
       <MasterLayout>
-        <Breadcrumb title="Employeet Type" subTitle="List" />
+        <Breadcrumb title="Department" subTitle="List" />
         <div className="card basic-data-table main-container-data">
           <div className="card-body container-data">
             <div className="card-body container-data">
@@ -616,13 +588,13 @@ const EmployeeTypeList = () => {
                                 handleShowEdit(dept);
                               }}
                             >
-                              <Icon icon="lucide:edit" width="18" className='icone' />
+                              <Icon icon="lucide:edit" width="18" className='icone'/>
                             </Link>
                             <button
                               onClick={() => handleDelete(dept.uuid)}
                               className='delete-btn-icone'
                             >
-                              <Icon icon="mingcute:delete-2-line" width="18" className='icone' />
+                              <Icon icon="mingcute:delete-2-line" width="18" className='icone'/>
                             </button>
                           </div>
                         </td>
@@ -745,8 +717,9 @@ const EmployeeTypeList = () => {
             </div>
           </div>
         </div>
-        <AddEmployeeType show={show} handleClose={handleClose} />
-        <EditEmployeeType show={showEdit} handleCloseEdit={handleCloseEdit} rowSelectData={rowSelectData} />
+
+        <AddDepartment show={show} handleClose={handleClose} />
+        <EditDepartment show={showEdit} handleCloseEdit={handleCloseEdit} rowSelectData={rowSelectData} />
         {showImport && (
           <AddImportModal show={showImport} handleClose={handleCloseImport} />)}
         {showDeleteConfirm && (
@@ -793,7 +766,7 @@ const EmployeeTypeList = () => {
             <div className="modal-dialog modal-lg modal-dialog-centered " role="document">
               <div className="modal-content radius-16 bg-base">
                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                  <h1 className="modal-title fs-5">Export Employee Type</h1>
+                  <h1 className="modal-title fs-5">Export Department</h1>
                   <button
                     type="button"
                     className="btn-close"
@@ -861,4 +834,4 @@ const EmployeeTypeList = () => {
   );
 };
 
-export default EmployeeTypeList;
+export default StakeholderCategoriesList;

@@ -100,7 +100,12 @@ const AddImportModal = ({ show, handleClose }) => {
         link.click();
         document.body.removeChild(link);
     };
-
+const handleBackdropClick = (e) => {
+    // Only close if clicking the backdrop itself, not the modal content
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
     if (!show) return null;
 
     return (
@@ -110,6 +115,7 @@ const AddImportModal = ({ show, handleClose }) => {
             role="dialog"
             aria-labelledby="departmentModalLabel"
             aria-hidden={!show}
+             onClick={handleBackdropClick}
         >
             <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
                 <div className="modal-content radius-16 bg-base">
