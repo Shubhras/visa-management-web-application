@@ -46,6 +46,148 @@ class MaritalstatusSerializer(serializers.ModelSerializer):
         read_only_fields = ['uuid', 'created_at', 'updated_at', 'is_deleted']
 
 
+class ContinentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Continents
+        fields = [
+            'uuid', 'name', 'description',
+            'is_active', 'is_deleted',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = ['uuid', 'created_at', 'updated_at']
+
+
+
+class CountrySerializer(serializers.ModelSerializer):
+    continent = ContinentSerializer(read_only=True)
+    continent_id = serializers.PrimaryKeyRelatedField(
+        queryset=Continents.objects.all(),
+        source='continent',
+        write_only=True
+    )
+
+    class Meta:
+        model = Country
+        fields = [
+            'uuid', 'name', 'continent', 'continent_id',
+            'shortName', 'fullName', 'officialName', 'capitalCity',
+            'dialCodes', 'currencyCode', 'status',
+            'is_active', 'is_deleted', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['uuid', 'created_at', 'updated_at']
+
+
+
+class StateSerializer(serializers.ModelSerializer):
+    countryName = CountrySerializer(read_only=True)
+    country_id = serializers.PrimaryKeyRelatedField(
+        queryset=Country.objects.all(),
+        source='countryName',
+        write_only=True
+    )
+
+    class Meta:
+        model = State
+        fields = [
+            'uuid', 'countryName', 'country_id',
+            'stateName', 'stateshortName', 'description',
+            'is_active', 'is_deleted', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['uuid', 'created_at', 'updated_at']
+
+
+class DistrictSerializer(serializers.ModelSerializer):
+    countryName = CountrySerializer(read_only=True)
+    country_id = serializers.PrimaryKeyRelatedField(
+        queryset=Country.objects.all(),
+        source='countryName',
+        write_only=True
+    )
+    stateName = StateSerializer(read_only=True)
+    state_id = serializers.PrimaryKeyRelatedField(
+        queryset=State.objects.all(),
+        source='stateName',
+        write_only=True
+    )
+
+    class Meta:
+        model = District
+        fields = [
+            'uuid', 'countryName', 'country_id',
+            'stateName', 'state_id',
+            'districtName', 'description',
+            'is_deleted', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['uuid', 'created_at', 'updated_at']
+
+
+class CitySerializer(serializers.ModelSerializer):
+    countryName = CountrySerializer(read_only=True)
+    country_id = serializers.PrimaryKeyRelatedField(
+        queryset=Country.objects.all(),
+        source='countryName',
+        write_only=True
+    )
+    stateName = StateSerializer(read_only=True)
+    state_id = serializers.PrimaryKeyRelatedField(
+        queryset=State.objects.all(),
+        source='stateName',
+        write_only=True
+    )
+    districtName = DistrictSerializer(read_only=True)
+    district_id = serializers.PrimaryKeyRelatedField(
+        queryset=District.objects.all(),
+        source='districtName',
+        write_only=True
+    )
+
+    class Meta:
+        model = City
+        fields = [
+            'uuid', 'countryName', 'country_id',
+            'stateName', 'state_id',
+            'districtName', 'district_id',
+            'cityName', 'description',
+            'is_deleted', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['uuid', 'created_at', 'updated_at']
+
+
+class RelationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Relation
+        fields = [
+            'uuid', 'relation', 'description',
+            'is_deleted', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['uuid', 'created_at', 'updated_at']
+
+
+class TimezoneSerializer(serializers.ModelSerializer):
+    countryName = CountrySerializer(read_only=True)
+    country_id = serializers.PrimaryKeyRelatedField(
+        queryset=Country.objects.all(),
+        source='countryName',
+        write_only=True
+    )
+    stateName = StateSerializer(read_only=True)
+    state_id = serializers.PrimaryKeyRelatedField(
+        queryset=State.objects.all(),
+        source='stateName',
+        write_only=True
+    )
+
+    class Meta:
+        model = Timezone
+        fields = [
+            'uuid', 'countryName', 'country_id',
+            'stateName', 'state_id',
+            'Timezone', 'description',
+            'is_deleted', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['uuid', 'created_at', 'updated_at']
+
+
 class DepartmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Department
@@ -388,3 +530,155 @@ class LanguageSerializer(serializers.ModelSerializer):
             'updated_at'
         ]
         read_only_fields = ['uuid', 'created_at', 'updated_at']
+
+
+class LanguageTestSerializer(serializers.ModelSerializer):
+    language = LanguageSerializer(read_only=True)
+
+    class Meta:
+        model = LanguageTest
+        fields = [
+            'id', 'uuid', 'language', 'name', 'fullname', 'description', 
+            'is_deleted', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
+
+        
+
+class LanguagetestmoduleNameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LanguagetestmoduleName
+        fields = [
+            'id',
+            'uuid',
+            'name',
+            'description',
+            'is_deleted',
+            'created_at',
+            'updated_at'
+        ]
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
+class CLBLevelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CLBLevel
+        fields = [
+            'id',
+            'uuid',
+            'name',
+            'description',
+            'is_deleted',
+            'created_at',
+            'updated_at'
+        ]
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']        
+
+
+
+class LanguageTestResultSerializer(serializers.ModelSerializer):
+    
+    language = LanguageSerializer(read_only=True)
+    language_test = LanguageTestSerializer(read_only=True)
+    module_name = LanguagetestmoduleNameSerializer(read_only=True)
+    clb_level = CLBLevelSerializer(read_only=True)
+
+
+    language_id = serializers.PrimaryKeyRelatedField(
+        queryset=Language.objects.all(), source='language', write_only=True
+    )
+    language_test_id = serializers.PrimaryKeyRelatedField(
+        queryset=LanguageTest.objects.all(), source='language_test', write_only=True
+    )
+    module_name_id = serializers.PrimaryKeyRelatedField(
+        queryset=LanguagetestmoduleName.objects.all(), source='languagetest_module_name', write_only=True
+    )
+    clb_level_id = serializers.PrimaryKeyRelatedField(
+        queryset=CLBLevel.objects.all(), source='clb_level', write_only=True
+    )
+
+    class Meta:
+        model = LanguageTestResult
+        fields = [
+            'id', 'uuid',
+            'language', 'language_id',
+            'language_test', 'language_test_id',
+            'module_name', 'module_name_id',
+            'clb_level', 'clb_level_id',
+            'numeric_score', 'description',
+            'is_deleted', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
+
+class StudyLanguageBanchmarkSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StudyLanguageBanchmark
+        fields = ['id', 'uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
+class EntranceTestNameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EntranceTestName
+        fields = ['id', 'uuid', 'fullname', 'shortname', 'description', 'is_deleted', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
+class EntranceTestModuleNameSerializer(serializers.ModelSerializer):
+    entrancetest = EntranceTestNameSerializer(read_only=True)
+    entrancetest_id = serializers.PrimaryKeyRelatedField(
+        queryset=EntranceTestName.objects.all(), source='entrancetest', write_only=True
+    )
+
+    class Meta:
+        model = EntranceTestModuleName
+        fields = ['id', 'uuid', 'entrancetest', 'entrancetest_id', 'moduleName', 'description', 
+                  'is_deleted', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
+# Main Result serializer
+class EntranceTestResultSerializer(serializers.ModelSerializer):
+    entrancetest = EntranceTestNameSerializer(read_only=True)
+    entrancetest_id = serializers.PrimaryKeyRelatedField(
+        queryset=EntranceTestName.objects.all(), source='entrancetest', write_only=True
+    )
+    
+    moduleName = EntranceTestModuleNameSerializer(read_only=True)
+    moduleName_id = serializers.PrimaryKeyRelatedField(
+        queryset=EntranceTestModuleName.objects.all(), source='moduleName', write_only=True
+    )
+
+    class Meta:
+        model = EntranceTestResult
+        fields = ['id', 'uuid', 
+                  'entrancetest', 'entrancetest_id', 
+                  'moduleName', 'moduleName_id', 
+                  'testresult', 'description',
+                  'is_deleted', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
+
+class OccupationVersionSerializer(serializers.ModelSerializer):
+    country = CountrySerializer(read_only=True)
+
+    country_id = serializers.PrimaryKeyRelatedField(
+        queryset=Country.objects.all(),
+        source='country',
+        write_only=True
+    )
+
+    class Meta:
+        model = OccupationVersion
+        fields = [
+            'id',
+            'uuid',
+            'country',
+            'country_id',
+            'occupation_version',
+            'effect_from',
+            'valid_upto',
+            'description',
+            'is_deleted',
+            'created_at',
+            'updated_at'
+        ]
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']

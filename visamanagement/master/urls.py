@@ -15,42 +15,62 @@ urlpatterns = [
     path('Maritalstatus/<uuid:uuid>/', MaritalstatusDetailAPIView.as_view(), name='Maritalstatus-detail'),
     path('Maritalstatus/<uuid:uuid>/update/', MaritalstatusUpdateAPIView.as_view(),name='Maritalstatus-update'),
 
-    path('continents/create/', ContinentsCreateAPIView.as_view(),name='continents-create'),
-    path('continents/list/', ContinentsListAPIView.as_view(),name='continents-list'),
-    # path('continents/<uuid:uuid>/', ContinentsDetailAPIView.as_view()),
-    path('continents/update/<uuid:uuid>/', ContinentsUpdateAPIView.as_view(),name='continents-update'),
-    path('continents/<uuid:uuid>/delete/', ContinentsDeleteAPIView.as_view(),name='continents-delete'),
+    path('continents/create/', ContinentCreateAPIView.as_view(),name='continents-create'),
+    path('continents/', ContinentListAPIView.as_view(),name='continents-list'),
+    path('continents/<uuid:uuid>/', ContinentRetrieveAPIView.as_view()),
+    path('continents/<uuid:uuid>/update/', ContinentUpdateAPIView.as_view(),name='continents-update'),
+    path('continents/delete/', ContinentDeleteAPIView.as_view(),name='continents-delete'),
+    path('continents/export/', ContinentExportAPIView.as_view(),name='continents-export'),
+    path('continents/import/', ContinentImportAPIView.as_view(),name='continents-import'),
+    
 # 
     path('country/create/', CountryCreateAPIView.as_view(),name='country-create'),
-    path('country/list/', CountryListAPIView.as_view(),name='country-list'),
-    path('country/update/<uuid:uuid>/', CountryUpdateAPIView.as_view(),name='country-update'),
-    path('country/<uuid:uuid>/delete/', CountryDeleteAPIView.as_view(),name='country-delete'),
+    path('country/', CountryListAPIView.as_view(),name='country-list'),
+    path('country/<uuid:uuid>/', StateRetrieveAPIView.as_view(), name='state-detail'),
+    path('country/<uuid:uuid>/update/', CountryUpdateAPIView.as_view(),name='country-update'),
+    path('country/delete/', CountryDeleteAPIView.as_view(),name='country-delete'),
+    path('countries/export/', CountryExportAPIView.as_view(), name='country-export'),
+    path('countries/import/', CountryImportAPIView.as_view(), name='country-import'),
     path('countries/by-continent/', CountriesByContinentAPIView.as_view(), name='countries-by-continent'),
 
-
     path('state/create/', StateCreateAPIView.as_view(),name='state-create'),
-    path('state/list/', StateListAPIView.as_view(),name='state-list'),
-    path('state/update/<uuid:uuid>/', StateUpdateAPIView.as_view(),name='state-update'),
-    path('state/<uuid:uuid>/delete/', StateDeleteAPIView.as_view(),name='state-delete'),
+    path('state/', StateListAPIView.as_view(),name='state-list'),
+    path('state/<uuid:uuid>/update/', StateUpdateAPIView.as_view(),name='state-update'),
+    path('states/<uuid:uuid>/', StateRetrieveAPIView.as_view(), name='state-detail'),
+    path('state/delete/', StateDeleteAPIView.as_view(),name='state-delete'),
+    path('state/export/', StateExportAPIView.as_view(), name='state-export'),
+    path('state/import/', StateImportAPIView.as_view(), name='state-import'),
     path('state/by-country/', StateByCountryAPIView.as_view(), name='state-by-country'),
 
     
     path('district/create/', DistrictCreateAPIView.as_view(),name='district-create'),
-    path('district/list/', DistrictListAPIView.as_view(),name='district-list'),
-    path('district/update/<uuid:uuid>/', DistrictUpdateAPIView.as_view(),name='district-update'),
-    path('district/<uuid:uuid>/delete/', DistrictDeleteAPIView.as_view(),name='district-delete'),
+    path('district/', DistrictListAPIView.as_view(),name='district-list'),
+    path('districts/<uuid:uuid>/', DistrictRetrieveAPIView.as_view(), name='district-detail'),
+    path('district/<uuid:uuid>/update/', DistrictUpdateAPIView.as_view(),name='district-update'),
+    path('district/delete/', DistrictDeleteAPIView.as_view(),name='district-delete'),
+    path('district/export/', DistrictExportAPIView.as_view(), name='district-export'),
+    path('district/import/', DistrictImportAPIView.as_view(), name='district   -import'),
     path('district/by-state/', DistrictByFilterAPIView.as_view(), name='district-by-state'),
 
 
-    path('city/create/', CityCreateAPIView.as_view(),name='city-create'),
-    path('city/list/', CityListAPIView.as_view(),name='city-list'),
-    path('city/update/<uuid:uuid>/', CityUpdateAPIView.as_view(),name='city-update'),
-    path('city/<uuid:uuid>/delete/', CityDeleteAPIView.as_view(),name='city-delete'),
-    
-    path('relation/create/', RelationCreateAPIView.as_view(),name='relation-create'),
-    path('relation/list/', RelationListAPIView.as_view(),name='relation-list'),
-    path('relation/update/<uuid:uuid>/', RelationUpdateAPIView.as_view(),name='relation-update'),
-    path('relation/<uuid:uuid>/delete/', RelationDeleteAPIView.as_view(),name='relation-delete'),
+    path('city/', CityListAPIView.as_view(), name='city-list'),
+    path('city/create/', CityCreateAPIView.as_view(), name='city-create'),
+    path('city/<uuid:uuid>/', CityRetrieveAPIView.as_view(), name='city-detail'),
+    path('city/update/<uuid:uuid>/', CityUpdateAPIView.as_view(), name='city-update'),
+    path('city/delete/', CityDeleteAPIView.as_view(), name='city-delete'),
+    path('city/export/', CityExportAPIView.as_view(), name='city-export'),
+    path('city/import/', CityImportAPIView.as_view(), name='city-import'),
+
+
+
+
+    path('relations/list/', RelationListAPIView.as_view(), name='relation-list'),
+    path('relations/create/', RelationCreateAPIView.as_view(), name='relation-create'),
+    path('relations/<uuid:uuid>/', RelationRetrieveAPIView.as_view(), name='relation-detail'),
+    path('relations/update/<uuid:uuid>/', RelationUpdateAPIView.as_view(), name='relation-update'),
+    path('relations/delete/', RelationDeleteAPIView.as_view(), name='relation-delete'),
+    path('relations/export/', RelationExportAPIView.as_view(), name='relation-export'),
+    path('relations/import/', RelationImportAPIView.as_view(), name='relation-import'),
 
     path('timezones/create/', TimezoneCreateAPIView.as_view(), name='timezone-create'),
     path('timezones/list/', TimezoneListAPIView.as_view(), name='timezone-list'),
@@ -246,7 +266,7 @@ urlpatterns = [
     path('academicresult/export/', AcademicResultExportAPIView.as_view(), name='academicresult-export'),
     path('academicresult/import/', AcademicResultImportAPIView.as_view(), name='academicresult-import'),    
 
-     path('educationtype/create/', EducationTypeCreateAPIView.as_view(), name='educationtype-create'),
+    path('educationtype/create/', EducationTypeCreateAPIView.as_view(), name='educationtype-create'),
     path('educationtype/<uuid:uuid>/', EducationTypeRetrieveAPIView.as_view(), name='educationtype-retrieve'),
     path('educationtype/update/<uuid:uuid>/', EducationTypeUpdateAPIView.as_view(), name='educationtype-update'),
     path('educationtype/delete/', EducationTypeDeleteAPIView.as_view(), name='educationtype-delete'),
@@ -264,6 +284,52 @@ urlpatterns = [
     path('language/list/', LanguageListAPIView.as_view(), name='language-list'),
     path('language/export/', LanguageExportAPIView.as_view(), name='language-export'),
     path('language/import/', LanguageImportAPIView.as_view(), name='language-import'),
+
+
+    # ---------------- LanguageTest ---------------- #
+    path('language-tests/', LanguageTestListAPIView.as_view(), name='language-test-list'),
+    path('language-tests/create/', LanguageTestCreateAPIView.as_view(), name='language-test-create'),
+    path('language-tests/<uuid:uuid>/', LanguageTestRetrieveAPIView.as_view(), name='language-test-retrieve'),
+    path('language-tests/<uuid:uuid>/update/', LanguageTestUpdateAPIView.as_view(), name='language-test-update'),
+    path('language-tests/delete/', LanguageTestDeleteAPIView.as_view(), name='language-test-delete'),
+    path('language-tests/export/', LanguageTestExportAPIView.as_view(), name='language-test-export'),
+    path('language-tests/import/', LanguageTestImportAPIView.as_view(), name='language-test-import'),
+
+    # ------------- LanguagetestmoduleName ------------- #
+    path('languagetest-modules/', LanguagetestmoduleNameListAPIView.as_view(), name='languagetest-module-list'),
+    path('languagetest-modules/create/', LanguagetestmoduleNameCreateAPIView.as_view(), name='languagetest-module-create'),
+    path('languagetest-modules/<uuid:uuid>/', LanguagetestmoduleNameRetrieveAPIView.as_view(), name='languagetest-module-retrieve'),
+    path('languagetest-modules/<uuid:uuid>/update/', LanguagetestmoduleNameUpdateAPIView.as_view(), name='languagetest-module-update'),
+    path('languagetest-modules/delete/', LanguagetestmoduleNameDeleteAPIView.as_view(), name='languagetest-module-delete'),
+    path('languagetest-modules/export/', LanguagetestmoduleNameExportAPIView.as_view(), name='languagetest-module-export'),
+    path('languagetest-modules/import/', LanguagetestmoduleNameImportAPIView.as_view(), name='languagetest-module-import'),
+
+    # ---------------- CLBLevel ---------------- #
+    path('clb-levels/', CLBLevelListAPIView.as_view(), name='clb-level-list'),
+    path('clb-levels/create/', CLBLevelCreateAPIView.as_view(), name='clb-level-create'),
+    path('clb-levels/<uuid:uuid>/', CLBLevelRetrieveAPIView.as_view(), name='clb-level-retrieve'),
+    path('clb-levels/<uuid:uuid>/update/', CLBLevelUpdateAPIView.as_view(), name='clb-level-update'),
+    path('clb-levels/delete/', CLBLevelDeleteAPIView.as_view(), name='clb-level-delete'),
+    path('clb-levels/export/', CLBLevelExportAPIView.as_view(), name='clb-level-export'),
+    path('clb-levels/import/', CLBLevelImportAPIView.as_view(), name='clb-level-import'),
+
+    # --------- StudyLanguageBanchmark --------- #
+    path('study-language-banchmarks/', StudyLanguageBanchmarkListAPIView.as_view(), name='study-language-banchmark-list'),
+    path('study-language-banchmarks/create/', StudyLanguageBanchmarkCreateAPIView.as_view(), name='study-language-banchmark-create'),
+    path('study-language-banchmarks/<uuid:uuid>/', StudyLanguageBanchmarkRetrieveAPIView.as_view(), name='study-language-banchmark-retrieve'),
+    path('study-language-banchmarks/<uuid:uuid>/update/', StudyLanguageBanchmarkUpdateAPIView.as_view(), name='study-language-banchmark-update'),
+    path('study-language-banchmarks/delete/', StudyLanguageBanchmarkDeleteAPIView.as_view(), name='study-language-banchmark-delete'),
+    path('study-language-banchmarks/export/', StudyLanguageBanchmarkExportAPIView.as_view(), name='study-language-banchmark-export'),
+    path('study-language-banchmarks/import/', StudyLanguageBanchmarkImportAPIView.as_view(), name='study-language-banchmark-import'),
+
+    # --------- EntranceTestName --------- #
+    path('entrance-tests/', EntranceTestNameListAPIView.as_view(), name='entrance-test-list'),
+    path('entrance-tests/create/', EntranceTestNameCreateAPIView.as_view(), name='entrance-test-create'),
+    path('entrance-tests/<uuid:uuid>/', EntranceTestNameRetrieveAPIView.as_view(), name='entrance-test-retrieve'),
+    path('entrance-tests/<uuid:uuid>/update/', EntranceTestNameUpdateAPIView.as_view(), name='entrance-test-update'),
+    path('entrance-tests/delete/', EntranceTestNameDeleteAPIView.as_view(), name='entrance-test-delete'),
+    path('entrance-tests/export/', EntranceTestNameExportAPIView.as_view(), name='entrance-test-export'),
+    path('entrance-tests/import/', EntranceTestNameImportAPIView.as_view(), name='entrance-test-import'),
 
 ]
 

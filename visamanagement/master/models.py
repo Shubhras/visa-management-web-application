@@ -560,5 +560,92 @@ class CLBLevel(models.Model):
 
     def __str__(self):
         return self.name
+    
+
+class LanguageTestResult(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    language = models.ForeignKey('Language',on_delete=models.SET_NULL,null=True,blank=True,related_name='test_results')
+    language_test = models.ForeignKey('LanguageTest',on_delete=models.SET_NULL,null=True,blank=True,related_name='results')
+    module_name = models.ForeignKey('LanguagetestmoduleName',  on_delete=models.SET_NULL,null=True,blank=True,related_name='test_results')
+    clb_level = models.ForeignKey('CLBLevel', on_delete=models.SET_NULL,null=True,blank=True,related_name='language_test_results'    )
+
+    numeric_score = models.DecimalField(max_digits=4, decimal_places=1, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_deleted = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.language_test} - {self.language} - {self.module_name}"
 
 
+class StudyLanguageBanchmark(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    name=models.TextField(max_length=255,blank=True,null=True)
+    description = models.TextField(max_length=255,blank=True,null=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+    
+class EntranceTestName(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    fullname=models.TextField(max_length=255,blank=True,null=True)
+    shortname=models.TextField(max_length=255,blank=True,null=True)
+    description = models.TextField(max_length=255,blank=True,null=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.fullname
+
+
+class EntranceTestModuleName(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    entrancetest=models.ForeignKey('EntranceTestName',on_delete=models.SET_NULL,null=True,blank=True,related_name='entrance_test')
+    moduleName=models.TextField(max_length=255,blank=True,null=True)
+    description = models.TextField(max_length=255,blank=True,null=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.moduleName
+
+
+class EntranceTestResult(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    entrancetest=models.ForeignKey('EntranceTestName',on_delete=models.SET_NULL,null=True,blank=True,related_name='entrance_test')
+    moduleName=models.ForeignKey('EntranceTestModuleName',on_delete=models.SET_NULL,null=True,blank=True,related_name='entrance_test')
+    testresult=models.TextField(max_length=255,blank=True,null=True)
+    description = models.TextField(max_length=255,blank=True,null=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.testresult
+
+
+class OccupationVersion(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    country = models.ForeignKey('Country',on_delete=models.SET_NULL,null=True,blank=True,related_name='occupation_versions')
+    occupation_version = models.CharField(max_length=255, unique=True)  # duplicate not allowed
+    effect_from = models.DateField(null=True, blank=True)
+    valid_upto = models.DateField(null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.occupation_version
