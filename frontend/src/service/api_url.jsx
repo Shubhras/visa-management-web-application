@@ -34,7 +34,13 @@ export const DELETE_STAKEHOLDER_CATEGORY_API = "api/v1/master/stakeholder-catego
 export const EXPORT_STAKEHOLDER_CATEGORY_API = "api/v1/master/stakeholder-categories/export/";
 export const IMPORT_STAKEHOLDER_CATEGORY_API = "api/v1/master/stakeholder-categories/import/";
 
-
+// PRIORITY_TYPE
+export const GET_PRIORITY_TYPE_LIST = "/api/v1/master/Priority/";
+export const ADD_PRIORITY_TYPE_API = "/api/v1/master/Priority/create/";
+export const EDIT_PRIORITY_TYPE_API = "api/v1/master/Priority/";
+export const DELETE_PRIORITY_TYPE_API = "api/v1/master/Priority/";
+export const EXPORT_PRIORITY_TYPE_API = "api/v1/master/Priority/export/";
+export const IMPORT_PRIORITY_TYPE_API = "api/v1/master/Priority/import/";
 
 
 // // export const TWO_STEP_VERIFICATION = 'api/national-admin/national-admin-verifyOtpAdmin'

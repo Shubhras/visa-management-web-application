@@ -153,7 +153,39 @@ export const importStakeholderCategoryDataAPI = (payload) => {
     return post(apiUrl, payload);
 };
 
+// PRIORITY_TYPE
+export const getPriorityTypeListDataAPI = (data) => {
+    const apiUrl = `${url.GET_PRIORITY_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
 
+export const addPriorityTypeDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_PRIORITY_TYPE_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editPriorityTypeDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_PRIORITY_TYPE_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deletePriorityTypeDataAPI = (payload) => {
+    const prepareDATA = {
+        id: payload
+    };
+    const apiUrl = `${url.DELETE_PRIORITY_TYPE_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportPriorityTypeDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_PRIORITY_TYPE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importPriorityTypeDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_PRIORITY_TYPE_API}`;
+    return post(apiUrl, payload);
+};
 
 // //international admin
 // export const getUsersDetailsById = (payload) => {

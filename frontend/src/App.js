@@ -348,6 +348,8 @@ import DepartmentList from "./pages/masters/department/DepartmentList";
 import EmployeeTypeList from "./pages/masters/employeeType/EmployeeTypeList";
 import CompanyList from "./pages/masters/company/CompanyList";
 import StakeholderCategoriesList from "./pages/masters/stakeholderCategories/StakeholderCategoriesList";
+import PriorityTypeList from "./pages/masters/priorityType/PriorityTypeList";
+
 import LeadsList from "./pages/leads/LeadsList";
 
 
@@ -465,7 +467,7 @@ function App() {
         <Route exact path='/employeetype' element={<EmployeeTypeList />} />
         <Route exact path= '/companylist' element={<CompanyList/>} />
        <Route exact path= '/stakeholder-list' element={<StakeholderCategoriesList/>} />
-
+        <Route exact path= '/priority-type' element={<PriorityTypeList/>} />
         <Route path='*' element={<ErrorPage />} />
       </Routes>
     </BrowserRouter>

@@ -72,7 +72,9 @@ const Header = () => {
             submenu: [
                 { name: 'Department', path: '/department' },
                 { name: 'Employee type', path: '/employeetype' },
-                { name: 'Company type', path: '/companylist' }
+                { name: 'Company type', path: '/companylist' },
+                { name: 'Stakeholder categories', path: '/stakeholder-list' },
+                { name: 'Priority type', path: '/priority-type' }
             ]
         }
     ];
