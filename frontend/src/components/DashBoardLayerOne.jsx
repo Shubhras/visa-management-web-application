@@ -13,30 +13,30 @@ const DashBoardLayerOne = () => {
     return (
         <>
             {/* UnitCountOne */}
-            <UnitCountOne />
+            {/* <UnitCountOne /> */}
 
             <section className="row gy-4 mt-1">
 
                 {/* SalesStatisticOne */}
-                <SalesStatisticOne />
+                {/* <SalesStatisticOne /> */}
 
                 {/* TotalSubscriberOne */}
-                <TotalSubscriberOne />
+                {/* <TotalSubscriberOne /> */}
 
                 {/* UsersOverviewOne */}
-                <UsersOverviewOne />
+                {/* <UsersOverviewOne /> */}
 
                 {/* LatestRegisteredOne */}
-                <LatestRegisteredOne />
+                {/* <LatestRegisteredOne /> */}
 
                 {/* TopPerformerOne */}
-                <TopPerformerOne />
+                {/* <TopPerformerOne /> */}
 
                 {/* TopCountries */}
-                <TopCountries />
+                {/* <TopCountries /> */}
 
                 {/* GeneratedContent */}
-                <GeneratedContent />
+                {/* <GeneratedContent /> */}
 
             </section>
         </>
