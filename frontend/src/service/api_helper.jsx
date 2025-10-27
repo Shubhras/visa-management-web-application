@@ -1,7 +1,7 @@
 // import axios from "axios";
 
 import * as url from "./api_url";
-import { get, post, put, del ,delWithPayload,getExportData} from "./api_service";
+import { get, post, put, del, delWithPayload, getExportData } from "./api_service";
 
 // auth
 export const postLogin = data => post(url.POST_LOGIN, data);
@@ -33,7 +33,7 @@ export const deleteDepartmentDataAPI = (payload) => {
 
 
 export const exportDepartmentDataAPI = (payload) => {
-    console.log('fffffffff',payload);
+    console.log('fffffffff', payload);
     const apiUrl = `${url.EXPORT_DEPARTMENT_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
     return getExportData(apiUrl, payload);
 };
@@ -47,7 +47,7 @@ export const importDepartmentDataAPI = (payload) => {
 
 //EMPLOYEE_TYPE 
 export const getEmployeeTypeListDataAPI = (data) => {
-    const apiUrl = `${url.GET_EMPLOYEE_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}`;
+    const apiUrl = `${url.GET_EMPLOYEE_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
     return get(apiUrl)
 };
 
@@ -71,7 +71,7 @@ export const deleteEmployeeTypeDataAPI = (payload) => {
 
 
 export const exportEmployeeTypeDataAPI = (payload) => {
-    const apiUrl = `${url.EXPORT_EMPLOYEE_TYPE_API}`;
+    const apiUrl = `${url.EXPORT_EMPLOYEE_TYPE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -80,7 +80,78 @@ export const importEmployeeTypeDataAPI = (payload) => {
     return post(apiUrl, payload);
 };
 
+//Company Type
+export const getCompanyListDataAPI = (data) => {
+    const apiUrl = `${url.GET_COMPANY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl)
 
+};
+
+export const addCompanyDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_COMPANY_API}`;
+    return post(apiUrl, payload);
+
+};
+
+export const editCompanyDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_COMPANY_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+
+};
+
+export const deleteCompanyDataAPI = (payload) => {
+    const prapareDATA = {
+        id: payload
+    }
+    const apiUrl = `${url.DELETE_COMPANY_API}delete/`;
+    return delWithPayload(apiUrl, prapareDATA);
+};
+
+
+export const exportCompanyDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_COMPANY_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importCompanyDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_COMPANY_API}`;
+    return post(apiUrl, payload);
+
+};
+
+// STAKEHOLDER_CATEGORY
+export const getStakeholderCategoryListDataAPI = (data) => {
+    const apiUrl = `${url.GET_STAKEHOLDER_CATEGORY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addStakeholderCategoryDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_STAKEHOLDER_CATEGORY_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editStakeholderCategoryDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_STAKEHOLDER_CATEGORY_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteStakeholderCategoryDataAPI = (payload) => {
+    const prepareDATA = {
+        id: payload
+    };
+    const apiUrl = `${url.DELETE_STAKEHOLDER_CATEGORY_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportStakeholderCategoryDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_STAKEHOLDER_CATEGORY_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importStakeholderCategoryDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_STAKEHOLDER_CATEGORY_API}`;
+    return post(apiUrl, payload);
+};
 
 
 

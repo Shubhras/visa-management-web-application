@@ -1,0 +1,830 @@
+import React, { useState, useEffect } from 'react'
+import { useDispatch } from "react-redux";
+import MasterLayout from "../../../masterLayout/MasterLayout";
+import Breadcrumb from "../../../components/Breadcrumb";
+import { Icon } from '@iconify/react/dist/iconify.js';
+import { Link } from 'react-router-dom';
+// import * as XLSX from 'xlsx';
+// import { saveAs } from 'file-saver';
+import { toast } from "react-toastify";
+import AddCompany from './AddCompany';
+import EditCompany from './EditCompany';
+import { companyList, companyDelete, companyExportData } from '../../../store/master/actions';
+import AddImportModal from './AddImportModal';
+
+const CompanyList = () => {
+    const dispatch = useDispatch();
+
+    const [show, setShow] = useState(false);
+    const handleShow = () => setShow(true);
+    const handleClose = () => {
+        setShow(false);
+        fetchDepartmentList();
+    };
+
+    const [showEdit, setShowEdit] = useState(false);
+    const [showImport, setShowImport] = useState(false);
+    const [rowSelectData, setRowSelectData] = useState({});
+    const [selectedRows, setSelectedRows] = useState([]);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this department?");
+    const [showExportPopop, setShowExportPopop] = useState(false);
+    const [deleteId, setDeleteId] = useState(null);
+    const [departments, setDepartments] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [loadingExport, setLoadingExport] = useState(false);
+
+    const [items, setItems] = useState(["name", "description", "created_at"]);
+    const [selectedItems, setSelectedItems] = useState([...items]);
+
+    // Updated state with sorting
+    const [tableState, setTableState] = useState({
+        page: 1,
+        limit: 25,
+        search: '',
+        status: '',
+        sortBy: '', // Field to sort by
+        sortOrder: '', // 'asc' or 'desc'
+        total: 0,
+        totalPages: 0,
+        currentPage: 1,
+        hasNext: false,
+        hasPrevious: false
+    });
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (tableState.search !== undefined) {
+                fetchDepartmentList();
+            }
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [tableState.search]);
+
+    useEffect(() => {
+        fetchDepartmentList();
+    }, [tableState.page, tableState.limit, tableState.status, tableState.sortBy, tableState.sortOrder]);
+
+    const fetchDepartmentList = () => {
+        setLoading(true);
+        const params = {
+            page: tableState.page,
+            limit: tableState.limit,
+            search: tableState.search || '',
+            status: tableState.status || '',
+            sortBy: tableState.sortBy || '',
+            sortOrder: tableState.sortOrder || ''
+        };
+
+        dispatch(companyList(params, (response, error) => {
+            setLoading(false);
+            if (response?.statusCode === 200 && response?.status === true) {
+                const paginationData = response?.pagination || {};
+
+                setDepartments(response?.data || []);
+                setTableState(prev => ({
+                    ...prev,
+                    total: paginationData.totalItems || 0,
+                    totalPages: paginationData.totalPages || 0,
+                    currentPage: paginationData.currentPage || 1,
+                    hasNext: paginationData.nextPage || false,
+                    hasPrevious: paginationData.previousPage || false
+                }));
+            } else {
+                setDepartments([]);
+                setTableState(prev => ({
+                    ...prev,
+                    total: 0,
+                    totalPages: 0,
+                    currentPage: 1,
+                    hasNext: false,
+                    hasPrevious: false
+                }));
+            }
+        }));
+    };
+
+    // Handle sorting
+    const handleSort = (field) => {
+        setTableState(prev => {
+            // If clicking the same field, toggle between asc -> desc -> no sort
+            if (prev.sortBy === field) {
+                if (prev.sortOrder === 'asc') {
+                    return { ...prev, sortOrder: 'desc', page: 1 };
+                } else if (prev.sortOrder === 'desc') {
+                    return { ...prev, sortBy: '', sortOrder: '', page: 1 };
+                }
+            }
+            // If clicking a new field, start with asc
+            return { ...prev, sortBy: field, sortOrder: 'asc', page: 1 };
+        });
+    };
+
+    // Get sort icon for a column
+    const getSortIcon = (field) => {
+        // if (tableState.sortBy !== field) {
+        //   return <Icon icon="ri:sort-line" width="16" style={{ color: '#999', marginLeft: '4px' }} />;
+        // }
+        // if (tableState.sortOrder === 'asc') {
+        //   return <Icon icon="ri:sort-asc" width="16" style={{ color: '#5a6c5b', marginLeft: '4px' }} />;
+        // }
+        // return <Icon icon="ri:sort-desc" width="16" style={{ color: '#5a6c5b', marginLeft: '4px' }} />;
+        if (tableState.sortBy !== field) {
+            return <Icon icon="ri:sort-desc" className='sorting-th-icone' />;
+        }
+        if (tableState.sortOrder === 'asc') {
+            return <Icon icon="ri:sort-asc" className='sorting-th-icone' />;
+        }
+        return <Icon icon="ri:sort-desc" className='sorting-th-icone' />;
+    };
+
+    const handleSearchChange = (value) => {
+        setTableState(prev => ({
+            ...prev,
+            search: value,
+            page: 1
+        }));
+    };
+
+    const handleStatusChange = (value) => {
+        setTableState(prev => ({
+            ...prev,
+            status: value === 'All' ? '' : value,
+            page: 1
+        }));
+    };
+
+    const handlePageLengthChange = (value) => {
+        setTableState(prev => ({
+            ...prev,
+            limit: Number(value),
+            page: 1
+        }));
+    };
+
+    // For "Select All" button
+    const handleSelectAllButton = () => {
+        if (isAllSelected) {
+            setSelectedRows([]);
+        } else {
+            setSelectedRows(departments.map(dept => dept.uuid));
+        }
+    };
+    // For checkbox in table header
+    const handleSelectAll = (e) => {
+
+        const checked = e.target.checked;
+        if (checked) {
+            setSelectedRows(departments.map(dept => dept.uuid));
+        } else {
+            setSelectedRows([]);
+        }
+    };
+
+    const handleRowSelect = (uuid) => {
+        setSelectedRows(prev => {
+            if (prev.includes(uuid)) {
+                return prev.filter(rowId => rowId !== uuid);
+            } else {
+                return [...prev, uuid];
+            }
+        });
+    };
+
+    const isAllSelected = departments.length > 0 &&
+        departments.every(dept => selectedRows.includes(dept.uuid));
+
+    const goToPage = (page) => {
+        if (page >= 1 && page <= tableState.totalPages) {
+            setTableState(prev => ({
+                ...prev,
+                page: page
+            }));
+        }
+    };
+
+    const getPaginationNumbers = () => {
+        const pages = [];
+        const maxVisible = 5;
+        const totalPages = tableState.totalPages;
+        const currentPage = tableState.currentPage;
+
+        if (totalPages <= maxVisible) {
+            for (let i = 1; i <= totalPages; i++) {
+                pages.push(i);
+            }
+        } else {
+            if (currentPage <= 3) {
+                for (let i = 1; i <= 4; i++) pages.push(i);
+                pages.push('...');
+                pages.push(totalPages);
+            } else if (currentPage >= totalPages - 2) {
+                pages.push(1);
+                pages.push('...');
+                for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i);
+            } else {
+                pages.push(1);
+                pages.push('...');
+                for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i);
+                pages.push('...');
+                pages.push(totalPages);
+            }
+        }
+        return pages;
+    };
+
+    const handleCloseEdit = () => {
+        setShowEdit(false);
+        fetchDepartmentList();
+    };
+
+    const handleShowEdit = (rowData) => {
+        setShowEdit(true);
+        setRowSelectData(rowData);
+    };
+
+    const handleDelete = (uuid) => {
+        setDeleteId(uuid);
+        setShowDeleteConfirm(true);
+    };
+
+    const handleBulkDelete = () => {
+        if (selectedRows.length === 0) {
+            alert('Please select rows to delete');
+            return;
+        }
+        const maggase = isAllSelected ? "all" : deleteId ? "" : selectedRows.length
+        setDeleteConfirmMessage(`Are you sure you want to delete this department (${maggase})?`);
+        setShowDeleteConfirm(true);
+    };
+
+    const confirmDelete = () => {
+        //const sendPayload = "all"//deleteId ? [deleteId] : selectedRows;
+        const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
+
+        if (!sendPayload || sendPayload.length === 0) {
+            toast.error("No department selected for deletion.");
+            return;
+        }
+
+        dispatch(companyDelete(sendPayload, (response, error) => {
+            if (error) {
+                toast.error(error?.response?.data?.message || "server error");
+            } else {
+                if (response?.statusCode === 200 && response?.status === true) {
+                    toast.success(response?.message);
+                    setDepartments(prevDepts => prevDepts.filter(dept => dept.uuid !== deleteId));
+                    setSelectedRows(prevSelected => prevSelected.filter(rowId => rowId !== deleteId));
+                    setShowDeleteConfirm(false);
+                    setSelectedRows([])
+                    setDeleteId(null);
+                    fetchDepartmentList();
+                } else {
+                    toast.error("Something went wrong.");
+                }
+            }
+        }));
+    };
+
+    const cancelDelete = () => {
+        setShowDeleteConfirm(false);
+        setDeleteId(null);
+        setSelectedRows([])
+    };
+
+    const handleCloseImport = () => {
+        setShowImport(false);
+        fetchDepartmentList();
+    };
+
+    const handleShowImport = () => {
+        setShowImport(true);
+    };
+
+    const handleExportTest = () => {
+        setShowExportPopop(true);
+    }
+
+    const cancelExportTest = () => {
+        setShowExportPopop(false);
+    };
+
+    const handleDragStart = (e, index) => {
+        e.dataTransfer.setData("dragIndex", index);
+    };
+
+    const handleDrop = (e, dropIndex) => {
+        const dragIndex = e.dataTransfer.getData("dragIndex");
+        const newItems = [...items];
+        const draggedItem = newItems.splice(dragIndex, 1)[0];
+        newItems.splice(dropIndex, 0, draggedItem);
+        setItems(newItems);
+
+        const newSelected = newItems.filter((item) => selectedItems.includes(item));
+        setSelectedItems(newSelected);
+    };
+
+    const handleDragOver = (e) => {
+        e.preventDefault();
+    };
+
+    const handleCheckboxChange = (item, checked) => {
+        if (checked) {
+            const indexInItems = items.indexOf(item);
+            const newSelected = [...selectedItems];
+            const insertIndex = newSelected.findIndex(
+                (i) => items.indexOf(i) > indexInItems
+            );
+            if (insertIndex === -1) {
+                newSelected.push(item);
+            } else {
+                newSelected.splice(insertIndex, 0, item);
+            }
+            setSelectedItems(newSelected);
+        } else {
+            setSelectedItems(selectedItems.filter((i) => i !== item));
+        }
+    }
+
+    const handleExport = () => {
+        if (selectedItems.length == 0) {
+            toast.error("Please select at least one field");
+            return
+        }
+        const fieldsString = selectedItems.join(',');
+
+        const sendPayload = {
+            file: "csv",
+            fields: fieldsString,
+            uuids: selectedRows
+        };
+        setLoadingExport(true);
+
+        dispatch(companyExportData(sendPayload, (response, error) => {
+            if (error) {
+                setLoadingExport(false);
+                toast.error(error?.response?.message || "server error");
+            } else {
+                setLoadingExport(false);
+                if (response?.status === 200) {
+                    const blob = new Blob([response.data], { type: 'text/csv' });
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `departments_${new Date().toISOString().split('T')[0]}.csv`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+                    toast.success("Export successful");
+                    cancelExportTest();
+                } else {
+                    toast.error("Something went wrong.");
+                }
+            }
+        }));
+    };
+
+    const startIndex = (tableState.currentPage - 1) * tableState.limit;
+    const statusOptions = ['All', 'Active', 'Inactive'];
+
+    const formatDateTime = (dateString) => {
+        const date = new Date(dateString);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        let hours = date.getHours();
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const seconds = String(date.getSeconds()).padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12 || 12;
+        hours = String(hours).padStart(2, '0');
+        return `${day}-${month}-${year} ${hours}:${minutes}:${seconds} ${ampm}`
+    };
+
+    return (
+        <>
+            <MasterLayout>
+                <Breadcrumb title="Company" subTitle="List" />
+                <div className="card basic-data-table main-container-data">
+                    <div className="card-body container-data">
+                        <div className="card-body container-data">
+                            <div className="row align-items-center gy-3 gx-2 flex-wrap">
+                                {/* Left Section: Import / Export / Delete */}
+                                <div className="col-xl-4 col-lg-4 col-md-12">
+                                    <div className="d-flex flex-wrap align-items-center gap-2">
+                                        <button
+                                            className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
+                                            onClick={handleShowImport}
+                                        >
+                                            Import
+                                        </button>
+
+                                        <button
+                                            className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
+                                            onClick={handleExportTest}
+                                            disabled={loadingExport}
+                                        >
+                                            Export
+                                        </button>
+                                        <button
+                                            onClick={handleSelectAllButton}
+                                            className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
+                                        >
+                                            {isAllSelected ? 'Deselect All' : 'Select All'}
+                                        </button>
+                                        {selectedRows.length > 0 && (
+                                            <button
+                                                onClick={handleBulkDelete}
+                                                className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
+                                            >
+                                                {isAllSelected
+                                                    ? `Delete All`
+                                                    : `Delete Selected (${selectedRows.length})`}
+                                            </button>
+                                        )}
+
+                                    </div>
+                                </div>
+
+                                {/* Right Section: Select / Search / +Add New */}
+                                <div className="col-xl-8 col-lg-8 col-md-12">
+                                    <div className="d-flex flex-wrap align-items-center justify-content-end gap-2">
+                                        <select
+                                            className="form-select form-select-sm"
+                                            style={{ width: 'auto', minWidth: '100px' }}
+                                            value={tableState.limit}
+                                            onChange={(e) => handlePageLengthChange(e.target.value)}
+                                        >
+                                            <option value={10}>Show 10</option>
+                                            <option value={25}>Show 25</option>
+                                            <option value={50}>Show 50</option>
+                                            <option value={100}>Show 100</option>
+                                        </select>
+
+                                        <div className="position-relative flex-grow-1" style={{ minWidth: '180px', maxWidth: '300px' }}>
+                                            <Icon
+                                                icon="ion:search-outline"
+                                                className="position-absolute"
+                                                style={{ left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#999' }}
+                                                width="18"
+                                            />
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm ps-5"
+                                                placeholder="Search..."
+                                                value={tableState.search}
+                                                onChange={(e) => handleSearchChange(e.target.value)}
+                                            />
+                                        </div>
+
+                                        <button
+                                            className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
+                                            onClick={handleShow}
+                                        >
+                                            + ADD New
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div className="card-body pt-0 container-table" >
+                        <div className='container-table-div'>
+                            <table className="table mb-0"  >
+                                <thead >
+                                    <tr>
+                                        <th scope="col" className='sl-numbar-th'>
+                                            <div className="d-flex align-items-center gap-2">
+                                                <input
+                                                    className="form-check-input"
+                                                    type="checkbox"
+                                                    checked={isAllSelected}
+                                                    onChange={handleSelectAll}
+                                                    disabled={departments.length === 0}
+                                                />
+                                                <span>S.L</span>
+                                            </div>
+                                        </th>
+                                        <th scope="col" className='sorting-th' onClick={() => handleSort('name')}>
+                                            <div className="d-flex align-items-center">
+                                                Name
+                                                {getSortIcon('name')}
+                                            </div>
+                                        </th>
+                                        <th scope="col" className='sorting-th' onClick={() => handleSort('description')}>
+                                            <div className="d-flex align-items-center">
+                                                Description
+                                                {getSortIcon('description')}
+                                            </div>
+                                        </th>
+                                        <th scope="col" className='sorting-th' onClick={() => handleSort('created_at')}>
+                                            <div className="d-flex align-items-center">
+                                                Created At
+                                                {getSortIcon('created_at')}
+                                            </div>
+                                        </th>
+                                        <th scope="col" className='action-th'>
+                                            Action
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {loading ? (
+                                        <tr>
+                                            <td colSpan="5" style={{ textAlign: 'center', padding: '32px', color: '#6c757d', fontSize: '14px' }}>
+                                                <div className="d-flex justify-content-center align-items-center gap-2">
+                                                    <div className="spinner-border spinner-border-sm" role="status">
+                                                        <span className="visually-hidden">Loading...</span>
+                                                    </div>
+                                                    Loading...
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ) : departments.length > 0 ? (
+                                        departments.map((dept, index) => (
+                                            <tr key={dept.uuid} >
+                                                <td >
+                                                    <div className="d-flex align-items-center gap-2">
+                                                        <input
+                                                            className="form-check-input"
+                                                            type="checkbox"
+                                                            checked={selectedRows.includes(dept.uuid)}
+                                                            onChange={() => handleRowSelect(dept.uuid)}
+                                                        />
+                                                        <span>
+                                                            {String(startIndex + index + 1).padStart(2, '0')}
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                                <td >
+                                                    <span >
+                                                        {dept.name}
+                                                    </span>
+                                                </td>
+                                                <td >
+                                                    <span >
+                                                        {dept.description}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span>{formatDateTime(dept.created_at)}</span>
+                                                </td>
+                                                <td >
+                                                    <div className="d-flex align-items-center gap-2">
+                                                        <Link
+                                                            to="#"
+                                                            className='edit-btn-icone'
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                handleShowEdit(dept);
+                                                            }}
+                                                        >
+                                                            <Icon icon="lucide:edit" width="18" className='icone' />
+                                                        </Link>
+                                                        <button
+                                                            onClick={() => handleDelete(dept.uuid)}
+                                                            className='delete-btn-icone'
+                                                        >
+                                                            <Icon icon="mingcute:delete-2-line" width="18" className='icone' />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan="5" className='no-records-found' >
+                                                No records found
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+
+                            {tableState.total > 0 && (
+                                <div className="d-flex justify-content-between align-items-center px-4 py-3" >
+                                    <div className='showing-total-page' >
+                                        Showing {startIndex + 1} to {Math.min(startIndex + tableState.limit, tableState.total)} of {tableState.total} entries
+                                    </div>
+                                    <nav>
+                                        <ul className="pagination mb-0" style={{ gap: '4px' }}>
+                                            <li className={`page-item ${!tableState.hasPrevious ? 'disabled' : ''}`}>
+                                                <button
+                                                    className="border-0 bg-transparent"
+                                                    onClick={() => goToPage(1)}
+                                                    disabled={!tableState.hasPrevious}
+                                                    style={{
+                                                        padding: '6px 10px',
+                                                        color: !tableState.hasPrevious ? '#ccc' : '#6c757d',
+                                                        fontSize: '18px',
+                                                        cursor: !tableState.hasPrevious ? 'not-allowed' : 'pointer'
+                                                    }}
+                                                >
+                                                    «
+                                                </button>
+                                            </li>
+                                            <li className={`page-item ${!tableState.hasPrevious ? 'disabled' : ''}`}>
+                                                <button
+                                                    className="border-0 bg-transparent"
+                                                    onClick={() => goToPage(tableState.currentPage - 1)}
+                                                    disabled={!tableState.hasPrevious}
+                                                    style={{
+                                                        padding: '6px 10px',
+                                                        color: !tableState.hasPrevious ? '#ccc' : '#6c757d',
+                                                        fontSize: '18px',
+                                                        cursor: !tableState.hasPrevious ? 'not-allowed' : 'pointer'
+                                                    }}
+                                                >
+                                                    ‹
+                                                </button>
+                                            </li>
+                                            {getPaginationNumbers().map((page, idx) => (
+                                                <li key={idx} className="page-item">
+                                                    {page === '...' ? (
+                                                        <span
+                                                            className="border-0 bg-transparent"
+                                                            style={{
+                                                                padding: '6px 12px',
+                                                                color: '#6c757d',
+                                                                cursor: 'default'
+                                                            }}
+                                                        >
+                                                            ...
+                                                        </span>
+                                                    ) : (
+                                                        <button
+                                                            className="border-0 "
+                                                            onClick={() => goToPage(page)}
+                                                            style={{
+                                                                padding: '6px 12px',
+                                                                minWidth: '36px',
+                                                                backgroundColor: page === tableState.currentPage ? '#5a6c5b' : 'transparent',
+                                                                color: page === tableState.currentPage ? '#fff' : '#6c757d',
+                                                                borderRadius: '4px',
+                                                                fontWeight: page === tableState.currentPage ? '500' : '400',
+                                                                cursor: 'pointer',
+                                                                fontSize: "16px"
+                                                            }}
+                                                        >
+                                                            {page}
+                                                        </button>
+                                                    )}
+                                                </li>
+                                            ))}
+                                            <li className={`page-item ${!tableState.hasNext ? 'disabled' : ''}`}>
+                                                <button
+                                                    className=" border-0 bg-transparent"
+                                                    onClick={() => goToPage(tableState.currentPage + 1)}
+                                                    disabled={!tableState.hasNext}
+                                                    style={{
+                                                        padding: '6px 10px',
+                                                        color: !tableState.hasNext ? '#ccc' : '#6c757d',
+                                                        fontSize: '18px',
+                                                        cursor: !tableState.hasNext ? 'not-allowed' : 'pointer'
+                                                    }}
+                                                >
+                                                    ›
+                                                </button>
+                                            </li>
+                                            <li className={`page-item ${!tableState.hasNext ? 'disabled' : ''}`}>
+                                                <button
+                                                    className="border-0 bg-transparent"
+                                                    onClick={() => goToPage(tableState.totalPages)}
+                                                    disabled={!tableState.hasNext}
+                                                    style={{
+                                                        padding: '6px 10px',
+                                                        color: !tableState.hasNext ? '#ccc' : '#6c757d',
+                                                        fontSize: '18px',
+                                                        cursor: !tableState.hasNext ? 'not-allowed' : 'pointer'
+                                                    }}
+                                                >
+                                                    »
+                                                </button>
+                                            </li>
+                                        </ul>
+                                    </nav>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+                
+                <AddCompany show={show} handleClose={handleClose} />
+                <EditCompany show={showEdit} handleCloseEdit={handleCloseEdit} rowSelectData={rowSelectData} />
+                {showImport && (
+                    <AddImportModal show={showImport} handleClose={handleCloseImport} />)}
+                {showDeleteConfirm && (
+                    <div className="modal fade show common-ctl-popup">
+                        <div className="modal-dialog modal-dialog-centered">
+                            <div className="modal-content" style={{ borderRadius: '10px' }}>
+                                <div className="modal-header">
+                                    <h6 className="modal-title text-danger">Confirm Delete</h6>
+                                    <button type="button" className="btn-close" onClick={cancelDelete}></button>
+                                </div>
+                                <div className="modal-body">
+                                    {/* <p className="mb-0">Are you sure you want to delete this department?</p> */}
+                                    {/* <p className="mb-0"> Are you sure you want to delete this department ({selectedRows.length})?</p> */}
+                                    <p className="mb-0">{deleteConfirmMessage}</p>
+
+                                </div>
+                                <div className="modal-footer">
+                                    <button
+                                        type="button"
+                                        className="btn btn-secondary btn-sm"
+                                        onClick={cancelDelete}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="btn btn-danger btn-sm"
+                                        onClick={confirmDelete}
+                                    >
+                                        Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+                {showExportPopop && (
+                    <div
+                        className="modal fade show common-ctl-popup"
+                        tabIndex={-1}
+                        role="dialog"
+                    >
+                        <div className="modal-dialog modal-lg modal-dialog-centered " role="document">
+                            <div className="modal-content radius-16 bg-base">
+                                <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
+                                    <h1 className="modal-title fs-5">Export Department</h1>
+                                    <button
+                                        type="button"
+                                        className="btn-close"
+                                        onClick={cancelExportTest}
+                                        aria-label="Close"
+                                    />
+                                </div>
+                                <div className="modal-body p-24">
+                                    <div className="row">
+                                        <div className="col-12 mb-20">
+                                            {items.map((item, index) => (
+                                                <div
+                                                    key={index}
+                                                    draggable
+                                                    onDragStart={(e) => handleDragStart(e, index)}
+                                                    onDrop={(e) => handleDrop(e, index)}
+                                                    onDragOver={handleDragOver}
+                                                    className="border p-2 mb-10 radius-8 d-flex align-items-center justify-content-start gap-2  cursor-pointer export-file"
+                                                    style={{
+                                                        cursor: "grab",
+                                                        margin: "10px !important",
+                                                        height: "40px"
+                                                    }}
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        id={`item-${index}`}
+                                                        checked={selectedItems.includes(item)}
+                                                        onChange={(e) =>
+                                                            handleCheckboxChange(item, e.target.checked)
+                                                        }
+                                                        className="form-check-input"
+                                                        style={{ marginLeft: "5px" }}
+                                                    />
+                                                    <label htmlFor={`item-${index}`} className="mb-0">
+                                                        {item}
+                                                    </label>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        <div className="d-flex align-items-center justify-content-center gap-3 mt-24">
+                                            <button
+                                                type="button"
+                                                onClick={cancelExportTest}
+                                                className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-40 py-6 radius-8"
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button onClick={handleExport}
+                                                type="button"
+                                                className="btn comman-btn-color border border-primary-600 text-md px-40 py-6 radius-8"
+                                            >
+                                                Submit
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </MasterLayout>
+        </>
+    );
+};
+
+export default CompanyList;

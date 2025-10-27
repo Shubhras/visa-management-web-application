@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useDispatch } from "react-redux";
-import { employeeTypeExportData } from '../../../store/master/actions';
+import { dcompanyImportData } from '../../../store/master/actions';
 import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 
@@ -64,7 +64,7 @@ const AddImportModal = ({ show, handleClose }) => {
         }
 
         setLoading(true);
-        dispatch(employeeTypeExportData(formData, (response, error) => {
+        dispatch(dcompanyImportData(formData, (response, error) => {
             setLoading(false);
             if (error) {
                 toast.error(error?.response?.data?.message || "Server error");
@@ -89,14 +89,25 @@ const AddImportModal = ({ show, handleClose }) => {
         setSheetNames([]);
         setSelectedSheet('');
         handleClose();
+        setLoading(false);
     };
+    const handleDownloadSample = () => {
+        const fileUrl = 'assets/simplefile//Demployee.xlsx'; // Update this path according to your project structure
+
+        const link = document.createElement('a');
+        link.href = fileUrl;
+        link.download = 'department_sample.xlsx'; // Downloaded file name
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
 
     if (!show) return null;
 
     return (
         <div
-            className="modal fade show"
-            style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}
+            className="modal fade show common-ctl-popup"
             tabIndex={-1}
             role="dialog"
             aria-labelledby="departmentModalLabel"
@@ -106,7 +117,7 @@ const AddImportModal = ({ show, handleClose }) => {
                 <div className="modal-content radius-16 bg-base">
                     <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
                         <h1 className="modal-title fs-5" id="departmentModalLabel">
-                             Upload Employee Type
+                            Upload Department
                         </h1>
                         <button
                             type="button"
@@ -117,9 +128,16 @@ const AddImportModal = ({ show, handleClose }) => {
                     </div>
 
                     <div className="modal-body p-24">
+                        <div className='text-md-end text-end'>
+                            <button
+                                type="button"
+                                onClick={handleDownloadSample}
+                                className="btn btn-sm text-white fw-medium px-3 py-1 w-md-auto comman-btn-color">
+                                Sample Excel
+                            </button>
+                        </div>
                         <form onSubmit={handleSubmit}>
                             <div className="row">
-                                {/* File Upload */}
                                 <div className="col-12 mb-20">
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                                         Upload File <span className="text-danger">*</span>
@@ -129,11 +147,10 @@ const AddImportModal = ({ show, handleClose }) => {
                                         className={`form-control radius-8 ${error && !selectedSheet ? 'is-invalid' : ''}`}
                                         onChange={handleFileChange}
                                         accept=".csv,.xlsx,.xls,.pdf,.docx"
+                                        style={{ height: "auto" }}
                                     />
                                     {error && !sheetNames.length && <div className="text-danger text-sm mt-1">{error}</div>}
                                 </div>
-
-                                {/* Sheet Selection with Checkboxes - Only show for Excel files */}
                                 {sheetNames.length > 0 && (
                                     <div className="col-12 mb-20">
                                         <label className="form-label fw-semibold text-primary-light text-sm mb-8">
@@ -144,19 +161,20 @@ const AddImportModal = ({ show, handleClose }) => {
                                                 <div key={index} className="form-check d-flex align-items-center">
                                                     <input
                                                         className="form-check-input mt-0"
-                                                        type="checkbox"
+                                                        type="radio"
+                                                        name="sheetSelection"
                                                         id={`sheet-${index}`}
                                                         value={sheetName}
                                                         checked={selectedSheet === sheetName}
-                                                        onChange={(e) => setSelectedSheet(e.target.checked ? sheetName : '')}
-                                                        style={{ 
-                                                            width: '18px', 
+                                                        onChange={(e) => setSelectedSheet(sheetName)}
+                                                        style={{
+                                                            width: '18px',
                                                             height: '18px',
                                                             cursor: 'pointer'
                                                         }}
                                                     />
-                                                    <label 
-                                                        className="form-check-label ms-2" 
+                                                    <label
+                                                        className="form-check-label ms-2"
                                                         htmlFor={`sheet-${index}`}
                                                         style={{ cursor: 'pointer' }}
                                                     >
@@ -168,22 +186,20 @@ const AddImportModal = ({ show, handleClose }) => {
                                         {error && sheetNames.length > 0 && <div className="text-danger text-sm mt-1">{error}</div>}
                                     </div>
                                 )}
-
-                                {/* Buttons */}
                                 <div className="d-flex align-items-center justify-content-center gap-3 mt-24">
                                     <button
                                         type="button"
                                         onClick={onClose}
-                                        className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-40 py-11 radius-8"
+                                        className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-40 py-6 radius-8"
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         type="submit"
                                         disabled={loading}
-                                        className="btn btn-primary border border-primary-600 text-md px-48 py-12 radius-8"
+                                        className="btn comman-btn-color border border-primary-600 text-md px-40 py-6 radius-8"
                                     >
-                                        {loading ? "Uploading..." : "Upload"}
+                                        {loading ? "Upload" : "Upload"}
                                     </button>
                                 </div>
                             </div>

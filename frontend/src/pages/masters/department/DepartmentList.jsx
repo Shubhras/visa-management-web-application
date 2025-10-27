@@ -27,7 +27,7 @@ const DepartmentList = () => {
   const [rowSelectData, setRowSelectData] = useState({});
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteConfirmMessage, setdeleteConfirmMessage] = useState("Are you sure you want to delete this department?");
+  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this department?");
   const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [departments, setDepartments] = useState([]);
@@ -123,13 +123,20 @@ const DepartmentList = () => {
 
   // Get sort icon for a column
   const getSortIcon = (field) => {
+    // if (tableState.sortBy !== field) {
+    //   return <Icon icon="ri:sort-line" width="16" style={{ color: '#999', marginLeft: '4px' }} />;
+    // }
+    // if (tableState.sortOrder === 'asc') {
+    //   return <Icon icon="ri:sort-asc" width="16" style={{ color: '#5a6c5b', marginLeft: '4px' }} />;
+    // }
+    // return <Icon icon="ri:sort-desc" width="16" style={{ color: '#5a6c5b', marginLeft: '4px' }} />;
     if (tableState.sortBy !== field) {
-      return <Icon icon="ri:sort-line" width="16" style={{ color: '#999', marginLeft: '4px' }} />;
+      return <Icon icon="ri:sort-desc" className='sorting-th-icone' />;
     }
     if (tableState.sortOrder === 'asc') {
-      return <Icon icon="ri:sort-asc" width="16" style={{ color: '#5a6c5b', marginLeft: '4px' }} />;
+      return <Icon icon="ri:sort-asc" className='sorting-th-icone' />;
     }
-    return <Icon icon="ri:sort-desc" width="16" style={{ color: '#5a6c5b', marginLeft: '4px' }} />;
+    return <Icon icon="ri:sort-desc" className='sorting-th-icone' />;
   };
 
   const handleSearchChange = (value) => {
@@ -156,7 +163,6 @@ const DepartmentList = () => {
     }));
   };
 
-
   // For "Select All" button
   const handleSelectAllButton = () => {
     if (isAllSelected) {
@@ -175,8 +181,6 @@ const DepartmentList = () => {
       setSelectedRows([]);
     }
   };
-
-
 
   const handleRowSelect = (uuid) => {
     setSelectedRows(prev => {
@@ -250,14 +254,15 @@ const DepartmentList = () => {
       alert('Please select rows to delete');
       return;
     }
+    const maggase = isAllSelected ? "all" : deleteId ? "" : selectedRows.length
+    setDeleteConfirmMessage(`Are you sure you want to delete this department (${maggase})?`);
     setShowDeleteConfirm(true);
   };
 
   const confirmDelete = () => {
-
     //const sendPayload = "all"//deleteId ? [deleteId] : selectedRows;
-     const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
-     
+    const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
+
     if (!sendPayload || sendPayload.length === 0) {
       toast.error("No department selected for deletion.");
       return;
@@ -398,6 +403,12 @@ const DepartmentList = () => {
     return `${day}-${month}-${year} ${hours}:${minutes}:${seconds} ${ampm}`
   };
 
+   // Handle backdrop click for modals
+  const handleBackdropClick = (e, closeFunction) => {
+    if (e.target === e.currentTarget) {
+      closeFunction();
+    }
+  }
   return (
     <>
       <MasterLayout>
@@ -503,19 +514,19 @@ const DepartmentList = () => {
                         <span>S.L</span>
                       </div>
                     </th>
-                    <th scope="col" className='sorting-th'  onClick={() => handleSort('name')}>
+                    <th scope="col" className='sorting-th' onClick={() => handleSort('name')}>
                       <div className="d-flex align-items-center">
                         Name
                         {getSortIcon('name')}
                       </div>
                     </th>
-                    <th scope="col" onClick={() => handleSort('description')}>
+                    <th scope="col" className='sorting-th' onClick={() => handleSort('description')}>
                       <div className="d-flex align-items-center">
                         Description
                         {getSortIcon('description')}
                       </div>
                     </th>
-                    <th scope="col" onClick={() => handleSort('created_at')}>
+                    <th scope="col" className='sorting-th' onClick={() => handleSort('created_at')}>
                       <div className="d-flex align-items-center">
                         Created At
                         {getSortIcon('created_at')}
@@ -577,13 +588,13 @@ const DepartmentList = () => {
                                 handleShowEdit(dept);
                               }}
                             >
-                              <Icon icon="lucide:edit" width="18" style={{ color: '#059669' }} />
+                              <Icon icon="lucide:edit" width="18" className='icone'/>
                             </Link>
                             <button
                               onClick={() => handleDelete(dept.uuid)}
                               className='delete-btn-icone'
                             >
-                              <Icon icon="mingcute:delete-2-line" width="18" style={{ color: '#dc2626' }} />
+                              <Icon icon="mingcute:delete-2-line" width="18" className='icone'/>
                             </button>
                           </div>
                         </td>
@@ -591,7 +602,7 @@ const DepartmentList = () => {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="5" style={{ textAlign: 'center', padding: '32px', color: '#6c757d', fontSize: '14px' }}>
+                      <td colSpan="5" className='no-records-found' >
                         No records found
                       </td>
                     </tr>
@@ -601,7 +612,7 @@ const DepartmentList = () => {
 
               {tableState.total > 0 && (
                 <div className="d-flex justify-content-between align-items-center px-4 py-3" >
-                  <div style={{ fontSize: '14px', color: '#6c757d' }}>
+                  <div className='showing-total-page' >
                     Showing {startIndex + 1} to {Math.min(startIndex + tableState.limit, tableState.total)} of {tableState.total} entries
                   </div>
                   <nav>
@@ -711,9 +722,8 @@ const DepartmentList = () => {
         <EditDepartment show={showEdit} handleCloseEdit={handleCloseEdit} rowSelectData={rowSelectData} />
         {showImport && (
           <AddImportModal show={showImport} handleClose={handleCloseImport} />)}
-
         {showDeleteConfirm && (
-          <div className="modal fade show common-ctl-popup">
+          <div className="modal fade show common-ctl-popup" onClick={(e) => handleBackdropClick(e, cancelDelete)}>
             <div className="modal-dialog modal-dialog-centered">
               <div className="modal-content" style={{ borderRadius: '10px' }}>
                 <div className="modal-header">
@@ -746,12 +756,12 @@ const DepartmentList = () => {
             </div>
           </div>
         )}
-
         {showExportPopop && (
           <div
             className="modal fade show common-ctl-popup"
             tabIndex={-1}
             role="dialog"
+            onClick={(e) => handleBackdropClick(e, cancelExportTest)}
           >
             <div className="modal-dialog modal-lg modal-dialog-centered " role="document">
               <div className="modal-content radius-16 bg-base">
