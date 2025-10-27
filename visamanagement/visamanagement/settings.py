@@ -29,7 +29,7 @@ SECRET_KEY = 'django-insecure-1le-!eq1@1^x*qytm8$a&_j3oj=dpypvjj-ram&dk)%c^fgrqs
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["192.168.0.156"]
+ALLOWED_HOSTS = ["192.168.0.156","visaadmin.digiprima.co","visa.digiprima.co","127.0.0.1","localhost"]
 
 
 # Application definition
