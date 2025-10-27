@@ -12,7 +12,14 @@ import {
   EDIT_EMPLOYEE_TYPE,
   DELETE_EMPLOYEE_TYPE,
   EXPORT_EMPLOYEE_TYPE,
-  IMPORT_EMPLOYEE_TYPE
+  IMPORT_EMPLOYEE_TYPE,
+
+  COMPANY_LIST,
+  ADD_COMPANY,
+  EDIT_COMPANY,
+  DELETE_COMPANY,
+  EXPORT_COMPANY,
+  IMPORT_COMPANY,
 } from "./actionTypes";
 
 import {
@@ -28,7 +35,14 @@ import {
   editEmployeeTypeDataAPI,
   deleteEmployeeTypeDataAPI,
   exportEmployeeTypeDataAPI,
-  importEmployeeTypeDataAPI
+  importEmployeeTypeDataAPI,
+
+  getCompanyListDataAPI,
+  addCompanyDataAPI,
+  editCompanyDataAPI,
+  deleteCompanyDataAPI,
+  exportCompanyDataAPI,
+  importCompanyDataAPI
 } from "../../service/api_helper";
 
 function* departmentListSaga(action) {
@@ -185,6 +199,84 @@ function* employeeTypeImportDataSaga(action) {
   }
 }
 
+//Company Type 
+function* companyListSaga(action) {
+  try {
+    const response = yield call(getCompanyListDataAPI, action?.data);
+    if (action.callback) {
+      action.callback(response);
+    }
+  } catch (error) {
+    if (action.callback) {
+      action.callback(null, error);
+    }
+  }
+}
+function* companyAddSaga(action) {
+  try {
+    const response = yield call(addCompanyDataAPI, action?.data);
+    if (action.callback) {
+      action.callback(response);
+    }
+  } catch (error) {
+    if (action.callback) {
+      action.callback(null, error);
+    }
+  }
+}
+function* companyEditSaga(action) {
+  try {
+    const response = yield call(editCompanyDataAPI, action?.data);
+    if (action.callback) {
+      action.callback(response);
+    }
+  } catch (error) {
+    if (action.callback) {
+      action.callback(null, error);
+    }
+  }
+}
+function* companyDeleteSaga(action) {
+  try {
+    const response = yield call(deleteCompanyDataAPI, action?.data);
+    if (action.callback) {
+      action.callback(response);
+    }
+  } catch (error) {
+    if (action.callback) {
+      action.callback(null, error);
+    }
+  }
+}
+
+function* companyExportDataSaga(action) {
+  try {
+    const response = yield call(exportCompanyDataAPI, action?.data);
+    if (action.callback) {
+
+      action.callback(response);
+    }
+  } catch (error) {
+    if (action.callback) {
+      action.callback(null, error);
+    }
+  }
+}
+function* companyImportDataSaga(action) {
+  try {
+    const response = yield call(importCompanyDataAPI, action?.data);
+    if (action.callback) {
+
+      action.callback(response);
+    }
+  } catch (error) {
+    if (action.callback) {
+      action.callback(null, error);
+    }
+  }
+}
+
+
 
 function* masterSaga() {
   yield takeEvery(DEPARTMENT_LIST, departmentListSaga);
@@ -202,6 +294,15 @@ function* masterSaga() {
   yield takeEvery(DELETE_EMPLOYEE_TYPE, employeeTypeDeleteSaga);
   yield takeEvery(EXPORT_EMPLOYEE_TYPE, employeeTypeExportDataSaga);
   yield takeEvery(IMPORT_EMPLOYEE_TYPE, employeeTypeImportDataSaga);
+
+  //Company Type
+  yield takeEvery(COMPANY_LIST, companyListSaga);
+  yield takeEvery(ADD_COMPANY, companyAddSaga);
+  yield takeEvery(EDIT_COMPANY, companyEditSaga);
+  yield takeEvery(DELETE_COMPANY, companyDeleteSaga);
+  yield takeEvery(EXPORT_COMPANY, companyExportDataSaga);
+  yield takeEvery(IMPORT_COMPANY, companyImportDataSaga);
+
 }
 
 export default masterSaga;

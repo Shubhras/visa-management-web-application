@@ -403,6 +403,12 @@ const DepartmentList = () => {
     return `${day}-${month}-${year} ${hours}:${minutes}:${seconds} ${ampm}`
   };
 
+   // Handle backdrop click for modals
+  const handleBackdropClick = (e, closeFunction) => {
+    if (e.target === e.currentTarget) {
+      closeFunction();
+    }
+  }
   return (
     <>
       <MasterLayout>
@@ -717,7 +723,7 @@ const DepartmentList = () => {
         {showImport && (
           <AddImportModal show={showImport} handleClose={handleCloseImport} />)}
         {showDeleteConfirm && (
-          <div className="modal fade show common-ctl-popup">
+          <div className="modal fade show common-ctl-popup" onClick={(e) => handleBackdropClick(e, cancelDelete)}>
             <div className="modal-dialog modal-dialog-centered">
               <div className="modal-content" style={{ borderRadius: '10px' }}>
                 <div className="modal-header">
@@ -755,6 +761,7 @@ const DepartmentList = () => {
             className="modal fade show common-ctl-popup"
             tabIndex={-1}
             role="dialog"
+            onClick={(e) => handleBackdropClick(e, cancelExportTest)}
           >
             <div className="modal-dialog modal-lg modal-dialog-centered " role="document">
               <div className="modal-content radius-16 bg-base">

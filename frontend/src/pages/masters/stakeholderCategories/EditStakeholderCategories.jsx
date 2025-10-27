@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { Icon } from '@iconify/react/dist/iconify.js';
-import { Link } from 'react-router-dom';
 import { useDispatch } from "react-redux";
-import { employeeTypeEdit } from '../../../store/master/actions';
+import { stakeholderCategoryEdit } from '../../../store/master/actions';
 import { toast } from "react-toastify";
-const EditEmployeeType = ({ show, handleCloseEdit, rowSelectData }) => {
+const EditStakeholderCategories = ({ show, handleCloseEdit, rowSelectData }) => {
     const [loading, setLoading] = useState(false);
     const dispatch = useDispatch();
     // Form state
@@ -52,12 +50,11 @@ const EditEmployeeType = ({ show, handleCloseEdit, rowSelectData }) => {
         const newErrors = {};
         let isValid = true;
 
-        // Department Name validation
+        // Name validation
         if (!formData.name.trim()) {
             newErrors.name = 'Name is required';
             isValid = false;
         }
-
         setErrors(newErrors);
         return isValid;
     };
@@ -73,7 +70,7 @@ const EditEmployeeType = ({ show, handleCloseEdit, rowSelectData }) => {
                 description: formData.description,
 
             };
-            dispatch(employeeTypeEdit(sendPayload, (response, error) => {
+            dispatch(stakeholderCategoryEdit(sendPayload, (response, error) => {
                 setLoading(false);
                 if (error) {
                     toast.error(error?.response?.data?.message || "server error");
@@ -122,15 +119,15 @@ const EditEmployeeType = ({ show, handleCloseEdit, rowSelectData }) => {
                 className={`modal fade show common-ctl-popup`}
                 tabIndex={-1}
                 role="dialog"
-                aria-labelledby="employeeModalLabel"
+                aria-labelledby="stakeholderModalLabel"
                 aria-hidden={!show}
                 onClick={handleBackdropClick}
             >
                 <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
                     <div className="modal-content radius-16 bg-base">
                         <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                            <h1 className="modal-title fs-5" id="employeeModalLabel">
-                                Edit Employee Type
+                            <h1 className="modal-title fs-5" id="stakeholderModalLabel">
+                                Edit Stakeholder Categories
                             </h1>
                             <button
                                 type="button"
@@ -143,7 +140,7 @@ const EditEmployeeType = ({ show, handleCloseEdit, rowSelectData }) => {
                         <div className="modal-body p-24">
                             <form onSubmit={handleSubmit}>
                                 <div className="row">
-                                    {/* Department Name */}
+                                    {/*  Name */}
                                     <div className="col-12 mb-20">
                                         <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                                             Name <span className="text-danger">*</span>
@@ -162,7 +159,6 @@ const EditEmployeeType = ({ show, handleCloseEdit, rowSelectData }) => {
                                             </div>
                                         )}
                                     </div>
-
                                     {/* Description */}
                                     <div className="col-12 mb-20">
                                         <label
@@ -209,4 +205,4 @@ const EditEmployeeType = ({ show, handleCloseEdit, rowSelectData }) => {
     );
 };
 
-export default EditEmployeeType;
+export default EditStakeholderCategories;

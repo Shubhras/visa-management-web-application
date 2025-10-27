@@ -1,21 +1,21 @@
 import React, { useState } from 'react';
 import { useDispatch } from "react-redux";
-import { departmentAdd } from '../../../store/master/actions';
+import { stakeholderCategoryAdd } from '../../../store/master/actions';
 import { toast } from "react-toastify";
-const AddDepartment = ({ show, handleClose }) => {
+const AddStakeholderCategories = ({ show, handleClose }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   // IMPORTANT: All hooks must be declared BEFORE any conditional returns
 
   // Form state
   const [formData, setFormData] = useState({
-    departmentName: '',
+    name: '',
     description: '',
   });
 
   // Validation errors state
   const [errors, setErrors] = useState({
-    departmentName: '',
+    name: '',
     description: '',
   });
 
@@ -41,9 +41,9 @@ const AddDepartment = ({ show, handleClose }) => {
     const newErrors = {};
     let isValid = true;
 
-    // Department Name validation
-    if (!formData.departmentName.trim()) {
-      newErrors.departmentName = 'Department Name is required';
+    // Name validation
+    if (!formData.name.trim()) {
+      newErrors.name = 'Name is required';
       isValid = false;
     }
     setErrors(newErrors);
@@ -56,12 +56,12 @@ const AddDepartment = ({ show, handleClose }) => {
 
     if (validateForm()) {
       const sendPayload = {
-        name: formData.departmentName,
+        name: formData.name,
         description: formData.description,
 
       };
       setLoading(true);
-      dispatch(departmentAdd(sendPayload, (response, error) => {
+      dispatch(stakeholderCategoryAdd(sendPayload, (response, error) => {
         setLoading(false);
         if (error) {
           toast.error(error?.response?.data?.message || "server error");
@@ -69,7 +69,7 @@ const AddDepartment = ({ show, handleClose }) => {
           if (response?.statusCode === 200 && response?.status === true) {
             toast.success(response?.message);
             setFormData({
-              departmentName: '',
+              name: '',
               description: '',
             });
             setErrors({});
@@ -86,7 +86,7 @@ const AddDepartment = ({ show, handleClose }) => {
   const onClose = () => {
     // Reset form and errors
     setFormData({
-      departmentName: '',
+      name: '',
       description: '',
     });
     setErrors({});
@@ -108,15 +108,15 @@ const AddDepartment = ({ show, handleClose }) => {
         className={`modal fade show common-ctl-popup`}
         tabIndex={-1}
         role="dialog"
-        aria-labelledby="departmentModalLabel"
+        aria-labelledby="stakeholderModalLabel"
         aria-hidden={!show}
         onClick={handleBackdropClick}
       >
         <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
           <div className="modal-content radius-16 bg-base">
             <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-              <h1 className="modal-title fs-5" id="departmentModalLabel">
-                Add New Department
+              <h1 className="modal-title fs-5" id="stakeholderModalLabel">
+                Add New Stakeholder Categories
               </h1>
               <button
                 type="button"
@@ -129,22 +129,22 @@ const AddDepartment = ({ show, handleClose }) => {
             <div className="modal-body p-24">
               <form onSubmit={handleSubmit}>
                 <div className="row">
-                  {/* Department Name */}
+                  {/* Name */}
                   <div className="col-12 mb-20">
                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                      Department Name <span className="text-danger">*</span>
+                      Name <span className="text-danger">*</span>
                     </label>
                     <input
                       type="text"
-                      name="departmentName"
-                      value={formData.departmentName}
+                      name="name"
+                      value={formData.name}
                       onChange={handleChange}
-                      className={`form-control radius-8 ${errors.departmentName ? 'is-invalid' : ''}`}
-                      placeholder="Enter Department Name"
+                      className={`form-control radius-8 ${errors.name ? 'is-invalid' : ''}`}
+                      placeholder="Enter Name"
                     />
-                    {errors.departmentName && (
+                    {errors.name && (
                       <div className="text-danger text-sm mt-1">
-                        {errors.departmentName}
+                        {errors.name}
                       </div>
                     )}
                   </div>
@@ -195,4 +195,4 @@ const AddDepartment = ({ show, handleClose }) => {
   );
 };
 
-export default AddDepartment;
+export default AddStakeholderCategories;

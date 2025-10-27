@@ -346,8 +346,10 @@ import BlankPagePage from "./pages/BlankPagePage";
 // master 
 import DepartmentList from "./pages/masters/department/DepartmentList";
 import EmployeeTypeList from "./pages/masters/employeeType/EmployeeTypeList";
+import CompanyList from "./pages/masters/company/CompanyList";
 
 import LeadsList from "./pages/leads/LeadsList";
+
 
 function App() {
   return (
@@ -461,6 +463,7 @@ function App() {
         <Route exact path='/leads' element={<LeadsList />} />
         <Route exact path='/department' element={<DepartmentList />} />
         <Route exact path='/employeetype' element={<EmployeeTypeList />} />
+        <Route exact path= '/companylist' element={<CompanyList/>} />
       
 
         <Route path='*' element={<ErrorPage />} />
