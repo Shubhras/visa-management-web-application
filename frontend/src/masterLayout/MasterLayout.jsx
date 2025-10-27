@@ -15,13 +15,13 @@ const MasterLayout = ({ children }) => {
     toast.success('Logout successful');
     // // 1. Clear user data (localStorage / sessionStorage / Redux)
     // localStorage.removeItem('userToken') // or whatever you use
-    // localStorage.removeItem('userData')
+    localStorage.removeItem('authUser')
 
     // // 2. Optionally reset Redux state
     // // dispatch({ type: 'LOGOUT' }) 
 
     // // 3. Navigate to login page
-    navigate('/');
+    navigate('/sign-in');
   }
 
   useEffect(() => {
