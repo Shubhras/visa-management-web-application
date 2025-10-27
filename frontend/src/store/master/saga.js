@@ -20,6 +20,13 @@ import {
   DELETE_COMPANY,
   EXPORT_COMPANY,
   IMPORT_COMPANY,
+
+  STAKEHOLDER_CATEGORY_LIST,
+  ADD_STAKEHOLDER_CATEGORY,
+  EDIT_STAKEHOLDER_CATEGORY,
+  DELETE_STAKEHOLDER_CATEGORY,
+  EXPORT_STAKEHOLDER_CATEGORY,
+  IMPORT_STAKEHOLDER_CATEGORY,
 } from "./actionTypes";
 
 import {
@@ -42,7 +49,13 @@ import {
   editCompanyDataAPI,
   deleteCompanyDataAPI,
   exportCompanyDataAPI,
-  importCompanyDataAPI
+  importCompanyDataAPI,
+  getStakeholderCategoryListDataAPI,
+  addStakeholderCategoryDataAPI,
+  editStakeholderCategoryDataAPI,
+  deleteStakeholderCategoryDataAPI,
+  exportStakeholderCategoryDataAPI,
+  importStakeholderCategoryDataAPI,
 } from "../../service/api_helper";
 
 function* departmentListSaga(action) {
@@ -276,7 +289,60 @@ function* companyImportDataSaga(action) {
   }
 }
 
+//stakeholder Category
+function* stakeholderCategoryListSaga(action) {
+  try {
+    const response = yield call(getStakeholderCategoryListDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
 
+function* stakeholderCategoryAddSaga(action) {
+  try {
+    const response = yield call(addStakeholderCategoryDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* stakeholderCategoryEditSaga(action) {
+  try {
+    const response = yield call(editStakeholderCategoryDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* stakeholderCategoryDeleteSaga(action) {
+  try {
+    const response = yield call(deleteStakeholderCategoryDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* stakeholderCategoryExportDataSaga(action) {
+  try {
+    const response = yield call(exportStakeholderCategoryDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* stakeholderCategoryImportDataSaga(action) {
+  try {
+    const response = yield call(importStakeholderCategoryDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
 
 function* masterSaga() {
   yield takeEvery(DEPARTMENT_LIST, departmentListSaga);
@@ -302,6 +368,14 @@ function* masterSaga() {
   yield takeEvery(DELETE_COMPANY, companyDeleteSaga);
   yield takeEvery(EXPORT_COMPANY, companyExportDataSaga);
   yield takeEvery(IMPORT_COMPANY, companyImportDataSaga);
+
+   //stakeholder Category
+  yield takeEvery(STAKEHOLDER_CATEGORY_LIST, stakeholderCategoryListSaga);
+  yield takeEvery(ADD_STAKEHOLDER_CATEGORY, stakeholderCategoryAddSaga);
+  yield takeEvery(EDIT_STAKEHOLDER_CATEGORY, stakeholderCategoryEditSaga);
+  yield takeEvery(DELETE_STAKEHOLDER_CATEGORY, stakeholderCategoryDeleteSaga);
+  yield takeEvery(EXPORT_STAKEHOLDER_CATEGORY, stakeholderCategoryExportDataSaga);
+  yield takeEvery(IMPORT_STAKEHOLDER_CATEGORY, stakeholderCategoryImportDataSaga);
 
 }
 

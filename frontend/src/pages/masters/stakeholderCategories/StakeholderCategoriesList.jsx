@@ -7,8 +7,8 @@ import { Link } from 'react-router-dom';
 // import * as XLSX from 'xlsx';
 // import { saveAs } from 'file-saver';
 import { toast } from "react-toastify";
-import AddDepartment from './AddDepartment';
-import EditDepartment from './EditDepartment';
+import AddStakeholderCategories from './AddStakeholderCategories';
+import EditStakeholderCategories from './EditStakeholderCategories';
 import { stakeholderCategoryList, stakeholderCategoryDelete, stakeholderCategoryExportData } from '../../../store/master/actions';
 import AddImportModal from './AddImportModal';
 
@@ -718,8 +718,8 @@ const StakeholderCategoriesList = () => {
           </div>
         </div>
 
-        <AddDepartment show={show} handleClose={handleClose} />
-        <EditDepartment show={showEdit} handleCloseEdit={handleCloseEdit} rowSelectData={rowSelectData} />
+        <AddStakeholderCategories show={show} handleClose={handleClose} />
+        <EditStakeholderCategories show={showEdit} handleCloseEdit={handleCloseEdit} rowSelectData={rowSelectData} />
         {showImport && (
           <AddImportModal show={showImport} handleClose={handleCloseImport} />)}
         {showDeleteConfirm && (
