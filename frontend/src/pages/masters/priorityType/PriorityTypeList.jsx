@@ -30,7 +30,7 @@ const PriorityTypeList = () => {
   const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this department?");
   const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
-  const [departments, setDepartments] = useState([]);
+  const [priorityTypeListData, setPriorityTypeListData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
 
@@ -82,7 +82,7 @@ const PriorityTypeList = () => {
       if (response?.statusCode === 200 && response?.status === true) {
         const paginationData = response?.pagination || {};
 
-        setDepartments(response?.data || []);
+        setPriorityTypeListData(response?.data || []);
         setTableState(prev => ({
           ...prev,
           total: paginationData.totalItems || 0,
@@ -92,7 +92,7 @@ const PriorityTypeList = () => {
           hasPrevious: paginationData.previousPage || false
         }));
       } else {
-        setDepartments([]);
+        setPriorityTypeListData([]);
         setTableState(prev => ({
           ...prev,
           total: 0,
@@ -168,7 +168,7 @@ const PriorityTypeList = () => {
     if (isAllSelected) {
       setSelectedRows([]);
     } else {
-      setSelectedRows(departments.map(dept => dept.uuid));
+      setSelectedRows(priorityTypeListData.map(dept => dept.uuid));
     }
   };
   // For checkbox in table header
@@ -176,7 +176,7 @@ const PriorityTypeList = () => {
 
     const checked = e.target.checked;
     if (checked) {
-      setSelectedRows(departments.map(dept => dept.uuid));
+      setSelectedRows(priorityTypeListData.map(dept => dept.uuid));
     } else {
       setSelectedRows([]);
     }
@@ -192,8 +192,8 @@ const PriorityTypeList = () => {
     });
   };
 
-  const isAllSelected = departments.length > 0 &&
-    departments.every(dept => selectedRows.includes(dept.uuid));
+  const isAllSelected = priorityTypeListData.length > 0 &&
+    priorityTypeListData.every(dept => selectedRows.includes(dept.uuid));
 
   const goToPage = (page) => {
     if (page >= 1 && page <= tableState.totalPages) {
@@ -274,7 +274,7 @@ const PriorityTypeList = () => {
       } else {
         if (response?.statusCode === 200 && response?.status === true) {
           toast.success(response?.message);
-          setDepartments(prevDepts => prevDepts.filter(dept => dept.uuid !== deleteId));
+          setPriorityTypeListData(prevDepts => prevDepts.filter(dept => dept.uuid !== deleteId));
           setSelectedRows(prevSelected => prevSelected.filter(rowId => rowId !== deleteId));
           setShowDeleteConfirm(false);
           setSelectedRows([])
@@ -372,7 +372,7 @@ const PriorityTypeList = () => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `departments_${new Date().toISOString().split('T')[0]}.csv`;
+          link.download = `priorityTypeListData_${new Date().toISOString().split('T')[0]}.csv`;
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
@@ -509,7 +509,7 @@ const PriorityTypeList = () => {
                           type="checkbox"
                           checked={isAllSelected}
                           onChange={handleSelectAll}
-                          disabled={departments.length === 0}
+                          disabled={priorityTypeListData.length === 0}
                         />
                         <span>S.L</span>
                       </div>
@@ -549,8 +549,8 @@ const PriorityTypeList = () => {
                         </div>
                       </td>
                     </tr>
-                  ) : departments.length > 0 ? (
-                    departments.map((dept, index) => (
+                  ) : priorityTypeListData.length > 0 ? (
+                    priorityTypeListData.map((dept, index) => (
                       <tr key={dept.uuid} >
                         <td >
                           <div className="d-flex align-items-center gap-2">
