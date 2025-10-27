@@ -188,6 +188,7 @@ const SignInLayer = () => {
       <div className="auth-left d-lg-block d-none">
         <div className="d-flex align-items-center flex-column h-100 justify-content-center">
           {/* <img src="assets/images/auth/auth-img.png" alt="Auth" /> */}
+           <img src="assets/images/auth/logo-test1.png" alt="Auth" />
         </div>
       </div>
       <div className="auth-right py-32 px-24 d-flex flex-column justify-content-center">
