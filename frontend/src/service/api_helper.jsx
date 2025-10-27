@@ -47,7 +47,7 @@ export const importDepartmentDataAPI = (payload) => {
 
 //EMPLOYEE_TYPE 
 export const getEmployeeTypeListDataAPI = (data) => {
-    const apiUrl = `${url.GET_EMPLOYEE_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}`;
+    const apiUrl = `${url.GET_EMPLOYEE_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
     return get(apiUrl)
 };
 
@@ -71,7 +71,7 @@ export const deleteEmployeeTypeDataAPI = (payload) => {
 
 
 export const exportEmployeeTypeDataAPI = (payload) => {
-    const apiUrl = `${url.EXPORT_EMPLOYEE_TYPE_API}`;
+    const apiUrl = `${url.EXPORT_EMPLOYEE_TYPE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
     return getExportData(apiUrl, payload);
 };
 

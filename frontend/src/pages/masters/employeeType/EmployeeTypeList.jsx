@@ -27,19 +27,24 @@ const EmployeeTypeList = () => {
   const [rowSelectData, setRowSelectData] = useState({});
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this department?");
   const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [items, setItems] = useState(["name", "description"]); // All items
-  const [selectedItems, setSelectedItems] = useState([...items]); // Checked items
-  // Merged state for filters and pagination
+
+  const [items, setItems] = useState(["name", "description", "created_at"]);
+  const [selectedItems, setSelectedItems] = useState([...items]);
+
+  // Updated state with sorting
   const [tableState, setTableState] = useState({
     page: 1,
-    limit: 10,
+    limit: 25,
     search: '',
     status: '',
+    sortBy: '', // Field to sort by
+    sortOrder: '', // 'asc' or 'desc'
     total: 0,
     totalPages: 0,
     currentPage: 1,
@@ -59,7 +64,7 @@ const EmployeeTypeList = () => {
 
   useEffect(() => {
     fetchEmployeeTypeList();
-  }, [tableState.page, tableState.limit, tableState.status]);
+  }, [tableState.page, tableState.limit, tableState.status, tableState.sortBy, tableState.sortOrder]);
 
   const fetchEmployeeTypeList = () => {
     setLoading(true);
@@ -67,7 +72,9 @@ const EmployeeTypeList = () => {
       page: tableState.page,
       limit: tableState.limit,
       search: tableState.search || '',
-      status: tableState.status || ''
+      status: tableState.status || '',
+      sortBy: tableState.sortBy || '',
+      sortOrder: tableState.sortOrder || ''
     };
 
     dispatch(employeeTypeList(params, (response, error) => {
@@ -101,6 +108,40 @@ const EmployeeTypeList = () => {
     }));
   };
 
+  // Handle sorting
+  const handleSort = (field) => {
+    setTableState(prev => {
+      // If clicking the same field, toggle between asc -> desc -> no sort
+      if (prev.sortBy === field) {
+        if (prev.sortOrder === 'asc') {
+          return { ...prev, sortOrder: 'desc', page: 1 };
+        } else if (prev.sortOrder === 'desc') {
+          return { ...prev, sortBy: '', sortOrder: '', page: 1 };
+        }
+      }
+      // If clicking a new field, start with asc
+      return { ...prev, sortBy: field, sortOrder: 'asc', page: 1 };
+    });
+  };
+
+  // Get sort icon for a column
+  const getSortIcon = (field) => {
+    // if (tableState.sortBy !== field) {
+    //   return <Icon icon="ri:sort-line" width="16" style={{ color: '#999', marginLeft: '4px' }} />;
+    // }
+    // if (tableState.sortOrder === 'asc') {
+    //   return <Icon icon="ri:sort-asc" width="16" style={{ color: '#5a6c5b', marginLeft: '4px' }} />;
+    // }
+    // return <Icon icon="ri:sort-desc" width="16" style={{ color: '#5a6c5b', marginLeft: '4px' }} />;
+    if (tableState.sortBy !== field) {
+      return <Icon icon="ri:sort-desc" className='sorting-th-icone' />;
+    }
+    if (tableState.sortOrder === 'asc') {
+      return <Icon icon="ri:sort-asc" className='sorting-th-icone' />;
+    }
+    return <Icon icon="ri:sort-desc" className='sorting-th-icone' />;
+  };
+
   const handleSearchChange = (value) => {
     setTableState(prev => ({
       ...prev,
@@ -125,7 +166,17 @@ const EmployeeTypeList = () => {
     }));
   };
 
+  // For "Select All" button
+  const handleSelectAllButton = () => {
+    if (isAllSelected) {
+      setSelectedRows([]);
+    } else {
+      setSelectedRows(departments.map(dept => dept.uuid));
+    }
+  };
+  // For checkbox in table header
   const handleSelectAll = (e) => {
+
     const checked = e.target.checked;
     if (checked) {
       setSelectedRows(departments.map(dept => dept.uuid));
@@ -207,14 +258,14 @@ const EmployeeTypeList = () => {
       alert('Please select rows to delete');
       return;
     }
+    const maggase = isAllSelected ? "all" : deleteId ? "" : selectedRows.length
+    setDeleteConfirmMessage(`Are you sure you want to delete this department (${maggase})?`);
     setShowDeleteConfirm(true);
-
   };
   const confirmDelete = () => {
-    // Determine which IDs to send — either single deleteId or multiple selectedRows
-    const sendPayload = deleteId ? [deleteId] : selectedRows;
-    console.log('Deleting employeeType:', sendPayload);
+     //const sendPayload = "all"//deleteId ? [deleteId] : selectedRows;
 
+    const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
     if (!sendPayload || sendPayload.length === 0) {
       toast.error("No employeeType selected for deletion.");
       return;
@@ -317,11 +368,12 @@ const EmployeeTypeList = () => {
       return
     }
     const fieldsString = selectedItems.join(',');
-
     const sendPayload = {
       file: "csv",
-      fields: fieldsString //"name,description"
+      fields: fieldsString,
+      uuids: selectedRows
     };
+
     setLoadingExport(true);
 
     dispatch(employeeTypeExportData(sendPayload, (response, error) => {
@@ -384,106 +436,126 @@ const EmployeeTypeList = () => {
     <>
       <MasterLayout>
         <Breadcrumb title="Employeet Type" subTitle="List" />
-        <div className="card basic-data-table">
-          <div className="card-body" style={{ backgroundColor: '#f5f5ef', paddingBottom: '16px' }}>
-            <div className="row align-items-center g-3">
-              <div className="col-lg-9 col-md-8 col-12">
-                <div className="d-flex flex-wrap align-items-center gap-2 gap-md-3">
-                  <button
-                    className="btn btn-sm px-3 py-1 text-white fw-medium"
-                    style={{ backgroundColor: '#5a6c5b' }}
-                    onClick={handleShowImport}
-                  >
-                    Import
-                  </button>
-
-                  <button
-                    className="btn btn-sm px-3 py-1 text-white fw-medium"
-                    style={{ backgroundColor: '#5a6c5b' }}
-                    onClick={handleExportTest}
-                    disabled={loadingExport}
-                  >
-                    Export
-                  </button>
-
-                  {selectedRows.length > 0 && (
+        <div className="card basic-data-table main-container-data">
+          <div className="card-body container-data">
+            <div className="card-body container-data">
+              <div className="row align-items-center gy-3 gx-2 flex-wrap">
+                {/* Left Section: Import / Export / Delete */}
+                <div className="col-xl-4 col-lg-4 col-md-12">
+                  <div className="d-flex flex-wrap align-items-center gap-2">
                     <button
-                      onClick={handleBulkDelete}
-                      className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
+                      className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
+                      onClick={handleShowImport}
                     >
-                      Delete Selected ({selectedRows.length})
+                      Import
                     </button>
-                  )}
 
-                  <select
-                    className="form-select form-select-sm"
-                    style={{ width: 'auto', minWidth: '100px' }}
-                    value={tableState.limit}
-                    onChange={(e) => handlePageLengthChange(e.target.value)}
-                  >
-                    <option value={10}>Show 10</option>
-                    <option value={25}>Show 25</option>
-                    <option value={50}>Show 50</option>
-                    <option value={100}>Show 100</option>
-                  </select>
+                    <button
+                      className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
+                      onClick={handleExportTest}
+                      disabled={loadingExport}
+                    >
+                      Export
+                    </button>
+                    <button
+                      onClick={handleSelectAllButton}
+                      className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
+                    >
+                      {isAllSelected ? 'Deselect All' : 'Select All'}
+                    </button>
+                    {selectedRows.length > 0 && (
+                      <button
+                        onClick={handleBulkDelete}
+                        className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
+                      >
+                        {isAllSelected
+                          ? `Delete All`
+                          : `Delete Selected (${selectedRows.length})`}
+                      </button>
+                    )}
 
-                  <div className="position-relative" style={{ flex: 1, minWidth: '200px', maxWidth: '300px' }}>
-                    <Icon
-                      icon="ion:search-outline"
-                      className="position-absolute"
-                      style={{ left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#999' }}
-                      width="18"
-                    />
-                    <input
-                      type="text"
-                      className="form-control form-control-sm ps-5"
-                      placeholder="Search..."
-                      value={tableState.search}
-                      onChange={(e) => handleSearchChange(e.target.value)}
-                    />
+                  </div>
+                </div>
+
+                {/* Right Section: Select / Search / +Add New */}
+                <div className="col-xl-8 col-lg-8 col-md-12">
+                  <div className="d-flex flex-wrap align-items-center justify-content-end gap-2">
+                    <select
+                      className="form-select form-select-sm"
+                      style={{ width: 'auto', minWidth: '100px' }}
+                      value={tableState.limit}
+                      onChange={(e) => handlePageLengthChange(e.target.value)}
+                    >
+                      <option value={10}>Show 10</option>
+                      <option value={25}>Show 25</option>
+                      <option value={50}>Show 50</option>
+                      <option value={100}>Show 100</option>
+                    </select>
+
+                    <div className="position-relative flex-grow-1" style={{ minWidth: '180px', maxWidth: '300px' }}>
+                      <Icon
+                        icon="ion:search-outline"
+                        className="position-absolute"
+                        style={{ left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#999' }}
+                        width="18"
+                      />
+                      <input
+                        type="text"
+                        className="form-control form-control-sm ps-5"
+                        placeholder="Search..."
+                        value={tableState.search}
+                        onChange={(e) => handleSearchChange(e.target.value)}
+                      />
+                    </div>
+
+                    <button
+                      className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
+                      onClick={handleShow}
+                    >
+                      + ADD New
+                    </button>
                   </div>
                 </div>
               </div>
-
-              <div className="col-lg-3 col-md-4 col-12 text-md-end text-end">
-                <button
-                  className="btn btn-sm text-white fw-medium px-3 py-1 w-md-auto"
-                  style={{ backgroundColor: '#5a6c5b' }}
-                  onClick={handleShow}
-                >
-                  + ADD New
-                </button>
-              </div>
             </div>
+
           </div>
-          <div className="card-body pt-0">
-            <div style={{ backgroundColor: 'white', borderRadius: '8px', overflow: 'hidden' }}>
-              <table className="table mb-0" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
-                <thead style={{ backgroundColor: '#f8f9fa', borderBottom: '2px solid #e9ecef' }}>
+          <div className="card-body pt-0 container-table" >
+            <div className='container-table-div'>
+              <table className="table mb-0"  >
+                <thead >
                   <tr>
-                    <th scope="col" style={{ width: '80px' }}>
+                    <th scope="col" className='sl-numbar-th'>
                       <div className="d-flex align-items-center gap-2">
                         <input
                           className="form-check-input"
                           type="checkbox"
                           checked={isAllSelected}
                           onChange={handleSelectAll}
-                          style={{ cursor: 'pointer' }}
                           disabled={departments.length === 0}
                         />
                         <span>S.L</span>
                       </div>
                     </th>
-                    <th scope="col">
-                      Name
+                    <th scope="col" className='sorting-th' onClick={() => handleSort('name')}>
+                      <div className="d-flex align-items-center">
+                        Name
+                        {getSortIcon('name')}
+                      </div>
                     </th>
-                    <th scope="col">
-                      Description
+                    <th scope="col" className='sorting-th' onClick={() => handleSort('description')}>
+                      <div className="d-flex align-items-center">
+                        Description
+                        {getSortIcon('description')}
+                      </div>
                     </th>
-                    <th scope="col">
-                      Created At
+                    <th scope="col" className='sorting-th' onClick={() => handleSort('created_at')}>
+                      <div className="d-flex align-items-center">
+                        Created At
+                        {getSortIcon('created_at')}
+                      </div>
                     </th>
-                    <th scope="col" style={{ width: '150px' }}>
+                    <th scope="col" className='action-th'>
                       Action
                     </th>
                   </tr>
@@ -502,71 +574,50 @@ const EmployeeTypeList = () => {
                     </tr>
                   ) : departments.length > 0 ? (
                     departments.map((dept, index) => (
-                      <tr key={dept.uuid} style={{ borderBottom: '1px solid #f0f0f0' }}>
-                        <td>
+                      <tr key={dept.uuid} >
+                        <td >
                           <div className="d-flex align-items-center gap-2">
                             <input
                               className="form-check-input"
                               type="checkbox"
                               checked={selectedRows.includes(dept.uuid)}
                               onChange={() => handleRowSelect(dept.uuid)}
-                              style={{ cursor: 'pointer' }}
                             />
-                            <span style={{ fontSize: '14px', color: '#6c757d' }}>
+                            <span>
                               {String(startIndex + index + 1).padStart(2, '0')}
                             </span>
                           </div>
                         </td>
-                        <td>
-                          <span>
+                        <td >
+                          <span >
                             {dept.name}
                           </span>
                         </td>
-                        <td>
-                          <span>
+                        <td >
+                          <span >
                             {dept.description}
                           </span>
                         </td>
-                        <td >
+                        <td>
                           <span>{formatDateTime(dept.created_at)}</span>
                         </td>
-                        <td>
+                        <td >
                           <div className="d-flex align-items-center gap-2">
                             <Link
                               to="#"
-                              style={{
-                                width: '28px',
-                                height: '28px',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                borderRadius: '50%',
-                                backgroundColor: '#d1fae5',
-                                transition: 'all 0.2s'
-                              }}
+                              className='edit-btn-icone'
                               onClick={(e) => {
                                 e.preventDefault();
                                 handleShowEdit(dept);
                               }}
                             >
-                              <Icon icon="lucide:edit" width="16" style={{ color: '#059669' }} />
+                              <Icon icon="lucide:edit" width="18" className='icone' />
                             </Link>
                             <button
                               onClick={() => handleDelete(dept.uuid)}
-                              style={{
-                                width: '28px',
-                                height: '28px',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                borderRadius: '50%',
-                                backgroundColor: '#fee2e2',
-                                border: 'none',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s'
-                              }}
+                              className='delete-btn-icone'
                             >
-                              <Icon icon="mingcute:delete-2-line" width="16" style={{ color: '#dc2626' }} />
+                              <Icon icon="mingcute:delete-2-line" width="18" className='icone' />
                             </button>
                           </div>
                         </td>
@@ -574,7 +625,7 @@ const EmployeeTypeList = () => {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="5" style={{ textAlign: 'center', padding: '32px', color: '#6c757d', fontSize: '14px' }}>
+                      <td colSpan="5" className='no-records-found' >
                         No records found
                       </td>
                     </tr>
@@ -583,15 +634,15 @@ const EmployeeTypeList = () => {
               </table>
 
               {tableState.total > 0 && (
-                <div className="d-flex justify-content-between align-items-center px-4 py-3" style={{ borderTop: '1px solid #e8e8e8' }}>
-                  <div style={{ fontSize: '14px', color: '#6c757d' }}>
+                <div className="d-flex justify-content-between align-items-center px-4 py-3" >
+                  <div className='showing-total-page' >
                     Showing {startIndex + 1} to {Math.min(startIndex + tableState.limit, tableState.total)} of {tableState.total} entries
                   </div>
                   <nav>
                     <ul className="pagination mb-0" style={{ gap: '4px' }}>
                       <li className={`page-item ${!tableState.hasPrevious ? 'disabled' : ''}`}>
                         <button
-                          className="page-link border-0 bg-transparent"
+                          className="border-0 bg-transparent"
                           onClick={() => goToPage(1)}
                           disabled={!tableState.hasPrevious}
                           style={{
@@ -606,7 +657,7 @@ const EmployeeTypeList = () => {
                       </li>
                       <li className={`page-item ${!tableState.hasPrevious ? 'disabled' : ''}`}>
                         <button
-                          className="page-link border-0 bg-transparent"
+                          className="border-0 bg-transparent"
                           onClick={() => goToPage(tableState.currentPage - 1)}
                           disabled={!tableState.hasPrevious}
                           style={{
@@ -623,7 +674,7 @@ const EmployeeTypeList = () => {
                         <li key={idx} className="page-item">
                           {page === '...' ? (
                             <span
-                              className="page-link border-0 bg-transparent"
+                              className="border-0 bg-transparent"
                               style={{
                                 padding: '6px 12px',
                                 color: '#6c757d',
@@ -634,16 +685,17 @@ const EmployeeTypeList = () => {
                             </span>
                           ) : (
                             <button
-                              className="page-link border-0"
+                              className="border-0 "
                               onClick={() => goToPage(page)}
                               style={{
                                 padding: '6px 12px',
                                 minWidth: '36px',
-                                backgroundColor: page === tableState.currentPage ? '#487fff' : 'transparent',
+                                backgroundColor: page === tableState.currentPage ? '#5a6c5b' : 'transparent',
                                 color: page === tableState.currentPage ? '#fff' : '#6c757d',
                                 borderRadius: '4px',
-                                fontWeight: page === tableState.currentPage ? '600' : '400',
-                                cursor: 'pointer'
+                                fontWeight: page === tableState.currentPage ? '500' : '400',
+                                cursor: 'pointer',
+                                fontSize: "16px"
                               }}
                             >
                               {page}
@@ -653,7 +705,7 @@ const EmployeeTypeList = () => {
                       ))}
                       <li className={`page-item ${!tableState.hasNext ? 'disabled' : ''}`}>
                         <button
-                          className="page-link border-0 bg-transparent"
+                          className=" border-0 bg-transparent"
                           onClick={() => goToPage(tableState.currentPage + 1)}
                           disabled={!tableState.hasNext}
                           style={{
@@ -668,7 +720,7 @@ const EmployeeTypeList = () => {
                       </li>
                       <li className={`page-item ${!tableState.hasNext ? 'disabled' : ''}`}>
                         <button
-                          className="page-link border-0 bg-transparent"
+                          className="border-0 bg-transparent"
                           onClick={() => goToPage(tableState.totalPages)}
                           disabled={!tableState.hasNext}
                           style={{
@@ -688,22 +740,23 @@ const EmployeeTypeList = () => {
             </div>
           </div>
         </div>
-
         <AddEmployeeType show={show} handleClose={handleClose} />
         <EditEmployeeType show={showEdit} handleCloseEdit={handleCloseEdit} rowSelectData={rowSelectData} />
         {showImport && (
           <AddImportModal show={showImport} handleClose={handleCloseImport} />)}
-
         {showDeleteConfirm && (
-          <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal fade show common-ctl-popup">
             <div className="modal-dialog modal-dialog-centered">
               <div className="modal-content" style={{ borderRadius: '10px' }}>
                 <div className="modal-header">
-                  <h5 className="modal-title text-danger">Confirm Delete</h5>
+                  <h6 className="modal-title text-danger">Confirm Delete</h6>
                   <button type="button" className="btn-close" onClick={cancelDelete}></button>
                 </div>
                 <div className="modal-body">
-                  <p className="mb-0">Are you sure you want to delete this department?</p>
+                  {/* <p className="mb-0">Are you sure you want to delete this department?</p> */}
+                  {/* <p className="mb-0"> Are you sure you want to delete this department ({selectedRows.length})?</p> */}
+                  <p className="mb-0">{deleteConfirmMessage}</p>
+
                 </div>
                 <div className="modal-footer">
                   <button
@@ -727,12 +780,11 @@ const EmployeeTypeList = () => {
         )}
         {showExportPopop && (
           <div
-            className="modal fade show"
-            style={{ display: "block", backgroundColor: "rgba(0,0,0,0.5)" }}
+            className="modal fade show common-ctl-popup"
             tabIndex={-1}
             role="dialog"
           >
-            <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
+            <div className="modal-dialog modal-lg modal-dialog-centered " role="document">
               <div className="modal-content radius-16 bg-base">
                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
                   <h1 className="modal-title fs-5">Export Department</h1>
@@ -745,7 +797,6 @@ const EmployeeTypeList = () => {
                 </div>
                 <div className="modal-body p-24">
                   <div className="row">
-                    {/* Draggable List with Checkbox */}
                     <div className="col-12 mb-20">
                       {items.map((item, index) => (
                         <div
@@ -754,7 +805,7 @@ const EmployeeTypeList = () => {
                           onDragStart={(e) => handleDragStart(e, index)}
                           onDrop={(e) => handleDrop(e, index)}
                           onDragOver={handleDragOver}
-                          className="border p-2 mb-10 radius-8 d-flex align-items-center justify-content-start gap-2  cursor-pointer"
+                          className="border p-2 mb-10 radius-8 d-flex align-items-center justify-content-start gap-2  cursor-pointer export-file"
                           style={{
                             cursor: "grab",
                             margin: "10px !important",
@@ -778,18 +829,17 @@ const EmployeeTypeList = () => {
                       ))}
                     </div>
 
-                    {/* Buttons */}
                     <div className="d-flex align-items-center justify-content-center gap-3 mt-24">
                       <button
                         type="button"
                         onClick={cancelExportTest}
-                        className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-40 py-11 radius-8"
+                        className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-40 py-6 radius-8"
                       >
                         Cancel
                       </button>
                       <button onClick={handleExport}
                         type="button"
-                        className="btn btn-primary border border-primary-600 text-md px-48 py-12 radius-8"
+                        className="btn comman-btn-color border border-primary-600 text-md px-40 py-6 radius-8"
                       >
                         Submit
                       </button>
