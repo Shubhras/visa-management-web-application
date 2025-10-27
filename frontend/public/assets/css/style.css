@@ -15817,7 +15817,12 @@ td.fc-header-center {
   cursor: pointer;
   transition: all 0.2s;
 }
-
+.basic-data-table .container-table .edit-btn-icone .icone{
+  color: #059669;
+}
+.basic-data-table .container-table .delete-btn-icone .icone{
+  color: #dc2626;
+}
 .basic-data-table .container-table .page-num-btn {
   padding: 6px 12px;
   min-width: 36px;
@@ -15832,13 +15837,28 @@ td.fc-header-center {
   cursor: pointer;
   user-select: none;
 }
+.basic-data-table .container-table .sorting-th-icone {
+  width: 16px;
+  color: #495057;
+  margin-left: 4px;
+}
+
 
 .basic-data-table .container-table .page-num-btn.active {
   background-color: #487fff;
   color: #fff;
   font-weight: 600;
 }
-
+.basic-data-table .container-table .no-records-found{
+   text-align: center;
+  padding: 32px;
+  color: #6c757d;
+  font-size: 14px;
+}
+.basic-data-table .container-table .showing-total-page{
+  font-size: 14px;
+  color: #6c757d;
+}
 .comman-btn-color {
   --bs-btn-color: #fff;
   --bs-btn-bg: #5a6c5b;
@@ -15886,3 +15906,6 @@ td.fc-header-center {
 .basic-data-table .sortable-header:hover .d-flex {
   opacity: 1;
 } */
+
+
+
