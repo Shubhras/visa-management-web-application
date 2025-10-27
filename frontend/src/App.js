@@ -465,9 +465,9 @@ function App() {
         <Route exact path='/leads' element={<LeadsList />} />
         <Route exact path='/department' element={<DepartmentList />} />
         <Route exact path='/employeetype' element={<EmployeeTypeList />} />
-        <Route exact path= '/companylist' element={<CompanyList/>} />
-       <Route exact path= '/stakeholder-list' element={<StakeholderCategoriesList/>} />
-        <Route exact path= '/priority-type' element={<PriorityTypeList/>} />
+        <Route exact path='/companylist' element={<CompanyList />} />
+        <Route exact path='/stakeholder-list' element={<StakeholderCategoriesList />} />
+        <Route exact path='/priority-type' element={<PriorityTypeList />} />
         <Route path='*' element={<ErrorPage />} />
       </Routes>
     </BrowserRouter>

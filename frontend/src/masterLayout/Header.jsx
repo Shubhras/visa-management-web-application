@@ -10,14 +10,14 @@ const Header = () => {
             name: 'Dashboard',
             path: '/',
             submenu: [
-                { name: 'Leads', path: '/leads' },
+                // { name: 'Leads', path: '/leads' },
             ]
         },
         {
             name: 'Sales',
             path: '/',
             submenu: [
-                { name: 'All Sales', path: '/' },
+                // { name: 'All Sales', path: '/' },
                 // { name: 'Add Sale', path: '/sales/add' },
                 // { name: 'Reports', path: '/sales/reports' }
             ]
@@ -26,7 +26,7 @@ const Header = () => {
             name: 'Clients',
             path: '/',
             submenu: [
-                { name: 'All Clients', path: '/' },
+                // { name: 'All Clients', path: '/' },
                 // { name: 'Add Client', path: '/clients/add' },
                 // { name: 'Active Clients', path: '/clients/active' }
             ]
@@ -35,7 +35,7 @@ const Header = () => {
             name: 'Stockholders',
             path: '/',
             submenu: [
-                { name: 'All Stockholders', path: '/' },
+                // { name: 'All Stockholders', path: '/' },
                 // { name: 'Add Stockholder', path: '/stockholders/add' }
             ]
         },
@@ -43,7 +43,7 @@ const Header = () => {
             name: 'Visa',
             path: '/',
             submenu: [
-                { name: 'Visa Applications', path: '/' },
+                // { name: 'Visa Applications', path: '/' },
                 // { name: 'Approved Visas', path: '/visa/approved' },
                 // { name: 'Pending Visas', path: '/visa/pending' }
             ]
@@ -52,7 +52,7 @@ const Header = () => {
             name: 'Package',
             path: '/',
             submenu: [
-                { name: 'All Packages', path: '/' },
+                // { name: 'All Packages', path: '/' },
                 // { name: 'Add Package', path: '/package/add' },
                 // { name: 'Package Types', path: '/package/types' }
             ]
@@ -61,7 +61,7 @@ const Header = () => {
             name: 'Subscriber',
             path: '/',
             submenu: [
-                { name: 'All Subscribers', path: '/' },
+                // { name: 'All Subscribers', path: '/' },
                 // { name: 'Active Plans', path: '/subscriber/active' },
                 // { name: 'Expired Plans', path: '/subscriber/expired' }
             ]
