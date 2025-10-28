@@ -2131,7 +2131,7 @@ class DepartmentListAPIView(APIView):
                 Q(description__icontains=search)
             )
 
-        queryset = queryset.order_by(sort_by)
+        queryset = queryset.order_by('-created_at')
 
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
