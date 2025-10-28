@@ -212,13 +212,13 @@ urlpatterns = [
     path('LostReason/export/', LostReasonExportAPIView.as_view(), name=' LostReason-export'),
     path('LostReason/import/',  LostReasonImportAPIView.as_view(), name=' LostReason-import'),
 
-    path("lostreason/create/", LostReasonB2BCreateAPIView.as_view(), name='LostReason-create'),
-    path("lostreason/", LostReasonB2BListAPIView.as_view(), name='LostReason-list'),
-    path("lostreason/<uuid:uuid>/", LostReasonB2BRetrieveAPIView.as_view(), name='LostReason-detail'),
-    path("lostreason/<uuid:uuid>/update/", LostReasonB2BUpdateAPIView.as_view(), name='LostReason-update'),
-    path("lostreason/delete/", LostReasonB2BDeleteAPIView.as_view(), name='LostReason-delete'),
-    path('lostreason/export/', LostReasonB2BExportAPIView.as_view(), name=' LostReason-export'),
-    path('lostreason/import/',  LostReasonB2BImportAPIView.as_view(), name=' LostReason-import'),
+    path("lostreasonB2B/create/", LostReasonB2BCreateAPIView.as_view(), name='LostReason-create'),
+    path("lostreasonB2B/", LostReasonB2BListAPIView.as_view(), name='LostReason-list'),
+    path("lostreasonB2B/<uuid:uuid>/", LostReasonB2BRetrieveAPIView.as_view(), name='LostReason-detail'),
+    path("lostreasonB2B/<uuid:uuid>/update/", LostReasonB2BUpdateAPIView.as_view(), name='LostReason-update'),
+    path("lostreasonB2B/delete/", LostReasonB2BDeleteAPIView.as_view(), name='LostReason-delete'),
+    path('lostreasonB2B/export/', LostReasonB2BExportAPIView.as_view(), name=' LostReason-export'),
+    path('lostreasonB2B/import/',  LostReasonB2BImportAPIView.as_view(), name=' LostReason-import'),
 
 
     path('education-level-codes/create/', EducationLevelCodeCreateAPIView.as_view(), name='educationlevelcode-create'),
