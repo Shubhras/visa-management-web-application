@@ -256,4 +256,36 @@ export const importActivityTypeDataAPI = (payload) => {
 };
 
 
+// LOST_REASON_B2C
+export const getLostReasonB2CListDataAPI = (data) => {
+    const apiUrl = `${url.GET_LOST_REASON_B2C_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
 
+export const addLostReasonB2CDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_LOST_REASON_B2C_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editLostReasonB2CDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_LOST_REASON_B2C_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteLostReasonB2CDataAPI = (payload) => {
+    const prepareDATA = {
+        id: payload
+    };
+    const apiUrl = `${url.DELETE_LOST_REASON_B2C_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportLostReasonB2CDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_LOST_REASON_B2C_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importLostReasonB2CDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_LOST_REASON_B2C_API}`;
+    return post(apiUrl, payload);
+};

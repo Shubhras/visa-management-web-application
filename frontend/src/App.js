@@ -349,8 +349,8 @@ import CompanyList from "./pages/masters/company/CompanyList";
 import StakeholderCategoriesList from "./pages/masters/stakeholderCategories/StakeholderCategoriesList";
 import PriorityTypeList from "./pages/masters/priorityType/PriorityTypeList";
 import TagsTypeList from "./pages/masters/tagsType/TagsTypeList";
- import ActivityTypeList from "./pages/masters/salesMasters/activityType/ActivityTypeList";
-
+import ActivityTypeList from "./pages/masters/salesMasters/activityType/ActivityTypeList";
+import LostReasonB2CList from "./pages/masters/salesMasters/lostReasonB2C/LostReasonB2CList";
 import LeadsList from "./pages/leads/LeadsList";
 
 // Protected Route Component
@@ -580,6 +580,7 @@ function App() {
         <Route path='/priority-type' element={<ProtectedRoute><PriorityTypeList /></ProtectedRoute>} />
         <Route path='/tags-type' element={<ProtectedRoute><TagsTypeList /></ProtectedRoute>} />
         <Route path='/activity-type' element={<ProtectedRoute><ActivityTypeList /></ProtectedRoute>} />
+        <Route path='/lost-reason-B2C' element={<ProtectedRoute><LostReasonB2CList /></ProtectedRoute>} />
         {/* 404 Error Page */}
         <Route path='*' element={<ErrorPage />} />
       </Routes>

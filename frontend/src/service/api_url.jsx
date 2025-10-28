@@ -59,6 +59,14 @@ export const DELETE_ACTIVITY_TYPE_API = "api/v1/master/ActivityType/";
 export const EXPORT_ACTIVITY_TYPE_API = "api/v1/master/ActivityType/export/";
 export const IMPORT_ACTIVITY_TYPE_API = "api/v1/master/ActivityType/import/";
 
+// LOST_REASON_B2C
+export const GET_LOST_REASON_B2C_LIST = "/api/v1/master/LostReason/";
+export const ADD_LOST_REASON_B2C_API = "/api/v1/master/LostReason/create/";
+export const EDIT_LOST_REASON_B2C_API = "api/v1/master/LostReason/";
+export const DELETE_LOST_REASON_B2C_API = "api/v1/master/LostReason/";
+export const EXPORT_LOST_REASON_B2C_API = "api/v1/master/LostReason/export/";
+export const IMPORT_LOST_REASON_B2C_API = "api/v1/master/LostReason/import/";
+
 // // export const TWO_STEP_VERIFICATION = 'api/national-admin/national-admin-verifyOtpAdmin'
 // export const TWO_STEP_VERIFICATION = '/api/users/verifyUser'
 // export const FORGET_PASSWORD_URL = '/api/national-admin/forgotpassword/'
