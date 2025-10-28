@@ -1,5 +1,6 @@
 from django.urls import path
 from .views import *
+from .test import *
 
 urlpatterns = [
 
@@ -330,6 +331,14 @@ urlpatterns = [
     path('entrance-tests/delete/', EntranceTestNameDeleteAPIView.as_view(), name='entrance-test-delete'),
     path('entrance-tests/export/', EntranceTestNameExportAPIView.as_view(), name='entrance-test-export'),
     path('entrance-tests/import/', EntranceTestNameImportAPIView.as_view(), name='entrance-test-import'),
+
+    path('entrancetestresult/list/', EntranceTestResultListAPIView.as_view(), name='entrancetestresult-list'),
+    path('entrancetestresult/create/', EntranceTestResultCreateAPIView.as_view(), name='entrancetestresult-create'),
+    path('entrancetestresult/<uuid:uuid>/', EntranceTestResultRetrieveAPIView.as_view(), name='entrancetestresult-retrieve'),
+    path('entrancetestresult/<uuid:uuid>/update/', EntranceTestResultUpdateAPIView.as_view(), name='entrancetestresult-update'),
+    path('entrancetestresult/delete/', EntranceTestResultDeleteAPIView.as_view(), name='entrancetestresult-delete'),
+    path('entrancetestresult/export/', EntranceTestResultExportAPIView.as_view(), name='entrancetestresult-export'),
+    path('entrancetestresult/import/', EntranceTestResultImportAPIView.as_view(), name='entrancetestresult-import'),
 
 ]
 
