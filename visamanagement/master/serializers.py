@@ -305,6 +305,12 @@ class LostReasonSerializer(serializers.ModelSerializer):
         model = LostReason
         fields = ['uuid', 'name', 'description', 'created_at', 'updated_at']
 
+class LostReasonB2BSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LostReasonB2B
+        fields = ['uuid', 'name', 'description', 'created_at', 'updated_at']
+
+
 
 class EducationLevelCodeSerializer(serializers.ModelSerializer):
     class Meta:
