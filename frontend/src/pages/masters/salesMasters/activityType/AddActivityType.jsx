@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useDispatch } from "react-redux";
-import { tagsTypeAdd } from '../../../../store/master/actions';
+
 import { toast } from "react-toastify";
+import { activityTypeAdd } from '../../../../store/master/salesMasters/actions';
 const AddActivityType = ({ show, handleClose }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
@@ -61,7 +62,7 @@ const AddActivityType = ({ show, handleClose }) => {
 
       };
       setLoading(true);
-      dispatch(tagsTypeAdd(sendPayload, (response, error) => {
+      dispatch(activityTypeAdd(sendPayload, (response, error) => {
         setLoading(false);
         if (error) {
           toast.error(error?.response?.data?.message || "server error");

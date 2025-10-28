@@ -9,8 +9,8 @@ import { Link } from 'react-router-dom';
 import { toast } from "react-toastify";
 import AddActivityType from './AddActivityType';
 import EditActivityType from './EditActivityType';
-import { tagsTypeList, tagsTypeDelete,tagsTypeExportData  } from '../../../../store/master/actions';
 import AddImportActivityModal from './AddImportActivityModal';
+import { activityTypeList,activityTypeDelete ,activityTypeExportData} from '../../../../store/master/salesMasters/actions';
 
 const ActivityTypeList = () => {
   const dispatch = useDispatch();
@@ -77,7 +77,7 @@ const ActivityTypeList = () => {
       sortOrder: tableState.sortOrder || ''
     };
 
-    dispatch(tagsTypeList(params, (response, error) => {
+    dispatch(activityTypeList(params, (response, error) => {
       setLoading(false);
       if (response?.statusCode === 200 && response?.status === true) {
         const paginationData = response?.pagination || {};
@@ -268,7 +268,7 @@ const ActivityTypeList = () => {
       return;
     }
 
-    dispatch(tagsTypeDelete(sendPayload, (response, error) => {
+    dispatch(activityTypeDelete(sendPayload, (response, error) => {
       if (error) {
         toast.error(error?.response?.data?.message || "server error");
       } else {
@@ -361,7 +361,7 @@ const ActivityTypeList = () => {
     };
     setLoadingExport(true);
 
-    dispatch(tagsTypeExportData(sendPayload, (response, error) => {
+    dispatch(activityTypeExportData(sendPayload, (response, error) => {
       if (error) {
         setLoadingExport(false);
         toast.error(error?.response?.message || "server error");
