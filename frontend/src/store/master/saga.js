@@ -34,6 +34,12 @@ import {
   DELETE_PRIORITY_TYPE,
   EXPORT_PRIORITY_TYPE,
   IMPORT_PRIORITY_TYPE,
+  TAGS_TYPE_LIST,
+  DELETE_TAGS_TYPE,
+  IMPORT_TAGS_TYPE,
+  EXPORT_TAGS_TYPE,
+  ADD_TAGS_TYPE,
+  EDIT_TAGS_TYPE,
 } from "./actionTypes";
 
 import {
@@ -71,6 +77,12 @@ import {
   deletePriorityTypeDataAPI,
   exportPriorityTypeDataAPI,
   importPriorityTypeDataAPI,
+  importTagsTypeDataAPI,
+  exportTagsTypeDataAPI,
+  deleteTagsTypeDataAPI,
+  editTagsTypeDataAPI,
+  addTagsTypeDataAPI,
+  getTagsTypeListDataAPI,
 } from "../../service/api_helper";
 
 function* departmentListSaga(action) {
@@ -415,6 +427,61 @@ function* priorityTypeImportDataSaga(action) {
 }
 
 
+//Tags type
+function* tagsTypeListSaga(action) {
+  try {
+    const response = yield call(getTagsTypeListDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* tagsTypeAddSaga(action) {
+  try {
+    const response = yield call(addTagsTypeDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* tagsTypeEditSaga(action) {
+  try {
+    const response = yield call(editTagsTypeDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* tagsTypeDeleteSaga(action) {
+  try {
+    const response = yield call(deleteTagsTypeDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* tagsTypeExportDataSaga(action) {
+  try {
+    const response = yield call(exportTagsTypeDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* tagsTypeImportDataSaga(action) {
+  try {
+    const response = yield call(importTagsTypeDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
 function* masterSaga() {
   yield takeEvery(DEPARTMENT_LIST, departmentListSaga);
   yield takeEvery(ADD_DEPARTMENT, departmentAddSaga);
@@ -455,6 +522,14 @@ function* masterSaga() {
   yield takeEvery(DELETE_PRIORITY_TYPE, priorityTypeDeleteSaga);
   yield takeEvery(EXPORT_PRIORITY_TYPE, priorityTypeExportDataSaga);
   yield takeEvery(IMPORT_PRIORITY_TYPE, priorityTypeImportDataSaga);
+
+ //Tags type
+  yield takeEvery(TAGS_TYPE_LIST, tagsTypeListSaga);
+  yield takeEvery(ADD_TAGS_TYPE, tagsTypeAddSaga);
+  yield takeEvery(EDIT_TAGS_TYPE, tagsTypeEditSaga);
+  yield takeEvery(DELETE_TAGS_TYPE, tagsTypeDeleteSaga);
+  yield takeEvery(EXPORT_TAGS_TYPE, tagsTypeExportDataSaga);
+  yield takeEvery(IMPORT_TAGS_TYPE, tagsTypeImportDataSaga);
 
 }
 

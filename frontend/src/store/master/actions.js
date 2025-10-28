@@ -32,6 +32,12 @@ import {
     DELETE_PRIORITY_TYPE,
     EXPORT_PRIORITY_TYPE,
     IMPORT_PRIORITY_TYPE,
+    IMPORT_TAGS_TYPE,
+    EXPORT_TAGS_TYPE,
+    DELETE_TAGS_TYPE,
+    EDIT_TAGS_TYPE,
+    ADD_TAGS_TYPE,
+    TAGS_TYPE_LIST,
 } from "./actionTypes"
 
 export const departmentList = (data, callback) => ({
@@ -211,6 +217,43 @@ export const priorityTypeExportData = (data, callback) => ({
 
 export const priorityTypeImportData = (data, callback) => ({
     type: IMPORT_PRIORITY_TYPE,
+    data,
+    callback,
+});
+
+// TAGS_TYPE
+export const tagsTypeList = (data, callback) => ({
+    type: TAGS_TYPE_LIST,
+    data,
+    callback,
+});
+
+export const tagsTypeAdd = (data, callback) => ({
+    type: ADD_TAGS_TYPE,
+    data,
+    callback,
+});
+
+export const tagsTypeEdit = (data, callback) => ({
+    type: EDIT_TAGS_TYPE,
+    data,
+    callback,
+});
+
+export const tagsTypeDelete = (data, callback) => ({
+    type: DELETE_TAGS_TYPE,
+    data,
+    callback,
+});
+
+export const tagsTypeExportData = (data, callback) => ({
+    type: EXPORT_TAGS_TYPE,
+    data,
+    callback,
+});
+
+export const tagsTypeImportData = (data, callback) => ({
+    type: IMPORT_TAGS_TYPE,
     data,
     callback,
 });

@@ -187,6 +187,39 @@ export const importPriorityTypeDataAPI = (payload) => {
     return post(apiUrl, payload);
 };
 
+// TAGS_TYPE
+export const getTagsTypeListDataAPI = (data) => {
+    const apiUrl = `${url.GET_TAGS_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addTagsTypeDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_TAGS_TYPE_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editTagsTypeDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_TAGS_TYPE_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteTagsTypeDataAPI = (payload) => {
+    const prepareDATA = {
+        id: payload
+    };
+    const apiUrl = `${url.DELETE_TAGS_TYPE_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportTagsTypeDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_TAGS_TYPE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importTagsTypeDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_TAGS_TYPE_API}`;
+    return post(apiUrl, payload);
+};
 // //international admin
 // export const getUsersDetailsById = (payload) => {
 //   const apiUrl = `${url.GET_USERS_DETAILS_BY_ID}`;

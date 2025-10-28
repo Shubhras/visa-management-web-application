@@ -56,14 +56,11 @@ const Header = () => {
             ]
         },
         // {
-        //     name: 'Masters',
-        //     path: '/department',
+        //     name: 'dummy',
+        //     path: '/tags-type',
         //     submenu: [
-        //         { name: 'Department', path: '/department' },
-        //         { name: 'Employee type', path: '/employeetype' },
-        //         { name: 'Company type', path: '/companylist' },
-        //         { name: 'Stakeholder categories', path: '/stakeholder-list' },
-        //         { name: 'Priority type', path: '/priority-type' }
+        //         { name: 'Tags type', path: '/tags-type' },
+              
         //     ]
         // },
         {

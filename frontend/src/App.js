@@ -348,6 +348,8 @@ import EmployeeTypeList from "./pages/masters/employeeType/EmployeeTypeList";
 import CompanyList from "./pages/masters/company/CompanyList";
 import StakeholderCategoriesList from "./pages/masters/stakeholderCategories/StakeholderCategoriesList";
 import PriorityTypeList from "./pages/masters/priorityType/PriorityTypeList";
+import TagsTypeList from "./pages/masters/tagsType/TagsTypeList";
+
 import LeadsList from "./pages/leads/LeadsList";
 
 // Protected Route Component
@@ -575,6 +577,7 @@ function App() {
         <Route path='/companylist' element={<ProtectedRoute><CompanyList /></ProtectedRoute>} />
         <Route path='/stakeholder-list' element={<ProtectedRoute><StakeholderCategoriesList /></ProtectedRoute>} />
         <Route path='/priority-type' element={<ProtectedRoute><PriorityTypeList /></ProtectedRoute>} />
+        <Route path='/tags-type' element={<ProtectedRoute><TagsTypeList /></ProtectedRoute>} />
 
         {/* 404 Error Page */}
         <Route path='*' element={<ErrorPage />} />

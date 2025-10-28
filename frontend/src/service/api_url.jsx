@@ -43,6 +43,14 @@ export const EXPORT_PRIORITY_TYPE_API = "api/v1/master/Priority/export/";
 export const IMPORT_PRIORITY_TYPE_API = "api/v1/master/Priority/import/";
 
 
+// TAGS_TYPE
+export const GET_TAGS_TYPE_LIST = "/api/v1/master/Tags/";
+export const ADD_TAGS_TYPE_API = "/api/v1/master/Tags/create/";
+export const EDIT_TAGS_TYPE_API = "api/v1/master/Tags/";
+export const DELETE_TAGS_TYPE_API = "api/v1/master/Tags/";
+export const EXPORT_TAGS_TYPE_API = "api/v1/master/Tags/export/";
+export const IMPORT_TAGS_TYPE_API = "api/v1/master/Tags/import/";
+
 // // export const TWO_STEP_VERIFICATION = 'api/national-admin/national-admin-verifyOtpAdmin'
 // export const TWO_STEP_VERIFICATION = '/api/users/verifyUser'
 // export const FORGET_PASSWORD_URL = '/api/national-admin/forgotpassword/'
