@@ -6670,6 +6670,337 @@ class LostReasonImportAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+
+
+
+
+
+
+
+#-------------------lostreasons(b2b)-----------------------
+
+class LostReasonB2BCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    def post(self, request):
+        serializer = LostReasonB2BSerializer(data=request.data)
+        if serializer.is_valid():
+            if LostReasonB2B.objects.filter(name=serializer.validated_data['name'], is_deleted=False).exists():
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Lost Reason  with this name already exists"
+                }, status=status.HTTP_400_BAD_REQUEST)
+            serializer.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "Lost Reason created successfully",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK)
+
+
+        return Response({
+            "statusCode": 400,
+            "status": False,
+            "message": serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+class LostReasonB2BListAPIView(APIView):    
+    def get(self, request):
+        search = request.GET.get('search', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
+
+        allowed_sort_fields = ['name', 'description', 'created_at']
+        if sort_by not in allowed_sort_fields:
+            sort_by = 'created_at'
+
+        # Apply descending order for 'desc'
+        if sort_order == 'desc':
+            sort_by = f'-{sort_by}'
+
+        queryset = LostReasonB2B.objects.filter(is_deleted=False)
+
+        if search:
+            queryset = queryset.filter(
+                Q(name__icontains=search) |
+                Q(description__icontains=search)
+            )
+
+        queryset = queryset.order_by('-created_at')
+
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = LostReasonB2BSerializer(result_page, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
+
+class LostReasonB2BRetrieveAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    def get(self, request, uuid):
+        try:
+            lostreason = LostReasonB2B.objects.get(uuid=uuid, is_deleted=False)
+        except LostReasonB2B.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "Lost Reason  not found"
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = LostReasonB2BSerializer(lostreason)
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": "Lost Reason  retrieved successfully",
+            "data": serializer.data
+        }, status=status.HTTP_200_OK)
+
+
+class LostReasonB2BUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    def put(self, request, uuid):
+        try:
+            category = LostReasonB2B.objects.get(uuid=uuid, is_deleted=False)
+        except LostReasonB2B.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "Lost Reason not found"
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = LostReasonB2BSerializer(category, data=request.data, partial=True)
+        if serializer.is_valid():
+            new_name = serializer.validated_data.get("name", category.name)
+            if LostReasonB2B.objects.filter(name=new_name).exclude(uuid=uuid).exists():
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Lost Reason with this name already exists"
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            serializer.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "Lost Reason  details updated successfully",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK)
+
+        return Response({
+            "statusCode": 400,
+            "status": False,
+            "message": serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+class LostReasonB2BDeleteAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def delete(self, request, uuid=None):
+        uuids = request.data.get('id', None)
+
+        # ✅ Case 1: Single delete via URL UUID
+        if uuid:
+            try:
+                reason = LostReasonB2B.objects.get(uuid=uuid, is_deleted=False)
+                reason.is_deleted = True
+                reason.save()
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": "Lost Reason deleted successfully",
+                    "data": None
+                }, status=status.HTTP_200_OK)
+            except LostReasonB2B.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "Lost Reason not found",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+
+        # ✅ Case 2: Delete all
+        if uuids == "all":
+            reasons = LostReasonB2B.objects.filter(is_deleted=False)
+            count = reasons.count()
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No Lost Reasons found to delete.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+            reasons.update(is_deleted=True)
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"All {count} Lost Reason(s) deleted successfully.",
+                "data": None
+            }, status=status.HTTP_200_OK)
+
+        # ✅ Case 3: Bulk delete via UUIDs list
+        if not uuids or not isinstance(uuids, list):
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Please provide a list of UUIDs in 'uuids' field or 'all'.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validate UUIDs
+        valid_uuids = []
+        invalid_uuids = []
+        for u in uuids:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(u)
+
+        if not valid_uuids:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "No valid UUIDs provided.",
+                "data": {"invalid_uuids": invalid_uuids}
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Fetch LostReason entries that exist and are not deleted
+        reasons = LostReasonB2B.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+        count = reasons.count()
+
+        if count == 0:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "No matching Lost Reasons found.",
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        # Soft delete
+        reasons.update(is_deleted=True)
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": f"{count} Lost Reason(s) deleted successfully.",
+            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+        }, status=status.HTTP_200_OK)
+
+class LostReasonB2BExportAPIView(APIView):
+    # permission_classes = [IsAuthenticated]  # Uncomment and adjust as needed
+
+    def get(self, request):
+        format_type = request.GET.get('format', 'csv').lower()
+        dataset = Dataset()
+        dataset.headers = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+
+        for dept in LostReasonB2B.objects.all():
+            dataset.append([
+                str(dept.uuid),
+                dept.name or '',  # Handle potential None
+                dept.description or '',
+                int(dept.is_deleted),
+                dept.created_at.strftime("%Y-%m-%d %H:%M:%S") if dept.created_at else '',
+                dept.updated_at.strftime("%Y-%m-%d %H:%M:%S") if dept.updated_at else ''
+            ])
+
+        if format_type == 'xlsx':
+            data = XLSX().export_data(dataset)  # Returns bytes
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'departments.xlsx'
+        else:
+            data = CSV().export_data(dataset)  # Returns bytes (ensure UTF-8)
+            content_type = 'text/csv; charset=utf-8'
+            file_name = 'departments.csv'
+
+        response = HttpResponse(data, content_type=content_type)
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        return response
+
+class LostReasonB2BImportAPIView(APIView):
+    def post(self, request):
+        file = request.FILES.get('file')
+        sheet_name = request.data.get('sheet_name')  # optional for XLSX
+
+        if not file:
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+
+        format_type = file.name.split('.')[-1].lower()
+        dataset = Dataset()
+        duplicate_names = []
+
+        try:
+            # ---------- XLSX Handling ----------
+            if format_type == 'xlsx':
+                wb = openpyxl.load_workbook(file, read_only=True)
+                available_sheets = wb.sheetnames
+
+                # Require sheet_name if multiple sheets
+                if len(available_sheets) > 1 and not sheet_name:
+                    return Response({
+                        'error': 'Please provide sheet_name',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                sheet_name = sheet_name or available_sheets[0]
+
+                if sheet_name not in available_sheets:
+                    return Response({
+                        'error': f'Sheet "{sheet_name}" not found in uploaded file',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                ws = wb[sheet_name]
+                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                data = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True)]
+
+            # ---------- CSV Handling ----------
+            elif format_type == 'csv':
+                dataset.load(file.read().decode('utf-8'), format='csv')
+                data = dataset.dict
+
+            else:
+                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # ---------- Process Each Row ----------
+            for row in data:
+                name = str(row.get('name')).strip() if row.get('name') else None
+                description = str(row.get('description')).strip() if row.get('description') else ''
+
+                if not name:
+                    continue  # skip empty names
+
+                existing = LostReasonB2B.objects.filter(name__iexact=name).first()
+
+                if existing:
+                    if existing.is_deleted:
+                        # Reactivate soft-deleted entry
+                        existing.description = description
+                        existing.is_deleted = False
+                        existing.save()
+                    else:
+                        # Already active — track as duplicate
+                        duplicate_names.append(name)
+                        continue
+                else:
+                    # No record exists — create new
+                    LostReasonB2B.objects.create(
+                        name=name,
+                        description=description,
+                        is_deleted=False
+                    )
+
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "duplicates": list(set(duplicate_names)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
+        }, status=status.HTTP_200_OK)
+
+
+
 # -------------------- EducationLevelCode -------------------- #
 class EducationLevelCodeCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -6718,7 +7049,7 @@ class EducationLevelCodeCreateAPIView(APIView):
             "message": " ".join(messages),
         }, status=status.HTTP_400_BAD_REQUEST)
     
-    
+
 class EducationLevelCodeRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 

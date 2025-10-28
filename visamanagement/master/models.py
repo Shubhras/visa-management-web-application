@@ -345,6 +345,20 @@ class LostReason(models.Model):
 
     def __str__(self):
         return self.name
+    
+
+class LostReasonB2B(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True) 
+    name = models.CharField(max_length=255,unique=True)
+    description = models.TextField(max_length=255,blank=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
 
 class EducationLevelCode(models.Model):
     id = models.AutoField(primary_key=True)
@@ -623,8 +637,8 @@ class EntranceTestModuleName(models.Model):
 class EntranceTestResult(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    entrancetest=models.ForeignKey('EntranceTestName',on_delete=models.SET_NULL,null=True,blank=True,related_name='entrance_test')
-    moduleName=models.ForeignKey('EntranceTestModuleName',on_delete=models.SET_NULL,null=True,blank=True,related_name='entrance_test')
+    entrancetest=models.ForeignKey('EntranceTestName',on_delete=models.SET_NULL,null=True,blank=True,related_name='entrance_result')
+    moduleName=models.ForeignKey('EntranceTestModuleName',on_delete=models.SET_NULL,null=True,blank=True,related_name='entrance_result')
     testresult=models.TextField(max_length=255,blank=True,null=True)
     description = models.TextField(max_length=255,blank=True,null=True)
     is_deleted = models.BooleanField(default=False)
