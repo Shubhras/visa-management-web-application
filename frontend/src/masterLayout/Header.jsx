@@ -78,9 +78,16 @@ const Header = () => {
                         { name: 'Employee type', path: '/employeetype' },
                         { name: 'Company type', path: '/companylist' },
                         { name: 'Stakeholder categories', path: '/stakeholder-list' },
+                    ]
+                },
+                {
+                    name: 'Sales',
+                    path: '/priority-type',
+                    children: [
                         { name: 'Priority type', path: '/priority-type' }
                     ]
                 },
+
                 { name: 'Education', path: '/' },
                 { name: 'Test', path: '/' },
                 { name: 'Occupation', path: '/' },
