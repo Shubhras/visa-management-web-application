@@ -1,10 +1,10 @@
 import React, { useState } from 'react'
 import { useDispatch } from "react-redux";
-import { employeeTypeExportData } from '../../../store/master/actions';
+import { dcompanyImportData } from '../../../store/master/actions';
 import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 
-const AddImportModal = ({ show, handleClose }) => {
+const AddImportCompanyModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
     const [file, setFile] = useState(null);
@@ -64,7 +64,7 @@ const AddImportModal = ({ show, handleClose }) => {
         }
 
         setLoading(true);
-        dispatch(employeeTypeExportData(formData, (response, error) => {
+        dispatch(dcompanyImportData(formData, (response, error) => {
             setLoading(false);
             if (error) {
                 toast.error(error?.response?.data?.message || "Server error");
@@ -89,8 +89,9 @@ const AddImportModal = ({ show, handleClose }) => {
         setSheetNames([]);
         setSelectedSheet('');
         handleClose();
+        setLoading(false);
     };
- const handleDownloadSample = () => {
+    const handleDownloadSample = () => {
         const fileUrl = 'assets/simplefile//Demployee.xlsx'; // Update this path according to your project structure
 
         const link = document.createElement('a');
@@ -100,12 +101,8 @@ const AddImportModal = ({ show, handleClose }) => {
         link.click();
         document.body.removeChild(link);
     };
-const handleBackdropClick = (e) => {
-    // Only close if clicking the backdrop itself, not the modal content
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
+
+
     if (!show) return null;
 
     return (
@@ -113,15 +110,14 @@ const handleBackdropClick = (e) => {
             className="modal fade show common-ctl-popup"
             tabIndex={-1}
             role="dialog"
-            aria-labelledby="departmentModalLabel"
+            aria-labelledby="companyModalLabel"
             aria-hidden={!show}
-             onClick={handleBackdropClick}
         >
             <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
                 <div className="modal-content radius-16 bg-base">
                     <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                        <h1 className="modal-title fs-5" id="departmentModalLabel">
-                            Upload Department
+                        <h1 className="modal-title fs-5" id="companyModalLabel">
+                            Upload Company Type
                         </h1>
                         <button
                             type="button"
@@ -215,4 +211,4 @@ const handleBackdropClick = (e) => {
     );
 };
 
-export default AddImportModal;
+export default AddImportCompanyModal;

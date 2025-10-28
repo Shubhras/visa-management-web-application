@@ -10,7 +10,7 @@ import { toast } from "react-toastify";
 import AddStakeholderCategories from './AddStakeholderCategories';
 import EditStakeholderCategories from './EditStakeholderCategories';
 import { stakeholderCategoryList, stakeholderCategoryDelete, stakeholderCategoryExportData } from '../../../store/master/actions';
-import AddImportModal from './AddImportModal';
+import AddImportStakeholderModal from './AddImportStakeholderModal';
 
 const StakeholderCategoriesList = () => {
   const dispatch = useDispatch();
@@ -27,7 +27,7 @@ const StakeholderCategoriesList = () => {
   const [rowSelectData, setRowSelectData] = useState({});
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this department?");
+  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this stakeholder?");
   const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [stakeholderListData, setStakeholderListData] = useState([]);
@@ -255,7 +255,7 @@ const StakeholderCategoriesList = () => {
       return;
     }
     const maggase = isAllSelected ? "all" : deleteId ? "" : selectedRows.length
-    setDeleteConfirmMessage(`Are you sure you want to delete this department (${maggase})?`);
+    setDeleteConfirmMessage(`Are you sure you want to delete this stakeholder (${maggase})?`);
     setShowDeleteConfirm(true);
   };
 
@@ -264,7 +264,7 @@ const StakeholderCategoriesList = () => {
     const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
 
     if (!sendPayload || sendPayload.length === 0) {
-      toast.error("No department selected for deletion.");
+      toast.error("No stakeholder selected for deletion.");
       return;
     }
 
@@ -721,7 +721,7 @@ const StakeholderCategoriesList = () => {
         <AddStakeholderCategories show={show} handleClose={handleClose} />
         <EditStakeholderCategories show={showEdit} handleCloseEdit={handleCloseEdit} rowSelectData={rowSelectData} />
         {showImport && (
-          <AddImportModal show={showImport} handleClose={handleCloseImport} />)}
+          <AddImportStakeholderModal show={showImport} handleClose={handleCloseImport} />)}
         {showDeleteConfirm && (
           <div className="modal fade show common-ctl-popup" onClick={(e) => handleBackdropClick(e, cancelDelete)}>
             <div className="modal-dialog modal-dialog-centered">
@@ -731,8 +731,8 @@ const StakeholderCategoriesList = () => {
                   <button type="button" className="btn-close" onClick={cancelDelete}></button>
                 </div>
                 <div className="modal-body">
-                  {/* <p className="mb-0">Are you sure you want to delete this department?</p> */}
-                  {/* <p className="mb-0"> Are you sure you want to delete this department ({selectedRows.length})?</p> */}
+                  {/* <p className="mb-0">Are you sure you want to delete this Stakeholder?</p> */}
+                  {/* <p className="mb-0"> Are you sure you want to delete this Stakeholder ({selectedRows.length})?</p> */}
                   <p className="mb-0">{deleteConfirmMessage}</p>
 
                 </div>
@@ -766,7 +766,7 @@ const StakeholderCategoriesList = () => {
             <div className="modal-dialog modal-lg modal-dialog-centered " role="document">
               <div className="modal-content radius-16 bg-base">
                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                  <h1 className="modal-title fs-5">Export Department</h1>
+                  <h1 className="modal-title fs-5">Export Stakeholder</h1>
                   <button
                     type="button"
                     className="btn-close"

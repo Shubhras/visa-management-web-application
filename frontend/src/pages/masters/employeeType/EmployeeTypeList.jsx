@@ -10,7 +10,7 @@ import { toast } from "react-toastify";
 import AddEmployeeType from './AddEmployeeType';
 import EditEmployeeType from './EditEmployeeType';
 import { employeeTypeList, employeeTypeDelete, employeeTypeExportData } from '../../../store/master/actions';
-import AddImportModal from './AddImportModal';
+import AddImportEmployeeModal from './AddImportEmployeeModal';
 
 const EmployeeTypeList = () => {
   const dispatch = useDispatch();
@@ -27,7 +27,7 @@ const EmployeeTypeList = () => {
   const [rowSelectData, setRowSelectData] = useState({});
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this department?");
+  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this  employee type?");
   const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [employeeTypeistData, setEmployeeTypeistData] = useState([]);
@@ -259,7 +259,7 @@ const EmployeeTypeList = () => {
       return;
     }
     const maggase = isAllSelected ? "all" : deleteId ? "" : selectedRows.length
-    setDeleteConfirmMessage(`Are you sure you want to delete this department (${maggase})?`);
+    setDeleteConfirmMessage(`Are you sure you want to delete this  employee type (${maggase})?`);
     setShowDeleteConfirm(true);
   };
   const confirmDelete = () => {
@@ -748,7 +748,7 @@ const EmployeeTypeList = () => {
         <AddEmployeeType show={show} handleClose={handleClose} />
         <EditEmployeeType show={showEdit} handleCloseEdit={handleCloseEdit} rowSelectData={rowSelectData} />
         {showImport && (
-          <AddImportModal show={showImport} handleClose={handleCloseImport} />)}
+          <AddImportEmployeeModal show={showImport} handleClose={handleCloseImport} />)}
         {showDeleteConfirm && (
           <div className="modal fade show common-ctl-popup" onClick={(e) => handleBackdropClick(e, cancelDelete)}>
             <div className="modal-dialog modal-dialog-centered">
@@ -758,8 +758,8 @@ const EmployeeTypeList = () => {
                   <button type="button" className="btn-close" onClick={cancelDelete}></button>
                 </div>
                 <div className="modal-body">
-                  {/* <p className="mb-0">Are you sure you want to delete this department?</p> */}
-                  {/* <p className="mb-0"> Are you sure you want to delete this department ({selectedRows.length})?</p> */}
+                  {/* <p className="mb-0">Are you sure you want to delete this  employee?</p> */}
+                  {/* <p className="mb-0"> Are you sure you want to delete this  employee ({selectedRows.length})?</p> */}
                   <p className="mb-0">{deleteConfirmMessage}</p>
 
                 </div>
