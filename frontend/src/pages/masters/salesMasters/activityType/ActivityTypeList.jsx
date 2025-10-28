@@ -27,7 +27,7 @@ const ActivityTypeList = () => {
   const [rowSelectData, setRowSelectData] = useState({});
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this tags type?");
+  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this activity type?");
   const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [activityTypeListData, setActivityTypeListData] = useState([]);
@@ -731,8 +731,8 @@ const ActivityTypeList = () => {
                   <button type="button" className="btn-close" onClick={cancelDelete}></button>
                 </div>
                 <div className="modal-body">
-                  {/* <p className="mb-0">Are you sure you want to delete this Tags?</p> */}
-                  {/* <p className="mb-0"> Are you sure you want to delete this Tags ({selectedRows.length})?</p> */}
+                  {/* <p className="mb-0">Are you sure you want to delete this Activity?</p> */}
+                  {/* <p className="mb-0"> Are you sure you want to delete this Activity ({selectedRows.length})?</p> */}
                   <p className="mb-0">{deleteConfirmMessage}</p>
 
                 </div>

@@ -109,11 +109,11 @@ const AddImportActivityModal = ({ show, handleClose }) => {
         setLoading(false);
     };
     const handleDownloadSample = () => {
-        const fileUrl = 'assets/simplefile/tags.xlsx'; // Update this path according to your project structure
+        const fileUrl = 'assets/simplefile/activity.xlsx'; // Update this path according to your project structure
 
         const link = document.createElement('a');
         link.href = fileUrl;
-        link.download = 'tags_sample.xlsx'; // Downloaded file name
+        link.download = 'activity_sample.xlsx'; // Downloaded file name
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -132,15 +132,15 @@ const AddImportActivityModal = ({ show, handleClose }) => {
             className="modal fade show common-ctl-popup"
             tabIndex={-1}
             role="dialog"
-            aria-labelledby="tagsTypeModalLabel"
+            aria-labelledby="ActivityTypeModalLabel"
             aria-hidden={!show}
             onClick={handleBackdropClick}
         >
             <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
                 <div className="modal-content radius-16 bg-base">
                     <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                        <h1 className="modal-title fs-5" id="tagsTypeModalLabel">
-                            Upload Tags Type
+                        <h1 className="modal-title fs-5" id="ActivityTypeModalLabel">
+                            Upload Activity Type
                         </h1>
                         <button
                             type="button"
