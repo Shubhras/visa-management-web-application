@@ -1,6 +1,7 @@
 from django.urls import path
 from .views import *
 from .test import *
+from .visamaster import *
 
 urlpatterns = [
 
@@ -339,6 +340,48 @@ urlpatterns = [
     path('entrancetestresult/delete/', EntranceTestResultDeleteAPIView.as_view(), name='entrancetestresult-delete'),
     path('entrancetestresult/export/', EntranceTestResultExportAPIView.as_view(), name='entrancetestresult-export'),
     path('entrancetestresult/import/', EntranceTestResultImportAPIView.as_view(), name='entrancetestresult-import'),
+
+
+    path('representingcountry/list/', RepresentingCountryListAPIView.as_view(), name='representingcountry-list'),
+    path('representingcountry/create/', RepresentingCountryCreateAPIView.as_view(), name='representingcountry-create'),
+    path('representingcountry/<uuid:uuid>/', RepresentingCountryRetrieveAPIView.as_view(), name='representingcountry-retrieve'),
+    path('representingcountry/<uuid:uuid>/update/', RepresentingCountryUpdateAPIView.as_view(), name='representingcountry-update'),
+    path('representingcountry/delete/', RepresentingCountryDeleteAPIView.as_view(), name='representingcountry-delete'),
+    path('representingcountry/export/', RepresentingCountryExportAPIView.as_view(), name='representingcountry-export'),
+    path('representingcountry/import/', RepresentingCountryImportAPIView.as_view(), name='representingcountry-import'),
+
+    path('visamain/list/', VisaMainListAPIView.as_view(), name='visamain-list'),
+    path('visamain/create/', VisaMainCreateAPIView.as_view(), name='visamain-create'),
+    path('visamain/<uuid:uuid>/', VisaMainRetrieveAPIView.as_view(), name='visamain-retrieve'),
+    path('visamain/<uuid:uuid>/update/', VisaMainUpdateAPIView.as_view(), name='visamain-update'),
+    path('visamain/delete/', VisaMainDeleteAPIView.as_view(), name='visamain-delete'),
+    path('visamain/export/', VisaMainExportAPIView.as_view(), name='visamain-export'),
+    path('visamain/import/', VisaMainImportAPIView.as_view(), name='visamain-import'),
+    
+    path('visamajor/', VisaMajorListAPIView.as_view(), name='visamajor-list'),
+    path('visamajor/create/', VisaMajorCreateAPIView.as_view(), name='visamajor-create'),
+    path('visamajor/<uuid:uuid>/', VisaMajorRetrieveAPIView.as_view(), name='visamajor-retrieve'),
+    path('visamajor/<uuid:uuid>/update/', VisaMajorUpdateAPIView.as_view(), name='visamajor-update'),
+    path('visamajor/delete/', VisaMajorDeleteAPIView.as_view(), name='visamajor-delete'),
+    path('visamajor/export/', VisaMajorExportAPIView.as_view(), name='visamajor-export'),
+    path('visamajor/import/', VisaMajorImportAPIView.as_view(), name='visamajor-import'),
+
+    path('visaname/', VisaNameListAPIView.as_view(), name='visaname-list'),
+    path('visaname/create/', VisaNameCreateAPIView.as_view(), name='visaname-create'),
+    path('visaname/<uuid:uuid>/', VisaNameRetrieveAPIView.as_view(), name='visaname-retrieve'),
+    path('visaname/<uuid:uuid>/update/', VisaNameUpdateAPIView.as_view(), name='visaname-update'),
+    path('visaname/delete/', VisaNameDeleteAPIView.as_view(), name='visaname-delete'),
+    path('visaname/export/', VisaNameExportAPIView.as_view(), name='visaname-export'),
+    path('visaname/import/', VisaNameImportAPIView.as_view(), name='visaname-import'),
+
+    path('applicanttype/', ApplicantTypeListAPIView.as_view(), name='applicanttype-list'),
+    path('applicanttype/create/', ApplicantTypeCreateAPIView.as_view(), name='applicanttype-create'),
+    path('applicanttype/<uuid:uuid>/', ApplicantTypeRetrieveAPIView.as_view(), name='applicanttype-retrieve'),
+    path('applicanttype/<uuid:uuid>/update/', ApplicantTypeUpdateAPIView.as_view(), name='applicanttype-update'),
+    path('applicanttype/delete/', ApplicantTypeDeleteAPIView.as_view(), name='applicanttype-delete'),
+    path('applicanttype/export/', ApplicantTypeExportAPIView.as_view(), name='applicanttype-export'),
+    path('applicanttype/import/', ApplicantTypeImportAPIView.as_view(), name='applicanttype-import'),
+
 
 ]
 

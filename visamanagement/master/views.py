@@ -3673,7 +3673,7 @@ class StakeholderCategoryImportAPIView(APIView):
 
 
 
-        
+
 #-------------------------stakeholdertype-------------------------------
 class StakeholderTypeCreateAPIView(APIView):
     def post(self, request):
@@ -3865,6 +3865,17 @@ class AccreditationCategoryCreateAPIView(APIView):
 class AccreditationCategoryListAPIView(APIView):    
     def get(self, request):
         search = request.GET.get('search', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
+
+        allowed_sort_fields = ['name', 'description', 'created_at']
+        if sort_by not in allowed_sort_fields:
+            sort_by = 'created_at'
+
+        # Apply descending order for 'desc'
+        if sort_order == 'desc':
+            sort_by = f'-{sort_by}'
+
         queryset = AccreditationCategory.objects.filter(is_deleted=False)
 
         if search:
@@ -4957,19 +4968,20 @@ class LeadSourceExportAPIView(APIView):
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
-
 class LeadSourceImportAPIView(APIView):
     def post(self, request):
         file = request.FILES.get('file')
-        sheet_name = request.data.get('sheet_name')  # <-- User se sheet name lena
+        sheet_name = request.data.get('sheet_name')
 
         if not file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
         dataset = Dataset()
+        duplicate_names = []
 
         try:
+            # ---------- XLSX Handling ----------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
@@ -4987,29 +4999,43 @@ class LeadSourceImportAPIView(APIView):
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 ws = wb[sheet_name]
-                data = []
                 headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                for row in ws.iter_rows(min_row=2, values_only=True):
-                    data.append(dict(zip(headers, row)))
+                data = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True)]
 
-                for row in data:
-                    LeadSource.objects.update_or_create(
-                        name=row.get('name'),
-                        defaults={
-                            'description': row.get('description', ''),
-                            'is_deleted': row.get('is_deleted', False)
-                        }
-                    )
-
-            else:  # CSV
+            # ---------- CSV Handling ----------
+            elif format_type == 'csv':
                 dataset.load(file.read().decode('utf-8'), format='csv')
-                for row in dataset.dict:
-                    LeadSource.objects.update_or_create(
-                        name=row.get('name'),
-                        defaults={
-                            'description': row.get('description', ''),
-                            'is_deleted': row.get('is_deleted', False)
-                        }
+                data = dataset.dict
+
+            else:
+                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # ---------- Process Each Row ----------
+            for row in data:
+                name = str(row.get('name')).strip() if row.get('name') else None
+                description = str(row.get('description')).strip() if row.get('description') else ''
+
+                if not name:
+                    continue  # skip empty names
+
+                existing = LeadSource.objects.filter(name__iexact=name).first()
+
+                if existing:
+                    if existing.is_deleted:
+                        # Reactivate soft-deleted entry
+                        existing.description = description
+                        existing.is_deleted = False
+                        existing.save()
+                    else:
+                        # Already active — track as duplicate
+                        duplicate_names.append(name)
+                        continue
+                else:
+                    # No record exists — create new
+                    LeadSource.objects.create(
+                        name=name,
+                        description=description,
+                        is_deleted=False
                     )
 
         except Exception as e:
@@ -5018,10 +5044,9 @@ class LeadSourceImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            'message': f'Sheet "{sheet_name}" imported successfully' if sheet_name else 'Import successful'
+            "duplicates": list(set(duplicate_names)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
         }, status=status.HTTP_200_OK)
-
-
 #-------------------------------------------InterestLevel---------------------------------
 
 
@@ -5232,7 +5257,6 @@ class InterestLevelDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-
 class InterestLevelExportAPIView(APIView):
     # permission_classes = [IsAuthenticated]  # Uncomment and adjust as needed
 
@@ -5268,15 +5292,17 @@ class InterestLevelExportAPIView(APIView):
 class InterestLevelImportAPIView(APIView):
     def post(self, request):
         file = request.FILES.get('file')
-        sheet_name = request.data.get('sheet_name')  # <-- User se sheet name lena
+        sheet_name = request.data.get('sheet_name')
 
         if not file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
         dataset = Dataset()
+        duplicate_names = []
 
         try:
+            # ---------- XLSX Handling ----------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
@@ -5294,29 +5320,43 @@ class InterestLevelImportAPIView(APIView):
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 ws = wb[sheet_name]
-                data = []
                 headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                for row in ws.iter_rows(min_row=2, values_only=True):
-                    data.append(dict(zip(headers, row)))
+                data = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True)]
 
-                for row in data:
-                    InterestLevel.objects.update_or_create(
-                        name=row.get('name'),
-                        defaults={
-                            'description': row.get('description', ''),
-                            'is_deleted': row.get('is_deleted', False)
-                        }
-                    )
-
-            else:  # CSV
+            # ---------- CSV Handling ----------
+            elif format_type == 'csv':
                 dataset.load(file.read().decode('utf-8'), format='csv')
-                for row in dataset.dict:
-                    InterestLevel.objects.update_or_create(
-                        name=row.get('name'),
-                        defaults={
-                            'description': row.get('description', ''),
-                            'is_deleted': row.get('is_deleted', False)
-                        }
+                data = dataset.dict
+
+            else:
+                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # ---------- Process Each Row ----------
+            for row in data:
+                name = str(row.get('name')).strip() if row.get('name') else None
+                description = str(row.get('description')).strip() if row.get('description') else ''
+
+                if not name:
+                    continue  # skip empty names
+
+                existing = InterestLevel.objects.filter(name__iexact=name).first()
+
+                if existing:
+                    if existing.is_deleted:
+                        # Reactivate soft-deleted entry
+                        existing.description = description
+                        existing.is_deleted = False
+                        existing.save()
+                    else:
+                        # Already active — track as duplicate
+                        duplicate_names.append(name)
+                        continue
+                else:
+                    # No record exists — create new
+                    InterestLevel.objects.create(
+                        name=name,
+                        description=description,
+                        is_deleted=False
                     )
 
         except Exception as e:
@@ -5325,11 +5365,9 @@ class InterestLevelImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            'message': f'Sheet "{sheet_name}" imported successfully' if sheet_name else 'Import successful'
+            "duplicates": list(set(duplicate_names)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
         }, status=status.HTTP_200_OK)
-
-
-
 #-------------------------------------------Priority---------------------------------
 
 
@@ -5541,8 +5579,6 @@ class PriorityDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-
-
 class PriorityExportAPIView(APIView):
     # permission_classes = [IsAuthenticated]  # Uncomment if needed
 
@@ -5597,19 +5633,20 @@ class PriorityExportAPIView(APIView):
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
-
 class PriorityImportAPIView(APIView):
     def post(self, request):
         file = request.FILES.get('file')
-        sheet_name = request.data.get('sheet_name')  # <-- User se sheet name lena
+        sheet_name = request.data.get('sheet_name')
 
         if not file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
         dataset = Dataset()
+        duplicate_names = []
 
         try:
+            # ---------- XLSX Handling ----------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
@@ -5627,29 +5664,43 @@ class PriorityImportAPIView(APIView):
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 ws = wb[sheet_name]
-                data = []
                 headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                for row in ws.iter_rows(min_row=2, values_only=True):
-                    data.append(dict(zip(headers, row)))
+                data = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True)]
 
-                for row in data:
-                    Priority.objects.update_or_create(
-                        name=row.get('name'),
-                        defaults={
-                            'description': row.get('description', ''),
-                            'is_deleted': row.get('is_deleted', False)
-                        }
-                    )
-
-            else:  # CSV
+            # ---------- CSV Handling ----------
+            elif format_type == 'csv':
                 dataset.load(file.read().decode('utf-8'), format='csv')
-                for row in dataset.dict:
-                    Priority.objects.update_or_create(
-                        name=row.get('name'),
-                        defaults={
-                            'description': row.get('description', ''),
-                            'is_deleted': row.get('is_deleted', False)
-                        }
+                data = dataset.dict
+
+            else:
+                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # ---------- Process Each Row ----------
+            for row in data:
+                name = str(row.get('name')).strip() if row.get('name') else None
+                description = str(row.get('description')).strip() if row.get('description') else ''
+
+                if not name:
+                    continue  # skip empty names
+
+                existing = Priority.objects.filter(name__iexact=name).first()
+
+                if existing:
+                    if existing.is_deleted:
+                        # Reactivate soft-deleted entry
+                        existing.description = description
+                        existing.is_deleted = False
+                        existing.save()
+                    else:
+                        # Already active — track as duplicate
+                        duplicate_names.append(name)
+                        continue
+                else:
+                    # No record exists — create new
+                    Priority.objects.create(
+                        name=name,
+                        description=description,
+                        is_deleted=False
                     )
 
         except Exception as e:
@@ -5658,8 +5709,10 @@ class PriorityImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            'message': f'Sheet "{sheet_name}" imported successfully' if sheet_name else 'Import successful'
+            "duplicates": list(set(duplicate_names)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
         }, status=status.HTTP_200_OK)
+
 
 
 #-------------------------------------------Tags---------------------------------
@@ -5690,9 +5743,6 @@ class TagsCreateAPIView(APIView):
             "status": False,
             "message": serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
-
-
-
 
 class TagsListAPIView(APIView):    
     def get(self, request):
@@ -5787,7 +5837,7 @@ class TagsDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
-        uuids = request.data.get('uuids', [])
+        uuids = request.data.get('id', [])
 
         #  Case 1: Single delete (UUID in URL)
         if uuid:
@@ -5889,41 +5939,86 @@ class TagsExportAPIView(APIView):
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
-
 class TagsImportAPIView(APIView):
-    
+
     def post(self, request):
         file = request.FILES.get('file')
+        sheet_name = request.data.get('sheet_name')  # optional, for XLSX
+
         if not file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
         dataset = Dataset()
+        duplicate_names = []
 
         try:
+            # ---------- XLSX Handling ----------
             if format_type == 'xlsx':
-                dataset.load(file.read(), format='xlsx')
-            else:  # default CSV
+                wb = openpyxl.load_workbook(file, read_only=True)
+                available_sheets = wb.sheetnames
+
+                if not sheet_name:
+                    return Response({
+                        'error': 'Please provide sheet_name',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                if sheet_name not in available_sheets:
+                    return Response({
+                        'error': f'Sheet "{sheet_name}" not found in uploaded file',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                ws = wb[sheet_name]
+                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                data = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True)]
+
+            # ---------- CSV Handling ----------
+            elif format_type == 'csv':
                 dataset.load(file.read().decode('utf-8'), format='csv')
+                data = dataset.dict
+
+            else:
+                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # ---------- Process Each Row ----------
+            for row in data:
+                name = str(row.get('name')).strip() if row.get('name') else None
+                description = str(row.get('description')).strip() if row.get('description') else ''
+
+                if not name:
+                    continue  # skip empty names
+
+                existing = Tags.objects.filter(name__iexact=name).first()
+
+                if existing:
+                    if existing.is_deleted:
+                        # Reactivate soft-deleted entry
+                        existing.description = description
+                        existing.is_deleted = False
+                        existing.save()
+                    else:
+                        # Already active — track as duplicate
+                        duplicate_names.append(name)
+                        continue
+                else:
+                    # No record exists — create new
+                    Tags.objects.create(
+                        name=name,
+                        description=description,
+                        is_deleted=False
+                    )
+
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-        for row in dataset.dict:
-            Tags.objects.update_or_create(
-                name=row.get('name'),
-                defaults={
-                    'description': row.get('description', ''),
-                    'is_deleted': row.get('is_deleted', False)
-                }
-            )
 
         return Response({
             "statusCode": 200,
             "status": True,
-            'message': 'Import successful'}, status=status.HTTP_200_OK)
-    
-
-
+            "duplicates": list(set(duplicate_names)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
+        }, status=status.HTTP_200_OK)
 
 
 #-------------------------------------------ActivityType---------------------------------
@@ -6050,9 +6145,8 @@ class ActivityTypeDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
-        uuids = request.data.get('uuids', None)
+        uuids = request.data.get('id', None)
 
-        # ✅ Case 1: Single delete via URL UUID
         if uuid:
             try:
                 activity = ActivityType.objects.get(uuid=uuid, is_deleted=False)
@@ -6072,7 +6166,6 @@ class ActivityTypeDeleteAPIView(APIView):
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-        # ✅ Case 2: Delete all
         if uuids == "all":
             activities = ActivityType.objects.filter(is_deleted=False)
             count = activities.count()
@@ -6173,9 +6266,11 @@ class ActivityTypeExportAPIView(APIView):
 
 
 class ActivityTypeImportAPIView(APIView):
+
     def post(self, request):
         file = request.FILES.get('file')
-        sheet_name = request.data.get('sheet_name')  # <-- User se sheet name lena
+        sheet_name = request.data.get('sheet_name')  # optional, for XLSX
+        duplicate_names = []
 
         if not file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
@@ -6184,6 +6279,7 @@ class ActivityTypeImportAPIView(APIView):
         dataset = Dataset()
 
         try:
+            # ---------- XLSX Handling ----------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
@@ -6201,29 +6297,43 @@ class ActivityTypeImportAPIView(APIView):
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 ws = wb[sheet_name]
-                data = []
                 headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                for row in ws.iter_rows(min_row=2, values_only=True):
-                    data.append(dict(zip(headers, row)))
+                data = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True)]
 
-                for row in data:
-                    ActivityType.objects.update_or_create(
-                        name=row.get('name'),
-                        defaults={
-                            'description': row.get('description', ''),
-                            'is_deleted': row.get('is_deleted', False)
-                        }
-                    )
-
-            else:  # CSV
+            # ---------- CSV Handling ----------
+            elif format_type == 'csv':
                 dataset.load(file.read().decode('utf-8'), format='csv')
-                for row in dataset.dict:
-                    ActivityType.objects.update_or_create(
-                        name=row.get('name'),
-                        defaults={
-                            'description': row.get('description', ''),
-                            'is_deleted': row.get('is_deleted', False)
-                        }
+                data = dataset.dict
+
+            else:
+                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # ---------- Process Each Row ----------
+            for row in data:
+                name = str(row.get('name')).strip() if row.get('name') else None
+                description = str(row.get('description')).strip() if row.get('description') else ''
+
+                if not name:
+                    continue  # skip empty names
+
+                existing = ActivityType.objects.filter(name__iexact=name).first()
+
+                if existing:
+                    if existing.is_deleted:
+                        # Reactivate soft-deleted entry
+                        existing.description = description
+                        existing.is_deleted = False
+                        existing.save()
+                    else:
+                        # Already active — track as duplicate
+                        duplicate_names.append(name)
+                        continue
+                else:
+                    # No record exists — create new
+                    ActivityType.objects.create(
+                        name=name,
+                        description=description,
+                        is_deleted=False
                     )
 
         except Exception as e:
@@ -6232,10 +6342,9 @@ class ActivityTypeImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            'message': f'Sheet "{sheet_name}" imported successfully' if sheet_name else 'Import successful'
+            "duplicates": list(set(duplicate_names)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
         }, status=status.HTTP_200_OK)
-
-
 
 #-------------------------------------------LostReasonSerializer---------------------------------
 
@@ -6266,7 +6375,6 @@ class LostReasonCreateAPIView(APIView):
             "message": serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
 
-
 class LostReasonListAPIView(APIView):    
     def get(self, request):
         search = request.GET.get('search', '').strip()
@@ -6296,7 +6404,6 @@ class LostReasonListAPIView(APIView):
         serializer = LostReasonSerializer(result_page, many=True)
 
         return paginator.get_paginated_response(serializer.data)
-
 
 class LostReasonRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -6355,13 +6462,11 @@ class LostReasonUpdateAPIView(APIView):
             "message": serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
 
-
-
 class LostReasonDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
-        uuids = request.data.get('uuids', None)
+        uuids = request.data.get('id', None)
 
         # ✅ Case 1: Single delete via URL UUID
         if uuid:
@@ -6450,8 +6555,6 @@ class LostReasonDeleteAPIView(APIView):
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         }, status=status.HTTP_200_OK)
 
-
-
 class LostReasonExportAPIView(APIView):
     # permission_classes = [IsAuthenticated]  # Uncomment and adjust as needed
 
@@ -6483,28 +6586,32 @@ class LostReasonExportAPIView(APIView):
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
-
 class LostReasonImportAPIView(APIView):
     def post(self, request):
         file = request.FILES.get('file')
-        sheet_name = request.data.get('sheet_name')  # <-- User se sheet name lena
+        sheet_name = request.data.get('sheet_name')  # optional for XLSX
 
         if not file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
         dataset = Dataset()
+        duplicate_names = []
 
         try:
+            # ---------- XLSX Handling ----------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
 
-                if not sheet_name:
+                # Require sheet_name if multiple sheets
+                if len(available_sheets) > 1 and not sheet_name:
                     return Response({
                         'error': 'Please provide sheet_name',
                         'available_sheets': available_sheets
                     }, status=status.HTTP_400_BAD_REQUEST)
+
+                sheet_name = sheet_name or available_sheets[0]
 
                 if sheet_name not in available_sheets:
                     return Response({
@@ -6513,29 +6620,43 @@ class LostReasonImportAPIView(APIView):
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 ws = wb[sheet_name]
-                data = []
                 headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                for row in ws.iter_rows(min_row=2, values_only=True):
-                    data.append(dict(zip(headers, row)))
+                data = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True)]
 
-                for row in data:
-                    LostReason.objects.update_or_create(
-                        name=row.get('name'),
-                        defaults={
-                            'description': row.get('description', ''),
-                            'is_deleted': row.get('is_deleted', False)
-                        }
-                    )
-
-            else:  # CSV
+            # ---------- CSV Handling ----------
+            elif format_type == 'csv':
                 dataset.load(file.read().decode('utf-8'), format='csv')
-                for row in dataset.dict:
-                    LostReason.objects.update_or_create(
-                        name=row.get('name'),
-                        defaults={
-                            'description': row.get('description', ''),
-                            'is_deleted': row.get('is_deleted', False)
-                        }
+                data = dataset.dict
+
+            else:
+                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # ---------- Process Each Row ----------
+            for row in data:
+                name = str(row.get('name')).strip() if row.get('name') else None
+                description = str(row.get('description')).strip() if row.get('description') else ''
+
+                if not name:
+                    continue  # skip empty names
+
+                existing = LostReason.objects.filter(name__iexact=name).first()
+
+                if existing:
+                    if existing.is_deleted:
+                        # Reactivate soft-deleted entry
+                        existing.description = description
+                        existing.is_deleted = False
+                        existing.save()
+                    else:
+                        # Already active — track as duplicate
+                        duplicate_names.append(name)
+                        continue
+                else:
+                    # No record exists — create new
+                    LostReason.objects.create(
+                        name=name,
+                        description=description,
+                        is_deleted=False
                     )
 
         except Exception as e:
@@ -6544,11 +6665,9 @@ class LostReasonImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            'message': f'Sheet "{sheet_name}" imported successfully' if sheet_name else 'Import successful'
+            "duplicates": list(set(duplicate_names)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
         }, status=status.HTTP_200_OK)
-
-
-
 
 
 # -------------------- EducationLevelCode -------------------- #
@@ -6598,8 +6717,8 @@ class EducationLevelCodeCreateAPIView(APIView):
             "status": False,
             "message": " ".join(messages),
         }, status=status.HTTP_400_BAD_REQUEST)
-
-
+    
+    
 class EducationLevelCodeRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -6752,7 +6871,7 @@ class EducationLevelCodeImportAPIView(APIView):
 
     def post(self, request):
         file = request.FILES.get('file')
-        sheet_name = request.data.get('sheet_name')
+        sheet_name = request.data.get('sheet_name')  # optional for XLSX
 
         if not file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
@@ -6762,46 +6881,63 @@ class EducationLevelCodeImportAPIView(APIView):
         duplicate_codes = []
 
         try:
+            # ---------- XLSX Handling ----------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
 
-                if not sheet_name:
-                    return Response({'error': 'Please provide sheet_name', 'available_sheets': available_sheets},
-                                    status=status.HTTP_400_BAD_REQUEST)
+                if len(available_sheets) > 1 and not sheet_name:
+                    return Response({
+                        'error': 'Please provide sheet_name',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                sheet_name = sheet_name or available_sheets[0]
 
                 if sheet_name not in available_sheets:
-                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets},
-                                    status=status.HTTP_400_BAD_REQUEST)
+                    return Response({
+                        'error': f'Sheet "{sheet_name}" not found',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
                 ws = wb[sheet_name]
                 headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                for row in ws.iter_rows(min_row=2, values_only=True):
-                    data = dict(zip(headers, row))
-                    code = str(data.get('Levelcode')).strip() if data.get('Levelcode') else None
-                    if not code:
-                        continue
-                    if EducationLevelCode.objects.filter(Levelcode__iexact=code).exists():
-                        duplicate_codes.append(code)
-                        continue
-                    EducationLevelCode.objects.create(
-                        Levelcode=code,
-                        description=data.get('description', ''),
-                        is_deleted=data.get('is_deleted', False)
-                    )
-            else:  # CSV
+                data = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True)]
+
+            # ---------- CSV Handling ----------
+            elif format_type == 'csv':
                 dataset.load(file.read().decode('utf-8'), format='csv')
-                for row in dataset.dict:
-                    code = str(row.get('Levelcode')).strip() if row.get('Levelcode') else None
-                    if not code:
-                        continue
-                    if EducationLevelCode.objects.filter(Levelcode__iexact=code).exists():
+                data = dataset.dict
+
+            else:
+                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # ---------- Process Each Row ----------
+            for row in data:
+                code = str(row.get('Levelcode')).strip() if row.get('Levelcode') else None
+                description = str(row.get('description')).strip() if row.get('description') else ''
+
+                if not code:
+                    continue  # skip empty codes
+
+                existing = EducationLevelCode.objects.filter(Levelcode__iexact=code).first()
+
+                if existing:
+                    if existing.is_deleted:
+                        # Reactivate soft-deleted entry
+                        existing.description = description
+                        existing.is_deleted = False
+                        existing.save()
+                    else:
+                        # Already active — track as duplicate
                         duplicate_codes.append(code)
                         continue
+                else:
+                    # No record exists — create new
                     EducationLevelCode.objects.create(
                         Levelcode=code,
-                        description=row.get('description', ''),
-                        is_deleted=row.get('is_deleted', False)
+                        description=description,
+                        is_deleted=False
                     )
 
         except Exception as e:
@@ -6811,13 +6947,12 @@ class EducationLevelCodeImportAPIView(APIView):
             "statusCode": 200,
             "status": True,
             "duplicates": list(set(duplicate_codes)),
-            'message': f'Sheet "{sheet_name}" imported successfully' if sheet_name else 'Import successful'
-        })
-
-
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
+        }, status=status.HTTP_200_OK)
 
 
 # -------------------- EducationLevel -------------------- #
+
 class EducationLevelCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -7011,56 +7146,74 @@ class EducationLevelImportAPIView(APIView):
 
     def post(self, request):
         file = request.FILES.get('file')
-        sheet_name = request.data.get('sheet_name')
+        sheet_name = request.data.get('sheet_name')  # optional, for XLSX
+        duplicate_entries = []
 
         if not file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
         dataset = Dataset()
-        duplicate_entries = []
 
         try:
+            # ---------- XLSX Handling ----------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
 
                 if not sheet_name:
-                    return Response({'error': 'Please provide sheet_name', 'available_sheets': available_sheets},
-                                    status=status.HTTP_400_BAD_REQUEST)
+                    return Response({
+                        'error': 'Please provide sheet_name',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
                 if sheet_name not in available_sheets:
-                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets},
-                                    status=status.HTTP_400_BAD_REQUEST)
+                    return Response({
+                        'error': f'Sheet "{sheet_name}" not found',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
                 ws = wb[sheet_name]
                 headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                for row in ws.iter_rows(min_row=2, values_only=True):
-                    data = dict(zip(headers, row))
-                    code_id = data.get('level_code')
-                    if not code_id or not EducationLevelCode.objects.filter(id=code_id).exists():
-                        continue
-                    if EducationLevel.objects.filter(level_code_id=code_id, educationlevel=data.get('educationlevel', '')).exists():
-                        duplicate_entries.append(code_id)
-                        continue
-                    EducationLevel.objects.create(
-                        level_code_id=code_id,
-                        educationlevel=data.get('educationlevel', ''),
-                        description=data.get('description', ''),
-                        is_deleted=data.get('is_deleted', False)
-                    )
-            else:  # CSV
+                data = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True)]
+
+            # ---------- CSV Handling ----------
+            elif format_type == 'csv':
                 dataset.load(file.read().decode('utf-8'), format='csv')
-                for row in dataset.dict:
-                    code_id = row.get('level_code')
-                    if not code_id or not EducationLevelCode.objects.filter(id=code_id).exists():
-                        continue
-                    if EducationLevel.objects.filter(level_code_id=code_id, educationlevel=row.get('educationlevel', '')).exists():
+                data = dataset.dict
+
+            else:
+                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # ---------- Process Each Row ----------
+            for row in data:
+                code_id = row.get('level_code')
+                education_level_name = str(row.get('educationlevel')).strip() if row.get('educationlevel') else ''
+
+                # Skip if level_code invalid
+                if not code_id or not EducationLevelCode.objects.filter(id=code_id).exists():
+                    continue
+
+                existing = EducationLevel.objects.filter(
+                    level_code_id=code_id, 
+                    educationlevel__iexact=education_level_name
+                ).first()
+
+                if existing:
+                    if existing.is_deleted:
+                        # Reactivate soft-deleted entry
+                        existing.description = row.get('description', '')
+                        existing.is_deleted = False
+                        existing.save()
+                    else:
+                        # Already active — track as duplicate
                         duplicate_entries.append(code_id)
                         continue
+                else:
+                    # Create new record
                     EducationLevel.objects.create(
                         level_code_id=code_id,
-                        educationlevel=row.get('educationlevel', ''),
+                        educationlevel=education_level_name,
                         description=row.get('description', ''),
                         is_deleted=row.get('is_deleted', False)
                     )
@@ -7073,8 +7226,7 @@ class EducationLevelImportAPIView(APIView):
             "status": True,
             "duplicates": list(set(duplicate_entries)),
             'message': f'Sheet "{sheet_name}" imported successfully' if sheet_name else 'Import successful'
-        })
-
+        }, status=status.HTTP_200_OK)
 
 
 #----------------------------EducationDuration----------------------
@@ -7383,7 +7535,6 @@ class StudymainareaCreateAPIView(APIView):
             "message": " ".join(messages)
         }, status=status.HTTP_400_BAD_REQUEST)
 
-
 class StudymainareaRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -7405,7 +7556,6 @@ class StudymainareaRetrieveAPIView(APIView):
             "message": "Studymainarea retrieved successfully",
             "data": serializer.data
         })
-
 
 class StudymainareaUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -7448,7 +7598,6 @@ class StudymainareaUpdateAPIView(APIView):
             "status": False,
             "message": " ".join(messages)
         }, status=status.HTTP_400_BAD_REQUEST)
-
 
 class StudymainareaDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -7496,7 +7645,6 @@ class StudymainareaDeleteAPIView(APIView):
             "message": f"{count} Studymainarea(s) deleted successfully.",
         })
 
-
 class StudymainareaExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -7539,54 +7687,71 @@ class StudymainareaExportAPIView(APIView):
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
-
 class StudymainareaImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
         file = request.FILES.get('file')
-        sheet_name = request.data.get('sheet_name')
+        sheet_name = request.data.get('sheet_name')  # optional, for XLSX
+        duplicate_entries = []
 
         if not file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
         dataset = Dataset()
-        duplicate_entries = []
 
         try:
+            # ---------- XLSX Handling ----------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
 
                 if not sheet_name:
-                    return Response({'error': 'Please provide sheet_name', 'available_sheets': available_sheets},
-                                    status=status.HTTP_400_BAD_REQUEST)
+                    return Response({
+                        'error': 'Please provide sheet_name',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
                 if sheet_name not in available_sheets:
-                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets},
-                                    status=status.HTTP_400_BAD_REQUEST)
+                    return Response({
+                        'error': f'Sheet "{sheet_name}" not found',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
                 ws = wb[sheet_name]
                 headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                for row in ws.iter_rows(min_row=2, values_only=True):
-                    data = dict(zip(headers, row))
-                    mainarea_name = data.get('Mainarea')
-                    if Studymainarea.objects.filter(Mainarea__iexact=mainarea_name).exists():
-                        duplicate_entries.append(mainarea_name)
-                        continue
-                    Studymainarea.objects.create(
-                        Mainarea=mainarea_name,
-                        description=data.get('description', ''),
-                        is_deleted=data.get('is_deleted', False)
-                    )
-            else:  # CSV
+                data = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True)]
+
+            # ---------- CSV Handling ----------
+            elif format_type == 'csv':
                 dataset.load(file.read().decode('utf-8'), format='csv')
-                for row in dataset.dict:
-                    mainarea_name = row.get('Mainarea')
-                    if Studymainarea.objects.filter(Mainarea__iexact=mainarea_name).exists():
+                data = dataset.dict
+
+            else:
+                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # ---------- Process Each Row ----------
+            for row in data:
+                mainarea_name = str(row.get('Mainarea')).strip() if row.get('Mainarea') else ''
+
+                if not mainarea_name:
+                    continue  # skip empty names
+
+                existing = Studymainarea.objects.filter(Mainarea__iexact=mainarea_name).first()
+
+                if existing:
+                    if existing.is_deleted:
+                        # Reactivate soft-deleted entry
+                        existing.description = row.get('description', '')
+                        existing.is_deleted = False
+                        existing.save()
+                    else:
+                        # Already active — track as duplicate
                         duplicate_entries.append(mainarea_name)
                         continue
+                else:
+                    # Create new record
                     Studymainarea.objects.create(
                         Mainarea=mainarea_name,
                         description=row.get('description', ''),
@@ -7601,9 +7766,7 @@ class StudymainareaImportAPIView(APIView):
             "status": True,
             "duplicates": list(set(duplicate_entries)),
             'message': f'Sheet "{sheet_name}" imported successfully' if sheet_name else 'Import successful'
-        })
-
-
+        }, status=status.HTTP_200_OK)
 
 
 
@@ -7666,7 +7829,6 @@ class StudymajorareaRetrieveAPIView(APIView):
             "data": serializer.data
         })
 
-
 class StudymajorareaUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -7710,7 +7872,6 @@ class StudymajorareaUpdateAPIView(APIView):
             "status": False,
             "message": " ".join(messages)
         })
-
 
 class StudymajorareaDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -7758,7 +7919,6 @@ class StudymajorareaDeleteAPIView(APIView):
             "message": f"{count} Studymajorarea(s) deleted successfully.",
         })
 
-
 class StudymajorareaExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -7803,7 +7963,6 @@ class StudymajorareaExportAPIView(APIView):
         response = HttpResponse(data, content_type=content_type)
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
-
 
 class StudymajorareaImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -7873,6 +8032,7 @@ class StudymajorareaImportAPIView(APIView):
         })
 
 
+# -------------------- Studyspecialisation -------------------- #
 
 
 
@@ -8199,8 +8359,6 @@ class AcademicResultTypeCreateAPIView(APIView):
             "message": " ".join(messages)
         }, status=status.HTTP_400_BAD_REQUEST)
 
-
-
 class AcademicResultTypeRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -8310,7 +8468,6 @@ class AcademicResultTypeDeleteAPIView(APIView):
             "status": True,
             "message": f"{count} Academic Result Type(s) deleted successfully."
         })
-
 
 class AcademicResultTypeExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]

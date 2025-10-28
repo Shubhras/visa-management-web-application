@@ -682,3 +682,107 @@ class OccupationVersionSerializer(serializers.ModelSerializer):
             'updated_at'
         ]
         read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
+
+
+class RepresentingCountrySerializer(serializers.ModelSerializer):
+    country_name = serializers.CharField(source='country.name', read_only=True)
+    largest_state_name = serializers.CharField(source='largest_state.name', read_only=True)
+    largest_city_name = serializers.CharField(source='largest_city.name', read_only=True)
+    
+    class Meta:
+        model = RepresentingCountry
+        fields = [
+            'uuid',
+            'country',            
+            'country_name',       
+            'continent',
+            'short_name',
+            'full_name',
+            'official_name',
+            'capital_city',
+            'dial_codes',
+            'currency_full_name',
+            'currency_short_name',
+            'currency_code',
+            'no_of_states',
+            'no_of_territories',
+            'total_states_and_territories',
+            'land_area_sq_km',
+            'water_area_sq_km',
+            'total_area_sq_km',
+            'population',
+            'religions',
+            'monthly_living_cost',
+            'unemployment',
+            'skilled_shortages',
+            'independence_day',
+            'government_type',
+            'official_language',
+            'largest_state',
+            'largest_state_name',
+            'largest_city',
+            'largest_city_name',
+            'major_cities',
+            'national_animal',
+            'national_bird',
+            'national_flower',
+            'border_countries_and_oceans',
+            'national_flag',
+            'country_map',
+            'status',
+            'is_active',
+            'is_deleted',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['created_at', 'updated_at', 'country_name', 'largest_state_name', 'largest_city_name']
+
+
+class VisaMainSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VisaMain
+        fields = [
+            'id', 'uuid', 'name', 'description', 
+            'is_deleted', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
+
+class VisaMajorSerializer(serializers.ModelSerializer):
+    visamain_name = serializers.CharField(source='visamain.name', read_only=True)
+
+    class Meta:
+        model = VisaMajor
+        fields = [
+            'id', 'uuid', 'visamain', 'visamain_name', 
+            'name', 'description', 'is_deleted', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at', 'visamain_name']
+
+
+class VisaNameSerializer(serializers.ModelSerializer):
+    country_name = serializers.CharField(source='country.full_name', read_only=True)
+    visamain_name = serializers.CharField(source='visamain.name', read_only=True)
+    visamajor_name = serializers.CharField(source='visamajor.name', read_only=True)
+
+    class Meta:
+        model = VisaName
+        fields = [
+            'id', 'uuid', 'country', 'country_name',
+            'visamain', 'visamain_name',
+            'visamajor', 'visamajor_name',
+            'full_name', 'short_name', 'description',
+            'is_deleted', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at', 'country_name', 'visamain_name', 'visamajor_name']
+
+
+class ApplicantTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ApplicantType
+        fields = [
+            'id', 'uuid', 'name', 'description',
+            'is_deleted', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
