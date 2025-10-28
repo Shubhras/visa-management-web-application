@@ -143,7 +143,7 @@ const AddEmployeeType = ({ show, handleClose }) => {
                       value={formData.departmentName}
                       onChange={handleChange}
                       className={`form-control radius-8 ${errors.departmentName ? 'is-invalid' : ''}`}
-                      placeholder="Enter Name"
+                      placeholder="Enter name"
                     />
                     {errors.departmentName && (
                       <div className="text-danger text-sm mt-1">
