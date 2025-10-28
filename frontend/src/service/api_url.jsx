@@ -51,6 +51,14 @@ export const DELETE_TAGS_TYPE_API = "api/v1/master/Tags/";
 export const EXPORT_TAGS_TYPE_API = "api/v1/master/Tags/export/";
 export const IMPORT_TAGS_TYPE_API = "api/v1/master/Tags/import/";
 
+// ACTIVITY_TYPE
+export const GET_ACTIVITY_TYPE_LIST = "/api/v1/master/ActivityType/";
+export const ADD_ACTIVITY_TYPE_API = "/api/v1/master/ActivityType/create/";
+export const EDIT_ACTIVITY_TYPE_API = "api/v1/master/ActivityType/";
+export const DELETE_ACTIVITY_TYPE_API = "api/v1/master/ActivityType/";
+export const EXPORT_ACTIVITY_TYPE_API = "api/v1/master/ActivityType/export/";
+export const IMPORT_ACTIVITY_TYPE_API = "api/v1/master/ActivityType/import/";
+
 // // export const TWO_STEP_VERIFICATION = 'api/national-admin/national-admin-verifyOtpAdmin'
 // export const TWO_STEP_VERIFICATION = '/api/users/verifyUser'
 // export const FORGET_PASSWORD_URL = '/api/national-admin/forgotpassword/'

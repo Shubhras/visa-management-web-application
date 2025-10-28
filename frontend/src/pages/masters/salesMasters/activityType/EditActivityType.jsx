@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useDispatch } from "react-redux";
-import { tagsTypeEdit  } from '../../../../store/master/actions';
 import { toast } from "react-toastify";
+import { activityTypeEdit } from '../../../../store/master/salesMasters/actions';
 const EditActivityType = ({ show, handleCloseEdit, rowSelectData }) => {
     const [loading, setLoading] = useState(false);
     const dispatch = useDispatch();
@@ -70,7 +70,7 @@ const EditActivityType = ({ show, handleCloseEdit, rowSelectData }) => {
                 description: formData.description,
 
             };
-            dispatch(tagsTypeEdit(sendPayload, (response, error) => {
+            dispatch(activityTypeEdit(sendPayload, (response, error) => {
                 setLoading(false);
                 if (error) {
                     toast.error(error?.response?.data?.message || "server error");

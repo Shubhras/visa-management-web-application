@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useDispatch } from "react-redux";
-import { tagsTypeImportData } from '../../../../store/master/actions';
+import { activityTypeImportData } from '../../../../store/master/salesMasters/actions';
 import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 
@@ -64,7 +64,7 @@ const AddImportActivityModal = ({ show, handleClose }) => {
         }
 
         setLoading(true);
-        dispatch(tagsTypeImportData(formData, (response, error) => {
+        dispatch(activityTypeImportData(formData, (response, error) => {
             setLoading(false);
             if (error) {
                 toast.error(error?.response?.data?.message || "Server error");
