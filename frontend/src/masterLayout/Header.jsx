@@ -55,14 +55,6 @@ const Header = () => {
 
             ]
         },
-        // {
-        //     name: 'dummy',
-        //     path: '/tags-type',
-        //     submenu: [
-        //         { name: 'Tags type', path: '/tags-type' },
-              
-        //     ]
-        // },
         {
             name: 'Masters',
             path: '/department',
@@ -81,7 +73,8 @@ const Header = () => {
                     name: 'Sales',
                     path: '/priority-type',
                     children: [
-                        { name: 'Priority type', path: '/priority-type' }
+                        { name: 'Priority type', path: '/priority-type' },
+                        { name: 'Tags type', path: '/tags-type' },
                     ]
                 },
 
