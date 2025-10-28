@@ -76,7 +76,7 @@ const AddImportStakeholderModal = ({ show, handleClose }) => {
                             <div>{response?.message}</div>
                             {response?.duplicates?.length > 0 && (
                                 <div style={{ marginTop: '6px' }}>
-                                    <strong>Duplicate departments skipped:</strong>
+                                    <strong>Duplicate stakeholder skipped:</strong>
                                     <br />
                                     {response.duplicates.map((item, index) => (
                                         <div key={index}>{item}</div>
@@ -109,7 +109,7 @@ const AddImportStakeholderModal = ({ show, handleClose }) => {
         setLoading(false);
     };
     const handleDownloadSample = () => {
-        const fileUrl = 'assets/simplefile//Demployee.xlsx'; // Update this path according to your project structure
+        const fileUrl = 'assets/simplefile/stakeholder.xlsx'; // Update this path according to your project structure
 
         const link = document.createElement('a');
         link.href = fileUrl;

@@ -76,7 +76,7 @@ const AddImportPriorityModal = ({ show, handleClose }) => {
                             <div>{response?.message}</div>
                             {response?.duplicates?.length > 0 && (
                                 <div style={{ marginTop: '6px' }}>
-                                    <strong>Duplicate departments skipped:</strong>
+                                    <strong>Duplicate priority skipped:</strong>
                                     <br />
                                     {response.duplicates.map((item, index) => (
                                         <div key={index}>{item}</div>
@@ -109,11 +109,11 @@ const AddImportPriorityModal = ({ show, handleClose }) => {
         setLoading(false);
     };
     const handleDownloadSample = () => {
-        const fileUrl = 'assets/simplefile//Demployee.xlsx'; // Update this path according to your project structure
+        const fileUrl = 'assets/simplefile/priority.xlsx'; // Update this path according to your project structure
 
         const link = document.createElement('a');
         link.href = fileUrl;
-        link.download = 'department_sample.xlsx'; // Downloaded file name
+        link.download = 'priority_sample.xlsx'; // Downloaded file name
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
