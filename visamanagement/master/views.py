@@ -2720,19 +2720,19 @@ class EmployeeTypeExportAPIView(APIView):
 
 
 class EmployeeTypeImportAPIView(APIView):
-    
     def post(self, request):
         file = request.FILES.get('file')
-        sheet_name = request.data.get('sheet_name') 
+        sheet_name = request.data.get('sheet_name')
+
         if not file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
         dataset = Dataset()
-
-        duplicate_names = [] 
+        duplicate_names = []
 
         try:
+            # ---------- XLSX Handling ----------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
@@ -2750,56 +2750,54 @@ class EmployeeTypeImportAPIView(APIView):
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 ws = wb[sheet_name]
-                data = []
                 headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                for row in ws.iter_rows(min_row=2, values_only=True):
-                    data.append(dict(zip(headers, row)))
+                data = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True)]
 
-                for row in data:
-                    name = str(row.get('name')).strip() if row.get('name') else None
-                    if not name:
-                        continue
-
-                    # Check for existing department
-                    if EmployeeType.objects.filter(name__iexact=name).exists():
-                        duplicate_names.append(name)
-                        continue  # skip adding duplicate
-
-                    EmployeeType.objects.create(
-                        name=name,
-                        description=row.get('description', ''),
-                        is_deleted=row.get('is_deleted', False)
-                    )
-
-            else:  # CSV
+            # ---------- CSV Handling ----------
+            elif format_type == 'csv':
                 dataset.load(file.read().decode('utf-8'), format='csv')
-                for row in dataset.dict:
-                    name = str(row.get('name')).strip() if row.get('name') else None
-                    if not name:
-                        continue
+                data = dataset.dict
 
-                    if EmployeeType.objects.filter(name__iexact=name).exists():
+            else:
+                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # ---------- Process Each Row ----------
+            for row in data:
+                name = str(row.get('name')).strip() if row.get('name') else None
+                description = str(row.get('description')).strip() if row.get('description') else ''
+
+                if not name:
+                    continue  # skip empty names
+
+                existing = EmployeeType.objects.filter(name__iexact=name).first()
+
+                if existing:
+                    if existing.is_deleted:
+                        # Reactivate soft-deleted employee type
+                        existing.description = description
+                        existing.is_deleted = False
+                        existing.save()
+                    else:
+                        # Already active — track as duplicate
                         duplicate_names.append(name)
                         continue
-
+                else:
+                    # No record exists — create new
                     EmployeeType.objects.create(
                         name=name,
-                        description=row.get('description', ''),
-                        is_deleted=row.get('is_deleted', False)
+                        description=description,
+                        is_deleted=False
                     )
 
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-            
 
         return Response({
             "statusCode": 200,
             "status": True,
             "duplicates": list(set(duplicate_names)),
-            'message': f'Sheet "{sheet_name}" imported successfully' if sheet_name else 'Import successful'
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
         }, status=status.HTTP_200_OK)
-
-
 
 
 class CompanyTypeListAPIView(APIView):    
@@ -3057,27 +3055,19 @@ class CompanyTypeExportAPIView(APIView):
 
 
 class CompanyTypeImportAPIView(APIView):
-    
     def post(self, request):
         file = request.FILES.get('file')
-        sheet_name = request.data.get('sheet_name') 
+        sheet_name = request.data.get('sheet_name')
+
         if not file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
         dataset = Dataset()
+        duplicate_names = []
 
-        duplicate_names = [] 
-
-        file = request.FILES.get('file')
-        if not file:
-            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
-
-        format_type = file.name.split('.')[-1].lower()
-        dataset = Dataset()
-
-        
         try:
+            # ---------- XLSX Handling ----------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
@@ -3095,57 +3085,54 @@ class CompanyTypeImportAPIView(APIView):
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 ws = wb[sheet_name]
-                data = []
                 headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                for row in ws.iter_rows(min_row=2, values_only=True):
-                    data.append(dict(zip(headers, row)))
+                data = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True)]
 
-                for row in data:
-                    name = str(row.get('name')).strip() if row.get('name') else None
-                    if not name:
-                        continue
-
-                    if CompanyType.objects.filter(name__iexact=name).exists():
-                        duplicate_names.append(name)
-                        continue 
-
-                    CompanyType.objects.create(
-                        name=name,
-                        description=row.get('description', ''),
-                        is_deleted=row.get('is_deleted', False)
-                    )
-
-            else:  
+            # ---------- CSV Handling ----------
+            elif format_type == 'csv':
                 dataset.load(file.read().decode('utf-8'), format='csv')
-                for row in dataset.dict:
-                    name = str(row.get('name')).strip() if row.get('name') else None
-                    if not name:
-                        continue
+                data = dataset.dict
 
-                    if CompanyType.objects.filter(name__iexact=name).exists():
+            else:
+                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # ---------- Process Each Row ----------
+            for row in data:
+                name = str(row.get('name')).strip() if row.get('name') else None
+                description = str(row.get('description')).strip() if row.get('description') else ''
+
+                if not name:
+                    continue  # skip empty names
+
+                existing = CompanyType.objects.filter(name__iexact=name).first()
+
+                if existing:
+                    if existing.is_deleted:
+                        # Reactivate soft-deleted company type
+                        existing.description = description
+                        existing.is_deleted = False
+                        existing.save()
+                    else:
+                        # Already active — track as duplicate
                         duplicate_names.append(name)
                         continue
-
+                else:
+                    # No record exists — create new
                     CompanyType.objects.create(
                         name=name,
-                        description=row.get('description', ''),
-                        is_deleted=row.get('is_deleted', False)
+                        description=description,
+                        is_deleted=False
                     )
-        
+
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-            
-        
-
 
         return Response({
             "statusCode": 200,
             "status": True,
-            'message': 'Import successful'}, status=status.HTTP_200_OK)
-    
-
-
-
+            "duplicates": list(set(duplicate_names)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
+        }, status=status.HTTP_200_OK)
 
 
 
