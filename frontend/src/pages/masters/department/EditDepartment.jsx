@@ -143,7 +143,7 @@ const EditDepartment = ({ show, handleCloseEdit, rowSelectData }) => {
                                     {/* Department Name */}
                                     <div className="col-12 mb-20">
                                         <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                                            Department Name <span className="text-danger">*</span>
+                                            Name <span className="text-danger">*</span>
                                         </label>
                                         <input
                                             type="text"
@@ -151,7 +151,7 @@ const EditDepartment = ({ show, handleCloseEdit, rowSelectData }) => {
                                             value={formData.name}
                                             onChange={handleChange}
                                             className={`form-control radius-8 ${errors.name ? 'is-invalid' : ''}`}
-                                            placeholder="Enter Department Name"
+                                            placeholder="Enter name"
                                         />
                                         {errors.name && (
                                             <div className="text-danger text-sm mt-1">

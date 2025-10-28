@@ -151,7 +151,7 @@ const EditStakeholderCategories = ({ show, handleCloseEdit, rowSelectData }) => 
                                             value={formData.name}
                                             onChange={handleChange}
                                             className={`form-control radius-8 ${errors.name ? 'is-invalid' : ''}`}
-                                            placeholder="Enter Name"
+                                            placeholder="Enter name"
                                         />
                                         {errors.name && (
                                             <div className="text-danger text-sm mt-1">
