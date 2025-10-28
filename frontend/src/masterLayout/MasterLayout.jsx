@@ -1411,7 +1411,7 @@ const MasterLayout = ({ children }) => {
                       <li>
                         <Link
                           className='dropdown-item text-black px-0 py-8 hover-bg-transparent hover-text-primary d-flex align-items-center gap-3'
-                          to='/view-profile'
+                          to='/'
                         >
                           <Icon
                             icon='solar:user-linear'
