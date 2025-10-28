@@ -70,7 +70,24 @@ const AddImportStakeholderModal = ({ show, handleClose }) => {
                 toast.error(error?.response?.data?.message || "Server error");
             } else {
                 if (response?.statusCode === 200 && response?.status === true) {
-                    toast.success(response?.message);
+                    // toast.success(response?.message);
+                    toast.success(
+                        <div>
+                            <div>{response?.message}</div>
+                            {response?.duplicates?.length > 0 && (
+                                <div style={{ marginTop: '6px' }}>
+                                    <strong>Duplicate departments skipped:</strong>
+                                    <br />
+                                    {response.duplicates.map((item, index) => (
+                                        <div key={index}>{item}</div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>,
+                        {
+                            autoClose: 10000,
+                        }
+                    );
                     setFile(null);
                     setSheetNames([]);
                     setSelectedSheet('');
