@@ -737,9 +737,9 @@ class VisaMajor(models.Model):
 class VisaName(models.Model):
     id = models.AutoField(primary_key=True) 
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True) 
-    country=models.ForeignKey('RepresentingCountry', on_delete=models.CASCADE, related_name='visamajor')
-    visamain=models.ForeignKey('VisaMain', on_delete=models.CASCADE, related_name='visamajor')
-    visamajor=models.ForeignKey('VisaMajor', on_delete=models.CASCADE, related_name='visamajor')
+    country=models.ForeignKey('RepresentingCountry', on_delete=models.CASCADE, related_name='visaname')
+    visamain=models.ForeignKey('VisaMain', on_delete=models.CASCADE, related_name='visaname')
+    visamajor=models.ForeignKey('VisaMajor', on_delete=models.CASCADE, related_name='visaname')
     full_name = models.CharField(max_length=255,unique=True)
     short_name=models.CharField(max_length=255,blank=True)
     description = models.TextField(max_length=255,blank=True)
