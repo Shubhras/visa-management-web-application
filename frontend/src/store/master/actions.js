@@ -99,7 +99,7 @@ export const employeeTypeExportData = (data, callback) => ({
     data,
     callback,
 });
-export const demployeeTypeImportData = (data, callback) => ({
+export const employeeTypeImportData = (data, callback) => ({
     type: IMPORT_EMPLOYEE_TYPE,
     data,
     callback,
