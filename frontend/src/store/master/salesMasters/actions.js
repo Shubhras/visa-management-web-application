@@ -11,6 +11,12 @@ import {
     EDIT_LOST_REASON_B2C,
     ADD_LOST_REASON_B2C,
     LOST_REASON_B2C_LIST,
+    IMPORT_LOST_REASON_B2B,
+    EXPORT_LOST_REASON_B2B,
+    DELETE_LOST_REASON_B2B,
+    EDIT_LOST_REASON_B2B,
+    ADD_LOST_REASON_B2B,
+    LOST_REASON_B2B_LIST,
 } from "./actionTypes"
 
 // ACTIVITY_TYPE
@@ -83,6 +89,44 @@ export const lostReasonB2CExportData = (data, callback) => ({
 
 export const lostReasonB2CImportData = (data, callback) => ({
     type: IMPORT_LOST_REASON_B2C,
+    data,
+    callback,
+});
+
+
+// LOST_REASON_B2B
+export const lostReasonB2BList = (data, callback) => ({
+    type: LOST_REASON_B2B_LIST,
+    data,
+    callback,
+});
+
+export const lostReasonB2BAdd = (data, callback) => ({
+    type: ADD_LOST_REASON_B2B,
+    data,
+    callback,
+});
+
+export const lostReasonB2BEdit = (data, callback) => ({
+    type: EDIT_LOST_REASON_B2B,
+    data,
+    callback,
+});
+
+export const lostReasonB2BDelete = (data, callback) => ({
+    type: DELETE_LOST_REASON_B2B,
+    data,
+    callback,
+});
+
+export const lostReasonB2BExportData = (data, callback) => ({
+    type: EXPORT_LOST_REASON_B2B,
+    data,
+    callback,
+});
+
+export const lostReasonB2BImportData = (data, callback) => ({
+    type: IMPORT_LOST_REASON_B2B,
     data,
     callback,
 });

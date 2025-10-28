@@ -12,6 +12,12 @@ import {
   DELETE_LOST_REASON_B2C,
   IMPORT_LOST_REASON_B2C,
   EXPORT_LOST_REASON_B2C,
+  LOST_REASON_B2B_LIST,
+  ADD_LOST_REASON_B2B,
+  EDIT_LOST_REASON_B2B,
+  DELETE_LOST_REASON_B2B,
+  IMPORT_LOST_REASON_B2B,
+  EXPORT_LOST_REASON_B2B,
 } from "./actionTypes";
 
 import {
@@ -27,6 +33,12 @@ import {
   editLostReasonB2CDataAPI,
   addLostReasonB2CDataAPI,
   getLostReasonB2CListDataAPI,
+  importLostReasonB2BDataAPI,
+  exportLostReasonB2BDataAPI,
+  deleteLostReasonB2BDataAPI,
+  editLostReasonB2BDataAPI,
+  addLostReasonB2BDataAPI,
+  getLostReasonB2BListDataAPI,
 } from "../../../service/api_helper";
 
 // Activity type
@@ -139,6 +151,61 @@ function* lostReasonB2CImportDataSaga(action) {
   }
 }
 
+// Lost Reason (B2B)
+function* lostReasonB2BListSaga(action) {
+  try {
+    const response = yield call(getLostReasonB2BListDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* lostReasonB2BAddSaga(action) {
+  try {
+    const response = yield call(addLostReasonB2BDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* lostReasonB2BEditSaga(action) {
+  try {
+    const response = yield call(editLostReasonB2BDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* lostReasonB2BDeleteSaga(action) {
+  try {
+    const response = yield call(deleteLostReasonB2BDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* lostReasonB2BExportDataSaga(action) {
+  try {
+    const response = yield call(exportLostReasonB2BDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* lostReasonB2BImportDataSaga(action) {
+  try {
+    const response = yield call(importLostReasonB2BDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
 function* salesMasterSaga() {
   // Activity type
   yield takeEvery(ACTIVITY_TYPE_LIST, activityTypeListSaga);
@@ -155,6 +222,14 @@ function* salesMasterSaga() {
   yield takeEvery(DELETE_LOST_REASON_B2C, lostReasonB2CDeleteSaga);
   yield takeEvery(EXPORT_LOST_REASON_B2C, lostReasonB2CExportDataSaga);
   yield takeEvery(IMPORT_LOST_REASON_B2C, lostReasonB2CImportDataSaga);
+
+   // Lost Reason (B2B)
+  yield takeEvery(LOST_REASON_B2B_LIST, lostReasonB2BListSaga);
+  yield takeEvery(ADD_LOST_REASON_B2B, lostReasonB2BAddSaga);
+  yield takeEvery(EDIT_LOST_REASON_B2B, lostReasonB2BEditSaga);
+  yield takeEvery(DELETE_LOST_REASON_B2B, lostReasonB2BDeleteSaga);
+  yield takeEvery(EXPORT_LOST_REASON_B2B, lostReasonB2BExportDataSaga);
+  yield takeEvery(IMPORT_LOST_REASON_B2B, lostReasonB2BImportDataSaga);
 }
 
 export default salesMasterSaga;
