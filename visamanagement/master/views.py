@@ -2664,8 +2664,7 @@ class EmployeeTypeDeleteAPIView(APIView):
             "message": f"{count} employee type(s) deleted successfully.",
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         }, status=status.HTTP_200_OK)
-
-
+    
 
 class EmployeeTypeExportAPIView(APIView):
     # permission_classes = [IsAuthenticated]  
@@ -2716,8 +2715,6 @@ class EmployeeTypeExportAPIView(APIView):
         response = HttpResponse(data, content_type=content_type)
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
-
-
 
 class EmployeeTypeImportAPIView(APIView):
     def post(self, request):
@@ -2800,6 +2797,8 @@ class EmployeeTypeImportAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+
+#--------------------------companyType------------------------
 class CompanyTypeListAPIView(APIView):    
     def get(self, request):
         search = request.GET.get('search', '').strip()
@@ -3391,7 +3390,7 @@ class OwnershipTypeImportAPIView(APIView):
 
 
 
-
+#-------------------------stakeholder----------------------------
 
 class StakeholderCategoryCreateAPIView(APIView):
     def post(self, request):
@@ -3591,19 +3590,20 @@ class StakeholderCategoryExportAPIView(APIView):
         return response
 
 
-
 class StakeholderCategoryImportAPIView(APIView):
     def post(self, request):
         file = request.FILES.get('file')
-        sheet_name = request.data.get('sheet_name')  # <-- User se sheet name lena
+        sheet_name = request.data.get('sheet_name')
 
         if not file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
         dataset = Dataset()
+        duplicate_names = []
 
         try:
+            # ---------- XLSX Handling ----------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
@@ -3621,29 +3621,43 @@ class StakeholderCategoryImportAPIView(APIView):
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 ws = wb[sheet_name]
-                data = []
                 headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                for row in ws.iter_rows(min_row=2, values_only=True):
-                    data.append(dict(zip(headers, row)))
+                data = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True)]
 
-                for row in data:
-                    StakeholderCategory.objects.update_or_create(
-                        name=row.get('name'),
-                        defaults={
-                            'description': row.get('description', ''),
-                            'is_deleted': row.get('is_deleted', False)
-                        }
-                    )
-
-            else:  # CSV
+            # ---------- CSV Handling ----------
+            elif format_type == 'csv':
                 dataset.load(file.read().decode('utf-8'), format='csv')
-                for row in dataset.dict:
-                    StakeholderCategory.objects.update_or_create(
-                        name=row.get('name'),
-                        defaults={
-                            'description': row.get('description', ''),
-                            'is_deleted': row.get('is_deleted', False)
-                        }
+                data = dataset.dict
+
+            else:
+                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # ---------- Process Each Row ----------
+            for row in data:
+                name = str(row.get('name')).strip() if row.get('name') else None
+                description = str(row.get('description')).strip() if row.get('description') else ''
+
+                if not name:
+                    continue  # skip empty names
+
+                existing = StakeholderCategory.objects.filter(name__iexact=name).first()
+
+                if existing:
+                    if existing.is_deleted:
+                        # Reactivate soft-deleted category
+                        existing.description = description
+                        existing.is_deleted = False
+                        existing.save()
+                    else:
+                        # Already active — track as duplicate
+                        duplicate_names.append(name)
+                        continue
+                else:
+                    # No record exists — create new
+                    StakeholderCategory.objects.create(
+                        name=name,
+                        description=description,
+                        is_deleted=False
                     )
 
         except Exception as e:
@@ -3652,9 +3666,15 @@ class StakeholderCategoryImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            'message': f'Sheet "{sheet_name}" imported successfully' if sheet_name else 'Import successful'
+            "duplicates": list(set(duplicate_names)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
         }, status=status.HTTP_200_OK)
 
+
+
+
+        
+#-------------------------stakeholdertype-------------------------------
 class StakeholderTypeCreateAPIView(APIView):
     def post(self, request):
         serializer = StakeholderTypeSerializer(data=request.data)
