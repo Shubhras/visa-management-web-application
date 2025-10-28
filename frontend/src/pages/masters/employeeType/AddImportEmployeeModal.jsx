@@ -4,7 +4,7 @@ import { employeeTypeExportData } from '../../../store/master/actions';
 import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 
-const AddImportModal = ({ show, handleClose }) => {
+const AddImportEmployeeModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
     const [file, setFile] = useState(null);
@@ -113,15 +113,15 @@ const handleBackdropClick = (e) => {
             className="modal fade show common-ctl-popup"
             tabIndex={-1}
             role="dialog"
-            aria-labelledby="departmentModalLabel"
+            aria-labelledby="EmployeeModalLabel"
             aria-hidden={!show}
              onClick={handleBackdropClick}
         >
             <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
                 <div className="modal-content radius-16 bg-base">
                     <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                        <h1 className="modal-title fs-5" id="departmentModalLabel">
-                            Upload Department
+                        <h1 className="modal-title fs-5" id="EmployeeModalLabel">
+                            Upload Employee
                         </h1>
                         <button
                             type="button"
@@ -215,4 +215,4 @@ const handleBackdropClick = (e) => {
     );
 };
 
-export default AddImportModal;
+export default AddImportEmployeeModal;

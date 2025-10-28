@@ -10,7 +10,7 @@ import { toast } from "react-toastify";
 import AddStakeholderCategories from './AddStakeholderCategories';
 import EditStakeholderCategories from './EditStakeholderCategories';
 import { stakeholderCategoryList, stakeholderCategoryDelete, stakeholderCategoryExportData } from '../../../store/master/actions';
-import AddImportModal from './AddImportModal';
+import AddImportStakeholderModal from './AddImportStakeholderModal';
 
 const StakeholderCategoriesList = () => {
   const dispatch = useDispatch();
@@ -27,10 +27,10 @@ const StakeholderCategoriesList = () => {
   const [rowSelectData, setRowSelectData] = useState({});
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this department?");
+  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this stakeholder?");
   const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
-  const [departments, setDepartments] = useState([]);
+  const [stakeholderListData, setStakeholderListData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
 
@@ -82,7 +82,7 @@ const StakeholderCategoriesList = () => {
       if (response?.statusCode === 200 && response?.status === true) {
         const paginationData = response?.pagination || {};
 
-        setDepartments(response?.data || []);
+        setStakeholderListData(response?.data || []);
         setTableState(prev => ({
           ...prev,
           total: paginationData.totalItems || 0,
@@ -92,7 +92,7 @@ const StakeholderCategoriesList = () => {
           hasPrevious: paginationData.previousPage || false
         }));
       } else {
-        setDepartments([]);
+        setStakeholderListData([]);
         setTableState(prev => ({
           ...prev,
           total: 0,
@@ -168,7 +168,7 @@ const StakeholderCategoriesList = () => {
     if (isAllSelected) {
       setSelectedRows([]);
     } else {
-      setSelectedRows(departments.map(dept => dept.uuid));
+      setSelectedRows(stakeholderListData.map(dept => dept.uuid));
     }
   };
   // For checkbox in table header
@@ -176,7 +176,7 @@ const StakeholderCategoriesList = () => {
 
     const checked = e.target.checked;
     if (checked) {
-      setSelectedRows(departments.map(dept => dept.uuid));
+      setSelectedRows(stakeholderListData.map(dept => dept.uuid));
     } else {
       setSelectedRows([]);
     }
@@ -192,8 +192,8 @@ const StakeholderCategoriesList = () => {
     });
   };
 
-  const isAllSelected = departments.length > 0 &&
-    departments.every(dept => selectedRows.includes(dept.uuid));
+  const isAllSelected = stakeholderListData.length > 0 &&
+    stakeholderListData.every(dept => selectedRows.includes(dept.uuid));
 
   const goToPage = (page) => {
     if (page >= 1 && page <= tableState.totalPages) {
@@ -255,7 +255,7 @@ const StakeholderCategoriesList = () => {
       return;
     }
     const maggase = isAllSelected ? "all" : deleteId ? "" : selectedRows.length
-    setDeleteConfirmMessage(`Are you sure you want to delete this department (${maggase})?`);
+    setDeleteConfirmMessage(`Are you sure you want to delete this stakeholder (${maggase})?`);
     setShowDeleteConfirm(true);
   };
 
@@ -264,7 +264,7 @@ const StakeholderCategoriesList = () => {
     const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
 
     if (!sendPayload || sendPayload.length === 0) {
-      toast.error("No department selected for deletion.");
+      toast.error("No stakeholder selected for deletion.");
       return;
     }
 
@@ -274,7 +274,7 @@ const StakeholderCategoriesList = () => {
       } else {
         if (response?.statusCode === 200 && response?.status === true) {
           toast.success(response?.message);
-          setDepartments(prevDepts => prevDepts.filter(dept => dept.uuid !== deleteId));
+          setStakeholderListData(prevDepts => prevDepts.filter(dept => dept.uuid !== deleteId));
           setSelectedRows(prevSelected => prevSelected.filter(rowId => rowId !== deleteId));
           setShowDeleteConfirm(false);
           setSelectedRows([])
@@ -372,7 +372,7 @@ const StakeholderCategoriesList = () => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `departments_${new Date().toISOString().split('T')[0]}.csv`;
+          link.download = `stakeholderListData_${new Date().toISOString().split('T')[0]}.csv`;
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
@@ -509,7 +509,7 @@ const StakeholderCategoriesList = () => {
                           type="checkbox"
                           checked={isAllSelected}
                           onChange={handleSelectAll}
-                          disabled={departments.length === 0}
+                          disabled={stakeholderListData.length === 0}
                         />
                         <span>S.L</span>
                       </div>
@@ -549,8 +549,8 @@ const StakeholderCategoriesList = () => {
                         </div>
                       </td>
                     </tr>
-                  ) : departments.length > 0 ? (
-                    departments.map((dept, index) => (
+                  ) : stakeholderListData.length > 0 ? (
+                    stakeholderListData.map((dept, index) => (
                       <tr key={dept.uuid} >
                         <td >
                           <div className="d-flex align-items-center gap-2">
@@ -721,7 +721,7 @@ const StakeholderCategoriesList = () => {
         <AddStakeholderCategories show={show} handleClose={handleClose} />
         <EditStakeholderCategories show={showEdit} handleCloseEdit={handleCloseEdit} rowSelectData={rowSelectData} />
         {showImport && (
-          <AddImportModal show={showImport} handleClose={handleCloseImport} />)}
+          <AddImportStakeholderModal show={showImport} handleClose={handleCloseImport} />)}
         {showDeleteConfirm && (
           <div className="modal fade show common-ctl-popup" onClick={(e) => handleBackdropClick(e, cancelDelete)}>
             <div className="modal-dialog modal-dialog-centered">
@@ -731,8 +731,8 @@ const StakeholderCategoriesList = () => {
                   <button type="button" className="btn-close" onClick={cancelDelete}></button>
                 </div>
                 <div className="modal-body">
-                  {/* <p className="mb-0">Are you sure you want to delete this department?</p> */}
-                  {/* <p className="mb-0"> Are you sure you want to delete this department ({selectedRows.length})?</p> */}
+                  {/* <p className="mb-0">Are you sure you want to delete this Stakeholder?</p> */}
+                  {/* <p className="mb-0"> Are you sure you want to delete this Stakeholder ({selectedRows.length})?</p> */}
                   <p className="mb-0">{deleteConfirmMessage}</p>
 
                 </div>
@@ -766,7 +766,7 @@ const StakeholderCategoriesList = () => {
             <div className="modal-dialog modal-lg modal-dialog-centered " role="document">
               <div className="modal-content radius-16 bg-base">
                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                  <h1 className="modal-title fs-5">Export Department</h1>
+                  <h1 className="modal-title fs-5">Export Stakeholder</h1>
                   <button
                     type="button"
                     className="btn-close"

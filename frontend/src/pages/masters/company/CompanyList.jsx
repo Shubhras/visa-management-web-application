@@ -10,7 +10,7 @@ import { toast } from "react-toastify";
 import AddCompany from './AddCompany';
 import EditCompany from './EditCompany';
 import { companyList, companyDelete, companyExportData } from '../../../store/master/actions';
-import AddImportModal from './AddImportModal';
+import AddImportCompanyModal from './AddImportCompanyModal';
 
 const CompanyList = () => {
     const dispatch = useDispatch();
@@ -19,7 +19,7 @@ const CompanyList = () => {
     const handleShow = () => setShow(true);
     const handleClose = () => {
         setShow(false);
-        fetchDepartmentList();
+        fetchCompanyTypetList();
     };
 
     const [showEdit, setShowEdit] = useState(false);
@@ -27,10 +27,10 @@ const CompanyList = () => {
     const [rowSelectData, setRowSelectData] = useState({});
     const [selectedRows, setSelectedRows] = useState([]);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-    const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this department?");
+    const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this company type?");
     const [showExportPopop, setShowExportPopop] = useState(false);
     const [deleteId, setDeleteId] = useState(null);
-    const [departments, setDepartments] = useState([]);
+    const [companyListData, setCompanyListData] = useState([]);
     const [loading, setLoading] = useState(false);
     const [loadingExport, setLoadingExport] = useState(false);
 
@@ -55,7 +55,7 @@ const CompanyList = () => {
     useEffect(() => {
         const timer = setTimeout(() => {
             if (tableState.search !== undefined) {
-                fetchDepartmentList();
+                fetchCompanyTypetList();
             }
         }, 500);
 
@@ -63,10 +63,10 @@ const CompanyList = () => {
     }, [tableState.search]);
 
     useEffect(() => {
-        fetchDepartmentList();
+        fetchCompanyTypetList();
     }, [tableState.page, tableState.limit, tableState.status, tableState.sortBy, tableState.sortOrder]);
 
-    const fetchDepartmentList = () => {
+    const fetchCompanyTypetList = () => {
         setLoading(true);
         const params = {
             page: tableState.page,
@@ -82,7 +82,7 @@ const CompanyList = () => {
             if (response?.statusCode === 200 && response?.status === true) {
                 const paginationData = response?.pagination || {};
 
-                setDepartments(response?.data || []);
+                setCompanyListData(response?.data || []);
                 setTableState(prev => ({
                     ...prev,
                     total: paginationData.totalItems || 0,
@@ -92,7 +92,7 @@ const CompanyList = () => {
                     hasPrevious: paginationData.previousPage || false
                 }));
             } else {
-                setDepartments([]);
+                setCompanyListData([]);
                 setTableState(prev => ({
                     ...prev,
                     total: 0,
@@ -168,7 +168,7 @@ const CompanyList = () => {
         if (isAllSelected) {
             setSelectedRows([]);
         } else {
-            setSelectedRows(departments.map(dept => dept.uuid));
+            setSelectedRows(companyListData.map(dept => dept.uuid));
         }
     };
     // For checkbox in table header
@@ -176,7 +176,7 @@ const CompanyList = () => {
 
         const checked = e.target.checked;
         if (checked) {
-            setSelectedRows(departments.map(dept => dept.uuid));
+            setSelectedRows(companyListData.map(dept => dept.uuid));
         } else {
             setSelectedRows([]);
         }
@@ -192,8 +192,8 @@ const CompanyList = () => {
         });
     };
 
-    const isAllSelected = departments.length > 0 &&
-        departments.every(dept => selectedRows.includes(dept.uuid));
+    const isAllSelected = companyListData.length > 0 &&
+        companyListData.every(dept => selectedRows.includes(dept.uuid));
 
     const goToPage = (page) => {
         if (page >= 1 && page <= tableState.totalPages) {
@@ -236,7 +236,7 @@ const CompanyList = () => {
 
     const handleCloseEdit = () => {
         setShowEdit(false);
-        fetchDepartmentList();
+        fetchCompanyTypetList();
     };
 
     const handleShowEdit = (rowData) => {
@@ -255,7 +255,7 @@ const CompanyList = () => {
             return;
         }
         const maggase = isAllSelected ? "all" : deleteId ? "" : selectedRows.length
-        setDeleteConfirmMessage(`Are you sure you want to delete this department (${maggase})?`);
+        setDeleteConfirmMessage(`Are you sure you want to delete this company type (${maggase})?`);
         setShowDeleteConfirm(true);
     };
 
@@ -264,7 +264,7 @@ const CompanyList = () => {
         const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
 
         if (!sendPayload || sendPayload.length === 0) {
-            toast.error("No department selected for deletion.");
+            toast.error("No company type selected for deletion.");
             return;
         }
 
@@ -274,12 +274,12 @@ const CompanyList = () => {
             } else {
                 if (response?.statusCode === 200 && response?.status === true) {
                     toast.success(response?.message);
-                    setDepartments(prevDepts => prevDepts.filter(dept => dept.uuid !== deleteId));
+                    setCompanyListData(prevDepts => prevDepts.filter(dept => dept.uuid !== deleteId));
                     setSelectedRows(prevSelected => prevSelected.filter(rowId => rowId !== deleteId));
                     setShowDeleteConfirm(false);
                     setSelectedRows([])
                     setDeleteId(null);
-                    fetchDepartmentList();
+                    fetchCompanyTypetList();
                 } else {
                     toast.error("Something went wrong.");
                 }
@@ -295,7 +295,7 @@ const CompanyList = () => {
 
     const handleCloseImport = () => {
         setShowImport(false);
-        fetchDepartmentList();
+        fetchCompanyTypetList();
     };
 
     const handleShowImport = () => {
@@ -372,7 +372,7 @@ const CompanyList = () => {
                     const url = window.URL.createObjectURL(blob);
                     const link = document.createElement('a');
                     link.href = url;
-                    link.download = `departments_${new Date().toISOString().split('T')[0]}.csv`;
+                    link.download = `companyListData_${new Date().toISOString().split('T')[0]}.csv`;
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
@@ -503,7 +503,7 @@ const CompanyList = () => {
                                                     type="checkbox"
                                                     checked={isAllSelected}
                                                     onChange={handleSelectAll}
-                                                    disabled={departments.length === 0}
+                                                    disabled={companyListData.length === 0}
                                                 />
                                                 <span>S.L</span>
                                             </div>
@@ -543,8 +543,8 @@ const CompanyList = () => {
                                                 </div>
                                             </td>
                                         </tr>
-                                    ) : departments.length > 0 ? (
-                                        departments.map((dept, index) => (
+                                    ) : companyListData.length > 0 ? (
+                                        companyListData.map((dept, index) => (
                                             <tr key={dept.uuid} >
                                                 <td >
                                                     <div className="d-flex align-items-center gap-2">
@@ -715,7 +715,7 @@ const CompanyList = () => {
                 <AddCompany show={show} handleClose={handleClose} />
                 <EditCompany show={showEdit} handleCloseEdit={handleCloseEdit} rowSelectData={rowSelectData} />
                 {showImport && (
-                    <AddImportModal show={showImport} handleClose={handleCloseImport} />)}
+                    <AddImportCompanyModal show={showImport} handleClose={handleCloseImport} />)}
                 {showDeleteConfirm && (
                     <div className="modal fade show common-ctl-popup">
                         <div className="modal-dialog modal-dialog-centered">
@@ -725,8 +725,8 @@ const CompanyList = () => {
                                     <button type="button" className="btn-close" onClick={cancelDelete}></button>
                                 </div>
                                 <div className="modal-body">
-                                    {/* <p className="mb-0">Are you sure you want to delete this department?</p> */}
-                                    {/* <p className="mb-0"> Are you sure you want to delete this department ({selectedRows.length})?</p> */}
+                                    {/* <p className="mb-0">Are you sure you want to delete this company?</p> */}
+                                    {/* <p className="mb-0"> Are you sure you want to delete this company ({selectedRows.length})?</p> */}
                                     <p className="mb-0">{deleteConfirmMessage}</p>
 
                                 </div>
@@ -759,7 +759,7 @@ const CompanyList = () => {
                         <div className="modal-dialog modal-lg modal-dialog-centered " role="document">
                             <div className="modal-content radius-16 bg-base">
                                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                                    <h1 className="modal-title fs-5">Export Department</h1>
+                                    <h1 className="modal-title fs-5">Export company type</h1>
                                     <button
                                         type="button"
                                         className="btn-close"

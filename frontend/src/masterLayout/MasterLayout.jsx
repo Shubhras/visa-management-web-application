@@ -15,13 +15,13 @@ const MasterLayout = ({ children }) => {
     toast.success('Logout successful');
     // // 1. Clear user data (localStorage / sessionStorage / Redux)
     // localStorage.removeItem('userToken') // or whatever you use
-    // localStorage.removeItem('userData')
+    localStorage.removeItem('authUser')
 
     // // 2. Optionally reset Redux state
     // // dispatch({ type: 'LOGOUT' }) 
 
     // // 3. Navigate to login page
-    navigate('/');
+    navigate('/sign-in');
   }
 
   useEffect(() => {
@@ -1411,7 +1411,7 @@ const MasterLayout = ({ children }) => {
                       <li>
                         <Link
                           className='dropdown-item text-black px-0 py-8 hover-bg-transparent hover-text-primary d-flex align-items-center gap-3'
-                          to='/view-profile'
+                          to='/'
                         >
                           <Icon
                             icon='solar:user-linear'

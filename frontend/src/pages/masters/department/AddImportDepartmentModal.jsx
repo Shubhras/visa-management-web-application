@@ -1,10 +1,10 @@
 import React, { useState } from 'react'
 import { useDispatch } from "react-redux";
-import { priorityTypeImportData } from '../../../store/master/actions';
+import {  departmentImportData} from '../../../store/master/actions';
 import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 
-const AddImportModal = ({ show, handleClose }) => {
+const AddImportDepartmentModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
     const [file, setFile] = useState(null);
@@ -64,7 +64,7 @@ const AddImportModal = ({ show, handleClose }) => {
         }
 
         setLoading(true);
-        dispatch(priorityTypeImportData(formData, (response, error) => {
+        dispatch(departmentImportData(formData, (response, error) => {
             setLoading(false);
             if (error) {
                 toast.error(error?.response?.data?.message || "Server error");
@@ -115,15 +115,15 @@ const AddImportModal = ({ show, handleClose }) => {
             className="modal fade show common-ctl-popup"
             tabIndex={-1}
             role="dialog"
-            aria-labelledby="PriorityTypeModalLabel"
+            aria-labelledby="departmentModalLabel"
             aria-hidden={!show}
             onClick={handleBackdropClick}
         >
             <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
                 <div className="modal-content radius-16 bg-base">
                     <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                        <h1 className="modal-title fs-5" id="PriorityTypeModalLabel">
-                            Upload Priority Type
+                        <h1 className="modal-title fs-5" id="departmentModalLabel">
+                            Upload Department
                         </h1>
                         <button
                             type="button"
@@ -217,4 +217,4 @@ const AddImportModal = ({ show, handleClose }) => {
     );
 };
 
-export default AddImportModal;
+export default AddImportDepartmentModal;

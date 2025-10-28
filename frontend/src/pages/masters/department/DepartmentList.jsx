@@ -10,7 +10,7 @@ import { toast } from "react-toastify";
 import AddDepartment from './AddDepartment';
 import EditDepartment from './EditDepartment';
 import { departmentList, departmentDelete, departmentExportData } from '../../../store/master/actions';
-import AddImportModal from './AddImportModal';
+import AddImportDepartmentModal from './AddImportDepartmentModal';
 
 const DepartmentList = () => {
   const dispatch = useDispatch();
@@ -721,7 +721,7 @@ const DepartmentList = () => {
         <AddDepartment show={show} handleClose={handleClose} />
         <EditDepartment show={showEdit} handleCloseEdit={handleCloseEdit} rowSelectData={rowSelectData} />
         {showImport && (
-          <AddImportModal show={showImport} handleClose={handleCloseImport} />)}
+          <AddImportDepartmentModal show={showImport} handleClose={handleCloseImport} />)}
         {showDeleteConfirm && (
           <div className="modal fade show common-ctl-popup" onClick={(e) => handleBackdropClick(e, cancelDelete)}>
             <div className="modal-dialog modal-dialog-centered">
