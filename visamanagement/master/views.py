@@ -2139,6 +2139,7 @@ class DepartmentListAPIView(APIView):
 
         return paginator.get_paginated_response(serializer.data)
 
+
 class DepartmentCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
