@@ -75,6 +75,7 @@ const Header = () => {
                     children: [
                         { name: 'Priority type', path: '/priority-type' },
                         { name: 'Tags type', path: '/tags-type' },
+                        { name: 'Activity Type', path: '/activity-type' },
                     ]
                 },
 
@@ -260,7 +261,7 @@ const Header = () => {
                                     boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
                                     borderRadius: '8px',
                                     zIndex: 1000,
-                                    marginTop: '2px',
+                                    marginTop: '1px',
                                     padding: '8px',
                                     animation: 'slideDown 0.2s ease'
                                 }}
@@ -342,7 +343,7 @@ const Header = () => {
                                                     boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
                                                     borderRadius: '8px',
                                                     zIndex: 1001,
-                                                    marginLeft: '4px',
+                                                    marginLeft: '2px',
                                                     padding: '8px',
                                                     animation: 'slideRight 0.2s ease'
                                                 }}

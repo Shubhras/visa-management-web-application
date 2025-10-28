@@ -349,6 +349,7 @@ import CompanyList from "./pages/masters/company/CompanyList";
 import StakeholderCategoriesList from "./pages/masters/stakeholderCategories/StakeholderCategoriesList";
 import PriorityTypeList from "./pages/masters/priorityType/PriorityTypeList";
 import TagsTypeList from "./pages/masters/tagsType/TagsTypeList";
+ import ActivityTypeList from "./pages/masters/salesMasters/activityType/ActivityTypeList";
 
 import LeadsList from "./pages/leads/LeadsList";
 
@@ -359,22 +360,22 @@ const ProtectedRoute = ({ children }) => {
     try {
       const authUser = localStorage.getItem('authUser');
       if (!authUser) return false;
-      
+
       const userData = JSON.parse(authUser);
-      
+
       // Check if access token exists
       if (!userData.access) return false;
-      
+
       // Optional: Decode JWT and check expiration
       const tokenPayload = JSON.parse(atob(userData.access.split('.')[1]));
       const isExpired = tokenPayload.exp * 1000 < Date.now();
-      
+
       if (isExpired) {
         // Token expired, clear storage
         localStorage.removeItem('authUser');
         return false;
       }
-      
+
       return true;
     } catch (error) {
       console.error('Authentication check failed:', error);
@@ -396,7 +397,7 @@ const PublicRoute = ({ children }) => {
     try {
       const authUser = localStorage.getItem('authUser');
       if (!authUser) return false;
-      
+
       const userData = JSON.parse(authUser);
       return userData.access !== null && userData.access !== undefined;
     } catch (error) {
@@ -578,7 +579,7 @@ function App() {
         <Route path='/stakeholder-list' element={<ProtectedRoute><StakeholderCategoriesList /></ProtectedRoute>} />
         <Route path='/priority-type' element={<ProtectedRoute><PriorityTypeList /></ProtectedRoute>} />
         <Route path='/tags-type' element={<ProtectedRoute><TagsTypeList /></ProtectedRoute>} />
-
+        <Route path='/activity-type' element={<ProtectedRoute><ActivityTypeList /></ProtectedRoute>} />
         {/* 404 Error Page */}
         <Route path='*' element={<ErrorPage />} />
       </Routes>

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { useDispatch } from "react-redux";
-import { tagsTypeEdit  } from '../../../store/master/actions';
+import { tagsTypeEdit  } from '../../../../store/master/actions';
 import { toast } from "react-toastify";
-const EditTagsType = ({ show, handleCloseEdit, rowSelectData }) => {
+const EditActivityType = ({ show, handleCloseEdit, rowSelectData }) => {
     const [loading, setLoading] = useState(false);
     const dispatch = useDispatch();
     // Form state
@@ -119,15 +119,15 @@ const EditTagsType = ({ show, handleCloseEdit, rowSelectData }) => {
                 className={`modal fade show common-ctl-popup`}
                 tabIndex={-1}
                 role="dialog"
-                aria-labelledby="TagsTypeModalLabel"
+                aria-labelledby="ActivityTypeModalLabel"
                 aria-hidden={!show}
                 onClick={handleBackdropClick}
             >
                 <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
                     <div className="modal-content radius-16 bg-base">
                         <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                            <h1 className="modal-title fs-5" id="TagsTypeModalLabel">
-                                Edit Tags Type
+                            <h1 className="modal-title fs-5" id="ActivityTypeModalLabel">
+                                Edit Activity Type
                             </h1>
                             <button
                                 type="button"
@@ -205,4 +205,4 @@ const EditTagsType = ({ show, handleCloseEdit, rowSelectData }) => {
     );
 };
 
-export default EditTagsType;
+export default EditActivityType;
