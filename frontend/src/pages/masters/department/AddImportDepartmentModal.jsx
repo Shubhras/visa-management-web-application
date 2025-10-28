@@ -4,7 +4,7 @@ import {  departmentImportData} from '../../../store/master/actions';
 import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 
-const AddImportModal = ({ show, handleClose }) => {
+const AddImportDepartmentModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
     const [file, setFile] = useState(null);
@@ -217,4 +217,4 @@ const AddImportModal = ({ show, handleClose }) => {
     );
 };
 
-export default AddImportModal;
+export default AddImportDepartmentModal;
