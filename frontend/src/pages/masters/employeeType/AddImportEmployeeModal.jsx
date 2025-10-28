@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useDispatch } from "react-redux";
-import { employeeTypeExportData } from '../../../store/master/actions';
+import { employeeTypeImportData } from '../../../store/master/actions';
 import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 
@@ -63,8 +63,9 @@ const AddImportEmployeeModal = ({ show, handleClose }) => {
             formData.append('sheet_name', selectedSheet);
         }
 
+        console.log('hhhhhhhhhhhhhhhhhhh',formData);
         setLoading(true);
-        dispatch(employeeTypeExportData(formData, (response, error) => {
+        dispatch(employeeTypeImportData(formData, (response, error) => {
             setLoading(false);
             if (error) {
                 toast.error(error?.response?.data?.message || "Server error");
