@@ -63,7 +63,6 @@ const AddImportEmployeeModal = ({ show, handleClose }) => {
             formData.append('sheet_name', selectedSheet);
         }
 
-        console.log('hhhhhhhhhhhhhhhhhhh',formData);
         setLoading(true);
         dispatch(employeeTypeImportData(formData, (response, error) => {
             setLoading(false);
@@ -71,7 +70,24 @@ const AddImportEmployeeModal = ({ show, handleClose }) => {
                 toast.error(error?.response?.data?.message || "Server error");
             } else {
                 if (response?.statusCode === 200 && response?.status === true) {
-                    toast.success(response?.message);
+                    // toast.success(response?.message);
+                    toast.success(
+                        <div>
+                            <div>{response?.message}</div>
+                            {response?.duplicates?.length > 0 && (
+                                <div style={{ marginTop: '6px' }}>
+                                    <strong>Duplicate departments skipped:</strong>
+                                    <br />
+                                    {response.duplicates.map((item, index) => (
+                                        <div key={index}>{item}</div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>,
+                        {
+                            autoClose: 10000,
+                        }
+                    );
                     setFile(null);
                     setSheetNames([]);
                     setSelectedSheet('');
@@ -91,7 +107,7 @@ const AddImportEmployeeModal = ({ show, handleClose }) => {
         setSelectedSheet('');
         handleClose();
     };
- const handleDownloadSample = () => {
+    const handleDownloadSample = () => {
         const fileUrl = 'assets/simplefile//Demployee.xlsx'; // Update this path according to your project structure
 
         const link = document.createElement('a');
@@ -101,12 +117,12 @@ const AddImportEmployeeModal = ({ show, handleClose }) => {
         link.click();
         document.body.removeChild(link);
     };
-const handleBackdropClick = (e) => {
-    // Only close if clicking the backdrop itself, not the modal content
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
+    const handleBackdropClick = (e) => {
+        // Only close if clicking the backdrop itself, not the modal content
+        if (e.target === e.currentTarget) {
+            onClose();
+        }
+    };
     if (!show) return null;
 
     return (
@@ -116,7 +132,7 @@ const handleBackdropClick = (e) => {
             role="dialog"
             aria-labelledby="EmployeeModalLabel"
             aria-hidden={!show}
-             onClick={handleBackdropClick}
+            onClick={handleBackdropClick}
         >
             <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
                 <div className="modal-content radius-16 bg-base">
