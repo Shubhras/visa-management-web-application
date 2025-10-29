@@ -3790,8 +3790,13 @@ class StakeholderCategoryExportAPIView(APIView):
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
-
 class StakeholderCategoryImportAPIView(APIView):
+    """
+    API to import Stakeholder Categories from CSV or XLSX.
+    Handles headers with spaces/capitalization, ignores extra columns,
+    and handles duplicates/deleted records.
+    """
+
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')
@@ -3801,15 +3806,15 @@ class StakeholderCategoryImportAPIView(APIView):
 
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
-        
 
+        # Mapping file headers → model fields
         header_field_map = {
             'Stakeholder Category': 'name',
-            'Description': 'description',
-            'Created ON': 'created_at'
+            'Description': 'description'
         }
 
-        allowed_headers = set(k.lower() for k in header_field_map.keys())
+        # Normalize headers: lowercase + remove spaces
+        allowed_headers = set(k.lower().replace(' ', '') for k in header_field_map.keys())
 
         try:
             data = []
@@ -3832,17 +3837,18 @@ class StakeholderCategoryImportAPIView(APIView):
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 ws = wb[sheet_name]
-                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                headers = [str(cell.value).strip() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                normalized_headers = [h.lower().replace(' ', '') for h in headers]
 
-                if not allowed_headers.issubset(set(headers)):
+                if not allowed_headers.issubset(set(normalized_headers)):
                     return Response({
                         "statusCode": 400,
                         "status": True,
-                        'message': f'Missing required headers. Required: {allowed_headers}, Found: {set(headers)}'
+                        'message': f'Missing required headers. Required: {allowed_headers}, Found: {set(normalized_headers)}'
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 for row in ws.iter_rows(min_row=2, values_only=True):
-                    row_dict = dict(zip(headers, row))
+                    row_dict = dict(zip(normalized_headers, row))
                     data.append(row_dict)
 
             # ---------- CSV Handling ----------
@@ -3852,7 +3858,7 @@ class StakeholderCategoryImportAPIView(APIView):
                 dataset.load(decoded_file, format='csv')
 
                 for row in dataset.dict:
-                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    row_lower = {k.strip().lower().replace(' ', ''): v for k, v in row.items()}
                     if not allowed_headers.issubset(set(row_lower.keys())):
                         return Response({
                             "statusCode": 400,
@@ -3866,7 +3872,7 @@ class StakeholderCategoryImportAPIView(APIView):
 
             # ---------- Process Each Row ----------
             for row in data:
-                name = str(row.get('stakeholder category'.lower())).strip() if row.get('stakeholder category'.lower()) else None
+                name = str(row.get('stakeholdercategory')).strip() if row.get('stakeholdercategory') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not name:
@@ -3881,7 +3887,6 @@ class StakeholderCategoryImportAPIView(APIView):
                         existing.save()
                     else:
                         duplicate_names.append(name)
-                        
                         continue
                 else:
                     StakeholderCategory.objects.create(
@@ -3889,8 +3894,6 @@ class StakeholderCategoryImportAPIView(APIView):
                         description=description,
                         is_deleted=False
                     )
-
-           
 
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -3901,9 +3904,6 @@ class StakeholderCategoryImportAPIView(APIView):
             "duplicates": list(set(duplicate_names)),
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
         }, status=status.HTTP_200_OK)
-
-
-
 
 #-------------------------stakeholdertype-------------------------------
 class StakeholderTypeCreateAPIView(APIView):
