@@ -2798,25 +2798,26 @@ class EmployeeTypeExportAPIView(APIView):
 
 
 class EmployeeTypeImportAPIView(APIView):
+    """
+    API to import Employee Types from CSV or XLSX.
+    """
+
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')
-
         if not file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
-       
 
         # Mapping file headers → model fields
         header_field_map = {
-            'EmployeeType': 'name',
+            'Employee Type': 'name',
             'Description': 'description'
         }
 
         allowed_headers = set(k.lower() for k in header_field_map.keys())  # normalize
-
         try:
             data = []
 
@@ -2838,17 +2839,20 @@ class EmployeeTypeImportAPIView(APIView):
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 ws = wb[sheet_name]
-                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                headers = [str(cell.value).strip() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
 
-                if not allowed_headers.issubset(set(headers)):
+                # Normalize headers for comparison
+                normalized_headers = [h.lower() for h in headers]
+
+                if not allowed_headers.issubset(set(normalized_headers)):
                     return Response({
                         "statusCode": 400,
                         "status": True,
-                        'message': f'Missing required headers. Required: {allowed_headers}, Found: {set(headers)}'
+                        'message': f'Missing required headers. Required: {allowed_headers}, Found: {set(normalized_headers)}'
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 for row in ws.iter_rows(min_row=2, values_only=True):
-                    row_dict = dict(zip(headers, row))
+                    row_dict = dict(zip(normalized_headers, row))
                     data.append(row_dict)
 
             # ---------- CSV Handling ----------
@@ -2858,6 +2862,7 @@ class EmployeeTypeImportAPIView(APIView):
                 dataset.load(decoded_file, format='csv')
 
                 for row in dataset.dict:
+                    # normalize keys: lowercase and strip
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
                     if not allowed_headers.issubset(set(row_lower.keys())):
                         return Response({
@@ -2872,7 +2877,8 @@ class EmployeeTypeImportAPIView(APIView):
 
             # ---------- Process Each Row ----------
             for row in data:
-                name = str(row.get('employeetype')).strip() if row.get('employeetype') else None
+                # Map normalized header to model fields
+                name = str(row.get('employee type')).strip() if row.get('employee type') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not name:
@@ -2895,8 +2901,6 @@ class EmployeeTypeImportAPIView(APIView):
                         is_deleted=False
                     )
 
-            
-
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -2906,7 +2910,6 @@ class EmployeeTypeImportAPIView(APIView):
             "duplicates": list(set(duplicate_names)),
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
         }, status=status.HTTP_200_OK)
-
 
 #--------------------------companyType------------------------
 class CompanyTypeListAPIView(APIView):    
