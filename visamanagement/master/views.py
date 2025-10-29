@@ -2312,7 +2312,7 @@ class DepartmentDeleteAPIView(APIView):
             }, status=status.HTTP_404_NOT_FOUND)
 
         # Soft delete
-        departments.delete()
+        departments.update(is_deleted=True)
 
         return Response({
             "statusCode": 200,
@@ -2326,7 +2326,7 @@ class DepartmentDeleteAPIView(APIView):
 class DepartmentExportAPIView(APIView):
 
     def get(self, request):
-        format_type = request.GET.get('format', 'csv').lower()
+        format_type = request.GET.get('format') or request.data.get('format', 'csv')
         fields = request.GET.get('fields')  
         uuids_param = request.GET.get('uuids', '')
 
@@ -5361,31 +5361,20 @@ class InterestLevelUpdateAPIView(APIView):
 class InterestLevelDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
-    def delete(self, request, uuid=None):
-        uuids = request.data.get('uuids', None)
+    def delete(self, request):
+        ids = request.data.get('id', None)
 
-        #  Case 1: Single delete via URL parameter
-        if uuid:
-            try:
-                interest = InterestLevel.objects.get(uuid=uuid, is_deleted=False)
-                interest.is_deleted = True
-                interest.save()
-                return Response({
-                    "statusCode": 200,
-                    "status": True,
-                    "message": "Interest Level deleted successfully",
-                    "data": None
-                }, status=status.HTTP_200_OK)
-            except InterestLevel.DoesNotExist:
-                return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "Interest Level not found",
-                    "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
+        # Validate ID field
+        if not ids:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Please provide 'id' field (UUID list or 'all').",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
 
-        #  Case 2: Delete all
-        if uuids == "all":
+        # Case 1: Delete all Interest Levels
+        if ids == "all":
             interests = InterestLevel.objects.filter(is_deleted=False)
             count = interests.count()
             if count == 0:
@@ -5403,19 +5392,19 @@ class InterestLevelDeleteAPIView(APIView):
                 "data": None
             }, status=status.HTTP_200_OK)
 
-        #  Case 3: Bulk delete via request body UUIDs
-        if not uuids or not isinstance(uuids, list):
+        # Case 2: Delete multiple by UUID list
+        if not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Please provide a list of UUIDs in 'uuids' field or 'all'.",
+                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
                 "data": None
             }, status=status.HTTP_400_BAD_REQUEST)
 
         # Validate UUIDs
         valid_uuids = []
         invalid_uuids = []
-        for u in uuids:
+        for u in ids:
             try:
                 valid_uuids.append(UUID(u))
             except ValueError:
@@ -5429,7 +5418,7 @@ class InterestLevelDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids}
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # Fetch InterestLevel entries that exist and are not deleted
+        # Fetch existing, non-deleted Interest Levels
         interests = InterestLevel.objects.filter(uuid__in=valid_uuids, is_deleted=False)
         count = interests.count()
 
@@ -5450,7 +5439,6 @@ class InterestLevelDeleteAPIView(APIView):
             "message": f"{count} Interest Level(s) deleted successfully.",
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         }, status=status.HTTP_200_OK)
-
 
 class InterestLevelExportAPIView(APIView):
     # permission_classes = [IsAuthenticated]  # Uncomment and adjust as needed
@@ -9756,7 +9744,6 @@ class EducationTypeDeleteAPIView(APIView):
             "invalid_uuids": invalid_uuids
         })
 
-
 # -------------------- MediumofEducation CRUD -------------------- #
 
 class MediumofEducationListAPIView(APIView):
@@ -9767,7 +9754,7 @@ class MediumofEducationListAPIView(APIView):
         sort_by = request.GET.get('sortBy', 'created_at')
         sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
 
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'Perticulars', 'created_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
 
@@ -9878,17 +9865,58 @@ class MediumofEducationUpdateAPIView(APIView):
             "message": " ".join([m for msgs in serializer.errors.values() for m in msgs])
         }, status=status.HTTP_400_BAD_REQUEST)
 
-
 class MediumofEducationDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
-    def delete(self, request):
-        uuids = request.data.get('id', [])
+    def delete(self, request, uuid=None):
+        uuids = request.data.get('id', None)
+
+        # Single delete via URL parameter
+        if uuid:
+            try:
+                obj = MediumofEducation.objects.get(uuid=uuid, is_deleted=False)
+                obj.is_deleted = True
+                obj.save()
+                return Response({
+                    "statusCode": 204,
+                    "status": True,
+                    "message": "Medium of Education deleted successfully",
+                    "data": None
+                }, status=status.HTTP_204_NO_CONTENT)
+            except MediumofEducation.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "Medium of Education not found",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+
+        # Delete all if "all" is sent
+        if uuids == "all":
+            objs = MediumofEducation.objects.filter(is_deleted=False)
+            count = objs.count()
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No Medium of Education records found to delete.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+            objs.update(is_deleted=True)
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"All {count} Medium of Education record(s) deleted successfully.",
+                "data": None
+            }, status=status.HTTP_200_OK)
+
+        # Validate bulk UUIDs
         if not uuids or not isinstance(uuids, list):
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Please provide a list of UUIDs in 'id'."
+                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+                "data": None
             }, status=status.HTTP_400_BAD_REQUEST)
 
         valid_uuids = []
@@ -9899,16 +9927,177 @@ class MediumofEducationDeleteAPIView(APIView):
             except ValueError:
                 invalid_uuids.append(u)
 
+        if not valid_uuids:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "No valid UUIDs provided.",
+                "data": {"invalid_uuids": invalid_uuids}
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Bulk delete
         objs = MediumofEducation.objects.filter(uuid__in=valid_uuids, is_deleted=False)
         count = objs.count()
+
+        if count == 0:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "No matching Medium of Education records found.",
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+            }, status=status.HTTP_404_NOT_FOUND)
+
         objs.update(is_deleted=True)
 
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f"{count} Medium of Education(s) deleted successfully",
-            "invalid_uuids": invalid_uuids
-        })
+            "message": f"{count} Medium of Education record(s) deleted successfully.",
+            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+        }, status=status.HTTP_200_OK)
 
 
+class MediumofEducationExportAPIView(APIView):
+    def get(self, request):
+        format_type = request.GET.get('format', 'csv').lower()
+        fields = request.GET.get('fields')  # Optional comma-separated fields
+        uuids_param = request.GET.get('uuids', '')
+        uuids = [u.strip() for u in uuids_param.split(',') if u]
 
+        # Default fields
+        field_list = [f.strip() for f in fields.split(',')] if fields else [
+            'uuid', 'name', 'Perticulars', 'is_deleted', 'created_at', 'updated_at'
+        ]
+
+        queryset = MediumofEducation.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+
+        dataset = Dataset()
+        dataset.headers = field_list
+
+        for obj in queryset:
+            row = []
+            for field in field_list:
+                value = getattr(obj, field, '')
+                if isinstance(value, datetime.datetime):
+                    value = value.strftime("%Y-%m-%d %H:%M:%S")
+                if isinstance(value, bool):
+                    value = int(value)
+                row.append(value if value is not None else '')
+            dataset.append(row)
+
+        if format_type == 'xlsx':
+            data = XLSX().export_data(dataset)
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'mediumofeducation.xlsx'
+        else:
+            data = CSV().export_data(dataset)
+            content_type = 'text/csv; charset=utf-8'
+            file_name = 'mediumofeducation.csv'
+
+        response = HttpResponse(data, content_type=content_type)
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        return response
+
+
+class MediumofEducationImportAPIView(APIView):
+    def post(self, request):
+        file = request.FILES.get('file')
+        sheet_name = request.data.get('sheet_name')
+
+        if not file:
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+
+        format_type = file.name.split('.')[-1].lower()
+        duplicate_names = []
+        allowed_headers = {'name', 'perticulars'}
+
+        try:
+            data = []
+
+            # XLSX Handling
+            if format_type == 'xlsx':
+                import openpyxl
+                wb = openpyxl.load_workbook(file, read_only=True)
+                sheets = wb.sheetnames
+
+                if not sheet_name:
+                    return Response({
+                        'error': 'Please provide sheet_name',
+                        'available_sheets': sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                if sheet_name not in sheets:
+                    return Response({
+                        'error': f'Sheet "{sheet_name}" not found',
+                        'available_sheets': sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                ws = wb[sheet_name]
+                headers = [cell.value.strip().lower() for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if set(headers) != allowed_headers:
+                    return Response({
+                        "statusCode": 400,
+                        "status": True,
+                        'message': f'Invalid headers. Expected: {allowed_headers}, Found: {set(headers)}'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    data.append(dict(zip(headers, row)))
+
+            # CSV Handling
+            elif format_type == 'csv':
+                from tablib import Dataset
+                decoded_file = file.read().decode('utf-8')
+                dataset = Dataset()
+                dataset.load(decoded_file, format='csv')
+                for row in dataset.dict:
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if set(row_lower.keys()) != allowed_headers:
+                        return Response({
+                            "statusCode": 400,
+                            "status": True,
+                            "message": f"Invalid headers. Expected: {allowed_headers}, Found: {set(row_lower.keys())}"
+                        }, status=status.HTTP_400_BAD_REQUEST)
+                    data.append(row_lower)
+            else:
+                return Response({
+                    "statusCode": 400,
+                    "status": True,
+                    'error': 'Unsupported file format. Use .xlsx or .csv'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Process rows
+            for row in data:
+                name = str(row.get('name')).strip() if row.get('name') else None
+                perticulars = str(row.get('perticulars')).strip() if row.get('perticulars') else ''
+
+                if not name:
+                    continue
+
+                existing = MediumofEducation.objects.filter(name__iexact=name).first()
+                if existing:
+                    if existing.is_deleted:
+                        existing.Perticulars = perticulars
+                        existing.is_deleted = False
+                        existing.save()
+                    else:
+                        duplicate_names.append(name)
+                        continue
+                else:
+                    MediumofEducation.objects.create(name=name, Perticulars=perticulars, is_deleted=False)
+
+        except Exception as e:
+            return Response({
+                "statusCode": 400,
+                "status": True,
+                "message": str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "duplicates": list(set(duplicate_names)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
+        }, status=status.HTTP_200_OK)

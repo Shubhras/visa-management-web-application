@@ -119,16 +119,59 @@ class LanguageUpdateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
+
 class LanguageDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
-    def delete(self, request):
-        uuids = request.data.get('id', [])
+    def delete(self, request, uuid=None):
+        uuids = request.data.get('id', None)
+
+        # --- Single delete via URL parameter ---
+        if uuid:
+            try:
+                lang = Language.objects.get(uuid=uuid, is_deleted=False)
+                lang.is_deleted = True
+                lang.save()
+                return Response({
+                    "statusCode": 204,
+                    "status": True,
+                    "message": "Language deleted successfully",
+                    "data": None
+                }, status=status.HTTP_204_NO_CONTENT)
+            except Language.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "Language not found",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+
+        # --- Delete all if 'all' is passed ---
+        if uuids == "all":
+            langs = Language.objects.filter(is_deleted=False)
+            count = langs.count()
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No Language records found to delete.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+            langs.update(is_deleted=True)
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"All {count} Language record(s) deleted successfully.",
+                "data": None
+            }, status=status.HTTP_200_OK)
+
+        # --- Validate UUID list ---
         if not uuids or not isinstance(uuids, list):
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Please provide a list of UUIDs in 'id'."
+                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+                "data": None
             }, status=status.HTTP_400_BAD_REQUEST)
 
         valid_uuids = []
@@ -139,26 +182,53 @@ class LanguageDeleteAPIView(APIView):
             except ValueError:
                 invalid_uuids.append(u)
 
-        objs = Language.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = objs.count()
-        objs.update(is_deleted=True)
+        if not valid_uuids:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "No valid UUIDs provided.",
+                "data": {"invalid_uuids": invalid_uuids}
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # --- Bulk delete ---
+        langs = Language.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+        count = langs.count()
+
+        if count == 0:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "No matching Language records found.",
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        langs.update(is_deleted=True)
 
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f"{count} Language(s) deleted successfully",
-            "invalid_uuids": invalid_uuids
-        })
+            "message": f"{count} Language record(s) deleted successfully.",
+            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+        }, status=status.HTTP_200_OK)
 
 
-# -------------------- LIST -------------------- #
 class LanguageListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        queryset = Language.objects.filter(is_deleted=False)
+        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
 
+        allowed_sort_fields = ['name', 'description', 'created_at']
+        if sort_by not in allowed_sort_fields:
+            sort_by = 'created_at'
+
+        # Apply descending order for 'desc'
+        if sort_order == 'desc':
+            sort_by = f'-{sort_by}'
+
+        queryset = Language.objects.filter(is_deleted=False)  
         if search:
             queryset = queryset.filter(
                 Q(name__icontains=search) |
@@ -170,6 +240,8 @@ class LanguageListAPIView(APIView):
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = LanguageSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
+
+
 
 
 class LanguageExportAPIView(APIView):
@@ -295,6 +367,9 @@ class LanguageImportAPIView(APIView):
         })
 
 
+
+
+#--------------------language Test-------------------
 
 class LanguageTestListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -824,8 +899,15 @@ class CLBLevelExportAPIView(APIView):
         fields = request.GET.get('fields')
         uuids_param = request.GET.get('uuids', '')
         uuids = [u.strip() for u in uuids_param.split(',') if u]
-        field_list = [f.strip() for f in fields.split(',')] if fields else ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
-        queryset = CLBLevel.objects.filter(uuid__in=uuids) if uuids else CLBLevel.objects.all()
+        if fields:
+            field_list = [f.strip() for f in fields.split(',')]
+        else:
+            field_list = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+
+        queryset = CLBLevel.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+
 
         dataset = Dataset()
         dataset.headers = field_list

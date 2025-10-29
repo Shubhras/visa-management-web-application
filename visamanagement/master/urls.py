@@ -285,18 +285,20 @@ urlpatterns = [
     path('educationlevel/export/', EducationLevelCodeExportAPIView.as_view(), name='educationlevel-export'),
     path('educationlevel/import/', EducationLevelCodeImportAPIView.as_view(), name='educationlevel-import'),
 
-    
+    path('mediumeducation/',MediumofEducationListAPIView.as_view(), name='educationlevel-list'),
     path('mediumeducation/create/', MediumofEducationCreateAPIView.as_view(), name='mediumeducation-create'),
     path('mediumeducation/<uuid:uuid>/', MediumofEducationRetrieveAPIView.as_view(), name='mediumeducation-retrieve'),
     path('mediumeducation/update/<uuid:uuid>/', MediumofEducationUpdateAPIView.as_view(), name='mediumeducation-update'),
     path('mediumeducation/delete/', MediumofEducationDeleteAPIView.as_view(), name='mediumeducation-delete'),
+    path('mediumeducation/export/', MediumofEducationExportAPIView.as_view(), name='educationlevel-export'),
+    path('mediumeducation/import/',MediumofEducationImportAPIView.as_view(), name='educationlevel-import'),
 
 
     path('language/create/', LanguageCreateAPIView.as_view(), name='language-create'),
     path('language/<uuid:uuid>/', LanguageRetrieveAPIView.as_view(), name='language-retrieve'),
     path('language/update/<uuid:uuid>/', LanguageUpdateAPIView.as_view(), name='language-update'),
     path('language/delete/', LanguageDeleteAPIView.as_view(), name='language-delete'),
-    path('language/list/', LanguageListAPIView.as_view(), name='language-list'),
+    path('language/', LanguageListAPIView.as_view(), name='language-list'),
     path('language/export/', LanguageExportAPIView.as_view(), name='language-export'),
     path('language/import/', LanguageImportAPIView.as_view(), name='language-import'),
 
