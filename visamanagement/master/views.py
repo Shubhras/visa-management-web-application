@@ -3260,7 +3260,7 @@ class CompanyTypeImportAPIView(APIView):
 
             # ---------- Process Each Row ----------
             for row in data:
-                name = str(row.get('name')).strip() if row.get('name') else None
+                name = str(row.get('companytype')).strip() if row.get('companytype') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not name:
