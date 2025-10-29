@@ -3769,7 +3769,7 @@ class StakeholderCategoryExportAPIView(APIView):
             for field in field_list:
                 value = getattr(dept, field, '')  # get attribute dynamically
                 # Format datetime fields
-                if isinstance(value, datetime.datetime):
+                if isinstance(value, datetime):
                     value = value.strftime("%Y-%m-%d %H:%M:%S")
                 # Convert boolean to int
                 if isinstance(value, bool):
@@ -3789,6 +3789,8 @@ class StakeholderCategoryExportAPIView(APIView):
         response = HttpResponse(data, content_type=content_type)
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
+
+
 
 class StakeholderCategoryImportAPIView(APIView):
     """
