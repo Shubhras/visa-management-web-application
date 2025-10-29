@@ -99,6 +99,49 @@ const AddImportDepartmentModal = ({ show, handleClose }) => {
         }));
     };
 
+
+//     const ExportToExcel = () => {
+//   const [loading, setLoading] = useState(false);
+
+//   // Sample data - replace with your actual data
+//   const data = [
+//     { id: 1, name: 'John Doe', email: 'john@example.com', department: 'IT' },
+//     { id: 2, name: 'Jane Smith', email: 'jane@example.com', department: 'HR' },
+//     { id: 3, name: 'Bob Johnson', email: 'bob@example.com', department: 'Finance' }
+//   ];
+
+  const handleExportToExcel = () => {
+     const data = [
+    { id: 1, name: 'John Doe', email: 'john@example.com', department: 'IT' },
+    { id: 2, name: 'Jane Smith', email: 'jane@example.com', department: 'HR' },
+    { id: 3, name: 'Bob Johnson', email: 'bob@example.com', department: 'Finance' }
+  ];
+    try {
+      setLoading(true);
+
+      // Create a new workbook
+      const workbook = XLSX.utils.book_new();
+
+      // Convert data to worksheet
+      const worksheet = XLSX.utils.json_to_sheet(data);
+
+      // Add worksheet to workbook
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Departments');
+
+      // Generate filename with current date
+      const fileName = `departments_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+      // Write and download the file
+      XLSX.writeFile(workbook, fileName);
+
+      toast.success('Export successful');
+      setLoading(false);
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Export failed');
+      setLoading(false);
+    }
+  };
     // Handle modal close
     const onClose = () => {
         setFile(null);
