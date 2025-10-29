@@ -78,7 +78,7 @@ export async function get(url, config = {}) {
 
 export async function getExportData(url, config = {}) {
   return await axiosApi
-    .get(url, { ...config })
+    .get(url,{ responseType: 'blob'}, { ...config })
     .then((response) => response);
 }
 

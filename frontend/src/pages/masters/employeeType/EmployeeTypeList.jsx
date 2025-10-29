@@ -34,8 +34,8 @@ const EmployeeTypeList = () => {
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
 
-  const [items, setItems] = useState(["name", "description", "created_at"]);
-  const [selectedItems, setSelectedItems] = useState([...items]);
+  const [items] = useState(["Employee Type", "Description", "Created On"]);
+  const [selectedItems, setSelectedItems] = useState([]);
 
   // Updated state with sorting
   const [tableState, setTableState] = useState({
@@ -263,7 +263,7 @@ const EmployeeTypeList = () => {
     setShowDeleteConfirm(true);
   };
   const confirmDelete = () => {
-     //const sendPayload = "all"//deleteId ? [deleteId] : selectedRows;
+    //const sendPayload = "all"//deleteId ? [deleteId] : selectedRows;
 
     const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
     if (!sendPayload || sendPayload.length === 0) {
@@ -316,20 +316,16 @@ const EmployeeTypeList = () => {
     setShowExportPopop(false);
 
   };
-
   const handleDragStart = (e, index) => {
     e.dataTransfer.setData("dragIndex", index);
   };
 
   const handleDrop = (e, dropIndex) => {
-    const dragIndex = e.dataTransfer.getData("dragIndex");
-    const newItems = [...items];
-    const draggedItem = newItems.splice(dragIndex, 1)[0];
-    newItems.splice(dropIndex, 0, draggedItem);
-    setItems(newItems);
-
-    // Also reorder selectedItems to match
-    const newSelected = newItems.filter((item) => selectedItems.includes(item));
+    e.preventDefault();
+    const dragIndex = parseInt(e.dataTransfer.getData("dragIndex"));
+    const newSelected = [...selectedItems];
+    const draggedItem = newSelected.splice(dragIndex, 1)[0];
+    newSelected.splice(dropIndex, 0, draggedItem);
     setSelectedItems(newSelected);
   };
 
@@ -339,40 +335,31 @@ const EmployeeTypeList = () => {
 
   const handleCheckboxChange = (item, checked) => {
     if (checked) {
-      // Find the index of the item in the full items list
-      const indexInItems = items.indexOf(item);
-
-      // Insert it into selectedItems at the correct position
-      const newSelected = [...selectedItems];
-      // Find the first item in selectedItems that comes after this item
-      const insertIndex = newSelected.findIndex(
-        (i) => items.indexOf(i) > indexInItems
-      );
-      if (insertIndex === -1) {
-        newSelected.push(item); // If no item after, add at end
-      } else {
-        newSelected.splice(insertIndex, 0, item); // Insert at correct position
-      }
-      setSelectedItems(newSelected);
+      setSelectedItems([...selectedItems, item]);
     } else {
-      // Remove unchecked item
       setSelectedItems(selectedItems.filter((i) => i !== item));
     }
-  }
-
-
+  };
 
   const handleExport = () => {
     if (selectedItems.length == 0) {
       toast.error("Please select at least one field");
       return
     }
-    const fieldsString = selectedItems.join(',');
+    // Map frontend labels to backend field names
+    const fieldMapping = {
+      "Employee Type": "name",
+      "Created On": "created_at",
+      "Description": "description",
+    };
+    // Convert selectedItems to backend field names
+    const mappedFields = selectedItems.map((item) => fieldMapping[item] || item);
+    // Convert to comma-separated string
+    const fieldsString = mappedFields.join(",");
     const sendPayload = {
-       // file: "csv",
       file: "xlsx",
       fields: fieldsString,
-      uuids: selectedRows
+      uuids: selectedRows, // your selected department IDs
     };
 
     setLoadingExport(true);
@@ -383,22 +370,41 @@ const EmployeeTypeList = () => {
         toast.error(error?.response?.message || "server error");
       } else {
         setLoadingExport(false);
-        if (response?.status === 200) {
-          // Create a Blob from the CSV data
-          const blob = new Blob([response.data], { type: 'text/csv' });
+        // if (response?.status === 200) {
+        //   // Create a Blob from the CSV data
+        //   const blob = new Blob([response.data], { type: 'text/csv' });
 
-          // Create a temporary download link
+        //   // Create a temporary download link
+        //   const url = window.URL.createObjectURL(blob);
+        //   const link = document.createElement('a');
+        //   link.href = url;
+        //   link.download = `employeeTypeistData_${new Date().toISOString().split('T')[0]}.csv`;
+
+        //   // Trigger download
+        //   document.body.appendChild(link);
+        //   link.click();
+
+        //   // Cleanup
+        //   document.body.removeChild(link);
+        //   window.URL.revokeObjectURL(url);
+
+        //   toast.success("Export successful");
+        //   cancelExportTest();
+        // } else {
+        //   toast.error("Something went wrong.");
+        // }
+        if (response?.status === 200) {
+          const blob = new Blob([response.data], {
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          });
+
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `employeeTypeistData_${new Date().toISOString().split('T')[0]}.csv`;
-
-          // Trigger download
+          link.download = `employeeType_${new Date().toISOString().split('T')[0]}.xlsx`;
           document.body.appendChild(link);
           link.click();
-
-          // Cleanup
-          document.body.removeChild(link);
+          link.remove();
           window.URL.revokeObjectURL(url);
 
           toast.success("Export successful");
@@ -431,7 +437,7 @@ const EmployeeTypeList = () => {
 
     return `${day}-${month}-${year} ${hours}:${minutes}:${seconds} ${ampm}`
   };
- 
+
 
   return (
     <>
@@ -439,83 +445,74 @@ const EmployeeTypeList = () => {
         <Breadcrumb title="Employeet Type" subTitle="List" />
         <div className="card basic-data-table main-container-data">
           <div className="card-body container-data">
-            <div className="card-body container-data">
-              <div className="row align-items-center gy-3 gx-2 flex-wrap">
-                {/* Left Section: Import / Export / Delete */}
-                <div className="col-xl-4 col-lg-4 col-md-12">
-                  <div className="d-flex flex-wrap align-items-center gap-2">
-                    <button
-                      className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
-                      onClick={handleShowImport}
-                    >
-                      Import
-                    </button>
-
-                    <button
-                      className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
-                      onClick={handleExportTest}
-                      disabled={loadingExport}
-                    >
-                      Export
-                    </button>
+            <div className="row align-items-center gy-3 gx-2 flex-wrap filter-action-btn">
+              {/* Left Section: Import / Export / Delete */}
+              <div className="col-xl-4 col-lg-4 col-md-12">
+                <div className="d-flex flex-wrap align-items-center gap-2">
+                  <button
+                    className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
+                    onClick={handleShowImport}
+                  >
+                    Import
+                  </button>
+                  <button
+                    className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
+                    onClick={handleExportTest}
+                    disabled={loadingExport}
+                  >
+                    Export
+                  </button>
+                  {selectedRows.length == 0 && (
                     <button
                       onClick={handleSelectAllButton}
                       className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
                     >
-                      {isAllSelected ? 'Deselect All' : 'Select All'}
+                      Delete All
                     </button>
-                    {selectedRows.length > 0 && (
-                      <button
-                        onClick={handleBulkDelete}
-                        className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
-                      >
-                        {isAllSelected
-                          ? `Delete All`
-                          : `Delete Selected (${selectedRows.length})`}
-                      </button>
-                    )}
-
-                  </div>
-                </div>
-
-                {/* Right Section: Select / Search / +Add New */}
-                <div className="col-xl-8 col-lg-8 col-md-12">
-                  <div className="d-flex flex-wrap align-items-center justify-content-end gap-2">
-                    <select
-                      className="form-select form-select-sm"
-                      style={{ width: 'auto', minWidth: '100px' }}
-                      value={tableState.limit}
-                      onChange={(e) => handlePageLengthChange(e.target.value)}
-                    >
-                      <option value={10}>Show 10</option>
-                      <option value={25}>Show 25</option>
-                      <option value={50}>Show 50</option>
-                      <option value={100}>Show 100</option>
-                    </select>
-
-                    <div className="position-relative flex-grow-1" style={{ minWidth: '180px', maxWidth: '300px' }}>
-                      <Icon
-                        icon="ion:search-outline"
-                        className="position-absolute"
-                        style={{ left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#999' }}
-                        width="18"
-                      />
-                      <input
-                        type="text"
-                        className="form-control form-control-sm ps-5"
-                        placeholder="Search..."
-                        value={tableState.search}
-                        onChange={(e) => handleSearchChange(e.target.value)}
-                      />
-                    </div>
-
+                  )}
+                  {selectedRows.length > 0 && (
                     <button
-                      className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
-                      onClick={handleShow}
+                      onClick={handleBulkDelete}
+                      className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
                     >
-                      + ADD New
+                      {isAllSelected
+                        ? `Delete All (${selectedRows.length})`
+                        : `Delete Selected (${selectedRows.length})`}
                     </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Right Section: Select / Search / +Add New */}
+              <div className="col-xl-8 col-lg-8 col-md-12">
+                <div className="d-flex flex-wrap align-items-center justify-content-end gap-2">
+                  <select
+                    className="form-select form-select-sm select-page-filter"
+                    value={tableState.limit}
+                    onChange={(e) => handlePageLengthChange(e.target.value)}
+                  >
+                    <option value={10}>Show 10</option>
+                    <option value={25}>Show 25</option>
+                    <option value={50}>Show 50</option>
+                    <option value={100}>Show 100</option>
+                  </select>
+                  <div className="position-relative flex-grow-1 search-filter-div">
+                    <Icon
+                      icon="ion:search-outline"
+                      className="position-absolute search-filter-icone"
+                    />
+                    <input
+                      type="text"
+                      className="form-control form-control-sm ps-5 search-filter-input"
+                      placeholder="Search..."
+                      value={tableState.search}
+                      onChange={(e) => handleSearchChange(e.target.value)}
+                    />
                   </div>
+                  <button
+                    className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
+                    onClick={handleShow}
+                  >+ New</button>
                 </div>
               </div>
             </div>
@@ -540,7 +537,7 @@ const EmployeeTypeList = () => {
                     </th>
                     <th scope="col" className='sorting-th' onClick={() => handleSort('name')}>
                       <div className="d-flex align-items-center">
-                        Name
+                        Employee Type
                         {getSortIcon('name')}
                       </div>
                     </th>
@@ -552,7 +549,7 @@ const EmployeeTypeList = () => {
                     </th>
                     <th scope="col" className='sorting-th' onClick={() => handleSort('created_at')}>
                       <div className="d-flex align-items-center">
-                       Created On
+                        Created On
                         {getSortIcon('created_at')}
                       </div>
                     </th>
@@ -785,7 +782,7 @@ const EmployeeTypeList = () => {
             tabIndex={-1}
             role="dialog"
           >
-            <div className="modal-dialog modal-lg modal-dialog-centered " role="document">
+            <div className="modal-dialog modal-xl modal-dialog-centered" role="document">
               <div className="modal-content radius-16 bg-base">
                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
                   <h1 className="modal-title fs-5">Export Employee Type</h1>
@@ -798,53 +795,80 @@ const EmployeeTypeList = () => {
                 </div>
                 <div className="modal-body p-24">
                   <div className="row">
-                    <div className="col-12 mb-20">
-                      {items.map((item, index) => (
-                        <div
-                          key={index}
-                          draggable
-                          onDragStart={(e) => handleDragStart(e, index)}
-                          onDrop={(e) => handleDrop(e, index)}
-                          onDragOver={handleDragOver}
-                          className="border p-2 mb-10 radius-8 d-flex align-items-center justify-content-start gap-2  cursor-pointer export-file"
-                          style={{
-                            cursor: "grab",
-                            margin: "10px !important",
-                            height: "40px"
-                          }}
-                        >
-                          <input
-                            type="checkbox"
-                            id={`item-${index}`}
-                            checked={selectedItems.includes(item)}
-                            onChange={(e) =>
-                              handleCheckboxChange(item, e.target.checked)
-                            }
-                            className="form-check-input"
-                            style={{ marginLeft: "5px" }}
-                          />
-                          <label htmlFor={`item-${index}`} className="mb-0">
-                            {item}
-                          </label>
-                        </div>
-                      ))}
+                    <div className="col-12 col-md-6">
+                      <h3 className="text-sm font-semibold mb-3 text-gray-700">Available fields</h3>
+                      <div className="border rounded-lg p-3 bg-gray-50 export-file-left" >
+                        {items.map((item, index) => (
+                          <div
+                            key={index}
+                            className="bg-white border rounded p-2 mb-2 d-flex align-items-center gap-2 export-file"
+                          >
+                            <input
+                              type="checkbox"
+                              id={`item-${index}`}
+                              checked={selectedItems.includes(item)}
+                              onChange={(e) => handleCheckboxChange(item, e.target.checked)}
+                              className="form-check-input"
+                            />
+                            <label htmlFor={`item-${index}`} className="mb-0 flex-grow-1" >
+                              {item}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-
-                    <div className="d-flex align-items-center justify-content-center gap-3 mt-24">
-                      <button
-                        type="button"
-                        onClick={cancelExportTest}
-                        className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-40 py-6 radius-8"
-                      >
-                        Cancel
-                      </button>
-                      <button onClick={handleExport}
-                        type="button"
-                        className="btn comman-btn-color border border-primary-600 text-md px-40 py-6 radius-8"
-                      >
-                        Submit
-                      </button>
+                    <div className="col-12 col-md-6">
+                      <h3 className="text-sm font-semibold mb-3 text-gray-700">
+                        Selected fields ({selectedItems.length})
+                      </h3>
+                      <div className="border rounded-lg p-3 bg-blue-50 export-file-righit" >
+                        {selectedItems.length === 0 ? (
+                          <div className="text-center text-muted py-5">
+                            No fields selected
+                          </div>
+                        ) : (
+                          selectedItems.map((item, index) => (
+                            <div
+                              key={index}
+                              draggable
+                              onDragStart={(e) => handleDragStart(e, index)}
+                              onDrop={(e) => handleDrop(e, index)}
+                              onDragOver={handleDragOver}
+                              className="bg-white border border-primary rounded p-2 mb-2 d-flex align-items-center gap-2 export-file"
+                              style={{ cursor: 'grab' }}
+                            >
+                              <span className="text-muted move-drop-icone">☰</span>
+                              <span className="flex-grow-1">{item}</span>
+                              <button
+                                onClick={() => handleCheckboxChange(item, false)}
+                                className="btn btn-sm btn-link text-danger p-0 close-icone"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                      <small className="text-muted mt-2 d-block">
+                        💡 Drag items to reorder the export fields
+                      </small>
                     </div>
+                  </div>
+                  <div className="d-flex align-items-center justify-content-center gap-3 mt-24">
+                    <button
+                      type="button"
+                      onClick={cancelExportTest}
+                      className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-40 py-6 radius-8"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleExport}
+                      type="button"
+                      className="btn comman-btn-color border border-primary-600 text-md px-40 py-6 radius-8"
+                    >
+                      Submit
+                    </button>
                   </div>
                 </div>
               </div>

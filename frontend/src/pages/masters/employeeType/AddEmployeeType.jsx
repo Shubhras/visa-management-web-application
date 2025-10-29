@@ -112,7 +112,7 @@ const AddEmployeeType = ({ show, handleClose }) => {
           <div className="modal-content radius-16 bg-base">
             <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
               <h1 className="modal-title fs-5" id="employeeModalLabel">
-                Add New Employee Type
+                Add Employee Type
               </h1>
               <button
                 type="button"
@@ -128,7 +128,7 @@ const AddEmployeeType = ({ show, handleClose }) => {
                   {/*  Name */}
                   <div className="col-12 mb-20">
                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                      Name <span className="text-danger">*</span>
+                      Employee type <span className="text-danger">*</span>
                     </label>
                     <input
                       type="text"
@@ -136,7 +136,7 @@ const AddEmployeeType = ({ show, handleClose }) => {
                       value={formData.departmentName}
                       onChange={handleChange}
                       className={`form-control radius-8 ${errors.departmentName ? 'is-invalid' : ''}`}
-                      placeholder="Enter name"
+                      placeholder="Enter employee type"
                     />
                     {errors.departmentName && (
                       <div className="text-danger text-sm mt-1">
