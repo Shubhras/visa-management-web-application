@@ -2436,7 +2436,13 @@ class DepartmentImportAPIView(APIView):
                         return Response({
                             "statusCode": 400,
                             "status": True,
-                            'message': f'Invalid headers in CSV. Expected: {allowed_headers}, Found: {set(row_lower.keys())}'
+                            "message": (
+    f'The uploaded file contains invalid column headers. '
+    f'Only the following headers are allowed: {", ".join(allowed_headers)}. '
+    f'Found headers in the file: {", ".join(row_lower.keys())}. '
+    'Please correct the headers and try again.'
+)
+
                         }, status=status.HTTP_400_BAD_REQUEST)
                     data.append(row_lower)
 
@@ -2512,7 +2518,7 @@ class EmployeeTypeListAPIView(APIView):
                 Q(description__icontains=search)
             )
 
-        queryset = queryset.order_by('-created_at')
+        queryset = queryset.order_by(sort_by)
 
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
@@ -2712,11 +2718,10 @@ class EmployeeTypeExportAPIView(APIView):
             field_list = [f.strip() for f in fields.split(',')]
         else:
             field_list = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
-
+        
+        queryset = EmployeeType.objects.filter(is_deleted=False)
         if uuids:
-            queryset = EmployeeType.objects.filter(uuid__in=uuids)
-        else:
-            queryset = EmployeeType.objects.all()
+            queryset = queryset.filter(uuid__in=uuids)
         
         dataset = Dataset()
         dataset.headers = field_list
@@ -2759,7 +2764,11 @@ class EmployeeTypeImportAPIView(APIView):
         dataset = Dataset()
         duplicate_names = []
 
+        allowed_headers = {'name', 'description'}
+
         try:
+            data = []
+            headers = []
             # ---------- XLSX Handling ----------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
@@ -2779,13 +2788,41 @@ class EmployeeTypeImportAPIView(APIView):
 
                 ws = wb[sheet_name]
                 headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                data = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True)]
 
+                if set(headers) != allowed_headers:
+                    return Response({
+                        "statusCode": 400,
+                        "status": True,
+                        'message': f'Invalid headers in sheet. Expected: {allowed_headers}, Found: {set(headers)}'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    row_dict = dict(zip(headers, row))
+                    data.append(row_dict)
+                
             # ---------- CSV Handling ----------
             elif format_type == 'csv':
-                dataset.load(file.read().decode('utf-8'), format='csv')
-                data = dataset.dict
+                decoded_file = file.read().decode('utf-8')
+                dataset = Dataset()
+                dataset.load(decoded_file, format='csv')
 
+                for row in dataset.dict:
+                    # Normalize headers to lowercase
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if set(row_lower.keys()) != allowed_headers:
+                        return Response({
+                            "statusCode": 400,
+                            "status": True,
+                            "message": (
+    f'The uploaded file contains invalid column headers. '
+    f'Only the following headers are allowed: {", ".join(allowed_headers)}. '
+    f'Found headers in the file: {", ".join(row_lower.keys())}. '
+    'Please correct the headers and try again.'
+)
+
+                        }, status=status.HTTP_400_BAD_REQUEST)
+                    data.append(row_lower)
+                    
             else:
                 return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -2795,22 +2832,22 @@ class EmployeeTypeImportAPIView(APIView):
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not name:
-                    continue  # skip empty names
+                    continue  
 
                 existing = EmployeeType.objects.filter(name__iexact=name).first()
 
                 if existing:
                     if existing.is_deleted:
-                        # Reactivate soft-deleted employee type
+                       
                         existing.description = description
                         existing.is_deleted = False
                         existing.save()
                     else:
-                        # Already active — track as duplicate
+                        
                         duplicate_names.append(name)
                         continue
                 else:
-                    # No record exists — create new
+                    
                     EmployeeType.objects.create(
                         name=name,
                         description=description,
@@ -2852,7 +2889,7 @@ class CompanyTypeListAPIView(APIView):
                 Q(description__icontains=search)
             )
 
-        queryset = queryset.order_by('-created_at')
+        queryset = queryset.order_by(sort_by)
 
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
@@ -3048,10 +3085,10 @@ class CompanyTypeExportAPIView(APIView):
         else:
             field_list = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
 
+        
+        queryset = CompanyType.objects.filter(is_deleted=False)
         if uuids:
-            queryset = CompanyType.objects.filter(uuid__in=uuids)
-        else:
-            queryset = CompanyType.objects.all()
+            queryset = queryset.filter(uuid__in=uuids)
 
         dataset = Dataset()
         dataset.headers = field_list
@@ -3095,8 +3132,12 @@ class CompanyTypeImportAPIView(APIView):
         format_type = file.name.split('.')[-1].lower()
         dataset = Dataset()
         duplicate_names = []
-
+        
+        allowed_headers = {'name', 'description'}
+        
         try:
+            data = []
+            headers = []
             # ---------- XLSX Handling ----------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
@@ -3115,16 +3156,47 @@ class CompanyTypeImportAPIView(APIView):
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 ws = wb[sheet_name]
-                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                data = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True)]
+                headers = [cell.value.strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+
+                if set(headers) != allowed_headers:
+                    return Response({
+                        "statusCode": 400,
+                        "status": True,
+                        'message': f'Invalid headers in sheet. Expected: {allowed_headers}, Found: {set(headers)}'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    row_dict = dict(zip(headers, row))
+                    data.append(row_dict)
 
             # ---------- CSV Handling ----------
             elif format_type == 'csv':
-                dataset.load(file.read().decode('utf-8'), format='csv')
-                data = dataset.dict
+                decoded_file = file.read().decode('utf-8')
+                dataset = Dataset()
+                dataset.load(decoded_file, format='csv')
+
+                for row in dataset.dict:
+                    # Normalize headers to lowercase
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if set(row_lower.keys()) != allowed_headers:
+                        return Response({
+                            "statusCode": 400,
+                            "status": True,
+                            "message": (
+    f'The uploaded file contains invalid column headers. '
+    f'Only the following headers are allowed: {", ".join(allowed_headers)}. '
+    f'Found headers in the file: {", ".join(row_lower.keys())}. '
+    'Please correct the headers and try again.'
+)
+
+                        }, status=status.HTTP_400_BAD_REQUEST)
+                    data.append(row_lower)
 
             else:
-                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({
+                    "statusCode": 400,
+                    "status": True,
+                    'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
 
             # ---------- Process Each Row ----------
             for row in data:
@@ -3190,7 +3262,7 @@ class OwnershipTypeListAPIView(APIView):
                 Q(description__icontains=search)
             )
 
-        queryset = queryset.order_by('-created_at')
+        queryset = queryset.order_by(sort_by)
 
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
@@ -3472,7 +3544,7 @@ class StakeholderCategoryListAPIView(APIView):
                 Q(description__icontains=search)
             )
 
-        queryset = queryset.order_by('-created_at')
+        queryset = queryset.order_by(sort_by)
 
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
@@ -3594,27 +3666,45 @@ class StakeholderCategoryExportAPIView(APIView):
 
     def get(self, request):
         format_type = request.GET.get('format', 'csv').lower()
-        dataset = Dataset()
-        dataset.headers = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+        fields = request.GET.get('fields')  
+        uuids_param = request.GET.get('uuids', '')
 
-        for dept in StakeholderCategory.objects.all():
-            dataset.append([
-                str(dept.uuid),
-                dept.name or '',  # Handle potential None
-                dept.description or '',
-                int(dept.is_deleted),
-                dept.created_at.strftime("%Y-%m-%d %H:%M:%S") if dept.created_at else '',
-                dept.updated_at.strftime("%Y-%m-%d %H:%M:%S") if dept.updated_at else ''
-            ])
+        uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+        # Default fields if none provided
+        if fields:
+            field_list = [f.strip() for f in fields.split(',')]
+        else:
+            field_list = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+
+        queryset = StakeholderCategory.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+
+        dataset = Dataset()
+        dataset.headers = field_list
+
+        for dept in queryset:
+            row = []
+            for field in field_list:
+                value = getattr(dept, field, '')  # get attribute dynamically
+                # Format datetime fields
+                if isinstance(value, datetime.datetime):
+                    value = value.strftime("%Y-%m-%d %H:%M:%S")
+                # Convert boolean to int
+                if isinstance(value, bool):
+                    value = int(value)
+                row.append(value if value is not None else '')
+            dataset.append(row)
 
         if format_type == 'xlsx':
-            data = XLSX().export_data(dataset)  # Returns bytes
+            data = XLSX().export_data(dataset)
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'departments.xlsx'
+            file_name = 'StakeholderCategory.xlsx'
         else:
-            data = CSV().export_data(dataset)  # Returns bytes (ensure UTF-8)
+            data = CSV().export_data(dataset)
             content_type = 'text/csv; charset=utf-8'
-            file_name = 'departments.csv'
+            file_name = 'StakeholderCategory.csv'
 
         response = HttpResponse(data, content_type=content_type)
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
@@ -3632,8 +3722,12 @@ class StakeholderCategoryImportAPIView(APIView):
         format_type = file.name.split('.')[-1].lower()
         dataset = Dataset()
         duplicate_names = []
+        allowed_headers = {'name', 'description'}
+
 
         try:
+            data = []
+            headers = []
             # ---------- XLSX Handling ----------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
@@ -3652,16 +3746,47 @@ class StakeholderCategoryImportAPIView(APIView):
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 ws = wb[sheet_name]
-                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                data = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True)]
+                headers = [cell.value.strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
 
+                # Validate headers
+                if set(headers) != allowed_headers:
+                    return Response({
+                        "statusCode": 400,
+                        "status": True,
+                        'message': f'Invalid headers in sheet. Expected: {allowed_headers}, Found: {set(headers)}'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    row_dict = dict(zip(headers, row))
+                    data.append(row_dict)
             # ---------- CSV Handling ----------
             elif format_type == 'csv':
-                dataset.load(file.read().decode('utf-8'), format='csv')
-                data = dataset.dict
+                decoded_file = file.read().decode('utf-8')
+                dataset = Dataset()
+                dataset.load(decoded_file, format='csv')
+
+                for row in dataset.dict:
+                    # Normalize headers to lowercase
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if set(row_lower.keys()) != allowed_headers:
+                        return Response({
+                            "statusCode": 400,
+                            "status": True,
+                            "message": (
+    f'The uploaded file contains invalid column headers. '
+    f'Only the following headers are allowed: {", ".join(allowed_headers)}. '
+    f'Found headers in the file: {", ".join(row_lower.keys())}. '
+    'Please correct the headers and try again.'
+)
+
+                        }, status=status.HTTP_400_BAD_REQUEST)
+                    data.append(row_lower)
 
             else:
-                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({
+                    "statusCode": 400,
+                    "status": True,
+                    'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
 
             # ---------- Process Each Row ----------
             for row in data:
@@ -3752,7 +3877,7 @@ class StakeholderTypeListAPIView(APIView):
                 Q(description__icontains=search)
             )
 
-        queryset = queryset.order_by('-created_at')
+        queryset = queryset.order_by(sort_by)
 
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
@@ -3915,7 +4040,7 @@ class AccreditationCategoryListAPIView(APIView):
                 Q(description__icontains=search)
             )
 
-        queryset = queryset.order_by('-created_at')
+        queryset = queryset.order_by(sort_by)
 
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
@@ -4060,25 +4185,43 @@ class AccreditationCategoryExportAPIView(APIView):
 
     def get(self, request):
         format_type = request.GET.get('format', 'csv').lower()
-        dataset = Dataset()
-        dataset.headers = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+        fields = request.GET.get('fields')  
+        uuids_param = request.GET.get('uuids', '')
 
-        for dept in StakeholderCategory.objects.all():
-            dataset.append([
-                str(dept.uuid),
-                dept.name or '',  # Handle potential None
-                dept.description or '',
-                int(dept.is_deleted),
-                dept.created_at.strftime("%Y-%m-%d %H:%M:%S") if dept.created_at else '',
-                dept.updated_at.strftime("%Y-%m-%d %H:%M:%S") if dept.updated_at else ''
-            ])
+        uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+        # Default fields if none provided
+        if fields:
+            field_list = [f.strip() for f in fields.split(',')]
+        else:
+            field_list = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+
+        queryset = AccreditationCategory.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+
+        dataset = Dataset()
+        dataset.headers = field_list
+
+        for dept in queryset:
+            row = []
+            for field in field_list:
+                value = getattr(dept, field, '')  # get attribute dynamically
+                # Format datetime fields
+                if isinstance(value, datetime.datetime):
+                    value = value.strftime("%Y-%m-%d %H:%M:%S")
+                # Convert boolean to int
+                if isinstance(value, bool):
+                    value = int(value)
+                row.append(value if value is not None else '')
+            dataset.append(row)
 
         if format_type == 'xlsx':
-            data = XLSX().export_data(dataset)  # Returns bytes
+            data = XLSX().export_data(dataset)
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'departments.xlsx'
         else:
-            data = CSV().export_data(dataset)  # Returns bytes (ensure UTF-8)
+            data = CSV().export_data(dataset)
             content_type = 'text/csv; charset=utf-8'
             file_name = 'departments.csv'
 
@@ -4180,7 +4323,7 @@ class AccreditationNameListAPIView(APIView):
                 Q(description__icontains=search)
             )
 
-        queryset = queryset.order_by('-created_at')
+        queryset = queryset.order_by(sort_by)
 
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
@@ -4354,7 +4497,7 @@ class BankAccountTypeListAPIView(APIView):
                 Q(description__icontains=search)
             )
 
-        queryset = queryset.order_by('-created_at')
+        queryset = queryset.order_by(sort_by)
 
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
@@ -4500,27 +4643,45 @@ class BankAccountTypeExportAPIView(APIView):
 
     def get(self, request):
         format_type = request.GET.get('format', 'csv').lower()
-        dataset = Dataset()
-        dataset.headers = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+        fields = request.GET.get('fields')  
+        uuids_param = request.GET.get('uuids', '')
 
-        for dept in BankAccountType.objects.all():
-            dataset.append([
-                str(dept.uuid),
-                dept.name or '',  # Handle potential None
-                dept.description or '',
-                int(dept.is_deleted),
-                dept.created_at.strftime("%Y-%m-%d %H:%M:%S") if dept.created_at else '',
-                dept.updated_at.strftime("%Y-%m-%d %H:%M:%S") if dept.updated_at else ''
-            ])
+        uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+        # Default fields if none provided
+        if fields:
+            field_list = [f.strip() for f in fields.split(',')]
+        else:
+            field_list = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+
+        queryset = BankAccountType.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+
+        dataset = Dataset()
+        dataset.headers = field_list
+
+        for dept in queryset:
+            row = []
+            for field in field_list:
+                value = getattr(dept, field, '')  # get attribute dynamically
+                # Format datetime fields
+                if isinstance(value, datetime.datetime):
+                    value = value.strftime("%Y-%m-%d %H:%M:%S")
+                # Convert boolean to int
+                if isinstance(value, bool):
+                    value = int(value)
+                row.append(value if value is not None else '')
+            dataset.append(row)
 
         if format_type == 'xlsx':
-            data = XLSX().export_data(dataset)  # Returns bytes
+            data = XLSX().export_data(dataset)
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'departments.xlsx'
+            file_name = 'BankAccount.xlsx'
         else:
-            data = CSV().export_data(dataset)  # Returns bytes (ensure UTF-8)
+            data = CSV().export_data(dataset)
             content_type = 'text/csv; charset=utf-8'
-            file_name = 'departments.csv'
+            file_name = 'BankAccount.csv'
 
         response = HttpResponse(data, content_type=content_type)
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
@@ -4617,7 +4778,7 @@ class LicenseNameListAPIView(APIView):
                 Q(description__icontains=search)
             )
 
-        queryset = queryset.order_by('-created_at')
+        queryset = queryset.order_by(sort_by)
 
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
@@ -4797,7 +4958,7 @@ class LeadSourceListAPIView(APIView):
                 Q(description__icontains=search)
             )
 
-        queryset = queryset.order_by('-created_at')
+        queryset = queryset.order_by(sort_by)
 
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
@@ -4963,10 +5124,9 @@ class LeadSourceExportAPIView(APIView):
             field_list = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
 
         # Filter queryset
+        queryset = LeadSource.objects.filter(is_deleted=False)
         if uuids:
-            queryset = LeadSource.objects.filter(uuid__in=uuids)
-        else:
-            queryset = LeadSource.objects.all()
+            queryset = queryset.filter(uuid__in=uuids)
 
         # Prepare dataset
         dataset = Dataset()
@@ -5078,6 +5238,10 @@ class LeadSourceImportAPIView(APIView):
             "duplicates": list(set(duplicate_names)),
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
         }, status=status.HTTP_200_OK)
+
+
+
+
 #-------------------------------------------InterestLevel---------------------------------
 
 
@@ -5130,7 +5294,7 @@ class InterestLevelListAPIView(APIView):
                 Q(description__icontains=search)
             )
 
-        queryset = queryset.order_by('-created_at')
+        queryset = queryset.order_by(sort_by)
 
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
@@ -5293,27 +5457,45 @@ class InterestLevelExportAPIView(APIView):
 
     def get(self, request):
         format_type = request.GET.get('format', 'csv').lower()
-        dataset = Dataset()
-        dataset.headers = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+        fields = request.GET.get('fields')  
+        uuids_param = request.GET.get('uuids', '')
 
-        for dept in InterestLevel.objects.all():
-            dataset.append([
-                str(dept.uuid),
-                dept.name or '',  # Handle potential None
-                dept.description or '',
-                int(dept.is_deleted),
-                dept.created_at.strftime("%Y-%m-%d %H:%M:%S") if dept.created_at else '',
-                dept.updated_at.strftime("%Y-%m-%d %H:%M:%S") if dept.updated_at else ''
-            ])
+        uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+        # Default fields if none provided
+        if fields:
+            field_list = [f.strip() for f in fields.split(',')]
+        else:
+            field_list = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+
+        queryset = InterestLevel.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+
+        dataset = Dataset()
+        dataset.headers = field_list
+
+        for dept in queryset:
+            row = []
+            for field in field_list:
+                value = getattr(dept, field, '')  # get attribute dynamically
+                # Format datetime fields
+                if isinstance(value, datetime.datetime):
+                    value = value.strftime("%Y-%m-%d %H:%M:%S")
+                # Convert boolean to int
+                if isinstance(value, bool):
+                    value = int(value)
+                row.append(value if value is not None else '')
+            dataset.append(row)
 
         if format_type == 'xlsx':
-            data = XLSX().export_data(dataset)  # Returns bytes
+            data = XLSX().export_data(dataset)
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'departments.xlsx'
+            file_name = 'InterestLevel.xlsx'
         else:
-            data = CSV().export_data(dataset)  # Returns bytes (ensure UTF-8)
+            data = CSV().export_data(dataset)
             content_type = 'text/csv; charset=utf-8'
-            file_name = 'departments.csv'
+            file_name = 'InterestLevel.csv'
 
         response = HttpResponse(data, content_type=content_type)
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
@@ -5428,7 +5610,6 @@ class PriorityCreateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
-
 class PriorityListAPIView(APIView):    
     def get(self, request):
         search = request.GET.get('search', '').strip()
@@ -5451,7 +5632,7 @@ class PriorityListAPIView(APIView):
                 Q(description__icontains=search)
             )
 
-        queryset = queryset.order_by('-created_at')
+        queryset = queryset.order_by(sort_by)
 
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
@@ -5478,7 +5659,6 @@ class PriorityRetrieveAPIView(APIView):
             "message": "Priority  retrieved successfully",
             "data": serializer.data
         }, status=status.HTTP_200_OK)
-
 
 class PriorityUpdateAPIView(APIView):
     def put(self, request, uuid):
@@ -5514,8 +5694,6 @@ class PriorityUpdateAPIView(APIView):
             "status": False,
             "message": serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
-
-
 
 class PriorityDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -5628,10 +5806,9 @@ class PriorityExportAPIView(APIView):
             field_list = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
 
         # Filter queryset
+        queryset = Priority.objects.filter(is_deleted=False)
         if uuids:
-            queryset = Priority.objects.filter(uuid__in=uuids)
-        else:
-            queryset = Priority.objects.all()
+            queryset = queryset.filter(uuid__in=uuids)
 
         # Prepare dataset
         dataset = Dataset()
@@ -5676,7 +5853,11 @@ class PriorityImportAPIView(APIView):
         dataset = Dataset()
         duplicate_names = []
 
+        allowed_headers = {'name', 'description'}
+
         try:
+            data = []
+            headers = []
             # ---------- XLSX Handling ----------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
@@ -5696,12 +5877,39 @@ class PriorityImportAPIView(APIView):
 
                 ws = wb[sheet_name]
                 headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                data = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True)]
+                if set(headers) != allowed_headers:
+                    return Response({
+                        "statusCode": 400,
+                        "status": True,
+                        'message': f'Invalid headers in sheet. Expected: {allowed_headers}, Found: {set(headers)}'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    row_dict = dict(zip(headers, row))
+                    data.append(row_dict)
 
             # ---------- CSV Handling ----------
             elif format_type == 'csv':
-                dataset.load(file.read().decode('utf-8'), format='csv')
-                data = dataset.dict
+                decoded_file = file.read().decode('utf-8')
+                dataset = Dataset()
+                dataset.load(decoded_file, format='csv')
+
+                for row in dataset.dict:
+                    # Normalize headers to lowercase
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if set(row_lower.keys()) != allowed_headers:
+                        return Response({
+                            "statusCode": 400,
+                            "status": True,
+                            "message": (
+    f'The uploaded file contains invalid column headers. '
+    f'Only the following headers are allowed: {", ".join(allowed_headers)}. '
+    f'Found headers in the file: {", ".join(row_lower.keys())}. '
+    'Please correct the headers and try again.'
+)
+
+                        }, status=status.HTTP_400_BAD_REQUEST)
+                    data.append(row_lower)
 
             else:
                 return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
@@ -5718,16 +5926,15 @@ class PriorityImportAPIView(APIView):
 
                 if existing:
                     if existing.is_deleted:
-                        # Reactivate soft-deleted entry
                         existing.description = description
                         existing.is_deleted = False
                         existing.save()
                     else:
-                        # Already active — track as duplicate
+                        
                         duplicate_names.append(name)
                         continue
                 else:
-                    # No record exists — create new
+                   
                     Priority.objects.create(
                         name=name,
                         description=description,
@@ -5797,7 +6004,7 @@ class TagsListAPIView(APIView):
                 Q(description__icontains=search)
             )
 
-        queryset = queryset.order_by('-created_at')
+        queryset = queryset.order_by(sort_by)
 
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
@@ -5944,27 +6151,45 @@ class TagsExportAPIView(APIView):
 
     def get(self, request):
         format_type = request.GET.get('format', 'csv').lower()
-        dataset = Dataset()
-        dataset.headers = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+        fields = request.GET.get('fields')  
+        uuids_param = request.GET.get('uuids', '')
 
-        for dept in Tags.objects.all():
-            dataset.append([
-                str(dept.uuid),
-                dept.name or '',  # Handle potential None
-                dept.description or '',
-                int(dept.is_deleted),
-                dept.created_at.strftime("%Y-%m-%d %H:%M:%S") if dept.created_at else '',
-                dept.updated_at.strftime("%Y-%m-%d %H:%M:%S") if dept.updated_at else ''
-            ])
+        uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+        # Default fields if none provided
+        if fields:
+            field_list = [f.strip() for f in fields.split(',')]
+        else:
+            field_list = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+
+        queryset = Tags.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+
+        dataset = Dataset()
+        dataset.headers = field_list
+
+        for dept in queryset:
+            row = []
+            for field in field_list:
+                value = getattr(dept, field, '')  # get attribute dynamically
+                # Format datetime fields
+                if isinstance(value, datetime.datetime):
+                    value = value.strftime("%Y-%m-%d %H:%M:%S")
+                # Convert boolean to int
+                if isinstance(value, bool):
+                    value = int(value)
+                row.append(value if value is not None else '')
+            dataset.append(row)
 
         if format_type == 'xlsx':
-            data = XLSX().export_data(dataset)  # Returns bytes
+            data = XLSX().export_data(dataset)
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'departments.xlsx'
+            file_name = 'tags.xlsx'
         else:
-            data = CSV().export_data(dataset)  # Returns bytes (ensure UTF-8)
+            data = CSV().export_data(dataset)
             content_type = 'text/csv; charset=utf-8'
-            file_name = 'departments.csv'
+            file_name = 'tags.csv'
 
         response = HttpResponse(data, content_type=content_type)
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
@@ -5983,7 +6208,11 @@ class TagsImportAPIView(APIView):
         dataset = Dataset()
         duplicate_names = []
 
+        allowed_headers = {'name', 'description'}
+
         try:
+            data = []
+            headers = []
             # ---------- XLSX Handling ----------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
@@ -6003,15 +6232,45 @@ class TagsImportAPIView(APIView):
 
                 ws = wb[sheet_name]
                 headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                data = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True)]
+                if set(headers) != allowed_headers:
+                    return Response({
+                        "statusCode": 400,
+                        "status": True,
+                        'message': f'Invalid headers in sheet. Expected: {allowed_headers}, Found: {set(headers)}'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    row_dict = dict(zip(headers, row))
+                    data.append(row_dict)
 
             # ---------- CSV Handling ----------
             elif format_type == 'csv':
-                dataset.load(file.read().decode('utf-8'), format='csv')
-                data = dataset.dict
+                decoded_file = file.read().decode('utf-8')
+                dataset = Dataset()
+                dataset.load(decoded_file, format='csv')
+
+                for row in dataset.dict:
+                    # Normalize headers to lowercase
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if set(row_lower.keys()) != allowed_headers:
+                        return Response({
+                            "statusCode": 400,
+                            "status": True,
+                            "message": (
+    f'The uploaded file contains invalid column headers. '
+    f'Only the following headers are allowed: {", ".join(allowed_headers)}. '
+    f'Found headers in the file: {", ".join(row_lower.keys())}. '
+    'Please correct the headers and try again.'
+)
+
+                        }, status=status.HTTP_400_BAD_REQUEST)
+                    data.append(row_lower)
 
             else:
-                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({
+                    "statusCode": 400,
+                    "status": True,
+                    'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
 
             # ---------- Process Each Row ----------
             for row in data:
@@ -6083,7 +6342,6 @@ class ActivityTypeCreateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
-
 class ActivityTypeListAPIView(APIView):    
     def get(self, request):
         search = request.GET.get('search', '').strip()
@@ -6106,7 +6364,7 @@ class ActivityTypeListAPIView(APIView):
                 Q(description__icontains=search)
             )
 
-        queryset = queryset.order_by('-created_at')
+        queryset = queryset.order_by(sort_by)
 
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
@@ -6269,27 +6527,45 @@ class ActivityTypeExportAPIView(APIView):
 
     def get(self, request):
         format_type = request.GET.get('format', 'csv').lower()
-        dataset = Dataset()
-        dataset.headers = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+        fields = request.GET.get('fields')  
+        uuids_param = request.GET.get('uuids', '')
 
-        for dept in ActivityType.objects.all():
-            dataset.append([
-                str(dept.uuid),
-                dept.name or '',  # Handle potential None
-                dept.description or '',
-                int(dept.is_deleted),
-                dept.created_at.strftime("%Y-%m-%d %H:%M:%S") if dept.created_at else '',
-                dept.updated_at.strftime("%Y-%m-%d %H:%M:%S") if dept.updated_at else ''
-            ])
+        uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+        # Default fields if none provided
+        if fields:
+            field_list = [f.strip() for f in fields.split(',')]
+        else:
+            field_list = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+
+        queryset = ActivityType.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+
+        dataset = Dataset()
+        dataset.headers = field_list
+
+        for dept in queryset:
+            row = []
+            for field in field_list:
+                value = getattr(dept, field, '')  # get attribute dynamically
+                # Format datetime fields
+                if isinstance(value, datetime.datetime):
+                    value = value.strftime("%Y-%m-%d %H:%M:%S")
+                # Convert boolean to int
+                if isinstance(value, bool):
+                    value = int(value)
+                row.append(value if value is not None else '')
+            dataset.append(row)
 
         if format_type == 'xlsx':
-            data = XLSX().export_data(dataset)  # Returns bytes
+            data = XLSX().export_data(dataset)
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'departments.xlsx'
+            file_name = 'ActivityType.xlsx'
         else:
-            data = CSV().export_data(dataset)  # Returns bytes (ensure UTF-8)
+            data = CSV().export_data(dataset)
             content_type = 'text/csv; charset=utf-8'
-            file_name = 'departments.csv'
+            file_name = 'ActivityType.csv'
 
         response = HttpResponse(data, content_type=content_type)
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
@@ -6302,6 +6578,7 @@ class ActivityTypeImportAPIView(APIView):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')  # optional, for XLSX
         duplicate_names = []
+        allowed_headers = {'name', 'description'}
 
         if not file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
@@ -6310,6 +6587,8 @@ class ActivityTypeImportAPIView(APIView):
         dataset = Dataset()
 
         try:
+            data = []
+            headers = []
             # ---------- XLSX Handling ----------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
@@ -6328,16 +6607,47 @@ class ActivityTypeImportAPIView(APIView):
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 ws = wb[sheet_name]
-                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                data = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True)]
+                headers = [cell.value.strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+
+                if set(headers) != allowed_headers:
+                    return Response({
+                        "statusCode": 400,
+                        "status": True,
+                        'message': f'Invalid headers in sheet. Expected: {allowed_headers}, Found: {set(headers)}'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    row_dict = dict(zip(headers, row))
+                    data.append(row_dict)
 
             # ---------- CSV Handling ----------
             elif format_type == 'csv':
-                dataset.load(file.read().decode('utf-8'), format='csv')
-                data = dataset.dict
+                decoded_file = file.read().decode('utf-8')
+                dataset = Dataset()
+                dataset.load(decoded_file, format='csv')
+
+                for row in dataset.dict:
+                    # Normalize headers to lowercase
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if set(row_lower.keys()) != allowed_headers:
+                        return Response({
+                            "statusCode": 400,
+                            "status": True,
+                            "message": (
+    f'The uploaded file contains invalid column headers. '
+    f'Only the following headers are allowed: {", ".join(allowed_headers)}. '
+    f'Found headers in the file: {", ".join(row_lower.keys())}. '
+    'Please correct the headers and try again.'
+)
+
+                        }, status=status.HTTP_400_BAD_REQUEST)
+                    data.append(row_lower)
 
             else:
-                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({
+                    "statusCode": 400,
+                    "status": True,
+                    'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
 
             # ---------- Process Each Row ----------
             for row in data:
@@ -6426,7 +6736,7 @@ class LostReasonListAPIView(APIView):
                 Q(description__icontains=search)
             )
 
-        queryset = queryset.order_by('-created_at')
+        queryset = queryset.order_by(sort_by)
 
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
@@ -6589,27 +6899,45 @@ class LostReasonExportAPIView(APIView):
 
     def get(self, request):
         format_type = request.GET.get('format', 'csv').lower()
-        dataset = Dataset()
-        dataset.headers = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+        fields = request.GET.get('fields')  
+        uuids_param = request.GET.get('uuids', '')
 
-        for dept in LostReason.objects.all():
-            dataset.append([
-                str(dept.uuid),
-                dept.name or '',  # Handle potential None
-                dept.description or '',
-                int(dept.is_deleted),
-                dept.created_at.strftime("%Y-%m-%d %H:%M:%S") if dept.created_at else '',
-                dept.updated_at.strftime("%Y-%m-%d %H:%M:%S") if dept.updated_at else ''
-            ])
+        uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+        # Default fields if none provided
+        if fields:
+            field_list = [f.strip() for f in fields.split(',')]
+        else:
+            field_list = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+
+        queryset = LostReason.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+
+        dataset = Dataset()
+        dataset.headers = field_list
+
+        for dept in queryset:
+            row = []
+            for field in field_list:
+                value = getattr(dept, field, '')  # get attribute dynamically
+                # Format datetime fields
+                if isinstance(value, datetime.datetime):
+                    value = value.strftime("%Y-%m-%d %H:%M:%S")
+                # Convert boolean to int
+                if isinstance(value, bool):
+                    value = int(value)
+                row.append(value if value is not None else '')
+            dataset.append(row)
 
         if format_type == 'xlsx':
-            data = XLSX().export_data(dataset)  # Returns bytes
+            data = XLSX().export_data(dataset)
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'departments.xlsx'
+            file_name = 'LostReason.xlsx'
         else:
-            data = CSV().export_data(dataset)  # Returns bytes (ensure UTF-8)
+            data = CSV().export_data(dataset)
             content_type = 'text/csv; charset=utf-8'
-            file_name = 'departments.csv'
+            file_name = 'LostReason.csv'
 
         response = HttpResponse(data, content_type=content_type)
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
@@ -6626,8 +6954,11 @@ class LostReasonImportAPIView(APIView):
         format_type = file.name.split('.')[-1].lower()
         dataset = Dataset()
         duplicate_names = []
+        allowed_headers = {'name', 'description'}
 
         try:
+            data = []
+            headers = []
             # ---------- XLSX Handling ----------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
@@ -6650,15 +6981,44 @@ class LostReasonImportAPIView(APIView):
 
                 ws = wb[sheet_name]
                 headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                data = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True)]
+                if set(headers) != allowed_headers:
+                    return Response({
+                        "statusCode": 400,
+                        "status": True,
+                        'message': f'Invalid headers in sheet. Expected: {allowed_headers}, Found: {set(headers)}'
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    row_dict = dict(zip(headers, row))
+                    data.append(row_dict)
             # ---------- CSV Handling ----------
             elif format_type == 'csv':
-                dataset.load(file.read().decode('utf-8'), format='csv')
-                data = dataset.dict
+                decoded_file = file.read().decode('utf-8')
+                dataset = Dataset()
+                dataset.load(decoded_file, format='csv')
+
+                for row in dataset.dict:
+                    # Normalize headers to lowercase
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if set(row_lower.keys()) != allowed_headers:
+                        return Response({
+                            "statusCode": 400,
+                            "status": True,
+                            "message": (
+    f'The uploaded file contains invalid column headers. '
+    f'Only the following headers are allowed: {", ".join(allowed_headers)}. '
+    f'Found headers in the file: {", ".join(row_lower.keys())}. '
+    'Please correct the headers and try again.'
+)
+
+                        }, status=status.HTTP_400_BAD_REQUEST)
+                    data.append(row_lower)
 
             else:
-                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({
+                    "statusCode": 400,
+                    "status": True,
+                    'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
 
             # ---------- Process Each Row ----------
             for row in data:
@@ -6756,7 +7116,7 @@ class LostReasonB2BListAPIView(APIView):
                 Q(description__icontains=search)
             )
 
-        queryset = queryset.order_by('-created_at')
+        queryset = queryset.order_by(sort_by)
 
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
@@ -6919,27 +7279,45 @@ class LostReasonB2BExportAPIView(APIView):
 
     def get(self, request):
         format_type = request.GET.get('format', 'csv').lower()
-        dataset = Dataset()
-        dataset.headers = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+        fields = request.GET.get('fields')  
+        uuids_param = request.GET.get('uuids', '')
 
-        for dept in LostReasonB2B.objects.all():
-            dataset.append([
-                str(dept.uuid),
-                dept.name or '',  # Handle potential None
-                dept.description or '',
-                int(dept.is_deleted),
-                dept.created_at.strftime("%Y-%m-%d %H:%M:%S") if dept.created_at else '',
-                dept.updated_at.strftime("%Y-%m-%d %H:%M:%S") if dept.updated_at else ''
-            ])
+        uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+        # Default fields if none provided
+        if fields:
+            field_list = [f.strip() for f in fields.split(',')]
+        else:
+            field_list = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+
+        queryset = LostReasonB2B.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+
+        dataset = Dataset()
+        dataset.headers = field_list
+
+        for dept in queryset:
+            row = []
+            for field in field_list:
+                value = getattr(dept, field, '')  # get attribute dynamically
+                # Format datetime fields
+                if isinstance(value, datetime.datetime):
+                    value = value.strftime("%Y-%m-%d %H:%M:%S")
+                # Convert boolean to int
+                if isinstance(value, bool):
+                    value = int(value)
+                row.append(value if value is not None else '')
+            dataset.append(row)
 
         if format_type == 'xlsx':
-            data = XLSX().export_data(dataset)  # Returns bytes
+            data = XLSX().export_data(dataset)
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'departments.xlsx'
+            file_name = 'LostReasonB2B.xlsx'
         else:
-            data = CSV().export_data(dataset)  # Returns bytes (ensure UTF-8)
+            data = CSV().export_data(dataset)
             content_type = 'text/csv; charset=utf-8'
-            file_name = 'departments.csv'
+            file_name = 'LostReasonB2B.csv'
 
         response = HttpResponse(data, content_type=content_type)
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
@@ -6956,14 +7334,15 @@ class LostReasonB2BImportAPIView(APIView):
         format_type = file.name.split('.')[-1].lower()
         dataset = Dataset()
         duplicate_names = []
+        allowed_headers = {'name', 'description'}
 
         try:
-            # ---------- XLSX Handling ----------
+            data = []
+            headers = []
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
 
-                # Require sheet_name if multiple sheets
                 if len(available_sheets) > 1 and not sheet_name:
                     return Response({
                         'error': 'Please provide sheet_name',
@@ -6980,15 +7359,45 @@ class LostReasonB2BImportAPIView(APIView):
 
                 ws = wb[sheet_name]
                 headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                data = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True)]
+                if set(headers) != allowed_headers:
+                    return Response({
+                        "statusCode": 400,
+                        "status": True,
+                        'message': f'Invalid headers in sheet. Expected: {allowed_headers}, Found: {set(headers)}'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    row_dict = dict(zip(headers, row))
+                    data.append(row_dict)
 
             # ---------- CSV Handling ----------
             elif format_type == 'csv':
-                dataset.load(file.read().decode('utf-8'), format='csv')
-                data = dataset.dict
+                decoded_file = file.read().decode('utf-8')
+                dataset = Dataset()
+                dataset.load(decoded_file, format='csv')
+
+                for row in dataset.dict:
+                    # Normalize headers to lowercase
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if set(row_lower.keys()) != allowed_headers:
+                        return Response({
+                            "statusCode": 400,
+                            "status": True,
+                            "message": (
+    f'The uploaded file contains invalid column headers. '
+    f'Only the following headers are allowed: {", ".join(allowed_headers)}. '
+    f'Found headers in the file: {", ".join(row_lower.keys())}. '
+    'Please correct the headers and try again.'
+)
+
+                        }, status=status.HTTP_400_BAD_REQUEST)
+                    data.append(row_lower)
 
             else:
-                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({
+                    "statusCode": 400,
+                    "status": True,
+                    'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
 
             # ---------- Process Each Row ----------
             for row in data:
@@ -7146,39 +7555,52 @@ class EducationLevelCodeDeleteAPIView(APIView):
 # ------------------ EXPORT ------------------
 class EducationLevelCodeExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
-
     def get(self, request):
         format_type = request.GET.get('format', 'csv').lower()
-        fields = request.GET.get('fields')
+        fields = request.GET.get('fields')  
         uuids_param = request.GET.get('uuids', '')
-        uuids = [u.strip() for u in uuids_param.split(',') if u]
-        field_list = [f.strip() for f in fields.split(',')] if fields else ['uuid', 'Levelcode', 'description', 'created_at', 'updated_at']
 
-        queryset = EducationLevelCode.objects.filter(uuid__in=uuids) if uuids else EducationLevelCode.objects.all()
+        uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+        # Default fields if none provided
+        if fields:
+            field_list = [f.strip() for f in fields.split(',')]
+        else:
+            field_list = ['uuid', 'Levelcode', 'description', 'is_deleted', 'created_at', 'updated_at']
+
+        queryset = EducationLevelCode.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+
         dataset = Dataset()
         dataset.headers = field_list
 
-        for obj in queryset:
+        for dept in queryset:
             row = []
             for field in field_list:
-                value = getattr(obj, field, '')
+                value = getattr(dept, field, '')  # get attribute dynamically
+                # Format datetime fields
                 if isinstance(value, datetime.datetime):
                     value = value.strftime("%Y-%m-%d %H:%M:%S")
+                # Convert boolean to int
+                if isinstance(value, bool):
+                    value = int(value)
                 row.append(value if value is not None else '')
             dataset.append(row)
 
         if format_type == 'xlsx':
             data = XLSX().export_data(dataset)
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            filename = 'education_level_code.xlsx'
+            file_name = 'EducationLevelCode.xlsx'
         else:
             data = CSV().export_data(dataset)
             content_type = 'text/csv; charset=utf-8'
-            filename = 'education_level_code.csv'
+            file_name = 'EducationLevelCode.csv'
 
         response = HttpResponse(data, content_type=content_type)
-        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
+
 
 
 # ------------------ IMPORT ------------------
@@ -9188,6 +9610,17 @@ class EducationTypeListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
+
+        allowed_sort_fields = ['educationType', 'Perticulars', 'created_at']
+        if sort_by not in allowed_sort_fields:
+            sort_by = 'created_at'
+
+        # Apply descending order for 'desc'
+        if sort_order == 'desc':
+            sort_by = f'-{sort_by}'
+
         queryset = EducationType.objects.filter(is_deleted=False)
 
         if search:
@@ -9196,7 +9629,7 @@ class EducationTypeListAPIView(APIView):
                 Q(Perticulars__icontains=search)
             )
 
-        queryset = queryset.order_by('-created_at')
+        queryset = queryset.order_by(sort_by)
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = EducationTypeSerializer(result_page, many=True)
@@ -9331,6 +9764,17 @@ class MediumofEducationListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
+
+        allowed_sort_fields = ['name', 'description', 'created_at']
+        if sort_by not in allowed_sort_fields:
+            sort_by = 'created_at'
+
+        # Apply descending order for 'desc'
+        if sort_order == 'desc':
+            sort_by = f'-{sort_by}'
+
         queryset = MediumofEducation.objects.filter(is_deleted=False)
 
         if search:
@@ -9339,7 +9783,7 @@ class MediumofEducationListAPIView(APIView):
                 Q(Perticulars__icontains=search)
             )
 
-        queryset = queryset.order_by('-created_at')
+        queryset = queryset.order_by(sort_by)
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = MediumofEducationSerializer(result_page, many=True)
