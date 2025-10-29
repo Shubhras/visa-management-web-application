@@ -2331,7 +2331,7 @@ class DepartmentExportAPIView(APIView):
 
     def get(self, request):
         # Get query params
-        format_type = request.GET.get('format', 'csv').lower()
+        format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')  # comma-separated
         uuids_param = request.GET.get('uuids', '')  # comma-separated
 
