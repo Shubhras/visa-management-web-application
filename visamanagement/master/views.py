@@ -2408,8 +2408,9 @@ class DepartmentImportAPIView(APIView):
 
         # Mapping file headers → model fields
         header_field_map = {
-            'department': 'name',   # File column "Department" → model field "name"
-            'description': 'description'
+            'Department': 'name',   # File column "Department" → model field "name"
+            'Description': 'description',
+            'Created ON':'created_at'
         }
         allowed_headers = set(header_field_map.keys())
 
@@ -2808,8 +2809,9 @@ class EmployeeTypeImportAPIView(APIView):
         duplicate_names = []
 
         header_field_map = {
-            'employeetype': 'name',   # File column "Department" → model field "name"
-            'description': 'description'
+            'EmployeeType': 'name',   # File column "Department" → model field "name"
+            'Description': 'description',
+            'Created ON':'created_at'
         }
         allowed_headers = set(header_field_map.keys())
 
@@ -3130,7 +3132,7 @@ class CompanyTypeExportAPIView(APIView):
         # --- Field to header mapping ---
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'CompanyType',  # Custom header
+            'name': 'Company Type',  # Custom header
             'description': 'Description',
             'is_deleted': 'Deleted',
             'created_at': 'Created On',
@@ -3193,8 +3195,9 @@ class CompanyTypeImportAPIView(APIView):
         duplicate_names = []
 
         header_field_map = {
-            'companytype': 'name',   # File column "Department" → model field "name"
-            'description': 'description'
+            'CompanyType': 'name',   # File column "Department" → model field "name"
+            'Description': 'description',
+            'Created ON':'created_at'
         }
         allowed_headers = set(header_field_map.keys())
 
@@ -3738,7 +3741,7 @@ class StakeholderCategoryExportAPIView(APIView):
         # --- Field to header mapping ---
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'StakeholderCategory',  # Custom header
+            'name': 'Stakeholder Category',  # Custom header
             'description': 'Description',
             'is_deleted': 'Deleted',
             'created_at': 'Created On',
@@ -3797,8 +3800,9 @@ class StakeholderCategoryImportAPIView(APIView):
         dataset = Dataset()
         duplicate_names = []
         header_field_map = {
-            'stakeholdercategory': 'name',   # File column "Department" → model field "name"
-            'description': 'description'
+            'Stakeholder Category': 'name',   # File column "Department" → model field "name"
+            'Description': 'description',
+            'Created ON':'created_at'
         }
         allowed_headers = set(header_field_map.keys())
 
