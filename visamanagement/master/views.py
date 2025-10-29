@@ -3187,8 +3187,13 @@ class CompanyTypeImportAPIView(APIView):
         format_type = file.name.split('.')[-1].lower()
         dataset = Dataset()
         duplicate_names = []
-        
-        allowed_headers = {'name', 'description'}
+
+        header_field_map = {
+            'companytype': 'name',   # File column "Department" → model field "name"
+            'description': 'description'
+        }
+        allowed_headers = set(header_field_map.keys())
+
         
         try:
             data = []
