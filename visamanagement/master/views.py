@@ -2322,42 +2322,49 @@ class DepartmentDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-
 class DepartmentExportAPIView(APIView):
+    """
+    Export Departments via GET query params only.
+    Example:
+    /api/v1/master/departments/export/?format=xlsx&fields=uuid,name&uuids=uuid1,uuid2
+    """
 
     def get(self, request):
-        format_type = request.GET.get('format') or request.data.get('format', 'csv')
-        fields = request.GET.get('fields')  
-        uuids_param = request.GET.get('uuids', '')
+        # Get query params
+        format_type = request.GET.get('format', 'csv').lower()
+        fields = request.GET.get('fields')  # comma-separated
+        uuids_param = request.GET.get('uuids', '')  # comma-separated
 
+        # Prepare UUIDs list
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
-        # Default fields if none provided
+        # Prepare field list
         if fields:
             field_list = [f.strip() for f in fields.split(',')]
         else:
             field_list = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
 
+        # Query departments
         queryset = Department.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
 
+        # Prepare dataset
         dataset = Dataset()
         dataset.headers = field_list
 
         for dept in queryset:
             row = []
             for field in field_list:
-                value = getattr(dept, field, '')  # get attribute dynamically
-                # Format datetime fields
+                value = getattr(dept, field, '')
                 if isinstance(value, datetime.datetime):
                     value = value.strftime("%Y-%m-%d %H:%M:%S")
-                # Convert boolean to int
                 if isinstance(value, bool):
                     value = int(value)
                 row.append(value if value is not None else '')
             dataset.append(row)
 
+        # Export CSV or XLSX
         if format_type == 'xlsx':
             data = XLSX().export_data(dataset)
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
@@ -2370,7 +2377,6 @@ class DepartmentExportAPIView(APIView):
         response = HttpResponse(data, content_type=content_type)
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
-
 
 class DepartmentImportAPIView(APIView):
     def post(self, request):
