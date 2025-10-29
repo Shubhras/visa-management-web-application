@@ -2396,10 +2396,7 @@ class DepartmentExportAPIView(APIView):
 
 
 class DepartmentImportAPIView(APIView):
-    """
-    API to import Departments from XLSX or CSV.
-    Handles duplicate names, deleted records, and exports duplicate rows.
-    """
+    
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')
@@ -2409,8 +2406,6 @@ class DepartmentImportAPIView(APIView):
 
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
-        duplicate_rows = []
-
         # Mapping file headers → model fields
         header_field_map = {
             'Department': 'name',
@@ -2501,7 +2496,7 @@ class DepartmentImportAPIView(APIView):
                         existing.save()
                     else:
                         duplicate_names.append(name)
-                        duplicate_rows.append({'department': name, 'description': description})
+                       
                         continue
                 else:
                     Department.objects.create(
@@ -2511,19 +2506,7 @@ class DepartmentImportAPIView(APIView):
                     )
 
             # ---------- Return duplicate XLSX if exists ----------
-            if duplicate_rows:
-                dup_dataset = Dataset()
-                dup_dataset.headers = ['Department', 'Description']
-                for dup in duplicate_rows:
-                    dup_dataset.append([dup['department'], dup['description']])
-
-                dup_xlsx = io.BytesIO(dup_dataset.export('xlsx'))
-                response = Response(
-                    dup_xlsx.getvalue(),
-                    content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-                )
-                response['Content-Disposition'] = 'attachment; filename="duplicate_departments.xlsx"'
-                return response
+            
 
         except Exception as e:
             return Response({
