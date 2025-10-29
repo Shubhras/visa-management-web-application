@@ -3194,7 +3194,7 @@ class CompanyTypeImportAPIView(APIView):
 
         # Mapping file headers → model fields
         header_field_map = {
-            'CompanyType': 'name',
+            'Company Type': 'name',
             'Description': 'description'
         }
 
