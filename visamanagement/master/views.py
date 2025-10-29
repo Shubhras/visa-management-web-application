@@ -2807,7 +2807,11 @@ class EmployeeTypeImportAPIView(APIView):
         dataset = Dataset()
         duplicate_names = []
 
-        allowed_headers = {'name', 'description'}
+        header_field_map = {
+            'employeetype': 'name',   # File column "Department" → model field "name"
+            'description': 'description'
+        }
+        allowed_headers = set(header_field_map.keys())
 
         try:
             data = []
@@ -2871,7 +2875,7 @@ class EmployeeTypeImportAPIView(APIView):
 
             # ---------- Process Each Row ----------
             for row in data:
-                name = str(row.get('name')).strip() if row.get('name') else None
+                name = str(row.get('employeetype')).strip() if row.get('employeetype') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not name:
