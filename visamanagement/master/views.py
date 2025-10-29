@@ -2414,7 +2414,9 @@ class DepartmentImportAPIView(APIView):
                 # Validate headers
                 if set(headers) != allowed_headers:
                     return Response({
-                        'error': f'Invalid headers in sheet. Expected: {allowed_headers}, Found: {set(headers)}'
+                        "statusCode": 400,
+                        "status": True,
+                        'message': f'Invalid headers in sheet. Expected: {allowed_headers}, Found: {set(headers)}'
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 for row in ws.iter_rows(min_row=2, values_only=True):
@@ -2432,12 +2434,17 @@ class DepartmentImportAPIView(APIView):
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
                     if set(row_lower.keys()) != allowed_headers:
                         return Response({
-                            'error': f'Invalid headers in CSV. Expected: {allowed_headers}, Found: {set(row_lower.keys())}'
+                            "statusCode": 400,
+                            "status": True,
+                            'message': f'Invalid headers in CSV. Expected: {allowed_headers}, Found: {set(row_lower.keys())}'
                         }, status=status.HTTP_400_BAD_REQUEST)
                     data.append(row_lower)
 
             else:
-                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({
+                    "statusCode": 400,
+                    "status": True,
+                    'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
 
             # ---------- Process Each Row ----------
             for row in data:
@@ -2468,7 +2475,10 @@ class DepartmentImportAPIView(APIView):
                     )
 
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({
+                "statusCode": 400,
+                        "status": True,
+                        'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({
             "statusCode": 200,
