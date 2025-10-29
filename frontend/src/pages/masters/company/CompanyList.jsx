@@ -355,7 +355,8 @@ const CompanyList = () => {
         const fieldsString = selectedItems.join(',');
 
         const sendPayload = {
-            file: "csv",
+             // file: "csv",
+      file: "xlsx",
             fields: fieldsString,
             uuids: selectedRows
         };
@@ -522,7 +523,7 @@ const CompanyList = () => {
                                         </th>
                                         <th scope="col" className='sorting-th' onClick={() => handleSort('created_at')}>
                                             <div className="d-flex align-items-center">
-                                                Created At
+                                               Created On
                                                 {getSortIcon('created_at')}
                                             </div>
                                         </th>

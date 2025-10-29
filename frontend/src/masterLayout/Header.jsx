@@ -9,51 +9,37 @@ const Header = () => {
         {
             name: 'Dashboard',
             path: '/',
-            submenu: [
-
-            ]
+            submenu: []
         },
         {
             name: 'Sales',
             path: '/',
-            submenu: [
-
-            ]
+            submenu: []
         },
         {
             name: 'Clients',
             path: '/',
-            submenu: [
-
-            ]
+            submenu: []
         },
         {
-            name: 'Stockholders',
+            name: 'Parters',
             path: '/',
-            submenu: [
-
-            ]
+            submenu: []
         },
         {
             name: 'Visa',
             path: '/',
-            submenu: [
-
-            ]
+            submenu: []
         },
         {
-            name: 'Package',
+            name: 'Institutes',
             path: '/',
-            submenu: [
-
-            ]
+            submenu: []
         },
         {
-            name: 'Subscriber',
+            name: 'Layout',
             path: '/',
-            submenu: [
-
-            ]
+            submenu: []
         },
         {
             name: 'Masters',
@@ -92,6 +78,16 @@ const Header = () => {
 
             ]
         },
+         {
+            name: 'Packages',
+            path: '/',
+            submenu: []
+        },
+        {
+            name: 'Subscribers',
+            path: '/',
+            submenu: []
+        }
     ];
 
     return (

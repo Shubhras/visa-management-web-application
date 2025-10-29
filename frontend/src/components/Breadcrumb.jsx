@@ -5,7 +5,7 @@ const Breadcrumb = ({ title , subTitle}) => {
   return (
     <div className='d-flex flex-wrap align-items-center justify-content-between gap-3 mb-24'>
       <h6 className='fw-semibold mb-0'>{title}</h6>
-      <ul className='d-flex align-items-center gap-2'>
+      {/* <ul className='d-flex align-items-center gap-2'>
         <li className='fw-medium'>
           <Link
             to='/'
@@ -20,7 +20,7 @@ const Breadcrumb = ({ title , subTitle}) => {
         </li>
         <li> - </li>
         <li className='fw-medium'>{subTitle}</li>
-      </ul>
+      </ul> */}
     </div>
   );
 };

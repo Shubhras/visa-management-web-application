@@ -94,12 +94,7 @@ const AddActivityType = ({ show, handleClose }) => {
     handleClose();
      setLoading(false);
   };
- const handleBackdropClick = (e) => {
-    // Only close if clicking the backdrop itself, not the modal content
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
+
   // NOW we can do the conditional return - AFTER all hooks
   if (!show) return null;
 
@@ -111,7 +106,6 @@ const AddActivityType = ({ show, handleClose }) => {
         role="dialog"
         aria-labelledby="ActivityTypeModalLabel"
         aria-hidden={!show}
-        onClick={handleBackdropClick}
       >
         <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
           <div className="modal-content radius-16 bg-base">
