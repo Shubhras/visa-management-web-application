@@ -3,7 +3,7 @@ import { useDispatch } from "react-redux";
 import { departmentImportData } from '../../../store/master/actions';
 import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
-
+import { saveAs } from "file-saver";
 const AddImportDepartmentModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
@@ -62,7 +62,6 @@ const AddImportDepartmentModal = ({ show, handleClose }) => {
         if (selectedSheet) {
             formData.append('sheet_name', selectedSheet);
         }
-
         setLoading(true);
         dispatch(departmentImportData(formData, (response, error) => {
             setLoading(false);
@@ -76,11 +75,7 @@ const AddImportDepartmentModal = ({ show, handleClose }) => {
                             <div>{response?.message}</div>
                             {response?.duplicates?.length > 0 && (
                                 <div style={{ marginTop: '6px' }}>
-                                    <strong>Duplicate departments skipped:</strong>
-                                    <br />
-                                    {response.duplicates.map((item, index) => (
-                                        <div key={index}>{item}</div>
-                                    ))}
+                                    <strong>Duplicate departments skipped — the duplicate data from your uploaded file has been exported into an .xlsx file.</strong>
                                 </div>
                             )}
                         </div>,
@@ -88,6 +83,9 @@ const AddImportDepartmentModal = ({ show, handleClose }) => {
                             autoClose: 10000,
                         }
                     );
+                    if (response?.duplicates?.length > 0) {
+                        handleExportToExcel(response.duplicates)
+                    }
                     setFile(null);
                     setSheetNames([]);
                     setSelectedSheet('');
@@ -99,49 +97,25 @@ const AddImportDepartmentModal = ({ show, handleClose }) => {
         }));
     };
 
+    const handleExportToExcel = (duplicatesData) => {
+        const header = ["Department"];
+        const duplicates = duplicatesData //["test1", "test3", "test3"];
+        const worksheetData = [header, ...duplicates.map((item) => [item])];
+        const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Departments");
 
-//     const ExportToExcel = () => {
-//   const [loading, setLoading] = useState(false);
+        const excelBuffer = XLSX.write(workbook, {
+            bookType: "xlsx",
+            type: "array",
+        });
 
-//   // Sample data - replace with your actual data
-//   const data = [
-//     { id: 1, name: 'John Doe', email: 'john@example.com', department: 'IT' },
-//     { id: 2, name: 'Jane Smith', email: 'jane@example.com', department: 'HR' },
-//     { id: 3, name: 'Bob Johnson', email: 'bob@example.com', department: 'Finance' }
-//   ];
+        const blob = new Blob([excelBuffer], {
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        });
 
-  const handleExportToExcel = () => {
-     const data = [
-    { id: 1, name: 'John Doe', email: 'john@example.com', department: 'IT' },
-    { id: 2, name: 'Jane Smith', email: 'jane@example.com', department: 'HR' },
-    { id: 3, name: 'Bob Johnson', email: 'bob@example.com', department: 'Finance' }
-  ];
-    try {
-      setLoading(true);
-
-      // Create a new workbook
-      const workbook = XLSX.utils.book_new();
-
-      // Convert data to worksheet
-      const worksheet = XLSX.utils.json_to_sheet(data);
-
-      // Add worksheet to workbook
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Departments');
-
-      // Generate filename with current date
-      const fileName = `departments_${new Date().toISOString().split('T')[0]}.xlsx`;
-
-      // Write and download the file
-      XLSX.writeFile(workbook, fileName);
-
-      toast.success('Export successful');
-      setLoading(false);
-    } catch (error) {
-      console.error('Export error:', error);
-      toast.error('Export failed');
-      setLoading(false);
-    }
-  };
+        saveAs(blob, `departments_${new Date().toISOString().split("T")[0]}.xlsx`);
+    };
     // Handle modal close
     const onClose = () => {
         setFile(null);

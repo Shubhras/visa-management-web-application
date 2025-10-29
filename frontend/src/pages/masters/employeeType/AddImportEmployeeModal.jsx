@@ -3,7 +3,7 @@ import { useDispatch } from "react-redux";
 import { employeeTypeImportData } from '../../../store/master/actions';
 import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
-
+import { saveAs } from "file-saver";
 const AddImportEmployeeModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
@@ -76,11 +76,7 @@ const AddImportEmployeeModal = ({ show, handleClose }) => {
                             <div>{response?.message}</div>
                             {response?.duplicates?.length > 0 && (
                                 <div style={{ marginTop: '6px' }}>
-                                    <strong>Duplicate employees skipped:</strong>
-                                    <br />
-                                    {response.duplicates.map((item, index) => (
-                                        <div key={index}>{item}</div>
-                                    ))}
+                                   <strong>Duplicate employees skipped — the duplicate data from your uploaded file has been exported into an .xlsx file.</strong>
                                 </div>
                             )}
                         </div>,
@@ -88,6 +84,9 @@ const AddImportEmployeeModal = ({ show, handleClose }) => {
                             autoClose: 10000,
                         }
                     );
+                    if (response?.duplicates?.length > 0) {
+                        handleExportToExcel(response.duplicates)
+                    }
                     setFile(null);
                     setSheetNames([]);
                     setSelectedSheet('');
@@ -98,7 +97,25 @@ const AddImportEmployeeModal = ({ show, handleClose }) => {
             }
         }));
     };
+    const handleExportToExcel = (duplicatesData) => {
+        const header = ["Employee Type"];
+        const duplicates = duplicatesData //["test1", "test3", "test3"];
+        const worksheetData = [header, ...duplicates.map((item) => [item])];
+        const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Employee Type");
 
+        const excelBuffer = XLSX.write(workbook, {
+            bookType: "xlsx",
+            type: "array",
+        });
+
+        const blob = new Blob([excelBuffer], {
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        });
+
+        saveAs(blob, `employeesType_${new Date().toISOString().split("T")[0]}.xlsx`);
+    };
     // Handle modal close
     const onClose = () => {
         setFile(null);
