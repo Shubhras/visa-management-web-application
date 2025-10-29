@@ -2344,7 +2344,7 @@ class DepartmentExportAPIView(APIView):
             'name': 'Department',  # Custom header
             'description': 'Description',
             'is_deleted': 'Deleted',
-            'created_at': 'Created At',
+            'created_at': 'Created On',
             'updated_at': 'Updated At'
         }
 
@@ -2736,48 +2736,62 @@ class EmployeeTypeExportAPIView(APIView):
     # permission_classes = [IsAuthenticated]  
 
     def get(self, request):
-        format_type = request.GET.get('format', 'csv').lower()
+        format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')  
-        uuids_param = request.GET.get('uuids', '')
+        uuids_param = request.GET.get('uuids', '') 
 
 
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
+        field_header_map = {
+            'uuid': 'UUID',
+            'name': 'Employee Type',  
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'created_at': 'Created On',
+            'updated_at': 'Updated At'
+        }
+
+
         if fields:
             field_list = [f.strip() for f in fields.split(',')]
         else:
-            field_list = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
-        
+            field_list = list(field_header_map.keys())
+
         queryset = EmployeeType.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
         
         dataset = Dataset()
-        dataset.headers = field_list
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
 
         for dept in queryset:
             row = []
             for field in field_list:
-                value = getattr(dept, field, '')  
-                
-                if isinstance(value, datetime.datetime):
+                value = getattr(dept, field, '')
+                if isinstance(value, datetime):
                     value = value.strftime("%Y-%m-%d %H:%M:%S")
-                
                 if isinstance(value, bool):
-                    value = int(value)
+                    value = int(value)  # convert True/False to 1/0
                 row.append(value if value is not None else '')
             dataset.append(row)
 
-        if format_type == 'xlsx':
-            data = XLSX().export_data(dataset)
-            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'Employeetype.xlsx'
+        # --- Export data ---
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'employeetype.csv'
         else:
-            data = CSV().export_data(dataset)
-            content_type = 'text/csv; charset=utf-8'
-            file_name = 'Employeetype.csv'
+            # XLSX export with BytesIO
+            file_data = io.BytesIO(dataset.export('xlsx'))
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'employeetype.xlsx'
 
-        response = HttpResponse(data, content_type=content_type)
+        # --- Return response ---
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
@@ -3098,57 +3112,69 @@ class CompanyTypeDeleteAPIView(APIView):
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         }, status=status.HTTP_200_OK)
     
+
 class CompanyTypeExportAPIView(APIView):
     # permission_classes = [IsAuthenticated]  
     def get(self, request):
 
-        format_type = request.GET.get('format', 'csv').lower()
-        fields = request.GET.get('fields')  
-        uuids_param = request.GET.get('uuids', '')
-
+        format_type = request.GET.get('format', 'xlsx').lower()
+        fields = request.GET.get('fields')  # comma-separated fields
+        uuids_param = request.GET.get('uuids', '')  # comma-separated UUIDs
 
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
+        # --- Field to header mapping ---
+        field_header_map = {
+            'uuid': 'UUID',
+            'name': 'CompanyType',  # Custom header
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'created_at': 'Created On',
+            'updated_at': 'Updated At'
+        }
+
+        # --- Determine which fields to export ---
         if fields:
             field_list = [f.strip() for f in fields.split(',')]
         else:
-            field_list = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+            field_list = list(field_header_map.keys())
 
-        
         queryset = CompanyType.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
 
         dataset = Dataset()
-        dataset.headers = field_list
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
 
         for dept in queryset:
             row = []
             for field in field_list:
-                value = getattr(dept, field, '')  
-                
-                if isinstance(value, datetime.datetime):
+                value = getattr(dept, field, '')
+                if isinstance(value, datetime):
                     value = value.strftime("%Y-%m-%d %H:%M:%S")
-                
                 if isinstance(value, bool):
-                    value = int(value)
+                    value = int(value)  
                 row.append(value if value is not None else '')
             dataset.append(row)
-        
 
-        if format_type == 'xlsx':
-            data = XLSX().export_data(dataset)
-            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'companytype.xlsx'
+        # --- Export data ---
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'CompanyType.csv'
         else:
-            data = CSV().export_data(dataset)
-            content_type = 'text/csv; charset=utf-8'
-            file_name = 'companytype.csv'
+            # XLSX export with BytesIO
+            file_data = io.BytesIO(dataset.export('xlsx'))
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'CompanyType.xlsx'
 
-        response = HttpResponse(data, content_type=content_type)
+        # --- Return response ---
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
-
 
 class CompanyTypeImportAPIView(APIView):
     def post(self, request):
@@ -3694,17 +3720,27 @@ class StakeholderCategoryExportAPIView(APIView):
     # permission_classes = [IsAuthenticated]  # Uncomment and adjust as needed
 
     def get(self, request):
-        format_type = request.GET.get('format', 'csv').lower()
-        fields = request.GET.get('fields')  
-        uuids_param = request.GET.get('uuids', '')
+        format_type = request.GET.get('format', 'xlsx').lower()
+        fields = request.GET.get('fields')  # comma-separated fields
+        uuids_param = request.GET.get('uuids', '')  # comma-separated UUIDs
 
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
-        # Default fields if none provided
+        # --- Field to header mapping ---
+        field_header_map = {
+            'uuid': 'UUID',
+            'name': 'StakeholderCategory',  # Custom header
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'created_at': 'Created On',
+            'updated_at': 'Updated At'
+        }
+
+        # --- Determine which fields to export ---
         if fields:
             field_list = [f.strip() for f in fields.split(',')]
         else:
-            field_list = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+            field_list = list(field_header_map.keys())
 
         queryset = StakeholderCategory.objects.filter(is_deleted=False)
         if uuids:
@@ -3751,7 +3787,12 @@ class StakeholderCategoryImportAPIView(APIView):
         format_type = file.name.split('.')[-1].lower()
         dataset = Dataset()
         duplicate_names = []
-        allowed_headers = {'name', 'description'}
+        header_field_map = {
+            'stakeholdercategory': 'name',   # File column "Department" → model field "name"
+            'description': 'description'
+        }
+        allowed_headers = set(header_field_map.keys())
+
 
 
         try:
@@ -3819,7 +3860,7 @@ class StakeholderCategoryImportAPIView(APIView):
 
             # ---------- Process Each Row ----------
             for row in data:
-                name = str(row.get('name')).strip() if row.get('name') else None
+                name = str(row.get('stakeholdercategory')).strip() if row.get('stakeholdercategory') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not name:
