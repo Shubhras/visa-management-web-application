@@ -33,8 +33,7 @@ export const deleteDepartmentDataAPI = (payload) => {
 
 
 export const exportDepartmentDataAPI = (payload) => {
-    console.log('fffffffff', payload);
-    const apiUrl = `${url.EXPORT_DEPARTMENT_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    const apiUrl = `${url.EXPORT_DEPARTMENT_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&format=${payload?.file}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -71,7 +70,7 @@ export const deleteEmployeeTypeDataAPI = (payload) => {
 
 
 export const exportEmployeeTypeDataAPI = (payload) => {
-    const apiUrl = `${url.EXPORT_EMPLOYEE_TYPE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    const apiUrl = `${url.EXPORT_EMPLOYEE_TYPE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&format=${payload?.file}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -109,7 +108,7 @@ export const deleteCompanyDataAPI = (payload) => {
 
 
 export const exportCompanyDataAPI = (payload) => {
-    const apiUrl = `${url.EXPORT_COMPANY_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    const apiUrl = `${url.EXPORT_COMPANY_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&format=${payload?.file}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -144,7 +143,7 @@ export const deleteStakeholderCategoryDataAPI = (payload) => {
 };
 
 export const exportStakeholderCategoryDataAPI = (payload) => {
-    const apiUrl = `${url.EXPORT_STAKEHOLDER_CATEGORY_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    const apiUrl = `${url.EXPORT_STAKEHOLDER_CATEGORY_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&format=${payload?.file}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -178,7 +177,7 @@ export const deletePriorityTypeDataAPI = (payload) => {
 };
 
 export const exportPriorityTypeDataAPI = (payload) => {
-    const apiUrl = `${url.EXPORT_PRIORITY_TYPE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    const apiUrl = `${url.EXPORT_PRIORITY_TYPE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&format=${payload?.file}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -212,7 +211,7 @@ export const deleteTagsTypeDataAPI = (payload) => {
 };
 
 export const exportTagsTypeDataAPI = (payload) => {
-    const apiUrl = `${url.EXPORT_TAGS_TYPE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    const apiUrl = `${url.EXPORT_TAGS_TYPE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&format=${payload?.file}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -246,7 +245,7 @@ export const deleteActivityTypeDataAPI = (payload) => {
 };
 
 export const exportActivityTypeDataAPI = (payload) => {
-    const apiUrl = `${url.EXPORT_ACTIVITY_TYPE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    const apiUrl = `${url.EXPORT_ACTIVITY_TYPE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&format=${payload?.file}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -281,7 +280,7 @@ export const deleteLostReasonB2CDataAPI = (payload) => {
 };
 
 export const exportLostReasonB2CDataAPI = (payload) => {
-    const apiUrl = `${url.EXPORT_LOST_REASON_B2C_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    const apiUrl = `${url.EXPORT_LOST_REASON_B2C_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&format=${payload?.file}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -315,7 +314,7 @@ export const deleteLostReasonB2BDataAPI = (payload) => {
 };
 
 export const exportLostReasonB2BDataAPI = (payload) => {
-    const apiUrl = `${url.EXPORT_LOST_REASON_B2B_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    const apiUrl = `${url.EXPORT_LOST_REASON_B2B_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&format=${payload?.file}`;
     return getExportData(apiUrl, payload);
 };
 

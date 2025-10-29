@@ -104,12 +104,7 @@ const EditDepartment = ({ show, handleCloseEdit, rowSelectData }) => {
         handleCloseEdit();
         setLoading(false);
     };
-    const handleBackdropClick = (e) => {
-        // Only close if clicking the backdrop itself, not the modal content
-        if (e.target === e.currentTarget) {
-            onClose();
-        }
-    };
+   
     // NOW we can do the conditional return - AFTER all hooks
     if (!show) return null;
 
@@ -121,7 +116,6 @@ const EditDepartment = ({ show, handleCloseEdit, rowSelectData }) => {
                 role="dialog"
                 aria-labelledby="departmentModalLabel"
                 aria-hidden={!show}
-                onClick={handleBackdropClick}
             >
                 <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
                     <div className="modal-content radius-16 bg-base">
@@ -143,7 +137,7 @@ const EditDepartment = ({ show, handleCloseEdit, rowSelectData }) => {
                                     {/* Department Name */}
                                     <div className="col-12 mb-20">
                                         <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                                            Name <span className="text-danger">*</span>
+                                            Department <span className="text-danger">*</span>
                                         </label>
                                         <input
                                             type="text"
@@ -151,7 +145,7 @@ const EditDepartment = ({ show, handleCloseEdit, rowSelectData }) => {
                                             value={formData.name}
                                             onChange={handleChange}
                                             className={`form-control radius-8 ${errors.name ? 'is-invalid' : ''}`}
-                                            placeholder="Enter name"
+                                            placeholder="Enter department"
                                         />
                                         {errors.name && (
                                             <div className="text-danger text-sm mt-1">

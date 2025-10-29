@@ -369,7 +369,8 @@ const EmployeeTypeList = () => {
     }
     const fieldsString = selectedItems.join(',');
     const sendPayload = {
-      file: "csv",
+       // file: "csv",
+      file: "xlsx",
       fields: fieldsString,
       uuids: selectedRows
     };
@@ -430,12 +431,7 @@ const EmployeeTypeList = () => {
 
     return `${day}-${month}-${year} ${hours}:${minutes}:${seconds} ${ampm}`
   };
-  // Handle backdrop click for modals
-  const handleBackdropClick = (e, closeFunction) => {
-    if (e.target === e.currentTarget) {
-      closeFunction();
-    }
-  }
+ 
 
   return (
     <>
@@ -556,7 +552,7 @@ const EmployeeTypeList = () => {
                     </th>
                     <th scope="col" className='sorting-th' onClick={() => handleSort('created_at')}>
                       <div className="d-flex align-items-center">
-                        Created At
+                       Created On
                         {getSortIcon('created_at')}
                       </div>
                     </th>
@@ -568,7 +564,7 @@ const EmployeeTypeList = () => {
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan="5" style={{ textAlign: 'center', padding: '32px', color: '#6c757d', fontSize: '14px' }}>
+                      <td colSpan="5" className='loding-data'>
                         <div className="d-flex justify-content-center align-items-center gap-2">
                           <div className="spinner-border spinner-border-sm" role="status">
                             <span className="visually-hidden">Loading...</span>
@@ -750,7 +746,7 @@ const EmployeeTypeList = () => {
         {showImport && (
           <AddImportEmployeeModal show={showImport} handleClose={handleCloseImport} />)}
         {showDeleteConfirm && (
-          <div className="modal fade show common-ctl-popup" onClick={(e) => handleBackdropClick(e, cancelDelete)}>
+          <div className="modal fade show common-ctl-popup" >
             <div className="modal-dialog modal-dialog-centered">
               <div className="modal-content" style={{ borderRadius: '10px' }}>
                 <div className="modal-header">
@@ -788,7 +784,6 @@ const EmployeeTypeList = () => {
             className="modal fade show common-ctl-popup"
             tabIndex={-1}
             role="dialog"
-            onClick={(e) => handleBackdropClick(e, cancelExportTest)}
           >
             <div className="modal-dialog modal-lg modal-dialog-centered " role="document">
               <div className="modal-content radius-16 bg-base">

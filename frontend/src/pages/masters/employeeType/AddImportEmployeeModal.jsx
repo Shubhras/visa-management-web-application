@@ -117,12 +117,6 @@ const AddImportEmployeeModal = ({ show, handleClose }) => {
         link.click();
         document.body.removeChild(link);
     };
-    const handleBackdropClick = (e) => {
-        // Only close if clicking the backdrop itself, not the modal content
-        if (e.target === e.currentTarget) {
-            onClose();
-        }
-    };
     if (!show) return null;
 
     return (
@@ -132,7 +126,6 @@ const AddImportEmployeeModal = ({ show, handleClose }) => {
             role="dialog"
             aria-labelledby="EmployeeModalLabel"
             aria-hidden={!show}
-            onClick={handleBackdropClick}
         >
             <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
                 <div className="modal-content radius-16 bg-base">
@@ -161,7 +154,7 @@ const AddImportEmployeeModal = ({ show, handleClose }) => {
                             <div className="row">
                                 <div className="col-12 mb-20">
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                                        Upload File <span className="text-danger">*</span>
+                                        Upload file <span className="text-danger">*</span>
                                     </label>
                                     <input
                                         type="file"

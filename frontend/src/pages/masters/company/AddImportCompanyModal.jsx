@@ -157,7 +157,7 @@ const AddImportCompanyModal = ({ show, handleClose }) => {
                             <div className="row">
                                 <div className="col-12 mb-20">
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                                        Upload File <span className="text-danger">*</span>
+                                        Upload file <span className="text-danger">*</span>
                                     </label>
                                     <input
                                         type="file"
