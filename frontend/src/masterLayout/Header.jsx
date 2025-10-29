@@ -75,7 +75,9 @@ const Header = () => {
                     children: [
                         { name: 'Priority type', path: '/priority-type' },
                         { name: 'Tags type', path: '/tags-type' },
-                        { name: 'Activity Type', path: '/activity-type' },
+                        { name: 'Activity type', path: '/activity-type' },
+                        { name: 'Lost Reason (B2C)', path: '/lost-reason-B2C' },
+                        { name: 'Lost Reason (B2B)', path: '/lost-reason-B2B' },
                     ]
                 },
 

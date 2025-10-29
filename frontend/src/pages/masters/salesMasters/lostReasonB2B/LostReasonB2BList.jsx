@@ -7,19 +7,19 @@ import { Link } from 'react-router-dom';
 // import * as XLSX from 'xlsx';
 // import { saveAs } from 'file-saver';
 import { toast } from "react-toastify";
-import AddActivityType from './AddActivityType';
-import EditActivityType from './EditActivityType';
-import AddImportActivityModal from './AddImportActivityModal';
-import { activityTypeList,activityTypeDelete ,activityTypeExportData} from '../../../../store/master/salesMasters/actions';
+import AddLostReasonB2B from './AddLostReasonB2B';
+import EditLostReasonB2B from './EditLostReasonB2B';
+import AddImportLostReasonB2BModal from './AddImportLostReasonB2BModal';
+import { lostReasonB2BDelete ,lostReasonB2BExportData ,lostReasonB2BList} from '../../../../store/master/salesMasters/actions';
 
-const ActivityTypeList = () => {
+const LostReasonB2BList = () => {
   const dispatch = useDispatch();
 
   const [show, setShow] = useState(false);
   const handleShow = () => setShow(true);
   const handleClose = () => {
     setShow(false);
-    fetchActivityTypeList();
+    fetchLostReasonB2BList();
   };
 
   const [showEdit, setShowEdit] = useState(false);
@@ -27,10 +27,10 @@ const ActivityTypeList = () => {
   const [rowSelectData, setRowSelectData] = useState({});
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this activity type?");
+  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this lost reason B2B?");
   const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
-  const [activityTypeListData, setActivityTypeListData] = useState([]);
+  const [lostReasonB2BListData, setLostReasonB2BListData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
 
@@ -55,7 +55,7 @@ const ActivityTypeList = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (tableState.search !== undefined) {
-        fetchActivityTypeList();
+        fetchLostReasonB2BList();
       }
     }, 500);
 
@@ -63,10 +63,10 @@ const ActivityTypeList = () => {
   }, [tableState.search]);
 
   useEffect(() => {
-    fetchActivityTypeList();
+    fetchLostReasonB2BList();
   }, [tableState.page, tableState.limit, tableState.status, tableState.sortBy, tableState.sortOrder]);
 
-  const fetchActivityTypeList = () => {
+  const fetchLostReasonB2BList = () => {
     setLoading(true);
     const params = {
       page: tableState.page,
@@ -77,12 +77,12 @@ const ActivityTypeList = () => {
       sortOrder: tableState.sortOrder || ''
     };
 
-    dispatch(activityTypeList(params, (response, error) => {
+    dispatch(lostReasonB2BList(params, (response, error) => {
       setLoading(false);
       if (response?.statusCode === 200 && response?.status === true) {
         const paginationData = response?.pagination || {};
 
-        setActivityTypeListData(response?.data || []);
+        setLostReasonB2BListData(response?.data || []);
         setTableState(prev => ({
           ...prev,
           total: paginationData.totalItems || 0,
@@ -92,7 +92,7 @@ const ActivityTypeList = () => {
           hasPrevious: paginationData.previousPage || false
         }));
       } else {
-        setActivityTypeListData([]);
+        setLostReasonB2BListData([]);
         setTableState(prev => ({
           ...prev,
           total: 0,
@@ -168,7 +168,7 @@ const ActivityTypeList = () => {
     if (isAllSelected) {
       setSelectedRows([]);
     } else {
-      setSelectedRows(activityTypeListData.map(dept => dept.uuid));
+      setSelectedRows(lostReasonB2BListData.map(dept => dept.uuid));
     }
   };
   // For checkbox in table header
@@ -176,7 +176,7 @@ const ActivityTypeList = () => {
 
     const checked = e.target.checked;
     if (checked) {
-      setSelectedRows(activityTypeListData.map(dept => dept.uuid));
+      setSelectedRows(lostReasonB2BListData.map(dept => dept.uuid));
     } else {
       setSelectedRows([]);
     }
@@ -192,8 +192,8 @@ const ActivityTypeList = () => {
     });
   };
 
-  const isAllSelected = activityTypeListData.length > 0 &&
-    activityTypeListData.every(dept => selectedRows.includes(dept.uuid));
+  const isAllSelected = lostReasonB2BListData.length > 0 &&
+    lostReasonB2BListData.every(dept => selectedRows.includes(dept.uuid));
 
   const goToPage = (page) => {
     if (page >= 1 && page <= tableState.totalPages) {
@@ -236,7 +236,7 @@ const ActivityTypeList = () => {
 
   const handleCloseEdit = () => {
     setShowEdit(false);
-    fetchActivityTypeList();
+    fetchLostReasonB2BList();
   };
 
   const handleShowEdit = (rowData) => {
@@ -255,7 +255,7 @@ const ActivityTypeList = () => {
       return;
     }
     const maggase = isAllSelected ? "all" : deleteId ? "" : selectedRows.length
-    setDeleteConfirmMessage(`Are you sure you want to delete this activity type (${maggase})?`);
+    setDeleteConfirmMessage(`Are you sure you want to delete this lost reason B2B (${maggase})?`);
     setShowDeleteConfirm(true);
   };
 
@@ -268,18 +268,18 @@ const ActivityTypeList = () => {
       return;
     }
 
-    dispatch(activityTypeDelete(sendPayload, (response, error) => {
+    dispatch(lostReasonB2BDelete(sendPayload, (response, error) => {
       if (error) {
         toast.error(error?.response?.data?.message || "server error");
       } else {
         if (response?.statusCode === 200 && response?.status === true) {
           toast.success(response?.message);
-          setActivityTypeListData(prevDepts => prevDepts.filter(dept => dept.uuid !== deleteId));
+          setLostReasonB2BListData(prevDepts => prevDepts.filter(dept => dept.uuid !== deleteId));
           setSelectedRows(prevSelected => prevSelected.filter(rowId => rowId !== deleteId));
           setShowDeleteConfirm(false);
           setSelectedRows([])
           setDeleteId(null);
-          fetchActivityTypeList();
+          fetchLostReasonB2BList();
         } else {
           toast.error("Something went wrong.");
         }
@@ -295,7 +295,7 @@ const ActivityTypeList = () => {
 
   const handleCloseImport = () => {
     setShowImport(false);
-    fetchActivityTypeList();
+    fetchLostReasonB2BList();
   };
 
   const handleShowImport = () => {
@@ -361,7 +361,7 @@ const ActivityTypeList = () => {
     };
     setLoadingExport(true);
 
-    dispatch(activityTypeExportData(sendPayload, (response, error) => {
+    dispatch(lostReasonB2BExportData(sendPayload, (response, error) => {
       if (error) {
         setLoadingExport(false);
         toast.error(error?.response?.message || "server error");
@@ -372,7 +372,7 @@ const ActivityTypeList = () => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `activityTypeListData_${new Date().toISOString().split('T')[0]}.csv`;
+          link.download = `lostReasonB2BListData_${new Date().toISOString().split('T')[0]}.csv`;
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
@@ -412,7 +412,7 @@ const ActivityTypeList = () => {
   return (
     <>
       <MasterLayout>
-        <Breadcrumb title="Activity Type" subTitle="List" />
+        <Breadcrumb title="Lost Reason (B2B)" subTitle="List" />
         <div className="card basic-data-table main-container-data">
           <div className="card-body container-data">
             <div className="card-body container-data">
@@ -509,7 +509,7 @@ const ActivityTypeList = () => {
                           type="checkbox"
                           checked={isAllSelected}
                           onChange={handleSelectAll}
-                          disabled={activityTypeListData.length === 0}
+                          disabled={lostReasonB2BListData.length === 0}
                         />
                         <span>S.L</span>
                       </div>
@@ -549,8 +549,8 @@ const ActivityTypeList = () => {
                         </div>
                       </td>
                     </tr>
-                  ) : activityTypeListData.length > 0 ? (
-                    activityTypeListData.map((dept, index) => (
+                  ) : lostReasonB2BListData.length > 0 ? (
+                    lostReasonB2BListData.map((dept, index) => (
                       <tr key={dept.uuid} >
                         <td >
                           <div className="d-flex align-items-center gap-2">
@@ -718,10 +718,10 @@ const ActivityTypeList = () => {
           </div>
         </div>
 
-        <AddActivityType show={show} handleClose={handleClose} />
-        <EditActivityType show={showEdit} handleCloseEdit={handleCloseEdit} rowSelectData={rowSelectData} />
+        <AddLostReasonB2B show={show} handleClose={handleClose} />
+        <EditLostReasonB2B show={showEdit} handleCloseEdit={handleCloseEdit} rowSelectData={rowSelectData} />
         {showImport && (
-          <AddImportActivityModal show={showImport} handleClose={handleCloseImport} />)}
+          <AddImportLostReasonB2BModal show={showImport} handleClose={handleCloseImport} />)}
         {showDeleteConfirm && (
           <div className="modal fade show common-ctl-popup" onClick={(e) => handleBackdropClick(e, cancelDelete)}>
             <div className="modal-dialog modal-dialog-centered">
@@ -766,7 +766,7 @@ const ActivityTypeList = () => {
             <div className="modal-dialog modal-lg modal-dialog-centered " role="document">
               <div className="modal-content radius-16 bg-base">
                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                  <h1 className="modal-title fs-5">Export Activity Type</h1>
+                  <h1 className="modal-title fs-5">Export Lost Reason (B2B)</h1>
                   <button
                     type="button"
                     className="btn-close"
@@ -834,4 +834,4 @@ const ActivityTypeList = () => {
   );
 };
 
-export default ActivityTypeList;
+export default LostReasonB2BList;
