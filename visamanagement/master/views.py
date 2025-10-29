@@ -2396,6 +2396,10 @@ class DepartmentExportAPIView(APIView):
 
 
 class DepartmentImportAPIView(APIView):
+    """
+    API to import Departments from XLSX or CSV.
+    Handles duplicate names, deleted records, and exports duplicate rows.
+    """
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')
@@ -2405,14 +2409,15 @@ class DepartmentImportAPIView(APIView):
 
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
+        duplicate_rows = []
 
         # Mapping file headers → model fields
         header_field_map = {
-            'Department': 'name',   # File column "Department" → model field "name"
+            'Department': 'name',
             'Description': 'description',
-            'Created ON':'created_at'
         }
-        allowed_headers = set(header_field_map.keys())
+
+        allowed_headers = set(k.lower() for k in header_field_map.keys())  # normalize to lowercase
 
         try:
             data = []
@@ -2438,15 +2443,14 @@ class DepartmentImportAPIView(APIView):
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 ws = wb[sheet_name]
-                # Read headers and normalize to lowercase
                 headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
 
-                # Validate headers
-                if set(headers) != allowed_headers:
+                # Validate headers (required headers must exist)
+                if not allowed_headers.issubset(set(headers)):
                     return Response({
                         "statusCode": 400,
                         "status": True,
-                        'message': f'Invalid headers in sheet. Expected: {allowed_headers}, Found: {set(headers)}'
+                        'message': f'Missing required headers. Required: {allowed_headers}, Found: {set(headers)}'
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 # Read rows
@@ -2456,22 +2460,19 @@ class DepartmentImportAPIView(APIView):
 
             # ---------- CSV Handling ----------
             elif format_type == 'csv':
-                from tablib import Dataset
                 decoded_file = file.read().decode('utf-8')
                 dataset = Dataset()
                 dataset.load(decoded_file, format='csv')
 
                 for row in dataset.dict:
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
-                    if set(row_lower.keys()) != allowed_headers:
+                    if not allowed_headers.issubset(set(row_lower.keys())):
                         return Response({
                             "statusCode": 400,
                             "status": True,
                             "message": (
-                                f'The uploaded file contains invalid column headers. '
-                                f'Only the following headers are allowed: {", ".join(allowed_headers)}. '
-                                f'Found headers in the file: {", ".join(row_lower.keys())}. '
-                                'Please correct the headers and try again.'
+                                f'Missing required headers. Required: {", ".join(allowed_headers)}. '
+                                f'Found headers in the file: {", ".join(row_lower.keys())}.'
                             )
                         }, status=status.HTTP_400_BAD_REQUEST)
                     data.append(row_lower)
@@ -2500,6 +2501,7 @@ class DepartmentImportAPIView(APIView):
                         existing.save()
                     else:
                         duplicate_names.append(name)
+                        duplicate_rows.append({'department': name, 'description': description})
                         continue
                 else:
                     Department.objects.create(
@@ -2507,6 +2509,21 @@ class DepartmentImportAPIView(APIView):
                         description=description,
                         is_deleted=False
                     )
+
+            # ---------- Return duplicate XLSX if exists ----------
+            if duplicate_rows:
+                dup_dataset = Dataset()
+                dup_dataset.headers = ['Department', 'Description']
+                for dup in duplicate_rows:
+                    dup_dataset.append([dup['department'], dup['description']])
+
+                dup_xlsx = io.BytesIO(dup_dataset.export('xlsx'))
+                response = Response(
+                    dup_xlsx.getvalue(),
+                    content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                )
+                response['Content-Disposition'] = 'attachment; filename="duplicate_departments.xlsx"'
+                return response
 
         except Exception as e:
             return Response({
@@ -3666,31 +3683,47 @@ class StakeholderCategoryDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
-        uuids = request.data.get('id', [])
+        ids = request.data.get('id', None)
 
-        if uuid:
-            category = get_object_or_404(StakeholderCategory, uuid=uuid, is_deleted=False)
-            category.is_deleted = True
-            category.save()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": "Stakeholder Category deleted successfully",
-                "data": None
-            }, status=status.HTTP_200_OK)
-
-        if not uuids or not isinstance(uuids, list):
+        if not ids:
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Please provide a list of UUIDs in 'uuids' field.",
+                "message": "Please provide 'id' field (UUID list or 'all').",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+    
+        if ids == "all":
+            Stakeholdercategory = StakeholderCategory.objects.filter(is_deleted=False)
+            count = Stakeholdercategory.count()
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No StakeholderCategory found to delete.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+            Stakeholdercategory.update(is_deleted=True)
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"All {count} StakeholderCategory(s) deleted successfully.",
+                "data": None
+            }, status=status.HTTP_200_OK)
+
+        # Otherwise, treat as list of UUIDs
+        if not isinstance(ids, list):
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
                 "data": None
             }, status=status.HTTP_400_BAD_REQUEST)
 
         # Validate UUIDs
         valid_uuids = []
         invalid_uuids = []
-        for u in uuids:
+        for u in ids:
             try:
                 valid_uuids.append(UUID(u))
             except ValueError:
@@ -3704,28 +3737,31 @@ class StakeholderCategoryDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids}
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # Fetch categories that exist and are not deleted
-        categories = StakeholderCategory.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = categories.count()
+        # Fetch departments that exist and are not deleted
+        Stakeholdercategory = StakeholderCategory.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+        count = Stakeholdercategory.count()
 
         if count == 0:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "No matching stakeholder categories found.",
-                "data": {"invalid_uuids": invalid_uuids}
+                "message": "No matching StakeholderCategory found.",
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
             }, status=status.HTTP_404_NOT_FOUND)
 
         # Soft delete
-        categories.update(is_deleted=True)
+        Stakeholdercategory.update(is_deleted=True)
 
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f"{count} Stakeholder Category(s) deleted successfully.",
-        
+            "message": f"{count} Stakeholder(s) deleted successfully.",
+            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         }, status=status.HTTP_200_OK)
 
+
+
+        
 
 
 class StakeholderCategoryExportAPIView(APIView):
