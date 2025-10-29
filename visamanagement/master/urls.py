@@ -277,11 +277,15 @@ urlpatterns = [
     path('academicresult/export/', AcademicResultExportAPIView.as_view(), name='academicresult-export'),
     path('academicresult/import/', AcademicResultImportAPIView.as_view(), name='academicresult-import'),    
 
-    path('educationtype/create/', EducationTypeCreateAPIView.as_view(), name='educationtype-create'),
-    path('educationtype/<uuid:uuid>/', EducationTypeRetrieveAPIView.as_view(), name='educationtype-retrieve'),
-    path('educationtype/update/<uuid:uuid>/', EducationTypeUpdateAPIView.as_view(), name='educationtype-update'),
-    path('educationtype/delete/', EducationTypeDeleteAPIView.as_view(), name='educationtype-delete'),
+    path('educationlevel/', EducationLevelCodeListAPIView.as_view(), name='educationlevel-list'),
+    path('educationlevel/create/', EducationLevelCodeCreateAPIView.as_view(), name='educationlevel-create'),
+    path('educationlevel/<uuid:uuid>/', EducationLevelCodeRetrieveAPIView.as_view(), name='educationlevel-retrieve'),
+    path('educationlevel/<uuid:uuid>/update/', EducationLevelCodeUpdateAPIView.as_view(), name='educationlevel-update'),
+    path('educationlevel/delete/', EducationLevelCodeDeleteAPIView.as_view(), name='educationlevel-delete'),
+    path('educationlevel/export/', EducationLevelCodeExportAPIView.as_view(), name='educationlevel-export'),
+    path('educationlevel/import/', EducationLevelCodeImportAPIView.as_view(), name='educationlevel-import'),
 
+    
     path('mediumeducation/create/', MediumofEducationCreateAPIView.as_view(), name='mediumeducation-create'),
     path('mediumeducation/<uuid:uuid>/', MediumofEducationRetrieveAPIView.as_view(), name='mediumeducation-retrieve'),
     path('mediumeducation/update/<uuid:uuid>/', MediumofEducationUpdateAPIView.as_view(), name='mediumeducation-update'),
