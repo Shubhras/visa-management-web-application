@@ -536,7 +536,7 @@ const TagsTypeList = () => {
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan="5" className='loding-data'>
+                       <td colSpan="5" className='loding-data'>
                         <div className="d-flex justify-content-center align-items-center gap-2">
                           <div className="spinner-border spinner-border-sm" role="status">
                             <span className="visually-hidden">Loading...</span>

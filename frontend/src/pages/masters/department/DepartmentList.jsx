@@ -34,7 +34,7 @@ const DepartmentList = () => {
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
 
-  const [items] = useState(["name", "description", "created_at"]);
+  const [items] = useState(["Department", "Description", "Created On"]);
   const [selectedItems, setSelectedItems] = useState([]);
 
   // Updated state with sorting
@@ -341,14 +341,22 @@ const DepartmentList = () => {
       toast.error("Please select at least one field");
       return
     }
-    const fieldsString = selectedItems.join(',');
-
+    // Map frontend labels to backend field names
+    const fieldMapping = {
+      "Department": "name",
+      "Created On": "created_at",
+      "Description": "description",
+    };
+    // Convert selectedItems to backend field names
+    const mappedFields = selectedItems.map((item) => fieldMapping[item] || item);
+    // Convert to comma-separated string
+    const fieldsString = mappedFields.join(",");
     const sendPayload = {
-      // file: "csv",
       file: "xlsx",
       fields: fieldsString,
-      uuids: selectedRows
+      uuids: selectedRows, // your selected department IDs
     };
+
     setLoadingExport(true);
 
     dispatch(departmentExportData(sendPayload, (response, error) => {
@@ -357,16 +365,35 @@ const DepartmentList = () => {
         toast.error(error?.response?.message || "server error");
       } else {
         setLoadingExport(false);
+        // if (response?.status === 200) {
+        //   const blob = new Blob([response.data], { type: 'text/csv' });
+        //   const url = window.URL.createObjectURL(blob);
+        //   const link = document.createElement('a');
+        //   link.href = url;
+        //   link.download = `departments_${new Date().toISOString().split('T')[0]}.csv`;
+        //   document.body.appendChild(link);
+        //   link.click();
+        //   document.body.removeChild(link);
+        //   window.URL.revokeObjectURL(url);
+        //   toast.success("Export successful");
+        //   cancelExportTest();
+        // } else {
+        //   toast.error("Something went wrong.");
+        // }
         if (response?.status === 200) {
-          const blob = new Blob([response.data], { type: 'text/csv' });
+          const blob = new Blob([response.data], {
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          });
+
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `departments_${new Date().toISOString().split('T')[0]}.csv`;
+          link.download = `departments_${new Date().toISOString().split('T')[0]}.xlsx`;
           document.body.appendChild(link);
           link.click();
-          document.body.removeChild(link);
+          link.remove();
           window.URL.revokeObjectURL(url);
+
           toast.success("Export successful");
           cancelExportTest();
         } else {
@@ -400,82 +427,80 @@ const DepartmentList = () => {
         <Breadcrumb title="Department" subTitle="List" />
         <div className="card basic-data-table main-container-data">
           <div className="card-body container-data">
-            <div className="card-body container-data">
-              <div className="row align-items-center gy-3 gx-2 flex-wrap filter-action-btn">
-                {/* Left Section: Import / Export / Delete */}
-                <div className="col-xl-4 col-lg-4 col-md-12">
-                  <div className="d-flex flex-wrap align-items-center gap-2">
-                    <button
-                      className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
-                      onClick={handleShowImport}
-                    >
-                      Import
-                    </button>
-                    <button
-                      className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
-                      onClick={handleExportTest}
-                      disabled={loadingExport}
-                    >
-                      Export
-                    </button>
-                    {/* <button
+            <div className="row align-items-center gy-3 gx-2 flex-wrap filter-action-btn">
+              {/* Left Section: Import / Export / Delete */}
+              <div className="col-xl-4 col-lg-4 col-md-12">
+                <div className="d-flex flex-wrap align-items-center gap-2">
+                  <button
+                    className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
+                    onClick={handleShowImport}
+                  >
+                    Import
+                  </button>
+                  <button
+                    className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
+                    onClick={handleExportTest}
+                    disabled={loadingExport}
+                  >
+                    Export
+                  </button>
+                  {/* <button
                       onClick={handleSelectAllButton}
                       className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
                     >
                       {isAllSelected ? 'Deselect All' : 'Select All'}
                     </button> */}
-                    {selectedRows.length == 0 && (
-                      <button
-                        onClick={handleSelectAllButton}
-                        className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
-                      >
-                        Delete All
-                      </button>
-                    )}
-                    {selectedRows.length > 0 && (
-                      <button
-                        onClick={handleBulkDelete}
-                        className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
-                      >
-                        {isAllSelected
-                          ? `Delete All (${selectedRows.length})`
-                          : `Delete Selected (${selectedRows.length})`}
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Right Section: Select / Search / +Add New */}
-                <div className="col-xl-8 col-lg-8 col-md-12">
-                  <div className="d-flex flex-wrap align-items-center justify-content-end gap-2">
-                    <select
-                      className="form-select form-select-sm select-page-filter"
-                      value={tableState.limit}
-                      onChange={(e) => handlePageLengthChange(e.target.value)}
-                    >
-                      <option value={10}>Show 10</option>
-                      <option value={25}>Show 25</option>
-                      <option value={50}>Show 50</option>
-                      <option value={100}>Show 100</option>
-                    </select>
-                    <div className="position-relative flex-grow-1 search-filter-div">
-                      <Icon
-                        icon="ion:search-outline"
-                        className="position-absolute search-filter-icone"
-                      />
-                      <input
-                        type="text"
-                        className="form-control form-control-sm ps-5 search-filter-input"
-                        placeholder="Search..."
-                        value={tableState.search}
-                        onChange={(e) => handleSearchChange(e.target.value)}
-                      />
-                    </div>
+                  {selectedRows.length == 0 && (
                     <button
-                      className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
-                      onClick={handleShow}
-                    >+ New</button>
+                      onClick={handleSelectAllButton}
+                      className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
+                    >
+                      Delete All
+                    </button>
+                  )}
+                  {selectedRows.length > 0 && (
+                    <button
+                      onClick={handleBulkDelete}
+                      className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
+                    >
+                      {isAllSelected
+                        ? `Delete All (${selectedRows.length})`
+                        : `Delete Selected (${selectedRows.length})`}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Right Section: Select / Search / +Add New */}
+              <div className="col-xl-8 col-lg-8 col-md-12">
+                <div className="d-flex flex-wrap align-items-center justify-content-end gap-2">
+                  <select
+                    className="form-select form-select-sm select-page-filter"
+                    value={tableState.limit}
+                    onChange={(e) => handlePageLengthChange(e.target.value)}
+                  >
+                    <option value={10}>Show 10</option>
+                    <option value={25}>Show 25</option>
+                    <option value={50}>Show 50</option>
+                    <option value={100}>Show 100</option>
+                  </select>
+                  <div className="position-relative flex-grow-1 search-filter-div">
+                    <Icon
+                      icon="ion:search-outline"
+                      className="position-absolute search-filter-icone"
+                    />
+                    <input
+                      type="text"
+                      className="form-control form-control-sm ps-5 search-filter-input"
+                      placeholder="Search..."
+                      value={tableState.search}
+                      onChange={(e) => handleSearchChange(e.target.value)}
+                    />
                   </div>
+                  <button
+                    className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
+                    onClick={handleShow}
+                  >+ New</button>
                 </div>
               </div>
             </div>
@@ -758,7 +783,7 @@ const DepartmentList = () => {
                 <div className="modal-body p-24">
                   <div className="row">
                     <div className="col-12 col-md-6">
-                      <h3 className="text-sm font-semibold mb-3 text-gray-700">Available Fields</h3>
+                      <h3 className="text-sm font-semibold mb-3 text-gray-700">Available fields</h3>
                       <div className="border rounded-lg p-3 bg-gray-50 export-file-left" >
                         {items.map((item, index) => (
                           <div
@@ -781,7 +806,7 @@ const DepartmentList = () => {
                     </div>
                     <div className="col-12 col-md-6">
                       <h3 className="text-sm font-semibold mb-3 text-gray-700">
-                        Selected Fields ({selectedItems.length})
+                        Selected fields ({selectedItems.length})
                       </h3>
                       <div className="border rounded-lg p-3 bg-blue-50 export-file-righit" >
                         {selectedItems.length === 0 ? (

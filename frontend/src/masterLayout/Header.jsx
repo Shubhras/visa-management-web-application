@@ -22,7 +22,7 @@ const Header = () => {
             submenu: []
         },
         {
-            name: 'Parters',
+            name: 'Partners',
             path: '/',
             submenu: []
         },
@@ -52,7 +52,7 @@ const Header = () => {
                         { name: 'Department', path: '/department' },
                         { name: 'Employee type', path: '/employeetype' },
                         { name: 'Company type', path: '/companylist' },
-                        { name: 'Stakeholder categories', path: '/stakeholder-list' },
+                        { name: 'Stakeholder category', path: '/stakeholder-list' },
                     ]
                 },
                 {
