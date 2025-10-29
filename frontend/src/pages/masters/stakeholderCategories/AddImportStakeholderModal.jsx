@@ -113,7 +113,7 @@ const AddImportStakeholderModal = ({ show, handleClose }) => {
 
         const link = document.createElement('a');
         link.href = fileUrl;
-        link.download = 'department_sample.xlsx'; // Downloaded file name
+        link.download = 'stakeholderCategories_sample.xlsx'; // Downloaded file name
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
