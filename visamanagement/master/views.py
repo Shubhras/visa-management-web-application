@@ -19,7 +19,11 @@ from tablib import Dataset
 import openpyxl
 from django.http import HttpResponse
 from uuid import UUID
-import datetime
+from datetime import datetime  
+import io
+# <- this is the class
+  # this is the datetime class
+
 
 
 
@@ -2322,61 +2326,74 @@ class DepartmentDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+
 class DepartmentExportAPIView(APIView):
-    """
-    Export Departments via GET query params only.
-    Example:
-    /api/v1/master/departments/export/?format=xlsx&fields=uuid,name&uuids=uuid1,uuid2
-    """
+    
 
     def get(self, request):
-        # Get query params
+        # --- Get query params ---
         format_type = request.GET.get('format', 'xlsx').lower()
-        fields = request.GET.get('fields')  # comma-separated
-        uuids_param = request.GET.get('uuids', '')  # comma-separated
+        fields = request.GET.get('fields')  # comma-separated fields
+        uuids_param = request.GET.get('uuids', '')  # comma-separated UUIDs
 
-        # Prepare UUIDs list
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
-        # Prepare field list
+        # --- Field to header mapping ---
+        field_header_map = {
+            'uuid': 'UUID',
+            'name': 'Department',  # Custom header
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'created_at': 'Created At',
+            'updated_at': 'Updated At'
+        }
+
+        # --- Determine which fields to export ---
         if fields:
             field_list = [f.strip() for f in fields.split(',')]
         else:
-            field_list = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+            field_list = list(field_header_map.keys())
 
-        # Query departments
+        # --- Fetch queryset ---
         queryset = Department.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
 
-        # Prepare dataset
+        # --- Prepare dataset ---
         dataset = Dataset()
-        dataset.headers = field_list
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
 
         for dept in queryset:
             row = []
             for field in field_list:
                 value = getattr(dept, field, '')
-                if isinstance(value, datetime.datetime):
+                if isinstance(value, datetime):
                     value = value.strftime("%Y-%m-%d %H:%M:%S")
                 if isinstance(value, bool):
-                    value = int(value)
+                    value = int(value)  # convert True/False to 1/0
                 row.append(value if value is not None else '')
             dataset.append(row)
 
-        # Export CSV or XLSX
-        if format_type == 'xlsx':
-            data = XLSX().export_data(dataset)
-            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'departments.xlsx'
+        # --- Export data ---
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'departments.csv'
         else:
-            data = XLSX().export_data(dataset)
+            # XLSX export with BytesIO
+            file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'departments.xlsx'
 
-        response = HttpResponse(data, content_type=content_type)
+        # --- Return response ---
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
+
+
 
 class DepartmentImportAPIView(APIView):
     def post(self, request):
@@ -2389,8 +2406,12 @@ class DepartmentImportAPIView(APIView):
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
 
-        # Allowed headers (case-insensitive)
-        allowed_headers = {'name', 'description'}
+        # Mapping file headers → model fields
+        header_field_map = {
+            'department': 'name',   # File column "Department" → model field "name"
+            'description': 'description'
+        }
+        allowed_headers = set(header_field_map.keys())
 
         try:
             data = []
@@ -2398,6 +2419,7 @@ class DepartmentImportAPIView(APIView):
 
             # ---------- XLSX Handling ----------
             if format_type == 'xlsx':
+                import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
 
@@ -2415,7 +2437,8 @@ class DepartmentImportAPIView(APIView):
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 ws = wb[sheet_name]
-                headers = [cell.value.strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                # Read headers and normalize to lowercase
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
 
                 # Validate headers
                 if set(headers) != allowed_headers:
@@ -2425,30 +2448,30 @@ class DepartmentImportAPIView(APIView):
                         'message': f'Invalid headers in sheet. Expected: {allowed_headers}, Found: {set(headers)}'
                     }, status=status.HTTP_400_BAD_REQUEST)
 
+                # Read rows
                 for row in ws.iter_rows(min_row=2, values_only=True):
                     row_dict = dict(zip(headers, row))
                     data.append(row_dict)
 
             # ---------- CSV Handling ----------
             elif format_type == 'csv':
+                from tablib import Dataset
                 decoded_file = file.read().decode('utf-8')
                 dataset = Dataset()
                 dataset.load(decoded_file, format='csv')
 
                 for row in dataset.dict:
-                    # Normalize headers to lowercase
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
                     if set(row_lower.keys()) != allowed_headers:
                         return Response({
                             "statusCode": 400,
                             "status": True,
                             "message": (
-    f'The uploaded file contains invalid column headers. '
-    f'Only the following headers are allowed: {", ".join(allowed_headers)}. '
-    f'Found headers in the file: {", ".join(row_lower.keys())}. '
-    'Please correct the headers and try again.'
-)
-
+                                f'The uploaded file contains invalid column headers. '
+                                f'Only the following headers are allowed: {", ".join(allowed_headers)}. '
+                                f'Found headers in the file: {", ".join(row_lower.keys())}. '
+                                'Please correct the headers and try again.'
+                            )
                         }, status=status.HTTP_400_BAD_REQUEST)
                     data.append(row_lower)
 
@@ -2460,7 +2483,8 @@ class DepartmentImportAPIView(APIView):
 
             # ---------- Process Each Row ----------
             for row in data:
-                name = str(row.get('name')).strip() if row.get('name') else None
+                # Map file columns to model fields
+                name = str(row.get('department')).strip() if row.get('department') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not name:
@@ -2470,16 +2494,13 @@ class DepartmentImportAPIView(APIView):
 
                 if existing:
                     if existing.is_deleted:
-                        # Reactivate soft-deleted department
                         existing.description = description
                         existing.is_deleted = False
                         existing.save()
                     else:
-                        # Already active — track as duplicate
                         duplicate_names.append(name)
                         continue
                 else:
-                    # No record exists — create new
                     Department.objects.create(
                         name=name,
                         description=description,
@@ -2489,8 +2510,8 @@ class DepartmentImportAPIView(APIView):
         except Exception as e:
             return Response({
                 "statusCode": 400,
-                        "status": True,
-                        'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                "status": True,
+                'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({
             "statusCode": 200,
@@ -2498,6 +2519,8 @@ class DepartmentImportAPIView(APIView):
             "duplicates": list(set(duplicate_names)),
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
         }, status=status.HTTP_200_OK)
+
+
 
 
 # -----------------------employeeType---------------------------------
