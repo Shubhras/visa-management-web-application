@@ -7812,8 +7812,11 @@ class LostReasonB2BExportAPIView(APIView):
         return response
 
 
-
 class LostReasonB2BImportAPIView(APIView):
+    """
+    API to import LostReasonB2B from XLSX or CSV files.
+    """
+
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')  # optional for XLSX
@@ -7822,18 +7825,20 @@ class LostReasonB2BImportAPIView(APIView):
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
-        dataset = Dataset()
         duplicate_names = []
+
+        # Map file headers (lowercase) to model fields
         header_field_map = {
-            'Lost ReasonB2B': 'name',
-            'Description': 'description'
+            'last reasonsb2b': 'name',
+            'description': 'description'
         }
 
-        allowed_headers = set(k.lower() for k in header_field_map.keys())
+        allowed_headers = set(header_field_map.keys())
 
         try:
             data = []
-            headers = []
+
+            # ---------- XLSX Handling ----------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
@@ -7858,6 +7863,7 @@ class LostReasonB2BImportAPIView(APIView):
                         "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Please provide at least one data row.'
                     }, status=status.HTTP_400_BAD_REQUEST)
 
+                # Read headers and normalize
                 headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
 
                 if not allowed_headers.issubset(set(headers)):
@@ -7867,6 +7873,7 @@ class LostReasonB2BImportAPIView(APIView):
                         'message': f'Missing required headers. Required: {allowed_headers}, Found: {set(headers)}'
                     }, status=status.HTTP_400_BAD_REQUEST)
 
+                # Read rows
                 for row in ws.iter_rows(min_row=2, values_only=True):
                     if not any(row):
                         continue
@@ -7880,7 +7887,6 @@ class LostReasonB2BImportAPIView(APIView):
                         "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Please provide at least one data row.'
                     }, status=status.HTTP_400_BAD_REQUEST)
 
-
             # ---------- CSV Handling ----------
             elif format_type == 'csv':
                 decoded_file = file.read().decode('utf-8')
@@ -7890,17 +7896,16 @@ class LostReasonB2BImportAPIView(APIView):
                 for row in dataset.dict:
                     # Normalize headers to lowercase
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
-                    if set(row_lower.keys()) != allowed_headers:
+                    if not allowed_headers.issubset(set(row_lower.keys())):
                         return Response({
                             "statusCode": 400,
                             "status": True,
                             "message": (
-    f'The uploaded file contains invalid column headers. '
-    f'Only the following headers are allowed: {", ".join(allowed_headers)}. '
-    f'Found headers in the file: {", ".join(row_lower.keys())}. '
-    'Please correct the headers and try again.'
-)
-
+                                f'The uploaded file contains invalid column headers. '
+                                f'Only the following headers are allowed: {", ".join(allowed_headers)}. '
+                                f'Found headers in the file: {", ".join(row_lower.keys())}. '
+                                'Please correct the headers and try again.'
+                            )
                         }, status=status.HTTP_400_BAD_REQUEST)
                     data.append(row_lower)
 
@@ -7908,13 +7913,14 @@ class LostReasonB2BImportAPIView(APIView):
                 return Response({
                     "statusCode": 400,
                     "status": True,
-                    'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
+                    'error': 'Unsupported file format. Use .xlsx or .csv'
+                }, status=status.HTTP_400_BAD_REQUEST)
 
             # ---------- Process Each Row ----------
             for row in data:
-                name = str(row.get('last reasonb2b')).strip() if row.get('last reasonb2b') else None
+                name = str(row.get('last reasonsb2b')).strip() if row.get('last reasonsb2b') else None
                 description = str(row.get('description')).strip() if row.get('description') else None
-                
+
                 if not name:
                     continue  # skip empty names
 
@@ -7947,8 +7953,6 @@ class LostReasonB2BImportAPIView(APIView):
             "duplicates": list(set(duplicate_names)),
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
         }, status=status.HTTP_200_OK)
-
-
 
 # -------------------- EducationLevelCode -------------------- #
 class EducationLevelCodeListAPIView(APIView):
