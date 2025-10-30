@@ -2372,15 +2372,18 @@ class DepartmentExportAPIView(APIView):
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
 
         for dept in queryset:
-            row = []
-            for field in field_list:
-                value = getattr(dept, field, '')
-                if isinstance(value, datetime):
-                    value = value.strftime("%Y-%m-%d %H:%M:%S")
-                if isinstance(value, bool):
-                    value = int(value)  # convert True/False to 1/0
-                row.append(value if value is not None else '')
-            dataset.append(row)
+        row = []
+        for field in field_list:
+            value = getattr(dept, field, '')
+
+            if field in ['created_at']:
+                # Use current time instead of the original
+                value = timezone.localtime(timezone.now()).strftime("%Y-%m-%d %H:%M:%S")
+            elif isinstance(value, bool):
+                value = int(value)
+
+            row.append(value if value is not None else '')
+        dataset.append(row)
 
         # --- Export data ---
         if format_type == 'csv':
