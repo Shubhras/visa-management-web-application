@@ -2470,7 +2470,7 @@ class DepartmentImportAPIView(APIView):
                     row_dict = dict(zip(headers, row))
                     data.append(row_dict)
 
-                # ✅ If all rows were blank (no real data)
+               
                 if not data:
                     return Response({
                         "statusCode": 400,
@@ -2806,10 +2806,13 @@ class EmployeeTypeExportAPIView(APIView):
             row = []
             for field in field_list:
                 value = getattr(dept, field, '')
-                if isinstance(value, datetime):
-                    value = value.strftime("%Y-%m-%d %H:%M:%S")
-                if isinstance(value, bool):
-                    value = int(value)  # convert True/False to 1/0
+
+                if field in ['created_at', 'updated_at'] and value:
+                    # Convert the stored UTC datetime to IST and format it
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
+                    value = int(value)
+
                 row.append(value if value is not None else '')
             dataset.append(row)
 
@@ -3205,10 +3208,13 @@ class CompanyTypeExportAPIView(APIView):
             row = []
             for field in field_list:
                 value = getattr(dept, field, '')
-                if isinstance(value, datetime):
-                    value = value.strftime("%Y-%m-%d %H:%M:%S")
-                if isinstance(value, bool):
-                    value = int(value)  
+
+                if field in ['created_at', 'updated_at'] and value:
+                    # Convert the stored UTC datetime to IST and format it
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
+                    value = int(value)
+
                 row.append(value if value is not None else '')
             dataset.append(row)
 
@@ -3835,13 +3841,14 @@ class StakeholderCategoryExportAPIView(APIView):
         for dept in queryset:
             row = []
             for field in field_list:
-                value = getattr(dept, field, '')  # get attribute dynamically
-                # Format datetime fields
-                if isinstance(value, datetime):
-                    value = value.strftime("%Y-%m-%d %H:%M:%S")
-                # Convert boolean to int
-                if isinstance(value, bool):
+                value = getattr(dept, field, '')
+
+                if field in ['created_at', 'updated_at'] and value:
+                    # Convert the stored UTC datetime to IST and format it
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
                     value = int(value)
+
                 row.append(value if value is not None else '')
             dataset.append(row)
 
@@ -3930,7 +3937,6 @@ class StakeholderCategoryImportAPIView(APIView):
                     row_dict = dict(zip(headers, row))
                     data.append(row_dict)
 
-                # ✅ If all rows were blank (no real data)
                 if not data:
                     return Response({
                         "statusCode": 400,
