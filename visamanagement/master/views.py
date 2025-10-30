@@ -2247,18 +2247,30 @@ class DepartmentUpdateAPIView(APIView):
 class DepartmentDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
-    def delete(self, request):
+    def delete(self, request, uuid=None):
         ids = request.data.get('id', None)
 
-        if not ids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Please provide 'id' field (UUID list or 'all').",
-                "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
+        # Single delete via URL parameter
+        if uuid:
+            try:
+                department = Department.objects.get(uuid=uuid, is_deleted=False)
+                department.is_deleted = True
+                department.save()
+                return Response({
+                    "statusCode": 204,
+                    "status": True,
+                    "message": "Department deleted successfully",
+                    "data": None
+                }, status=status.HTTP_204_NO_CONTENT)
+            except Department.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "Department not found",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
 
-        # If client requests all departments to be deleted
+        # Delete all departments
         if ids == "all":
             departments = Department.objects.filter(is_deleted=False)
             count = departments.count()
@@ -2277,8 +2289,8 @@ class DepartmentDeleteAPIView(APIView):
                 "data": None
             }, status=status.HTTP_200_OK)
 
-        # Otherwise, treat as list of UUIDs
-        if not isinstance(ids, list):
+        # Validate bulk UUIDs
+        if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
                 "status": False,
@@ -2286,7 +2298,6 @@ class DepartmentDeleteAPIView(APIView):
                 "data": None
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # Validate UUIDs
         valid_uuids = []
         invalid_uuids = []
         for u in ids:
@@ -2303,7 +2314,7 @@ class DepartmentDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids}
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # Fetch departments that exist and are not deleted
+        # Bulk delete
         departments = Department.objects.filter(uuid__in=valid_uuids, is_deleted=False)
         count = departments.count()
 
@@ -2315,7 +2326,6 @@ class DepartmentDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        # Soft delete
         departments.update(is_deleted=True)
 
         return Response({
@@ -2324,9 +2334,6 @@ class DepartmentDeleteAPIView(APIView):
             "message": f"{count} department(s) deleted successfully.",
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         }, status=status.HTTP_200_OK)
-
-
-
 class DepartmentExportAPIView(APIView):
     
 
