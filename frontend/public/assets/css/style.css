@@ -15720,6 +15720,7 @@ td.fc-header-center {
 @media (min-width: 1400px) {
   .dashboard-main-body {
     padding: 1.5rem;
+    padding-top: 0px;
   }
 }
 
