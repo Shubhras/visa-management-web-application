@@ -2363,7 +2363,7 @@ class DepartmentExportAPIView(APIView):
             field_list = list(field_header_map.keys())
 
         # --- Fetch queryset ---
-        queryset = Department.objects.filter(is_deleted=False)
+        queryset = Department.objects.filter(is_deleted=False).order_by('created_at')  
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
 
