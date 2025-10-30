@@ -21,12 +21,11 @@ from django.http import HttpResponse
 from uuid import UUID
 from datetime import datetime  
 import io
+import pytz
 from django.utils import timezone
-# <- this is the class
-  # this is the datetime class
 
 
-
+india_tz = pytz.timezone('Asia/Kolkata')
 
 class IsAdminUser(BasePermission):
     def has_permission(self, request, view):
@@ -2378,15 +2377,13 @@ class DepartmentExportAPIView(APIView):
                 value = getattr(dept, field, '')
 
                 if field in ['created_at', 'updated_at']:
-                    # Use current local time at the moment of export
-                    now = timezone.localtime(timezone.now())
+                    now = timezone.now().astimezone(india_tz)  # current IST
                     value = now.strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
                     value = int(value)
 
                 row.append(value if value is not None else '')
             dataset.append(row)
-
         # --- Export data ---
         if format_type == 'csv':
             file_data = dataset.export('csv')
