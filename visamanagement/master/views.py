@@ -7845,7 +7845,7 @@ class LostReasonB2BImportAPIView(APIView):
 
         # Map file headers (lowercase) to model fields
         header_field_map = {
-            'last reasons (b2b)': 'name',
+            'last reason (b2b)': 'name',
             'description': 'description'
         }
 
@@ -7934,7 +7934,7 @@ class LostReasonB2BImportAPIView(APIView):
 
             # ---------- Process Each Row ----------
             for row in data:
-                name = str(row.get('last reasons (b2b)')).strip() if row.get('last reasons (b2b)') else None
+                name = str(row.get('last reason (b2b)')).strip() if row.get('last reason (b2b)') else None
                 description = str(row.get('description')).strip() if row.get('description') else None
 
                 if not name:
