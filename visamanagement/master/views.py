@@ -2759,7 +2759,7 @@ class EmployeeTypeDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        emp_types.update(is_deleted=True)
+        emp_types.delete()
 
         return Response({
             "statusCode": 200,
