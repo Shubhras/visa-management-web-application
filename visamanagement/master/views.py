@@ -3615,7 +3615,7 @@ class StakeholderCategoryCreateAPIView(APIView):
     def post(self, request):
         serializer = StakeholderCategorySerializer(data=request.data)
         if serializer.is_valid():
-            if StakeholderCategory.objects.filter(name=serializer.validated_data["name"]).exists():
+            if StakeholderCategory.objects.filter(name=serializer.validated_data["name"],is_deleted=False).exists():
                 return Response({
                     "statusCode": 400,
                     "status": False,
