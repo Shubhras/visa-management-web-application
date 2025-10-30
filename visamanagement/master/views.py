@@ -7912,9 +7912,9 @@ class LostReasonB2BImportAPIView(APIView):
 
             # ---------- Process Each Row ----------
             for row in data:
-                name = str(row.get('lost reasonsB2B')).strip() if row.get('lost reasons') else None
-                description = str(row.get('description')).strip() if row.get('description') else ''
-
+                name = str(row.get('last reasonsb2b')).strip() if row.get('last reasonsb2b') else None
+                description = str(row.get('description')).strip() if row.get('description') else 
+                
                 if not name:
                     continue  # skip empty names
 
