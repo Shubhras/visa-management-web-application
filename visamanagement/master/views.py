@@ -2363,9 +2363,10 @@ class DepartmentExportAPIView(APIView):
             field_list = list(field_header_map.keys())
 
         # --- Fetch queryset ---
-        queryset = Department.objects.filter(is_deleted=False).order_by('created_at')  
+        queryset = Department.objects.filter(is_deleted=False) 
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-created_at')
 
         # --- Prepare dataset ---
         dataset = Dataset()
@@ -2798,7 +2799,7 @@ class EmployeeTypeExportAPIView(APIView):
         queryset = EmployeeType.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        
+        queryset = queryset.order_by('-created_at')
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
 
@@ -2834,6 +2835,8 @@ class EmployeeTypeExportAPIView(APIView):
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
+
+
 
 class EmployeeTypeImportAPIView(APIView):
     """
