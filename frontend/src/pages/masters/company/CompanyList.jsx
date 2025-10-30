@@ -30,12 +30,13 @@ const CompanyList = () => {
     const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this company type?");
     const [showExportPopop, setShowExportPopop] = useState(false);
     const [deleteId, setDeleteId] = useState(null);
+    const [deleteAllData, setDeleteAllData] = useState('');
     const [companyListData, setCompanyListData] = useState([]);
     const [loading, setLoading] = useState(false);
     const [loadingExport, setLoadingExport] = useState(false);
-
     const [items] = useState(["Company Type", "Description", "Created On"]);
-    const [selectedItems, setSelectedItems] = useState([]);
+    const [selectedItems, setSelectedItems] = useState(["Company Type"]);
+    const [ItemsRequired] = useState(["Company Type"]);
 
     // Updated state with sorting
     const [tableState, setTableState] = useState({
@@ -43,8 +44,8 @@ const CompanyList = () => {
         limit: 25,
         search: '',
         status: '',
-        sortBy: '', // Field to sort by
-        sortOrder: '', // 'asc' or 'desc'
+        sortBy: 'created_at', // Field to sort by
+        sortOrder: 'desc', // 'asc' or 'desc'
         total: 0,
         totalPages: 0,
         currentPage: 1,
@@ -247,21 +248,23 @@ const CompanyList = () => {
     const handleDelete = (uuid) => {
         setDeleteId(uuid);
         setShowDeleteConfirm(true);
+        setDeleteConfirmMessage(`Are you sure you want to delete this company type?`);
     };
 
-    const handleBulkDelete = () => {
+    const handleBulkDelete = (deleteData) => {
         if (selectedRows.length === 0) {
-            alert('Please select rows to delete');
+            toast.error('Please select rows to delete');
             return;
         }
-        const maggase = isAllSelected ? "all" : deleteId ? "" : selectedRows.length
-        setDeleteConfirmMessage(`Are you sure you want to delete this company type (${maggase})?`);
+        const message = deleteData === "all" ? `${tableState.total} all company type` : `${selectedRows.length} selected company type`;
+        setDeleteConfirmMessage(`Are you sure you want to delete this company type (${message})?`);
         setShowDeleteConfirm(true);
+        setDeleteAllData(deleteData);
     };
 
     const confirmDelete = () => {
-        //const sendPayload = "all"//deleteId ? [deleteId] : selectedRows;
-        const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
+        // const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
+        const sendPayload = deleteAllData === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
 
         if (!sendPayload || sendPayload.length === 0) {
             toast.error("No company type selected for deletion.");
@@ -290,7 +293,9 @@ const CompanyList = () => {
     const cancelDelete = () => {
         setShowDeleteConfirm(false);
         setDeleteId(null);
-        setSelectedRows([])
+        setSelectedRows([]);
+        setDeleteConfirmMessage('');
+        setDeleteAllData('');
     };
 
     const handleCloseImport = () => {
@@ -322,12 +327,14 @@ const CompanyList = () => {
         newSelected.splice(dropIndex, 0, draggedItem);
         setSelectedItems(newSelected);
     };
-
     const handleDragOver = (e) => {
         e.preventDefault();
     };
 
     const handleCheckboxChange = (item, checked) => {
+        // prevent unchecking required items
+        if (ItemsRequired.includes(item)) return;
+
         if (checked) {
             setSelectedItems([...selectedItems, item]);
         } else {
@@ -421,7 +428,7 @@ const CompanyList = () => {
     return (
         <>
             <MasterLayout>
-                <Breadcrumb title="Company" subTitle="List" />
+                <Breadcrumb title="Company Type" subTitle="List" />
                 <div className="card basic-data-table main-container-data">
                     <div className="card-body container-data">
                         <div className="row align-items-center gy-3 gx-2 flex-wrap filter-action-btn">
@@ -451,12 +458,16 @@ const CompanyList = () => {
                                     )}
                                     {selectedRows.length > 0 && (
                                         <button
-                                            onClick={handleBulkDelete}
+                                            onClick={() => handleBulkDelete("")}
                                             className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
-                                        >
-                                            {isAllSelected
-                                                ? `Delete All (${selectedRows.length})`
-                                                : `Delete Selected (${selectedRows.length})`}
+                                        >{`Delete Selected (${selectedRows.length})`}
+                                        </button>
+                                    )}
+                                    {selectedRows.length > 0 && (
+                                        <button
+                                            onClick={() => handleBulkDelete("all")}
+                                            className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
+                                        >{`Delete All (${tableState.total})`}
                                         </button>
                                     )}
                                 </div>
@@ -880,9 +891,10 @@ const CompanyList = () => {
                                                             id={`item-${index}`}
                                                             checked={selectedItems.includes(item)}
                                                             onChange={(e) => handleCheckboxChange(item, e.target.checked)}
+                                                            disabled={ItemsRequired.includes(item)} // 🔒 Disable required item
                                                             className="form-check-input"
                                                         />
-                                                        <label htmlFor={`item-${index}`} className="mb-0 flex-grow-1" >
+                                                        <label htmlFor={`item-${index}`} className="mb-0 flex-grow-1">
                                                             {item}
                                                         </label>
                                                     </div>
@@ -911,12 +923,14 @@ const CompanyList = () => {
                                                         >
                                                             <span className="text-muted move-drop-icone">☰</span>
                                                             <span className="flex-grow-1">{item}</span>
-                                                            <button
-                                                                onClick={() => handleCheckboxChange(item, false)}
-                                                                className="btn btn-sm btn-link text-danger p-0 close-icone"
-                                                            >
-                                                                ×
-                                                            </button>
+                                                            {!ItemsRequired.includes(item) && (
+                                                                <button
+                                                                    onClick={() => handleCheckboxChange(item, false)}
+                                                                    className="btn btn-sm btn-link text-danger p-0 close-icone"
+                                                                >
+                                                                    ×
+                                                                </button>
+                                                            )}
                                                         </div>
                                                     ))
                                                 )}

@@ -126,7 +126,7 @@ const AddCompany = ({ show, handleClose }) => {
                   {/* Department Name */}
                   <div className="col-12 mb-20">
                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                      Company type <span className="text-danger">*</span>
+                      Company Type <span className="text-danger">*</span>
                     </label>
                     <input
                       type="text"

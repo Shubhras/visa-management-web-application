@@ -27,15 +27,16 @@ const StakeholderCategoriesList = () => {
   const [rowSelectData, setRowSelectData] = useState({});
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this stakeholder?");
+  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this stakeholder category?");
   const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
+  const [deleteAllData, setDeleteAllData] = useState('');
   const [stakeholderListData, setStakeholderListData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-
   const [items] = useState(["Stakeholder Category", "Description", "Created On"]);
-  const [selectedItems, setSelectedItems] = useState([]);
+  const [selectedItems, setSelectedItems] = useState(["Stakeholder Category"]);
+  const [ItemsRequired] = useState(["Stakeholder Category"]);
 
   // Updated state with sorting
   const [tableState, setTableState] = useState({
@@ -43,8 +44,8 @@ const StakeholderCategoriesList = () => {
     limit: 25,
     search: '',
     status: '',
-    sortBy: '', // Field to sort by
-    sortOrder: '', // 'asc' or 'desc'
+    sortBy: 'created_at', // Field to sort by
+    sortOrder: 'desc', // 'asc' or 'desc'
     total: 0,
     totalPages: 0,
     currentPage: 1,
@@ -247,21 +248,23 @@ const StakeholderCategoriesList = () => {
   const handleDelete = (uuid) => {
     setDeleteId(uuid);
     setShowDeleteConfirm(true);
+    setDeleteConfirmMessage(`Are you sure you want to delete this stakeholder category?`);
   };
 
-  const handleBulkDelete = () => {
+  const handleBulkDelete = (deleteData) => {
     if (selectedRows.length === 0) {
-      alert('Please select rows to delete');
+      toast.error("Please select rows to delete");
       return;
     }
-    const maggase = isAllSelected ? "all" : deleteId ? "" : selectedRows.length
-    setDeleteConfirmMessage(`Are you sure you want to delete this stakeholder (${maggase})?`);
+    // Choose message based on delete type
+    const message = deleteData === "all" ? `${tableState.total} all stakeholder category` : `${selectedRows.length} selected stakeholder category`;
+    setDeleteConfirmMessage(`Are you sure you want to delete this stakeholder category (${message})?`);
     setShowDeleteConfirm(true);
+    setDeleteAllData(deleteData);
   };
-
   const confirmDelete = () => {
-    //const sendPayload = "all"//deleteId ? [deleteId] : selectedRows;
-    const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
+    // const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
+    const sendPayload = deleteAllData === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
 
     if (!sendPayload || sendPayload.length === 0) {
       toast.error("No stakeholder selected for deletion.");
@@ -290,7 +293,9 @@ const StakeholderCategoriesList = () => {
   const cancelDelete = () => {
     setShowDeleteConfirm(false);
     setDeleteId(null);
-    setSelectedRows([])
+    setSelectedRows([]);
+    setDeleteConfirmMessage('');
+    setDeleteAllData('');
   };
 
   const handleCloseImport = () => {
@@ -322,12 +327,14 @@ const StakeholderCategoriesList = () => {
     newSelected.splice(dropIndex, 0, draggedItem);
     setSelectedItems(newSelected);
   };
-
   const handleDragOver = (e) => {
     e.preventDefault();
   };
 
   const handleCheckboxChange = (item, checked) => {
+    // prevent unchecking required items
+    if (ItemsRequired.includes(item)) return;
+
     if (checked) {
       setSelectedItems([...selectedItems, item]);
     } else {
@@ -452,12 +459,16 @@ const StakeholderCategoriesList = () => {
                   )}
                   {selectedRows.length > 0 && (
                     <button
-                      onClick={handleBulkDelete}
+                      onClick={() => handleBulkDelete("")}
                       className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
-                    >
-                      {isAllSelected
-                        ? `Delete All (${selectedRows.length})`
-                        : `Delete Selected (${selectedRows.length})`}
+                    >{`Delete Selected (${selectedRows.length})`}
+                    </button>
+                  )}
+                  {selectedRows.length > 0 && (
+                    <button
+                      onClick={() => handleBulkDelete("all")}
+                      className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
+                    >{`Delete All (${tableState.total})`}
                     </button>
                   )}
                 </div>
@@ -809,9 +820,10 @@ const StakeholderCategoriesList = () => {
                               id={`item-${index}`}
                               checked={selectedItems.includes(item)}
                               onChange={(e) => handleCheckboxChange(item, e.target.checked)}
+                              disabled={ItemsRequired.includes(item)} // 🔒 Disable required item
                               className="form-check-input"
                             />
-                            <label htmlFor={`item-${index}`} className="mb-0 flex-grow-1" >
+                            <label htmlFor={`item-${index}`} className="mb-0 flex-grow-1">
                               {item}
                             </label>
                           </div>
@@ -840,12 +852,14 @@ const StakeholderCategoriesList = () => {
                             >
                               <span className="text-muted move-drop-icone">☰</span>
                               <span className="flex-grow-1">{item}</span>
-                              <button
-                                onClick={() => handleCheckboxChange(item, false)}
-                                className="btn btn-sm btn-link text-danger p-0 close-icone"
-                              >
-                                ×
-                              </button>
+                              {!ItemsRequired.includes(item) && (
+                                <button
+                                  onClick={() => handleCheckboxChange(item, false)}
+                                  className="btn btn-sm btn-link text-danger p-0 close-icone"
+                                >
+                                  ×
+                                </button>
+                              )}
                             </div>
                           ))
                         )}

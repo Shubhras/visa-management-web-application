@@ -114,7 +114,7 @@ const AddImportEmployeeModal = ({ show, handleClose }) => {
             type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         });
 
-        saveAs(blob, `employeesType_${new Date().toISOString().split("T")[0]}.xlsx`);
+        saveAs(blob, `EmployeetType_${new Date().toISOString().split("T")[0]}.xlsx`);
     };
     // Handle modal close
     const onClose = () => {
@@ -125,11 +125,11 @@ const AddImportEmployeeModal = ({ show, handleClose }) => {
         handleClose();
     };
     const handleDownloadSample = () => {
-        const fileUrl = 'assets/simplefile/employee.xlsx'; // Update this path according to your project structure
+        const fileUrl = 'assets/simplefile/EmployeetType.xlsx'; // Update this path according to your project structure
 
         const link = document.createElement('a');
         link.href = fileUrl;
-        link.download = 'employee_sample.xlsx'; // Downloaded file name
+        link.download = 'EmployeetType.xlsx'; // Downloaded file name
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

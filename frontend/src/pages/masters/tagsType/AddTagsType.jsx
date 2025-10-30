@@ -111,7 +111,7 @@ const AddTagsType = ({ show, handleClose }) => {
           <div className="modal-content radius-16 bg-base">
             <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
               <h1 className="modal-title fs-5" id="TagsTypeModalLabel">
-                Add Tags Type
+                Add Tags
               </h1>
               <button
                 type="button"
@@ -127,7 +127,7 @@ const AddTagsType = ({ show, handleClose }) => {
                   {/* Name */}
                   <div className="col-12 mb-20">
                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                      Name <span className="text-danger">*</span>
+                      Tags <span className="text-danger">*</span>
                     </label>
                     <input
                       type="text"
@@ -135,7 +135,7 @@ const AddTagsType = ({ show, handleClose }) => {
                       value={formData.name}
                       onChange={handleChange}
                       className={`form-control radius-8 ${errors.name ? 'is-invalid' : ''}`}
-                      placeholder="Enter name"
+                      placeholder="Enter tags"
                     />
                     {errors.name && (
                       <div className="text-danger text-sm mt-1">

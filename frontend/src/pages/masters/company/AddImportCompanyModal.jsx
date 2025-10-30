@@ -114,7 +114,7 @@ const AddImportCompanyModal = ({ show, handleClose }) => {
             type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         });
 
-        saveAs(blob, `companyType_${new Date().toISOString().split("T")[0]}.xlsx`);
+        saveAs(blob, `CompanyType_${new Date().toISOString().split("T")[0]}.xlsx`);
     };
     // Handle modal close
     const onClose = () => {
@@ -126,11 +126,11 @@ const AddImportCompanyModal = ({ show, handleClose }) => {
         setLoading(false);
     };
     const handleDownloadSample = () => {
-        const fileUrl = 'assets/simplefile/company.xlsx'; // Update this path according to your project structure
+        const fileUrl = 'assets/simplefile/CompanyType.xlsx'; // Update this path according to your project structure
 
         const link = document.createElement('a');
         link.href = fileUrl;
-        link.download = 'company_sample.xlsx'; // Downloaded file name
+        link.download = 'CompanyType.xlsx'; // Downloaded file name
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
