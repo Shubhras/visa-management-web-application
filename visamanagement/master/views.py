@@ -21,6 +21,7 @@ from django.http import HttpResponse
 from uuid import UUID
 from datetime import datetime  
 import io
+from django.utils import timezone
 # <- this is the class
   # this is the datetime class
 
@@ -2372,17 +2373,17 @@ class DepartmentExportAPIView(APIView):
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
 
         for dept in queryset:
-        row = []
-        for field in field_list:
-            value = getattr(dept, field, '')
+            row = []
+            for field in field_list:
+                value = getattr(dept, field, '')
 
-            if field in ['created_at']:
-                # Use current time instead of the original
-                value = timezone.localtime(timezone.now()).strftime("%Y-%m-%d %H:%M:%S")
-            elif isinstance(value, bool):
-                value = int(value)
+                if field in ['created_at']:
+                    # Use current time instead of the original
+                    value = timezone.localtime(timezone.now()).strftime("%Y-%m-%d %H:%M:%S")
+                elif isinstance(value, bool):
+                    value = int(value)
 
-            row.append(value if value is not None else '')
+                row.append(value if value is not None else '')
         dataset.append(row)
 
         # --- Export data ---
