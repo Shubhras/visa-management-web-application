@@ -3888,8 +3888,6 @@ class StakeholderCategoryExportAPIView(APIView):
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
-
-
 class StakeholderCategoryImportAPIView(APIView):
     """
     API to import Stakeholder Categories from CSV or XLSX.
@@ -3913,8 +3911,13 @@ class StakeholderCategoryImportAPIView(APIView):
             'Description': 'description'
         }
 
-        # Normalize headers: lowercase + remove spaces
-        allowed_headers = set(k.lower().replace(' ', '') for k in header_field_map.keys())
+        # Normalize headers: keep only alphanumeric lowercase characters
+        def normalize_header(h):
+            if not h:
+                return ''
+            return ''.join(c for c in str(h).lower() if c.isalnum())
+
+        allowed_headers = set(normalize_header(k) for k in header_field_map.keys())
 
         try:
             data = []
@@ -3922,6 +3925,7 @@ class StakeholderCategoryImportAPIView(APIView):
 
             # ---------- XLSX Handling ----------
             if format_type == 'xlsx':
+                import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
 
@@ -3944,9 +3948,9 @@ class StakeholderCategoryImportAPIView(APIView):
                         "status": False,
                         "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Please provide at least one data row.'
                     }, status=status.HTTP_400_BAD_REQUEST)
-                
-                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
 
+                # Normalize headers
+                headers = [normalize_header(cell.value) for cell in next(ws.iter_rows(min_row=1, max_row=1))]
 
                 if not allowed_headers.issubset(set(headers)):
                     return Response({
@@ -3970,19 +3974,29 @@ class StakeholderCategoryImportAPIView(APIView):
 
             # ---------- CSV Handling ----------
             elif format_type == 'csv':
+                from tablib import Dataset
                 decoded_file = file.read().decode('utf-8')
                 dataset = Dataset()
                 dataset.load(decoded_file, format='csv')
 
                 for row in dataset.dict:
-                    row_lower = {k.strip().lower().replace(' ', ''): v for k, v in row.items()}
+                    row_lower = {normalize_header(k): v for k, v in row.items()}
                     if not allowed_headers.issubset(set(row_lower.keys())):
                         return Response({
                             "statusCode": 400,
                             "status": True,
                             "message": f'Missing required headers. Required: {allowed_headers}. Found: {set(row_lower.keys())}.'
                         }, status=status.HTTP_400_BAD_REQUEST)
+                    if not any(row_lower.values()):
+                        continue
                     data.append(row_lower)
+
+                if not data:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "The uploaded CSV file is empty. Please provide at least one data row."
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
             else:
                 return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
@@ -3990,7 +4004,7 @@ class StakeholderCategoryImportAPIView(APIView):
             # ---------- Process Each Row ----------
             imported_count = 0
             for row in data:
-                name = str(row.get('stakeholder category')).strip() if row.get('stakeholder category') else None
+                name = str(row.get('stakeholdercategory')).strip() if row.get('stakeholdercategory') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not name:
@@ -4028,7 +4042,6 @@ class StakeholderCategoryImportAPIView(APIView):
             "duplicates": list(set(duplicate_names)),
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
         }, status=status.HTTP_200_OK)
-
 #-------------------------stakeholdertype-------------------------------
 class StakeholderTypeCreateAPIView(APIView):
     def post(self, request):
