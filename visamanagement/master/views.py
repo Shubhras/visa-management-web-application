@@ -3944,7 +3944,7 @@ class StakeholderCategoryImportAPIView(APIView):
 
             # ---------- Process Each Row ----------
             for row in data:
-                name = str(row.get('stakeholdercategory')).strip() if row.get('stakeholdercategory') else None
+                name = str(row.get('stakeholder category')).strip() if row.get('stakeholder category') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not name:
