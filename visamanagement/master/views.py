@@ -7833,6 +7833,12 @@ class LostReasonB2BImportAPIView(APIView):
     API to import LostReasonB2B from XLSX or CSV files.
     """
 
+    def normalize_header(self, header):
+        """Normalize headers: lowercase, strip spaces, remove parentheses."""
+        if not header:
+            return ''
+        return header.strip().lower().replace('(', '').replace(')', '')
+
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')  # optional for XLSX
@@ -7843,12 +7849,11 @@ class LostReasonB2BImportAPIView(APIView):
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
 
-        # Map file headers (lowercase) to model fields
+        # Map normalized file headers to model fields
         header_field_map = {
-            'last reason (b2b)': 'name',
+            'lost reason b2b': 'name',
             'description': 'description'
         }
-
         allowed_headers = set(header_field_map.keys())
 
         try:
@@ -7880,7 +7885,7 @@ class LostReasonB2BImportAPIView(APIView):
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 # Read headers and normalize
-                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                headers = [self.normalize_header(str(cell.value)) for cell in next(ws.iter_rows(min_row=1, max_row=1))]
 
                 if not allowed_headers.issubset(set(headers)):
                     return Response({
@@ -7910,8 +7915,7 @@ class LostReasonB2BImportAPIView(APIView):
                 dataset.load(decoded_file, format='csv')
 
                 for row in dataset.dict:
-                    # Normalize headers to lowercase
-                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    row_lower = {self.normalize_header(k): v for k, v in row.items()}
                     if not allowed_headers.issubset(set(row_lower.keys())):
                         return Response({
                             "statusCode": 400,
@@ -7934,7 +7938,7 @@ class LostReasonB2BImportAPIView(APIView):
 
             # ---------- Process Each Row ----------
             for row in data:
-                name = str(row.get('last reason (b2b)')).strip() if row.get('last reason (b2b)') else None
+                name = str(row.get('lost reason b2b')).strip() if row.get('lost reason b2b') else None
                 description = str(row.get('description')).strip() if row.get('description') else None
 
                 if not name:
@@ -7969,7 +7973,7 @@ class LostReasonB2BImportAPIView(APIView):
             "duplicates": list(set(duplicate_names)),
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
         }, status=status.HTTP_200_OK)
-
+    
 # -------------------- EducationLevelCode -------------------- #
 class EducationLevelCodeListAPIView(APIView):
     def get(self, request):
