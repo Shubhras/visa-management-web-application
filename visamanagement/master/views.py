@@ -6410,20 +6410,20 @@ class TagsDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
-        uuids = request.data.get('id', [])
+        uuids = request.data.get('id', None)
 
-        #  Case 1: Single delete (UUID in URL)
+        # Single delete via URL parameter
         if uuid:
             try:
                 tag = Tags.objects.get(uuid=uuid, is_deleted=False)
                 tag.is_deleted = True
                 tag.save()
                 return Response({
-                    "statusCode": 200,
+                    "statusCode": 204,
                     "status": True,
                     "message": "Tag deleted successfully",
                     "data": None
-                }, status=status.HTTP_200_OK)
+                }, status=status.HTTP_204_NO_CONTENT)
             except Tags.DoesNotExist:
                 return Response({
                     "statusCode": 404,
@@ -6432,16 +6432,34 @@ class TagsDeleteAPIView(APIView):
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-        #  Case 2: Multiple delete (UUIDs in request body)
+        # Delete all if "all" is sent
+        if uuids == "all":
+            tags = Tags.objects.filter(is_deleted=False)
+            count = tags.count()
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No tags found to delete.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+            tags.update(is_deleted=True)
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"All {count} tag(s) deleted successfully.",
+                "data": None
+            }, status=status.HTTP_200_OK)
+
+        # Validate bulk UUIDs
         if not uuids or not isinstance(uuids, list):
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Please provide a list of UUIDs in 'uuids' field.",
+                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
                 "data": None
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # Validate UUIDs
         valid_uuids = []
         invalid_uuids = []
         for u in uuids:
@@ -6458,7 +6476,7 @@ class TagsDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids}
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # Fetch Tags that exist and are not deleted
+        # Bulk delete
         tags = Tags.objects.filter(uuid__in=valid_uuids, is_deleted=False)
         count = tags.count()
 
@@ -6466,20 +6484,18 @@ class TagsDeleteAPIView(APIView):
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "No matching Tags found.",
-                "data": {"invalid_uuids": invalid_uuids}
+                "message": "No matching tags found.",
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        # Soft delete
-        tags.delete()
+        tags.update(is_deleted=True)
 
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f"{count} Tag(s) deleted successfully.",
-            
-        }, status=status.HTTP_200_OK)
-    
+            "message": f"{count} tag(s) deleted successfully.",
+            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+        }, status=status.HTTP_200_OK) 
 
 class TagsExportAPIView(APIView):
     # permission_classes = [IsAuthenticated]  # Uncomment and adjust as needed
