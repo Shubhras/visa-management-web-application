@@ -7222,7 +7222,7 @@ class LostReasonDeleteAPIView(APIView):
             }, status=status.HTTP_404_NOT_FOUND)
 
         # Soft delete
-        reasons.update(is_deleted=True)
+        reasons.delete()
 
         return Response({
             "statusCode": 200,
@@ -7241,44 +7241,59 @@ class LostReasonExportAPIView(APIView):
 
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
-        # Default fields if none provided
+        field_header_map = {
+            'uuid': 'UUID',
+            'name': 'Lost Reason',  
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'created_at': 'Created On',
+            'updated_at': 'Updated At'
+        }
+
         if fields:
             field_list = [f.strip() for f in fields.split(',')]
         else:
-            field_list = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+            field_list = list(field_header_map.keys())
 
         queryset = LostReason.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-
+        queryset = queryset.order_by('-created_at')
         dataset = Dataset()
-        dataset.headers = field_list
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
 
         for dept in queryset:
             row = []
             for field in field_list:
-                value = getattr(dept, field, '')  # get attribute dynamically
-                # Format datetime fields
-                if isinstance(value, datetime.datetime):
-                    value = value.strftime("%Y-%m-%d %H:%M:%S")
-                # Convert boolean to int
-                if isinstance(value, bool):
+                value = getattr(dept, field, '')
+
+                if field in ['created_at', 'updated_at'] and value:
+                    # Convert the stored UTC datetime to IST and format it
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
                     value = int(value)
+
                 row.append(value if value is not None else '')
             dataset.append(row)
-
-        if format_type == 'xlsx':
-            data = XLSX().export_data(dataset)
+        
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'LostReason.csv'
+        else:
+            # XLSX export with BytesIO
+            file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'LostReason.xlsx'
-        else:
-            data = CSV().export_data(dataset)
-            content_type = 'text/csv; charset=utf-8'
-            file_name = 'LostReason.csv'
 
-        response = HttpResponse(data, content_type=content_type)
+
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
+
 
 class LostReasonImportAPIView(APIView):
     def post(self, request):
@@ -7291,7 +7306,14 @@ class LostReasonImportAPIView(APIView):
         format_type = file.name.split('.')[-1].lower()
         dataset = Dataset()
         duplicate_names = []
-        allowed_headers = {'name', 'description'}
+
+        # Mapping file headers → model fields
+        header_field_map = {
+            'Lost Reason': 'name',
+            'Description': 'description'
+        }
+        allowed_headers = set(k.lower() for k in header_field_map.keys())
+
 
         try:
             data = []
@@ -7302,32 +7324,48 @@ class LostReasonImportAPIView(APIView):
                 available_sheets = wb.sheetnames
 
                 # Require sheet_name if multiple sheets
-                if len(available_sheets) > 1 and not sheet_name:
+                if not sheet_name:
                     return Response({
                         'error': 'Please provide sheet_name',
                         'available_sheets': available_sheets
                     }, status=status.HTTP_400_BAD_REQUEST)
-
-                sheet_name = sheet_name or available_sheets[0]
-
+                
                 if sheet_name not in available_sheets:
                     return Response({
                         'error': f'Sheet "{sheet_name}" not found in uploaded file',
                         'available_sheets': available_sheets
                     }, status=status.HTTP_400_BAD_REQUEST)
 
+
                 ws = wb[sheet_name]
-                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                if set(headers) != allowed_headers:
+                if ws.max_row <= 1:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Please provide at least one data row.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+
+                if not allowed_headers.issubset(set(headers)):
                     return Response({
                         "statusCode": 400,
                         "status": True,
-                        'message': f'Invalid headers in sheet. Expected: {allowed_headers}, Found: {set(headers)}'
+                        'message': f'Missing required headers. Required: {allowed_headers}, Found: {set(headers)}'
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 for row in ws.iter_rows(min_row=2, values_only=True):
+                    if not any(row):
+                        continue
                     row_dict = dict(zip(headers, row))
                     data.append(row_dict)
+
+                if not data:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Please provide at least one data row.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
             # ---------- CSV Handling ----------
             elif format_type == 'csv':
                 decoded_file = file.read().decode('utf-8')
@@ -7358,36 +7396,40 @@ class LostReasonImportAPIView(APIView):
                     'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
 
             # ---------- Process Each Row ----------
+            imported_count = 0
             for row in data:
-                name = str(row.get('name')).strip() if row.get('name') else None
+                name = str(row.get('last reason')).strip() if row.get('last reason') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not name:
-                    continue  # skip empty names
+                    continue  
 
                 existing = LostReason.objects.filter(name__iexact=name).first()
 
                 if existing:
                     if existing.is_deleted:
-                        # Reactivate soft-deleted entry
                         existing.description = description
                         existing.is_deleted = False
                         existing.save()
+                        imported_count += 1
                     else:
-                        # Already active — track as duplicate
                         duplicate_names.append(name)
                         continue
                 else:
-                    # No record exists — create new
                     LostReason.objects.create(
                         name=name,
                         description=description,
                         is_deleted=False
                     )
+                    imported_count += 1
 
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
+            return Response({
+                "statusCode": 400,
+                "status": True,
+                'message': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
         return Response({
             "statusCode": 200,
             "status": True,
@@ -7602,7 +7644,7 @@ class LostReasonB2BDeleteAPIView(APIView):
             }, status=status.HTTP_404_NOT_FOUND)
 
         # Soft delete
-        reasons.update(is_deleted=True)
+        reasons.delete()
 
         return Response({
             "statusCode": 200,
@@ -7610,6 +7652,8 @@ class LostReasonB2BDeleteAPIView(APIView):
             "message": f"{count} Lost Reason(s) deleted successfully.",
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         }, status=status.HTTP_200_OK)
+
+
 
 class LostReasonB2BExportAPIView(APIView):
     # permission_classes = [IsAuthenticated]  # Uncomment and adjust as needed
@@ -7621,15 +7665,28 @@ class LostReasonB2BExportAPIView(APIView):
 
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
+        field_header_map = {
+            'uuid': 'UUID',
+            'name': 'Last ReasonsB2B',  
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'created_at': 'Created On',
+            'updated_at': 'Updated At'
+        }
+
         # Default fields if none provided
         if fields:
             field_list = [f.strip() for f in fields.split(',')]
         else:
-            field_list = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+            field_list = list(field_header_map.keys())
+
 
         queryset = LostReasonB2B.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-created_at')
+        dataset = Dataset()
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
 
         dataset = Dataset()
         dataset.headers = field_list
@@ -7637,28 +7694,37 @@ class LostReasonB2BExportAPIView(APIView):
         for dept in queryset:
             row = []
             for field in field_list:
-                value = getattr(dept, field, '')  # get attribute dynamically
-                # Format datetime fields
-                if isinstance(value, datetime.datetime):
-                    value = value.strftime("%Y-%m-%d %H:%M:%S")
-                # Convert boolean to int
-                if isinstance(value, bool):
+                value = getattr(dept, field, '')
+
+                if field in ['created_at', 'updated_at'] and value:
+                    # Convert the stored UTC datetime to IST and format it
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
                     value = int(value)
+
                 row.append(value if value is not None else '')
             dataset.append(row)
 
-        if format_type == 'xlsx':
-            data = XLSX().export_data(dataset)
+
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'LostReasonB2B.csv'
+        else:
+            # XLSX export with BytesIO
+            file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'LostReasonB2B.xlsx'
-        else:
-            data = CSV().export_data(dataset)
-            content_type = 'text/csv; charset=utf-8'
-            file_name = 'LostReasonB2B.csv'
 
-        response = HttpResponse(data, content_type=content_type)
+        # --- Return response ---
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
+
+
 
 class LostReasonB2BImportAPIView(APIView):
     def post(self, request):
@@ -7671,7 +7737,12 @@ class LostReasonB2BImportAPIView(APIView):
         format_type = file.name.split('.')[-1].lower()
         dataset = Dataset()
         duplicate_names = []
-        allowed_headers = {'name', 'description'}
+        header_field_map = {
+            'Lost ReasonB2B': 'name',
+            'Description': 'description'
+        }
+
+        allowed_headers = set(k.lower() for k in header_field_map.keys())
 
         try:
             data = []
@@ -7680,13 +7751,11 @@ class LostReasonB2BImportAPIView(APIView):
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
 
-                if len(available_sheets) > 1 and not sheet_name:
+                if not sheet_name:
                     return Response({
                         'error': 'Please provide sheet_name',
                         'available_sheets': available_sheets
                     }, status=status.HTTP_400_BAD_REQUEST)
-
-                sheet_name = sheet_name or available_sheets[0]
 
                 if sheet_name not in available_sheets:
                     return Response({
@@ -7695,17 +7764,35 @@ class LostReasonB2BImportAPIView(APIView):
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 ws = wb[sheet_name]
-                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                if set(headers) != allowed_headers:
+                if ws.max_row <= 1:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Please provide at least one data row.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+
+                if not allowed_headers.issubset(set(headers)):
                     return Response({
                         "statusCode": 400,
                         "status": True,
-                        'message': f'Invalid headers in sheet. Expected: {allowed_headers}, Found: {set(headers)}'
+                        'message': f'Missing required headers. Required: {allowed_headers}, Found: {set(headers)}'
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 for row in ws.iter_rows(min_row=2, values_only=True):
+                    if not any(row):
+                        continue
                     row_dict = dict(zip(headers, row))
                     data.append(row_dict)
+
+                if not data:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Please provide at least one data row.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
 
             # ---------- CSV Handling ----------
             elif format_type == 'csv':
@@ -7738,7 +7825,7 @@ class LostReasonB2BImportAPIView(APIView):
 
             # ---------- Process Each Row ----------
             for row in data:
-                name = str(row.get('name')).strip() if row.get('name') else None
+                name = str(row.get('lost reasonsB2B')).strip() if row.get('lost reasons') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not name:
