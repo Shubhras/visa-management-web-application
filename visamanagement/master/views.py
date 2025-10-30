@@ -2500,6 +2500,8 @@ class DepartmentImportAPIView(APIView):
                     "statusCode": 400,
                     "status": True,
                     'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            imported_count = 0
 
             for row in data:
                 name = str(row.get('department')).strip() if row.get('department') else None
@@ -2511,20 +2513,23 @@ class DepartmentImportAPIView(APIView):
                 existing = Department.objects.filter(name__iexact=name).first()
 
                 if existing:
-                    if existing.is_deleted:
+                    # Skip if not deleted
+                    if not existing.is_deleted:
+                        duplicate_names.append(name)
+                        continue
+                    else:
+                        # Reactivate if previously deleted
                         existing.description = description
                         existing.is_deleted = False
                         existing.save()
-                    else:
-                        duplicate_names.append(name)
-                       
-                        continue
+                        imported_count += 1
                 else:
                     Department.objects.create(
                         name=name,
                         description=description,
                         is_deleted=False
                     )
+                    imported_count += 1
 
             # ---------- Return duplicate XLSX if exists ----------
             
