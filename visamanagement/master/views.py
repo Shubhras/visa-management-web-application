@@ -2406,7 +2406,7 @@ class DepartmentImportAPIView(APIView):
 
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
-        # Mapping file headers → model fields
+      
         header_field_map = {
             'Department': 'name',
             'Description': 'description',
@@ -2440,7 +2440,6 @@ class DepartmentImportAPIView(APIView):
                 ws = wb[sheet_name]
                 headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
 
-                # Validate headers (required headers must exist)
                 if not allowed_headers.issubset(set(headers)):
                     return Response({
                         "statusCode": 400,
@@ -2448,10 +2447,16 @@ class DepartmentImportAPIView(APIView):
                         'message': f'Missing required headers. Required: {allowed_headers}, Found: {set(headers)}'
                     }, status=status.HTTP_400_BAD_REQUEST)
 
-                # Read rows
                 for row in ws.iter_rows(min_row=2, values_only=True):
                     row_dict = dict(zip(headers, row))
                     data.append(row_dict)
+
+                if not data:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Please provide at least one data row.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
             # ---------- CSV Handling ----------
             elif format_type == 'csv':
@@ -2471,6 +2476,13 @@ class DepartmentImportAPIView(APIView):
                             )
                         }, status=status.HTTP_400_BAD_REQUEST)
                     data.append(row_lower)
+                
+                if not data:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "The uploaded CSV file is empty. Please provide at least one data row."
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
             else:
                 return Response({
@@ -2478,14 +2490,12 @@ class DepartmentImportAPIView(APIView):
                     "status": True,
                     'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
 
-            # ---------- Process Each Row ----------
             for row in data:
-                # Map file columns to model fields
                 name = str(row.get('department')).strip() if row.get('department') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not name:
-                    continue  # skip empty names
+                    continue  
 
                 existing = Department.objects.filter(name__iexact=name).first()
 
