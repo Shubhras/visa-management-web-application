@@ -419,7 +419,7 @@ const PriorityTypeList = () => {
   return (
     <>
       <MasterLayout>
-        <Breadcrumb title="Priority" subTitle="List" />
+        {/* <Breadcrumb title="Priority" subTitle="List" /> */}
         <div className="card basic-data-table main-container-data">
           <div className="card-body container-data">
             <div className="row align-items-center gy-3 gx-2 flex-wrap filter-action-btn">

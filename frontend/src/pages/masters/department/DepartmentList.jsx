@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useDispatch } from "react-redux";
 import MasterLayout from "../../../masterLayout/MasterLayout";
-import Breadcrumb from "../../../components/Breadcrumb";
+// import Breadcrumb from "../../../components/Breadcrumb";
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { Link } from 'react-router-dom';
 import { toast } from "react-toastify";
@@ -421,7 +421,7 @@ const handleShowEdit = (rowData) => {
   return (
     <>
       <MasterLayout>
-        <Breadcrumb title="Department" subTitle="List" />
+        {/* <Breadcrumb title="Department" subTitle="List" /> */}
         <div className="card basic-data-table main-container-data">
           <div className="card-body container-data">
             <div className="row align-items-center gy-3 gx-2 flex-wrap filter-action-btn">

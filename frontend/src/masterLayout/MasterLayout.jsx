@@ -10,7 +10,7 @@ const MasterLayout = ({ children }) => {
   let [sidebarActive, seSidebarActive] = useState(false);
   let [mobileMenu, setMobileMenu] = useState(false);
   const location = useLocation();
-
+   const [selectedItemName, setSelectedItemName] = useState('');
   const handleLogout = () => {
     toast.success('Logout successful');
     // // 1. Clear user data (localStorage / sessionStorage / Redux)
@@ -95,6 +95,13 @@ const MasterLayout = ({ children }) => {
   let mobileMenuControl = () => {
     setMobileMenu(!mobileMenu);
   };
+ const handleMenuClick = (clickData) => {
+    console.log('Clicked Item Name:', clickData);
+    
+    // if (clickData?.itemName) {
+    //     setSelectedItemName(clickData.itemName);
+    // }
+};
 
   return (
     <section className={mobileMenu ? "overlay active" : "overlay "}>
@@ -1306,36 +1313,10 @@ const MasterLayout = ({ children }) => {
       <main
         className={sidebarActive ? "dashboard-main active" : "dashboard-main"}
       >
-        <div className='navbar-header' >
+        {/* <div className='navbar-header' >
           <div className='row align-items-center justify-content-between' style={{ margin: '0' }}>
             <div className='col-auto'>
               <div className='d-flex align-items-center gap-3'>
-                {/* <button
-                  type='button'
-                  className='sidebar-toggle'
-                  onClick={sidebarControl}
-                  style={{ color: '#fff' }}
-                >
-                  {sidebarActive ? (
-                    <Icon
-                      icon='iconoir:arrow-right'
-                      className='icon text-2xl'
-                    />
-                  ) : (
-                    <Icon
-                      icon='heroicons:bars-3-solid'
-                      className='icon text-2xl'
-                    />
-                  )}
-                </button>
-                <button
-                  onClick={mobileMenuControl}
-                  type='button'
-                  className='sidebar-mobile-toggle'
-                  style={{ color: '#fff' }}
-                >
-                  <Icon icon='heroicons:bars-3-solid' className='icon' />
-                </button> */}
                 <div>
                   <img
                     src='assets/images/logo-test1.png'
@@ -1351,7 +1332,7 @@ const MasterLayout = ({ children }) => {
             </div>
             <div className='col-auto'>
               <div className='d-flex flex-wrap align-items-center gap-3'>
-                {/* <ThemeToggleButton /> */}
+            
 
                 <div className='dropdown'>
                   <button
@@ -1435,8 +1416,149 @@ const MasterLayout = ({ children }) => {
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
+        <div className="d-flex align-items-stretch">
+          <div
+            className="bg-white d-flex align-items-center justify-content-center px-4 border-end"
+            style={{ minWidth: "200px" }}
+          >
+            <img
+              src="assets/images/logo-test1.png"
+              alt="Logo"
+              style={{
+                height: "60px",
+                width: "auto",
+                objectFit: "contain",
+              }}
+            />
+          </div>
+          <div className="flex-grow-1 d-flex flex-column">
+            <div
+              style={{
+                backgroundColor: "#5a6c5b",
+                color: "white",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "0 15px",
+                height: "60px",
+              }}
+            >
+              <Header  onMenuItemClick={handleMenuClick}/>
+              <div className='col-auto'>
+                <div className='d-flex flex-wrap align-items-center gap-3'>
+                  <div className='dropdown'>
+                    <button
+                      className='has-indicator w-32-px h-32-px bg-neutral-200 rounded-circle d-flex justify-content-center align-items-center'>
+                      <Icon
+                        icon="solar:alarm-linear"
+                        className='text-primary-light text-md'
+                      />
+                    </button>
+                  </div>
+                  <div className='dropdown'>
+                    <button
+                      className='has-indicator w-32-px h-32-px bg-neutral-200 rounded-circle d-flex justify-content-center align-items-center'
+                      type='button'
+                      data-bs-toggle='dropdown'
+                    >
+                      <Icon
+                        icon='iconoir:bell'
+                        className='text-primary-light text-md'
+                      />
+                    </button>
+                    <div className='dropdown-menu to-top dropdown-menu-lg p-0'>
+                      <div className='m-16 py-12 px-16 radius-8 bg-primary-50 mb-16 d-flex align-items-center justify-content-between gap-2'>
+                        <div>
+                          <h6 className='text-lg text-primary-light fw-semibold mb-0'>
+                            Notifications
+                          </h6>
+                        </div>
+                        <span className='text-primary-600 fw-semibold text-lg w-40-px h-40-px rounded-circle bg-base d-flex justify-content-center align-items-center'>
+                          05
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className='dropdown'>
+                    <button
+                      className='d-flex justify-content-center align-items-center rounded-circle'
+                      type='button'
+                      data-bs-toggle='dropdown'
+                    >
+                      <img
+                        src='assets/images/users/avatar-4.jpg'
+                        alt='image_user'
+                        className='w-32-px h-32-px object-fit-cover rounded-circle'
+                      />
+                    </button>
+                    <div className='dropdown-menu to-top dropdown-menu-sm'>
+                      <div className='py-12 px-16 radius-8 bg-primary-50 mb-16 d-flex align-items-center justify-content-between gap-2'>
+                        <div>
+                          <h6 className='text-lg text-primary-light fw-semibold mb-2'>
+                            Shaidul Islam
+                          </h6>
+                          <span className='text-secondary-light fw-medium text-sm'>
+                            Admin
+                          </span>
+                        </div>
+                        <button type='button' className='hover-text-danger'>
+                          <Icon
+                            icon='radix-icons:cross-1'
+                            className='icon text-xl'
+                          />
+                        </button>
+                      </div>
+                      <ul className='to-top-list'>
+                        <li>
+                          <Link
+                            className='dropdown-item text-black px-0 py-8 hover-bg-transparent hover-text-primary d-flex align-items-center gap-3'
+                            to='/'
+                          >
+                            <Icon
+                              icon='solar:user-linear'
+                              className='icon text-xl'
+                            />{" "}
+                            My Profile
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            className='dropdown-item text-black px-0 py-8 hover-bg-transparent hover-text-danger d-flex align-items-center gap-3'
+                            to='/sign-in' onClick={handleLogout}
+                          >
+                            <Icon icon='lucide:power' className='icon text-xl' />{" "}
+                            Log Out
+                          </Link>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div
+              style={{
+                backgroundColor: "#e5f0ef",
+                padding: "12px 20px",
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              <div
+                style={{
+                  color: "#174b47",
+                  fontSize: "20px",
+                  fontWeight: "bold",
+                  margin: 0,
+                }}
+              >
+                Master Name {selectedItemName}
+              </div>
 
+            </div>
+          </div>
+        </div>
         <div className='dashboard-main-body'>{children}</div>
 
         <footer className='d-footer main-footer'>
@@ -1457,7 +1579,7 @@ const MasterLayout = ({ children }) => {
                 src='assets/images/logo-test1.png'
                 alt='site logo'
                 className='light-logo'
-                style={{ width: "100px"}}
+                style={{ width: "100px" }}
               />
             </div>
           </div>
