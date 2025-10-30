@@ -487,6 +487,27 @@ const CompanyList = () => {
                                             value={tableState.search}
                                             onChange={(e) => handleSearchChange(e.target.value)}
                                         />
+                                        {tableState.search && tableState.search.length > 0 && (
+                                            <span
+                                                className="position-absolute"
+                                                style={{
+                                                    right: '10px',
+                                                    top: '50%',
+                                                    transform: 'translateY(-50%)',
+                                                    cursor: 'pointer',
+                                                    zIndex: 999,
+                                                    fontSize: '20px',
+                                                    color: '#6c757d',
+                                                    lineHeight: 1
+                                                }}
+                                                onClick={() => {
+                                                    console.log("Close clicked");
+                                                    handleSearchChange('');
+                                                }}
+                                            >
+                                                ×
+                                            </span>
+                                        )}
                                     </div>
                                     <button
                                         className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
