@@ -7746,7 +7746,7 @@ class LostReasonB2BExportAPIView(APIView):
     # permission_classes = [IsAuthenticated]  # Uncomment and adjust as needed
 
     def get(self, request):
-        format_type = request.GET.get('format', 'csv').lower()
+        format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')  
         uuids_param = request.GET.get('uuids', '')
 
@@ -7772,11 +7772,11 @@ class LostReasonB2BExportAPIView(APIView):
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
         queryset = queryset.order_by('-created_at')
+
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
 
-        dataset = Dataset()
-        dataset.headers = field_list
+        
 
         for dept in queryset:
             row = []
