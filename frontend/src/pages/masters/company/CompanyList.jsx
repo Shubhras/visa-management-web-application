@@ -428,7 +428,7 @@ const CompanyList = () => {
     return (
         <>
             <MasterLayout>
-                <Breadcrumb title="Company Type" subTitle="List" />
+                {/* <Breadcrumb title="Company Type" subTitle="List" /> */}
                 <div className="card basic-data-table main-container-data">
                     <div className="card-body container-data">
                         <div className="row align-items-center gy-3 gx-2 flex-wrap filter-action-btn">

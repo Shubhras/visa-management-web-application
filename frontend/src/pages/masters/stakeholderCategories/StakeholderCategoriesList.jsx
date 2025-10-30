@@ -429,7 +429,7 @@ const StakeholderCategoriesList = () => {
   return (
     <>
       <MasterLayout>
-        <Breadcrumb title="Stakeholder Category" subTitle="List" />
+        {/* <Breadcrumb title="Stakeholder Category" subTitle="List" /> */}
         <div className="card basic-data-table main-container-data">
           <div className="card-body container-data">
             <div className="row align-items-center gy-3 gx-2 flex-wrap filter-action-btn">
