@@ -2835,15 +2835,14 @@ class EmployeeTypeExportAPIView(APIView):
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
-
 class EmployeeTypeImportAPIView(APIView):
     """
     API to import Employee Types from CSV or XLSX.
     """
-
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')
+
         if not file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -2856,15 +2855,19 @@ class EmployeeTypeImportAPIView(APIView):
             'Description': 'description'
         }
 
-        allowed_headers = set(k.lower() for k in header_field_map.keys())  # normalize
+        allowed_headers = set(k.lower() for k in header_field_map.keys())
+
         try:
             data = []
+            headers = []
 
             # ---------- XLSX Handling ----------
             if format_type == 'xlsx':
+                import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
 
+                # Validate sheet name
                 if not sheet_name:
                     return Response({
                         'error': 'Please provide sheet_name',
@@ -2884,17 +2887,14 @@ class EmployeeTypeImportAPIView(APIView):
                         "status": False,
                         "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Please provide at least one data row.'
                     }, status=status.HTTP_400_BAD_REQUEST)
-                
-                headers = [str(cell.value).strip() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
 
-                # Normalize headers for comparison
-                normalized_headers = [h.lower() for h in headers]
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
 
-                if not allowed_headers.issubset(set(normalized_headers)):
+                if not allowed_headers.issubset(set(headers)):
                     return Response({
                         "statusCode": 400,
                         "status": True,
-                        'message': f'Missing required headers. Required: {allowed_headers}, Found: {set(normalized_headers)}'
+                        'message': f'Missing required headers. Required: {allowed_headers}, Found: {set(headers)}'
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 for row in ws.iter_rows(min_row=2, values_only=True):
@@ -2903,7 +2903,6 @@ class EmployeeTypeImportAPIView(APIView):
                     row_dict = dict(zip(headers, row))
                     data.append(row_dict)
 
-                # ✅ If all rows were blank (no real data)
                 if not data:
                     return Response({
                         "statusCode": 400,
@@ -2913,27 +2912,42 @@ class EmployeeTypeImportAPIView(APIView):
 
             # ---------- CSV Handling ----------
             elif format_type == 'csv':
+                from tablib import Dataset
                 decoded_file = file.read().decode('utf-8')
                 dataset = Dataset()
                 dataset.load(decoded_file, format='csv')
 
                 for row in dataset.dict:
-                    # normalize keys: lowercase and strip
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
                     if not allowed_headers.issubset(set(row_lower.keys())):
                         return Response({
                             "statusCode": 400,
                             "status": True,
-                            "message": f'Missing required headers. Required: {allowed_headers}. Found: {set(row_lower.keys())}.'
+                            "message": (
+                                f'Missing required headers. Required: {", ".join(allowed_headers)}. '
+                                f'Found headers in the file: {", ".join(row_lower.keys())}.'
+                            )
                         }, status=status.HTTP_400_BAD_REQUEST)
+                    if not any(row_lower.values()):
+                        continue
                     data.append(row_lower)
 
-            else:
-                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
+                if not data:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "The uploaded CSV file is empty. Please provide at least one data row."
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
-            # ---------- Process Each Row ----------
+            else:
+                return Response({
+                    "statusCode": 400,
+                    "status": True,
+                    'error': 'Unsupported file format. Use .xlsx or .csv'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            imported_count = 0
             for row in data:
-                # Map normalized header to model fields
                 name = str(row.get('employee type')).strip() if row.get('employee type') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
@@ -2947,6 +2961,7 @@ class EmployeeTypeImportAPIView(APIView):
                         existing.description = description
                         existing.is_deleted = False
                         existing.save()
+                        imported_count += 1
                     else:
                         duplicate_names.append(name)
                         continue
@@ -2956,9 +2971,14 @@ class EmployeeTypeImportAPIView(APIView):
                         description=description,
                         is_deleted=False
                     )
+                    imported_count += 1
 
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({
+                "statusCode": 400,
+                "status": True,
+                'message': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({
             "statusCode": 200,
@@ -3237,8 +3257,6 @@ class CompanyTypeExportAPIView(APIView):
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
-
-
 class CompanyTypeImportAPIView(APIView):
     def post(self, request):
         file = request.FILES.get('file')
@@ -3364,6 +3382,11 @@ class CompanyTypeImportAPIView(APIView):
             "duplicates": list(set(duplicate_names)),
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
         }, status=status.HTTP_200_OK)
+
+
+
+
+
 
 class OwnershipTypeListAPIView(APIView):    
     def get(self, request):
