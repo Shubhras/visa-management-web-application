@@ -3161,7 +3161,7 @@ class CompanyTypeDeleteAPIView(APIView):
             }, status=status.HTTP_404_NOT_FOUND)
 
         # Soft delete
-        company_types.update(is_deleted=True)
+        company_types.delete()
 
         return Response({
             "statusCode": 200,
@@ -3301,7 +3301,7 @@ class CompanyTypeImportAPIView(APIView):
                     row_dict = dict(zip(headers, row))
                     data.append(row_dict)
 
-                # ✅ If all rows were blank (no real data)
+           
                 if not data:
                     return Response({
                         "statusCode": 400,
@@ -3791,7 +3791,7 @@ class StakeholderCategoryDeleteAPIView(APIView):
             }, status=status.HTTP_404_NOT_FOUND)
 
         # Soft delete
-        Stakeholdercategory.update(is_deleted=True)
+        Stakeholdercategory.delete()
 
         return Response({
             "statusCode": 200,
