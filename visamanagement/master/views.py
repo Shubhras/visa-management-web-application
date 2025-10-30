@@ -7322,7 +7322,7 @@ class LostReasonExportAPIView(APIView):
     # permission_classes = [IsAuthenticated]  # Uncomment and adjust as needed
 
     def get(self, request):
-        format_type = request.GET.get('format', 'csv').lower()
+        format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')  
         uuids_param = request.GET.get('uuids', '')
 
