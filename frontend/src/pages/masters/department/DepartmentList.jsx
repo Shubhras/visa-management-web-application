@@ -4,23 +4,34 @@ import MasterLayout from "../../../masterLayout/MasterLayout";
 import Breadcrumb from "../../../components/Breadcrumb";
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { Link } from 'react-router-dom';
-// import * as XLSX from 'xlsx';
-// import { saveAs } from 'file-saver';
 import { toast } from "react-toastify";
-import AddDepartment from './AddDepartment';
-import EditDepartment from './EditDepartment';
 import { departmentList, departmentDelete, departmentExportData } from '../../../store/master/actions';
 import AddImportDepartmentModal from './AddImportDepartmentModal';
+import AddEditDepartmentModal from './AddEditDepartmentModal';
 
 const DepartmentList = () => {
   const dispatch = useDispatch();
-
-  const [show, setShow] = useState(false);
-  const handleShow = () => setShow(true);
-  const handleClose = () => {
-    setShow(false);
-    fetchDepartmentList();
-  };
+  const [modalState, setModalState] = useState({
+  show: false,
+  mode: 'add', // 'add' or 'edit'
+  rowData: null
+})
+  const handleShow = () => {
+  setModalState({
+    show: true,
+    mode: 'add',
+    rowData: null
+  });
+};
+// For closing modal
+const handleClose = () => {
+  setModalState({
+    show: false,
+    mode: 'add',
+    rowData: null
+  });
+  fetchDepartmentList();
+}
 
   const [showEdit, setShowEdit] = useState(false);
   const [showImport, setShowImport] = useState(false);
@@ -30,12 +41,13 @@ const DepartmentList = () => {
   const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this department?");
   const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
+  const [deleteAllData, setDeleteAllData] = useState('');
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-
   const [items] = useState(["Department", "Description", "Created On"]);
-  const [selectedItems, setSelectedItems] = useState([]);
+  const [selectedItems, setSelectedItems] = useState(["Department"]);
+  const [ItemsRequired] = useState(["Department"]);
 
   // Updated state with sorting
   const [tableState, setTableState] = useState({
@@ -43,8 +55,8 @@ const DepartmentList = () => {
     limit: 25,
     search: '',
     status: '',
-    sortBy: '', // Field to sort by
-    sortOrder: '', // 'asc' or 'desc'
+    sortBy: 'created_at', // Field to sort by
+    sortOrder: 'desc', // 'asc' or 'desc'
     total: 0,
     totalPages: 0,
     currentPage: 1,
@@ -123,13 +135,6 @@ const DepartmentList = () => {
 
   // Get sort icon for a column
   const getSortIcon = (field) => {
-    // if (tableState.sortBy !== field) {
-    //   return <Icon icon="ri:sort-line" width="16" style={{ color: '#999', marginLeft: '4px' }} />;
-    // }
-    // if (tableState.sortOrder === 'asc') {
-    //   return <Icon icon="ri:sort-asc" width="16" style={{ color: '#5a6c5b', marginLeft: '4px' }} />;
-    // }
-    // return <Icon icon="ri:sort-desc" width="16" style={{ color: '#5a6c5b', marginLeft: '4px' }} />;
     if (tableState.sortBy !== field) {
       return <Icon icon="ri:sort-desc" className='sorting-th-icone' />;
     }
@@ -239,35 +244,39 @@ const DepartmentList = () => {
     fetchDepartmentList();
   };
 
-  const handleShowEdit = (rowData) => {
-    setShowEdit(true);
-    setRowSelectData(rowData);
-  };
-
+const handleShowEdit = (rowData) => {
+  setModalState({
+    show: true,
+    mode: 'edit',
+    rowData: rowData
+  });
+};
   const handleDelete = (uuid) => {
     setDeleteId(uuid);
     setShowDeleteConfirm(true);
+    setDeleteConfirmMessage(`Are you sure you want to delete this department?`);
   };
 
-  const handleBulkDelete = () => {
+  const handleBulkDelete = (deleteData) => {
     if (selectedRows.length === 0) {
-      alert('Please select rows to delete');
+      toast.error("Please select rows to delete");
       return;
     }
-    const maggase = isAllSelected ? "all" : deleteId ? "" : selectedRows.length
-    setDeleteConfirmMessage(`Are you sure you want to delete this department (${maggase})?`);
+    // Choose message based on delete type
+    const message = deleteData === "all" ? `${tableState.total} all departments` : `${selectedRows.length} selected departments`;
+    setDeleteConfirmMessage(`Are you sure you want to delete this department (${message})?`);
     setShowDeleteConfirm(true);
+    setDeleteAllData(deleteData);
   };
 
   const confirmDelete = () => {
-    //const sendPayload = "all"//deleteId ? [deleteId] : selectedRows;
-    const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
+    // const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
+    const sendPayload = deleteAllData === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
 
     if (!sendPayload || sendPayload.length === 0) {
       toast.error("No department selected for deletion.");
       return;
     }
-
     dispatch(departmentDelete(sendPayload, (response, error) => {
       if (error) {
         toast.error(error?.response?.data?.message || "server error");
@@ -291,6 +300,8 @@ const DepartmentList = () => {
     setShowDeleteConfirm(false);
     setDeleteId(null);
     setSelectedRows([])
+    setDeleteConfirmMessage('');
+    setDeleteAllData('');
   };
 
   const handleCloseImport = () => {
@@ -323,12 +334,14 @@ const DepartmentList = () => {
     newSelected.splice(dropIndex, 0, draggedItem);
     setSelectedItems(newSelected);
   };
-
   const handleDragOver = (e) => {
     e.preventDefault();
   };
 
   const handleCheckboxChange = (item, checked) => {
+    // prevent unchecking required items
+    if (ItemsRequired.includes(item)) return;
+
     if (checked) {
       setSelectedItems([...selectedItems, item]);
     } else {
@@ -358,28 +371,12 @@ const DepartmentList = () => {
     };
 
     setLoadingExport(true);
-
     dispatch(departmentExportData(sendPayload, (response, error) => {
       if (error) {
         setLoadingExport(false);
         toast.error(error?.response?.message || "server error");
       } else {
         setLoadingExport(false);
-        // if (response?.status === 200) {
-        //   const blob = new Blob([response.data], { type: 'text/csv' });
-        //   const url = window.URL.createObjectURL(blob);
-        //   const link = document.createElement('a');
-        //   link.href = url;
-        //   link.download = `departments_${new Date().toISOString().split('T')[0]}.csv`;
-        //   document.body.appendChild(link);
-        //   link.click();
-        //   document.body.removeChild(link);
-        //   window.URL.revokeObjectURL(url);
-        //   toast.success("Export successful");
-        //   cancelExportTest();
-        // } else {
-        //   toast.error("Something went wrong.");
-        // }
         if (response?.status === 200) {
           const blob = new Blob([response.data], {
             type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -460,12 +457,16 @@ const DepartmentList = () => {
                   )}
                   {selectedRows.length > 0 && (
                     <button
-                      onClick={handleBulkDelete}
+                      onClick={() => handleBulkDelete("")}
                       className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
-                    >
-                      {isAllSelected
-                        ? `Delete All (${selectedRows.length})`
-                        : `Delete Selected (${selectedRows.length})`}
+                    >{`Delete Selected (${selectedRows.length})`}
+                    </button>
+                  )}
+                  {selectedRows.length > 0 && (
+                    <button
+                      onClick={() => handleBulkDelete("all")}
+                      className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
+                    >{`Delete All (${tableState.total})`}
                     </button>
                   )}
                 </div>
@@ -746,8 +747,14 @@ const DepartmentList = () => {
             </div>
           </div>
         </div>
-        <AddDepartment show={show} handleClose={handleClose} />
-        <EditDepartment show={showEdit} handleCloseEdit={handleCloseEdit} rowSelectData={rowSelectData} />
+        {/* <AddDepartment show={show} handleClose={handleClose} />
+        <EditDepartment show={showEdit} handleCloseEdit={handleCloseEdit} rowSelectData={rowSelectData} /> */}
+        <AddEditDepartmentModal
+          show={modalState.show}
+          handleClose={handleClose}
+          mode={modalState.mode}
+          rowData={modalState.rowData}
+        />
         {showImport && (
           <AddImportDepartmentModal show={showImport} handleClose={handleCloseImport} />)}
         {showDeleteConfirm && (
@@ -816,9 +823,10 @@ const DepartmentList = () => {
                               id={`item-${index}`}
                               checked={selectedItems.includes(item)}
                               onChange={(e) => handleCheckboxChange(item, e.target.checked)}
+                              disabled={ItemsRequired.includes(item)} // 🔒 Disable required item
                               className="form-check-input"
                             />
-                            <label htmlFor={`item-${index}`} className="mb-0 flex-grow-1" >
+                            <label htmlFor={`item-${index}`} className="mb-0 flex-grow-1">
                               {item}
                             </label>
                           </div>
@@ -847,12 +855,14 @@ const DepartmentList = () => {
                             >
                               <span className="text-muted move-drop-icone">☰</span>
                               <span className="flex-grow-1">{item}</span>
-                              <button
-                                onClick={() => handleCheckboxChange(item, false)}
-                                className="btn btn-sm btn-link text-danger p-0 close-icone"
-                              >
-                                ×
-                              </button>
+                              {!ItemsRequired.includes(item) && (
+                                <button
+                                  onClick={() => handleCheckboxChange(item, false)}
+                                  className="btn btn-sm btn-link text-danger p-0 close-icone"
+                                >
+                                  ×
+                                </button>
+                              )}
                             </div>
                           ))
                         )}

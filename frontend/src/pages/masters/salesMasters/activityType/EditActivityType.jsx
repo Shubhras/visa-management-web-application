@@ -137,7 +137,7 @@ const EditActivityType = ({ show, handleCloseEdit, rowSelectData }) => {
                                     {/*  Name */}
                                     <div className="col-12 mb-20">
                                         <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                                            Name <span className="text-danger">*</span>
+                                            Activity Type <span className="text-danger">*</span>
                                         </label>
                                         <input
                                             type="text"
@@ -145,7 +145,7 @@ const EditActivityType = ({ show, handleCloseEdit, rowSelectData }) => {
                                             value={formData.name}
                                             onChange={handleChange}
                                             className={`form-control radius-8 ${errors.name ? 'is-invalid' : ''}`}
-                                            placeholder="Enter name"
+                                            placeholder="Enter activity type"
                                         />
                                         {errors.name && (
                                             <div className="text-danger text-sm mt-1">

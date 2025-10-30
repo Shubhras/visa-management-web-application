@@ -128,7 +128,7 @@ const AddEmployeeType = ({ show, handleClose }) => {
                   {/*  Name */}
                   <div className="col-12 mb-20">
                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                      Employee type <span className="text-danger">*</span>
+                      Employee Type <span className="text-danger">*</span>
                     </label>
                     <input
                       type="text"

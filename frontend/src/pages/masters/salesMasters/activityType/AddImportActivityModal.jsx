@@ -3,7 +3,7 @@ import { useDispatch } from "react-redux";
 import { activityTypeImportData } from '../../../../store/master/salesMasters/actions';
 import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
-
+import { saveAs } from "file-saver";
 const AddImportActivityModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
@@ -76,11 +76,7 @@ const AddImportActivityModal = ({ show, handleClose }) => {
                             <div>{response?.message}</div>
                             {response?.duplicates?.length > 0 && (
                                 <div style={{ marginTop: '6px' }}>
-                                    <strong>Duplicate priority skipped:</strong>
-                                    <br />
-                                    {response.duplicates.map((item, index) => (
-                                        <div key={index}>{item}</div>
-                                    ))}
+                                    <strong>Duplicate activity type skipped — the duplicate data from your uploaded file has been exported into an .xlsx file.</strong>
                                 </div>
                             )}
                         </div>,
@@ -88,6 +84,9 @@ const AddImportActivityModal = ({ show, handleClose }) => {
                             autoClose: 10000,
                         }
                     );
+                    if (response?.duplicates?.length > 0) {
+                        handleExportToExcel(response.duplicates)
+                    }
                     setFile(null);
                     setSheetNames([]);
                     setSelectedSheet('');
@@ -98,7 +97,25 @@ const AddImportActivityModal = ({ show, handleClose }) => {
             }
         }));
     };
+    const handleExportToExcel = (duplicatesData) => {
+        const header = ["Activity Type"];
+        const duplicates = duplicatesData //["test1", "test3", "test3"];
+        const worksheetData = [header, ...duplicates.map((item) => [item])];
+        const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Activity Type");
 
+        const excelBuffer = XLSX.write(workbook, {
+            bookType: "xlsx",
+            type: "array",
+        });
+
+        const blob = new Blob([excelBuffer], {
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        });
+
+        saveAs(blob, `ActivityType_${new Date().toISOString().split("T")[0]}.xlsx`);
+    };
     // Handle modal close
     const onClose = () => {
         setFile(null);
@@ -109,17 +126,17 @@ const AddImportActivityModal = ({ show, handleClose }) => {
         setLoading(false);
     };
     const handleDownloadSample = () => {
-        const fileUrl = 'assets/simplefile/activity.xlsx'; // Update this path according to your project structure
+        const fileUrl = 'assets/simplefile/ActivityType.xlsx'; // Update this path according to your project structure
 
         const link = document.createElement('a');
         link.href = fileUrl;
-        link.download = 'activity_sample.xlsx'; // Downloaded file name
+        link.download = 'ActivityType.xlsx'; // Downloaded file name
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
     };
 
-    
+
     if (!show) return null;
 
     return (
@@ -129,7 +146,7 @@ const AddImportActivityModal = ({ show, handleClose }) => {
             role="dialog"
             aria-labelledby="ActivityTypeModalLabel"
             aria-hidden={!show}
-            
+
         >
             <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
                 <div className="modal-content radius-16 bg-base">

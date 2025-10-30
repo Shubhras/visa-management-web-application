@@ -30,12 +30,13 @@ const EmployeeTypeList = () => {
   const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this  employee type?");
   const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
+  const [deleteAllData, setDeleteAllData] = useState('');
   const [employeeTypeistData, setEmployeeTypeistData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-
   const [items] = useState(["Employee Type", "Description", "Created On"]);
-  const [selectedItems, setSelectedItems] = useState([]);
+  const [selectedItems, setSelectedItems] = useState(["Employee Type"]);
+  const [ItemsRequired] = useState(["Employee Type"]);
 
   // Updated state with sorting
   const [tableState, setTableState] = useState({
@@ -43,8 +44,8 @@ const EmployeeTypeList = () => {
     limit: 25,
     search: '',
     status: '',
-    sortBy: '', // Field to sort by
-    sortOrder: '', // 'asc' or 'desc'
+    sortBy: 'created_at', // Field to sort by
+    sortOrder: 'desc', // 'asc' or 'desc'
     total: 0,
     totalPages: 0,
     currentPage: 1,
@@ -250,24 +251,26 @@ const EmployeeTypeList = () => {
   const handleDelete = (uuid) => {
     setDeleteId(uuid);
     setShowDeleteConfirm(true);
+    setDeleteConfirmMessage(`Are you sure you want to delete this employee type?`);
   };
 
   // Handle bulk delete
-  const handleBulkDelete = () => {
+  const handleBulkDelete = (deleteData) => {
     if (selectedRows.length === 0) {
-      alert('Please select rows to delete');
+      toast.error('Please select rows to delete');
       return;
     }
-    const maggase = isAllSelected ? "all" : deleteId ? "" : selectedRows.length
-    setDeleteConfirmMessage(`Are you sure you want to delete this  employee type (${maggase})?`);
+    // Choose message based on delete type
+    const message = deleteData === "all" ? `${tableState.total} all employee type` : `${selectedRows.length} selected employee type`;
+    setDeleteConfirmMessage(`Are you sure you want to delete this employee type (${message})?`);
     setShowDeleteConfirm(true);
+    setDeleteAllData(deleteData);
   };
   const confirmDelete = () => {
-    //const sendPayload = "all"//deleteId ? [deleteId] : selectedRows;
-
-    const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
+    // const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
+    const sendPayload = deleteAllData === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
     if (!sendPayload || sendPayload.length === 0) {
-      toast.error("No employeeType selected for deletion.");
+      toast.error("No employee type selected for deletion.");
       return;
     }
 
@@ -295,7 +298,9 @@ const EmployeeTypeList = () => {
   const cancelDelete = () => {
     setShowDeleteConfirm(false);
     setDeleteId(null);
-    setSelectedRows([])
+    setSelectedRows([]);
+    setDeleteConfirmMessage('');
+    setDeleteAllData('');
   };
 
   const handleCloseImport = () => {
@@ -328,12 +333,14 @@ const EmployeeTypeList = () => {
     newSelected.splice(dropIndex, 0, draggedItem);
     setSelectedItems(newSelected);
   };
-
   const handleDragOver = (e) => {
     e.preventDefault();
   };
 
   const handleCheckboxChange = (item, checked) => {
+    // prevent unchecking required items
+    if (ItemsRequired.includes(item)) return;
+
     if (checked) {
       setSelectedItems([...selectedItems, item]);
     } else {
@@ -359,7 +366,7 @@ const EmployeeTypeList = () => {
     const sendPayload = {
       file: "xlsx",
       fields: fieldsString,
-      uuids: selectedRows, // your selected department IDs
+      uuids: selectedRows, // your selected Employee Type IDs
     };
 
     setLoadingExport(true);
@@ -472,12 +479,16 @@ const EmployeeTypeList = () => {
                   )}
                   {selectedRows.length > 0 && (
                     <button
-                      onClick={handleBulkDelete}
+                      onClick={() => handleBulkDelete("")}
                       className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
-                    >
-                      {isAllSelected
-                        ? `Delete All (${selectedRows.length})`
-                        : `Delete Selected (${selectedRows.length})`}
+                    >{`Delete Selected (${selectedRows.length})`}
+                    </button>
+                  )}
+                  {selectedRows.length > 0 && (
+                    <button
+                      onClick={() => handleBulkDelete("all")}
+                      className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
+                    >{`Delete All (${tableState.total})`}
                     </button>
                   )}
                 </div>
@@ -829,9 +840,10 @@ const EmployeeTypeList = () => {
                               id={`item-${index}`}
                               checked={selectedItems.includes(item)}
                               onChange={(e) => handleCheckboxChange(item, e.target.checked)}
+                              disabled={ItemsRequired.includes(item)} // 🔒 Disable required item
                               className="form-check-input"
                             />
-                            <label htmlFor={`item-${index}`} className="mb-0 flex-grow-1" >
+                            <label htmlFor={`item-${index}`} className="mb-0 flex-grow-1">
                               {item}
                             </label>
                           </div>
@@ -860,12 +872,14 @@ const EmployeeTypeList = () => {
                             >
                               <span className="text-muted move-drop-icone">☰</span>
                               <span className="flex-grow-1">{item}</span>
-                              <button
-                                onClick={() => handleCheckboxChange(item, false)}
-                                className="btn btn-sm btn-link text-danger p-0 close-icone"
-                              >
-                                ×
-                              </button>
+                              {!ItemsRequired.includes(item) && (
+                                <button
+                                  onClick={() => handleCheckboxChange(item, false)}
+                                  className="btn btn-sm btn-link text-danger p-0 close-icone"
+                                >
+                                  ×
+                                </button>
+                              )}
                             </div>
                           ))
                         )}

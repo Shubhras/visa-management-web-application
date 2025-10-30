@@ -114,7 +114,7 @@ const AddImportDepartmentModal = ({ show, handleClose }) => {
             type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         });
 
-        saveAs(blob, `departments_${new Date().toISOString().split("T")[0]}.xlsx`);
+        saveAs(blob, `Department_${new Date().toISOString().split("T")[0]}.xlsx`);
     };
     // Handle modal close
     const onClose = () => {
@@ -126,11 +126,11 @@ const AddImportDepartmentModal = ({ show, handleClose }) => {
         setLoading(false);
     };
     const handleDownloadSample = () => {
-        const fileUrl = 'assets/simplefile/department.xlsx'; // Update this path according to your project structure
+        const fileUrl = 'assets/simplefile/Department.xlsx'; // Update this path according to your project structure
 
         const link = document.createElement('a');
         link.href = fileUrl;
-        link.download = 'department_sample.xlsx'; // Downloaded file name
+        link.download = 'Department.xlsx'; // Downloaded file name
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

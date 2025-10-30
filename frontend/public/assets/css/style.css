@@ -15737,7 +15737,10 @@ td.fc-header-center {
   margin-block-start: auto;
 }
 
-.main-footer {}
+.main-footer {
+  padding-top: 15px;
+  padding-bottom: 15px;
+}
 
 /* === footer css end === */
 

@@ -1337,14 +1337,14 @@ const MasterLayout = ({ children }) => {
                   <Icon icon='heroicons:bars-3-solid' className='icon' />
                 </button> */}
                 <div>
-                   <img
-                  src='assets/images/logo-test1.png'
-                  alt='site logo'
-                  className='light-logo'
-                  style={{width:"100px"}}
-                />
+                  <img
+                    src='assets/images/logo-test1.png'
+                    alt='site logo'
+                    className='light-logo'
+                    style={{ width: "100px" }}
+                  />
                 </div>
-               
+
                 <Header />
 
               </div>
@@ -1444,10 +1444,21 @@ const MasterLayout = ({ children }) => {
             <div className='col-auto'>
               <p className='mb-0'>© 2025 Abrova. All Rights Reserved.</p>
             </div>
-            <div className='col-auto'>
+            {/* <div className='col-auto'>
               <p className='mb-0'>
                 Powered by <span className='text-primary-600'>Abrova</span>
               </p>
+            </div> */}
+            <div className='col-auto d-flex align-items-center gap-2 pe-5 pe-lg-6 flex-wrap justify-content-center justify-content-md-end'>
+              <p className='mb-0'>
+                Powered by
+              </p>
+              <img
+                src='assets/images/logo-test1.png'
+                alt='site logo'
+                className='light-logo'
+                style={{ width: "100px"}}
+              />
             </div>
           </div>
         </footer>

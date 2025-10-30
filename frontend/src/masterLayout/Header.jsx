@@ -50,18 +50,20 @@ const Header = () => {
                     path: '/Department',
                     children: [
                         { name: 'Department', path: '/department' },
-                        { name: 'Employee type', path: '/employeetype' },
-                        { name: 'Company type', path: '/companylist' },
-                        { name: 'Stakeholder category', path: '/stakeholder-list' },
+                        { name: 'Employee Type', path: '/employeetype' },
+                        { name: 'Company Type', path: '/companylist' },
+                        { name: 'Stakeholder Category', path: '/stakeholder-list' },
                     ]
                 },
                 {
                     name: 'Sales',
                     path: '/priority-type',
                     children: [
-                        { name: 'Priority type', path: '/priority-type' },
-                        { name: 'Tags type', path: '/tags-type' },
-                        { name: 'Activity type', path: '/activity-type' },
+                        { name: 'Lead Source', path: '/lead-source' },
+                        { name: 'Interest Level', path: '/interest-level' },
+                        { name: 'Priority Type', path: '/priority-type' },
+                        { name: 'Tags Type', path: '/tags-type' },
+                        { name: 'Activity Type', path: '/activity-type' },
                         { name: 'Lost Reason (B2C)', path: '/lost-reason-B2C' },
                         { name: 'Lost Reason (B2B)', path: '/lost-reason-B2B' },
                     ]
@@ -70,7 +72,7 @@ const Header = () => {
                 { name: 'Education', path: '/' },
                 { name: 'Test', path: '/' },
                 { name: 'Occupation', path: '/' },
-                { name: 'General', path: '/' },
+                // { name: 'General', path: '/' },
                 { name: 'Admin', path: '/' },
                 // { name: 'Visa', path: '/' },
                 // { name: 'Process', path: '/' },
@@ -78,7 +80,7 @@ const Header = () => {
 
             ]
         },
-         {
+        {
             name: 'Packages',
             path: '/',
             submenu: []

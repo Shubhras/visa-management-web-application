@@ -3,7 +3,7 @@ import { useDispatch } from "react-redux";
 import { tagsTypeImportData } from '../../../store/master/actions';
 import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
-
+import { saveAs } from "file-saver";
 const AddImportTagsModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
@@ -76,11 +76,7 @@ const AddImportTagsModal = ({ show, handleClose }) => {
                             <div>{response?.message}</div>
                             {response?.duplicates?.length > 0 && (
                                 <div style={{ marginTop: '6px' }}>
-                                    <strong>Duplicate priority skipped:</strong>
-                                    <br />
-                                    {response.duplicates.map((item, index) => (
-                                        <div key={index}>{item}</div>
-                                    ))}
+                                    <strong>Duplicate tags skipped — the duplicate data from your uploaded file has been exported into an .xlsx file.</strong>
                                 </div>
                             )}
                         </div>,
@@ -88,6 +84,9 @@ const AddImportTagsModal = ({ show, handleClose }) => {
                             autoClose: 10000,
                         }
                     );
+                    if (response?.duplicates?.length > 0) {
+                        handleExportToExcel(response.duplicates)
+                    }
                     setFile(null);
                     setSheetNames([]);
                     setSelectedSheet('');
@@ -98,7 +97,25 @@ const AddImportTagsModal = ({ show, handleClose }) => {
             }
         }));
     };
+    const handleExportToExcel = (duplicatesData) => {
+        const header = ["Tags"];
+        const duplicates = duplicatesData //["test1", "test3", "test3"];
+        const worksheetData = [header, ...duplicates.map((item) => [item])];
+        const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Tags");
 
+        const excelBuffer = XLSX.write(workbook, {
+            bookType: "xlsx",
+            type: "array",
+        });
+
+        const blob = new Blob([excelBuffer], {
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        });
+
+        saveAs(blob, `Tags_${new Date().toISOString().split("T")[0]}.xlsx`);
+    };
     // Handle modal close
     const onClose = () => {
         setFile(null);
@@ -109,17 +126,17 @@ const AddImportTagsModal = ({ show, handleClose }) => {
         setLoading(false);
     };
     const handleDownloadSample = () => {
-        const fileUrl = 'assets/simplefile/tags.xlsx'; // Update this path according to your project structure
+        const fileUrl = 'assets/simplefile/Tags.xlsx'; // Update this path according to your project structure
 
         const link = document.createElement('a');
         link.href = fileUrl;
-        link.download = 'tags_sample.xlsx'; // Downloaded file name
+        link.download = 'Tags.xlsx'; // Downloaded file name
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
     };
 
-  
+
     if (!show) return null;
 
     return (
@@ -129,13 +146,13 @@ const AddImportTagsModal = ({ show, handleClose }) => {
             role="dialog"
             aria-labelledby="tagsTypeModalLabel"
             aria-hidden={!show}
-            
+
         >
             <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
                 <div className="modal-content radius-16 bg-base">
                     <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
                         <h1 className="modal-title fs-5" id="tagsTypeModalLabel">
-                            Upload Tags Type
+                            Upload Tags
                         </h1>
                         <button
                             type="button"
