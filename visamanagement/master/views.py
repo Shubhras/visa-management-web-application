@@ -2378,8 +2378,9 @@ class DepartmentExportAPIView(APIView):
                 value = getattr(dept, field, '')
 
                 if field in ['created_at', 'updated_at']:
-                    # Current time in local timezone, formatted as DD-MM-YYYY hh:mm:ss AM/PM
-                    value = timezone.localtime(timezone.now()).strftime("%d-%m-%Y %I:%M:%S %p")
+                    # Use current local time at the moment of export
+                    now = timezone.localtime(timezone.now())
+                    value = now.strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
                     value = int(value)
 
