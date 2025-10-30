@@ -5359,7 +5359,6 @@ class LeadSourceExportAPIView(APIView):
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
 
-        india_tz = timezone.pytz.timezone("Asia/Kolkata")
 
         for lead in queryset:
             row = []
