@@ -5983,7 +5983,7 @@ class PriorityDeleteAPIView(APIView):
             }, status=status.HTTP_404_NOT_FOUND)
 
         # Soft delete
-        priorities.update(is_deleted=True)
+        priorities.delete()
 
         return Response({
             "statusCode": 200,
@@ -6004,45 +6004,61 @@ class PriorityExportAPIView(APIView):
         # Parse UUIDs
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
-        # Determine fields
+        field_header_map = {
+            'uuid': 'UUID',
+            'name': 'Priority',  
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'created_at': 'Created On',
+            'updated_at': 'Updated At'
+        }
+
+
         if fields:
             field_list = [f.strip() for f in fields.split(',')]
         else:
-            field_list = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+            field_list = list(field_header_map.keys())
 
+            
         # Filter queryset
         queryset = Priority.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-created_at')
 
         # Prepare dataset
         dataset = Dataset()
-        dataset.headers = field_list
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
 
         for obj in queryset:
             row = []
             for field in field_list:
                 value = getattr(obj, field, '')
-                # Format datetime
-                if isinstance(value, datetime.datetime):
-                    value = value.strftime("%Y-%m-%d %H:%M:%S")
-                # Convert boolean to int
-                if isinstance(value, bool):
+
+                if field in ['created_at', 'updated_at'] and value:
+                    # Convert the stored UTC datetime to IST and format it
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
                     value = int(value)
+
                 row.append(value if value is not None else '')
             dataset.append(row)
 
         # Export
-        if format_type == 'xlsx':
-            data = XLSX().export_data(dataset)
-            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'priorities.xlsx'
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'priority.csv'
         else:
-            data = CSV().export_data(dataset)
-            content_type = 'text/csv; charset=utf-8'
-            file_name = 'priorities.csv'
+            # XLSX export with BytesIO
+            file_data = io.BytesIO(dataset.export('xlsx'))
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'priority.xlsx'
 
-        response = HttpResponse(data, content_type=content_type)
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
@@ -6055,10 +6071,13 @@ class PriorityImportAPIView(APIView):
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
-        dataset = Dataset()
         duplicate_names = []
 
-        allowed_headers = {'name', 'description'}
+        header_field_map = {
+            'Priority': 'name',
+            'Description': 'description'
+        }
+        allowed_headers = set(k.lower() for k in header_field_map.keys())
 
         try:
             data = []
@@ -6081,17 +6100,34 @@ class PriorityImportAPIView(APIView):
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 ws = wb[sheet_name]
-                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                if set(headers) != allowed_headers:
+                if ws.max_row <= 1:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Please provide at least one data row.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+
+                if not allowed_headers.issubset(set(headers)):
                     return Response({
                         "statusCode": 400,
                         "status": True,
-                        'message': f'Invalid headers in sheet. Expected: {allowed_headers}, Found: {set(headers)}'
+                        'message': f'Missing required headers. Required: {allowed_headers}, Found: {set(headers)}'
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 for row in ws.iter_rows(min_row=2, values_only=True):
+                    if not any(row):
+                        continue
                     row_dict = dict(zip(headers, row))
                     data.append(row_dict)
+
+                if not data:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Please provide at least one data row.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
             # ---------- CSV Handling ----------
             elif format_type == 'csv':
@@ -6120,8 +6156,9 @@ class PriorityImportAPIView(APIView):
                 return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
 
             # ---------- Process Each Row ----------
+            imported_count = 0
             for row in data:
-                name = str(row.get('name')).strip() if row.get('name') else None
+                name = str(row.get('priority')).strip() if row.get('priority') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not name:
@@ -6134,6 +6171,7 @@ class PriorityImportAPIView(APIView):
                         existing.description = description
                         existing.is_deleted = False
                         existing.save()
+                        imported_count += 1
                     else:
                         
                         duplicate_names.append(name)
@@ -6145,10 +6183,15 @@ class PriorityImportAPIView(APIView):
                         description=description,
                         is_deleted=False
                     )
+                    imported_count += 1
 
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
+            return Response({
+                "statusCode": 400,
+                "status": True,
+                'message': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
         return Response({
             "statusCode": 200,
             "status": True,
