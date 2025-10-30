@@ -6558,8 +6558,9 @@ class TagsImportAPIView(APIView):
                     'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
 
             # ---------- Process Each Row ----------
+            imported_count = 0
             for row in data:
-                name = str(row.get('name')).strip() if row.get('name') else None
+                name = str(row.get('tags')).strip() if row.get('tags') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not name:
@@ -6573,6 +6574,7 @@ class TagsImportAPIView(APIView):
                         existing.description = description
                         existing.is_deleted = False
                         existing.save()
+                        imported_count += 1
                     else:
                         # Already active — track as duplicate
                         duplicate_names.append(name)
@@ -6584,9 +6586,14 @@ class TagsImportAPIView(APIView):
                         description=description,
                         is_deleted=False
                     )
+                    imported_count += 1
 
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({
+                "statusCode": 400,
+                "status": True,
+                'message': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({
             "statusCode": 200,
@@ -6881,7 +6888,11 @@ class ActivityTypeImportAPIView(APIView):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')  # optional, for XLSX
         duplicate_names = []
-        allowed_headers = {'name', 'description'}
+        header_field_map = {
+            'Activity Type': 'name',
+            'Description': 'description'
+        }
+        allowed_headers = set(k.lower() for k in header_field_map.keys())
 
         if not file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
@@ -6910,18 +6921,34 @@ class ActivityTypeImportAPIView(APIView):
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 ws = wb[sheet_name]
-                headers = [cell.value.strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if ws.max_row <= 1:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Please provide at least one data row.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
-                if set(headers) != allowed_headers:
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+
+                if not allowed_headers.issubset(set(headers)):
                     return Response({
                         "statusCode": 400,
                         "status": True,
-                        'message': f'Invalid headers in sheet. Expected: {allowed_headers}, Found: {set(headers)}'
+                        'message': f'Missing required headers. Required: {allowed_headers}, Found: {set(headers)}'
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 for row in ws.iter_rows(min_row=2, values_only=True):
+                    if not any(row):
+                        continue
                     row_dict = dict(zip(headers, row))
                     data.append(row_dict)
+
+                if not data:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Please provide at least one data row.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
             # ---------- CSV Handling ----------
             elif format_type == 'csv':
@@ -6953,8 +6980,9 @@ class ActivityTypeImportAPIView(APIView):
                     'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
 
             # ---------- Process Each Row ----------
+            imported_count = 0
             for row in data:
-                name = str(row.get('name')).strip() if row.get('name') else None
+                name = str(row.get('activity type')).strip() if row.get('activity type') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not name:
@@ -6968,6 +6996,7 @@ class ActivityTypeImportAPIView(APIView):
                         existing.description = description
                         existing.is_deleted = False
                         existing.save()
+                        imported_count += 1
                     else:
                         # Already active — track as duplicate
                         duplicate_names.append(name)
@@ -6979,9 +7008,14 @@ class ActivityTypeImportAPIView(APIView):
                         description=description,
                         is_deleted=False
                     )
+                    imported_count += 1
 
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({
+                "statusCode": 400,
+                "status": True,
+                'message': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({
             "statusCode": 200,
