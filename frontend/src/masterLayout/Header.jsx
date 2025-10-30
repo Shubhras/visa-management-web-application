@@ -60,7 +60,7 @@ const Header = () => {
                     path: '/priority-type',
                     children: [
                         { name: 'Lead Source', path: '/lead-source' },
-                        { name: 'Interest Level', path: '/interest-level' },
+                        // { name: 'Interest Level', path: '/interest-level' },
                         { name: 'Priority Type', path: '/priority-type' },
                         { name: 'Tags Type', path: '/tags-type' },
                         { name: 'Activity Type', path: '/activity-type' },

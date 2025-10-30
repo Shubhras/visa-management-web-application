@@ -18,6 +18,12 @@ import {
   DELETE_LOST_REASON_B2B,
   IMPORT_LOST_REASON_B2B,
   EXPORT_LOST_REASON_B2B,
+  LEAD_SOURCE_LIST,
+  ADD_LEAD_SOURCE,
+  EDIT_LEAD_SOURCE,
+  DELETE_LEAD_SOURCE,
+  EXPORT_LEAD_SOURCE,
+  IMPORT_LEAD_SOURCE,
 } from "./actionTypes";
 
 import {
@@ -39,6 +45,12 @@ import {
   editLostReasonB2BDataAPI,
   addLostReasonB2BDataAPI,
   getLostReasonB2BListDataAPI,
+  importLeadSourceDataAPI,
+  exportLeadSourceDataAPI,
+  deleteLeadSourceDataAPI,
+  editLeadSourceDataAPI,
+  addLeadSourceDataAPI,
+  getLeadSourceListDataAPI,
 } from "../../../service/api_helper";
 
 // Activity type
@@ -205,6 +217,60 @@ function* lostReasonB2BImportDataSaga(action) {
     if (action.callback) action.callback(null, error);
   }
 }
+// Lead Source
+function* leadSourceListSaga(action) {
+  try {
+    const response = yield call(getLeadSourceListDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* leadSourceAddSaga(action) {
+  try {
+    const response = yield call(addLeadSourceDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* leadSourceEditSaga(action) {
+  try {
+    const response = yield call(editLeadSourceDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* leadSourceDeleteSaga(action) {
+  try {
+    const response = yield call(deleteLeadSourceDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* leadSourceExportDataSaga(action) {
+  try {
+    const response = yield call(exportLeadSourceDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* leadSourceImportDataSaga(action) {
+  try {
+    const response = yield call(importLeadSourceDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
 
 function* salesMasterSaga() {
   // Activity type
@@ -223,13 +289,21 @@ function* salesMasterSaga() {
   yield takeEvery(EXPORT_LOST_REASON_B2C, lostReasonB2CExportDataSaga);
   yield takeEvery(IMPORT_LOST_REASON_B2C, lostReasonB2CImportDataSaga);
 
-   // Lost Reason (B2B)
+  // Lost Reason (B2B)
   yield takeEvery(LOST_REASON_B2B_LIST, lostReasonB2BListSaga);
   yield takeEvery(ADD_LOST_REASON_B2B, lostReasonB2BAddSaga);
   yield takeEvery(EDIT_LOST_REASON_B2B, lostReasonB2BEditSaga);
   yield takeEvery(DELETE_LOST_REASON_B2B, lostReasonB2BDeleteSaga);
   yield takeEvery(EXPORT_LOST_REASON_B2B, lostReasonB2BExportDataSaga);
   yield takeEvery(IMPORT_LOST_REASON_B2B, lostReasonB2BImportDataSaga);
+
+  // Lead Source
+  yield takeEvery(LEAD_SOURCE_LIST, leadSourceListSaga);
+  yield takeEvery(ADD_LEAD_SOURCE, leadSourceAddSaga);
+  yield takeEvery(EDIT_LEAD_SOURCE, leadSourceEditSaga);
+  yield takeEvery(DELETE_LEAD_SOURCE, leadSourceDeleteSaga);
+  yield takeEvery(EXPORT_LEAD_SOURCE, leadSourceExportDataSaga);
+  yield takeEvery(IMPORT_LEAD_SOURCE, leadSourceImportDataSaga);
 }
 
 export default salesMasterSaga;

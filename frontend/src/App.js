@@ -347,6 +347,7 @@ import DepartmentList from "./pages/masters/department/DepartmentList";
 import EmployeeTypeList from "./pages/masters/employeeType/EmployeeTypeList";
 import CompanyList from "./pages/masters/company/CompanyList";
 import StakeholderCategoriesList from "./pages/masters/stakeholderCategories/StakeholderCategoriesList";
+import LeadSourceList from "./pages/masters/salesMasters/leadSource/LeadSourceList"
 import PriorityTypeList from "./pages/masters/priorityType/PriorityTypeList";
 import TagsTypeList from "./pages/masters/tagsType/TagsTypeList";
 import ActivityTypeList from "./pages/masters/salesMasters/activityType/ActivityTypeList";
@@ -578,6 +579,7 @@ function App() {
         <Route path='/employeetype' element={<ProtectedRoute><EmployeeTypeList /></ProtectedRoute>} />
         <Route path='/companylist' element={<ProtectedRoute><CompanyList /></ProtectedRoute>} />
         <Route path='/stakeholder-list' element={<ProtectedRoute><StakeholderCategoriesList /></ProtectedRoute>} />
+         <Route path='/lead-source' element={<ProtectedRoute><LeadSourceList /></ProtectedRoute>} />
         <Route path='/priority-type' element={<ProtectedRoute><PriorityTypeList /></ProtectedRoute>} />
         <Route path='/tags-type' element={<ProtectedRoute><TagsTypeList /></ProtectedRoute>} />
         <Route path='/activity-type' element={<ProtectedRoute><ActivityTypeList /></ProtectedRoute>} />

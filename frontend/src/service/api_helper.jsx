@@ -322,3 +322,36 @@ export const importLostReasonB2BDataAPI = (payload) => {
     const apiUrl = `${url.IMPORT_LOST_REASON_B2B_API}`;
     return post(apiUrl, payload);
 };
+// LEAD_SOURCE
+export const getLeadSourceListDataAPI = (data) => {
+    const apiUrl = `${url.GET_LEAD_SOURCE_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addLeadSourceDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_LEAD_SOURCE_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editLeadSourceDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_LEAD_SOURCE_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteLeadSourceDataAPI = (payload) => {
+    const prepareDATA = {
+        id: payload
+    };
+    const apiUrl = `${url.DELETE_LEAD_SOURCE_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportLeadSourceDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_LEAD_SOURCE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importLeadSourceDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_LEAD_SOURCE_API}`;
+    return post(apiUrl, payload);
+};

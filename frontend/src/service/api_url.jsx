@@ -76,6 +76,14 @@ export const DELETE_LOST_REASON_B2B_API = "api/v1/master/lostreasonB2B/";
 export const EXPORT_LOST_REASON_B2B_API = "api/v1/master/lostreasonB2B/export/";
 export const IMPORT_LOST_REASON_B2B_API = "api/v1/master/lostreasonB2B/import/";
 
+// LEAD_SOURCE
+export const GET_LEAD_SOURCE_LIST_API = "/api/v1/master/LeadSource/";
+export const ADD_LEAD_SOURCE_API = "/api/v1/master/LeadSource/create/";
+export const EDIT_LEAD_SOURCE_API = "api/v1/master/LeadSource/";
+export const DELETE_LEAD_SOURCE_API = "api/v1/master/LeadSource/";
+export const EXPORT_LEAD_SOURCE_API = "api/v1/master/LeadSource/export/";
+export const IMPORT_LEAD_SOURCE_API = "api/v1/master/LeadSource/import/";
+
 // // export const TWO_STEP_VERIFICATION = 'api/national-admin/national-admin-verifyOtpAdmin'
 // export const TWO_STEP_VERIFICATION = '/api/users/verifyUser'
 // export const FORGET_PASSWORD_URL = '/api/national-admin/forgotpassword/'

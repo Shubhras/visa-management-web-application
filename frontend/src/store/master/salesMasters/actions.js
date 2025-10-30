@@ -17,6 +17,12 @@ import {
     EDIT_LOST_REASON_B2B,
     ADD_LOST_REASON_B2B,
     LOST_REASON_B2B_LIST,
+    LEAD_SOURCE_LIST,
+    ADD_LEAD_SOURCE,
+    EDIT_LEAD_SOURCE,
+    DELETE_LEAD_SOURCE,
+    EXPORT_LEAD_SOURCE,
+    IMPORT_LEAD_SOURCE,
 } from "./actionTypes"
 
 // ACTIVITY_TYPE
@@ -127,6 +133,43 @@ export const lostReasonB2BExportData = (data, callback) => ({
 
 export const lostReasonB2BImportData = (data, callback) => ({
     type: IMPORT_LOST_REASON_B2B,
+    data,
+    callback,
+});
+
+// LEAD_SOURCE
+export const leadSourceList = (data, callback) => ({
+    type: LEAD_SOURCE_LIST,
+    data,
+    callback,
+});
+
+export const leadSourceAdd = (data, callback) => ({
+    type: ADD_LEAD_SOURCE,
+    data,
+    callback,
+});
+
+export const leadSourceEdit = (data, callback) => ({
+    type: EDIT_LEAD_SOURCE,
+    data,
+    callback,
+});
+
+export const leadSourceDelete = (data, callback) => ({
+    type: DELETE_LEAD_SOURCE,
+    data,
+    callback,
+});
+
+export const leadSourceExportData = (data, callback) => ({
+    type: EXPORT_LEAD_SOURCE,
+    data,
+    callback,
+});
+
+export const leadSourceImportData = (data, callback) => ({
+    type: IMPORT_LEAD_SOURCE,
     data,
     callback,
 });
