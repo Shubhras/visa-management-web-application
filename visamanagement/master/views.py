@@ -7346,7 +7346,7 @@ class LostReasonExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Lost Reason',  
+            'name': 'Lost ReasonB2C',  
             'description': 'Description',
             'is_deleted': 'Deleted',
             'created_at': 'Created On',
@@ -7412,7 +7412,7 @@ class LostReasonImportAPIView(APIView):
 
         # Mapping file headers → model fields
         header_field_map = {
-            'Lost Reason': 'name',
+            'Lost Reason(B2C)': 'name',
             'Description': 'description'
         }
         allowed_headers = set(k.lower() for k in header_field_map.keys())
@@ -7501,7 +7501,7 @@ class LostReasonImportAPIView(APIView):
             # ---------- Process Each Row ----------
             imported_count = 0
             for row in data:
-                name = str(row.get('last reason')).strip() if row.get('last reason') else None
+                name = str(row.get('last reason(b2c)')).strip() if row.get('last reason(b2c)') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not name:
@@ -7845,7 +7845,7 @@ class LostReasonB2BImportAPIView(APIView):
 
         # Map file headers (lowercase) to model fields
         header_field_map = {
-            'last reasonsb2b': 'name',
+            'last reasons(b2b)': 'name',
             'description': 'description'
         }
 
@@ -7934,7 +7934,7 @@ class LostReasonB2BImportAPIView(APIView):
 
             # ---------- Process Each Row ----------
             for row in data:
-                name = str(row.get('last reasonsb2b')).strip() if row.get('last reasonsb2b') else None
+                name = str(row.get('last reasons(b2b)')).strip() if row.get('last reasons(b2b)') else None
                 description = str(row.get('description')).strip() if row.get('description') else None
 
                 if not name:
