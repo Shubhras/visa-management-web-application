@@ -7501,7 +7501,7 @@ class LostReasonImportAPIView(APIView):
             # ---------- Process Each Row ----------
             imported_count = 0
             for row in data:
-                name = str(row.get('last reason(b2c)')).strip() if row.get('last reason(b2c)') else None
+                name = str(row.get('lost reason(b2c)')).strip() if row.get('lost reason(b2c)') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not name:
