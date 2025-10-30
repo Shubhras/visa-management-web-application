@@ -3918,6 +3918,7 @@ class StakeholderCategoryImportAPIView(APIView):
 
         try:
             data = []
+            headers = []
 
             # ---------- XLSX Handling ----------
             if format_type == 'xlsx':
@@ -3944,14 +3945,14 @@ class StakeholderCategoryImportAPIView(APIView):
                         "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Please provide at least one data row.'
                     }, status=status.HTTP_400_BAD_REQUEST)
                 
-                headers = [str(cell.value).strip() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                normalized_headers = [h.lower().replace(' ', '') for h in headers]
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
 
-                if not allowed_headers.issubset(set(normalized_headers)):
+
+                if not allowed_headers.issubset(set(headers)):
                     return Response({
                         "statusCode": 400,
                         "status": True,
-                        'message': f'Missing required headers. Required: {allowed_headers}, Found: {set(normalized_headers)}'
+                        'message': f'Missing required headers. Required: {allowed_headers}, Found: {set(headers)}'
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 for row in ws.iter_rows(min_row=2, values_only=True):
@@ -3987,6 +3988,7 @@ class StakeholderCategoryImportAPIView(APIView):
                 return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
 
             # ---------- Process Each Row ----------
+            imported_count = 0
             for row in data:
                 name = str(row.get('stakeholder category')).strip() if row.get('stakeholder category') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
@@ -4001,6 +4003,7 @@ class StakeholderCategoryImportAPIView(APIView):
                         existing.description = description
                         existing.is_deleted = False
                         existing.save()
+                        imported_count += 1
                     else:
                         duplicate_names.append(name)
                         continue
@@ -4010,9 +4013,14 @@ class StakeholderCategoryImportAPIView(APIView):
                         description=description,
                         is_deleted=False
                     )
+                    imported_count += 1
 
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({
+                "statusCode": 400,
+                "status": True,
+                'message': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({
             "statusCode": 200,
