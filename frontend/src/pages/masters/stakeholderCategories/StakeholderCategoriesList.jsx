@@ -34,7 +34,7 @@ const StakeholderCategoriesList = () => {
   const [stakeholderListData, setStakeholderListData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [items] = useState(["Stakeholder Category", "Description", "Created On"]);
+  const [items] = useState(["Stakeholder Category", "Description", "Modified On"]);
   const [selectedItems, setSelectedItems] = useState(["Stakeholder Category"]);
   const [ItemsRequired] = useState(["Stakeholder Category"]);
 
@@ -44,7 +44,7 @@ const StakeholderCategoriesList = () => {
     limit: 25,
     search: '',
     status: '',
-    sortBy: 'created_at', // Field to sort by
+    sortBy: 'updated_at', // Field to sort by
     sortOrder: 'desc', // 'asc' or 'desc'
     total: 0,
     totalPages: 0,
@@ -350,7 +350,7 @@ const StakeholderCategoriesList = () => {
     // Map frontend labels to backend field names
     const fieldMapping = {
       "Stakeholder Category": "name",
-      "Created On": "created_at",
+      "Modified On": "updated_at",
       "Description": "description",
     };
     // Convert selectedItems to backend field names
@@ -454,7 +454,7 @@ const StakeholderCategoriesList = () => {
                       onClick={handleSelectAllButton}
                       className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
                     >
-                      Delete All
+                      Delete
                     </button>
                   )}
                   {selectedRows.length > 0 && (
@@ -543,7 +543,7 @@ const StakeholderCategoriesList = () => {
                           onChange={handleSelectAll}
                           disabled={stakeholderListData.length === 0}
                         />
-                        <span>S.L</span>
+                        <span>No.</span>
                       </div>
                     </th>
                     <th scope="col" className='sorting-th' onClick={() => handleSort('name')}>
@@ -558,10 +558,10 @@ const StakeholderCategoriesList = () => {
                         {getSortIcon('description')}
                       </div>
                     </th>
-                    <th scope="col" className='sorting-th' onClick={() => handleSort('created_at')}>
+                    <th scope="col" className='sorting-th' onClick={() => handleSort('updated_at')}>
                       <div className="d-flex align-items-center">
-                        Created On
-                        {getSortIcon('created_at')}
+                        Modified On
+                        {getSortIcon('updated_at')}
                       </div>
                     </th>
                     <th scope="col" className='action-th'>
@@ -608,7 +608,7 @@ const StakeholderCategoriesList = () => {
                           </span>
                         </td>
                         <td>
-                          <span>{formatDateTime(dept.created_at)}</span>
+                          <span>{formatDateTime(dept.updated_at)}</span>
                         </td>
                         <td >
                           <div className="d-flex align-items-center gap-2">

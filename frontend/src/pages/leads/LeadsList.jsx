@@ -418,7 +418,7 @@ const LeadsList = () => {
                           onChange={handleSelectAll}
                           style={{ cursor: 'pointer' }}
                         />
-                        <span>S.L</span>
+                        <span>No.</span>
                         <Icon icon="ph:caret-up-down" width="16" style={{ color: '#6c757d', opacity: 0.5 }} />
                       </div>
                     </th>

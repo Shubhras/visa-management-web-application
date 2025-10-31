@@ -4,6 +4,7 @@ import { tagsTypeImportData } from '../../../store/master/actions';
 import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
+import CommanSampleExcelDownloadModal from '../../../components/comman/CommanSampleExcelDownloadModal';
 const AddImportTagsModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
@@ -11,7 +12,7 @@ const AddImportTagsModal = ({ show, handleClose }) => {
     const [error, setError] = useState('');
     const [sheetNames, setSheetNames] = useState([]);
     const [selectedSheet, setSelectedSheet] = useState('');
-
+const [showSampleExcelDownload, setShowSampleExcelDownload] = useState(false);
     // Handle file change and extract sheet names
     const handleFileChange = async (e) => {
         const selectedFile = e.target.files[0];
@@ -125,21 +126,17 @@ const AddImportTagsModal = ({ show, handleClose }) => {
         handleClose();
         setLoading(false);
     };
-    const handleDownloadSample = () => {
-        const fileUrl = 'assets/simplefile/Tags.xlsx'; // Update this path according to your project structure
-
-        const link = document.createElement('a');
-        link.href = fileUrl;
-        link.download = 'Tags.xlsx'; // Downloaded file name
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    };
-
+ const handleDownloadSample = () => {
+    setShowSampleExcelDownload(true);
+};
+const handleCloseSampleExcelDownload = () => {
+    setShowSampleExcelDownload(false);
+}
 
     if (!show) return null;
 
     return (
+        <>
         <div
             className="modal fade show common-ctl-popup"
             tabIndex={-1}
@@ -243,6 +240,18 @@ const AddImportTagsModal = ({ show, handleClose }) => {
                 </div>
             </div>
         </div>
+        {
+                showSampleExcelDownload && (
+                    <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
+                        downloadFileName: "Tags",
+                        items: ["Tags", "Description"],
+                        selectedItems: ["Tags"],
+                        ItemsRequired: ["Tags"]
+                    }
+                    } />
+                )
+            }
+        </>
     );
 };
 

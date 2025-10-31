@@ -3,7 +3,7 @@ import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
-import { leadSourceImportData } from '../../../../store/master/salesMasters/actions';
+import { interestLevelImportData } from '../../../../store/master/salesMasters/actions';
 import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
 const AddImportLeadSourceModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
@@ -64,7 +64,7 @@ const AddImportLeadSourceModal = ({ show, handleClose }) => {
             formData.append('sheet_name', selectedSheet);
         }
         setLoading(true);
-        dispatch(leadSourceImportData(formData, (response, error) => {
+        dispatch(interestLevelImportData(formData, (response, error) => {
             setLoading(false);
             if (error) {
                 toast.error(error?.response?.data?.message || "Server error");
@@ -76,7 +76,7 @@ const AddImportLeadSourceModal = ({ show, handleClose }) => {
                             <div>{response?.message}</div>
                             {response?.duplicates?.length > 0 && (
                                 <div style={{ marginTop: '6px' }}>
-                                    <strong>Duplicate lead source skipped — the duplicate data from your uploaded file has been exported into an .xlsx file.</strong>
+                                    <strong>Duplicate interest level skipped — the duplicate data from your uploaded file has been exported into an .xlsx file.</strong>
                                 </div>
                             )}
                         </div>,
@@ -99,12 +99,12 @@ const AddImportLeadSourceModal = ({ show, handleClose }) => {
     };
 
     const handleExportToExcel = (duplicatesData) => {
-        const header = ["Lead Source"];
+        const header = ["Interest Level"];
         const duplicates = duplicatesData //["test1", "test3", "test3"];
         const worksheetData = [header, ...duplicates.map((item) => [item])];
         const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Lead Source");
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Interest Level");
 
         const excelBuffer = XLSX.write(workbook, {
             bookType: "xlsx",
@@ -148,7 +148,7 @@ const AddImportLeadSourceModal = ({ show, handleClose }) => {
                     <div className="modal-content radius-16 bg-base">
                         <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
                             <h1 className="modal-title fs-5" id="LeadSourceModalLabel">
-                                Upload Lead Source
+                                Upload Interest Level
                             </h1>
                             <button
                                 type="button"
@@ -242,10 +242,10 @@ const AddImportLeadSourceModal = ({ show, handleClose }) => {
             {
                 showSampleExcelDownload && (
                     <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
-                        downloadFileName: "LeadSource",
-                        items: ["Lead Source", "Description"],
-                        selectedItems: ["Lead Source"],
-                        ItemsRequired: ["Lead Source"]
+                        downloadFileName: "InterestLevel",
+                        items: ["Interest Level", "Description"],
+                        selectedItems: ["Interest Level"],
+                        ItemsRequired: ["Interest Level"]
                     }
                     } />
                 )

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
-import { leadSourceAdd, leadSourceEdit } from '../../../../store/master/salesMasters/actions';
+import { interestLevelAdd, interestLevelEdit } from '../../../../store/master/salesMasters/actions';
 
-const AddEditLeadSourceModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
+const AddEditInterestLevelModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
 
@@ -88,7 +88,7 @@ const AddEditLeadSourceModal = ({ show, handleClose, mode = 'add', rowData = nul
 
       setLoading(true);
       
-      const action = mode === 'edit' ? leadSourceEdit : leadSourceAdd;
+      const action = mode === 'edit' ? interestLevelEdit : interestLevelAdd;
       
       dispatch(action(sendPayload, (response, error) => {
         setLoading(false);
@@ -139,7 +139,7 @@ const AddEditLeadSourceModal = ({ show, handleClose, mode = 'add', rowData = nul
         <div className="modal-content radius-16 bg-base">
           <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
             <h1 className="modal-title fs-5" id="LeadSourceModalLabel">
-              {mode === 'edit' ? 'Edit Lead Source' : 'Add Lead Source'}
+              {mode === 'edit' ? 'Edit Interest Level' : 'Add Interest Level'}
             </h1>
             <button
               type="button"
@@ -152,10 +152,10 @@ const AddEditLeadSourceModal = ({ show, handleClose, mode = 'add', rowData = nul
           <div className="modal-body p-24">
             <form onSubmit={handleSubmit}>
               <div className="row">
-                {/* Lead Source Name */}
+                {/* Interest Level Name */}
                 <div className="col-12 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Lead Source <span className="text-danger">*</span>
+                   Interest Level <span className="text-danger">*</span>
                   </label>
                   <input
                     type="text"
@@ -163,7 +163,7 @@ const AddEditLeadSourceModal = ({ show, handleClose, mode = 'add', rowData = nul
                     value={formData.name}
                     onChange={handleChange}
                     className={`form-control radius-8 ${errors.name ? 'is-invalid' : ''}`}
-                    placeholder="Enter lead source"
+                    placeholder="Enter interest level"
                   />
                   {errors.name && (
                     <div className="text-danger text-sm mt-1">
@@ -218,4 +218,4 @@ const AddEditLeadSourceModal = ({ show, handleClose, mode = 'add', rowData = nul
   );
 };
 
-export default AddEditLeadSourceModal;
+export default AddEditInterestLevelModal;

@@ -34,7 +34,7 @@ const TagsTypeList = () => {
   const [tagsTypeListData, setTagsTypeListData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [items] = useState(["Tags", "Description", "Created On"]);
+  const [items] = useState(["Tags", "Description", "Modified On"]);
   const [selectedItems, setSelectedItems] = useState(["Tags"]);
   const [ItemsRequired] = useState(["Tags"]);
 
@@ -44,7 +44,7 @@ const TagsTypeList = () => {
     limit: 25,
     search: '',
     status: '',
-    sortBy: 'created_at', // Field to sort by
+    sortBy: 'updated_at', // Field to sort by
     sortOrder: 'desc', // 'asc' or 'desc'
     total: 0,
     totalPages: 0,
@@ -352,7 +352,7 @@ const TagsTypeList = () => {
     // Map frontend labels to backend field names
     const fieldMapping = {
       "Tags": "name",
-      "Created On": "created_at",
+      "Modified On": "updated_at",
       "Description": "description",
     };
     // Convert selectedItems to backend field names
@@ -441,7 +441,7 @@ const TagsTypeList = () => {
                       onClick={handleSelectAllButton}
                       className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
                     >
-                      Delete All
+                      Delete
                     </button>
                   )}
                   {selectedRows.length > 0 && (
@@ -530,7 +530,7 @@ const TagsTypeList = () => {
                           onChange={handleSelectAll}
                           disabled={tagsTypeListData.length === 0}
                         />
-                        <span>S.L</span>
+                        <span>No.</span>
                       </div>
                     </th>
                     <th scope="col" className='sorting-th' onClick={() => handleSort('name')}>
@@ -545,10 +545,10 @@ const TagsTypeList = () => {
                         {getSortIcon('description')}
                       </div>
                     </th>
-                    <th scope="col" className='sorting-th' onClick={() => handleSort('created_at')}>
+                    <th scope="col" className='sorting-th' onClick={() => handleSort('updated_at')}>
                       <div className="d-flex align-items-center">
-                        Created On
-                        {getSortIcon('created_at')}
+                        Modified On
+                        {getSortIcon('updated_at')}
                       </div>
                     </th>
                     <th scope="col" className='action-th'>
@@ -595,7 +595,7 @@ const TagsTypeList = () => {
                           </span>
                         </td>
                         <td>
-                          <span>{formatDateTime(dept.created_at)}</span>
+                          <span>{formatDateTime(dept.updated_at)}</span>
                         </td>
                         <td >
                           <div className="d-flex align-items-center gap-2">
