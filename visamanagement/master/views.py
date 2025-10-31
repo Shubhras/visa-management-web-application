@@ -2378,13 +2378,9 @@ class DepartmentExportAPIView(APIView):
             for field in field_list:
                 value = getattr(dept, field, '')
 
-                if field in ['updated_at'] and value:
-                    # Option 1: convert to string
+                if field in ['created_at', 'updated_at'] and value:
+                    # Convert the stored UTC datetime to IST and format it
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-                    
-                    # Option 2: or as naive datetime for Excel
-                    # value = timezone.localtime(value, india_tz).replace(tzinfo=None)
-
                 elif isinstance(value, bool):
                     value = int(value)
 
@@ -2809,7 +2805,7 @@ class EmployeeTypeExportAPIView(APIView):
             for field in field_list:
                 value = getattr(dept, field, '')
 
-                if field in ['updated_at'] and value:
+                if field in ['created_at', 'updated_at'] and value:
                     # Convert the stored UTC datetime to IST and format it
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
@@ -3232,7 +3228,7 @@ class CompanyTypeExportAPIView(APIView):
             for field in field_list:
                 value = getattr(dept, field, '')
 
-                if field in ['updated_at'] and value:
+                if field in ['created_at', 'updated_at'] and value:
                     # Convert the stored UTC datetime to IST and format it
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
@@ -3868,7 +3864,7 @@ class StakeholderCategoryExportAPIView(APIView):
             for field in field_list:
                 value = getattr(dept, field, '')
 
-                if field in ['updated_at'] and value:
+                if field in ['created_at', 'updated_at'] and value:
                     # Convert the stored UTC datetime to IST and format it
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
@@ -4893,7 +4889,7 @@ class BankAccountTypeExportAPIView(APIView):
             for field in field_list:
                 value = getattr(record, field, '')
 
-                if field in ['updated_at'] and value:
+                if field in ['created_at', 'updated_at'] and value:
                     # Convert UTC to IST and format
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
@@ -5480,7 +5476,7 @@ class LeadSourceExportAPIView(APIView):
                 value = getattr(lead, field, '')
 
                 # Format datetime fields in IST
-                if field in ['updated_at'] and value:
+                if field in ['created_at', 'updated_at'] and value:
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
                     value = int(value)
@@ -6308,7 +6304,7 @@ class PriorityExportAPIView(APIView):
             for field in field_list:
                 value = getattr(obj, field, '')
 
-                if field in ['updated_at'] and value:
+                if field in ['created_at', 'updated_at'] and value:
                     # Convert the stored UTC datetime to IST and format it
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
@@ -6731,7 +6727,7 @@ class TagsExportAPIView(APIView):
             for field in field_list:
                 value = getattr(dept, field, '')
 
-                if field in ['updated_at'] and value:
+                if field in ['created_at', 'updated_at'] and value:
                     # Convert the stored UTC datetime to IST and format it
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
@@ -7134,7 +7130,7 @@ class ActivityTypeExportAPIView(APIView):
             for field in field_list:
                 value = getattr(dept, field, '')
 
-                if field in ['updated_at'] and value:
+                if field in ['created_at', 'updated_at'] and value:
                     # Convert the stored UTC datetime to IST and format it
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
@@ -7517,7 +7513,7 @@ class LostReasonExportAPIView(APIView):
             for field in field_list:
                 value = getattr(dept, field, '')
 
-                if field in ['updated_at'] and value:
+                if field in ['created_at', 'updated_at'] and value:
                     # Convert the stored UTC datetime to IST and format it
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
@@ -7928,7 +7924,7 @@ class LostReasonB2BExportAPIView(APIView):
             for field in field_list:
                 value = getattr(dept, field, '')
 
-                if field in ['updated_at'] and value:
+                if field in ['created_at', 'updated_at'] and value:
                     # Convert the stored UTC datetime to IST and format it
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
