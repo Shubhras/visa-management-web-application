@@ -2352,8 +2352,8 @@ class DepartmentExportAPIView(APIView):
             'name': 'Department',  # Custom header
             'description': 'Description',
             'is_deleted': 'Deleted',
-            'created_at': 'Modified On',
-            'updated_at': 'Updated At'
+            'updated_at': 'Modified On',
+            
         }
 
         # --- Determine which fields to export ---
