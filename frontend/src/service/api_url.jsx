@@ -84,6 +84,14 @@ export const DELETE_LEAD_SOURCE_API = "api/v1/master/LeadSource/";
 export const EXPORT_LEAD_SOURCE_API = "api/v1/master/LeadSource/export/";
 export const IMPORT_LEAD_SOURCE_API = "api/v1/master/LeadSource/import/";
 
+// INTEREST_LEVEL
+export const GET_INTEREST_LEVEL_LIST_API = "/api/v1/master/InterestLevel/";
+export const ADD_INTEREST_LEVEL_API = "/api/v1/master/InterestLevel/create/";
+export const EDIT_INTEREST_LEVEL_API = "api/v1/master/InterestLevel/";
+export const DELETE_INTEREST_LEVEL_API = "api/v1/master/InterestLevel/";
+export const EXPORT_INTEREST_LEVEL_API = "api/v1/master/InterestLevel/export/";
+export const IMPORT_INTEREST_LEVEL_API = "api/v1/master/InterestLevel/import/";
+
 // // export const TWO_STEP_VERIFICATION = 'api/national-admin/national-admin-verifyOtpAdmin'
 // export const TWO_STEP_VERIFICATION = '/api/users/verifyUser'
 // export const FORGET_PASSWORD_URL = '/api/national-admin/forgotpassword/'

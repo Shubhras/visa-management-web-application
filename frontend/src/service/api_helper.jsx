@@ -355,3 +355,37 @@ export const importLeadSourceDataAPI = (payload) => {
     const apiUrl = `${url.IMPORT_LEAD_SOURCE_API}`;
     return post(apiUrl, payload);
 };
+
+// INTEREST_LEVEL
+export const getInterestLevelListDataAPI = (data) => {
+    const apiUrl = `${url.GET_INTEREST_LEVEL_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addInterestLevelDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_INTEREST_LEVEL_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editInterestLevelDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_INTEREST_LEVEL_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteInterestLevelDataAPI = (payload) => {
+    const prepareDATA = {
+        id: payload
+    };
+    const apiUrl = `${url.DELETE_INTEREST_LEVEL_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportInterestLevelDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_INTEREST_LEVEL_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importInterestLevelDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_INTEREST_LEVEL_API}`;
+    return post(apiUrl, payload);
+};

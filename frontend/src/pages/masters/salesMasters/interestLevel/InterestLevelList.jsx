@@ -1,53 +1,52 @@
 import React, { useState, useEffect } from 'react'
 import { useDispatch } from "react-redux";
-import MasterLayout from "../../../masterLayout/MasterLayout";
-// import Breadcrumb from "../../../components/Breadcrumb";
+import MasterLayout from "../../../../masterLayout/MasterLayout";
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { Link } from 'react-router-dom';
 import { toast } from "react-toastify";
-import { departmentList, departmentDelete, departmentExportData } from '../../../store/master/actions';
-import AddImportDepartmentModal from './AddImportDepartmentModal';
-import AddEditDepartmentModal from './AddEditDepartmentModal';
+import AddImportInterestLevelModal from './AddImportInterestLevelModal';
+import AddEditInterestLevelModal from './AddEditInterestLevelModal';
+import { interestLevelList, interestLevelDelete, interestLevelExportData } from '../../../../store/master/salesMasters/actions';
 
-const DepartmentList = () => {
+const InterestLevelList = () => {
   const dispatch = useDispatch();
   const [modalState, setModalState] = useState({
-  show: false,
-  mode: 'add', // 'add' or 'edit'
-  rowData: null
-})
-  const handleShow = () => {
-  setModalState({
-    show: true,
-    mode: 'add',
-    rowData: null
-  });
-};
-// For closing modal
-const handleClose = () => {
-  setModalState({
     show: false,
-    mode: 'add',
+    mode: 'add', // 'add' or 'edit'
     rowData: null
-  });
-  fetchDepartmentList();
-}
+  })
+  const handleShow = () => {
+    setModalState({
+      show: true,
+      mode: 'add',
+      rowData: null
+    });
+  };
+  // For closing modal
+  const handleClose = () => {
+    setModalState({
+      show: false,
+      mode: 'add',
+      rowData: null
+    });
+    fetchInterestLevelList();
+  }
 
-  // const [showEdit, setShowEdit] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [rowSelectData, setRowSelectData] = useState({});
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this department?");
+  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this Interest Level?");
   const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [deleteAllData, setDeleteAllData] = useState('');
-  const [departments, setDepartments] = useState([]);
+  const [interestLevelData, setInterestLevelData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [items] = useState(["Department", "Description", "Modified On"]);
-  const [selectedItems, setSelectedItems] = useState(["Department"]);
-  const [ItemsRequired] = useState(["Department"]);
+  const [items] = useState(["Interest Level", "Description", "Modified On"]);
+  const [selectedItems, setSelectedItems] = useState(["Interest Level"]);
+  const [ItemsRequired] = useState(["Interest Level"]);
 
   // Updated state with sorting
   const [tableState, setTableState] = useState({
@@ -67,7 +66,7 @@ const handleClose = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (tableState.search !== undefined) {
-        fetchDepartmentList();
+        fetchInterestLevelList();
       }
     }, 500);
 
@@ -75,10 +74,10 @@ const handleClose = () => {
   }, [tableState.search]);
 
   useEffect(() => {
-    fetchDepartmentList();
+    fetchInterestLevelList();
   }, [tableState.page, tableState.limit, tableState.status, tableState.sortBy, tableState.sortOrder]);
 
-  const fetchDepartmentList = () => {
+  const fetchInterestLevelList = () => {
     setLoading(true);
     const params = {
       page: tableState.page,
@@ -89,12 +88,12 @@ const handleClose = () => {
       sortOrder: tableState.sortOrder || ''
     };
 
-    dispatch(departmentList(params, (response, error) => {
+    dispatch(interestLevelList(params, (response, error) => {
       setLoading(false);
       if (response?.statusCode === 200 && response?.status === true) {
         const paginationData = response?.pagination || {};
 
-        setDepartments(response?.data || []);
+        setInterestLevelData(response?.data || []);
         setTableState(prev => ({
           ...prev,
           total: paginationData.totalItems || 0,
@@ -104,7 +103,7 @@ const handleClose = () => {
           hasPrevious: paginationData.previousPage || false
         }));
       } else {
-        setDepartments([]);
+        setInterestLevelData([]);
         setTableState(prev => ({
           ...prev,
           total: 0,
@@ -173,7 +172,7 @@ const handleClose = () => {
     if (isAllSelected) {
       setSelectedRows([]);
     } else {
-      setSelectedRows(departments.map(Item => Item.uuid));
+      setSelectedRows(interestLevelData.map(Item => Item.uuid));
     }
   };
   // For checkbox in table header
@@ -181,7 +180,7 @@ const handleClose = () => {
 
     const checked = e.target.checked;
     if (checked) {
-      setSelectedRows(departments.map(Item => Item.uuid));
+      setSelectedRows(interestLevelData.map(Item => Item.uuid));
     } else {
       setSelectedRows([]);
     }
@@ -197,8 +196,8 @@ const handleClose = () => {
     });
   };
 
-  const isAllSelected = departments.length > 0 &&
-    departments.every(Item => selectedRows.includes(Item.uuid));
+  const isAllSelected = interestLevelData.length > 0 &&
+    interestLevelData.every(Item => selectedRows.includes(Item.uuid));
 
   const goToPage = (page) => {
     if (page >= 1 && page <= tableState.totalPages) {
@@ -239,22 +238,22 @@ const handleClose = () => {
     return pages;
   };
 
-  // const handleCloseEdit = () => {
-  //   setShowEdit(false);
-  //   fetchDepartmentList();
-  // };
+  const handleCloseEdit = () => {
+    setShowEdit(false);
+    fetchInterestLevelList();
+  };
 
-const handleShowEdit = (rowData) => {
-  setModalState({
-    show: true,
-    mode: 'edit',
-    rowData: rowData
-  });
-};
+  const handleShowEdit = (rowData) => {
+    setModalState({
+      show: true,
+      mode: 'edit',
+      rowData: rowData
+    });
+  };
   const handleDelete = (uuid) => {
     setDeleteId(uuid);
     setShowDeleteConfirm(true);
-    setDeleteConfirmMessage(`Are you sure you want to delete this department?`);
+    setDeleteConfirmMessage(`Are you sure you want to delete this interest level?`);
   };
 
   const handleBulkDelete = (deleteData) => {
@@ -263,8 +262,8 @@ const handleShowEdit = (rowData) => {
       return;
     }
     // Choose message based on delete type
-    const message = deleteData === "all" ? `${tableState.total} all departments` : `${selectedRows.length} selected departments`;
-    setDeleteConfirmMessage(`Are you sure you want to delete this department (${message})?`);
+    const message = deleteData === "all" ? `${tableState.total} all interest level` : `${selectedRows.length} selected interest level`;
+    setDeleteConfirmMessage(`Are you sure you want to delete this interest level (${message})?`);
     setShowDeleteConfirm(true);
     setDeleteAllData(deleteData);
   };
@@ -274,21 +273,21 @@ const handleShowEdit = (rowData) => {
     const sendPayload = deleteAllData === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
 
     if (!sendPayload || sendPayload.length === 0) {
-      toast.error("No department selected for deletion.");
+      toast.error("No interest level selected for deletion.");
       return;
     }
-    dispatch(departmentDelete(sendPayload, (response, error) => {
+    dispatch(interestLevelDelete(sendPayload, (response, error) => {
       if (error) {
         toast.error(error?.response?.data?.message || "server error");
       } else {
         if (response?.statusCode === 200 && response?.status === true) {
           toast.success(response?.message);
-          setDepartments(prevRowItems => prevRowItems.filter(Item => Item.uuid !== deleteId));
+          setInterestLevelData(prevRowItems => prevRowItems.filter(Item => Item.uuid !== deleteId));
           setSelectedRows(prevSelected => prevSelected.filter(rowId => rowId !== deleteId));
           setShowDeleteConfirm(false);
           setSelectedRows([])
           setDeleteId(null);
-          fetchDepartmentList();
+          fetchInterestLevelList();
         } else {
           toast.error("Something went wrong.");
         }
@@ -306,7 +305,7 @@ const handleShowEdit = (rowData) => {
 
   const handleCloseImport = () => {
     setShowImport(false);
-    fetchDepartmentList();
+    fetchInterestLevelList();
   };
 
   const handleShowImport = () => {
@@ -356,7 +355,7 @@ const handleShowEdit = (rowData) => {
     }
     // Map frontend labels to backend field names
     const fieldMapping = {
-      "Department": "name",
+      "Interest Level": "name",
       "Modified On": "updated_at",
       "Description": "description",
     };
@@ -367,11 +366,11 @@ const handleShowEdit = (rowData) => {
     const sendPayload = {
       file: "xlsx",
       fields: fieldsString,
-      uuids: selectedRows, // your selected department IDs
+      uuids: selectedRows, // your selected LeadSource IDs
     };
 
     setLoadingExport(true);
-    dispatch(departmentExportData(sendPayload, (response, error) => {
+    dispatch(interestLevelExportData(sendPayload, (response, error) => {
       if (error) {
         setLoadingExport(false);
         toast.error(error?.response?.message || "server error");
@@ -385,7 +384,7 @@ const handleShowEdit = (rowData) => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `departments_${new Date().toISOString().split('T')[0]}.xlsx`;
+          link.download = `LeadSource_${new Date().toISOString().split('T')[0]}.xlsx`;
           document.body.appendChild(link);
           link.click();
           link.remove();
@@ -421,7 +420,6 @@ const handleShowEdit = (rowData) => {
   return (
     <>
       <MasterLayout>
-        {/* <Breadcrumb title="Department" subTitle="List" /> */}
         <div className="card basic-data-table main-container-data">
           <div className="card-body container-data">
             <div className="row align-items-center gy-3 gx-2 flex-wrap filter-action-btn">
@@ -441,6 +439,12 @@ const handleShowEdit = (rowData) => {
                   >
                     Export
                   </button>
+                  {/* <button
+                      onClick={handleSelectAllButton}
+                      className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
+                    >
+                      {isAllSelected ? 'Deselect All' : 'Select All'}
+                    </button> */}
                   {selectedRows.length == 0 && (
                     <button
                       onClick={handleSelectAllButton}
@@ -533,14 +537,14 @@ const handleShowEdit = (rowData) => {
                           type="checkbox"
                           checked={isAllSelected}
                           onChange={handleSelectAll}
-                          disabled={departments.length === 0}
+                          disabled={interestLevelData.length === 0}
                         />
                         <span>No.</span>
                       </div>
                     </th>
                     <th scope="col" className='sorting-th' onClick={() => handleSort('name')}>
                       <div className="d-flex align-items-center">
-                        Department
+                        Interest Level
                         {getSortIcon('name')}
                       </div>
                     </th>
@@ -573,8 +577,8 @@ const handleShowEdit = (rowData) => {
                         </div>
                       </td>
                     </tr>
-                  ) : departments.length > 0 ? (
-                    departments.map((rowItem, index) => (
+                  ) : interestLevelData.length > 0 ? (
+                    interestLevelData.map((rowItem, index) => (
                       <tr key={rowItem.uuid} >
                         <td >
                           <div className="d-flex align-items-center gap-2">
@@ -741,14 +745,14 @@ const handleShowEdit = (rowData) => {
             </div>
           </div>
         </div>
-        <AddEditDepartmentModal
+        <AddEditInterestLevelModal
           show={modalState.show}
           handleClose={handleClose}
           mode={modalState.mode}
           rowData={modalState.rowData}
         />
         {showImport && (
-          <AddImportDepartmentModal show={showImport} handleClose={handleCloseImport} />)}
+          <AddImportInterestLevelModal show={showImport} handleClose={handleCloseImport} />)}
         {showDeleteConfirm && (
           <div className="modal fade show common-ctl-popup">
             <div className="modal-dialog modal-dialog-centered">
@@ -758,10 +762,7 @@ const handleShowEdit = (rowData) => {
                   <button type="button" className="btn-close" onClick={cancelDelete}></button>
                 </div>
                 <div className="modal-body">
-                  {/* <p className="mb-0">Are you sure you want to delete this department?</p> */}
-                  {/* <p className="mb-0"> Are you sure you want to delete this department ({selectedRows.length})?</p> */}
                   <p className="mb-0">{deleteConfirmMessage}</p>
-
                 </div>
                 <div className="modal-footer">
                   <button
@@ -792,7 +793,7 @@ const handleShowEdit = (rowData) => {
             <div className="modal-dialog modal-xl modal-dialog-centered" role="document">
               <div className="modal-content radius-16 bg-base">
                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                  <h1 className="modal-title fs-5">Export Department</h1>
+                  <h1 className="modal-title fs-5">Export Interest Level</h1>
                   <button
                     type="button"
                     className="btn-close"
@@ -890,4 +891,4 @@ const handleShowEdit = (rowData) => {
   );
 };
 
-export default DepartmentList;
+export default InterestLevelList;

@@ -34,7 +34,7 @@ const LostReasonB2BList = () => {
   const [lostReasonB2BListData, setLostReasonB2BListData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [items] = useState(["Lost Reason (B2B)", "Description", "Created On"]);
+  const [items] = useState(["Lost Reason (B2B)", "Description", "Modified On"]);
   const [selectedItems, setSelectedItems] = useState(["Lost Reason (B2B)"]);
   const [ItemsRequired] = useState(["Lost Reason (B2B)"]);
 
@@ -44,7 +44,7 @@ const LostReasonB2BList = () => {
     limit: 25,
     search: '',
     status: '',
-    sortBy: 'created_at', // Field to sort by
+    sortBy: 'updated_at', // Field to sort by
     sortOrder: 'desc', // 'asc' or 'desc'
     total: 0,
     totalPages: 0,
@@ -350,7 +350,7 @@ const LostReasonB2BList = () => {
     // Map frontend labels to backend field names
     const fieldMapping = {
       "Lost Reason (B2B)": "name",
-      "Created On": "created_at",
+      "Modified On": "updated_at",
       "Description": "description",
     };
     // Convert selectedItems to backend field names
@@ -440,7 +440,7 @@ const LostReasonB2BList = () => {
                       onClick={handleSelectAllButton}
                       className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
                     >
-                      Delete All
+                      Delete
                     </button>
                   )}
                   {selectedRows.length > 0 && (
@@ -529,7 +529,7 @@ const LostReasonB2BList = () => {
                           onChange={handleSelectAll}
                           disabled={lostReasonB2BListData.length === 0}
                         />
-                        <span>S.L</span>
+                        <span>No.</span>
                       </div>
                     </th>
                     <th scope="col" className='sorting-th' onClick={() => handleSort('name')}>
@@ -544,10 +544,10 @@ const LostReasonB2BList = () => {
                         {getSortIcon('description')}
                       </div>
                     </th>
-                    <th scope="col" className='sorting-th' onClick={() => handleSort('created_at')}>
+                    <th scope="col" className='sorting-th' onClick={() => handleSort('updated_at')}>
                       <div className="d-flex align-items-center">
-                        Created On
-                        {getSortIcon('created_at')}
+                        Modified On
+                        {getSortIcon('updated_at')}
                       </div>
                     </th>
                     <th scope="col" className='action-th'>
@@ -594,7 +594,7 @@ const LostReasonB2BList = () => {
                           </span>
                         </td>
                         <td>
-                          <span>{formatDateTime(dept.created_at)}</span>
+                          <span>{formatDateTime(dept.updated_at)}</span>
                         </td>
                         <td >
                           <div className="d-flex align-items-center gap-2">

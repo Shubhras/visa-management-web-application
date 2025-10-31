@@ -353,6 +353,7 @@ import TagsTypeList from "./pages/masters/tagsType/TagsTypeList";
 import ActivityTypeList from "./pages/masters/salesMasters/activityType/ActivityTypeList";
 import LostReasonB2CList from "./pages/masters/salesMasters/lostReasonB2C/LostReasonB2CList";
 import LostReasonB2BList from "./pages/masters/salesMasters/lostReasonB2B/LostReasonB2BList";
+ import InterestLevelList from "./pages/masters/salesMasters/interestLevel/InterestLevelList";
 import LeadsList from "./pages/leads/LeadsList";
 
 // Protected Route Component
@@ -579,7 +580,8 @@ function App() {
         <Route path='/employeetype' element={<ProtectedRoute><EmployeeTypeList /></ProtectedRoute>} />
         <Route path='/companylist' element={<ProtectedRoute><CompanyList /></ProtectedRoute>} />
         <Route path='/stakeholder-list' element={<ProtectedRoute><StakeholderCategoriesList /></ProtectedRoute>} />
-         <Route path='/lead-source' element={<ProtectedRoute><LeadSourceList /></ProtectedRoute>} />
+        <Route path='/lead-source' element={<ProtectedRoute><LeadSourceList /></ProtectedRoute>} />
+        <Route path='/interest-level' element={<ProtectedRoute><InterestLevelList /></ProtectedRoute>} />
         <Route path='/priority-type' element={<ProtectedRoute><PriorityTypeList /></ProtectedRoute>} />
         <Route path='/tags-type' element={<ProtectedRoute><TagsTypeList /></ProtectedRoute>} />
         <Route path='/activity-type' element={<ProtectedRoute><ActivityTypeList /></ProtectedRoute>} />

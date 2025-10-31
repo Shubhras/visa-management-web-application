@@ -24,6 +24,12 @@ import {
   DELETE_LEAD_SOURCE,
   EXPORT_LEAD_SOURCE,
   IMPORT_LEAD_SOURCE,
+  INTEREST_LEVEL_LIST,
+  ADD_INTEREST_LEVEL,
+  EDIT_INTEREST_LEVEL,
+  DELETE_INTEREST_LEVEL,
+  EXPORT_INTEREST_LEVEL,
+  IMPORT_INTEREST_LEVEL,
 } from "./actionTypes";
 
 import {
@@ -51,6 +57,12 @@ import {
   editLeadSourceDataAPI,
   addLeadSourceDataAPI,
   getLeadSourceListDataAPI,
+  importInterestLevelDataAPI,
+  exportInterestLevelDataAPI,
+  deleteInterestLevelDataAPI,
+  editInterestLevelDataAPI,
+  addInterestLevelDataAPI,
+  getInterestLevelListDataAPI,
 } from "../../../service/api_helper";
 
 // Activity type
@@ -272,6 +284,61 @@ function* leadSourceImportDataSaga(action) {
   }
 }
 
+// Interest Level Sagas
+function* interestLevelListSaga(action) {
+  try {
+    const response = yield call(getInterestLevelListDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* interestLevelAddSaga(action) {
+  try {
+    const response = yield call(addInterestLevelDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* interestLevelEditSaga(action) {
+  try {
+    const response = yield call(editInterestLevelDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* interestLevelDeleteSaga(action) {
+  try {
+    const response = yield call(deleteInterestLevelDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* interestLevelExportDataSaga(action) {
+  try {
+    const response = yield call(exportInterestLevelDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* interestLevelImportDataSaga(action) {
+  try {
+    const response = yield call(importInterestLevelDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
 function* salesMasterSaga() {
   // Activity type
   yield takeEvery(ACTIVITY_TYPE_LIST, activityTypeListSaga);
@@ -304,6 +371,14 @@ function* salesMasterSaga() {
   yield takeEvery(DELETE_LEAD_SOURCE, leadSourceDeleteSaga);
   yield takeEvery(EXPORT_LEAD_SOURCE, leadSourceExportDataSaga);
   yield takeEvery(IMPORT_LEAD_SOURCE, leadSourceImportDataSaga);
+
+  // Interest Level
+  yield takeEvery(INTEREST_LEVEL_LIST, interestLevelListSaga);
+  yield takeEvery(ADD_INTEREST_LEVEL, interestLevelAddSaga);
+  yield takeEvery(EDIT_INTEREST_LEVEL, interestLevelEditSaga);
+  yield takeEvery(DELETE_INTEREST_LEVEL, interestLevelDeleteSaga);
+  yield takeEvery(EXPORT_INTEREST_LEVEL, interestLevelExportDataSaga);
+  yield takeEvery(IMPORT_INTEREST_LEVEL, interestLevelImportDataSaga);
 }
 
 export default salesMasterSaga;

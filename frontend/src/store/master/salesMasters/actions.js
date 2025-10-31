@@ -23,6 +23,12 @@ import {
     DELETE_LEAD_SOURCE,
     EXPORT_LEAD_SOURCE,
     IMPORT_LEAD_SOURCE,
+    IMPORT_INTEREST_LEVEL,
+    EXPORT_INTEREST_LEVEL,
+    DELETE_INTEREST_LEVEL,
+    EDIT_INTEREST_LEVEL,
+    ADD_INTEREST_LEVEL,
+    INTEREST_LEVEL_LIST,
 } from "./actionTypes"
 
 // ACTIVITY_TYPE
@@ -170,6 +176,43 @@ export const leadSourceExportData = (data, callback) => ({
 
 export const leadSourceImportData = (data, callback) => ({
     type: IMPORT_LEAD_SOURCE,
+    data,
+    callback,
+});
+
+// INTEREST_LEVEL
+export const interestLevelList = (data, callback) => ({
+    type: INTEREST_LEVEL_LIST,
+    data,
+    callback,
+});
+
+export const interestLevelAdd = (data, callback) => ({
+    type: ADD_INTEREST_LEVEL,
+    data,
+    callback,
+});
+
+export const interestLevelEdit = (data, callback) => ({
+    type: EDIT_INTEREST_LEVEL,
+    data,
+    callback,
+});
+
+export const interestLevelDelete = (data, callback) => ({
+    type: DELETE_INTEREST_LEVEL,
+    data,
+    callback,
+});
+
+export const interestLevelExportData = (data, callback) => ({
+    type: EXPORT_INTEREST_LEVEL,
+    data,
+    callback,
+});
+
+export const interestLevelImportData = (data, callback) => ({
+    type: IMPORT_INTEREST_LEVEL,
     data,
     callback,
 });

@@ -34,10 +34,7 @@ const PriorityTypeList = () => {
   const [priorityTypeListData, setPriorityTypeListData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-
-  // const [items, setItems] = useState(["name", "description", "created_at"]);
-  // const [selectedItems, setSelectedItems] = useState([...items]);
-  const [items] = useState(["Priority", "Description", "Created On"]);
+  const [items] = useState(["Priority", "Description", "Modified On"]);
   const [selectedItems, setSelectedItems] = useState(["Priority"]);
   const [ItemsRequired] = useState(["Priority"]);
 
@@ -47,7 +44,7 @@ const PriorityTypeList = () => {
     limit: 25,
     search: '',
     status: '',
-    sortBy: 'created_at', // Field to sort by
+    sortBy: 'updated_at', // Field to sort by
     sortOrder: 'desc', // 'asc' or 'desc'
     total: 0,
     totalPages: 0,
@@ -354,7 +351,7 @@ const PriorityTypeList = () => {
     // Map frontend labels to backend field names
     const fieldMapping = {
       "Priority": "name",
-      "Created On": "created_at",
+      "Modified On": "updated_at",
       "Description": "description",
     };
     // Convert selectedItems to backend field names
@@ -450,7 +447,7 @@ const PriorityTypeList = () => {
                       onClick={handleSelectAllButton}
                       className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
                     >
-                      Delete All
+                      Delete
                     </button>
                   )}
                   {selectedRows.length > 0 && (
@@ -539,7 +536,7 @@ const PriorityTypeList = () => {
                           onChange={handleSelectAll}
                           disabled={priorityTypeListData.length === 0}
                         />
-                        <span>S.L</span>
+                        <span>No.</span>
                       </div>
                     </th>
                     <th scope="col" className='sorting-th' onClick={() => handleSort('name')}>
@@ -554,10 +551,10 @@ const PriorityTypeList = () => {
                         {getSortIcon('description')}
                       </div>
                     </th>
-                    <th scope="col" className='sorting-th' onClick={() => handleSort('created_at')}>
+                    <th scope="col" className='sorting-th' onClick={() => handleSort('updated_at')}>
                       <div className="d-flex align-items-center">
-                        Created On
-                        {getSortIcon('created_at')}
+                        Modified On
+                        {getSortIcon('updated_at')}
                       </div>
                     </th>
                     <th scope="col" className='action-th'>
@@ -604,7 +601,7 @@ const PriorityTypeList = () => {
                           </span>
                         </td>
                         <td>
-                          <span>{formatDateTime(dept.created_at)}</span>
+                          <span>{formatDateTime(dept.updated_at)}</span>
                         </td>
                         <td >
                           <div className="d-flex align-items-center gap-2">

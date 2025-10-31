@@ -44,7 +44,7 @@ const LeadSourceList = () => {
   const [leadSourcesData, setLeadSources] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [items] = useState(["Lead Source", "Description", "Created On"]);
+  const [items] = useState(["Lead Source", "Description", "Modified On"]);
   const [selectedItems, setSelectedItems] = useState(["Lead Source"]);
   const [ItemsRequired] = useState(["Lead Source"]);
 
@@ -54,7 +54,7 @@ const LeadSourceList = () => {
     limit: 25,
     search: '',
     status: '',
-    sortBy: 'created_at', // Field to sort by
+    sortBy: 'updated_at', // Field to sort by
     sortOrder: 'desc', // 'asc' or 'desc'
     total: 0,
     totalPages: 0,
@@ -172,7 +172,7 @@ const LeadSourceList = () => {
     if (isAllSelected) {
       setSelectedRows([]);
     } else {
-      setSelectedRows(leadSourcesData.map(dept => dept.uuid));
+      setSelectedRows(leadSourcesData.map(Item => Item.uuid));
     }
   };
   // For checkbox in table header
@@ -180,7 +180,7 @@ const LeadSourceList = () => {
 
     const checked = e.target.checked;
     if (checked) {
-      setSelectedRows(leadSourcesData.map(dept => dept.uuid));
+      setSelectedRows(leadSourcesData.map(Item => Item.uuid));
     } else {
       setSelectedRows([]);
     }
@@ -197,7 +197,7 @@ const LeadSourceList = () => {
   };
 
   const isAllSelected = leadSourcesData.length > 0 &&
-    leadSourcesData.every(dept => selectedRows.includes(dept.uuid));
+    leadSourcesData.every(Item => selectedRows.includes(Item.uuid));
 
   const goToPage = (page) => {
     if (page >= 1 && page <= tableState.totalPages) {
@@ -282,7 +282,7 @@ const LeadSourceList = () => {
       } else {
         if (response?.statusCode === 200 && response?.status === true) {
           toast.success(response?.message);
-          setLeadSources(prevDepts => prevDepts.filter(dept => dept.uuid !== deleteId));
+          setLeadSources(prevRowItems => prevRowItems.filter(Item => Item.uuid !== deleteId));
           setSelectedRows(prevSelected => prevSelected.filter(rowId => rowId !== deleteId));
           setShowDeleteConfirm(false);
           setSelectedRows([])
@@ -356,7 +356,7 @@ const LeadSourceList = () => {
     // Map frontend labels to backend field names
     const fieldMapping = {
       "Lead Source": "name",
-      "Created On": "created_at",
+      "Modified On": "updated_at",
       "Description": "description",
     };
     // Convert selectedItems to backend field names
@@ -450,7 +450,7 @@ const LeadSourceList = () => {
                       onClick={handleSelectAllButton}
                       className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
                     >
-                      Delete All
+                      Delete
                     </button>
                   )}
                   {selectedRows.length > 0 && (
@@ -539,7 +539,7 @@ const LeadSourceList = () => {
                           onChange={handleSelectAll}
                           disabled={leadSourcesData.length === 0}
                         />
-                        <span>S.L</span>
+                        <span>No.</span>
                       </div>
                     </th>
                     <th scope="col" className='sorting-th' onClick={() => handleSort('name')}>
@@ -554,10 +554,10 @@ const LeadSourceList = () => {
                         {getSortIcon('description')}
                       </div>
                     </th>
-                    <th scope="col" className='sorting-th' onClick={() => handleSort('created_at')}>
+                    <th scope="col" className='sorting-th' onClick={() => handleSort('updated_at')}>
                       <div className="d-flex align-items-center">
-                        Created On
-                        {getSortIcon('created_at')}
+                        Modified On
+                        {getSortIcon('updated_at')}
                       </div>
                     </th>
                     <th scope="col" className='action-th'>
@@ -578,15 +578,15 @@ const LeadSourceList = () => {
                       </td>
                     </tr>
                   ) : leadSourcesData.length > 0 ? (
-                    leadSourcesData.map((dept, index) => (
-                      <tr key={dept.uuid} >
+                    leadSourcesData.map((rowItem, index) => (
+                      <tr key={rowItem.uuid} >
                         <td >
                           <div className="d-flex align-items-center gap-2">
                             <input
                               className="form-check-input"
                               type="checkbox"
-                              checked={selectedRows.includes(dept.uuid)}
-                              onChange={() => handleRowSelect(dept.uuid)}
+                              checked={selectedRows.includes(rowItem.uuid)}
+                              onChange={() => handleRowSelect(rowItem.uuid)}
                             />
                             <span>
                               {String(startIndex + index + 1).padStart(2, '0')}
@@ -595,16 +595,16 @@ const LeadSourceList = () => {
                         </td>
                         <td >
                           <span >
-                            {dept.name}
+                            {rowItem.name}
                           </span>
                         </td>
                         <td >
                           <span >
-                            {dept.description}
+                            {rowItem.description}
                           </span>
                         </td>
                         <td>
-                          <span>{formatDateTime(dept.created_at)}</span>
+                          <span>{formatDateTime(rowItem.updated_at)}</span>
                         </td>
                         <td >
                           <div className="d-flex align-items-center gap-2">
@@ -613,13 +613,13 @@ const LeadSourceList = () => {
                               className='edit-btn-icone'
                               onClick={(e) => {
                                 e.preventDefault();
-                                handleShowEdit(dept);
+                                handleShowEdit(rowItem);
                               }}
                             >
                               <Icon icon="lucide:edit" width="18" className='icone' />
                             </Link>
                             <button
-                              onClick={() => handleDelete(dept.uuid)}
+                              onClick={() => handleDelete(rowItem.uuid)}
                               className='delete-btn-icone'
                             >
                               <Icon icon="mingcute:delete-2-line" width="18" className='icone' />
