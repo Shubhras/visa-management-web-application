@@ -2404,8 +2404,6 @@ class DepartmentExportAPIView(APIView):
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
-
-
 class DepartmentImportAPIView(APIView):
     
     def post(self, request):
@@ -2417,13 +2415,10 @@ class DepartmentImportAPIView(APIView):
 
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
-      
-        header_field_map = {
-            'Department': 'name',
-            'Description': 'description',
-        }
 
-        allowed_headers = set(k.lower() for k in header_field_map.keys())  # normalize to lowercase
+        # Define required and optional headers
+        required_headers = {'department'}       # must be present
+        optional_headers = {'description'}      # optional
 
         try:
             data = []
@@ -2458,11 +2453,12 @@ class DepartmentImportAPIView(APIView):
                 
                 headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
 
-                if not allowed_headers.issubset(set(headers)):
+                # Validate only required headers
+                if not required_headers.issubset(set(headers)):
                     return Response({
                         "statusCode": 400,
                         "status": True,
-                        'message': f'Missing required headers. Required: {allowed_headers}, Found: {set(headers)}'
+                        'message': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 for row in ws.iter_rows(min_row=2, values_only=True):
@@ -2471,7 +2467,6 @@ class DepartmentImportAPIView(APIView):
                     row_dict = dict(zip(headers, row))
                     data.append(row_dict)
 
-               
                 if not data:
                     return Response({
                         "statusCode": 400,
@@ -2479,7 +2474,6 @@ class DepartmentImportAPIView(APIView):
                         "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Please provide at least one data row.'
                     }, status=status.HTTP_400_BAD_REQUEST)
 
-                
             # ---------- CSV Handling ----------
             elif format_type == 'csv':
                 decoded_file = file.read().decode('utf-8')
@@ -2488,15 +2482,18 @@ class DepartmentImportAPIView(APIView):
 
                 for row in dataset.dict:
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
-                    if not allowed_headers.issubset(set(row_lower.keys())):
+
+                    # Validate only required headers
+                    if not required_headers.issubset(set(row_lower.keys())):
                         return Response({
                             "statusCode": 400,
                             "status": True,
                             "message": (
-                                f'Missing required headers. Required: {", ".join(allowed_headers)}. '
+                                f'Missing required headers. Required: {", ".join(required_headers)}. '
                                 f'Found headers in the file: {", ".join(row_lower.keys())}.'
                             )
                         }, status=status.HTTP_400_BAD_REQUEST)
+
                     data.append(row_lower)
                 
                 if not data:
@@ -2510,16 +2507,18 @@ class DepartmentImportAPIView(APIView):
                 return Response({
                     "statusCode": 400,
                     "status": True,
-                    'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
+                    'error': 'Unsupported file format. Use .xlsx or .csv'
+                }, status=status.HTTP_400_BAD_REQUEST)
             
             imported_count = 0
 
+            # ---------- Import Rows ----------
             for row in data:
                 name = str(row.get('department')).strip() if row.get('department') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not name:
-                    continue  
+                    continue  # skip rows without department name
 
                 existing = Department.objects.filter(name__iexact=name).first()
 
@@ -2542,24 +2541,20 @@ class DepartmentImportAPIView(APIView):
                     )
                     imported_count += 1
 
-            # ---------- Return duplicate XLSX if exists ----------
-            
-
         except Exception as e:
             return Response({
                 "statusCode": 400,
                 "status": True,
-                'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                'message': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({
             "statusCode": 200,
             "status": True,
             "duplicates": list(set(duplicate_names)),
-            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count
         }, status=status.HTTP_200_OK)
-
-
-
 
 # -----------------------employeeType---------------------------------
 class EmployeeTypeListAPIView(APIView):    
@@ -5874,7 +5869,7 @@ class InterestLevelImportAPIView(APIView):
                         "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Please provide at least one data row.'
                     }, status=status.HTTP_400_BAD_REQUEST)
 
-                    
+
             # ---------- CSV Handling ----------
             elif format_type == 'csv':
                 dataset.load(file.read().decode('utf-8'), format='csv')
