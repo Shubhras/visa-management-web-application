@@ -75,6 +75,7 @@ const MasterLayout = ({ children }) => {
             { name: 'Activity Type', path: '/activity-type' },
             { name: 'Lost Reason (B2C)', path: '/lost-reason-B2C' },
             { name: 'Lost Reason (B2B)', path: '/lost-reason-B2B' },
+            { name: 'Bank Account Type', path: '/bank-ccount-type' },
           ]
         },
 
@@ -102,7 +103,7 @@ const MasterLayout = ({ children }) => {
   ];
 
 
-const handleMenuClick = (item, parent = null, grandParent = null) => {
+  const handleMenuClick = (item, parent = null, grandParent = null) => {
     if (item.children && item.children.length > 0) {
       return;
     }
@@ -124,7 +125,7 @@ const handleMenuClick = (item, parent = null, grandParent = null) => {
   }
 
   useEffect(() => {
-     // Current path के basis पर menu item ढूंढो
+    // Current path के basis पर menu item ढूंढो
     const findMenuItemByPath = (items, currentPath) => {
       for (const item of items) {
         if (item.path === currentPath) {
@@ -213,7 +214,7 @@ const handleMenuClick = (item, parent = null, grandParent = null) => {
     };
   }, [location.pathname]);
 
-  
+
 
   let sidebarControl = () => {
     seSidebarActive(!sidebarActive);
