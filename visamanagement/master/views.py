@@ -4772,46 +4772,63 @@ class BankAccountTypeUpdateAPIView(APIView):
             "message": serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
 
-
 class BankAccountTypeDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
-        uuids = request.data.get('uuids', [])
+        uuids_param = request.data.get('id', None)
 
-        #  Case 1: Single delete (UUID in URL)
+        # Single delete via URL parameter
         if uuid:
             try:
-                category = BankAccountType.objects.get(uuid=uuid, is_deleted=False)
-                category.is_deleted = True
-                category.save()
+                bank_type = BankAccountType.objects.get(uuid=uuid, is_deleted=False)
+                bank_type.is_deleted = True
+                bank_type.save()
                 return Response({
                     "statusCode": 200,
                     "status": True,
-                    "message": "Bank Account Type deleted successfully",
+                    "message": "Bank Account Type deleted successfully.",
                     "data": None
                 }, status=status.HTTP_200_OK)
             except BankAccountType.DoesNotExist:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "Bank Account Type not found",
+                    "message": "Bank Account Type not found.",
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-        #  Case 2: Multiple delete (UUIDs in request body)
-        if not uuids or not isinstance(uuids, list):
+        # Delete all BankAccountTypes
+        if uuids_param == "all":
+            bank_types = BankAccountType.objects.filter(is_deleted=False)
+            count = bank_types.count()
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No Bank Account Types found to delete.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+            bank_types.delete()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"All {count} Bank Account Type(s) deleted successfully.",
+                "data": None
+            }, status=status.HTTP_200_OK)
+
+        # Validate bulk UUIDs
+        if not uuids_param or not isinstance(uuids_param, list):
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Please provide a list of UUIDs in 'uuids' field.",
+                "message": "Please provide a list of UUIDs in 'uuids' field or 'all'.",
                 "data": None
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # Validate UUIDs
         valid_uuids = []
         invalid_uuids = []
-        for u in uuids:
+        for u in uuids_param:
             try:
                 valid_uuids.append(UUID(u))
             except ValueError:
@@ -4825,28 +4842,25 @@ class BankAccountTypeDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids}
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # Fetch BankAccountTypes that exist and are not deleted
-        categories = BankAccountType.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = categories.count()
+        # Bulk delete (soft delete)
+        bank_types = BankAccountType.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+        count = bank_types.count()
 
         if count == 0:
             return Response({
                 "statusCode": 404,
                 "status": False,
                 "message": "No matching Bank Account Types found.",
-                "data": {"invalid_uuids": invalid_uuids}
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        # Soft delete
-        categories.delete()
-
+        bank_types.delete()
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f"{count} Bank Account Type(s) deleted successfully."
+            "message": f"{count} Bank Account Type(s) deleted successfully.",
+            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         }, status=status.HTTP_200_OK)
-
-
 class BankAccountTypeExportAPIView(APIView):
     # permission_classes = [IsAuthenticated]  # Uncomment if needed
 
