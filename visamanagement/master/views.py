@@ -3834,16 +3834,14 @@ class StakeholderCategoryExportAPIView(APIView):
 
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
-        # --- Field to header mapping ---
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Stakeholder Category',  # Custom header
+            'name': 'Stakeholder Category', 
             'description': 'Description',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',
-            
         }
-
+        
         # --- Determine which fields to export ---
         if fields:
             field_list = [f.strip() for f in fields.split(',')]
@@ -3857,7 +3855,7 @@ class StakeholderCategoryExportAPIView(APIView):
 
 
         dataset = Dataset()
-        dataset.headers = field_list
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
 
         for dept in queryset:
             row = []
