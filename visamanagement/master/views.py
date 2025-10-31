@@ -2352,7 +2352,7 @@ class DepartmentExportAPIView(APIView):
             'name': 'Department',  # Custom header
             'description': 'Description',
             'is_deleted': 'Deleted',
-            'updated_at': 'Modified On',
+            'created_at': 'Modified On',
             'updated_at': 'Updated At'
         }
 
