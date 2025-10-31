@@ -2379,8 +2379,8 @@ class DepartmentExportAPIView(APIView):
                 value = getattr(dept, field, '')
 
                 if field in ['updated_at'] and value:
-                    # Convert the stored UTC datetime to IST and format it
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+            
                 elif isinstance(value, bool):
                     value = int(value)
 
