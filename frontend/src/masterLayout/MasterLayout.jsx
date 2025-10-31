@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import ThemeToggleButton from "../helper/ThemeToggleButton";
-import Header from "./Header";
+// import Header from "./Header";
 import { useNavigate } from 'react-router-dom';
 import { toast } from "react-toastify";
 const MasterLayout = ({ children }) => {

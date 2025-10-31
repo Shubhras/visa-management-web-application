@@ -4,6 +4,7 @@
 export * from "./auth/login/actions";
 export * from "./master/actions";
 export * from "./master/salesMasters/actions";
+export * from "./master/companyMasters/actions";
 
 
 

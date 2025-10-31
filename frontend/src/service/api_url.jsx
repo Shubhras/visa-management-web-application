@@ -92,6 +92,14 @@ export const DELETE_INTEREST_LEVEL_API = "api/v1/master/InterestLevel/";
 export const EXPORT_INTEREST_LEVEL_API = "api/v1/master/InterestLevel/export/";
 export const IMPORT_INTEREST_LEVEL_API = "api/v1/master/InterestLevel/import/";
 
+// BANK_ACCOUNT_TYPE
+export const GET_BANK_ACCOUNT_TYPE_LIST = "/api/v1/master/BankAccountType/";
+export const ADD_BANK_ACCOUNT_TYPE_API = "/api/v1/master/BankAccountType/create/";
+export const EDIT_BANK_ACCOUNT_TYPE_API = "api/v1/master/BankAccountType/";
+export const DELETE_BANK_ACCOUNT_TYPE_API = "api/v1/master/BankAccountType/";
+export const EXPORT_BANK_ACCOUNT_TYPE_API = "api/v1/master/BankAccountType/export/";
+export const IMPORT_BANK_ACCOUNT_TYPE_API = "api/v1/master/BankAccountType/import/";
+
 // // export const TWO_STEP_VERIFICATION = 'api/national-admin/national-admin-verifyOtpAdmin'
 // export const TWO_STEP_VERIFICATION = '/api/users/verifyUser'
 // export const FORGET_PASSWORD_URL = '/api/national-admin/forgotpassword/'

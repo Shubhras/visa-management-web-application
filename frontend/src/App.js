@@ -355,6 +355,7 @@ import LostReasonB2CList from "./pages/masters/salesMasters/lostReasonB2C/LostRe
 import LostReasonB2BList from "./pages/masters/salesMasters/lostReasonB2B/LostReasonB2BList";
  import InterestLevelList from "./pages/masters/salesMasters/interestLevel/InterestLevelList";
 import LeadsList from "./pages/leads/LeadsList";
+import BankAccountTypeList from "./pages/masters/companyMaster/bankAccountType/BankAccountTypeList";
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -587,6 +588,7 @@ function App() {
         <Route path='/activity-type' element={<ProtectedRoute><ActivityTypeList /></ProtectedRoute>} />
         <Route path='/lost-reason-B2C' element={<ProtectedRoute><LostReasonB2CList /></ProtectedRoute>} />
         <Route path='/lost-reason-B2B' element={<ProtectedRoute><LostReasonB2BList /></ProtectedRoute>} />
+        <Route path='/bank-ccount-type' element={<ProtectedRoute><BankAccountTypeList /></ProtectedRoute>} />
         {/* 404 Error Page */}
         <Route path='*' element={<ErrorPage />} />
       </Routes>

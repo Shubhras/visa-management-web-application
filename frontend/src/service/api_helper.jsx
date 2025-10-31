@@ -389,3 +389,36 @@ export const importInterestLevelDataAPI = (payload) => {
     const apiUrl = `${url.IMPORT_INTEREST_LEVEL_API}`;
     return post(apiUrl, payload);
 };
+// BANK_ACCOUNT_TYPE
+export const getBankAccountTypeListDataAPI = (data) => {
+    const apiUrl = `${url.GET_BANK_ACCOUNT_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addBankAccountTypeDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_BANK_ACCOUNT_TYPE_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editBankAccountTypeDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_BANK_ACCOUNT_TYPE_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteBankAccountTypeDataAPI = (payload) => {
+    const prepareDATA = {
+        id: payload
+    };
+    const apiUrl = `${url.DELETE_BANK_ACCOUNT_TYPE_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportBankAccountTypeDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_BANK_ACCOUNT_TYPE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importBankAccountTypeDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_BANK_ACCOUNT_TYPE_API}`;
+    return post(apiUrl, payload);
+};

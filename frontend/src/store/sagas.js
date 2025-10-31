@@ -4,11 +4,13 @@ import { all, fork } from "redux-saga/effects";
 import AuthSaga from "./auth/login/saga";
 import masterSaga from "./master/saga";
 import salesMasterSaga from "./master/salesMasters/saga";
+import companyMasterSaga from "./master/companyMasters/saga";
 export default function* rootSaga() {
   yield all([
 
     fork(AuthSaga),
     fork(masterSaga),
     fork(salesMasterSaga),
+    fork(companyMasterSaga),
   ]);
 }

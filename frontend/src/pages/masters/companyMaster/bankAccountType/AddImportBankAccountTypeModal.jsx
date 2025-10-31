@@ -3,9 +3,9 @@ import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
-import { interestLevelImportData } from '../../../../store/master/salesMasters/actions';
+import { bankAccountTypeImportData } from '../../../../store/master/companyMasters/actions';
 import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
-const AddImportInterestLevelModal = ({ show, handleClose }) => {
+const AddImportBankAccountTypeModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
     const [file, setFile] = useState(null);
@@ -13,6 +13,7 @@ const AddImportInterestLevelModal = ({ show, handleClose }) => {
     const [sheetNames, setSheetNames] = useState([]);
     const [selectedSheet, setSelectedSheet] = useState('');
     const [showSampleExcelDownload, setShowSampleExcelDownload] = useState(false);
+
     // Handle file change and extract sheet names
     const handleFileChange = async (e) => {
         const selectedFile = e.target.files[0];
@@ -64,7 +65,7 @@ const AddImportInterestLevelModal = ({ show, handleClose }) => {
             formData.append('sheet_name', selectedSheet);
         }
         setLoading(true);
-        dispatch(interestLevelImportData(formData, (response, error) => {
+        dispatch(bankAccountTypeImportData(formData, (response, error) => {
             setLoading(false);
             if (error) {
                 toast.error(error?.response?.data?.message || "Server error");
@@ -76,7 +77,7 @@ const AddImportInterestLevelModal = ({ show, handleClose }) => {
                             <div>{response?.message}</div>
                             {response?.duplicates?.length > 0 && (
                                 <div style={{ marginTop: '6px' }}>
-                                    <strong>Duplicate interest level skipped — the duplicate data from your uploaded file has been exported into an .xlsx file.</strong>
+                                    <strong>Duplicate departments skipped — the duplicate data from your uploaded file has been exported into an .xlsx file.</strong>
                                 </div>
                             )}
                         </div>,
@@ -99,12 +100,12 @@ const AddImportInterestLevelModal = ({ show, handleClose }) => {
     };
 
     const handleExportToExcel = (duplicatesData) => {
-        const header = ["Interest Level"];
+        const header = ["Bank Account Type"];
         const duplicates = duplicatesData //["test1", "test3", "test3"];
         const worksheetData = [header, ...duplicates.map((item) => [item])];
         const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Interest Level");
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Bank Account Type");
 
         const excelBuffer = XLSX.write(workbook, {
             bookType: "xlsx",
@@ -115,7 +116,7 @@ const AddImportInterestLevelModal = ({ show, handleClose }) => {
             type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         });
 
-        saveAs(blob, `InterestLevel_${new Date().toISOString().split("T")[0]}.xlsx`);
+        saveAs(blob, `BankAccountType_${new Date().toISOString().split("T")[0]}.xlsx`);
     };
     // Handle modal close
     const onClose = () => {
@@ -132,7 +133,6 @@ const AddImportInterestLevelModal = ({ show, handleClose }) => {
     const handleCloseSampleExcelDownload = () => {
         setShowSampleExcelDownload(false);
     }
-
     if (!show) return null;
 
     return (
@@ -141,14 +141,14 @@ const AddImportInterestLevelModal = ({ show, handleClose }) => {
                 className="modal fade show common-ctl-popup"
                 tabIndex={-1}
                 role="dialog"
-                aria-labelledby="InterestLevelModalLabel"
+                aria-labelledby="departmentModalLabel"
                 aria-hidden={!show}
             >
                 <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
                     <div className="modal-content radius-16 bg-base">
                         <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                            <h1 className="modal-title fs-5" id="InterestLevelModalLabel">
-                                Upload Interest Level
+                            <h1 className="modal-title fs-5" id="departmentModalLabel">
+                                Upload Department
                             </h1>
                             <button
                                 type="button"
@@ -239,18 +239,17 @@ const AddImportInterestLevelModal = ({ show, handleClose }) => {
                     </div>
                 </div>
             </div>
-            {
-                showSampleExcelDownload && (
-                    <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
-                        downloadFileName: "InterestLevel",
-                        items: ["Interest Level", "Description"],
-                        selectedItems: ["Interest Level"],
-                        ItemsRequired: ["Interest Level"]
-                    }
-                    } />
-                )
-            }</>
+            {showSampleExcelDownload && (
+                <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
+                    downloadFileName:"BankAccountType",
+                    items: ["Bank Account Type", "Description"],
+                    selectedItems: ["Bank Account Type"],
+                    ItemsRequired:["Bank Account Type"]
+                }
+                } />
+            )}
+        </>
     );
 };
 
-export default AddImportInterestLevelModal;
+export default AddImportBankAccountTypeModal;
