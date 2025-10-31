@@ -60,7 +60,7 @@ const AddEditBankAccountTypeModal = ({ show, handleClose, mode = 'add', rowData 
     const newErrors = {};
     let isValid = true;
 
-    // Department Name validation
+    // Bank Account Type Name validation
     if (!formData.name.trim()) {
       newErrors.name = 'Name is required';
       isValid = false;

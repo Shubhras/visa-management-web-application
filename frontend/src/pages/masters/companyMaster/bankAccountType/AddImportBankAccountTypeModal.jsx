@@ -77,7 +77,7 @@ const AddImportBankAccountTypeModal = ({ show, handleClose }) => {
                             <div>{response?.message}</div>
                             {response?.duplicates?.length > 0 && (
                                 <div style={{ marginTop: '6px' }}>
-                                    <strong>Duplicate departments skipped — the duplicate data from your uploaded file has been exported into an .xlsx file.</strong>
+                                    <strong>Duplicate bank account type skipped — the duplicate data from your uploaded file has been exported into an .xlsx file.</strong>
                                 </div>
                             )}
                         </div>,
@@ -141,14 +141,14 @@ const AddImportBankAccountTypeModal = ({ show, handleClose }) => {
                 className="modal fade show common-ctl-popup"
                 tabIndex={-1}
                 role="dialog"
-                aria-labelledby="departmentModalLabel"
+                aria-labelledby="BankAccountTypeModalLabel"
                 aria-hidden={!show}
             >
                 <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
                     <div className="modal-content radius-16 bg-base">
                         <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                            <h1 className="modal-title fs-5" id="departmentModalLabel">
-                                Upload Department
+                            <h1 className="modal-title fs-5" id="BankAccountTypeModalLabel">
+                                Upload Bank Account Type
                             </h1>
                             <button
                                 type="button"

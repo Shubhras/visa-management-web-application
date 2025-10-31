@@ -254,7 +254,7 @@ const handleShowEdit = (rowData) => {
   const handleDelete = (uuid) => {
     setDeleteId(uuid);
     setShowDeleteConfirm(true);
-    setDeleteConfirmMessage(`Are you sure you want to delete this department?`);
+    setDeleteConfirmMessage(`Are you sure you want to delete this bank account type?`);
   };
 
   const handleBulkDelete = (deleteData) => {
@@ -263,8 +263,8 @@ const handleShowEdit = (rowData) => {
       return;
     }
     // Choose message based on delete type
-    const message = deleteData === "all" ? `${tableState.total} all departments` : `${selectedRows.length} selected departments`;
-    setDeleteConfirmMessage(`Are you sure you want to delete this department (${message})?`);
+    const message = deleteData === "all" ? `${tableState.total} all bank account type` : `${selectedRows.length} selected bank account type`;
+    setDeleteConfirmMessage(`Are you sure you want to delete this bank account type (${message})?`);
     setShowDeleteConfirm(true);
     setDeleteAllData(deleteData);
   };
@@ -274,7 +274,7 @@ const handleShowEdit = (rowData) => {
     const sendPayload = deleteAllData === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
 
     if (!sendPayload || sendPayload.length === 0) {
-      toast.error("No department selected for deletion.");
+      toast.error("No bank account type selected for deletion.");
       return;
     }
     dispatch(bankAccountTypeDelete(sendPayload, (response, error) => {
@@ -356,7 +356,7 @@ const handleShowEdit = (rowData) => {
     }
     // Map frontend labels to backend field names
     const fieldMapping = {
-      "Department": "name",
+      "Bank Account Type": "name",
       "Modified On": "updated_at",
       "Description": "description",
     };
@@ -367,7 +367,7 @@ const handleShowEdit = (rowData) => {
     const sendPayload = {
       file: "xlsx",
       fields: fieldsString,
-      uuids: selectedRows, // your selected department IDs
+      uuids: selectedRows, // your selected Bank Account Type IDs
     };
 
     setLoadingExport(true);
@@ -385,7 +385,7 @@ const handleShowEdit = (rowData) => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `departments_${new Date().toISOString().split('T')[0]}.xlsx`;
+          link.download = `BankAccountType_${new Date().toISOString().split('T')[0]}.xlsx`;
           document.body.appendChild(link);
           link.click();
           link.remove();
@@ -540,7 +540,7 @@ const handleShowEdit = (rowData) => {
                     </th>
                     <th scope="col" className='sorting-th' onClick={() => handleSort('name')}>
                       <div className="d-flex align-items-center">
-                        Department
+                        Bank Account Type
                         {getSortIcon('name')}
                       </div>
                     </th>
@@ -758,8 +758,6 @@ const handleShowEdit = (rowData) => {
                   <button type="button" className="btn-close" onClick={cancelDelete}></button>
                 </div>
                 <div className="modal-body">
-                  {/* <p className="mb-0">Are you sure you want to delete this department?</p> */}
-                  {/* <p className="mb-0"> Are you sure you want to delete this department ({selectedRows.length})?</p> */}
                   <p className="mb-0">{deleteConfirmMessage}</p>
 
                 </div>
@@ -792,7 +790,7 @@ const handleShowEdit = (rowData) => {
             <div className="modal-dialog modal-xl modal-dialog-centered" role="document">
               <div className="modal-content radius-16 bg-base">
                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                  <h1 className="modal-title fs-5">Export Department</h1>
+                  <h1 className="modal-title fs-5">Export Bank Account Type</h1>
                   <button
                     type="button"
                     className="btn-close"
