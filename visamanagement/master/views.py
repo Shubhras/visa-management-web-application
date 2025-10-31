@@ -7941,11 +7941,8 @@ class LostReasonB2BExportAPIView(APIView):
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
-
 class LostReasonB2BImportAPIView(APIView):
-    """
-    API to import LostReasonB2B from XLSX or CSV files.
-    """
+    
 
     def normalize_header(self, header):
         """Normalize headers: lowercase, strip spaces, remove parentheses."""
@@ -7956,56 +7953,31 @@ class LostReasonB2BImportAPIView(APIView):
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')  # optional for XLSX
+        duplicate_names = []
+        data = []
+
+        required_headers = {'lost reason b2b'}
+        optional_headers = {'description'}
 
         if not file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
-        duplicate_names = []
-
-        # Map normalized file headers to model fields
-        header_field_map = {
-            'lost reason b2b': 'name',
-            'description': 'description'
-        }
-        allowed_headers = set(header_field_map.keys())
 
         try:
-            data = []
-
             # ---------- XLSX Handling ----------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
-                available_sheets = wb.sheetnames
-
-                if not sheet_name:
-                    return Response({
-                        'error': 'Please provide sheet_name',
-                        'available_sheets': available_sheets
-                    }, status=status.HTTP_400_BAD_REQUEST)
-
-                if sheet_name not in available_sheets:
-                    return Response({
-                        'error': f'Sheet "{sheet_name}" not found in uploaded file',
-                        'available_sheets': available_sheets
-                    }, status=status.HTTP_400_BAD_REQUEST)
-
-                ws = wb[sheet_name]
-                if ws.max_row <= 1:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Please provide at least one data row.'
-                    }, status=status.HTTP_400_BAD_REQUEST)
+                ws = wb[sheet_name] if sheet_name else wb.active
 
                 # Read headers and normalize
                 headers = [self.normalize_header(str(cell.value)) for cell in next(ws.iter_rows(min_row=1, max_row=1))]
 
-                if not allowed_headers.issubset(set(headers)):
+                if not required_headers.issubset(set(headers)):
                     return Response({
                         "statusCode": 400,
                         "status": True,
-                        'message': f'Missing required headers. Required: {allowed_headers}, Found: {set(headers)}'
+                        'message': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 # Read rows
@@ -8015,13 +7987,6 @@ class LostReasonB2BImportAPIView(APIView):
                     row_dict = dict(zip(headers, row))
                     data.append(row_dict)
 
-                if not data:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Please provide at least one data row.'
-                    }, status=status.HTTP_400_BAD_REQUEST)
-
             # ---------- CSV Handling ----------
             elif format_type == 'csv':
                 decoded_file = file.read().decode('utf-8')
@@ -8030,49 +7995,37 @@ class LostReasonB2BImportAPIView(APIView):
 
                 for row in dataset.dict:
                     row_lower = {self.normalize_header(k): v for k, v in row.items()}
-                    if not allowed_headers.issubset(set(row_lower.keys())):
+                    if not required_headers.issubset(set(row_lower.keys())):
                         return Response({
                             "statusCode": 400,
                             "status": True,
-                            "message": (
-                                f'The uploaded file contains invalid column headers. '
-                                f'Only the following headers are allowed: {", ".join(allowed_headers)}. '
-                                f'Found headers in the file: {", ".join(row_lower.keys())}. '
-                                'Please correct the headers and try again.'
-                            )
+                            "message": f'Missing required headers. Required: {required_headers}, Found: {set(row_lower.keys())}.'
                         }, status=status.HTTP_400_BAD_REQUEST)
+                    if not any(row_lower.values()):
+                        continue
                     data.append(row_lower)
 
             else:
-                return Response({
-                    "statusCode": 400,
-                    "status": True,
-                    'error': 'Unsupported file format. Use .xlsx or .csv'
-                }, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
 
             # ---------- Process Each Row ----------
             for row in data:
                 name = str(row.get('lost reason b2b')).strip() if row.get('lost reason b2b') else None
-                
                 if not name:
                     continue  # skip empty names
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
-   
                 existing = LostReasonB2B.objects.filter(name__iexact=name).first()
 
                 if existing:
                     if existing.is_deleted:
-                        # Reactivate soft-deleted entry
                         existing.description = description
                         existing.is_deleted = False
                         existing.save()
                     else:
-                        # Already active — track as duplicate
                         duplicate_names.append(name)
                         continue
                 else:
-                    # No record exists — create new
                     LostReasonB2B.objects.create(
                         name=name,
                         description=description,
@@ -8088,8 +8041,6 @@ class LostReasonB2BImportAPIView(APIView):
             "duplicates": list(set(duplicate_names)),
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
         }, status=status.HTTP_200_OK)
-
-
 
 # -------------------- EducationLevelCode -------------------- #
 class EducationLevelCodeListAPIView(APIView):
