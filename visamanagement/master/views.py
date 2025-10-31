@@ -268,7 +268,7 @@ class GenderDeleteAPIView(APIView):
                     "message": "No genders found to delete.",
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
-            genders.update(is_deleted=True)
+            genders.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
@@ -313,7 +313,7 @@ class GenderDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        genders.update(is_deleted=True)
+        genders.delete()
 
         return Response({
             "statusCode": 200,
@@ -560,7 +560,7 @@ class ContinentDeleteAPIView(APIView):
         if ids == "all":
             objs = Continents.objects.filter(is_deleted=False)
             count = objs.count()
-            objs.update(is_deleted=True)
+            objs.delete()
             return Response({"statusCode": 200, "status": True, "message": f"All {count} continents deleted"})
 
         if not isinstance(ids, list):
@@ -578,7 +578,7 @@ class ContinentDeleteAPIView(APIView):
         if count == 0:
             return Response({"statusCode": 404, "status": False, "message": "No matching continents found"}, status=404)
 
-        objs.update(is_deleted=True)
+        objs.delete()
         return Response({"statusCode": 200, "status": True, "message": f"{count} continent(s) deleted", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None})
 
 
@@ -771,7 +771,7 @@ class CountryDeleteAPIView(APIView):
         if ids == "all":
             objs = Country.objects.filter(is_deleted=False)
             count = objs.count()
-            objs.update(is_deleted=True)
+            objs.delete()
             return Response({"statusCode": 200, "status": True, "message": f"All {count} countries deleted"})
 
         if not isinstance(ids, list):
@@ -789,7 +789,7 @@ class CountryDeleteAPIView(APIView):
         if count == 0:
             return Response({"statusCode": 404, "status": False, "message": "No matching countries found"}, status=404)
 
-        objs.update(is_deleted=True)
+        objs.delete()
         return Response({"statusCode": 200, "status": True, "message": f"{count} country(s) deleted", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None})
 
 class CountryExportAPIView(APIView):
@@ -1030,7 +1030,7 @@ class StateDeleteAPIView(APIView):
         if ids == "all":
             objs = State.objects.filter(is_deleted=False)
             count = objs.count()
-            objs.update(is_deleted=True)
+            objs.delete()
             return Response({"statusCode": 200, "status": True, "message": f"All {count} states deleted"})
 
         if not isinstance(ids, list):
@@ -1048,7 +1048,7 @@ class StateDeleteAPIView(APIView):
         if count == 0:
             return Response({"statusCode": 404, "status": False, "message": "No matching states found"}, status=404)
 
-        objs.update(is_deleted=True)
+        objs.delete()
         return Response({"statusCode": 200, "status": True, "message": f"{count} state(s) deleted", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None})
 
 
@@ -1305,7 +1305,7 @@ class DistrictDeleteAPIView(APIView):
         if ids == "all":
             objs = District.objects.filter(is_deleted=False)
             count = objs.count()
-            objs.update(is_deleted=True)
+            objs.delete()
             return Response({"statusCode": 200, "status": True, "message": f"All {count} districts deleted"})
 
         if not isinstance(ids, list):
@@ -1323,7 +1323,7 @@ class DistrictDeleteAPIView(APIView):
         if count == 0:
             return Response({"statusCode": 404, "status": False, "message": "No matching districts found"}, status=404)
 
-        objs.update(is_deleted=True)
+        objs.delete()
         return Response({"statusCode": 200, "status": True, "message": f"{count} district(s) deleted", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None})
 
 # -------------------- Export -------------------- 
@@ -1609,7 +1609,7 @@ class CityDeleteAPIView(APIView):
         if ids == "all":
             objs = City.objects.filter(is_deleted=False)
             count = objs.count()
-            objs.update(is_deleted=True)
+            objs.delete()
             return Response({"statusCode": 200, "status": True, "message": f"All {count} cities deleted"})
 
         if not isinstance(ids, list):
@@ -1627,7 +1627,7 @@ class CityDeleteAPIView(APIView):
         if count == 0:
             return Response({"statusCode": 404, "status": False, "message": "No matching cities found"}, status=404)
 
-        objs.update(is_deleted=True)
+        objs.delete()
         return Response({"statusCode": 200, "status": True, "message": f"{count} city(s) deleted", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None})
 
 
@@ -1834,7 +1834,7 @@ class RelationDeleteAPIView(APIView):
         if ids == "all":
             objs = Relation.objects.filter(is_deleted=False)
             count = objs.count()
-            objs.update(is_deleted=True)
+            objs.delete()
             return Response({"statusCode": 200, "status": True, "message": f"All {count} relations deleted"})
 
         if not isinstance(ids, list):
@@ -1852,7 +1852,7 @@ class RelationDeleteAPIView(APIView):
         if count == 0:
             return Response({"statusCode": 404, "status": False, "message": "No matching relations found"}, status=404)
 
-        objs.update(is_deleted=True)
+        objs.delete()
         return Response({"statusCode": 200, "status": True, "message": f"{count} relation(s) deleted", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None})
 
 
@@ -2715,7 +2715,7 @@ class EmployeeTypeDeleteAPIView(APIView):
                     "message": "No employee types found to delete.",
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
-            emp_types.update(is_deleted=True)
+            emp_types.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
@@ -3137,7 +3137,7 @@ class CompanyTypeDeleteAPIView(APIView):
                     "message": "No company types found to delete.",
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
-            company_types.update(is_deleted=True)
+            company_types.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
@@ -3565,7 +3565,7 @@ class OwnershipTypeDeleteAPIView(APIView):
             }, status=status.HTTP_404_NOT_FOUND)
 
         # Soft delete
-        ownerships.update(is_deleted=True)
+        ownerships.delete()
 
         return Response({
             "statusCode": 200,
@@ -3771,7 +3771,7 @@ class StakeholderCategoryDeleteAPIView(APIView):
                     "message": "No StakeholderCategory found to delete.",
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
-            Stakeholdercategory.update(is_deleted=True)
+            Stakeholdercategory.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
@@ -4198,7 +4198,7 @@ class StakeholderTypeDeleteAPIView(APIView):
             }, status=status.HTTP_404_NOT_FOUND)
 
         # Soft delete
-        stakeholder_types.update(is_deleted=True)
+        stakeholder_types.delete()
 
         return Response({
             "statusCode": 200,
@@ -4386,7 +4386,7 @@ class AccreditationCategoryDeleteAPIView(APIView):
             }, status=status.HTTP_404_NOT_FOUND)
 
         # Soft delete
-        categories.update(is_deleted=True)
+        categories.delete()
 
         return Response({
             "statusCode": 200,
@@ -4652,7 +4652,7 @@ class AccreditationNameDeleteAPIView(APIView):
             }, status=status.HTTP_404_NOT_FOUND)
 
         deleted_count = names.count()
-        names.update(is_deleted=True)
+        names.delete()
 
         return Response({
             "statusCode": 200,
@@ -4845,7 +4845,7 @@ class BankAccountTypeDeleteAPIView(APIView):
             }, status=status.HTTP_404_NOT_FOUND)
 
         # Soft delete
-        categories.update(is_deleted=True)
+        categories.delete()
 
         return Response({
             "statusCode": 200,
@@ -5108,7 +5108,7 @@ class LicenseNameDeleteAPIView(APIView):
             }, status=status.HTTP_404_NOT_FOUND)
 
         deleted_count = license_objs.count()
-        license_objs.update(is_deleted=True)
+        license_objs.delete()
 
         return Response({
             "statusCode": 200,
@@ -5266,7 +5266,7 @@ class LeadSourceDeleteAPIView(APIView):
                     "message": "No Lead Source Types found to delete.",
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
-            lead_sources.update(is_deleted=True)
+            lead_sources.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
@@ -5391,6 +5391,7 @@ class LeadSourceExportAPIView(APIView):
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
+
 
 class LeadSourceImportAPIView(APIView):
     """
@@ -5688,7 +5689,7 @@ class InterestLevelDeleteAPIView(APIView):
                     "message": "No Interest Levels found to delete.",
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
-            interests.update(is_deleted=True)
+            interests.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
@@ -5735,7 +5736,7 @@ class InterestLevelDeleteAPIView(APIView):
             }, status=status.HTTP_404_NOT_FOUND)
 
         # Soft delete
-        interests.update(is_deleted=True)
+        interests.delete()
 
         return Response({
             "statusCode": 200,
@@ -5754,29 +5755,39 @@ class InterestLevelExportAPIView(APIView):
 
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
-        # Default fields if none provided
+        # Mapping fields to readable headers
+        field_header_map = {
+            'uuid': 'UUID',
+            'name': 'Interest Level',
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'created_at': 'Created On',
+            'updated_at': 'Updated At'
+        }
+
         if fields:
             field_list = [f.strip() for f in fields.split(',')]
         else:
-            field_list = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+            field_list = list(field_header_map.keys())
+
 
         queryset = InterestLevel.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
 
         dataset = Dataset()
-        dataset.headers = field_list
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
 
-        for dept in queryset:
+
+        for inte in queryset:
             row = []
             for field in field_list:
-                value = getattr(dept, field, '')  # get attribute dynamically
-                # Format datetime fields
-                if isinstance(value, datetime.datetime):
-                    value = value.strftime("%Y-%m-%d %H:%M:%S")
-                # Convert boolean to int
-                if isinstance(value, bool):
+                value = getattr(inte, field, '')
+                if field in ['updated_at'] and value:
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
                     value = int(value)
+
                 row.append(value if value is not None else '')
             dataset.append(row)
 
@@ -5794,6 +5805,7 @@ class InterestLevelExportAPIView(APIView):
         return response
 
 
+
 class InterestLevelImportAPIView(APIView):
     def post(self, request):
         file = request.FILES.get('file')
@@ -5805,6 +5817,13 @@ class InterestLevelImportAPIView(APIView):
         format_type = file.name.split('.')[-1].lower()
         dataset = Dataset()
         duplicate_names = []
+
+        header_field_map = {
+            'Interest Level': 'name',
+            'Description': 'description'
+        }
+        allowed_headers = set(k.lower() for k in header_field_map.keys())
+
 
         try:
             # ---------- XLSX Handling ----------
@@ -5825,9 +5844,37 @@ class InterestLevelImportAPIView(APIView):
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 ws = wb[sheet_name]
-                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                data = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True)]
+                if ws.max_row <= 1:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Please provide at least one data row.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
 
+                if not allowed_headers.issubset(set(headers)):
+                    return Response({
+                        "statusCode": 400,
+                        "status": True,
+                        'message': f'Missing required headers. Required: {allowed_headers}, Found: {set(headers)}'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    if not any(row):
+                        continue
+                    row_dict = dict(zip(headers, row))
+                    data.append(row_dict)
+
+               
+                if not data:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Please provide at least one data row.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                    
             # ---------- CSV Handling ----------
             elif format_type == 'csv':
                 dataset.load(file.read().decode('utf-8'), format='csv')
@@ -5837,8 +5884,10 @@ class InterestLevelImportAPIView(APIView):
                 return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
 
             # ---------- Process Each Row ----------
+            imported_count = 0
+
             for row in data:
-                name = str(row.get('name')).strip() if row.get('name') else None
+                name = str(row.get('interest level')).strip() if row.get('interest level') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not name:
@@ -5847,15 +5896,16 @@ class InterestLevelImportAPIView(APIView):
                 existing = InterestLevel.objects.filter(name__iexact=name).first()
 
                 if existing:
-                    if existing.is_deleted:
-                        # Reactivate soft-deleted entry
+                    if not existing.is_deleted:
+                        duplicate_names.append(name)
+                        continue
+                    
+                    else:
+                        # Reactivate if previously deleted
                         existing.description = description
                         existing.is_deleted = False
                         existing.save()
-                    else:
-                        # Already active — track as duplicate
-                        duplicate_names.append(name)
-                        continue
+                        imported_count += 1
                 else:
                     # No record exists — create new
                     InterestLevel.objects.create(
@@ -5863,16 +5913,25 @@ class InterestLevelImportAPIView(APIView):
                         description=description,
                         is_deleted=False
                     )
-
+                    imported_count += 1
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
+            return Response({
+                "statusCode": 400,
+                "status": True,
+                'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         return Response({
+
             "statusCode": 200,
             "status": True,
             "duplicates": list(set(duplicate_names)),
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
         }, status=status.HTTP_200_OK)
+
+
+
+
+
+
 #-------------------------------------------Priority---------------------------------
 
 
@@ -6023,7 +6082,7 @@ class PriorityDeleteAPIView(APIView):
                     "message": "No Priorities found to delete.",
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
-            priorities.update(is_deleted=True)
+            priorities.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
@@ -6443,7 +6502,7 @@ class TagsDeleteAPIView(APIView):
                     "message": "No tags found to delete.",
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
-            tags.update(is_deleted=True)
+            tags.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
@@ -6488,7 +6547,7 @@ class TagsDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        tags.update(is_deleted=True)
+        tags.delete()
 
         return Response({
             "statusCode": 200,
@@ -6860,7 +6919,7 @@ class ActivityTypeDeleteAPIView(APIView):
                     "message": "No Activity Types found to delete.",
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
-            activities.update(is_deleted=True)
+            activities.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
@@ -7278,7 +7337,7 @@ class LostReasonDeleteAPIView(APIView):
                     "message": "No Lost Reasons found to delete.",
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
-            reasons.update(is_deleted=True)
+            reasons.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
@@ -7700,7 +7759,7 @@ class LostReasonB2BDeleteAPIView(APIView):
                     "message": "No Lost Reasons found to delete.",
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
-            reasons.update(is_deleted=True)
+            reasons.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
@@ -8325,7 +8384,7 @@ class EducationLevelDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids}
             }, status=status.HTTP_404_NOT_FOUND)
 
-        objs.update(is_deleted=True)
+        objs.delete()
         return Response({
             "statusCode": 200,
             "status": True,
@@ -8617,7 +8676,7 @@ class EducationDurationDeleteAPIView(APIView):
                     "message": "No Education Durations found to delete.",
                     "data": None
                 }, status=404)
-            durations.update(is_deleted=True)
+            durations.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
@@ -8659,7 +8718,7 @@ class EducationDurationDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
             }, status=404)
 
-        durations.update(is_deleted=True)
+        durations.delete()
         return Response({
             "statusCode": 200,
             "status": True,
@@ -8924,7 +8983,7 @@ class StudymainareaDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids}
             }, status=status.HTTP_404_NOT_FOUND)
 
-        objs.update(is_deleted=True)
+        objs.delete()
         return Response({
             "statusCode": 200,
             "status": True,
@@ -9198,7 +9257,7 @@ class StudymajorareaDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids}
             }, status=status.HTTP_404_NOT_FOUND)
 
-        objs.update(is_deleted=True)
+        objs.delete()
         return Response({
             "statusCode": 200,
             "status": True,
@@ -9476,7 +9535,7 @@ class StudySpecialisationDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids}
             }, status=status.HTTP_404_NOT_FOUND)
 
-        objs.update(is_deleted=True)
+        objs.delete()
         return Response({
             "statusCode": 200,
             "status": True,
@@ -9748,7 +9807,7 @@ class AcademicResultTypeDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids}
             }, status=status.HTTP_404_NOT_FOUND)
 
-        objs.update(is_deleted=True)
+        objs.delete()
         return Response({
             "statusCode": 200,
             "status": True,
@@ -10015,7 +10074,7 @@ class AcademicResultDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids}
             }, status=status.HTTP_404_NOT_FOUND)
 
-        objs.update(is_deleted=True)
+        objs.delete()
         return Response({
             "statusCode": 200,
             "status": True,
@@ -10283,7 +10342,7 @@ class EducationTypeDeleteAPIView(APIView):
 
         objs = EducationType.objects.filter(uuid__in=valid_uuids, is_deleted=False)
         count = objs.count()
-        objs.update(is_deleted=True)
+        objs.delete()
 
         return Response({
             "statusCode": 200,
@@ -10450,7 +10509,7 @@ class MediumofEducationDeleteAPIView(APIView):
                     "message": "No Medium of Education records found to delete.",
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
-            objs.update(is_deleted=True)
+            objs.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
@@ -10495,7 +10554,7 @@ class MediumofEducationDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        objs.update(is_deleted=True)
+        objs.delete()
 
         return Response({
             "statusCode": 200,
