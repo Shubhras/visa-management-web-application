@@ -2379,8 +2379,12 @@ class DepartmentExportAPIView(APIView):
                 value = getattr(dept, field, '')
 
                 if field in ['updated_at'] and value:
+                    # Option 1: convert to string
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-            
+                    
+                    # Option 2: or as naive datetime for Excel
+                    # value = timezone.localtime(value, india_tz).replace(tzinfo=None)
+
                 elif isinstance(value, bool):
                     value = int(value)
 
