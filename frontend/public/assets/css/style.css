@@ -15745,7 +15745,7 @@ td.fc-header-center {
 
 .main-footer .light-logo {
   width: 100px;
-      height: 35px;
+  height: 35px;
 }
 
 /* === footer css end === */
@@ -16084,10 +16084,59 @@ td.fc-header-center {
   font-weight: bold;
   margin: 0;
 }
-.main-header-container .main-menu-items{
- font-size: 15px;
+
+.main-header-container .main-menu-items {
+  font-size: 15px;
   font-weight: 500;
   padding: 4px 10px;
   border-radius: 6px;
   transition: all 0.2s ease;
+}
+
+.main-header-container .main-submenu-items {
+  top: 100%;
+  left: 0;
+  min-width: 220px;
+  background-color: #fff;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  z-index: 1000;
+  margin-top: 0px;
+  padding: 4px;
+  animation: slideDown 0.2s ease;
+}
+
+.main-header-container .main-submenu-items .main-submenu-items-link {
+  font-size: 14px;
+  font-weight: 400;
+  color: #374151;
+  padding: 5px 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  margin: 2px 0;
+  line-height: 1.6;
+}
+
+.main-header-container .main-submenu-items .main-submenu-children-items {
+  top: 0;
+  left: 100%;
+  min-width: 200px;
+  background-color: #fff;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  z-index: 1001;
+  margin-left: 0;
+  padding: 4px;
+  animation: slideRight 0.2s ease;
+}
+
+.main-header-container .main-submenu-items .main-submenu-children-items-link {
+  font-size: 13px;
+  font-weight: 400;
+  color: #374151;
+  padding: 5px 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  margin: 2px 0;
+  line-height: 1.6;
 }

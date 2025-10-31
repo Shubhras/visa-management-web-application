@@ -47,7 +47,7 @@ const Header = ({ onMenuItemClick }) => {
             submenu: [
                 {
                     // name: 'Admin',
-                    name:'Company',
+                    name: 'Company',
                     // path: '/Department',
                     children: [
                         { name: 'Department', path: '/department' },
@@ -61,7 +61,7 @@ const Header = ({ onMenuItemClick }) => {
                     // path: '/priority-type',
                     children: [
                         { name: 'Lead Source', path: '/lead-source' },
-                        // { name: 'Interest Level', path: '/interest-level' },
+                        { name: 'Interest Level', path: '/interest-level' },
                         { name: 'Priority', path: '/priority-type' },
                         { name: 'Tags', path: '/tags-type' },
                         { name: 'Activity Type', path: '/activity-type' },
@@ -93,25 +93,25 @@ const Header = ({ onMenuItemClick }) => {
         }
     ];
     const handleMenuClick = (item, parent = null, grandParent = null) => {
+        if (item.children && item.children.length > 0) return;
+
+        const clickedName = item?.name || parent?.name || grandParent?.name;
+
         const clickData = {
-            itemName: item.name,
-            itemPath: item.path,
+            itemName: clickedName,
+            itemPath: item?.path || '',
             parentName: parent?.name || null,
             grandParentName: grandParent?.name || null,
             fullPath: grandParent
                 ? `${grandParent.name} > ${parent.name} > ${item.name}`
                 : parent
                     ? `${parent.name} > ${item.name}`
-                    : item.name,
-            timestamp: new Date().toISOString()
+                    : item.name
         };
 
-        // Parent component ko data pass karo
         if (onMenuItemClick) {
             onMenuItemClick(clickData);
         }
-
-        console.log('Clicked Menu Item:', clickData);
     };
     return (
         <>
@@ -236,7 +236,14 @@ const Header = ({ onMenuItemClick }) => {
                     >
                         <Link
                             to={item.path}
-                            onClick={() => handleMenuClick(item)}
+                            // onClick={() => handleMenuClick(item)}
+                            onClick={(e) => {
+                                if (item.submenu && item.submenu.length > 0) {
+                                    e.preventDefault();
+                                } else {
+                                    handleMenuClick(item);
+                                }
+                            }}
                             className='text-white text-decoration-none d-flex align-items-center gap-1 main-menu-items'
                             style={{
                                 backgroundColor: openSubmenu === index ? 'rgba(255, 255, 255, 0.1)' : 'transparent'
@@ -269,19 +276,7 @@ const Header = ({ onMenuItemClick }) => {
                         {/* Submenu Dropdown */}
                         {item.submenu && item.submenu.length > 0 && openSubmenu === index && (
                             <div
-                                className='position-absolute'
-                                style={{
-                                    top: '100%',
-                                    left: '0',
-                                    minWidth: '220px',
-                                    backgroundColor: '#fff',
-                                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
-                                    borderRadius: '8px',
-                                    zIndex: 1000,
-                                    marginTop: '1px',
-                                    padding: '4px',
-                                    animation: 'slideDown 0.2s ease'
-                                }}
+                                className='position-absolute main-submenu-items'
                             >
                                 <style>
                                     {`
@@ -316,18 +311,15 @@ const Header = ({ onMenuItemClick }) => {
                                     >
                                         <Link
                                             to={subItem.path}
-                                            onClick={() => handleMenuClick(subItem, item)}
-                                            className='d-flex align-items-center justify-content-between text-decoration-none'
-                                            style={{
-                                                fontSize: '14px',
-                                                fontWeight: '400',
-                                                color: '#374151',
-                                                padding: '6px 10px',
-                                                borderRadius: '6px',
-                                                transition: 'all 0.2s ease',
-                                                margin: '2px 0',
-                                                lineHeight: '1.6',
+                                            // onClick={() => handleMenuClick(subItem, item)}
+                                            onClick={(e) => {
+                                                if (subItem.children && subItem.children.length > 0) {
+                                                    e.preventDefault();
+                                                } else {
+                                                    handleMenuClick(subItem, item);
+                                                }
                                             }}
+                                            className='d-flex align-items-center justify-content-between text-decoration-none main-submenu-items-link'
                                             onMouseEnter={(e) => {
                                                 e.currentTarget.style.backgroundColor = '#f3f4f6';
                                                 e.currentTarget.style.color = '#111827';
@@ -353,36 +345,16 @@ const Header = ({ onMenuItemClick }) => {
                                         {/* Child Menu (Third Level) */}
                                         {subItem.children && subItem.children.length > 0 && openChildMenu === subIndex && (
                                             <div
-                                                className='position-absolute'
-                                                style={{
-                                                    top: '0',
-                                                    left: '100%',
-                                                    minWidth: '200px',
-                                                    backgroundColor: '#fff',
-                                                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
-                                                    borderRadius: '8px',
-                                                    zIndex: 1001,
-                                                    marginLeft: '0px',
-                                                    padding: '4px',
-                                                    animation: 'slideRight 0.2s ease'
-                                                }}
+                                                className='position-absolute main-submenu-children-items'
                                             >
                                                 {subItem.children.map((childItem, childIndex) => (
                                                     <Link
                                                         key={childIndex}
                                                         to={childItem.path}
+                                                        // onClick={() => handleMenuClick(childItem, subItem, item)}
                                                         onClick={() => handleMenuClick(childItem, subItem, item)}
-                                                        className='d-block text-decoration-none'
-                                                        style={{
-                                                            fontSize: '13px',
-                                                            fontWeight: '400',
-                                                            color: '#374151',
-                                                            padding: '6px 10px',
-                                                            borderRadius: '6px',
-                                                            transition: 'all 0.2s ease',
-                                                            margin: '2px 0',
-                                                            lineHeight: '1.6',
-                                                        }}
+                                                        className='d-block text-decoration-none main-submenu-children-items-link'
+
                                                         onMouseEnter={(e) => {
                                                             e.currentTarget.style.backgroundColor = '#f3f4f6';
                                                             e.currentTarget.style.color = '#111827';
@@ -394,7 +366,7 @@ const Header = ({ onMenuItemClick }) => {
                                                             e.currentTarget.style.paddingLeft = '14px';
                                                         }}
                                                     >
-                                                        {childItem.name}
+                                                        {childItem.name} dsfsdf
                                                     </Link>
                                                 ))}
                                             </div>
