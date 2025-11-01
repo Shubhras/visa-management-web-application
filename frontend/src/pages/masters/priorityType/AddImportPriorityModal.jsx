@@ -115,7 +115,7 @@ const AddImportPriorityModal = ({ show, handleClose }) => {
             type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         });
 
-        saveAs(blob, `Priority_${new Date().toISOString().split("T")[0]}.xlsx`);
+        saveAs(blob, `Priority-Duplicate-Data.xlsx`);
     };
     // Handle modal close
     const onClose = () => {
