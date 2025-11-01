@@ -8830,7 +8830,7 @@ class LostReasonB2BExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Last ReasonsB2B',  
+            'name': 'Last Reasons (B2B)',  
             'description': 'Description',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',
