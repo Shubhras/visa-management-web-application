@@ -8906,7 +8906,7 @@ class LostReasonB2BImportAPIView(APIView):
         duplicate_names = []
         data = []
 
-        required_headers = {'lost reason (b2b)'}
+        required_headers = {'lost reason b2b'}
         optional_headers = {'description'}
 
         if not file:
