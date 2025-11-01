@@ -2872,7 +2872,7 @@ class RelationImportAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-        
+
 
 class TimezoneCreateAPIView(APIView):
     def post(self, request):
@@ -8427,7 +8427,7 @@ class LostReasonExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Lost ReasonB2C',  
+            'name': 'Lost Reason (B2C)',  
             'description': 'Description',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',
@@ -8833,7 +8833,7 @@ class LostReasonB2BExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Last ReasonsB2B',  
+            'name': 'Last Reasons (B2B)',  
             'description': 'Description',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',
