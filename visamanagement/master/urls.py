@@ -15,11 +15,13 @@ urlpatterns = [
     path('genders/export/', GenderExportAPIView.as_view(), name='genders-export'),
     path('genders/import/', GenderImportAPIView.as_view(), name='genders-import'),
 
-
-    path('Maritalstatus/create/', MaritalstatusCreateAPIView.as_view(),name='Maritalstatus-create'),
-    path('Maritalstatus/list/', MaritalstatusListAPIView.as_view(),name='Maritalstatus-list'),
-    path('Maritalstatus/<uuid:uuid>/', MaritalstatusDetailAPIView.as_view(), name='Maritalstatus-detail'),
-    path('Maritalstatus/<uuid:uuid>/update/', MaritalstatusUpdateAPIView.as_view(),name='Maritalstatus-update'),
+    path('maritalstatus/', MaritalstatusListAPIView.as_view(),name='Maritalstatus-list'),
+    path('maritalstatus/create/', MaritalstatusCreateAPIView.as_view(),name='Maritalstatus-create'),
+    path('maritalstatus/list/', MaritalstatusListAPIView.as_view(),name='Maritalstatus-list'),
+    path('maritalstatus/<uuid:uuid>/', MaritalstatusDetailAPIView.as_view(), name='Maritalstatus-detail'),
+    path('maritalstatus/<uuid:uuid>/update/', MaritalstatusUpdateAPIView.as_view(),name='Maritalstatus-update'),
+    path('maritalstatus/export/', MaritalstatusExportAPIView.as_view(), name='Maritalstatus-export'),
+    path('maritalstatus/import/', MaritalstatusImportAPIView.as_view(), name='Maritalstatus-import'),
 
     path('continents/create/', ContinentCreateAPIView.as_view(),name='continents-create'),
     path('continents/', ContinentListAPIView.as_view(),name='continents-list'),

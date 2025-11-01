@@ -157,7 +157,7 @@ class RelationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Relation
         fields = [
-            'uuid', 'relation', 'description',
+            'uuid', 'name', 'description',
             'is_deleted', 'created_at', 'updated_at'
         ]
         read_only_fields = ['uuid', 'created_at', 'updated_at']
