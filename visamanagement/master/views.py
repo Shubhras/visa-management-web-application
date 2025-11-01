@@ -608,19 +608,28 @@ class MaritalstatusCreateAPIView(APIView):
 
     def post(self, request):
         name = request.data.get("name", "").strip()
-
-        # Check for existing marital status with the same name
-        existing = Maritalstatus.objects.filter(name__iexact=name, is_deleted=False).first()
-
-        if existing:
+        if not name:
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Marital status with this name already exists."
+                "message": "Name is required.",
+                "data": None
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # Create new marital status if no active duplicate found
-        serializer = MaritalstatusSerializer(data=request.data)
+        # Check for duplicate (case-insensitive)
+        if Maritalstatus.objects.filter(name__iexact=name, is_deleted=False).exists():
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Marital status with this name already exists.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Cleaned data for serializer
+        data = request.data.copy()
+        data['name'] = name
+
+        serializer = MaritalstatusSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
             return Response({
@@ -630,17 +639,14 @@ class MaritalstatusCreateAPIView(APIView):
                 "data": serializer.data
             }, status=status.HTTP_200_OK)
 
-        # Handle serializer validation errors
-        errors = serializer.errors
+        # Collect validation errors
         messages = []
-        for field, msgs in errors.items():
+        for field, msgs in serializer.errors.items():
             messages.extend(msgs)
-        message_text = " ".join(messages)
-
         return Response({
             "statusCode": 400,
             "status": False,
-            "message": message_text,
+            "message": " ".join(messages),
             "data": None
         }, status=status.HTTP_400_BAD_REQUEST)
 
