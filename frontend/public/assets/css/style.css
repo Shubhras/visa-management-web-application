@@ -15932,6 +15932,20 @@ td.fc-header-center {
   --bs-btn-disabled-border-color: #5a6c5b;
 }
 
+.comman-inactive-btn {
+  /* color: #495057 !important;
+  border: 1px solid #658e67; */
+  border: 1px solid var(--input-form-light);
+  color: var(--text-primary-light) !important;
+  background-color: var(--white);
+}
+
+.comman-inactive-btn:hover {
+  background: #5a6c5b;
+  color: #fff !important;
+  border: 1px solid #658e67;
+}
+
 /*  popup class start*/
 .common-ctl-popup {
   display: block;

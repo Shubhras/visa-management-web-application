@@ -54,6 +54,20 @@ const MasterLayout = ({ children }) => {
       // path: '/department',
       submenu: [
         {
+          name: 'General',
+          children: [
+            { name: 'Gender', path: '/gender-list' },
+            { name: 'Marital Status', path: '/marital-status' },
+            // { name: 'Continents ', path: '/' },
+            // { name: 'State', path: '/' },
+            // { name: 'District', path: '/' },
+            // { name: 'City', path: '/' },
+            // { name: 'Timezone', path: '/' },
+            // { name: 'Relation', path: '/' },
+            // { name: 'Civil ID Name', path: '/' },
+          ]
+        },
+        {
           // name: 'Admin',
           name: 'Company',
           // path: '/Department',
@@ -61,7 +75,13 @@ const MasterLayout = ({ children }) => {
             { name: 'Department', path: '/department' },
             { name: 'Employee Type', path: '/employeetype' },
             { name: 'Company Type', path: '/companylist' },
+            // { name: 'Ownership Type', path: '/' },
             { name: 'Stakeholder Category', path: '/stakeholder-list' },
+            // { name: 'Stakeholder Type', path: '/' },
+            // { name: 'Accrediation Category ', path: '/' },
+            // { name: 'Accrediation Name', path: '/' },
+            { name: 'Bank Account Type', path: '/bank-ccount-type' },
+            // { name: 'License Name', path: '/' },
           ]
         },
         {
@@ -75,7 +95,6 @@ const MasterLayout = ({ children }) => {
             { name: 'Activity Type', path: '/activity-type' },
             { name: 'Lost Reason (B2C)', path: '/lost-reason-B2C' },
             { name: 'Lost Reason (B2B)', path: '/lost-reason-B2B' },
-            { name: 'Bank Account Type', path: '/bank-ccount-type' },
           ]
         },
 

@@ -5,11 +5,10 @@ import MasterLayout from "../../../../masterLayout/MasterLayout";
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { Link } from 'react-router-dom';
 import { toast } from "react-toastify";
-import AddImportBankAccountTypeModal from './AddImportBankAccountTypeModal';
-import AddEditBankAccountTypeModal from './AddEditBankAccountTypeModal';
-import { bankAccountTypeList, bankAccountTypeDelete, bankAccountTypeExportData } from '../../../../store/master/companyMasters/actions';
-
-const BankAccountTypeList = () => {
+import AddImportGenderModal from './AddImportGenderModal';
+import AddEditGenderModal from './AddEditGenderModal';
+import { genderList,genderDelete ,genderExportData} from '../../../../store/master/generalMasters/actions';
+const GenderList = () => {
   const dispatch = useDispatch();
   const [modalState, setModalState] = useState({
     show: false,
@@ -45,9 +44,9 @@ const BankAccountTypeList = () => {
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [items] = useState(["Bank Account Type", "Description", "Modified On"]);
-  const [selectedItems, setSelectedItems] = useState(["Bank Account Type"]);
-  const [ItemsRequired] = useState(["Bank Account Type"]);
+  const [items] = useState(["Gender", "Description", "Modified On"]);
+  const [selectedItems, setSelectedItems] = useState(["Gender"]);
+  const [ItemsRequired] = useState(["Gender"]);
 
   // Updated state with sorting
   const [tableState, setTableState] = useState({
@@ -89,7 +88,7 @@ const BankAccountTypeList = () => {
       sortOrder: tableState.sortOrder || ''
     };
 
-    dispatch(bankAccountTypeList(params, (response, error) => {
+    dispatch(genderList(params, (response, error) => {
       setLoading(false);
       if (response?.statusCode === 200 && response?.status === true) {
         const paginationData = response?.pagination || {};
@@ -257,7 +256,7 @@ const BankAccountTypeList = () => {
   const handleDelete = (uuid) => {
     setDeleteId(uuid);
     setShowDeleteConfirm(true);
-    setDeleteConfirmMessage(`Are you sure you want to delete this bank account type?`);
+    setDeleteConfirmMessage(`Are you sure you want to delete this gender?`);
   };
 
   const handleBulkDelete = () => {
@@ -266,8 +265,8 @@ const BankAccountTypeList = () => {
       return;
     }
     // Choose message based on delete type
-    const message = selectAllOrNot === "all" ? `${tableState.total} all bank account type` : `${selectedRows.length} selected bank account type`;
-    setDeleteConfirmMessage(`Are you sure you want to delete this bank account type (${message})?`);
+    const message = selectAllOrNot === "all" ? `${tableState.total} all gender` : `${selectedRows.length} selected gender`;
+    setDeleteConfirmMessage(`Are you sure you want to delete this gender (${message})?`);
     setShowDeleteConfirm(true);
   };
 
@@ -275,10 +274,10 @@ const BankAccountTypeList = () => {
     // const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
     const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
     if (!sendPayload || sendPayload.length === 0) {
-      toast.error("No bank account type selected for deletion.");
+      toast.error("No gender selected for deletion.");
       return;
     }
-    dispatch(bankAccountTypeDelete(sendPayload, (response, error) => {
+    dispatch(genderDelete(sendPayload, (response, error) => {
       if (error) {
         toast.error(error?.response?.data?.message || "server error");
       } else {
@@ -356,13 +355,13 @@ const BankAccountTypeList = () => {
       toast.error("Please select at least one field");
       return
     }
-    // Map frontend labels to backend field names
+    // Map frontend labels to Gender field names
     const fieldMapping = {
-      "Bank Account Type": "name",
+      "Gender": "name",
       "Modified On": "updated_at",
       "Description": "description",
     };
-    // Convert selectedItems to backend field names
+    // Convert selectedItems to Gender field names
     const mappedFields = selectedItems.map((item) => fieldMapping[item] || item);
     // Convert to comma-separated string
     const fieldsString = mappedFields.join(",");
@@ -373,7 +372,7 @@ const BankAccountTypeList = () => {
     };
 
     setLoadingExport(true);
-    dispatch(bankAccountTypeExportData(sendPayload, (response, error) => {
+    dispatch(genderExportData(sendPayload, (response, error) => {
       if (error) {
         setLoadingExport(false);
         toast.error(error?.response?.message || "server error");
@@ -387,7 +386,7 @@ const BankAccountTypeList = () => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `BankAccountType.xlsx`;
+          link.download = `Gender.xlsx`;
           document.body.appendChild(link);
           link.click();
           link.remove();
@@ -544,7 +543,7 @@ const BankAccountTypeList = () => {
                     </th>
                     <th scope="col" className='sorting-th' onClick={() => handleSort('name')}>
                       <div className="d-flex align-items-center">
-                        Bank Account Type
+                        Gender
                         {getSortIcon('name')}
                       </div>
                     </th>
@@ -745,14 +744,14 @@ const BankAccountTypeList = () => {
             </div>
           </div>
         </div>
-        <AddEditBankAccountTypeModal
+        <AddEditGenderModal
           show={modalState.show}
           handleClose={handleClose}
           mode={modalState.mode}
           rowData={modalState.rowData}
         />
         {showImport && (
-          <AddImportBankAccountTypeModal show={showImport} handleClose={handleCloseImport} />)}
+          <AddImportGenderModal show={showImport} handleClose={handleCloseImport} />)}
         {showDeleteConfirm && (
           <div className="modal fade show common-ctl-popup">
             <div className="modal-dialog modal-dialog-centered">
@@ -794,7 +793,7 @@ const BankAccountTypeList = () => {
             <div className="modal-dialog modal-xl modal-dialog-centered" role="document">
               <div className="modal-content radius-16 bg-base">
                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                  <h1 className="modal-title fs-5">Export Bank Account Type</h1>
+                  <h1 className="modal-title fs-5">Export Gender</h1>
                   <button
                     type="button"
                     className="btn-close"
@@ -892,4 +891,4 @@ const BankAccountTypeList = () => {
   );
 };
 
-export default BankAccountTypeList;
+export default GenderList;

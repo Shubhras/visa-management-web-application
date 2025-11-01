@@ -5,11 +5,10 @@ import MasterLayout from "../../../../masterLayout/MasterLayout";
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { Link } from 'react-router-dom';
 import { toast } from "react-toastify";
-import AddImportBankAccountTypeModal from './AddImportBankAccountTypeModal';
-import AddEditBankAccountTypeModal from './AddEditBankAccountTypeModal';
-import { bankAccountTypeList, bankAccountTypeDelete, bankAccountTypeExportData } from '../../../../store/master/companyMasters/actions';
-
-const BankAccountTypeList = () => {
+import AddImportMaritalStatusModal from './AddImportMaritalStatusModal';
+import AddEditMaritalStatusModal from './AddEditMaritalStatusModal';
+import { maritalStatusList,maritalStatusDelete ,maritalStatusExportData} from '../../../../store/master/generalMasters/actions';
+const MaritalStatusList = () => {
   const dispatch = useDispatch();
   const [modalState, setModalState] = useState({
     show: false,
@@ -30,7 +29,7 @@ const BankAccountTypeList = () => {
       mode: 'add',
       rowData: null
     });
-    fetchDepartmentList();
+    fetchMaritalStatusList();
   }
 
   // const [showEdit, setShowEdit] = useState(false);
@@ -38,16 +37,16 @@ const BankAccountTypeList = () => {
   const [rowSelectData, setRowSelectData] = useState({});
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this department?");
+  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this marital status?");
   const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [selectAllOrNot, setSelectAllOrNot] = useState('');
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [items] = useState(["Bank Account Type", "Description", "Modified On"]);
-  const [selectedItems, setSelectedItems] = useState(["Bank Account Type"]);
-  const [ItemsRequired] = useState(["Bank Account Type"]);
+  const [items] = useState(["Marital Status", "Description", "Modified On"]);
+  const [selectedItems, setSelectedItems] = useState(["Marital Status"]);
+  const [ItemsRequired] = useState(["Marital Status"]);
 
   // Updated state with sorting
   const [tableState, setTableState] = useState({
@@ -67,7 +66,7 @@ const BankAccountTypeList = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (tableState.search !== undefined) {
-        fetchDepartmentList();
+        fetchMaritalStatusList();
       }
     }, 500);
 
@@ -75,10 +74,10 @@ const BankAccountTypeList = () => {
   }, [tableState.search]);
 
   useEffect(() => {
-    fetchDepartmentList();
+    fetchMaritalStatusList();
   }, [tableState.page, tableState.limit, tableState.status, tableState.sortBy, tableState.sortOrder]);
 
-  const fetchDepartmentList = () => {
+  const fetchMaritalStatusList = () => {
     setLoading(true);
     const params = {
       page: tableState.page,
@@ -89,7 +88,7 @@ const BankAccountTypeList = () => {
       sortOrder: tableState.sortOrder || ''
     };
 
-    dispatch(bankAccountTypeList(params, (response, error) => {
+    dispatch(maritalStatusList(params, (response, error) => {
       setLoading(false);
       if (response?.statusCode === 200 && response?.status === true) {
         const paginationData = response?.pagination || {};
@@ -239,11 +238,6 @@ const BankAccountTypeList = () => {
     return pages;
   };
 
-  // const handleCloseEdit = () => {
-  //   setShowEdit(false);
-  //   fetchDepartmentList();
-  // };
-
   const handleShowEdit = (rowData) => {
     setModalState({
       show: true,
@@ -257,7 +251,7 @@ const BankAccountTypeList = () => {
   const handleDelete = (uuid) => {
     setDeleteId(uuid);
     setShowDeleteConfirm(true);
-    setDeleteConfirmMessage(`Are you sure you want to delete this bank account type?`);
+    setDeleteConfirmMessage(`Are you sure you want to delete this marital status?`);
   };
 
   const handleBulkDelete = () => {
@@ -266,8 +260,8 @@ const BankAccountTypeList = () => {
       return;
     }
     // Choose message based on delete type
-    const message = selectAllOrNot === "all" ? `${tableState.total} all bank account type` : `${selectedRows.length} selected bank account type`;
-    setDeleteConfirmMessage(`Are you sure you want to delete this bank account type (${message})?`);
+    const message = selectAllOrNot === "all" ? `${tableState.total} all marital status` : `${selectedRows.length} selected marital status`;
+    setDeleteConfirmMessage(`Are you sure you want to delete this marital status (${message})?`);
     setShowDeleteConfirm(true);
   };
 
@@ -275,10 +269,10 @@ const BankAccountTypeList = () => {
     // const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
     const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
     if (!sendPayload || sendPayload.length === 0) {
-      toast.error("No bank account type selected for deletion.");
+      toast.error("No marital status selected for deletion.");
       return;
     }
-    dispatch(bankAccountTypeDelete(sendPayload, (response, error) => {
+    dispatch(maritalStatusDelete(sendPayload, (response, error) => {
       if (error) {
         toast.error(error?.response?.data?.message || "server error");
       } else {
@@ -290,7 +284,7 @@ const BankAccountTypeList = () => {
           setSelectedRows([]);
           setSelectAllOrNot('');
           setDeleteId(null);
-          fetchDepartmentList();
+          fetchMaritalStatusList();
         } else {
           toast.error("Something went wrong.");
         }
@@ -308,7 +302,7 @@ const BankAccountTypeList = () => {
 
   const handleCloseImport = () => {
     setShowImport(false);
-    fetchDepartmentList();
+    fetchMaritalStatusList();
   };
 
   const handleShowImport = () => {
@@ -356,13 +350,13 @@ const BankAccountTypeList = () => {
       toast.error("Please select at least one field");
       return
     }
-    // Map frontend labels to backend field names
+    // Map frontend labels to Marital Status field names
     const fieldMapping = {
-      "Bank Account Type": "name",
+      "Marital Status": "name",
       "Modified On": "updated_at",
       "Description": "description",
     };
-    // Convert selectedItems to backend field names
+    // Convert selectedItems to Marital Status field names
     const mappedFields = selectedItems.map((item) => fieldMapping[item] || item);
     // Convert to comma-separated string
     const fieldsString = mappedFields.join(",");
@@ -373,7 +367,7 @@ const BankAccountTypeList = () => {
     };
 
     setLoadingExport(true);
-    dispatch(bankAccountTypeExportData(sendPayload, (response, error) => {
+    dispatch(maritalStatusExportData(sendPayload, (response, error) => {
       if (error) {
         setLoadingExport(false);
         toast.error(error?.response?.message || "server error");
@@ -387,7 +381,7 @@ const BankAccountTypeList = () => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `BankAccountType.xlsx`;
+          link.download = `MaritalStatus.xlsx`;
           document.body.appendChild(link);
           link.click();
           link.remove();
@@ -544,7 +538,7 @@ const BankAccountTypeList = () => {
                     </th>
                     <th scope="col" className='sorting-th' onClick={() => handleSort('name')}>
                       <div className="d-flex align-items-center">
-                        Bank Account Type
+                        Marital Status
                         {getSortIcon('name')}
                       </div>
                     </th>
@@ -745,14 +739,14 @@ const BankAccountTypeList = () => {
             </div>
           </div>
         </div>
-        <AddEditBankAccountTypeModal
+        <AddEditMaritalStatusModal
           show={modalState.show}
           handleClose={handleClose}
           mode={modalState.mode}
           rowData={modalState.rowData}
         />
         {showImport && (
-          <AddImportBankAccountTypeModal show={showImport} handleClose={handleCloseImport} />)}
+          <AddImportMaritalStatusModal show={showImport} handleClose={handleCloseImport} />)}
         {showDeleteConfirm && (
           <div className="modal fade show common-ctl-popup">
             <div className="modal-dialog modal-dialog-centered">
@@ -794,7 +788,7 @@ const BankAccountTypeList = () => {
             <div className="modal-dialog modal-xl modal-dialog-centered" role="document">
               <div className="modal-content radius-16 bg-base">
                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                  <h1 className="modal-title fs-5">Export Bank Account Type</h1>
+                  <h1 className="modal-title fs-5">Export Marital Status</h1>
                   <button
                     type="button"
                     className="btn-close"
@@ -892,4 +886,4 @@ const BankAccountTypeList = () => {
   );
 };
 
-export default BankAccountTypeList;
+export default MaritalStatusList;

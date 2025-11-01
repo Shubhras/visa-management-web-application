@@ -356,7 +356,8 @@ import LostReasonB2BList from "./pages/masters/salesMasters/lostReasonB2B/LostRe
  import InterestLevelList from "./pages/masters/salesMasters/interestLevel/InterestLevelList";
 import LeadsList from "./pages/leads/LeadsList";
 import BankAccountTypeList from "./pages/masters/companyMaster/bankAccountType/BankAccountTypeList";
-
+import GenderList from "./pages/masters/generalMaster/gender/GenderList";
+import MaritalStatusList from "./pages/masters/generalMaster/maritalStatus/MaritalStatusList";
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   // Check if user is authenticated
@@ -589,6 +590,11 @@ function App() {
         <Route path='/lost-reason-B2C' element={<ProtectedRoute><LostReasonB2CList /></ProtectedRoute>} />
         <Route path='/lost-reason-B2B' element={<ProtectedRoute><LostReasonB2BList /></ProtectedRoute>} />
         <Route path='/bank-ccount-type' element={<ProtectedRoute><BankAccountTypeList /></ProtectedRoute>} />
+
+        {/* General Masters */}
+          <Route path='/gender-list' element={<ProtectedRoute><GenderList /></ProtectedRoute>} />
+           <Route path='/marital-status' element={<ProtectedRoute><MaritalStatusList /></ProtectedRoute>} />
+          
         {/* 404 Error Page */}
         <Route path='*' element={<ErrorPage />} />
       </Routes>

@@ -30,7 +30,7 @@ const ActivityTypeList = () => {
   const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this activity type?");
   const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
-  const [deleteAllData, setDeleteAllData] = useState('');
+  const [selectAllOrNot, setSelectAllOrNot] = useState('');
   const [activityTypeListData, setActivityTypeListData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
@@ -174,12 +174,12 @@ const ActivityTypeList = () => {
   };
   // For checkbox in table header
   const handleSelectAll = (e) => {
-
     const checked = e.target.checked;
     if (checked) {
       setSelectedRows(activityTypeListData.map(dept => dept.uuid));
     } else {
       setSelectedRows([]);
+      setSelectAllOrNot('');
     }
   };
 
@@ -244,7 +244,9 @@ const ActivityTypeList = () => {
     setShowEdit(true);
     setRowSelectData(rowData);
   };
-
+  const handleSelectAllOrNot = (a) => {
+    setSelectAllOrNot(a);
+  }
 
   const handleDelete = (uuid) => {
     setDeleteId(uuid);
@@ -252,22 +254,20 @@ const ActivityTypeList = () => {
     setDeleteConfirmMessage(`Are you sure you want to delete this activity type?`);
   };
 
-  const handleBulkDelete = (deleteData) => {
+  const handleBulkDelete = () => {
     if (selectedRows.length === 0) {
-      toast.error("Please select rows to delete");
+      toast.error("Please select at least one row to delete");
       return;
     }
     // Choose message based on delete type
-    const message = deleteData === "all" ? `${tableState.total} all activity type` : `${selectedRows.length} selected activity type`;
+    const message = selectAllOrNot === "all" ? `${tableState.total} all activity type` : `${selectedRows.length} selected activity type`;
     setDeleteConfirmMessage(`Are you sure you want to delete this activity type (${message})?`);
     setShowDeleteConfirm(true);
-    setDeleteAllData(deleteData);
   };
 
   const confirmDelete = () => {
     // const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
-    const sendPayload = deleteAllData === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
-
+    const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
     if (!sendPayload || sendPayload.length === 0) {
       toast.error("No activity selected for deletion.");
       return;
@@ -282,7 +282,8 @@ const ActivityTypeList = () => {
           setActivityTypeListData(prevDepts => prevDepts.filter(dept => dept.uuid !== deleteId));
           setSelectedRows(prevSelected => prevSelected.filter(rowId => rowId !== deleteId));
           setShowDeleteConfirm(false);
-          setSelectedRows([])
+          setSelectedRows([]);
+          setSelectAllOrNot('');
           setDeleteId(null);
           fetchActivityTypeList();
         } else {
@@ -297,7 +298,7 @@ const ActivityTypeList = () => {
     setDeleteId(null);
     setSelectedRows([]);
     setDeleteConfirmMessage('');
-    setDeleteAllData('');
+    setSelectAllOrNot('');
   };
 
   const handleCloseImport = () => {
@@ -361,7 +362,7 @@ const ActivityTypeList = () => {
     const sendPayload = {
       file: "xlsx",
       fields: fieldsString,
-      uuids: selectedRows, // your selected department IDs
+      uuids: selectAllOrNot === "all" ? [] : selectedRows,
     };
     setLoadingExport(true);
 
@@ -379,14 +380,16 @@ const ActivityTypeList = () => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `ActivityType_${new Date().toISOString().split('T')[0]}.xlsx`;
+          link.download = `ActivityType.xlsx`;
           document.body.appendChild(link);
           link.click();
           link.remove();
           window.URL.revokeObjectURL(url);
-
           toast.success("Export successful");
           cancelExportTest();
+          setSelectedRows([]);
+          setSelectAllOrNot('');
+          setDeleteId(null);
         } else {
           toast.error("Something went wrong.");
         }
@@ -435,33 +438,27 @@ const ActivityTypeList = () => {
                   >
                     Export
                   </button>
-                  {/* <button
-                              onClick={handleSelectAllButton}
-                              className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
-                            >
-                              {isAllSelected ? 'Deselect All' : 'Select All'}
-                            </button> */}
-                  {selectedRows.length == 0 && (
-                    <button
-                      onClick={handleSelectAllButton}
-                      className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
-                    >
-                      Delete
-                    </button>
-                  )}
+                  <button
+                    onClick={handleBulkDelete}
+                    className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
+                  >
+                    Delete
+                  </button>
                   {selectedRows.length > 0 && (
-                    <button
-                      onClick={() => handleBulkDelete("")}
-                      className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
-                    >{`Delete Selected (${selectedRows.length})`}
-                    </button>
-                  )}
-                  {selectedRows.length > 0 && (
-                    <button
-                      onClick={() => handleBulkDelete("all")}
-                      className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
-                    >{`Delete All (${tableState.total})`}
-                    </button>
+                    <>
+                      <button
+                        onClick={() => handleSelectAllOrNot("onlySelected")}
+                        className={`btn btn-sm px-3 py-1 fw-medium ${selectAllOrNot === "onlySelected" ? "comman-btn-color" : "comman-inactive-btn"}`}
+                      >
+                        {`Select (${selectedRows.length})`}
+                      </button>
+                      <button
+                        onClick={() => handleSelectAllOrNot("all")}
+                        className={`btn btn-sm px-3 py-1 fw-medium ${selectAllOrNot === "all" ? "comman-btn-color" : "comman-inactive-btn"}`}
+                      >
+                        {`Select All (${tableState.total})`}
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
@@ -780,7 +777,7 @@ const ActivityTypeList = () => {
             </div>
           </div>
         )}
-          {showExportPopop && (
+        {showExportPopop && (
           <div
             className="modal fade show common-ctl-popup"
             tabIndex={-1}

@@ -422,3 +422,72 @@ export const importBankAccountTypeDataAPI = (payload) => {
     const apiUrl = `${url.IMPORT_BANK_ACCOUNT_TYPE_API}`;
     return post(apiUrl, payload);
 };
+
+// GENDER
+export const getGenderListDataAPI = (data) => {
+    const apiUrl = `${url.GET_GENDER_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addGenderDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_GENDER_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editGenderDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_GENDER_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteGenderDataAPI = (payload) => {
+    const prepareDATA = {
+        id: payload
+    };
+    const apiUrl = `${url.DELETE_GENDER_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportGenderDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_GENDER_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importGenderDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_GENDER_API}`;
+    return post(apiUrl, payload);
+};
+
+
+// MARITAL STATUS
+export const getMaritalStatusListDataAPI = (data) => {
+    const apiUrl = `${url.GET_MARITAL_STATUS_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addMaritalStatusDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_MARITAL_STATUS_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editMaritalStatusDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_MARITAL_STATUS_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteMaritalStatusDataAPI = (payload) => {
+    const prepareDATA = {
+        id: payload
+    };
+    const apiUrl = `${url.DELETE_MARITAL_STATUS_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportMaritalStatusDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_MARITAL_STATUS_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importMaritalStatusDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_MARITAL_STATUS_API}`;
+    return post(apiUrl, payload);
+};
