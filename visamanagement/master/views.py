@@ -8424,7 +8424,7 @@ class LostReasonExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Lost ReasonB2C',  
+            'name': 'Lost Reason (B2C)',  
             'description': 'Description',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',
@@ -8466,7 +8466,7 @@ class LostReasonExportAPIView(APIView):
             # XLSX export with BytesIO
             file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'LostReason.xlsx'
+            file_name = 'LostReasonB2C.xlsx'
 
 
         response = HttpResponse(
