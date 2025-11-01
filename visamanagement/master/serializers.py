@@ -33,6 +33,8 @@ class AdminUserLoginSerializer(serializers.Serializer):
         return data
 
 class GenderSerializer(serializers.ModelSerializer):
+    description = serializers.CharField(required=False, allow_blank=True)  # optional
+
     class Meta:
         model = Gender
         fields = ['uuid', 'name', 'description', 'created_at', 'updated_at', 'is_active', 'is_deleted']
@@ -157,7 +159,7 @@ class RelationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Relation
         fields = [
-            'uuid', 'relation', 'description',
+            'uuid', 'name', 'description',
             'is_deleted', 'created_at', 'updated_at'
         ]
         read_only_fields = ['uuid', 'created_at', 'updated_at']
