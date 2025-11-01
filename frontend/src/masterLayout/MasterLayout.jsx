@@ -62,6 +62,7 @@ const MasterLayout = ({ children }) => {
             { name: 'Employee Type', path: '/employeetype' },
             { name: 'Company Type', path: '/companylist' },
             { name: 'Stakeholder Category', path: '/stakeholder-list' },
+            { name: 'Bank Account Type', path: '/bank-ccount-type' },
           ]
         },
         {
@@ -75,7 +76,6 @@ const MasterLayout = ({ children }) => {
             { name: 'Activity Type', path: '/activity-type' },
             { name: 'Lost Reason (B2C)', path: '/lost-reason-B2C' },
             { name: 'Lost Reason (B2B)', path: '/lost-reason-B2B' },
-            { name: 'Bank Account Type', path: '/bank-ccount-type' },
           ]
         },
 
