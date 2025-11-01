@@ -100,6 +100,23 @@ export const DELETE_BANK_ACCOUNT_TYPE_API = "api/v1/master/BankAccountType/";
 export const EXPORT_BANK_ACCOUNT_TYPE_API = "api/v1/master/BankAccountType/export/";
 export const IMPORT_BANK_ACCOUNT_TYPE_API = "api/v1/master/BankAccountType/import/";
 
+// GENDER
+export const GET_GENDER_LIST = "/api/v1/master/genders/";
+export const ADD_GENDER_API = "/api/v1/master/genders/create/";
+export const EDIT_GENDER_API = "api/v1/master/genders/";
+export const DELETE_GENDER_API = "api/v1/master/genders/";
+export const EXPORT_GENDER_API = "api/v1/master/genders/export/";
+export const IMPORT_GENDER_API = "api/v1/master/genders/import/";
+
+
+// MARITAL STATUS
+export const GET_MARITAL_STATUS_LIST = "/api/v1/master/maritalstatus/";
+export const ADD_MARITAL_STATUS_API = "/api/v1/master/maritalstatus/create/";
+export const EDIT_MARITAL_STATUS_API = "api/v1/master/maritalstatus/";
+export const DELETE_MARITAL_STATUS_API = "api/v1/master/maritalstatus/";
+export const EXPORT_MARITAL_STATUS_API = "api/v1/master/maritalstatus/export/";
+export const IMPORT_MARITAL_STATUS_API = "api/v1/master/maritalstatus/import/";
+
 // // export const TWO_STEP_VERIFICATION = 'api/national-admin/national-admin-verifyOtpAdmin'
 // export const TWO_STEP_VERIFICATION = '/api/users/verifyUser'
 // export const FORGET_PASSWORD_URL = '/api/national-admin/forgotpassword/'

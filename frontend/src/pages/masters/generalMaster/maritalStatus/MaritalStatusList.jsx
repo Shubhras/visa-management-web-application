@@ -1,42 +1,52 @@
 import React, { useState, useEffect } from 'react'
 import { useDispatch } from "react-redux";
 import MasterLayout from "../../../../masterLayout/MasterLayout";
-import Breadcrumb from "../../../../components/Breadcrumb";
+// import Breadcrumb from "../../../components/Breadcrumb";
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { Link } from 'react-router-dom';
-// import * as XLSX from 'xlsx';
-// import { saveAs } from 'file-saver';
 import { toast } from "react-toastify";
-import AddLostReasonB2C from './AddLostReasonB2C';
-import EditLostReasonB2C from './EditLostReasonB2C';
-import AddImportLostReasonB2CModal from './AddImportLostReasonB2CModal';
-import { lostReasonB2CDelete, lostReasonB2CExportData, lostReasonB2CList } from '../../../../store/master/salesMasters/actions';
-
-const LostReasonB2CList = () => {
+import AddImportMaritalStatusModal from './AddImportMaritalStatusModal';
+import AddEditMaritalStatusModal from './AddEditMaritalStatusModal';
+import { maritalStatusList,maritalStatusDelete ,maritalStatusExportData} from '../../../../store/master/generalMasters/actions';
+const MaritalStatusList = () => {
   const dispatch = useDispatch();
-
-  const [show, setShow] = useState(false);
-  const handleShow = () => setShow(true);
-  const handleClose = () => {
-    setShow(false);
-    fetchLostReasonB2CList();
+  const [modalState, setModalState] = useState({
+    show: false,
+    mode: 'add', // 'add' or 'edit'
+    rowData: null
+  })
+  const handleShow = () => {
+    setModalState({
+      show: true,
+      mode: 'add',
+      rowData: null
+    });
   };
+  // For closing modal
+  const handleClose = () => {
+    setModalState({
+      show: false,
+      mode: 'add',
+      rowData: null
+    });
+    fetchMaritalStatusList();
+  }
 
-  const [showEdit, setShowEdit] = useState(false);
+  // const [showEdit, setShowEdit] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [rowSelectData, setRowSelectData] = useState({});
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this lost reason (B2C)?");
+  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this marital status?");
   const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [selectAllOrNot, setSelectAllOrNot] = useState('');
-  const [lostReasonB2CListData, setLostReasonB2CListData] = useState([]);
+  const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [items] = useState(["Lost Reason (B2C)", "Description", "Modified On"]);
-  const [selectedItems, setSelectedItems] = useState(["Lost Reason (B2C)"]);
-  const [ItemsRequired] = useState(["Lost Reason (B2C)"]);
+  const [items] = useState(["Marital Status", "Description", "Modified On"]);
+  const [selectedItems, setSelectedItems] = useState(["Marital Status"]);
+  const [ItemsRequired] = useState(["Marital Status"]);
 
   // Updated state with sorting
   const [tableState, setTableState] = useState({
@@ -56,7 +66,7 @@ const LostReasonB2CList = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (tableState.search !== undefined) {
-        fetchLostReasonB2CList();
+        fetchMaritalStatusList();
       }
     }, 500);
 
@@ -64,10 +74,10 @@ const LostReasonB2CList = () => {
   }, [tableState.search]);
 
   useEffect(() => {
-    fetchLostReasonB2CList();
+    fetchMaritalStatusList();
   }, [tableState.page, tableState.limit, tableState.status, tableState.sortBy, tableState.sortOrder]);
 
-  const fetchLostReasonB2CList = () => {
+  const fetchMaritalStatusList = () => {
     setLoading(true);
     const params = {
       page: tableState.page,
@@ -78,12 +88,12 @@ const LostReasonB2CList = () => {
       sortOrder: tableState.sortOrder || ''
     };
 
-    dispatch(lostReasonB2CList(params, (response, error) => {
+    dispatch(maritalStatusList(params, (response, error) => {
       setLoading(false);
       if (response?.statusCode === 200 && response?.status === true) {
         const paginationData = response?.pagination || {};
 
-        setLostReasonB2CListData(response?.data || []);
+        setDepartments(response?.data || []);
         setTableState(prev => ({
           ...prev,
           total: paginationData.totalItems || 0,
@@ -93,7 +103,7 @@ const LostReasonB2CList = () => {
           hasPrevious: paginationData.previousPage || false
         }));
       } else {
-        setLostReasonB2CListData([]);
+        setDepartments([]);
         setTableState(prev => ({
           ...prev,
           total: 0,
@@ -124,13 +134,6 @@ const LostReasonB2CList = () => {
 
   // Get sort icon for a column
   const getSortIcon = (field) => {
-    // if (tableState.sortBy !== field) {
-    //   return <Icon icon="ri:sort-line" width="16" style={{ color: '#999', marginLeft: '4px' }} />;
-    // }
-    // if (tableState.sortOrder === 'asc') {
-    //   return <Icon icon="ri:sort-asc" width="16" style={{ color: '#5a6c5b', marginLeft: '4px' }} />;
-    // }
-    // return <Icon icon="ri:sort-desc" width="16" style={{ color: '#5a6c5b', marginLeft: '4px' }} />;
     if (tableState.sortBy !== field) {
       return <Icon icon="ri:sort-desc" className='sorting-th-icone' />;
     }
@@ -169,14 +172,14 @@ const LostReasonB2CList = () => {
     if (isAllSelected) {
       setSelectedRows([]);
     } else {
-      setSelectedRows(lostReasonB2CListData.map(dept => dept.uuid));
+      setSelectedRows(departments.map(Item => Item.uuid));
     }
   };
   // For checkbox in table header
   const handleSelectAll = (e) => {
     const checked = e.target.checked;
     if (checked) {
-      setSelectedRows(lostReasonB2CListData.map(dept => dept.uuid));
+      setSelectedRows(departments.map(Item => Item.uuid));
     } else {
       setSelectedRows([]);
       setSelectAllOrNot('');
@@ -193,8 +196,8 @@ const LostReasonB2CList = () => {
     });
   };
 
-  const isAllSelected = lostReasonB2CListData.length > 0 &&
-    lostReasonB2CListData.every(dept => selectedRows.includes(dept.uuid));
+  const isAllSelected = departments.length > 0 &&
+    departments.every(Item => selectedRows.includes(Item.uuid));
 
   const goToPage = (page) => {
     if (page >= 1 && page <= tableState.totalPages) {
@@ -235,14 +238,12 @@ const LostReasonB2CList = () => {
     return pages;
   };
 
-  const handleCloseEdit = () => {
-    setShowEdit(false);
-    fetchLostReasonB2CList();
-  };
-
   const handleShowEdit = (rowData) => {
-    setShowEdit(true);
-    setRowSelectData(rowData);
+    setModalState({
+      show: true,
+      mode: 'edit',
+      rowData: rowData
+    });
   };
   const handleSelectAllOrNot = (a) => {
     setSelectAllOrNot(a);
@@ -250,7 +251,7 @@ const LostReasonB2CList = () => {
   const handleDelete = (uuid) => {
     setDeleteId(uuid);
     setShowDeleteConfirm(true);
-    setDeleteConfirmMessage(`Are you sure you want to delete this lost reason (B2C)?`);
+    setDeleteConfirmMessage(`Are you sure you want to delete this marital status?`);
   };
 
   const handleBulkDelete = () => {
@@ -259,8 +260,8 @@ const LostReasonB2CList = () => {
       return;
     }
     // Choose message based on delete type
-    const message = selectAllOrNot === "all" ? `${tableState.total} all lost reason (B2C)` : `${selectedRows.length} selected lost reason (B2C)`;
-    setDeleteConfirmMessage(`Are you sure you want to delete this lost reason (B2C) (${message})?`);
+    const message = selectAllOrNot === "all" ? `${tableState.total} all marital status` : `${selectedRows.length} selected marital status`;
+    setDeleteConfirmMessage(`Are you sure you want to delete this marital status (${message})?`);
     setShowDeleteConfirm(true);
   };
 
@@ -268,23 +269,22 @@ const LostReasonB2CList = () => {
     // const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
     const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
     if (!sendPayload || sendPayload.length === 0) {
-      toast.error("No lost reason (B2C) selected for deletion.");
+      toast.error("No marital status selected for deletion.");
       return;
     }
-
-    dispatch(lostReasonB2CDelete(sendPayload, (response, error) => {
+    dispatch(maritalStatusDelete(sendPayload, (response, error) => {
       if (error) {
         toast.error(error?.response?.data?.message || "server error");
       } else {
         if (response?.statusCode === 200 && response?.status === true) {
           toast.success(response?.message);
-          setLostReasonB2CListData(prevDepts => prevDepts.filter(dept => dept.uuid !== deleteId));
+          setDepartments(prevRowItems => prevRowItems.filter(Item => Item.uuid !== deleteId));
           setSelectedRows(prevSelected => prevSelected.filter(rowId => rowId !== deleteId));
           setShowDeleteConfirm(false);
           setSelectedRows([]);
           setSelectAllOrNot('');
           setDeleteId(null);
-          fetchLostReasonB2CList();
+          fetchMaritalStatusList();
         } else {
           toast.error("Something went wrong.");
         }
@@ -296,11 +296,13 @@ const LostReasonB2CList = () => {
     setShowDeleteConfirm(false);
     setDeleteId(null);
     setSelectedRows([])
+    setDeleteConfirmMessage('');
+    setSelectAllOrNot('');
   };
 
   const handleCloseImport = () => {
     setShowImport(false);
-    fetchLostReasonB2CList();
+    fetchMaritalStatusList();
   };
 
   const handleShowImport = () => {
@@ -314,6 +316,7 @@ const LostReasonB2CList = () => {
   const cancelExportTest = () => {
     setShowExportPopop(false);
   };
+
 
   const handleDragStart = (e, index) => {
     e.dataTransfer.setData("dragIndex", index);
@@ -342,19 +345,18 @@ const LostReasonB2CList = () => {
     }
   };
 
-
   const handleExport = () => {
     if (selectedItems.length == 0) {
       toast.error("Please select at least one field");
       return
     }
-    // Map frontend labels to backend field names
+    // Map frontend labels to Marital Status field names
     const fieldMapping = {
-      "Lost Reason (B2C)": "name",
+      "Marital Status": "name",
       "Modified On": "updated_at",
       "Description": "description",
     };
-    // Convert selectedItems to backend field names
+    // Convert selectedItems to Marital Status field names
     const mappedFields = selectedItems.map((item) => fieldMapping[item] || item);
     // Convert to comma-separated string
     const fieldsString = mappedFields.join(",");
@@ -363,9 +365,9 @@ const LostReasonB2CList = () => {
       fields: fieldsString,
       uuids: selectAllOrNot === "all" ? [] : selectedRows,
     };
-    setLoadingExport(true);
 
-    dispatch(lostReasonB2CExportData(sendPayload, (response, error) => {
+    setLoadingExport(true);
+    dispatch(maritalStatusExportData(sendPayload, (response, error) => {
       if (error) {
         setLoadingExport(false);
         toast.error(error?.response?.message || "server error");
@@ -379,7 +381,7 @@ const LostReasonB2CList = () => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `LostReason(B2C).xlsx`;
+          link.download = `MaritalStatus.xlsx`;
           document.body.appendChild(link);
           link.click();
           link.remove();
@@ -417,7 +419,7 @@ const LostReasonB2CList = () => {
   return (
     <>
       <MasterLayout>
-        {/* <Breadcrumb title="Lost Reason (B2C)" subTitle="List" /> */}
+        {/* <Breadcrumb title="Department" subTitle="List" /> */}
         <div className="card basic-data-table main-container-data">
           <div className="card-body container-data">
             <div className="row align-items-center gy-3 gx-2 flex-wrap filter-action-btn">
@@ -437,7 +439,7 @@ const LostReasonB2CList = () => {
                   >
                     Export
                   </button>
-                  <button
+                <button
                     onClick={handleBulkDelete}
                     className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
                   >
@@ -529,14 +531,14 @@ const LostReasonB2CList = () => {
                           type="checkbox"
                           checked={isAllSelected}
                           onChange={handleSelectAll}
-                          disabled={lostReasonB2CListData.length === 0}
+                          disabled={departments.length === 0}
                         />
                         <span>No.</span>
                       </div>
                     </th>
                     <th scope="col" className='sorting-th' onClick={() => handleSort('name')}>
                       <div className="d-flex align-items-center">
-                        Lost Reason (B2C)
+                        Marital Status
                         {getSortIcon('name')}
                       </div>
                     </th>
@@ -569,16 +571,16 @@ const LostReasonB2CList = () => {
                         </div>
                       </td>
                     </tr>
-                  ) : lostReasonB2CListData.length > 0 ? (
-                    lostReasonB2CListData.map((dept, index) => (
-                      <tr key={dept.uuid} >
+                  ) : departments.length > 0 ? (
+                    departments.map((rowItem, index) => (
+                      <tr key={rowItem.uuid} >
                         <td >
                           <div className="d-flex align-items-center gap-2">
                             <input
                               className="form-check-input"
                               type="checkbox"
-                              checked={selectedRows.includes(dept.uuid)}
-                              onChange={() => handleRowSelect(dept.uuid)}
+                              checked={selectedRows.includes(rowItem.uuid)}
+                              onChange={() => handleRowSelect(rowItem.uuid)}
                             />
                             <span>
                               {String(startIndex + index + 1).padStart(2, '0')}
@@ -587,16 +589,16 @@ const LostReasonB2CList = () => {
                         </td>
                         <td >
                           <span >
-                            {dept.name}
+                            {rowItem.name}
                           </span>
                         </td>
                         <td >
                           <span >
-                            {dept.description}
+                            {rowItem.description}
                           </span>
                         </td>
                         <td>
-                          <span>{formatDateTime(dept.updated_at)}</span>
+                          <span>{formatDateTime(rowItem.updated_at)}</span>
                         </td>
                         <td >
                           <div className="d-flex align-items-center gap-2">
@@ -605,13 +607,13 @@ const LostReasonB2CList = () => {
                               className='edit-btn-icone'
                               onClick={(e) => {
                                 e.preventDefault();
-                                handleShowEdit(dept);
+                                handleShowEdit(rowItem);
                               }}
                             >
                               <Icon icon="lucide:edit" width="18" className='icone' />
                             </Link>
                             <button
-                              onClick={() => handleDelete(dept.uuid)}
+                              onClick={() => handleDelete(rowItem.uuid)}
                               className='delete-btn-icone'
                             >
                               <Icon icon="mingcute:delete-2-line" width="18" className='icone' />
@@ -622,7 +624,7 @@ const LostReasonB2CList = () => {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="5" className='no-records-found' >
+                      <td colSpan="5" className='no-records-found'>
                         No records found
                       </td>
                     </tr>
@@ -737,13 +739,16 @@ const LostReasonB2CList = () => {
             </div>
           </div>
         </div>
-
-        <AddLostReasonB2C show={show} handleClose={handleClose} />
-        <EditLostReasonB2C show={showEdit} handleCloseEdit={handleCloseEdit} rowSelectData={rowSelectData} />
+        <AddEditMaritalStatusModal
+          show={modalState.show}
+          handleClose={handleClose}
+          mode={modalState.mode}
+          rowData={modalState.rowData}
+        />
         {showImport && (
-          <AddImportLostReasonB2CModal show={showImport} handleClose={handleCloseImport} />)}
+          <AddImportMaritalStatusModal show={showImport} handleClose={handleCloseImport} />)}
         {showDeleteConfirm && (
-          <div className="modal fade show common-ctl-popup" >
+          <div className="modal fade show common-ctl-popup">
             <div className="modal-dialog modal-dialog-centered">
               <div className="modal-content" style={{ borderRadius: '10px' }}>
                 <div className="modal-header">
@@ -751,8 +756,6 @@ const LostReasonB2CList = () => {
                   <button type="button" className="btn-close" onClick={cancelDelete}></button>
                 </div>
                 <div className="modal-body">
-                  {/* <p className="mb-0">Are you sure you want to delete this Activity?</p> */}
-                  {/* <p className="mb-0"> Are you sure you want to delete this Activity ({selectedRows.length})?</p> */}
                   <p className="mb-0">{deleteConfirmMessage}</p>
 
                 </div>
@@ -785,7 +788,7 @@ const LostReasonB2CList = () => {
             <div className="modal-dialog modal-xl modal-dialog-centered" role="document">
               <div className="modal-content radius-16 bg-base">
                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                  <h1 className="modal-title fs-5">Export Lost Reason (B2C)</h1>
+                  <h1 className="modal-title fs-5">Export Marital Status</h1>
                   <button
                     type="button"
                     className="btn-close"
@@ -883,4 +886,4 @@ const LostReasonB2CList = () => {
   );
 };
 
-export default LostReasonB2CList;
+export default MaritalStatusList;
