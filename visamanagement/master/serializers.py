@@ -35,14 +35,14 @@ class AdminUserLoginSerializer(serializers.Serializer):
 class GenderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Gender
-        fields = ['uuid', 'text', 'description', 'created_at', 'updated_at', 'is_active', 'is_deleted']
+        fields = ['uuid', 'name', 'description', 'created_at', 'updated_at', 'is_active', 'is_deleted']
         read_only_fields = ['uuid', 'created_at', 'updated_at', 'is_deleted']
 
 
 class MaritalstatusSerializer(serializers.ModelSerializer):
     class Meta:
         model = Maritalstatus
-        fields = ['uuid', 'text', 'description', 'created_at', 'updated_at', 'is_active', 'is_deleted']
+        fields = ['uuid', 'name', 'description', 'created_at', 'updated_at', 'is_active', 'is_deleted']
         read_only_fields = ['uuid', 'created_at', 'updated_at', 'is_deleted']
 
 

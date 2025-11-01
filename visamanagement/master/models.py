@@ -4,7 +4,7 @@ from django.db import models
 
 class Gender(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    text = models.CharField(max_length=255, unique=True)
+    name = models.CharField(max_length=255, unique=True)
     description = models.TextField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -12,11 +12,11 @@ class Gender(models.Model):
     is_deleted = models.BooleanField(default=False)
 
     def __str__(self):
-        return self.text
+        return self.name
   
 class Maritalstatus(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    text = models.CharField(max_length=255, unique=True)
+    name = models.CharField(max_length=255, unique=True)
     description = models.TextField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -24,7 +24,7 @@ class Maritalstatus(models.Model):
     is_deleted = models.BooleanField(default=False)
     
     def __str__(self):
-        return self.text
+        return self.name
 
 
 class Continents(models.Model):

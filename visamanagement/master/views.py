@@ -131,7 +131,6 @@ class GenderListAPIView(APIView):
         sort_by = request.GET.get('sortBy', 'created_at')
         sort_order = request.GET.get('sortOrder', 'asc')
 
-        # Define allowed fields to sort
         allowed_sort_fields = ['text', 'description', 'created_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
@@ -139,20 +138,16 @@ class GenderListAPIView(APIView):
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
-        # Filter out deleted entries
         queryset = Gender.objects.filter(is_deleted=False)
 
-        # Apply search filter if provided
         if search:
             queryset = queryset.filter(
                 Q(text__icontains=search) |
                 Q(description__icontains=search)
             )
 
-        # Apply ordering
         queryset = queryset.order_by(sort_by)
 
-        # Apply pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = GenderSerializer(result_page, many=True)
@@ -161,7 +156,22 @@ class GenderListAPIView(APIView):
 
 
 class GenderCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
     def post(self, request):
+        name = request.data.get("name", "").strip()
+
+        # Check if gender with same name already exists (ignoring case)
+        existing = Gender.objects.filter(name__iexact=name, is_deleted=False).first()
+
+        if existing:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Gender with this name already exists."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # If no active gender exists, create new
         serializer = GenderSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -171,13 +181,14 @@ class GenderCreateAPIView(APIView):
                 "message": "Gender created successfully",
                 "data": serializer.data
             }, status=status.HTTP_200_OK)
-        
 
+        # Handle validation errors
         errors = serializer.errors
         messages = []
         for field, msgs in errors.items():
             messages.extend(msgs)
         message_text = " ".join(messages)
+
         return Response({
             "statusCode": 400,
             "status": False,
@@ -187,6 +198,8 @@ class GenderCreateAPIView(APIView):
 
 
 class GenderDetailAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
     def get(self, request, uuid):
         try:
             gender = Gender.objects.get(uuid=uuid, is_deleted=False)
@@ -204,7 +217,7 @@ class GenderDetailAPIView(APIView):
             "status": True,
             "message": "Gender retrieved successfully",
             "data": serializer.data
-        })
+        }, status=status.HTTP_200_OK)
 
 
 class GenderUpdateAPIView(APIView):
@@ -324,6 +337,223 @@ class GenderDeleteAPIView(APIView):
 
 
 
+
+class GenderExportAPIView(APIView):
+    """
+    Export Gender data to CSV or XLSX.
+    """
+    def get(self, request):
+        format_type = request.GET.get('format', 'xlsx').lower()
+        fields = request.GET.get('fields')  # comma-separated
+        uuids_param = request.GET.get('uuids', '')  # comma-separated UUIDs
+
+        uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+        # --- Field to header mapping ---
+        field_header_map = {
+            'uuid': 'UUID',
+            'name': 'Gender',
+            'description': 'Description',
+            'is_active': 'Active',
+            'is_deleted': 'Deleted',
+            'updated_at': 'Modified On',
+        }
+
+        # --- Determine export fields ---
+        if fields:
+            field_list = [f.strip() for f in fields.split(',')]
+        else:
+            field_list = list(field_header_map.keys())
+
+        # --- Fetch queryset ---
+        queryset = Gender.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-updated_at')
+
+        # --- Prepare dataset ---
+        dataset = Dataset()
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+
+        for gender in queryset:
+            row = []
+            for field in field_list:
+                value = getattr(gender, field, '')
+                if field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
+                    value = int(value)
+                row.append(value if value is not None else '')
+            dataset.append(row)
+
+        # --- Export file ---
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'genders.csv'
+        else:
+            file_data = io.BytesIO(dataset.export('xlsx'))
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'genders.xlsx'
+
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        return response
+
+
+class GenderImportAPIView(APIView):
+    """
+    Import Gender data from CSV or XLSX.
+    """
+    def post(self, request):
+        file = request.FILES.get('file')
+        sheet_name = request.data.get('sheet_name')
+
+        if not file:
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+
+        format_type = file.name.split('.')[-1].lower()
+        duplicate_names = []
+
+        required_headers = {'gender'}       # Required header name
+        optional_headers = {'description', 'is_active'}  # Optional
+
+        try:
+            data = []
+
+            # --- XLSX ---
+            if format_type == 'xlsx':
+                wb = openpyxl.load_workbook(file, read_only=True)
+                available_sheets = wb.sheetnames
+
+                if not sheet_name:
+                    return Response({
+                        'error': 'Please provide sheet_name',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                if sheet_name not in available_sheets:
+                    return Response({
+                        'error': f'Sheet "{sheet_name}" not found',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                ws = wb[sheet_name]
+                if ws.max_row <= 1:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'Sheet "{sheet_name}" is empty.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+
+                if not required_headers.issubset(set(headers)):
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    if not any(row):
+                        continue
+                    row_dict = dict(zip(headers, row))
+                    data.append(row_dict)
+
+                if not data:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'Sheet "{sheet_name}" has no data rows.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+            # --- CSV ---
+            elif format_type == 'csv':
+                decoded_file = file.read().decode('utf-8')
+                dataset = Dataset()
+                dataset.load(decoded_file, format='csv')
+
+                for row in dataset.dict:
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({
+                            "statusCode": 400,
+                            "status": False,
+                            "message": (
+                                f'Missing required headers. Required: {", ".join(required_headers)}. '
+                                f'Found: {", ".join(row_lower.keys())}'
+                            )
+                        }, status=status.HTTP_400_BAD_REQUEST)
+                    data.append(row_lower)
+
+                if not data:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "CSV file is empty."
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+            else:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": 'Unsupported file format. Use .xlsx or .csv'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # --- Process import data ---
+            imported_count = 0
+            for row in data:
+                name = str(row.get('gender')).strip() if row.get('gender') else None
+                description = str(row.get('description')).strip() if row.get('description') else ''
+                is_active = row.get('is_active')
+                is_active = bool(int(is_active)) if str(is_active).isdigit() else True
+
+                if not name:
+                    continue
+
+                existing = Gender.objects.filter(name__iexact=name).first()
+
+                if existing:
+                    if not existing.is_deleted:
+                        duplicate_names.append(name)
+                        continue
+                    else:
+                        existing.description = description
+                        existing.is_active = is_active
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
+                else:
+                    Gender.objects.create(
+                        name=name,
+                        description=description,
+                        is_active=is_active,
+                        is_deleted=False
+                    )
+                    imported_count += 1
+
+        except Exception as e:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "duplicates": list(set(duplicate_names)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count
+        }, status=status.HTTP_200_OK)
+
+
+
+        
 
 #-------------------------------maritalstatus--------------------------------
 class MaritalstatusListAPIView(APIView):

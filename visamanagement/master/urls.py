@@ -6,11 +6,15 @@ from .visamaster import *
 urlpatterns = [
 
     path("login/", MasterTokenLoginAPIView.as_view(), name="master-login"),
-    path('genders/create/', GenderCreateAPIView.as_view()),
-    path('genders/', GenderListAPIView.as_view()),
-    path('genders/<uuid:uuid>/', GenderDetailAPIView.as_view()),
-    path('genders/<uuid:uuid>/update/', GenderUpdateAPIView.as_view()),
-    path('genders/delete/', GenderDeleteAPIView.as_view()),
+
+    path('genders/create/', GenderCreateAPIView.as_view(),name='genders-create'),
+    path('genders/', GenderListAPIView.as_view(),name='genders-list'),
+    path('genders/<uuid:uuid>/', GenderDetailAPIView.as_view(),name='genders-detail'),
+    path('genders/<uuid:uuid>/update/', GenderUpdateAPIView.as_view(),name='genders-update'),
+    path('genders/delete/', GenderDeleteAPIView.as_view(),name='genders-export'),
+    path('genders/export/', GenderExportAPIView.as_view(), name='genders-export'),
+    path('genders/import/', GenderImportAPIView.as_view(), name='genders-import'),
+
 
     path('Maritalstatus/create/', MaritalstatusCreateAPIView.as_view(),name='Maritalstatus-create'),
     path('Maritalstatus/list/', MaritalstatusListAPIView.as_view(),name='Maritalstatus-list'),
