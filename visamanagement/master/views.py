@@ -8427,7 +8427,7 @@ class LostReasonExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'name': f'Lost Reason\u00A0(B2C)',  
+            'name': 'Lost Reason B2C',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',
