@@ -160,19 +160,27 @@ class GenderCreateAPIView(APIView):
 
     def post(self, request):
         name = request.data.get("name", "").strip()
-
-        # Check if gender with same name already exists (ignoring case)
-        existing = Gender.objects.filter(name__iexact=name, is_deleted=False).first()
-
-        if existing:
+        if not name:
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Gender with this name already exists."
+                "message": "Name is required.",
+                "data": None
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # If no active gender exists, create new
-        serializer = GenderSerializer(data=request.data)
+        # Check duplicate
+        if Gender.objects.filter(name__iexact=name, is_deleted=False).exists():
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Gender with this name already exists.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        data = request.data.copy()
+        data['name'] = name
+
+        serializer = GenderSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
             return Response({
@@ -182,17 +190,13 @@ class GenderCreateAPIView(APIView):
                 "data": serializer.data
             }, status=status.HTTP_200_OK)
 
-        # Handle validation errors
-        errors = serializer.errors
         messages = []
-        for field, msgs in errors.items():
+        for field, msgs in serializer.errors.items():
             messages.extend(msgs)
-        message_text = " ".join(messages)
-
         return Response({
             "statusCode": 400,
             "status": False,
-            "message": message_text,
+            "message": " ".join(messages),
             "data": None
         }, status=status.HTTP_400_BAD_REQUEST)
 

@@ -115,7 +115,7 @@ class Relation(models.Model):
     updated_at = models.DateTimeField(auto_now=True) 
 
     def __str__(self):
-        return self.relation
+        return self.name
 
 class Timezone(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
