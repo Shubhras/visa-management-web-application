@@ -15744,8 +15744,10 @@ td.fc-header-center {
 }
 
 .main-footer .light-logo {
-  width: 100px;
-  height: 35px;
+  /* width: 100px;
+  height: 35px; */
+
+  height: 31px;
 }
 
 /* === footer css end === */

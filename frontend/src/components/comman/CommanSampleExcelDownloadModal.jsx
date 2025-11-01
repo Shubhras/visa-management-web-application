@@ -57,9 +57,13 @@ const CommanSampleExcelDownloadModal = ({ show, handleClose, prepareData }) => {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     });
 
-    saveAs(
+    // saveAs(
+    //   blob,
+    //   `${prepareData?.downloadFileName || "departments"}_${new Date().toISOString().split("T")[0]}.xlsx`
+    // );
+     saveAs(
       blob,
-      `${prepareData?.downloadFileName || "departments"}_${new Date().toISOString().split("T")[0]}.xlsx`
+      `${prepareData?.downloadFileName || "Sample"}-Sample.xlsx`
     );
     onCloseSampleExcelDownload();
     // Success message

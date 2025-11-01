@@ -105,7 +105,7 @@ const AddImportBankAccountTypeModal = ({ show, handleClose }) => {
         const worksheetData = [header, ...duplicates.map((item) => [item])];
         const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Bank Account Type");
+        XLSX.utils.book_append_sheet(workbook, worksheet, "BankAccountType");
 
         const excelBuffer = XLSX.write(workbook, {
             bookType: "xlsx",
@@ -116,7 +116,7 @@ const AddImportBankAccountTypeModal = ({ show, handleClose }) => {
             type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         });
 
-        saveAs(blob, `BankAccountType_${new Date().toISOString().split("T")[0]}.xlsx`);
+        saveAs(blob, `BankAccountType-Duplicate-Data.xlsx`);
     };
     // Handle modal close
     const onClose = () => {
