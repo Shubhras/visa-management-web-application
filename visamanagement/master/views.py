@@ -5401,7 +5401,7 @@ class StakeholderTypeExportAPIView(APIView):
             'name': 'Stakeholder Type',
             'description': 'Description',
             'category': 'Category UUID',
-            'category_name': 'Category Name',
+            'category_name': 'Stakeholder Category',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',
             'created_at': 'Created On'
@@ -5457,7 +5457,7 @@ class StakeholderTypeImportAPIView(APIView):
         duplicate_names = []
 
         required_headers = {'stakeholder type'}
-        optional_headers = {'description', 'category'}
+        optional_headers = {'description', 'stakeholder category'}
 
         try:
             data = []
@@ -5539,7 +5539,7 @@ class StakeholderTypeImportAPIView(APIView):
             for row in data:
                 name = str(row.get('stakeholder type')).strip() if row.get('stakeholder type') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
-                category_id = row.get('category')
+                category_id = row.get('stakeholder category')
 
                 if not name:
                     continue
