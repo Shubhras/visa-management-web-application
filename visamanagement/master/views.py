@@ -1083,72 +1083,167 @@ class ContinentUpdateAPIView(APIView):
 class ContinentDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
-    def delete(self, request):
+    def delete(self, request, uuid=None):
         ids = request.data.get('id', None)
-        if not ids:
-            return Response({"statusCode": 400, "status": False, "message": "Provide 'id' field"}, status=400)
 
+        # Single delete via URL parameter
+        if uuid:
+            try:
+                continent = Continents.objects.get(uuid=uuid)
+                continent.delete()
+                return Response({
+                    "statusCode": 204,
+                    "status": True,
+                    "message": "Continent permanently deleted.",
+                    "data": None
+                }, status=status.HTTP_204_NO_CONTENT)
+            except Continents.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "Continent not found.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+
+        # Delete all continents
         if ids == "all":
-            objs = Continents.objects.filter(is_deleted=False)
-            count = objs.count()
-            objs.delete()
-            return Response({"statusCode": 200, "status": True, "message": f"All {count} continents deleted"})
+            continents = Continents.objects.all()
+            count = continents.count()
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No continents found to delete.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+            continents.delete()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"All {count} continent(s) permanently deleted.",
+                "data": None
+            }, status=status.HTTP_200_OK)
 
-        if not isinstance(ids, list):
-            return Response({"statusCode": 400, "status": False, "message": "Provide list of UUIDs"}, status=400)
+        # Validate bulk UUIDs
+        if not ids or not isinstance(ids, list):
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
 
-        valid_uuids, invalid_uuids = [], []
+        valid_uuids = []
+        invalid_uuids = []
         for u in ids:
             try:
                 valid_uuids.append(UUID(u))
             except ValueError:
                 invalid_uuids.append(u)
 
-        objs = Continents.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = objs.count()
+        if not valid_uuids:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "No valid UUIDs provided.",
+                "data": {"invalid_uuids": invalid_uuids}
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Bulk delete
+        continents = Continents.objects.filter(uuid__in=valid_uuids)
+        count = continents.count()
+
         if count == 0:
-            return Response({"statusCode": 404, "status": False, "message": "No matching continents found"}, status=404)
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "No matching continents found.",
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+            }, status=status.HTTP_404_NOT_FOUND)
 
-        objs.delete()
-        return Response({"statusCode": 200, "status": True, "message": f"{count} continent(s) deleted", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None})
+        continents.delete()
 
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": f"{count} continent(s) permanently deleted.",
+            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+        }, status=status.HTTP_200_OK)
+
+
+        
 
 class ContinentExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
+        # --- Get query params ---
         format_type = request.GET.get('format', 'xlsx').lower()
-        fields = request.GET.get('fields')
-        uuids_param = request.GET.get('uuids', '')
+        fields = request.GET.get('fields')  # comma-separated fields
+        uuids_param = request.GET.get('uuids', '')  # comma-separated UUIDs
         uuids = [u.strip() for u in uuids_param.split(',') if u]
-        field_list = [f.strip() for f in fields.split(',')] if fields else ['uuid', 'name', 'description', 'is_active', 'is_deleted', 'created_at', 'updated_at']
-        queryset = Continents.objects.filter(uuid__in=uuids) if uuids else Continents.objects.all()
 
+        # --- Field to header mapping ---
+        field_header_map = {
+            'uuid': 'UUID',
+            'name': 'Continent',
+            'description': 'Description',
+            'is_active': 'Active',
+            'is_deleted': 'Deleted',
+            'created_at': 'Created On',
+            'updated_at': 'Modified On',
+        }
+
+        # --- Determine which fields to export ---
+        if fields:
+            field_list = [f.strip() for f in fields.split(',')]
+        else:
+            field_list = list(field_header_map.keys())
+
+        # --- Fetch queryset ---
+        queryset = Continents.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-updated_at')
+
+        # --- Prepare dataset ---
         dataset = Dataset()
-        dataset.headers = field_list
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'Continents'
+
         for obj in queryset:
             row = []
             for field in field_list:
                 value = getattr(obj, field, '')
-                if isinstance(value, datetime.datetime):
-                    value = value.strftime("%Y-%m-%d %H:%M:%S")
-                if isinstance(value, bool):
+
+                if field in ['created_at', 'updated_at'] and value:
+                    # Convert UTC to IST
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
                     value = int(value)
+
                 row.append(value if value is not None else '')
             dataset.append(row)
 
-        if format_type == 'xlsx':
-            data = XLSX().export_data(dataset)
+        # --- Export data ---
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'continents.csv'
+        else:
+            file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'continents.xlsx'
-        else:
-            data = CSV().export_data(dataset)
-            content_type = 'text/csv; charset=utf-8'
-            file_name = 'continents.csv'
 
-        response = HttpResponse(data, content_type=content_type)
+        # --- Return response ---
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
+
+
 
 class ContinentImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -1156,39 +1251,113 @@ class ContinentImportAPIView(APIView):
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')
+
         if not file:
-            return Response({'error': 'No file uploaded'}, status=400)
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
-        dataset = Dataset()
         duplicate_names = []
 
+        # Required and optional headers
+        required_headers = {'continent'}
+        optional_headers = {'description'}
+
         try:
+            data = []
+            headers = []
+
+            # ---------- XLSX Handling ----------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
+
                 if not sheet_name:
-                    return Response({'error': 'Provide sheet_name', 'available_sheets': available_sheets}, status=400)
+                    return Response({
+                        'error': 'Please provide sheet_name',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
                 if sheet_name not in available_sheets:
-                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
+                    return Response({
+                        'error': f'Sheet "{sheet_name}" not found in uploaded file',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
                 ws = wb[sheet_name]
-                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                data = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True)]
+                if ws.max_row <= 1:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Please provide at least one data row.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+
+                # Validate required headers
+                if not required_headers.issubset(set(headers)):
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        'message': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    if not any(row):
+                        continue
+                    row_dict = dict(zip(headers, row))
+                    data.append(row_dict)
+
+                if not data:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Please provide at least one data row.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+            # ---------- CSV Handling ----------
             elif format_type == 'csv':
-                dataset.load(file.read().decode('utf-8'), format='csv')
-                data = dataset.dict
+                decoded_file = file.read().decode('utf-8')
+                dataset = Dataset()
+                dataset.load(decoded_file, format='csv')
+
+                for row in dataset.dict:
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+
+                    # Validate required headers
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({
+                            "statusCode": 400,
+                            "status": False,
+                            "message": (
+                                f'Missing required headers. Required: {", ".join(required_headers)}. '
+                                f'Found headers in the file: {", ".join(row_lower.keys())}.'
+                            )
+                        }, status=status.HTTP_400_BAD_REQUEST)
+
+                    data.append(row_lower)
+
+                if not data:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "The uploaded CSV file is empty. Please provide at least one data row."
+                    }, status=status.HTTP_400_BAD_REQUEST)
             else:
-                return Response({'error': 'Unsupported format'}, status=400)
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    'error': 'Unsupported file format. Use .xlsx or .csv'
+                }, status=status.HTTP_400_BAD_REQUEST)
 
+            imported_count = 0
+
+            # ---------- Import Rows ----------
             for row in data:
-                name = str(row.get('name')).strip() if row.get('name') else None
+                name = str(row.get('continent')).strip() if row.get('continent') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
-                is_active = bool(row.get('is_active')) if 'is_active' in row else True
-
+                
                 if not name:
-                    continue
+                    continue  # skip rows without name
 
                 existing = Continents.objects.filter(name__iexact=name).first()
                 if existing:
@@ -1197,20 +1366,33 @@ class ContinentImportAPIView(APIView):
                         existing.description = description
                         existing.is_active = is_active
                         existing.save()
+                        imported_count += 1
                     else:
                         duplicate_names.append(name)
                         continue
                 else:
-                    Continents.objects.create(name=name, description=description, is_active=is_active)
+                    Continents.objects.create(
+                        name=name,
+                        description=description,
+                        is_active=is_active,
+                        is_deleted=False
+                    )
+                    imported_count += 1
 
         except Exception as e:
-            return Response({'error': str(e)}, status=400)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                'message': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response({"statusCode": 200, "status": True, "duplicates": list(set(duplicate_names)), "message": f'Import successful'}, status=200)
-
-
-
-
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "duplicates": list(set(duplicate_names)),
+            "imported_count": imported_count,
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
+        }, status=status.HTTP_200_OK)
 
 #-------------------------------------------country---------------------------------
 
