@@ -1171,7 +1171,7 @@ class ContinentDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-        
+
 
 class ContinentExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -1364,7 +1364,7 @@ class ContinentImportAPIView(APIView):
                     if existing.is_deleted:
                         existing.is_deleted = False
                         existing.description = description
-                        existing.is_active = is_active
+                       
                         existing.save()
                         imported_count += 1
                     else:
@@ -1374,7 +1374,7 @@ class ContinentImportAPIView(APIView):
                     Continents.objects.create(
                         name=name,
                         description=description,
-                        is_active=is_active,
+                       
                         is_deleted=False
                     )
                     imported_count += 1
