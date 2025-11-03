@@ -3306,6 +3306,7 @@ class DepartmentExportAPIView(APIView):
         # --- Prepare dataset ---
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'Departments'
 
         for dept in queryset:
             row = []
