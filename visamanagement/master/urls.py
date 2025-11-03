@@ -133,9 +133,12 @@ urlpatterns = [
     # Stakeholder Type
     path('stakeholder-types/', StakeholderTypeListAPIView.as_view(), name='stakeholdertype-list'),
     path('stakeholder-types/create/', StakeholderTypeCreateAPIView.as_view(), name='stakeholdertype-create'),
-    path('stakeholder-types/<uuid:uuid>/', StakeholderTypeDetailAPIView.as_view(), name='stakeholdertype-detail'),
+    path('stakeholder-types/<uuid:uuid>/', StakeholderTypeRetrieveAPIView.as_view(), name='stakeholdertype-detail'),
     path('stakeholder-types/<uuid:uuid>/update/', StakeholderTypeUpdateAPIView.as_view(), name='stakeholdertype-update'),
     path('stakeholder-types/delete/', StakeholderTypeDeleteAPIView.as_view(), name='stakeholdertype-delete'),
+    path('stakeholder-categories/export/',  StakeholderTypeExportAPIView.as_view(), name='stakeholdercategory-export'),
+    path('stakeholder-categories/import/',  StakeholderTypeImportAPIView.as_view(), name='stakeholdercategory-import'),
+
 
     path("accreditation-category/create/", AccreditationCategoryCreateAPIView.as_view(), name='accreditation-list'),
     path("accreditation-category/", AccreditationCategoryListAPIView.as_view(), name='accreditation-create'),
