@@ -378,6 +378,7 @@ class GenderExportAPIView(APIView):
         # --- Prepare dataset ---
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title="Gender"
 
         for gender in queryset:
             row = []
@@ -822,9 +823,11 @@ class MaritalstatusExportAPIView(APIView):
             queryset = queryset.filter(uuid__in=uuids)
         queryset = queryset.order_by('-updated_at')
 
+
         # Prepare dataset
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title="MaritalStatus"
 
         for item in queryset:
             row = []
@@ -3306,7 +3309,7 @@ class DepartmentExportAPIView(APIView):
         # --- Prepare dataset ---
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'Departments'
+        dataset.title = 'Department'
 
         for dept in queryset:
             row = []
@@ -3734,6 +3737,7 @@ class EmployeeTypeExportAPIView(APIView):
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'EmployeeType'
 
         for dept in queryset:
             row = []
@@ -4157,6 +4161,9 @@ class CompanyTypeExportAPIView(APIView):
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        
+        dataset.title = 'CompanyType'
+        
 
         for dept in queryset:
             row = []
@@ -4791,6 +4798,7 @@ class StakeholderCategoryExportAPIView(APIView):
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'StakeholderCategory'
 
         for dept in queryset:
             row = []
@@ -5830,6 +5838,7 @@ class BankAccountTypeExportAPIView(APIView):
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title ="BankAccountType"
 
         for record in queryset:
             row = []
@@ -6415,6 +6424,7 @@ class LeadSourceExportAPIView(APIView):
         # Prepare dataset
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title="LeadSource"
 
 
         for lead in queryset:
@@ -6823,6 +6833,7 @@ class InterestLevelExportAPIView(APIView):
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title="InterestLevel"
 
 
         for inte in queryset:
@@ -7266,6 +7277,7 @@ class PriorityExportAPIView(APIView):
         # Prepare dataset
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title="Priority"
 
         for obj in queryset:
             row = []
@@ -7709,7 +7721,7 @@ class TagsExportAPIView(APIView):
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-
+        dataset.title("Tags")
 
         for dept in queryset:
             row = []
@@ -8133,6 +8145,7 @@ class ActivityTypeExportAPIView(APIView):
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title="ActivityType"
 
 
         for dept in queryset:
@@ -8544,6 +8557,7 @@ class LostReasonExportAPIView(APIView):
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title="LostReason(B2C)"
 
         for dept in queryset:
             row = []
@@ -8953,7 +8967,7 @@ class LostReasonB2BExportAPIView(APIView):
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-
+        dataset.title="LostReason(B2B)"
         
 
         for dept in queryset:
