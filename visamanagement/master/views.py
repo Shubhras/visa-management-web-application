@@ -5190,17 +5190,19 @@ class StakeholderTypeCreateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
+
 class StakeholderTypeListAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
     def get(self, request):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
+        sort_order = request.GET.get('sortOrder', 'desc')
 
         allowed_sort_fields = ['name', 'description', 'created_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
 
-        # Apply descending order for 'desc'
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
@@ -5220,110 +5222,367 @@ class StakeholderTypeListAPIView(APIView):
 
         return paginator.get_paginated_response(serializer.data)
 
+# ----------------- CREATE -----------------
+class StakeholderTypeCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
-class StakeholderTypeDetailAPIView(APIView):
-    def get(self, request, uuid):
-        stakeholder_type = get_object_or_404(StakeholderType, uuid=uuid, is_deleted=False)
-        serializer = StakeholderTypeSerializer(stakeholder_type)
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": "Stakeholder Type retrieved successfully",
-            "data": serializer.data
-        }, status=status.HTTP_200_OK)
+    def post(self, request):
+        name = request.data.get("name", "").strip()
 
+        existing = StakeholderType.objects.filter(name__iexact=name, is_deleted=False).first()
+        if existing:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "StakeholderType with this name already exists."
+            }, status=status.HTTP_400_BAD_REQUEST)
 
-class StakeholderTypeUpdateAPIView(APIView):
-    def put(self, request, uuid):
-        stakeholder_type = get_object_or_404(StakeholderType, uuid=uuid, is_deleted=False)
-        serializer = StakeholderTypeSerializer(stakeholder_type, data=request.data, partial=True)
+        serializer = StakeholderTypeSerializer(data=request.data)
         if serializer.is_valid():
-            new_name = serializer.validated_data.get("name", stakeholder_type.name)
-            if StakeholderType.objects.filter(name=new_name).exclude(uuid=uuid).exists():
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "Stakeholder Type with this name already exists"
-                }, status=status.HTTP_400_BAD_REQUEST)
             serializer.save()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "Stakeholder Type updated successfully",
+                "message": "StakeholderType created successfully",
                 "data": serializer.data
             }, status=status.HTTP_200_OK)
+        else:
+            messages = [msg for msgs in serializer.errors.values() for msg in msgs]
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": " ".join(messages)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+# ----------------- RETRIEVE -----------------
+class StakeholderTypeRetrieveAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request, uuid):
+        try:
+            obj = StakeholderType.objects.get(uuid=uuid, is_deleted=False)
+        except StakeholderType.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "StakeholderType not found",
+                "data": None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = StakeholderTypeSerializer(obj)
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": "StakeholderType retrieved successfully",
+            "data": serializer.data
+        })
+
+# ----------------- UPDATE -----------------
+class StakeholderTypeUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def put(self, request, uuid):
+        try:
+            obj = StakeholderType.objects.get(uuid=uuid, is_deleted=False)
+        except StakeholderType.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "StakeholderType not found",
+                "data": None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = StakeholderTypeSerializer(obj, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "StakeholderType updated successfully",
+                "data": serializer.data
+            })
+
+        messages = [msg for msgs in serializer.errors.values() for msg in msgs]
         return Response({
             "statusCode": 400,
             "status": False,
-            "message": next(iter(serializer.errors.values()))[0]
+            "message": " ".join(messages),
+            "data": None
         }, status=status.HTTP_400_BAD_REQUEST)
 
-
+# ----------------- DELETE -----------------
 class StakeholderTypeDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
-        uuids = request.data.get('id', [])
+        ids = request.data.get('id', None)
 
-        #  Case 1: Single delete (UUID in URL)
         if uuid:
-            stakeholder_type = get_object_or_404(StakeholderType, uuid=uuid, is_deleted=False)
-            stakeholder_type.is_deleted = True
-            stakeholder_type.save()
+            try:
+                obj = StakeholderType.objects.get(uuid=uuid)
+                obj.delete()
+                return Response({
+                    "statusCode": 204,
+                    "status": True,
+                    "message": "StakeholderType permanently deleted.",
+                    "data": None
+                }, status=status.HTTP_204_NO_CONTENT)
+            except StakeholderType.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "StakeholderType not found.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+
+        if ids == "all":
+            count = StakeholderType.objects.all().count()
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No StakeholderTypes found to delete.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+            StakeholderType.objects.all().delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "Stakeholder Type deleted successfully",
+                "message": f"All {count} StakeholderType(s) permanently deleted.",
                 "data": None
             }, status=status.HTTP_200_OK)
 
-        #  Case 2: Multiple delete (UUIDs in request body)
-        if not uuids or not isinstance(uuids, list):
+        if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Please provide a list of UUIDs in 'uuids' field.",
+                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
                 "data": None
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # Validate UUIDs
         valid_uuids = []
         invalid_uuids = []
-        for u in uuids:
+        for u in ids:
             try:
                 valid_uuids.append(UUID(u))
             except ValueError:
                 invalid_uuids.append(u)
 
-        if not valid_uuids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "No valid UUIDs provided.",
-                "data": {"invalid_uuids": invalid_uuids}
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        # Fetch stakeholder types that exist and are not deleted
-        stakeholder_types = StakeholderType.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = stakeholder_types.count()
-
+        queryset = StakeholderType.objects.filter(uuid__in=valid_uuids)
+        count = queryset.count()
         if count == 0:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "No matching stakeholder types found.",
-                "data": {"invalid_uuids": invalid_uuids}
+                "message": "No matching StakeholderTypes found.",
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        # Soft delete
-        stakeholder_types.delete()
+        queryset.delete()
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": f"{count} StakeholderType(s) permanently deleted.",
+            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+        }, status=status.HTTP_200_OK)
+
+# ----------------- EXPORT -----------------
+class StakeholderTypeExportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        format_type = request.GET.get('format', 'xlsx').lower()
+        fields = request.GET.get('fields')  # comma-separated
+        uuids_param = request.GET.get('uuids', '')
+        uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+        field_header_map = {
+            'uuid': 'UUID',
+            'name': 'Stakeholder Type',
+            'description': 'Description',
+            'category': 'Category UUID',
+            'category_name': 'Category Name',
+            'is_deleted': 'Deleted',
+            'updated_at': 'Modified On',
+            'created_at': 'Created On'
+        }
+
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+        queryset = StakeholderType.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-updated_at')
+
+        dataset = Dataset()
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'StakeholderType'
+
+        for obj in queryset:
+            row = []
+            for field in field_list:
+                value = getattr(obj, field, '')
+                if field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
+                    value = int(value)
+                row.append(value if value is not None else '')
+            dataset.append(row)
+
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'stakeholder_types.csv'
+        else:
+            file_data = io.BytesIO(dataset.export('xlsx'))
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'stakeholder_types.xlsx'
+
+        response = HttpResponse(file_data if format_type == 'csv' else file_data.getvalue(), content_type=content_type)
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        return response
+
+# ----------------- IMPORT -----------------
+class StakeholderTypeImportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        file = request.FILES.get('file')
+        sheet_name = request.data.get('sheet_name')
+
+        if not file:
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+
+        format_type = file.name.split('.')[-1].lower()
+        duplicate_names = []
+
+        required_headers = {'stakeholder type'}
+        optional_headers = {'description', 'category'}
+
+        try:
+            data = []
+            headers = []
+
+            if format_type == 'xlsx':
+                import openpyxl
+                wb = openpyxl.load_workbook(file, read_only=True)
+                available_sheets = wb.sheetnames
+
+                if not sheet_name:
+                    return Response({
+                        'error': 'Please provide sheet_name',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                if sheet_name not in available_sheets:
+                    return Response({
+                        'error': f'Sheet "{sheet_name}" not found',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                ws = wb[sheet_name]
+                if ws.max_row <= 1:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'Sheet "{sheet_name}" is empty. Provide at least one data row.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response({
+                        "statusCode": 400,
+                        "status": True,
+                        'message': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    if not any(row):
+                        continue
+                    data.append(dict(zip(headers, row)))
+
+                if not data:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'Sheet "{sheet_name}" has no data rows.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+            elif format_type == 'csv':
+                decoded_file = file.read().decode('utf-8')
+                dataset = Dataset()
+                dataset.load(decoded_file, format='csv')
+
+                for row in dataset.dict:
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({
+                            "statusCode": 400,
+                            "status": True,
+                            "message": f'Missing required headers. Required: {", ".join(required_headers)}. Found: {", ".join(row_lower.keys())}.'
+                        }, status=status.HTTP_400_BAD_REQUEST)
+                    data.append(row_lower)
+
+                if not data:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "CSV file is empty. Provide at least one data row."
+                    }, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                return Response({
+                    "statusCode": 400,
+                    "status": True,
+                    'error': 'Unsupported file format. Use .xlsx or .csv'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            imported_count = 0
+            for row in data:
+                name = str(row.get('stakeholder type')).strip() if row.get('stakeholder type') else None
+                description = str(row.get('description')).strip() if row.get('description') else ''
+                category_id = row.get('category')
+
+                if not name:
+                    continue
+
+                existing = StakeholderType.objects.filter(name__iexact=name).first()
+                if existing:
+                    if not existing.is_deleted:
+                        duplicate_names.append(name)
+                        continue
+                    else:
+                        existing.description = description
+                        if category_id:
+                            existing.category_id = category_id
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
+                else:
+                    StakeholderType.objects.create(
+                        name=name,
+                        description=description,
+                        category_id=category_id,
+                        is_deleted=False
+                    )
+                    imported_count += 1
+
+        except Exception as e:
+            return Response({
+                "statusCode": 400,
+                "status": True,
+                'message': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f"{count} Stakeholder Type(s) deleted successfully.",
-          
+            "duplicates": list(set(duplicate_names)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count
         }, status=status.HTTP_200_OK)
+
+
+
+
 
 
 
