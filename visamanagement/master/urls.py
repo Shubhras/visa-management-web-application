@@ -16,6 +16,7 @@ urlpatterns = [
     path('genders/import/', GenderImportAPIView.as_view(), name='genders-import'),
 
     path('maritalstatus/', MaritalstatusListAPIView.as_view(),name='Maritalstatus-list'),
+    path('maritalstatus/delete/', MaritalstatusDeleteAPIView.as_view(),name='Maritalstatus-delete'),
     path('maritalstatus/create/', MaritalstatusCreateAPIView.as_view(),name='Maritalstatus-create'),
     path('maritalstatus/list/', MaritalstatusListAPIView.as_view(),name='Maritalstatus-list'),
     path('maritalstatus/<uuid:uuid>/', MaritalstatusDetailAPIView.as_view(), name='Maritalstatus-detail'),

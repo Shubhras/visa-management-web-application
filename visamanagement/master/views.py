@@ -868,7 +868,7 @@ class MaritalstatusImportAPIView(APIView):
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
 
-        required_headers = {'maritalstatus'}       # Required header name
+        required_headers = {'marital status'}       # Required header name
         optional_headers = {'description', 'is_active'}  # Optional headers
 
         try:
@@ -956,7 +956,7 @@ class MaritalstatusImportAPIView(APIView):
             # Process import data
             imported_count = 0
             for row in data:
-                name = str(row.get('maritalstatus')).strip() if row.get('maritalstatus') else None
+                name = str(row.get('marital status')).strip() if row.get('marital status') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
                 is_active = row.get('is_active')
                 is_active = bool(int(is_active)) if str(is_active).isdigit() else True
