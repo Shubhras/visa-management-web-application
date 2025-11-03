@@ -92,6 +92,12 @@ const StakeholderCategoriesList = () => {
           hasNext: paginationData.nextPage || false,
           hasPrevious: paginationData.previousPage || false
         }));
+        setSelectedRows(prev => {
+          const filtered = prev.filter(rowId =>
+            response?.data.some(rowItems => rowItems.uuid === rowId)
+          );
+          return filtered;
+        });
       } else {
         setStakeholderListData([]);
         setTableState(prev => ({
@@ -443,7 +449,7 @@ const StakeholderCategoriesList = () => {
                   >
                     Delete
                   </button>
-                  {selectedRows.length > 0 && (
+                  {(selectedRows?.length > 0 && selectedRows?.length === stakeholderListData?.length) && (
                     <>
                       <button
                         onClick={() => handleSelectAllOrNot("onlySelected")}

@@ -3,9 +3,9 @@ import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
+import { stakeholderTypeImportData } from '../../../../store/master/companyMasters/actions';
 import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
-import { maritalStatusImportData } from '../../../../store/master/generalMasters/actions';
-const AddImportMaritalStatusModal = ({ show, handleClose }) => {
+const AddImportStakeholderTypeModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
     const [file, setFile] = useState(null);
@@ -65,7 +65,7 @@ const AddImportMaritalStatusModal = ({ show, handleClose }) => {
             formData.append('sheet_name', selectedSheet);
         }
         setLoading(true);
-        dispatch(maritalStatusImportData(formData, (response, error) => {
+        dispatch(stakeholderTypeImportData(formData, (response, error) => {
             setLoading(false);
             if (error) {
                 toast.error(error?.response?.data?.message || "Server error");
@@ -77,7 +77,7 @@ const AddImportMaritalStatusModal = ({ show, handleClose }) => {
                             <div>{response?.message}</div>
                             {response?.duplicates?.length > 0 && (
                                 <div style={{ marginTop: '6px' }}>
-                                    <strong>Duplicate marital status skipped — the duplicate data from your uploaded file has been exported into an .xlsx file.</strong>
+                                    <strong>Duplicate stakeholder type skipped — the duplicate data from your uploaded file has been exported into an .xlsx file.</strong>
                                 </div>
                             )}
                         </div>,
@@ -100,12 +100,12 @@ const AddImportMaritalStatusModal = ({ show, handleClose }) => {
     };
 
     const handleExportToExcel = (duplicatesData) => {
-        const header = ["MaritalStatus"];
+        const header = ["Stakeholder Type"];
         const duplicates = duplicatesData //["test1", "test3", "test3"];
         const worksheetData = [header, ...duplicates.map((item) => [item])];
         const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "MaritalStatus");
+        XLSX.utils.book_append_sheet(workbook, worksheet, "StakeholderType");
 
         const excelBuffer = XLSX.write(workbook, {
             bookType: "xlsx",
@@ -116,7 +116,7 @@ const AddImportMaritalStatusModal = ({ show, handleClose }) => {
             type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         });
 
-        saveAs(blob, `MaritalStatus-Duplicate-Data.xlsx`);
+        saveAs(blob, `StakeholderType-Duplicate-Data.xlsx`);
     };
     // Handle modal close
     const onClose = () => {
@@ -141,14 +141,14 @@ const AddImportMaritalStatusModal = ({ show, handleClose }) => {
                 className="modal fade show common-ctl-popup"
                 tabIndex={-1}
                 role="dialog"
-                aria-labelledby="GenderModalLabel"
+                aria-labelledby="StakeholderTypeModalLabel"
                 aria-hidden={!show}
             >
                 <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
                     <div className="modal-content radius-16 bg-base">
                         <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                            <h1 className="modal-title fs-5" id="GenderModalLabel">
-                                Upload Marital Status
+                            <h1 className="modal-title fs-5" id="StakeholderTypeModalLabel">
+                                Upload Stakeholder Type
                             </h1>
                             <button
                                 type="button"
@@ -241,10 +241,10 @@ const AddImportMaritalStatusModal = ({ show, handleClose }) => {
             </div>
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
-                    downloadFileName:"Marital Status",
-                    items: ["Marital Status", "Description"],
-                    selectedItems: ["Marital Status"],
-                    ItemsRequired:["Marital Status"]
+                    downloadFileName:"StakeholderType",
+                    items: ["Stakeholder Type","Stakeholder Category", "Description"],
+                    selectedItems: ["Stakeholder Type","Stakeholder Category"],
+                    ItemsRequired:["Stakeholder Type","Stakeholder Category"]
                 }
                 } />
             )}
@@ -252,4 +252,4 @@ const AddImportMaritalStatusModal = ({ show, handleClose }) => {
     );
 };
 
-export default AddImportMaritalStatusModal;
+export default AddImportStakeholderTypeModal;

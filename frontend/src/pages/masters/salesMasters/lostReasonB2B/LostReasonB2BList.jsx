@@ -92,6 +92,12 @@ const LostReasonB2BList = () => {
           hasNext: paginationData.nextPage || false,
           hasPrevious: paginationData.previousPage || false
         }));
+          setSelectedRows(prev => {
+          const filtered = prev.filter(rowId =>
+            response?.data.some(rowItems => rowItems.uuid === rowId)
+          );
+          return filtered;
+        });
       } else {
         setLostReasonB2BListData([]);
         setTableState(prev => ({
@@ -444,7 +450,7 @@ const LostReasonB2BList = () => {
                   >
                     Delete
                   </button>
-                  {selectedRows.length > 0 && (
+                  {(selectedRows?.length > 0 && selectedRows?.length === lostReasonB2BListData?.length) && (
                     <>
                       <button
                         onClick={() => handleSelectAllOrNot("onlySelected")}

@@ -491,3 +491,71 @@ export const importMaritalStatusDataAPI = (payload) => {
     const apiUrl = `${url.IMPORT_MARITAL_STATUS_API}`;
     return post(apiUrl, payload);
 };
+
+// STAKEHOLDER_TYPE
+export const getStakeholderTypeListDataAPI = (data) => {
+    const apiUrl = `${url.GET_STAKEHOLDER_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addStakeholderTypeDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_STAKEHOLDER_TYPE_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editStakeholderTypeDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_STAKEHOLDER_TYPE_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteStakeholderTypeDataAPI = (payload) => {
+    const prepareDATA = {
+        id: payload
+    };
+    const apiUrl = `${url.DELETE_STAKEHOLDER_TYPE_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportStakeholderTypeDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_STAKEHOLDER_TYPE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importStakeholderTypeDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_STAKEHOLDER_TYPE_API}`;
+    return post(apiUrl, payload);
+};
+
+// OWNERSHIP_TYPE
+export const getOwnershipTypeListDataAPI = (data) => {
+    const apiUrl = `${url.GET_OWNERSHIP_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addOwnershipTypeDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_OWNERSHIP_TYPE_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editOwnershipTypeDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_OWNERSHIP_TYPE_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteOwnershipTypeDataAPI = (payload) => {
+    const prepareDATA = {
+        id: payload
+    };
+    const apiUrl = `${url.DELETE_OWNERSHIP_TYPE_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportOwnershipTypeDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_OWNERSHIP_TYPE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importOwnershipTypeDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_OWNERSHIP_TYPE_API}`;
+    return post(apiUrl, payload);
+};

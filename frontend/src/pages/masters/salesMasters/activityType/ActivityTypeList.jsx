@@ -92,6 +92,12 @@ const ActivityTypeList = () => {
           hasNext: paginationData.nextPage || false,
           hasPrevious: paginationData.previousPage || false
         }));
+          setSelectedRows(prev => {
+          const filtered = prev.filter(rowId =>
+            response?.data.some(rowItems => rowItems.uuid === rowId)
+          );
+          return filtered;
+        });
       } else {
         setActivityTypeListData([]);
         setTableState(prev => ({
@@ -444,7 +450,7 @@ const ActivityTypeList = () => {
                   >
                     Delete
                   </button>
-                  {selectedRows.length > 0 && (
+                  {(selectedRows?.length > 0 && selectedRows?.length === activityTypeListData?.length)  && (
                     <>
                       <button
                         onClick={() => handleSelectAllOrNot("onlySelected")}

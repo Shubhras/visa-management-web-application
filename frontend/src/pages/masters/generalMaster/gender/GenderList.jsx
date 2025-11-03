@@ -7,7 +7,7 @@ import { Link } from 'react-router-dom';
 import { toast } from "react-toastify";
 import AddImportGenderModal from './AddImportGenderModal';
 import AddEditGenderModal from './AddEditGenderModal';
-import { genderList,genderDelete ,genderExportData} from '../../../../store/master/generalMasters/actions';
+import { genderList, genderDelete, genderExportData } from '../../../../store/master/generalMasters/actions';
 const GenderList = () => {
   const dispatch = useDispatch();
   const [modalState, setModalState] = useState({
@@ -102,6 +102,12 @@ const GenderList = () => {
           hasNext: paginationData.nextPage || false,
           hasPrevious: paginationData.previousPage || false
         }));
+        setSelectedRows(prev => {
+          const filtered = prev.filter(rowId =>
+            response?.data.some(rowItems => rowItems.uuid === rowId)
+          );
+          return filtered;
+        });
       } else {
         setDepartments([]);
         setTableState(prev => ({
@@ -444,13 +450,13 @@ const GenderList = () => {
                   >
                     Export
                   </button>
-                <button
+                  <button
                     onClick={handleBulkDelete}
                     className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
                   >
                     Delete
                   </button>
-                  {selectedRows.length > 0 && (
+                  {(selectedRows?.length > 0 && selectedRows?.length === departments?.length) && (
                     <>
                       <button
                         onClick={() => handleSelectAllOrNot("onlySelected")}

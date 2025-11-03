@@ -7,7 +7,7 @@ import { Link } from 'react-router-dom';
 import { toast } from "react-toastify";
 import AddImportMaritalStatusModal from './AddImportMaritalStatusModal';
 import AddEditMaritalStatusModal from './AddEditMaritalStatusModal';
-import { maritalStatusList,maritalStatusDelete ,maritalStatusExportData} from '../../../../store/master/generalMasters/actions';
+import { maritalStatusList, maritalStatusDelete, maritalStatusExportData } from '../../../../store/master/generalMasters/actions';
 const MaritalStatusList = () => {
   const dispatch = useDispatch();
   const [modalState, setModalState] = useState({
@@ -102,6 +102,12 @@ const MaritalStatusList = () => {
           hasNext: paginationData.nextPage || false,
           hasPrevious: paginationData.previousPage || false
         }));
+        setSelectedRows(prev => {
+          const filtered = prev.filter(rowId =>
+            response?.data.some(rowItems => rowItems.uuid === rowId)
+          );
+          return filtered;
+        });
       } else {
         setDepartments([]);
         setTableState(prev => ({
@@ -439,13 +445,13 @@ const MaritalStatusList = () => {
                   >
                     Export
                   </button>
-                <button
+                  <button
                     onClick={handleBulkDelete}
                     className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
                   >
                     Delete
                   </button>
-                  {selectedRows.length > 0 && (
+                  {(selectedRows?.length > 0 && selectedRows?.length === departments?.length) && (
                     <>
                       <button
                         onClick={() => handleSelectAllOrNot("onlySelected")}

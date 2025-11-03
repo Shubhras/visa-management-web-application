@@ -117,6 +117,24 @@ export const DELETE_MARITAL_STATUS_API = "api/v1/master/maritalstatus/";
 export const EXPORT_MARITAL_STATUS_API = "api/v1/master/maritalstatus/export/";
 export const IMPORT_MARITAL_STATUS_API = "api/v1/master/maritalstatus/import/";
 
+
+
+// STAKEHOLDER_TYPE
+export const GET_STAKEHOLDER_TYPE_LIST = "/api/v1/master/stakeholder-types/";
+export const ADD_STAKEHOLDER_TYPE_API = "/api/v1/master/stakeholder-types/create/";
+export const EDIT_STAKEHOLDER_TYPE_API = "api/v1/master/stakeholder-types/";
+export const DELETE_STAKEHOLDER_TYPE_API = "api/v1/master/stakeholder-types/";
+export const EXPORT_STAKEHOLDER_TYPE_API = "api/v1/master/stakeholder-types/export/";
+export const IMPORT_STAKEHOLDER_TYPE_API = "api/v1/master/stakeholder-types/import/";
+
+// OWNERSHIP_TYPE
+export const GET_OWNERSHIP_TYPE_LIST = "/api/v1/master/ownership-types/";
+export const ADD_OWNERSHIP_TYPE_API = "/api/v1/master/ownership-types/create/";
+export const EDIT_OWNERSHIP_TYPE_API = "api/v1/master/ownership-types/";
+export const DELETE_OWNERSHIP_TYPE_API = "api/v1/master/ownership-types/";
+export const EXPORT_OWNERSHIP_TYPE_API = "api/v1/master/ownership-types/export/";
+export const IMPORT_OWNERSHIP_TYPE_API = "api/v1/master/ownership-types/import/";
+
 // // export const TWO_STEP_VERIFICATION = 'api/national-admin/national-admin-verifyOtpAdmin'
 // export const TWO_STEP_VERIFICATION = '/api/users/verifyUser'
 // export const FORGET_PASSWORD_URL = '/api/national-admin/forgotpassword/'
