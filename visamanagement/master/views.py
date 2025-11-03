@@ -7004,15 +7004,30 @@ class InterestLevelImportAPIView(APIView):
 
 
 class PriorityCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
     def post(self, request):
+        name = request.data.get("name", "").strip()
+
+        if not name:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Name field is required."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check if an active priority already exists
+        existing = Priority.objects.filter(name__iexact=name, is_deleted=False).first()
+        if existing:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Priority with this name already exists."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Create new priority
         serializer = PrioritySerializer(data=request.data)
         if serializer.is_valid():
-            if Priority.objects.filter(name=serializer.validated_data['name'], is_deleted=False).exists():
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "Priority  with this name already exists"
-                }, status=status.HTTP_400_BAD_REQUEST)
             serializer.save()
             return Response({
                 "statusCode": 200,
@@ -7020,13 +7035,19 @@ class PriorityCreateAPIView(APIView):
                 "message": "Priority created successfully",
                 "data": serializer.data
             }, status=status.HTTP_200_OK)
+        else:
+            # Collect error messages
+            errors = serializer.errors
+            messages = []
+            for field, msgs in errors.items():
+                messages.extend(msgs)
+            message_text = " ".join(messages)
 
-
-        return Response({
-            "statusCode": 400,
-            "status": False,
-            "message": serializer.errors
-        }, status=status.HTTP_400_BAD_REQUEST)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": message_text,
+            }, status=status.HTTP_400_BAD_REQUEST)
 
 
 class PriorityListAPIView(APIView):    
@@ -7428,31 +7449,52 @@ class PriorityImportAPIView(APIView):
 #-------------------------------------------Tags---------------------------------
 
 
+
 class TagsCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
+
     def post(self, request):
+        name = request.data.get("name", "").strip()
+
+        if not name:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Name field is required."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check if an active tag with this name already exists
+        existing = Tags.objects.filter(name__iexact=name, is_deleted=False).first()
+        if existing:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Tag with this name already exists."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Create new tag
         serializer = TagsSerializer(data=request.data)
         if serializer.is_valid():
-            if Tags.objects.filter(name=serializer.validated_data['name'], is_deleted=False).exists():
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "Tags  with this name already exists"
-                }, status=status.HTTP_400_BAD_REQUEST)
             serializer.save()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "Tags created successfully",
+                "message": "Tag created successfully",
                 "data": serializer.data
             }, status=status.HTTP_200_OK)
+        else:
+            # Collect serializer error messages
+            errors = serializer.errors
+            messages = []
+            for field, msgs in errors.items():
+                messages.extend(msgs)
+            message_text = " ".join(messages)
 
-
-        return Response({
-            "statusCode": 400,
-            "status": False,
-            "message": serializer.errors
-        }, status=status.HTTP_400_BAD_REQUEST)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": message_text,
+            }, status=status.HTTP_400_BAD_REQUEST)
 
 class TagsListAPIView(APIView):    
     def get(self, request):
@@ -7829,17 +7871,32 @@ class TagsImportAPIView(APIView):
 
 
 
+
 class ActivityTypeCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
+
     def post(self, request):
+        name = request.data.get("name", "").strip()
+
+        if not name:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Name field is required."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check if an active ActivityType with this name already exists
+        existing = ActivityType.objects.filter(name__iexact=name, is_deleted=False).first()
+        if existing:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Activity Type with this name already exists."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Create new ActivityType
         serializer = ActivityTypeSerializer(data=request.data)
         if serializer.is_valid():
-            if ActivityType.objects.filter(name=serializer.validated_data['name'], is_deleted=False).exists():
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "Activity Type  with this name already exists"
-                }, status=status.HTTP_400_BAD_REQUEST)
             serializer.save()
             return Response({
                 "statusCode": 200,
@@ -7847,13 +7904,19 @@ class ActivityTypeCreateAPIView(APIView):
                 "message": "Activity Type created successfully",
                 "data": serializer.data
             }, status=status.HTTP_200_OK)
+        else:
+            # Collect serializer error messages
+            errors = serializer.errors
+            messages = []
+            for field, msgs in errors.items():
+                messages.extend(msgs)
+            message_text = " ".join(messages)
 
-
-        return Response({
-            "statusCode": 400,
-            "status": False,
-            "message": serializer.errors
-        }, status=status.HTTP_400_BAD_REQUEST)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": message_text,
+            }, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ActivityTypeListAPIView(APIView):    
@@ -8218,15 +8281,29 @@ class ActivityTypeImportAPIView(APIView):
 #-------------------------------------------LostReasonSerializer---------------------------------
 class LostReasonCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
+
     def post(self, request):
+        name = request.data.get("name", "").strip()
+
+        if not name:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Name field is required."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check if an active LostReason with this name already exists
+        existing = LostReason.objects.filter(name__iexact=name, is_deleted=False).first()
+        if existing:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Lost Reason with this name already exists."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Create new LostReason
         serializer = LostReasonSerializer(data=request.data)
         if serializer.is_valid():
-            if LostReason.objects.filter(name=serializer.validated_data['name'], is_deleted=False).exists():
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "Lost Reason  with this name already exists"
-                }, status=status.HTTP_400_BAD_REQUEST)
             serializer.save()
             return Response({
                 "statusCode": 200,
@@ -8234,6 +8311,19 @@ class LostReasonCreateAPIView(APIView):
                 "message": "Lost Reason created successfully",
                 "data": serializer.data
             }, status=status.HTTP_200_OK)
+        else:
+            # Collect serializer error messages
+            errors = serializer.errors
+            messages = []
+            for field, msgs in errors.items():
+                messages.extend(msgs)
+            message_text = " ".join(messages)
+
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": message_text,
+            }, status=status.HTTP_400_BAD_REQUEST)
 
 
         return Response({
