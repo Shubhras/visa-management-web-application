@@ -6412,13 +6412,11 @@ class AccreditationNameExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'country': 'Country UUID',
-            'country_name': 'Country Name',
-            'category': 'Category UUID',
-            'category_name': 'Category Name',
+            'country': 'Country Name',
+            'category': 'Category Name',
             'full_name': 'Accrediation Full Name',
             'short_name': 'Accrediation Short Name',
-            'issuing_authority': 'Accrediation Issuing Authority',
+            'issuing_authority': 'Accrediation Issuing Authority Name',
             'valid_upto': 'Accrediation Valid Upto',
             'description': 'Description',
             'created_at': 'Created On',
@@ -6447,14 +6445,8 @@ class AccreditationNameExportAPIView(APIView):
 
                 # Use UUID for FK fields
                 elif field == 'country' and accred.country:
-                    value = accred.country.uuid
-                elif field == 'category' and accred.category:
-                    value = accred.category.uuid
-
-                # Optionally include FK names
-                elif field == 'country_name' and accred.country:
                     value = accred.country.name
-                elif field == 'category_name' and accred.category:
+                elif field == 'category' and accred.category:
                     value = accred.category.name
 
                 elif isinstance(value, bool):
