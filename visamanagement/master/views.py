@@ -5586,43 +5586,18 @@ class StakeholderTypeImportAPIView(APIView):
 
 
 
-class AccreditationCategoryCreateAPIView(APIView):
-    def post(self, request):
-        serializer = AccreditationCategorySerializer(data=request.data)
-        if serializer.is_valid():
-            if AccreditationCategory.objects.filter(name=serializer.validated_data['name'], is_deleted=False).exists():
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "Accreditation Category with this name already exists"
-                }, status=status.HTTP_400_BAD_REQUEST)
-            serializer.save()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": "Accreditation Category created successfully",
-                "data": serializer.data
-            }, status=status.HTTP_200_OK)
+class AccreditationCategoryListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
 
-
-        return Response({
-            "statusCode": 400,
-            "status": False,
-            "message": serializer.errors
-        }, status=status.HTTP_400_BAD_REQUEST)
-
-
-class AccreditationCategoryListAPIView(APIView):    
     def get(self, request):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
+        sort_order = request.GET.get('sortOrder', 'desc')
 
         allowed_sort_fields = ['name', 'description', 'created_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
 
-        # Apply descending order for 'desc'
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
@@ -5643,220 +5618,307 @@ class AccreditationCategoryListAPIView(APIView):
         return paginator.get_paginated_response(serializer.data)
 
 
-class AccreditationCategoryRetrieveAPIView(APIView):
-    def get(self, request, uuid):
-        try:
-            category = AccreditationCategory.objects.get(uuid=uuid, is_deleted=False)
-        except AccreditationCategory.DoesNotExist:
+# ------------------ Create API ------------------
+class AccreditationCategoryCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        name = request.data.get("name", "").strip()
+        existing = AccreditationCategory.objects.filter(name__iexact=name, is_deleted=False).first()
+
+        if existing:
             return Response({
-                "statusCode": 404,
+                "statusCode": 400,
                 "status": False,
-                "message": "Accreditation Category not found"
-            }, status=status.HTTP_404_NOT_FOUND)
+                "message": "Accreditation category with this name already exists."
+            }, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = AccreditationCategorySerializer(category)
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": "Accreditation Category retrieved successfully",
-            "data": serializer.data
-        }, status=status.HTTP_200_OK)
-
-
-class AccreditationCategoryUpdateAPIView(APIView):
-    def put(self, request, uuid):
-        try:
-            category = AccreditationCategory.objects.get(uuid=uuid, is_deleted=False)
-        except AccreditationCategory.DoesNotExist:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "Accreditation Category not found"
-            }, status=status.HTTP_404_NOT_FOUND)
-
-        serializer = AccreditationCategorySerializer(category, data=request.data, partial=True)
+        serializer = AccreditationCategorySerializer(data=request.data)
         if serializer.is_valid():
-            new_name = serializer.validated_data.get("name", category.name)
-            if AccreditationCategory.objects.filter(name=new_name).exclude(uuid=uuid).exists():
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "Accreditation Category with this name already exists"
-                }, status=status.HTTP_400_BAD_REQUEST)
-
             serializer.save()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "Accreditation Category updated successfully",
+                "message": "Accreditation category created successfully",
                 "data": serializer.data
             }, status=status.HTTP_200_OK)
+        else:
+            messages = [msg for msgs in serializer.errors.values() for msg in msgs]
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": " ".join(messages)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
+
+# ------------------ Retrieve API ------------------
+class AccreditationCategoryRetrieveAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request, uuid):
+        try:
+            obj = AccreditationCategory.objects.get(uuid=uuid, is_deleted=False)
+        except AccreditationCategory.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "Accreditation category not found",
+                "data": None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = AccreditationCategorySerializer(obj)
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": "Accreditation category retrieved successfully",
+            "data": serializer.data
+        })
+
+
+# ------------------ Update API ------------------
+class AccreditationCategoryUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def put(self, request, uuid):
+        try:
+            obj = AccreditationCategory.objects.get(uuid=uuid, is_deleted=False)
+        except AccreditationCategory.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "Accreditation category not found",
+                "data": None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = AccreditationCategorySerializer(obj, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "Accreditation category updated successfully",
+                "data": serializer.data
+            })
+
+        messages = [msg for msgs in serializer.errors.values() for msg in msgs]
         return Response({
             "statusCode": 400,
             "status": False,
-            "message": serializer.errors
+            "message": " ".join(messages),
+            "data": None
         }, status=status.HTTP_400_BAD_REQUEST)
 
+
+# ------------------ Delete API ------------------
 class AccreditationCategoryDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
-        uuids = request.data.get('uuids', [])
+        ids = request.data.get('id', None)
 
-        #  Case 1: Single delete (UUID in URL)
+        # Single delete via URL
         if uuid:
             try:
-                category = AccreditationCategory.objects.get(uuid=uuid, is_deleted=False)
-                category.is_deleted = True
-                category.save()
+                obj = AccreditationCategory.objects.get(uuid=uuid)
+                obj.delete()
                 return Response({
-                    "statusCode": 200,
+                    "statusCode": 204,
                     "status": True,
-                    "message": "Accreditation Category deleted successfully",
+                    "message": "Accreditation category permanently deleted.",
                     "data": None
-                }, status=status.HTTP_200_OK)
+                }, status=status.HTTP_204_NO_CONTENT)
             except AccreditationCategory.DoesNotExist:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "Accreditation Category not found",
+                    "message": "Accreditation category not found.",
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-        #  Case 2: Multiple delete (UUIDs in request body)
-        if not uuids or not isinstance(uuids, list):
+        # Delete all
+        if ids == "all":
+            queryset = AccreditationCategory.objects.all()
+            count = queryset.count()
+            queryset.delete()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"All {count} accreditation category(s) permanently deleted.",
+                "data": None
+            }, status=status.HTTP_200_OK)
+
+        # Bulk delete
+        if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Please provide a list of UUIDs in 'uuids' field.",
+                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
                 "data": None
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # Validate UUIDs
         valid_uuids = []
         invalid_uuids = []
-        for u in uuids:
+        for u in ids:
             try:
                 valid_uuids.append(UUID(u))
             except ValueError:
                 invalid_uuids.append(u)
 
-        if not valid_uuids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "No valid UUIDs provided.",
-                "data": {"invalid_uuids": invalid_uuids}
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        # Fetch categories that exist and are not deleted
-        categories = AccreditationCategory.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = categories.count()
-
-        if count == 0:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "No matching accreditation categories found.",
-                "data": {"invalid_uuids": invalid_uuids}
-            }, status=status.HTTP_404_NOT_FOUND)
-
-        # Soft delete
-        categories.delete()
+        queryset = AccreditationCategory.objects.filter(uuid__in=valid_uuids)
+        count = queryset.count()
+        queryset.delete()
 
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f"{count} Accreditation Category(s) deleted successfully.",
-            "data": {"invalid_uuids": invalid_uuids}
+            "message": f"{count} accreditation category(s) permanently deleted.",
+            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         }, status=status.HTTP_200_OK)
 
 
-
+# ------------------ Export API ------------------
 class AccreditationCategoryExportAPIView(APIView):
-    # permission_classes = [IsAuthenticated]  # Uncomment and adjust as needed
 
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
-        fields = request.GET.get('fields')  
+        fields = request.GET.get('fields')
         uuids_param = request.GET.get('uuids', '')
-
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
-        # Default fields if none provided
-        if fields:
-            field_list = [f.strip() for f in fields.split(',')]
-        else:
-            field_list = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+        field_header_map = {
+            'uuid': 'UUID',
+            'name': 'Accreditation Category',
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'updated_at': 'Modified On',
+        }
+
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
         queryset = AccreditationCategory.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-updated_at')
 
         dataset = Dataset()
-        dataset.headers = field_list
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'AccreditationCategory'
 
-        for dept in queryset:
+        for obj in queryset:
             row = []
             for field in field_list:
-                value = getattr(dept, field, '')  # get attribute dynamically
-                # Format datetime fields
-                if isinstance(value, datetime.datetime):
-                    value = value.strftime("%Y-%m-%d %H:%M:%S")
-                # Convert boolean to int
-                if isinstance(value, bool):
+                value = getattr(obj, field, '')
+                if field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
                     value = int(value)
                 row.append(value if value is not None else '')
             dataset.append(row)
 
-        if format_type == 'xlsx':
-            data = XLSX().export_data(dataset)
-            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'departments.xlsx'
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'accreditation_categories.csv'
         else:
-            data = CSV().export_data(dataset)
-            content_type = 'text/csv; charset=utf-8'
-            file_name = 'departments.csv'
+            file_data = io.BytesIO(dataset.export('xlsx'))
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'accreditation_categories.xlsx'
 
-        response = HttpResponse(data, content_type=content_type)
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
 
+# ------------------ Import API ------------------
 class AccreditationCategoryImportAPIView(APIView):
-    
+
     def post(self, request):
         file = request.FILES.get('file')
+        sheet_name = request.data.get('sheet_name')
+
         if not file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
-        dataset = Dataset()
+        duplicate_names = []
+        required_headers = {'accreditation category'}
+        optional_headers = {'description'}
 
         try:
-            if format_type == 'xlsx':
-                dataset.load(file.read(), format='xlsx')
-            else:  # default CSV
-                dataset.load(file.read().decode('utf-8'), format='csv')
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            data = []
+            headers = []
 
-        for row in dataset.dict:
-            StakeholderCategory.objects.update_or_create(
-                name=row.get('name'),
-                defaults={
-                    'description': row.get('description', ''),
-                    'is_deleted': row.get('is_deleted', False)
-                }
-            )
+            if format_type == 'xlsx':
+                import openpyxl
+                wb = openpyxl.load_workbook(file, read_only=True)
+                available_sheets = wb.sheetnames
+
+                if not sheet_name:
+                    return Response({'error': 'Please provide sheet_name', 'available_sheets': available_sheets}, status=400)
+                if sheet_name not in available_sheets:
+                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
+
+                ws = wb[sheet_name]
+                if ws.max_row <= 1:
+                    return Response({"statusCode": 400, "status": False, "message": f'The uploaded XLSX sheet "{sheet_name}" is empty.'}, status=400)
+
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response({"statusCode": 400, "status": True, "message": f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'}, status=400)
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    if not any(row):
+                        continue
+                    data.append(dict(zip(headers, row)))
+
+            elif format_type == 'csv':
+                decoded_file = file.read().decode('utf-8')
+                dataset = Dataset()
+                dataset.load(decoded_file, format='csv')
+
+                for row in dataset.dict:
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({"statusCode": 400, "status": True, "message": f'Missing required headers. Required: {required_headers}. Found: {set(row_lower.keys())}'}, status=400)
+                    data.append(row_lower)
+            else:
+                return Response({"statusCode": 400, "status": True, 'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
+
+            imported_count = 0
+            for row in data:
+                name = str(row.get('accreditation category')).strip() if row.get('accreditation category') else None
+                description = str(row.get('description')).strip() if row.get('description') else ''
+
+                if not name:
+                    continue
+
+                existing = AccreditationCategory.objects.filter(name__iexact=name).first()
+                if existing:
+                    if not existing.is_deleted:
+                        duplicate_names.append(name)
+                        continue
+                    else:
+                        existing.description = description
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
+                else:
+                    AccreditationCategory.objects.create(name=name, description=description, is_deleted=False)
+                    imported_count += 1
+
+        except Exception as e:
+            return Response({"statusCode": 400, "status": True, 'message': str(e)}, status=400)
 
         return Response({
             "statusCode": 200,
             "status": True,
-            'message': 'Import successful'}, status=status.HTTP_200_OK)
-    
-
+            "duplicates": list(set(duplicate_names)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count
+        }, status=200)
 
 
 
