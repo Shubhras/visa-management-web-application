@@ -6414,11 +6414,11 @@ class AccreditationNameExportAPIView(APIView):
             'country': 'Country ID',
             'country_name': 'Country Name',
             'category': 'Category ID',
-            'category_name': 'Category Name',
-            'full_name': 'Full Name',
-            'short_name': 'Short Name',
-            'issuing_authority': 'Issuing Authority',
-            'valid_upto': 'Valid Upto',
+            'category_name' : 'Category Name',
+            'full_name': 'Accrediation Full Name',
+            'short_name': 'Accrediation Short Name',
+            'issuing_authority': 'Accrediation Issuing Authority',
+            'valid_upto': 'Accrediation Valid Upto',
             'description': 'Description',
             'created_at': 'Created On',
             'updated_at': 'Modified On'
@@ -6439,7 +6439,7 @@ class AccreditationNameExportAPIView(APIView):
             row = []
             for field in field_list:
                 value = getattr(accred, field, '')
-                if field in ['created_at', 'updated_at', 'valid_upto'] and value:
+                if field in ['created_at', 'updated_at'] and value:
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif field in ['country', 'category'] and value:
                     value = value.id  # Export ID for FK
@@ -6466,37 +6466,67 @@ class AccreditationNameExportAPIView(APIView):
 
 
 # -------------------- IMPORT API --------------------
+
+
+
+
+
+
+
+
+
+
+
+#-------------------------------------------bankAccount---------------------------------
+
 class AccreditationNameImportAPIView(APIView):
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')
+
         if not file:
-            return Response({'error': 'No file uploaded'}, status=400)
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
 
-        required_headers = {'full_name', 'country', 'category'}
-        optional_headers = {'short_name', 'issuing_authority', 'valid_upto', 'description'}
+        required_headers = {'accrediation full name', 'country', 'category'}
+        optional_headers = {'accrediation short name', 'accrediation issuing authority', 'accrediation valid upto', 'description'}
 
         try:
             data = []
             headers = []
 
+            # ---------- XLSX ----------
             if format_type == 'xlsx':
                 import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
+
                 if not sheet_name:
-                    return Response({'error': 'Provide sheet_name', 'available_sheets': wb.sheetnames}, status=400)
+                    return Response(
+                        {'error': 'Provide sheet_name', 'available_sheets': wb.sheetnames},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
                 if sheet_name not in wb.sheetnames:
-                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': wb.sheetnames}, status=400)
+                    return Response(
+                        {'error': f'Sheet "{sheet_name}" not found', 'available_sheets': wb.sheetnames},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
                 ws = wb[sheet_name]
                 if ws.max_row <= 1:
-                    return Response({'statusCode': 400, 'status': False, 'message': 'Sheet is empty'}, status=400)
+                    return Response(
+                        {'statusCode': 400, 'status': False, 'message': 'Sheet is empty'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
 
                 headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
                 if not required_headers.issubset(set(headers)):
-                    return Response({'statusCode': 400, 'status': True, 'message': f'Missing required headers: {required_headers}'}, status=400)
+                    return Response(
+                        {'statusCode': 400, 'status': True, 'message': f'Missing required headers: {required_headers}'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
 
                 for row in ws.iter_rows(min_row=2, values_only=True):
                     if not any(row):
@@ -6504,42 +6534,64 @@ class AccreditationNameImportAPIView(APIView):
                     row_dict = dict(zip(headers, row))
                     data.append(row_dict)
 
+            # ---------- CSV ----------
             elif format_type == 'csv':
                 decoded_file = file.read().decode('utf-8')
                 dataset = Dataset()
                 dataset.load(decoded_file, format='csv')
+
                 for row in dataset.dict:
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
                     if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({'statusCode': 400, 'status': True, 'message': f'Missing required headers: {required_headers}'}, status=400)
+                        return Response(
+                            {'statusCode': 400, 'status': True, 'message': f'Missing required headers: {required_headers}'},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
                     data.append(row_lower)
-            else:
-                return Response({'statusCode': 400, 'status': True, 'error': 'Unsupported file format'}, status=400)
 
+            else:
+                return Response(
+                    {'statusCode': 400, 'status': True, 'error': 'Unsupported file format'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # ---------- Import Data ----------
             imported_count = 0
-            skipped_rows = []  # track rows with invalid country/category
+            skipped_rows = []
 
             for row in data:
-                full_name = str(row.get('full_name')).strip() if row.get('full_name') else None
+                full_name = str(row.get('accrediation full name')).strip() if row.get('accrediation full name') else None
                 country_name = str(row.get('country')).strip() if row.get('country') else None
                 category_name = str(row.get('category')).strip() if row.get('category') else None
-                short_name = str(row.get('short_name')).strip() if row.get('short_name') else ''
-                issuing_authority = str(row.get('issuing_authority')).strip() if row.get('issuing_authority') else ''
-                valid_upto = str(row.get('valid_upto')).strip() if row.get('valid_upto') else ''
+                short_name = str(row.get('accrediation short name')).strip() if row.get('accrediation short name') else ''
+                issuing_authority = str(row.get('accrediation issuing authority')).strip() if row.get('accrediation issuing authority') else ''
+                valid_upto = str(row.get('accrediation valid upto')).strip() if row.get('accrediation valid upto') else ''
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not full_name or not country_name or not category_name:
-                    skipped_rows.append(full_name or 'Unknown')
+                    skipped_rows.append({
+                        'full_name': full_name or 'Unknown',
+                        'reason': 'Missing required field(s)'
+                    })
                     continue
 
+                # Map by name instead of ID
                 country = Country.objects.filter(name__iexact=country_name).first()
                 category = AccreditationCategory.objects.filter(name__iexact=category_name).first()
 
                 if not country or not category:
-                    skipped_rows.append(full_name)
-                    continue  # skip invalid FK
+                    skipped_rows.append({
+                        'full_name': full_name,
+                        'reason': f'Invalid country or category: {country_name}/{category_name}'
+                    })
+                    continue
 
-                existing = AccreditationName.objects.filter(full_name__iexact=full_name, country=country, category=category).first()
+                existing = AccreditationName.objects.filter(
+                    full_name__iexact=full_name,
+                    country=country,
+                    category=category
+                ).first()
+
                 if existing:
                     duplicate_names.append(full_name)
                     continue
@@ -6556,7 +6608,7 @@ class AccreditationNameImportAPIView(APIView):
                 imported_count += 1
 
         except Exception as e:
-            return Response({'statusCode': 400, 'status': True, 'message': str(e)}, status=400)
+            return Response({'statusCode': 400, 'status': True, 'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({
             "statusCode": 200,
@@ -6565,10 +6617,13 @@ class AccreditationNameImportAPIView(APIView):
             "skipped_rows": skipped_rows,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
-        }, status=200)
+        }, status=status.HTTP_200_OK)
 
-#-------------------------------------------bankAccount---------------------------------
 
+
+
+
+#-----------------Bank Account-----------------------        
 
 class BankAccountTypeCreateAPIView(APIView):
     def post(self, request):
