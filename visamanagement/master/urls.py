@@ -154,6 +154,8 @@ urlpatterns = [
     path("accreditation-name/<uuid:uuid>/", AccreditationNameRetrieveAPIView.as_view(), name='stakeholdertype-detail'),
     path("accreditation-name/<uuid:uuid>/update/", AccreditationNameUpdateAPIView.as_view(), name='stakeholdertype-update'),
     path("accreditation-name/delete/", AccreditationNameDeleteAPIView.as_view(), name='stakeholdertype-delete'),
+    path('accreditation-name/export/',  AccreditationNameExportAPIView.as_view(), name=' accreditation-export'),
+    path('accreditation-name/import/',  AccreditationNameImportAPIView.as_view(), name='accreditation-import'),
 
 
     path("BankAccountType/create/", BankAccountTypeCreateAPIView.as_view(), name='BankAccountType-create'),
