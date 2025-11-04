@@ -7116,7 +7116,7 @@ class LicenseNameExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'full_name': 'License  Full Name',
+            'full_name': 'License Full Name',
             'short_name': 'License Short Name',
             'issuing_authority': 'License Issuing Authority',
             'description': 'Description',
@@ -7181,8 +7181,8 @@ class LicenseNameImportAPIView(APIView):
 
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
-        required_headers = {'license  full name', 'country'}
-        optional_headers = {'license  short name', 'license issuing authority', 'description', 'license valid upto'}
+        required_headers = {'license full name', 'country'}
+        optional_headers = {'license short name', 'license issuing authority name', 'description', 'license valid upto'}
 
         try:
             data = []
@@ -7226,12 +7226,12 @@ class LicenseNameImportAPIView(APIView):
 
             imported_count = 0
             for row in data:
-                full_name = str(row.get('full_name')).strip() if row.get('full_name') else None
+                full_name = str(row.get('license full name')).strip() if row.get('license full name') else None
                 country_name = str(row.get('country')).strip() if row.get('country') else None
-                short_name = str(row.get('short_name')).strip() if row.get('short_name') else ''
-                issuing_authority = str(row.get('issuing_authority')).strip() if row.get('issuing_authority') else ''
+                short_name = str(row.get('license short name')).strip() if row.get('license short name') else ''
+                issuing_authority = str(row.get('license issuing authority name')).strip() if row.get('license issuing authority name') else ''
                 description = str(row.get('description')).strip() if row.get('description') else ''
-                valid_upto = str(row.get('valid_upto')).strip() if row.get('valid_upto') else ''
+                valid_upto = str(row.get('license valid upto')).strip() if row.get('license valid upto') else ''
 
                 if not full_name or not country_name:
                     continue
