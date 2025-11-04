@@ -117,6 +117,16 @@ export const DELETE_MARITAL_STATUS_API = "api/v1/master/maritalstatus/";
 export const EXPORT_MARITAL_STATUS_API = "api/v1/master/maritalstatus/export/";
 export const IMPORT_MARITAL_STATUS_API = "api/v1/master/maritalstatus/import/";
 
+//Continents
+export const GET_CONTINENT_LIST_API = "/api/v1/master/continents/";
+export const Add_CONTINENT_LIST_API = "/api/v1/master/continents/create/";
+export const EDIT_CONTINENT_LIST_API = "api/v1/master/continents/";
+export const DELETE_CONTINENT_LIST_API = "api/v1/master/continents/";
+export const EXPORT_CONTINENT_LIST_API = "api/v1/master/continents/export/";
+export const IMPORT_CONTINENT_LIST_API = "api/v1/master/continents/import/";
+
+
+
 // // export const TWO_STEP_VERIFICATION = 'api/national-admin/national-admin-verifyOtpAdmin'
 // export const TWO_STEP_VERIFICATION = '/api/users/verifyUser'
 // export const FORGET_PASSWORD_URL = '/api/national-admin/forgotpassword/'

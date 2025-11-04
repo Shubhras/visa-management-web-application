@@ -358,6 +358,7 @@ import LeadsList from "./pages/leads/LeadsList";
 import BankAccountTypeList from "./pages/masters/companyMaster/bankAccountType/BankAccountTypeList";
 import GenderList from "./pages/masters/generalMaster/gender/GenderList";
 import MaritalStatusList from "./pages/masters/generalMaster/maritalStatus/MaritalStatusList";
+import ContinentsList from "./pages/masters/generalMaster/continents/ContinentsList";
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   // Check if user is authenticated
@@ -594,6 +595,7 @@ function App() {
         {/* General Masters */}
           <Route path='/gender-list' element={<ProtectedRoute><GenderList /></ProtectedRoute>} />
            <Route path='/marital-status' element={<ProtectedRoute><MaritalStatusList /></ProtectedRoute>} />
+           <Route path='/continents' element={<ProtectedRoute><ContinentsList/></ProtectedRoute>} />
           
         {/* 404 Error Page */}
         <Route path='*' element={<ErrorPage />} />

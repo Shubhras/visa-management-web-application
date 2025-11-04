@@ -1,18 +1,20 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
-import MasterLayout from "../../../../masterLayout/MasterLayout";
 // import Breadcrumb from "../../../components/Breadcrumb";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
-import AddImportGenderModal from "./AddImportGenderModal";
-import AddEditGenderModal from "./AddEditGenderModal";
+
+import MasterLayout from "../../../../masterLayout/MasterLayout";
 import {
-  genderList,
-  genderDelete,
-  genderExportData,
+  continentDelete,
+  continentExportData,
+  continentList,
 } from "../../../../store/master/generalMasters/actions";
-const GenderList = () => {
+import AddEditContinentModel from "./AddEditContinentModal";
+import AddImportContinentModal from "./AddImportContinentModel";
+
+const ContinentsList = () => {
   const dispatch = useDispatch();
   const [modalState, setModalState] = useState({
     show: false,
@@ -33,7 +35,7 @@ const GenderList = () => {
       mode: "add",
       rowData: null,
     });
-    fetchDepartmentList();
+    fetchContinentsList();
   };
 
   // const [showEdit, setShowEdit] = useState(false);
@@ -47,12 +49,13 @@ const GenderList = () => {
   const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [selectAllOrNot, setSelectAllOrNot] = useState("");
-  const [departments, setDepartments] = useState([]);
+  const [continents, setContinents] = useState([]);
+
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [items] = useState(["Gender", "Description", "Modified On"]);
-  const [selectedItems, setSelectedItems] = useState(["Gender"]);
-  const [ItemsRequired] = useState(["Gender"]);
+  const [items] = useState(["Continent", "Description", "Modified On"]);
+  const [selectedItems, setSelectedItems] = useState(["Continent"]);
+  const [ItemsRequired] = useState(["Continent"]);
 
   // Updated state with sorting
   const [tableState, setTableState] = useState({
@@ -72,7 +75,7 @@ const GenderList = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (tableState.search !== undefined) {
-        fetchDepartmentList();
+        fetchContinentsList();
       }
     }, 500);
 
@@ -80,7 +83,7 @@ const GenderList = () => {
   }, [tableState.search]);
 
   useEffect(() => {
-    fetchDepartmentList();
+    fetchContinentsList();
   }, [
     tableState.page,
     tableState.limit,
@@ -89,7 +92,7 @@ const GenderList = () => {
     tableState.sortOrder,
   ]);
 
-  const fetchDepartmentList = () => {
+  const fetchContinentsList = () => {
     setLoading(true);
     const params = {
       page: tableState.page,
@@ -101,12 +104,12 @@ const GenderList = () => {
     };
 
     dispatch(
-      genderList(params, (response, error) => {
+      continentList(params, (response, error) => {
         setLoading(false);
         if (response?.statusCode === 200 && response?.status === true) {
           const paginationData = response?.pagination || {};
 
-          setDepartments(response?.data || []);
+          setContinents(response?.data || []);
           setTableState((prev) => ({
             ...prev,
             total: paginationData.totalItems || 0,
@@ -116,7 +119,7 @@ const GenderList = () => {
             hasPrevious: paginationData.previousPage || false,
           }));
         } else {
-          setDepartments([]);
+          setContinents([]);
           setTableState((prev) => ({
             ...prev,
             total: 0,
@@ -186,14 +189,14 @@ const GenderList = () => {
     if (isAllSelected) {
       setSelectedRows([]);
     } else {
-      setSelectedRows(departments.map((Item) => Item.uuid));
+      setSelectedRows(continents.map((Item) => Item.uuid));
     }
   };
   // For checkbox in table header
   const handleSelectAll = (e) => {
     const checked = e.target.checked;
     if (checked) {
-      setSelectedRows(departments.map((Item) => Item.uuid));
+      setSelectedRows(continents.map((Item) => Item.uuid));
     } else {
       setSelectedRows([]);
       setSelectAllOrNot("");
@@ -211,8 +214,8 @@ const GenderList = () => {
   };
 
   const isAllSelected =
-    departments.length > 0 &&
-    departments.every((Item) => selectedRows.includes(Item.uuid));
+    continents.length > 0 &&
+    continents.every((Item) => selectedRows.includes(Item.uuid));
 
   const goToPage = (page) => {
     if (page >= 1 && page <= tableState.totalPages) {
@@ -253,11 +256,6 @@ const GenderList = () => {
     return pages;
   };
 
-  // const handleCloseEdit = () => {
-  //   setShowEdit(false);
-  //   fetchDepartmentList();
-  // };
-
   const handleShowEdit = (rowData) => {
     setModalState({
       show: true,
@@ -265,13 +263,14 @@ const GenderList = () => {
       rowData: rowData,
     });
   };
+
   const handleSelectAllOrNot = (a) => {
     setSelectAllOrNot(a);
   };
   const handleDelete = (uuid) => {
     setDeleteId(uuid);
     setShowDeleteConfirm(true);
-    setDeleteConfirmMessage(`Are you sure you want to delete this gender?`);
+    setDeleteConfirmMessage(`Are you sure you want to delete this department?`);
   };
 
   const handleBulkDelete = () => {
@@ -282,10 +281,10 @@ const GenderList = () => {
     // Choose message based on delete type
     const message =
       selectAllOrNot === "all"
-        ? `${tableState.total} all gender`
-        : `${selectedRows.length} selected gender`;
+        ? `${tableState.total} all continent`
+        : `${selectedRows.length} selected continent`;
     setDeleteConfirmMessage(
-      `Are you sure you want to delete this gender (${message})?`
+      `Are you sure you want to delete this department (${message})?`
     );
     setShowDeleteConfirm(true);
   };
@@ -295,17 +294,17 @@ const GenderList = () => {
     const sendPayload =
       selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
     if (!sendPayload || sendPayload.length === 0) {
-      toast.error("No gender selected for deletion.");
+      toast.error("No continent selected for deletion.");
       return;
     }
     dispatch(
-      genderDelete(sendPayload, (response, error) => {
+      continentDelete(sendPayload, (response, error) => {
         if (error) {
           toast.error(error?.response?.data?.message || "server error");
         } else {
           if (response?.statusCode === 200 && response?.status === true) {
             toast.success(response?.message);
-            setDepartments((prevRowItems) =>
+            setContinents((prevRowItems) =>
               prevRowItems.filter((Item) => Item.uuid !== deleteId)
             );
             setSelectedRows((prevSelected) =>
@@ -315,7 +314,7 @@ const GenderList = () => {
             setSelectedRows([]);
             setSelectAllOrNot("");
             setDeleteId(null);
-            fetchDepartmentList();
+            fetchContinentsList();
           } else {
             toast.error("Something went wrong.");
           }
@@ -334,7 +333,7 @@ const GenderList = () => {
 
   const handleCloseImport = () => {
     setShowImport(false);
-    fetchDepartmentList();
+    fetchContinentsList();
   };
 
   const handleShowImport = () => {
@@ -381,13 +380,13 @@ const GenderList = () => {
       toast.error("Please select at least one field");
       return;
     }
-    // Map frontend labels to Gender field names
+    // Map frontend labels to backend field names
     const fieldMapping = {
-      Gender: "name",
+      Continent: "name",
       "Modified On": "updated_at",
       Description: "description",
     };
-    // Convert selectedItems to Gender field names
+    // Convert selectedItems to backend field names
     const mappedFields = selectedItems.map(
       (item) => fieldMapping[item] || item
     );
@@ -398,10 +397,9 @@ const GenderList = () => {
       fields: fieldsString,
       uuids: selectAllOrNot === "all" ? [] : selectedRows,
     };
-
     setLoadingExport(true);
     dispatch(
-      genderExportData(sendPayload, (response, error) => {
+      continentExportData(sendPayload, (response, error) => {
         if (error) {
           setLoadingExport(false);
           toast.error(error?.response?.message || "server error");
@@ -415,7 +413,7 @@ const GenderList = () => {
             const url = window.URL.createObjectURL(blob);
             const link = document.createElement("a");
             link.href = url;
-            link.download = `Gender.xlsx`;
+            link.download = `Continent.xlsx`;
             document.body.appendChild(link);
             link.click();
             link.remove();
@@ -473,6 +471,29 @@ const GenderList = () => {
                   >
                     Export
                   </button>
+                  {/* {selectedRows.length == 0 && (
+                    <button
+                      onClick={handleSelectAllButton}
+                      className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
+                    >
+                      Delete
+                    </button>
+                  )}
+                  {selectedRows.length > 0 && (
+                    <button
+                      onClick={() => handleBulkDelete("")}
+                      className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
+                    >{`Delete Selected (${selectedRows.length})`}
+                    </button>
+                  )}
+                  {selectedRows.length > 0 && (
+                    <button
+                      onClick={() => handleBulkDelete("all")}
+                      className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
+                    >{`Delete All (${tableState.total})`}
+                    </button>
+                  )} */}
+
                   <button
                     onClick={handleBulkDelete}
                     className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
@@ -575,7 +596,7 @@ const GenderList = () => {
                           type="checkbox"
                           checked={isAllSelected}
                           onChange={handleSelectAll}
-                          disabled={departments.length === 0}
+                          disabled={continents.length === 0}
                         />
                         <span>No.</span>
                       </div>
@@ -586,7 +607,7 @@ const GenderList = () => {
                       onClick={() => handleSort("name")}
                     >
                       <div className="d-flex align-items-center">
-                        Gender
+                        Continent
                         {getSortIcon("name")}
                       </div>
                     </th>
@@ -630,8 +651,8 @@ const GenderList = () => {
                         </div>
                       </td>
                     </tr>
-                  ) : departments.length > 0 ? (
-                    departments.map((rowItem, index) => (
+                  ) : continents.length > 0 ? (
+                    continents.map((rowItem, index) => (
                       <tr key={rowItem.uuid}>
                         <td>
                           <div className="d-flex align-items-center gap-2">
@@ -837,14 +858,14 @@ const GenderList = () => {
             </div>
           </div>
         </div>
-        <AddEditGenderModal
+        <AddEditContinentModel
           show={modalState.show}
           handleClose={handleClose}
           mode={modalState.mode}
           rowData={modalState.rowData}
         />
         {showImport && (
-          <AddImportGenderModal
+          <AddImportContinentModal
             show={showImport}
             handleClose={handleCloseImport}
           />
@@ -862,6 +883,8 @@ const GenderList = () => {
                   ></button>
                 </div>
                 <div className="modal-body">
+                  {/* <p className="mb-0">Are you sure you want to delete this department?</p> */}
+                  {/* <p className="mb-0"> Are you sure you want to delete this department ({selectedRows.length})?</p> */}
                   <p className="mb-0">{deleteConfirmMessage}</p>
                 </div>
                 <div className="modal-footer">
@@ -896,7 +919,7 @@ const GenderList = () => {
             >
               <div className="modal-content radius-16 bg-base">
                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                  <h1 className="modal-title fs-5">Export Gender</h1>
+                  <h1 className="modal-title fs-5">Export Continent</h1>
                   <button
                     type="button"
                     className="btn-close"
@@ -1005,4 +1028,4 @@ const GenderList = () => {
   );
 };
 
-export default GenderList;
+export default ContinentsList;

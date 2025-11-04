@@ -3,9 +3,10 @@ import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import { continentImportData } from "../../../../store/master/generalMasters/actions";
 import CommanSampleExcelDownloadModal from "../../../../components/comman/CommanSampleExcelDownloadModal";
-import { genderImportData } from "../../../../store/master/generalMasters/actions";
-const AddImportGenderModal = ({ show, handleClose }) => {
+
+const AddImportContinentModal = ({ show, handleClose }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState(null);
@@ -66,7 +67,7 @@ const AddImportGenderModal = ({ show, handleClose }) => {
     }
     setLoading(true);
     dispatch(
-      genderImportData(formData, (response, error) => {
+      continentImportData(formData, (response, error) => {
         setLoading(false);
         if (error) {
           toast.error(error?.response?.data?.message || "Server error");
@@ -79,8 +80,8 @@ const AddImportGenderModal = ({ show, handleClose }) => {
                 {response?.duplicates?.length > 0 && (
                   <div style={{ marginTop: "6px" }}>
                     <strong>
-                      Duplicate gender skipped — the duplicate data from your
-                      uploaded file has been exported into an .xlsx file.
+                      Duplicate continents skipped — the duplicate data from
+                      your uploaded file has been exported into an .xlsx file.
                     </strong>
                   </div>
                 )}
@@ -105,12 +106,12 @@ const AddImportGenderModal = ({ show, handleClose }) => {
   };
 
   const handleExportToExcel = (duplicatesData) => {
-    const header = ["Gender"];
-    const duplicates = duplicatesData; //["test1", "test3", "test3"];
+    const header = ["Continent"];
+    const duplicates = duplicatesData;
     const worksheetData = [header, ...duplicates.map((item) => [item])];
     const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Gender");
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Continent");
 
     const excelBuffer = XLSX.write(workbook, {
       bookType: "xlsx",
@@ -121,8 +122,9 @@ const AddImportGenderModal = ({ show, handleClose }) => {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     });
 
-    saveAs(blob, `Gender-Duplicate-Data.xlsx`);
+    saveAs(blob, `Continent-Duplicate-Data.xlsx`);
   };
+
   // Handle modal close
   const onClose = () => {
     setFile(null);
@@ -132,12 +134,15 @@ const AddImportGenderModal = ({ show, handleClose }) => {
     handleClose();
     setLoading(false);
   };
+
   const handleDownloadSample = () => {
     setShowSampleExcelDownload(true);
   };
+
   const handleCloseSampleExcelDownload = () => {
     setShowSampleExcelDownload(false);
   };
+
   if (!show) return null;
 
   return (
@@ -146,7 +151,7 @@ const AddImportGenderModal = ({ show, handleClose }) => {
         className="modal fade show common-ctl-popup"
         tabIndex={-1}
         role="dialog"
-        aria-labelledby="GenderModalLabel"
+        aria-labelledby="continentModalLabel"
         aria-hidden={!show}
       >
         <div
@@ -155,8 +160,8 @@ const AddImportGenderModal = ({ show, handleClose }) => {
         >
           <div className="modal-content radius-16 bg-base">
             <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-              <h1 className="modal-title fs-5" id="GenderModalLabel">
-                Upload Gender
+              <h1 className="modal-title fs-5" id="continentModalLabel">
+                Upload Continent
               </h1>
               <button
                 type="button"
@@ -262,10 +267,10 @@ const AddImportGenderModal = ({ show, handleClose }) => {
           show={showSampleExcelDownload}
           handleClose={handleCloseSampleExcelDownload}
           prepareData={{
-            downloadFileName: "Gender",
-            items: ["Gender", "Description"],
-            selectedItems: ["Gender"],
-            ItemsRequired: ["Gender"],
+            downloadFileName: "Continent",
+            items: ["Continent", "Description"],
+            selectedItems: ["Continent"],
+            ItemsRequired: ["Continent"],
           }}
         />
       )}
@@ -273,4 +278,4 @@ const AddImportGenderModal = ({ show, handleClose }) => {
   );
 };
 
-export default AddImportGenderModal;
+export default AddImportContinentModal;

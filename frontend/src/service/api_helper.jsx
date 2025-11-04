@@ -491,3 +491,37 @@ export const importMaritalStatusDataAPI = (payload) => {
     const apiUrl = `${url.IMPORT_MARITAL_STATUS_API}`;
     return post(apiUrl, payload);
 };
+
+// CONTINENT
+export const getContinentListDataAPI = (data) => {
+  const apiUrl = `${url.GET_CONTINENT_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
+
+export const addContinentDataAPI = (payload) => {
+  const apiUrl = `${url.Add_CONTINENT_LIST_API}`;
+  return post(apiUrl, payload);
+};
+
+export const editContinentDataAPI = (payload) => {
+  const apiUrl = `${url.EDIT_CONTINENT_LIST_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+
+export const deleteContinentDataAPI = (payload) => {
+  const prepareDATA = {
+    id: payload,
+  };
+  const apiUrl = `${url.DELETE_CONTINENT_LIST_API}delete/`;
+  return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportContinentDataAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_CONTINENT_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+
+export const importContinentDataAPI = (payload) => {
+  const apiUrl = `${url.IMPORT_CONTINENT_LIST_API}`;
+  return post(apiUrl, payload);
+};
