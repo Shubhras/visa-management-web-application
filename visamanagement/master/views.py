@@ -6412,7 +6412,7 @@ class AccreditationNameExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'country': 'Country Name',
+            'country': 'Country',
             'category': 'Category Name',
             'full_name': 'Accrediation Full Name',
             'short_name': 'Accrediation Short Name',
