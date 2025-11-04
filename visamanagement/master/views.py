@@ -6402,6 +6402,7 @@ class AccreditationNameDeleteAPIView(APIView):
 
 
 # -------------------- EXPORT API --------------------
+
 class AccreditationNameExportAPIView(APIView):
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
@@ -6411,10 +6412,10 @@ class AccreditationNameExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'country': 'Country ID',
+            'country': 'Country UUID',
             'country_name': 'Country Name',
-            'category': 'Category ID',
-            'category_name' : 'Category Name',
+            'category': 'Category UUID',
+            'category_name': 'Category Name',
             'full_name': 'Accrediation Full Name',
             'short_name': 'Accrediation Short Name',
             'issuing_authority': 'Accrediation Issuing Authority',
@@ -6439,12 +6440,26 @@ class AccreditationNameExportAPIView(APIView):
             row = []
             for field in field_list:
                 value = getattr(accred, field, '')
+
+                # Format date fields
                 if field in ['created_at', 'updated_at'] and value:
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-                elif field in ['country', 'category'] and value:
-                    value = value.uuid  # Export ID for FK
+
+                # Use UUID for FK fields
+                elif field == 'country' and accred.country:
+                    value = accred.country.uuid
+                elif field == 'category' and accred.category:
+                    value = accred.category.uuid
+
+                # Optionally include FK names
+                elif field == 'country_name' and accred.country:
+                    value = accred.country.name
+                elif field == 'category_name' and accred.category:
+                    value = accred.category.name
+
                 elif isinstance(value, bool):
                     value = int(value)
+
                 row.append(value if value is not None else '')
             dataset.append(row)
 
@@ -6463,8 +6478,6 @@ class AccreditationNameExportAPIView(APIView):
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
-
-
 # -------------------- IMPORT API --------------------
 
 
