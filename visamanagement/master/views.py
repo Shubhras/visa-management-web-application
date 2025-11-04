@@ -4828,7 +4828,7 @@ class OwnershipTypeImportAPIView(APIView):
                 if not name:
                     continue
 
-                from your_app.models import CompanyType  # replace with your actual app name
+                
                 company_type = None
                 if company_type_name:
                     company_type = CompanyType.objects.filter(name__iexact=company_type_name).first()
