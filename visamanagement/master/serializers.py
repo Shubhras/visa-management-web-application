@@ -318,7 +318,7 @@ class LostReasonB2BSerializer(serializers.ModelSerializer):
 class EducationLevelCodeSerializer(serializers.ModelSerializer):
     class Meta:
         model = EducationLevelCode
-        fields = ['uuid', 'Levelcode', 'description', 'created_at', 'updated_at']
+        fields = ['uuid', 'name', 'description', 'created_at', 'updated_at']
 
 
 
