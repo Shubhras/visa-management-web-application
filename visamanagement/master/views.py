@@ -1498,7 +1498,7 @@ class CountryDeleteAPIView(APIView):
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-            countries.update(is_deleted=True)
+            countries.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
@@ -1541,7 +1541,7 @@ class CountryDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        countries.update(is_deleted=True)
+        countries.delete()
 
         return Response({
             "statusCode": 200,
@@ -1842,7 +1842,7 @@ class StateDeleteAPIView(APIView):
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-            states.update(is_deleted=True)
+            states.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
@@ -1885,7 +1885,7 @@ class StateDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        states.update(is_deleted=True)
+        states.delete()
 
         return Response({
             "statusCode": 200,
@@ -2165,7 +2165,7 @@ class DistrictDeleteAPIView(APIView):
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-            districts.update(is_deleted=True)
+            districts.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
@@ -2208,7 +2208,7 @@ class DistrictDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        districts.update(is_deleted=True)
+        districts.delete()
 
         return Response({
             "statusCode": 200,
@@ -2519,7 +2519,7 @@ class CityDeleteAPIView(APIView):
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-            cities.update(is_deleted=True)
+            cities.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
@@ -2562,7 +2562,7 @@ class CityDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        cities.update(is_deleted=True)
+        cities.delete()
 
         return Response({
             "statusCode": 200,
@@ -2581,40 +2581,67 @@ class CityExportAPIView(APIView):
         fields = request.GET.get('fields')
         uuids_param = request.GET.get('uuids', '')
         uuids = [u.strip() for u in uuids_param.split(',') if u]
-        field_list = [f.strip() for f in fields.split(',')] if fields else [
-            'uuid', 'countryName', 'stateName', 'districtName', 'cityName', 'description', 'is_deleted', 'created_at', 'updated_at'
-        ]
-        queryset = City.objects.filter(uuid__in=uuids) if uuids else City.objects.all()
+
+        # Field to header mapping
+        field_header_map = {
+            'uuid': 'UUID',
+            'countryName': 'Country',
+            'stateName': 'State',
+            'districtName': 'District',
+            'cityName': 'City',
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'created_at': 'Created On',
+            'updated_at': 'Modified On'
+        }
+
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+        queryset = City.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-updated_at')
 
         dataset = Dataset()
-        dataset.headers = field_list
-        for obj in queryset:
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'Cities'
+
+        for city in queryset:
             row = []
             for field in field_list:
-                value = getattr(obj, field, '')
-                if field == "countryName" and obj.countryName:
-                    value = obj.countryName.name
-                if field == "stateName" and obj.stateName:
-                    value = obj.stateName.stateName
-                if field == "districtName" and obj.districtName:
-                    value = obj.districtName.districtName
+                value = getattr(city, field, '')
+
+                # Handle foreign keys by name
+                if field == 'countryName' and city.countryName:
+                    value = city.countryName.name
+                elif field == 'stateName' and city.stateName:
+                    value = city.stateName.stateName
+                elif field == 'districtName' and city.districtName:
+                    value = city.districtName.districtName
+
+                # Format datetime
                 if isinstance(value, datetime.datetime):
-                    value = value.strftime("%Y-%m-%d %H:%M:%S")
+                    value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
+                # Convert bool to int
                 if isinstance(value, bool):
                     value = int(value)
+
                 row.append(value if value is not None else '')
             dataset.append(row)
 
-        if format_type == 'xlsx':
-            data = XLSX().export_data(dataset)
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'cities.csv'
+        else:
+            file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'cities.xlsx'
-        else:
-            data = CSV().export_data(dataset)
-            content_type = 'text/csv; charset=utf-8'
-            file_name = 'cities.csv'
 
-        response = HttpResponse(data, content_type=content_type)
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
@@ -2628,41 +2655,65 @@ class CityImportAPIView(APIView):
         if not file:
             return Response({'error': 'No file uploaded'}, status=400)
 
-        dataset = Dataset()
+        format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
 
-        format_type = file.name.split('.')[-1].lower()
+        required_headers = {'cityname', 'countryname', 'statename', 'districtname'}
 
         try:
+            data = []
+            headers = []
+
+            # XLSX Handling
             if format_type == 'xlsx':
+                import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
+
                 if not sheet_name:
                     return Response({'error': 'Provide sheet_name', 'available_sheets': available_sheets}, status=400)
                 if sheet_name not in available_sheets:
                     return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
 
                 ws = wb[sheet_name]
-                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                data = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True)]
+                if ws.max_row <= 1:
+                    return Response({'error': f'Sheet "{sheet_name}" is empty.'}, status=400)
 
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response({'error': f'Missing required headers: {required_headers}'}, status=400)
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    if not any(row):
+                        continue
+                    row_dict = dict(zip(headers, row))
+                    data.append(row_dict)
+
+            # CSV Handling
             elif format_type == 'csv':
+                dataset = Dataset()
                 dataset.load(file.read().decode('utf-8'), format='csv')
-                data = dataset.dict
+                for row in dataset.dict:
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({'error': f'Missing required headers: {required_headers}'}, status=400)
+                    data.append(row_lower)
             else:
                 return Response({'error': 'Unsupported format'}, status=400)
 
+            imported_count = 0
             for row in data:
-                city_name = str(row.get('cityName')).strip() if row.get('cityName') else None
-                country_name = str(row.get('countryName')).strip() if row.get('countryName') else None
-                state_name = str(row.get('stateName')).strip() if row.get('stateName') else None
-                district_name = str(row.get('districtName')).strip() if row.get('districtName') else None
+                city_name = str(row.get('cityname')).strip()
+                country_name = str(row.get('countryname')).strip()
+                state_name = str(row.get('statename')).strip()
+                district_name = str(row.get('districtname')).strip()
+                description = str(row.get('description')).strip() if row.get('description') else ''
 
-                country = Country.objects.filter(name__iexact=country_name).first() if country_name else None
-                state = State.objects.filter(stateName__iexact=state_name, countryName=country).first() if state_name and country else None
-                district = District.objects.filter(districtName__iexact=district_name, stateName=state, countryName=country).first() if district_name and state and country else None
+                country = Country.objects.filter(name__iexact=country_name).first()
+                state = State.objects.filter(stateName__iexact=state_name, countryName=country).first() if country else None
+                district = District.objects.filter(districtName__iexact=district_name, stateName=state, countryName=country).first() if state else None
 
-                if not city_name or not district or not state or not country:
+                if not city_name or not country or not state or not district:
                     continue
 
                 existing = City.objects.filter(cityName__iexact=city_name, districtName=district, stateName=state, countryName=country).first()
@@ -2672,17 +2723,33 @@ class CityImportAPIView(APIView):
                         existing.countryName = country
                         existing.stateName = state
                         existing.districtName = district
+                        existing.description = description
                         existing.save()
+                        imported_count += 1
                     else:
                         duplicate_names.append(city_name)
                         continue
                 else:
-                    City.objects.create(cityName=city_name, countryName=country, stateName=state, districtName=district)
+                    City.objects.create(
+                        cityName=city_name,
+                        countryName=country,
+                        stateName=state,
+                        districtName=district,
+                        description=description
+                    )
+                    imported_count += 1
 
         except Exception as e:
             return Response({'error': str(e)}, status=400)
 
-        return Response({"statusCode": 200, "status": True, "duplicates": list(set(duplicate_names)), "message": 'Import successful'}, status=200)
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "duplicates": list(set(duplicate_names)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count
+        }, status=200)
+
 
 
 
@@ -2791,7 +2858,7 @@ class RelationDeleteAPIView(APIView):
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-            relations.update(is_deleted=True)
+            relations.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
@@ -2834,7 +2901,7 @@ class RelationDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        relations.update(is_deleted=True)
+        relations.delete()
 
         return Response({
             "statusCode": 200,
@@ -7141,14 +7208,19 @@ class LicenseNameExportAPIView(APIView):
         for obj in queryset:
             row = []
             for field in field_list:
+                # Handle special foreign key field
                 if field == 'country_name':
                     value = obj.country.name if obj.country else ''
                 else:
                     value = getattr(obj, field, '')
-                if field in ['created_at', 'updated_at', 'valid_upto'] and value:
+
+                # Convert datetime fields to string in India timezone
+                if isinstance(value, datetime.datetime):
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                # Convert boolean to integer
                 elif isinstance(value, bool):
                     value = int(value)
+
                 row.append(value if value is not None else '')
             dataset.append(row)
 
