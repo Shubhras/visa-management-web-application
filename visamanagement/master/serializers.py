@@ -331,7 +331,7 @@ class EducationLevelSerializer(serializers.ModelSerializer):
         required=False
     )
     level_code_detail = serializers.CharField(
-        source='level_code.Levelcode', read_only=True
+        source='level_code.name', read_only=True
     )
 
     class Meta:
