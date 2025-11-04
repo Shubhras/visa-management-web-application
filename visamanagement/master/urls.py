@@ -257,6 +257,7 @@ urlpatterns = [
     path('education-duration/export/', EducationDurationExportAPIView.as_view(), name='educationduration-export'),
     path('education-duration/import/', EducationDurationImportAPIView.as_view(), name='educationduration-import'),
 
+    path("studymainarea/", StudymainareaListAPIView.as_view(), name='studymainarea-list'),
     path('studymainarea/create/', StudymainareaCreateAPIView.as_view(), name='studymainarea-create'),
     path('studymainarea/<uuid:uuid>/', StudymainareaRetrieveAPIView.as_view(), name='studymainarea-retrieve'),
     path('studymainarea/<uuid:uuid>/update/', StudymainareaUpdateAPIView.as_view(), name='studymainarea-update'),
@@ -264,6 +265,7 @@ urlpatterns = [
     path('studymainarea/export/', StudymainareaExportAPIView.as_view(), name='studymainarea-export'),
     path('studymainarea/import/', StudymainareaImportAPIView.as_view(), name='studymainarea-import'),
 
+    
     path('studymajorarea/create/', StudymajorareaCreateAPIView.as_view(), name='studymajorarea-create'),
     path('studymajorarea/<uuid:uuid>/', StudymajorareaRetrieveAPIView.as_view(), name='studymajorarea-retrieve'),
     path('studymajorarea/<uuid:uuid>/update/', StudymajorareaUpdateAPIView.as_view(), name='studymajorarea-update'),
