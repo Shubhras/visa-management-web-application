@@ -7213,14 +7213,13 @@ class LicenseNameExportAPIView(APIView):
 
         for obj in queryset:
             row = []
+            from datetime import datetime
             for field in field_list:
                 # Handle special foreign key field
                 if field == 'country_name':
                     value = obj.country.name if obj.country else ''
                 else:
                     value = getattr(obj, field, '')
-
-                # Safely convert datetime fields to string
                 if value:
                     if isinstance(value, datetime.datetime):
                         value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
