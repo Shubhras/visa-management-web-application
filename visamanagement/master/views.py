@@ -10593,8 +10593,9 @@ class EducationLevelExportAPIView(APIView):
                     value = obj.level_code.Levelcode if obj.level_code else ''
                 else:
                     value = getattr(obj, field, '')
-                if isinstance(value, datetime.datetime):
-                    value = value.strftime("%Y-%m-%d %H:%M:%S")
+                if field in ['created_at', 'updated_at'] and value:
+                    # Convert the stored UTC datetime to IST and format it
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
                 if isinstance(value, bool):
                     value = int(value)
                 row.append(value if value is not None else '')
