@@ -232,6 +232,7 @@ urlpatterns = [
 
 
     path('education-level-codes/create/', EducationLevelCodeCreateAPIView.as_view(), name='educationlevelcode-create'),
+    path("education-level-codes/", EducationLevelCodeListAPIView.as_view(), name='educationlevelcode-list'),
     path('education-level-codes/<uuid:uuid>/', EducationLevelCodeRetrieveAPIView.as_view(), name='educationlevelcode-retrieve'),
     path('education-level-codes/update/<uuid:uuid>/', EducationLevelCodeUpdateAPIView.as_view(), name='educationlevelcode-update'),
     path('education-level-codes/delete/', EducationLevelCodeDeleteAPIView.as_view(), name='educationlevelcode-delete'),
