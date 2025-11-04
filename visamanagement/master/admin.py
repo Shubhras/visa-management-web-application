@@ -219,8 +219,8 @@ class LostReasonAdmin(admin.ModelAdmin):
 # ---------- EDUCATION ----------
 @admin.register(EducationLevelCode)
 class EducationLevelCodeAdmin(admin.ModelAdmin):
-    list_display = ('level_code', 'description', 'is_deleted', 'created_at', 'updated_at')
-    search_fields = ('level_code',)
+    list_display = ('name', 'description', 'is_deleted', 'created_at', 'updated_at')
+    search_fields = ('name',)
     list_filter = ('is_deleted',)
     ordering = ('level_code',)
 
