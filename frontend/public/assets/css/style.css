@@ -15817,6 +15817,7 @@ td.fc-header-center {
 
 .basic-data-table .container-table tr th {
   color: #495057 !important;
+  font-size: 15px;
 }
 
 .basic-data-table .container-table tr td {
@@ -15830,7 +15831,7 @@ td.fc-header-center {
 }
 
 .basic-data-table .container-table .action-th {
-  width: 150px;
+  width: 90px;
 }
 
 .basic-data-table .container-table .form-check-input {

@@ -559,3 +559,110 @@ export const importOwnershipTypeDataAPI = (payload) => {
     const apiUrl = `${url.IMPORT_OWNERSHIP_TYPE_API}`;
     return post(apiUrl, payload);
 };
+
+// ACCREDITATION_CATEGORY
+export const getAccreditationCategoryListDataAPI = (data) => {
+    const apiUrl = `${url.GET_ACCREDITATION_CATEGORY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addAccreditationCategoryDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_ACCREDITATION_CATEGORY_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editAccreditationCategoryDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_ACCREDITATION_CATEGORY_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteAccreditationCategoryDataAPI = (payload) => {
+    const prepareDATA = {
+        id: payload
+    };
+    const apiUrl = `${url.DELETE_ACCREDITATION_CATEGORY_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportAccreditationCategoryDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_ACCREDITATION_CATEGORY_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importAccreditationCategoryDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_ACCREDITATION_CATEGORY_API}`;
+    return post(apiUrl, payload);
+};
+
+// LICENCE_NAME
+export const getLicenceNameListDataAPI = (data) => {
+    const apiUrl = `${url.GET_LICENCE_NAME_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addLicenceNameDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_LICENCE_NAME_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editLicenceNameDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_LICENCE_NAME_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteLicenceNameDataAPI = (payload) => {
+    const prepareDATA = {
+        id: payload
+    };
+    const apiUrl = `${url.DELETE_LICENCE_NAME_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportLicenceNameDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_LICENCE_NAME_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importLicenceNameDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_LICENCE_NAME_API}`;
+    return post(apiUrl, payload);
+};
+
+// ACCREDITATION_NAME
+export const getAccreditationNameListDataAPI = (data) => {
+    const apiUrl = `${url.GET_ACCREDITATION_NAME_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addAccreditationNameDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_ACCREDITATION_NAME_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editAccreditationNameDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_ACCREDITATION_NAME_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteAccreditationNameDataAPI = (payload) => {
+    const prepareDATA = {
+        id: payload
+    };
+    const apiUrl = `${url.DELETE_ACCREDITATION_NAME_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportAccreditationNameDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_ACCREDITATION_NAME_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importAccreditationNameDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_ACCREDITATION_NAME_API}`;
+    return post(apiUrl, payload);
+};
+
+export const getCountryListDataAPI = (data) => {
+    const apiUrl = `${url.GET_COUNTRY_LIST_DEMO}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};

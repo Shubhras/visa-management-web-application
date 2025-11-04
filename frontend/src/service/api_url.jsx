@@ -135,6 +135,30 @@ export const DELETE_OWNERSHIP_TYPE_API = "api/v1/master/ownership-types/";
 export const EXPORT_OWNERSHIP_TYPE_API = "api/v1/master/ownership-types/export/";
 export const IMPORT_OWNERSHIP_TYPE_API = "api/v1/master/ownership-types/import/";
 
+// ACCREDITATION_CATEGORY
+export const GET_ACCREDITATION_CATEGORY_LIST = "/api/v1/master/accreditation-category/";
+export const ADD_ACCREDITATION_CATEGORY_API = "/api/v1/master/accreditation-category/create/";
+export const EDIT_ACCREDITATION_CATEGORY_API = "api/v1/master/accreditation-category/";
+export const DELETE_ACCREDITATION_CATEGORY_API = "api/v1/master/accreditation-category/";
+export const EXPORT_ACCREDITATION_CATEGORY_API = "api/v1/master/accreditation-category/export/";
+export const IMPORT_ACCREDITATION_CATEGORY_API = "api/v1/master/accreditation-category/import/";
+
+// LICENCE_NAME
+export const GET_LICENCE_NAME_LIST = "/api/v1/master/license-name/";
+export const ADD_LICENCE_NAME_API = "/api/v1/master/license-name/create/";
+export const EDIT_LICENCE_NAME_API = "api/v1/master/license-name/";
+export const DELETE_LICENCE_NAME_API = "api/v1/master/license-name/";
+export const EXPORT_LICENCE_NAME_API = "api/v1/master/license-name/export/";
+export const IMPORT_LICENCE_NAME_API = "api/v1/master/license-name/import/";
+
+// ACCREDITATION_NAME
+export const GET_ACCREDITATION_NAME_LIST = "/api/v1/master/accreditation-name/";
+export const ADD_ACCREDITATION_NAME_API = "/api/v1/master/accreditation-name/create/";
+export const EDIT_ACCREDITATION_NAME_API = "api/v1/master/accreditation-name/";
+export const DELETE_ACCREDITATION_NAME_API = "api/v1/master/accreditation-name/";
+export const EXPORT_ACCREDITATION_NAME_API = "api/v1/master/accreditation-name/export/";
+export const IMPORT_ACCREDITATION_NAME_API = "api/v1/master/accreditation-name/import/";
+
 // // export const TWO_STEP_VERIFICATION = 'api/national-admin/national-admin-verifyOtpAdmin'
 // export const TWO_STEP_VERIFICATION = '/api/users/verifyUser'
 // export const FORGET_PASSWORD_URL = '/api/national-admin/forgotpassword/'
@@ -175,8 +199,7 @@ export const IMPORT_OWNERSHIP_TYPE_API = "api/v1/master/ownership-types/import/"
 // export const GET_PORTAL_ACCESS = "/api/portalAnddocument/get-portal";
 // export const ADD_SUPERADMIN_IN_NATIONAL_ADMIN_URL="/api/national-admin/add-superAdmin-byNatioanalAdmin"
 // export const ADD_ADMIN_IN_NATIONAL_ADMIN_URL="/api/national-admin/add-admin-byNatioanalAdmin"
-// export const ADD_CUSTOMER_IN_NATIONAL_ADMIN_URL="/api/national-admin/add-customer-byNatioanalAdmin"
-
+ export const GET_COUNTRY_LIST_DEMO = "/api/v1/master/country/";
 
 
 

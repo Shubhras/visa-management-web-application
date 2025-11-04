@@ -360,6 +360,9 @@ import GenderList from "./pages/masters/generalMaster/gender/GenderList";
 import MaritalStatusList from "./pages/masters/generalMaster/maritalStatus/MaritalStatusList";
 import StakeholderTypeList from "./pages/masters/companyMaster/stakeholderType/StakeholderTypeList";
 import OwnershipTypeList from "./pages/masters/companyMaster/ownershipType/OwnershipTypeList";
+import AccrediationCategoryList from "./pages/masters/companyMaster/accrediationCategory/AccrediationCategoryList";
+import LicenceNameList from "./pages/masters/companyMaster/licenceName/LicenceNameList";
+import AccrediationNameList from "./pages/masters/companyMaster/accrediationName/AccrediationNameList";
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   // Check if user is authenticated
@@ -601,6 +604,9 @@ function App() {
         <Route path='/bank-ccount-type' element={<ProtectedRoute><BankAccountTypeList /></ProtectedRoute>} />
          <Route path='/stakeholder-type' element={<ProtectedRoute><StakeholderTypeList /></ProtectedRoute>} />
          <Route path='/ownership-type' element={<ProtectedRoute><OwnershipTypeList /></ProtectedRoute>} />
+         <Route path='/accrediation-category' element={<ProtectedRoute><AccrediationCategoryList /></ProtectedRoute>} />
+         <Route path='/license-name' element={<ProtectedRoute><LicenceNameList /></ProtectedRoute>} />
+        <Route path='/accrediation-name' element={<ProtectedRoute><AccrediationNameList /></ProtectedRoute>} />
         {/* 404 Error Page */}
         <Route path='*' element={<ErrorPage />} />
       </Routes>

@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from 'react'
 import { useDispatch } from "react-redux";
 import MasterLayout from "../../../../masterLayout/MasterLayout";
-// import Breadcrumb from "../../../components/Breadcrumb";
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { Link } from 'react-router-dom';
 import { toast } from "react-toastify";
-import AddImportStakeholderTypeModal from './AddImportStakeholderTypeModal';
-import AddEditStakeholderTypeModal from './AddEditStakeholderTypeModal';
-import { stakeholderTypeList, stakeholderTypeDelete, stakeholderTypeExportData } from '../../../../store/master/companyMasters/actions';
+import AddImportAccrediationNameModal from './AddImportAccrediationNameModal';
+import AddEditAccrediationNameModal from './AddEditAccrediationNameModal';
+import { accreditationNameExportData,accreditationNameList ,accreditationNameDelete} from '../../../../store/master/companyMasters/actions';
 
-const StakeholderTypeList = () => {
+const AccrediationNameList = () => {
   const dispatch = useDispatch();
   const [modalState, setModalState] = useState({
     show: false,
@@ -30,7 +29,7 @@ const StakeholderTypeList = () => {
       mode: 'add',
       rowData: null
     });
-    fetchBankAccountTypeList();
+    fetchAccrediationNameList();
   }
 
   // const [showEdit, setShowEdit] = useState(false);
@@ -38,16 +37,17 @@ const StakeholderTypeList = () => {
   const [rowSelectData, setRowSelectData] = useState({});
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this stakeholder type?");
+  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this accrediation name?");
   const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [selectAllOrNot, setSelectAllOrNot] = useState('');
-  const [stakeholderTypeData, setStakeholderTypeData] = useState([]);
+  const [accrediationNameData, setAccrediationNameData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [items] = useState(["Stakeholder Type", "Stakeholder Category", "Description", "Modified On"]);
-  const [selectedItems, setSelectedItems] = useState(["Stakeholder Type", "Stakeholder Category"]);
-  const [ItemsRequired] = useState(["Stakeholder Type", "Stakeholder Category"]);
+   const [items] = useState(["Country", "Accrediation Category","Accrediation Full Name", "Accrediation Short Name", "Accrediation Issuing Authority Name", "Accrediation Valid Upto", "Description", "Modified On"]);
+   const [selectedItems, setSelectedItems] = useState(["Country", "Accrediation Full Name", "Accrediation Short Name", "Accrediation Issuing Authority Name", "Accrediation Valid Upto",]);
+   const [ItemsRequired] = useState(["Country","Accrediation Category", "Accrediation Full Name", "Accrediation Short Name", "Accrediation Issuing Authority Name", "Accrediation Valid Upto",]);
+ 
 
   // Updated state with sorting
   const [tableState, setTableState] = useState({
@@ -67,7 +67,7 @@ const StakeholderTypeList = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (tableState.search !== undefined) {
-        fetchBankAccountTypeList();
+        fetchAccrediationNameList();
       }
     }, 500);
 
@@ -75,10 +75,10 @@ const StakeholderTypeList = () => {
   }, [tableState.search]);
 
   useEffect(() => {
-    fetchBankAccountTypeList();
+    fetchAccrediationNameList();
   }, [tableState.page, tableState.limit, tableState.status, tableState.sortBy, tableState.sortOrder]);
 
-  const fetchBankAccountTypeList = () => {
+  const fetchAccrediationNameList = () => {
     setLoading(true);
     const params = {
       page: tableState.page,
@@ -89,12 +89,12 @@ const StakeholderTypeList = () => {
       sortOrder: tableState.sortOrder || ''
     };
 
-    dispatch(stakeholderTypeList(params, (response, error) => {
+    dispatch(accreditationNameList(params, (response, error) => {
       setLoading(false);
       if (response?.statusCode === 200 && response?.status === true) {
         const paginationData = response?.pagination || {};
 
-        setStakeholderTypeData(response?.data || []);
+        setAccrediationNameData(response?.data || []);
         setTableState(prev => ({
           ...prev,
           total: paginationData.totalItems || 0,
@@ -103,6 +103,7 @@ const StakeholderTypeList = () => {
           hasNext: paginationData.nextPage || false,
           hasPrevious: paginationData.previousPage || false
         }));
+
         setSelectedRows(prev => {
           const filtered = prev.filter(rowId =>
             response?.data.some(rowItems => rowItems.uuid === rowId)
@@ -110,7 +111,7 @@ const StakeholderTypeList = () => {
           return filtered;
         });
       } else {
-        setStakeholderTypeData([]);
+        setAccrediationNameData([]);
         setTableState(prev => ({
           ...prev,
           total: 0,
@@ -179,14 +180,14 @@ const StakeholderTypeList = () => {
     if (isAllSelected) {
       setSelectedRows([]);
     } else {
-      setSelectedRows(stakeholderTypeData.map(Item => Item.uuid));
+      setSelectedRows(accrediationNameData.map(Item => Item.uuid));
     }
   };
   // For checkbox in table header
   const handleSelectAll = (e) => {
     const checked = e.target.checked;
     if (checked) {
-      setSelectedRows(stakeholderTypeData.map(Item => Item.uuid));
+      setSelectedRows(accrediationNameData.map(Item => Item.uuid));
     } else {
       setSelectedRows([]);
       setSelectAllOrNot('');
@@ -203,8 +204,8 @@ const StakeholderTypeList = () => {
     });
   };
 
-  const isAllSelected = stakeholderTypeData.length > 0 &&
-    stakeholderTypeData.every(Item => selectedRows.includes(Item.uuid));
+  const isAllSelected = accrediationNameData.length > 0 &&
+    accrediationNameData.every(Item => selectedRows.includes(Item.uuid));
 
   const goToPage = (page) => {
     if (page >= 1 && page <= tableState.totalPages) {
@@ -245,11 +246,6 @@ const StakeholderTypeList = () => {
     return pages;
   };
 
-  // const handleCloseEdit = () => {
-  //   setShowEdit(false);
-  //   fetchBankAccountTypeList();
-  // };
-
   const handleShowEdit = (rowData) => {
     setModalState({
       show: true,
@@ -257,13 +253,14 @@ const StakeholderTypeList = () => {
       rowData: rowData
     });
   };
+
   const handleSelectAllOrNot = (a) => {
     setSelectAllOrNot(a);
   }
   const handleDelete = (uuid) => {
     setDeleteId(uuid);
     setShowDeleteConfirm(true);
-    setDeleteConfirmMessage(`Are you sure you want to delete this stakeholder type?`);
+    setDeleteConfirmMessage(`Are you sure you want to delete this accrediation name?`);
   };
 
   const handleBulkDelete = () => {
@@ -272,8 +269,8 @@ const StakeholderTypeList = () => {
       return;
     }
     // Choose message based on delete type
-    const message = selectAllOrNot === "all" ? `${tableState.total} all stakeholder type` : `${selectedRows.length} selected stakeholder type`;
-    setDeleteConfirmMessage(`Are you sure you want to delete this stakeholder type (${message})?`);
+    const message = selectAllOrNot === "all" ? `${tableState.total} all accrediation name` : `${selectedRows.length} selected accrediation name`;
+    setDeleteConfirmMessage(`Are you sure you want to delete this accrediation name (${message})?`);
     setShowDeleteConfirm(true);
   };
 
@@ -281,22 +278,22 @@ const StakeholderTypeList = () => {
     // const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
     const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
     if (!sendPayload || sendPayload.length === 0) {
-      toast.error("No Stakeholder Type selected for deletion.");
+      toast.error("No accrediation name selected for deletion.");
       return;
     }
-    dispatch(stakeholderTypeDelete(sendPayload, (response, error) => {
+    dispatch(accreditationNameDelete(sendPayload, (response, error) => {
       if (error) {
         toast.error(error?.response?.data?.message || "server error");
       } else {
         if (response?.statusCode === 200 && response?.status === true) {
           toast.success(response?.message);
-          setStakeholderTypeData(prevRowItems => prevRowItems.filter(Item => Item.uuid !== deleteId));
+          setAccrediationNameData(prevRowItems => prevRowItems.filter(Item => Item.uuid !== deleteId));
           setSelectedRows(prevSelected => prevSelected.filter(rowId => rowId !== deleteId));
           setShowDeleteConfirm(false);
           setSelectedRows([]);
           setSelectAllOrNot('');
           setDeleteId(null);
-          fetchBankAccountTypeList();
+          fetchAccrediationNameList();
         } else {
           toast.error("Something went wrong.");
         }
@@ -314,7 +311,7 @@ const StakeholderTypeList = () => {
 
   const handleCloseImport = () => {
     setShowImport(false);
-    fetchBankAccountTypeList();
+    fetchAccrediationNameList();
   };
 
   const handleShowImport = () => {
@@ -364,8 +361,12 @@ const StakeholderTypeList = () => {
     }
     // Map frontend labels to backend field names
     const fieldMapping = {
-      "Stakeholder Type": "name",
-      "Stakeholder Category": "category_name",
+      "Country": "country",
+      "Accrediation Category": "category",
+      "Accrediation Full Name": "full_name",
+      "Accrediation Short Name": "short_name",
+      "Accrediation Issuing Authority Name": "issuing_authority",
+      "Accrediation Valid Upto": "valid_upto",
       "Modified On": "updated_at",
       "Description": "description",
     };
@@ -378,9 +379,8 @@ const StakeholderTypeList = () => {
       fields: fieldsString,
       uuids: selectAllOrNot === "all" ? [] : selectedRows,
     };
-
     setLoadingExport(true);
-    dispatch(stakeholderTypeExportData(sendPayload, (response, error) => {
+    dispatch(accreditationNameExportData(sendPayload, (response, error) => {
       if (error) {
         setLoadingExport(false);
         toast.error(error?.response?.message || "server error");
@@ -394,7 +394,7 @@ const StakeholderTypeList = () => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `StakeholderType.xlsx`;
+          link.download = `AccrediationName.xlsx`;
           document.body.appendChild(link);
           link.click();
           link.remove();
@@ -432,7 +432,7 @@ const StakeholderTypeList = () => {
   return (
     <>
       <MasterLayout>
-        {/* <Breadcrumb title="StakeholderType" subTitle="List" /> */}
+        {/* <Breadcrumb title="Licence Name" subTitle="List" /> */}
         <div className="card basic-data-table main-container-data">
           <div className="card-body container-data">
             <div className="row align-items-center gy-3 gx-2 flex-wrap filter-action-btn">
@@ -452,13 +452,36 @@ const StakeholderTypeList = () => {
                   >
                     Export
                   </button>
+                  {/* {selectedRows.length == 0 && (
+                    <button
+                      onClick={handleSelectAllButton}
+                      className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
+                    >
+                      Delete
+                    </button>
+                  )}
+                  {selectedRows.length > 0 && (
+                    <button
+                      onClick={() => handleBulkDelete("")}
+                      className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
+                    >{`Delete Selected (${selectedRows.length})`}
+                    </button>
+                  )}
+                  {selectedRows.length > 0 && (
+                    <button
+                      onClick={() => handleBulkDelete("all")}
+                      className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
+                    >{`Delete All (${tableState.total})`}
+                    </button>
+                  )} */}
+
                   <button
                     onClick={handleBulkDelete}
                     className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
                   >
                     Delete
                   </button>
-                  {(selectedRows?.length > 0 && selectedRows?.length === stakeholderTypeData?.length) && (
+                  {(selectedRows?.length > 0 && selectedRows?.length === accrediationNameData?.length) && (
                     <>
                       <button
                         onClick={() => handleSelectAllOrNot("onlySelected")}
@@ -544,24 +567,47 @@ const StakeholderTypeList = () => {
                           type="checkbox"
                           checked={isAllSelected}
                           onChange={handleSelectAll}
-                          disabled={stakeholderTypeData.length === 0}
+                          disabled={accrediationNameData.length === 0}
                         />
                         <span>No.</span>
                       </div>
                     </th>
-                    <th scope="col" className='sorting-th' onClick={() => handleSort('name')}>
+                    <th scope="col" className='sorting-th' onClick={() => handleSort('country_name')}>
                       <div className="d-flex align-items-center">
-                        Stakeholder Type
-                        {getSortIcon('name')}
+                        Country
+                        {getSortIcon('country_name')}
                       </div>
                     </th>
                     <th scope="col" className='sorting-th' onClick={() => handleSort('category_name')}>
                       <div className="d-flex align-items-center">
-                        Stakeholder Category
+                        Accrediation Category
                         {getSortIcon('category_name')}
                       </div>
                     </th>
-
+                    <th scope="col" className='sorting-th' onClick={() => handleSort('full_name')}>
+                      <div className="d-flex align-items-center">
+                        Accrediation Full Name
+                        {getSortIcon('full_name')}
+                      </div>
+                    </th>
+                    <th scope="col" className='sorting-th' onClick={() => handleSort('short_name')}>
+                      <div className="d-flex align-items-center">
+                        Accrediation Short Name
+                        {getSortIcon('short_name')}
+                      </div>
+                    </th>
+                    <th scope="col" className='sorting-th' onClick={() => handleSort('issuing_authority')}>
+                      <div className="d-flex align-items-center">
+                        Accrediation Issuing Authority Name
+                        {getSortIcon('issuing_authority')}
+                      </div>
+                    </th>
+                    <th scope="col" className='sorting-th' onClick={() => handleSort('valid_upto')}>
+                      <div className="d-flex align-items-center">
+                        Accrediation Valid Upto
+                        {getSortIcon('valid_upto')}
+                      </div>
+                    </th>
                     <th scope="col" className='sorting-th' onClick={() => handleSort('description')}>
                       <div className="d-flex align-items-center">
                         Description
@@ -591,8 +637,8 @@ const StakeholderTypeList = () => {
                         </div>
                       </td>
                     </tr>
-                  ) : stakeholderTypeData.length > 0 ? (
-                    stakeholderTypeData.map((rowItem, index) => (
+                  ) : accrediationNameData.length > 0 ? (
+                    accrediationNameData.map((rowItem, index) => (
                       <tr key={rowItem.uuid} >
                         <td >
                           <div className="d-flex align-items-center gap-2">
@@ -609,15 +655,34 @@ const StakeholderTypeList = () => {
                         </td>
                         <td >
                           <span >
-                            {rowItem.name}
+                            {rowItem.country_name}
                           </span>
                         </td>
-                        <td >
+                         <td >
                           <span >
                             {rowItem.category_name}
                           </span>
                         </td>
-
+                        <td >
+                          <span >
+                            {rowItem.full_name}
+                          </span>
+                        </td>
+                        <td >
+                          <span >
+                            {rowItem.short_name}
+                          </span>
+                        </td>
+                        <td >
+                          <span >
+                            {rowItem.issuing_authority}
+                          </span>
+                        </td>
+                        <td >
+                          <span >
+                            {rowItem.valid_upto}
+                          </span>
+                        </td>
                         <td >
                           <span >
                             {rowItem.description}
@@ -765,14 +830,14 @@ const StakeholderTypeList = () => {
             </div>
           </div>
         </div>
-        <AddEditStakeholderTypeModal
+        <AddEditAccrediationNameModal
           show={modalState.show}
           handleClose={handleClose}
           mode={modalState.mode}
           rowData={modalState.rowData}
         />
         {showImport && (
-          <AddImportStakeholderTypeModal show={showImport} handleClose={handleCloseImport} />)}
+          <AddImportAccrediationNameModal show={showImport} handleClose={handleCloseImport} />)}
         {showDeleteConfirm && (
           <div className="modal fade show common-ctl-popup">
             <div className="modal-dialog modal-dialog-centered">
@@ -783,7 +848,6 @@ const StakeholderTypeList = () => {
                 </div>
                 <div className="modal-body">
                   <p className="mb-0">{deleteConfirmMessage}</p>
-
                 </div>
                 <div className="modal-footer">
                   <button
@@ -814,7 +878,7 @@ const StakeholderTypeList = () => {
             <div className="modal-dialog modal-xl modal-dialog-centered" role="document">
               <div className="modal-content radius-16 bg-base">
                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                  <h1 className="modal-title fs-5">Export Stakeholder Type</h1>
+                  <h1 className="modal-title fs-5">Export Licence Name</h1>
                   <button
                     type="button"
                     className="btn-close"
@@ -912,4 +976,4 @@ const StakeholderTypeList = () => {
   );
 };
 
-export default StakeholderTypeList;
+export default AccrediationNameList;
