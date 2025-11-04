@@ -159,6 +159,42 @@ export const DELETE_ACCREDITATION_NAME_API = "api/v1/master/accreditation-name/"
 export const EXPORT_ACCREDITATION_NAME_API = "api/v1/master/accreditation-name/export/";
 export const IMPORT_ACCREDITATION_NAME_API = "api/v1/master/accreditation-name/import/";
 
+
+//Education level code
+export const GET_EDUCATION_LEVEL_CODE_LIST = "/api/v1/master/education-level-codes/";
+export const ADD_EDUCATION_LEVEL_CODE_API = "/api/v1/master/education-level-codes/create/";
+export const EDIT_EDUCATION_LEVEL_CODE_API = "api/v1/master/education-level-codes/";
+export const DELETE_EDUCATION_LEVEL_CODE_API = "api/v1/master/education-level-codes/";
+export const EXPORT_EDUCATION_LEVEL_CODE_API = "api/v1/master/education-level-codes/export/";
+export const IMPORT_EDUCATION_LEVEL_CODE_API = "api/v1/master/education-level-codes/import/";
+ 
+// EDUCATION_LEVEL
+export const GET_EDUCATION_LEVEL_LIST = "/api/v1/master/education-level/";
+export const ADD_EDUCATION_LEVEL_API = "/api/v1/master/education-level/create/";
+export const EDIT_EDUCATION_LEVEL_API = "api/v1/master/education-level/";
+export const DELETE_EDUCATION_LEVEL_API = "api/v1/master/education-level/";
+export const EXPORT_EDUCATION_LEVEL_API = "api/v1/master/education-level/export/";
+export const IMPORT_EDUCATION_LEVEL_API = "api/v1/master/education-level/import/";
+ 
+//Study Main Area
+export const GET_STUDY_MAIN_AREA_LIST = "/api/v1/master/studymainarea/";
+export const ADD_STUDY_MAIN_AREA_API = "/api/v1/master/studymainarea/create/";
+export const EDIT_STUDY_MAIN_AREA_API = "api/v1/master/studymainarea/";
+export const DELETE_STUDY_MAIN_AREA_API = "api/v1/master/studymainarea/";
+export const EXPORT_STUDY_MAIN_AREA_API = "api/v1/master/studymainarea/export/";
+export const IMPORT_STUDY_MAIN_AREA_API = "api/v1/master/studymainarea/import/";
+
+ 
+//CONTINENTS
+export const GET_CONTINENT_LIST_API = "/api/v1/master/continents/";
+export const Add_CONTINENT_LIST_API = "/api/v1/master/continents/create/";
+export const EDIT_CONTINENT_LIST_API = "api/v1/master/continents/";
+export const DELETE_CONTINENT_LIST_API = "api/v1/master/continents/";
+export const EXPORT_CONTINENT_LIST_API = "api/v1/master/continents/export/";
+export const IMPORT_CONTINENT_LIST_API = "api/v1/master/continents/import/";
+ 
+ 
+
 // // export const TWO_STEP_VERIFICATION = 'api/national-admin/national-admin-verifyOtpAdmin'
 // export const TWO_STEP_VERIFICATION = '/api/users/verifyUser'
 // export const FORGET_PASSWORD_URL = '/api/national-admin/forgotpassword/'

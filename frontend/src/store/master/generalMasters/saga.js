@@ -12,19 +12,31 @@ import {
   DELETE_MARITAL_STATUS,
   EXPORT_MARITAL_STATUS,
   IMPORT_MARITAL_STATUS,
+  CONTINENT_LIST,
+  ADD_CONTINENT,
+  EDIT_CONTINENT,
+  DELETE_CONTINENT,
+  EXPORT_CONTINENT,
+  IMPORT_CONTINENT,
 } from "./actionTypes";
 
 import {
+  addContinentDataAPI,
   addGenderDataAPI,
   addMaritalStatusDataAPI,
+  deleteContinentDataAPI,
   deleteGenderDataAPI,
   deleteMaritalStatusDataAPI,
+  editContinentDataAPI,
   editGenderDataAPI,
   editMaritalStatusDataAPI,
+  exportContinentDataAPI,
   exportGenderDataAPI,
   exportMaritalStatusDataAPI,
+  getContinentListDataAPI,
   getGenderListDataAPI,
   getMaritalStatusListDataAPI,
+  importContinentDataAPI,
   importGenderDataAPI,
   importMaritalStatusDataAPI,
 } from "../../../service/api_helper";
@@ -138,6 +150,60 @@ function* maritalStatusImportDataSaga(action) {
     if (action.callback) action.callback(null, error);
   }
 }
+//Continent
+function* continentListSaga(action) {
+  try {
+    const response = yield call(getContinentListDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+ 
+function* continentAddSaga(action) {
+  try {
+    const response = yield call(addContinentDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+ 
+function* continentEditSaga(action) {
+  try {
+    const response = yield call(editContinentDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+ 
+function* continentDeleteSaga(action) {
+  try {
+    const response = yield call(deleteContinentDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+ 
+function* continentExportDataSaga(action) {
+  try {
+    const response = yield call(exportContinentDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+ 
+function* continentImportDataSaga(action) {
+  try {
+    const response = yield call(importContinentDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
 
 function* generalMasterSaga() {
   // Gender
@@ -155,6 +221,14 @@ function* generalMasterSaga() {
   yield takeEvery(DELETE_MARITAL_STATUS, maritalStatusDeleteSaga);
   yield takeEvery(EXPORT_MARITAL_STATUS, maritalStatusExportDataSaga);
   yield takeEvery(IMPORT_MARITAL_STATUS, maritalStatusImportDataSaga);
+
+  //Continents
+  yield takeEvery(CONTINENT_LIST, continentListSaga);
+  yield takeEvery(ADD_CONTINENT, continentAddSaga);
+  yield takeEvery(EDIT_CONTINENT, continentEditSaga);
+  yield takeEvery(DELETE_CONTINENT, continentDeleteSaga);
+  yield takeEvery(EXPORT_CONTINENT, continentExportDataSaga);
+  yield takeEvery(IMPORT_CONTINENT, continentImportDataSaga);
 }
 
 export default generalMasterSaga;

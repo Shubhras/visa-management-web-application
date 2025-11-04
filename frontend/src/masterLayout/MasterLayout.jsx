@@ -58,7 +58,7 @@ const MasterLayout = ({ children }) => {
           children: [
             { name: 'Gender', path: '/gender-list' },
             { name: 'Marital Status', path: '/marital-status' },
-            // { name: 'Continents ', path: '/' },
+            { name: 'Continents ', path: '/continent-list' },
             // { name: 'State', path: '/' },
             // { name: 'District', path: '/' },
             // { name: 'City', path: '/' },
@@ -95,6 +95,16 @@ const MasterLayout = ({ children }) => {
             { name: 'Activity Type', path: '/activity-type' },
             { name: 'Lost Reason (B2C)', path: '/lost-reason-B2C' },
             { name: 'Lost Reason (B2B)', path: '/lost-reason-B2B' },
+          ]
+        },
+        {
+          name: 'Education',
+          // path: '/priority-type',
+          children: [
+            { name: 'Education Level Code', path: '/education-level-code' },
+            { name: 'Education Level', path: '/education-level' },
+            { name: 'Study Main Area', path: '/study-main-area' },
+          
           ]
         },
 
