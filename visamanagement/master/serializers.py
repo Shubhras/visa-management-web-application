@@ -318,15 +318,20 @@ class LostReasonB2BSerializer(serializers.ModelSerializer):
 class EducationLevelCodeSerializer(serializers.ModelSerializer):
     class Meta:
         model = EducationLevelCode
-        fields = ['uuid', 'Levelcode', 'description', 'created_at', 'updated_at']
+        fields = ['uuid', 'name', 'description', 'created_at', 'updated_at']
 
 
 
 
 class EducationLevelSerializer(serializers.ModelSerializer):
-    # Optionally display the related LevelCode's code
+    level_code = serializers.SlugRelatedField(
+        queryset=EducationLevelCode.objects.all(),
+        slug_field='uuid',  # Use UUID field in EducationLevelCode
+        allow_null=True,
+        required=False
+    )
     level_code_detail = serializers.CharField(
-        source='level_code.Levelcode', read_only=True
+        source='level_code.name', read_only=True
     )
 
     class Meta:
@@ -334,7 +339,7 @@ class EducationLevelSerializer(serializers.ModelSerializer):
         fields = [
             'uuid', 
             'level_code', 
-            'level_code_detail',  # optional for easy read
+            'level_code_detail',
             'educationlevel', 
             'description', 
             'is_deleted',
@@ -372,7 +377,7 @@ class StudymainareaSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'uuid',
-            'Mainarea',
+            'name',
             'description',
             'is_deleted',
             'created_at',
