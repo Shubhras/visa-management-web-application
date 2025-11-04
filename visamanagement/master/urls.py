@@ -117,8 +117,8 @@ urlpatterns = [
     path('ownership-types/<uuid:uuid>/', OwnershipTypeDetailAPIView.as_view(), name='ownershiptype-detail'),
     path('ownership-types/<uuid:uuid>/update/', OwnershipTypeUpdateAPIView.as_view(), name='ownershiptype-update'),
     path('ownership-types/delete/', OwnershipTypeDeleteAPIView.as_view(), name='ownershiptype-delete'),
-    path('Ownership-types/export/',  OwnershipTypeExportAPIView.as_view(), name='ownershiptype-export'),
-    path('Ownership-types/import/',  OwnershipTypeImportAPIView.as_view(), name='ownershiptype-import'),
+    path('ownership-types/export/',  OwnershipTypeExportAPIView.as_view(), name='ownershiptype-export'),
+    path('ownership-types/import/',  OwnershipTypeImportAPIView.as_view(), name='ownershiptype-import'),
 
 
 
@@ -291,14 +291,6 @@ urlpatterns = [
     path('academicresult/delete/', AcademicResultDeleteAPIView.as_view(), name='academicresult-delete'),
     path('academicresult/export/', AcademicResultExportAPIView.as_view(), name='academicresult-export'),
     path('academicresult/import/', AcademicResultImportAPIView.as_view(), name='academicresult-import'),    
-
-    path('educationlevel/', EducationLevelCodeListAPIView.as_view(), name='educationlevel-list'),
-    path('educationlevel/create/', EducationLevelCodeCreateAPIView.as_view(), name='educationlevel-create'),
-    path('educationlevel/<uuid:uuid>/', EducationLevelCodeRetrieveAPIView.as_view(), name='educationlevel-retrieve'),
-    path('educationlevel/<uuid:uuid>/update/', EducationLevelCodeUpdateAPIView.as_view(), name='educationlevel-update'),
-    path('educationlevel/delete/', EducationLevelCodeDeleteAPIView.as_view(), name='educationlevel-delete'),
-    path('educationlevel/export/', EducationLevelCodeExportAPIView.as_view(), name='educationlevel-export'),
-    path('educationlevel/import/', EducationLevelCodeImportAPIView.as_view(), name='educationlevel-import'),
 
     path('mediumeducation/',MediumofEducationListAPIView.as_view(), name='educationlevel-list'),
     path('mediumeducation/create/', MediumofEducationCreateAPIView.as_view(), name='mediumeducation-create'),
