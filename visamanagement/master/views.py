@@ -9889,6 +9889,7 @@ class EducationLevelCodeCreateAPIView(APIView):
 
 
 # ------------------ Retrieve API ------------------
+
 class EducationLevelCodeRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -10162,6 +10163,39 @@ class EducationLevelCodeImportAPIView(APIView):
 
 # -------------------- EducationLevel -------------------- #
 
+class EducationLevelListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        search = request.GET.get('search', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_order = request.GET.get('sortOrder', 'desc')
+
+        # Allowed sort fields
+        allowed_sort_fields = ['educationlevel', 'description', 'created_at']
+        if sort_by not in allowed_sort_fields:
+            sort_by = 'created_at'
+
+        if sort_order == 'desc':
+            sort_by = f'-{sort_by}'
+
+        queryset = EducationLevel.objects.filter(is_deleted=False)
+
+        if search:
+            queryset = queryset.filter(
+                Q(educationlevel__icontains=search) |
+                Q(description__icontains=search) |
+                Q(level_code__Levelcode__icontains=search)  # optional: search by level_code detail
+            )
+
+        queryset = queryset.order_by(sort_by)
+
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = EducationLevelSerializer(result_page, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
+    
 class EducationLevelCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
