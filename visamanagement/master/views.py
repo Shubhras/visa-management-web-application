@@ -7116,11 +7116,11 @@ class LicenseNameExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'full_name': 'Full Name',
-            'short_name': 'Short Name',
-            'issuing_authority': 'Issuing Authority',
+            'full_name': 'License  Full Name',
+            'short_name': 'License Short Name',
+            'issuing_authority': 'License Issuing Authority',
             'description': 'Description',
-            'valid_upto': 'Valid Upto',
+            'valid_upto': 'License Valid Upto',
             'country': 'Country ID',
             'country_name': 'Country Name',
             'is_deleted': 'Deleted',
@@ -7181,8 +7181,8 @@ class LicenseNameImportAPIView(APIView):
 
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
-        required_headers = {'full_name', 'country'}
-        optional_headers = {'short_name', 'issuing_authority', 'description', 'valid_upto'}
+        required_headers = {'license  full name', 'country'}
+        optional_headers = {'license  short name', 'license issuing authority', 'description', 'license valid upto'}
 
         try:
             data = []
