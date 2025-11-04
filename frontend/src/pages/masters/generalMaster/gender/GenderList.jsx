@@ -5,13 +5,9 @@ import MasterLayout from "../../../../masterLayout/MasterLayout";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
-import AddImportGenderModal from "./AddImportGenderModal";
-import AddEditGenderModal from "./AddEditGenderModal";
-import {
-  genderList,
-  genderDelete,
-  genderExportData,
-} from "../../../../store/master/generalMasters/actions";
+import AddImportGenderModal from './AddImportGenderModal';
+import AddEditGenderModal from './AddEditGenderModal';
+import { genderList, genderDelete, genderExportData } from '../../../../store/master/generalMasters/actions';
 const GenderList = () => {
   const dispatch = useDispatch();
   const [modalState, setModalState] = useState({
@@ -106,28 +102,33 @@ const GenderList = () => {
         if (response?.statusCode === 200 && response?.status === true) {
           const paginationData = response?.pagination || {};
 
-          setDepartments(response?.data || []);
-          setTableState((prev) => ({
-            ...prev,
-            total: paginationData.totalItems || 0,
-            totalPages: paginationData.totalPages || 0,
-            currentPage: paginationData.currentPage || 1,
-            hasNext: paginationData.nextPage || false,
-            hasPrevious: paginationData.previousPage || false,
-          }));
-        } else {
-          setDepartments([]);
-          setTableState((prev) => ({
-            ...prev,
-            total: 0,
-            totalPages: 0,
-            currentPage: 1,
-            hasNext: false,
-            hasPrevious: false,
-          }));
-        }
-      })
-    );
+        setDepartments(response?.data || []);
+        setTableState(prev => ({
+          ...prev,
+          total: paginationData.totalItems || 0,
+          totalPages: paginationData.totalPages || 0,
+          currentPage: paginationData.currentPage || 1,
+          hasNext: paginationData.nextPage || false,
+          hasPrevious: paginationData.previousPage || false
+        }));
+        setSelectedRows(prev => {
+          const filtered = prev.filter(rowId =>
+            response?.data.some(rowItems => rowItems.uuid === rowId)
+          );
+          return filtered;
+        });
+      } else {
+        setDepartments([]);
+        setTableState(prev => ({
+          ...prev,
+          total: 0,
+          totalPages: 0,
+          currentPage: 1,
+          hasNext: false,
+          hasPrevious: false
+        }));
+      }
+    }));
   };
 
   // Handle sorting
@@ -479,7 +480,7 @@ const GenderList = () => {
                   >
                     Delete
                   </button>
-                  {selectedRows.length > 0 && (
+                  {(selectedRows?.length > 0 && selectedRows?.length === departments?.length) && (
                     <>
                       <button
                         onClick={() => handleSelectAllOrNot("onlySelected")}

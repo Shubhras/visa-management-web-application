@@ -5,11 +5,11 @@ import MasterLayout from "../../../../masterLayout/MasterLayout";
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { Link } from 'react-router-dom';
 import { toast } from "react-toastify";
-import AddImportBankAccountTypeModal from './AddImportBankAccountTypeModal';
-import AddEditBankAccountTypeModal from './AddEditBankAccountTypeModal';
-import { bankAccountTypeList, bankAccountTypeDelete, bankAccountTypeExportData } from '../../../../store/master/companyMasters/actions';
+import AddImportStakeholderTypeModal from './AddImportStakeholderTypeModal';
+import AddEditStakeholderTypeModal from './AddEditStakeholderTypeModal';
+import { stakeholderTypeList, stakeholderTypeDelete, stakeholderTypeExportData } from '../../../../store/master/companyMasters/actions';
 
-const BankAccountTypeList = () => {
+const StakeholderTypeList = () => {
   const dispatch = useDispatch();
   const [modalState, setModalState] = useState({
     show: false,
@@ -38,16 +38,16 @@ const BankAccountTypeList = () => {
   const [rowSelectData, setRowSelectData] = useState({});
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this bank account type?");
+  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this stakeholder type?");
   const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [selectAllOrNot, setSelectAllOrNot] = useState('');
-  const [bankAccountTypeData, setBankAccountTypeData] = useState([]);
+  const [stakeholderTypeData, setStakeholderTypeData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [items] = useState(["Bank Account Type", "Description", "Modified On"]);
-  const [selectedItems, setSelectedItems] = useState(["Bank Account Type"]);
-  const [ItemsRequired] = useState(["Bank Account Type"]);
+  const [items] = useState(["Stakeholder Type", "Stakeholder Category", "Description", "Modified On"]);
+  const [selectedItems, setSelectedItems] = useState(["Stakeholder Type"]);
+  const [ItemsRequired] = useState(["Stakeholder Type", "Stakeholder Category"]);
 
   // Updated state with sorting
   const [tableState, setTableState] = useState({
@@ -89,12 +89,12 @@ const BankAccountTypeList = () => {
       sortOrder: tableState.sortOrder || ''
     };
 
-    dispatch(bankAccountTypeList(params, (response, error) => {
+    dispatch(stakeholderTypeList(params, (response, error) => {
       setLoading(false);
       if (response?.statusCode === 200 && response?.status === true) {
         const paginationData = response?.pagination || {};
 
-        setBankAccountTypeData(response?.data || []);
+        setStakeholderTypeData(response?.data || []);
         setTableState(prev => ({
           ...prev,
           total: paginationData.totalItems || 0,
@@ -110,7 +110,7 @@ const BankAccountTypeList = () => {
           return filtered;
         });
       } else {
-        setBankAccountTypeData([]);
+        setStakeholderTypeData([]);
         setTableState(prev => ({
           ...prev,
           total: 0,
@@ -179,14 +179,14 @@ const BankAccountTypeList = () => {
     if (isAllSelected) {
       setSelectedRows([]);
     } else {
-      setSelectedRows(bankAccountTypeData.map(Item => Item.uuid));
+      setSelectedRows(stakeholderTypeData.map(Item => Item.uuid));
     }
   };
   // For checkbox in table header
   const handleSelectAll = (e) => {
     const checked = e.target.checked;
     if (checked) {
-      setSelectedRows(bankAccountTypeData.map(Item => Item.uuid));
+      setSelectedRows(stakeholderTypeData.map(Item => Item.uuid));
     } else {
       setSelectedRows([]);
       setSelectAllOrNot('');
@@ -203,8 +203,8 @@ const BankAccountTypeList = () => {
     });
   };
 
-  const isAllSelected = bankAccountTypeData.length > 0 &&
-    bankAccountTypeData.every(Item => selectedRows.includes(Item.uuid));
+  const isAllSelected = stakeholderTypeData.length > 0 &&
+    stakeholderTypeData.every(Item => selectedRows.includes(Item.uuid));
 
   const goToPage = (page) => {
     if (page >= 1 && page <= tableState.totalPages) {
@@ -263,7 +263,7 @@ const BankAccountTypeList = () => {
   const handleDelete = (uuid) => {
     setDeleteId(uuid);
     setShowDeleteConfirm(true);
-    setDeleteConfirmMessage(`Are you sure you want to delete this bank account type?`);
+    setDeleteConfirmMessage(`Are you sure you want to delete this stakeholder type?`);
   };
 
   const handleBulkDelete = () => {
@@ -272,8 +272,8 @@ const BankAccountTypeList = () => {
       return;
     }
     // Choose message based on delete type
-    const message = selectAllOrNot === "all" ? `${tableState.total} all bank account type` : `${selectedRows.length} selected bank account type`;
-    setDeleteConfirmMessage(`Are you sure you want to delete this bank account type (${message})?`);
+    const message = selectAllOrNot === "all" ? `${tableState.total} all stakeholder type` : `${selectedRows.length} selected stakeholder type`;
+    setDeleteConfirmMessage(`Are you sure you want to delete this stakeholder type (${message})?`);
     setShowDeleteConfirm(true);
   };
 
@@ -281,16 +281,16 @@ const BankAccountTypeList = () => {
     // const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
     const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
     if (!sendPayload || sendPayload.length === 0) {
-      toast.error("No bank account type selected for deletion.");
+      toast.error("No Stakeholder Type selected for deletion.");
       return;
     }
-    dispatch(bankAccountTypeDelete(sendPayload, (response, error) => {
+    dispatch(stakeholderTypeDelete(sendPayload, (response, error) => {
       if (error) {
         toast.error(error?.response?.data?.message || "server error");
       } else {
         if (response?.statusCode === 200 && response?.status === true) {
           toast.success(response?.message);
-          setBankAccountTypeData(prevRowItems => prevRowItems.filter(Item => Item.uuid !== deleteId));
+          setStakeholderTypeData(prevRowItems => prevRowItems.filter(Item => Item.uuid !== deleteId));
           setSelectedRows(prevSelected => prevSelected.filter(rowId => rowId !== deleteId));
           setShowDeleteConfirm(false);
           setSelectedRows([]);
@@ -364,7 +364,8 @@ const BankAccountTypeList = () => {
     }
     // Map frontend labels to backend field names
     const fieldMapping = {
-      "Bank Account Type": "name",
+      "Stakeholder Type": "name",
+      "Stakeholder Category": "category_name",
       "Modified On": "updated_at",
       "Description": "description",
     };
@@ -379,7 +380,7 @@ const BankAccountTypeList = () => {
     };
 
     setLoadingExport(true);
-    dispatch(bankAccountTypeExportData(sendPayload, (response, error) => {
+    dispatch(stakeholderTypeExportData(sendPayload, (response, error) => {
       if (error) {
         setLoadingExport(false);
         toast.error(error?.response?.message || "server error");
@@ -393,7 +394,7 @@ const BankAccountTypeList = () => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `BankAccountType.xlsx`;
+          link.download = `StakeholderType.xlsx`;
           document.body.appendChild(link);
           link.click();
           link.remove();
@@ -431,7 +432,7 @@ const BankAccountTypeList = () => {
   return (
     <>
       <MasterLayout>
-        {/* <Breadcrumb title="bank account type" subTitle="List" /> */}
+        {/* <Breadcrumb title="StakeholderType" subTitle="List" /> */}
         <div className="card basic-data-table main-container-data">
           <div className="card-body container-data">
             <div className="row align-items-center gy-3 gx-2 flex-wrap filter-action-btn">
@@ -457,7 +458,7 @@ const BankAccountTypeList = () => {
                   >
                     Delete
                   </button>
-                  {(selectedRows?.length > 0 && selectedRows?.length === bankAccountTypeData?.length) && (
+                  {(selectedRows?.length > 0 && selectedRows?.length === stakeholderTypeData?.length) && (
                     <>
                       <button
                         onClick={() => handleSelectAllOrNot("onlySelected")}
@@ -543,17 +544,24 @@ const BankAccountTypeList = () => {
                           type="checkbox"
                           checked={isAllSelected}
                           onChange={handleSelectAll}
-                          disabled={bankAccountTypeData.length === 0}
+                          disabled={stakeholderTypeData.length === 0}
                         />
                         <span>No.</span>
                       </div>
                     </th>
                     <th scope="col" className='sorting-th' onClick={() => handleSort('name')}>
                       <div className="d-flex align-items-center">
-                        Bank Account Type
+                        Stakeholder Type
                         {getSortIcon('name')}
                       </div>
                     </th>
+                    <th scope="col" className='sorting-th' onClick={() => handleSort('category_name')}>
+                      <div className="d-flex align-items-center">
+                        Stakeholder Category
+                        {getSortIcon('category_name')}
+                      </div>
+                    </th>
+
                     <th scope="col" className='sorting-th' onClick={() => handleSort('description')}>
                       <div className="d-flex align-items-center">
                         Description
@@ -583,8 +591,8 @@ const BankAccountTypeList = () => {
                         </div>
                       </td>
                     </tr>
-                  ) : bankAccountTypeData.length > 0 ? (
-                    bankAccountTypeData.map((rowItem, index) => (
+                  ) : stakeholderTypeData.length > 0 ? (
+                    stakeholderTypeData.map((rowItem, index) => (
                       <tr key={rowItem.uuid} >
                         <td >
                           <div className="d-flex align-items-center gap-2">
@@ -604,6 +612,12 @@ const BankAccountTypeList = () => {
                             {rowItem.name}
                           </span>
                         </td>
+                        <td >
+                          <span >
+                            {rowItem.category_name}
+                          </span>
+                        </td>
+
                         <td >
                           <span >
                             {rowItem.description}
@@ -751,14 +765,14 @@ const BankAccountTypeList = () => {
             </div>
           </div>
         </div>
-        <AddEditBankAccountTypeModal
+        <AddEditStakeholderTypeModal
           show={modalState.show}
           handleClose={handleClose}
           mode={modalState.mode}
           rowData={modalState.rowData}
         />
         {showImport && (
-          <AddImportBankAccountTypeModal show={showImport} handleClose={handleCloseImport} />)}
+          <AddImportStakeholderTypeModal show={showImport} handleClose={handleCloseImport} />)}
         {showDeleteConfirm && (
           <div className="modal fade show common-ctl-popup">
             <div className="modal-dialog modal-dialog-centered">
@@ -800,7 +814,7 @@ const BankAccountTypeList = () => {
             <div className="modal-dialog modal-xl modal-dialog-centered" role="document">
               <div className="modal-content radius-16 bg-base">
                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                  <h1 className="modal-title fs-5">Export Bank Account Type</h1>
+                  <h1 className="modal-title fs-5">Export Stakeholder Type</h1>
                   <button
                     type="button"
                     className="btn-close"
@@ -898,4 +912,4 @@ const BankAccountTypeList = () => {
   );
 };
 
-export default BankAccountTypeList;
+export default StakeholderTypeList;

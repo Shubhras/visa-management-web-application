@@ -95,6 +95,12 @@ const EmployeeTypeList = () => {
           hasNext: paginationData.nextPage || false,
           hasPrevious: paginationData.previousPage || false
         }));
+        setSelectedRows(prev => {
+          const filtered = prev.filter(rowId =>
+            response?.data.some(rowItems => rowItems.uuid === rowId)
+          );
+          return filtered;
+        });
       } else {
         setEmployeeTypeistData([]);
         setTableState(prev => ({
@@ -456,7 +462,7 @@ const EmployeeTypeList = () => {
                   >
                     Delete
                   </button>
-                  {selectedRows.length > 0 && (
+                  {(selectedRows?.length > 0 && selectedRows?.length === employeeTypeistData?.length) && (
                     <>
                       <button
                         onClick={() => handleSelectAllOrNot("onlySelected")}

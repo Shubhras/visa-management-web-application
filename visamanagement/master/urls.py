@@ -16,6 +16,7 @@ urlpatterns = [
     path('genders/import/', GenderImportAPIView.as_view(), name='genders-import'),
 
     path('maritalstatus/', MaritalstatusListAPIView.as_view(),name='Maritalstatus-list'),
+    path('maritalstatus/delete/', MaritalstatusDeleteAPIView.as_view(),name='Maritalstatus-delete'),
     path('maritalstatus/create/', MaritalstatusCreateAPIView.as_view(),name='Maritalstatus-create'),
     path('maritalstatus/list/', MaritalstatusListAPIView.as_view(),name='Maritalstatus-list'),
     path('maritalstatus/<uuid:uuid>/', MaritalstatusDetailAPIView.as_view(), name='Maritalstatus-detail'),
@@ -132,9 +133,12 @@ urlpatterns = [
     # Stakeholder Type
     path('stakeholder-types/', StakeholderTypeListAPIView.as_view(), name='stakeholdertype-list'),
     path('stakeholder-types/create/', StakeholderTypeCreateAPIView.as_view(), name='stakeholdertype-create'),
-    path('stakeholder-types/<uuid:uuid>/', StakeholderTypeDetailAPIView.as_view(), name='stakeholdertype-detail'),
+    path('stakeholder-types/<uuid:uuid>/', StakeholderTypeRetrieveAPIView.as_view(), name='stakeholdertype-detail'),
     path('stakeholder-types/<uuid:uuid>/update/', StakeholderTypeUpdateAPIView.as_view(), name='stakeholdertype-update'),
     path('stakeholder-types/delete/', StakeholderTypeDeleteAPIView.as_view(), name='stakeholdertype-delete'),
+    path('stakeholder-types/export/',  StakeholderTypeExportAPIView.as_view(), name='stakeholdercategory-export'),
+    path('stakeholder-types/import/',  StakeholderTypeImportAPIView.as_view(), name='stakeholdercategory-import'),
+
 
     path("accreditation-category/create/", AccreditationCategoryCreateAPIView.as_view(), name='accreditation-list'),
     path("accreditation-category/", AccreditationCategoryListAPIView.as_view(), name='accreditation-create'),

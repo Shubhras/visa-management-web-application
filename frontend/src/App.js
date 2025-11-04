@@ -353,12 +353,14 @@ import TagsTypeList from "./pages/masters/tagsType/TagsTypeList";
 import ActivityTypeList from "./pages/masters/salesMasters/activityType/ActivityTypeList";
 import LostReasonB2CList from "./pages/masters/salesMasters/lostReasonB2C/LostReasonB2CList";
 import LostReasonB2BList from "./pages/masters/salesMasters/lostReasonB2B/LostReasonB2BList";
- import InterestLevelList from "./pages/masters/salesMasters/interestLevel/InterestLevelList";
+import InterestLevelList from "./pages/masters/salesMasters/interestLevel/InterestLevelList";
 import LeadsList from "./pages/leads/LeadsList";
 import BankAccountTypeList from "./pages/masters/companyMaster/bankAccountType/BankAccountTypeList";
 import GenderList from "./pages/masters/generalMaster/gender/GenderList";
 import MaritalStatusList from "./pages/masters/generalMaster/maritalStatus/MaritalStatusList";
 import ContinentsList from "./pages/masters/generalMaster/continents/ContinentsList";
+import StakeholderTypeList from "./pages/masters/companyMaster/stakeholderType/StakeholderTypeList";
+import OwnershipTypeList from "./pages/masters/companyMaster/ownershipType/OwnershipTypeList";
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   // Check if user is authenticated
@@ -579,10 +581,6 @@ function App() {
 
         {/* Master routes - Protected */}
         <Route path='/leads' element={<ProtectedRoute><LeadsList /></ProtectedRoute>} />
-        <Route path='/department' element={<ProtectedRoute><DepartmentList /></ProtectedRoute>} />
-        <Route path='/employeetype' element={<ProtectedRoute><EmployeeTypeList /></ProtectedRoute>} />
-        <Route path='/companylist' element={<ProtectedRoute><CompanyList /></ProtectedRoute>} />
-        <Route path='/stakeholder-list' element={<ProtectedRoute><StakeholderCategoriesList /></ProtectedRoute>} />
         <Route path='/lead-source' element={<ProtectedRoute><LeadSourceList /></ProtectedRoute>} />
         <Route path='/interest-level' element={<ProtectedRoute><InterestLevelList /></ProtectedRoute>} />
         <Route path='/priority-type' element={<ProtectedRoute><PriorityTypeList /></ProtectedRoute>} />
@@ -590,13 +588,22 @@ function App() {
         <Route path='/activity-type' element={<ProtectedRoute><ActivityTypeList /></ProtectedRoute>} />
         <Route path='/lost-reason-B2C' element={<ProtectedRoute><LostReasonB2CList /></ProtectedRoute>} />
         <Route path='/lost-reason-B2B' element={<ProtectedRoute><LostReasonB2BList /></ProtectedRoute>} />
-        <Route path='/bank-ccount-type' element={<ProtectedRoute><BankAccountTypeList /></ProtectedRoute>} />
+        
 
         {/* General Masters */}
           <Route path='/gender-list' element={<ProtectedRoute><GenderList /></ProtectedRoute>} />
            <Route path='/marital-status' element={<ProtectedRoute><MaritalStatusList /></ProtectedRoute>} />
            <Route path='/continents' element={<ProtectedRoute><ContinentsList/></ProtectedRoute>} />
-          
+    
+
+        {/* Company  Masters */}
+        <Route path='/department' element={<ProtectedRoute><DepartmentList /></ProtectedRoute>} />
+        <Route path='/employeetype' element={<ProtectedRoute><EmployeeTypeList /></ProtectedRoute>} />
+        <Route path='/companylist' element={<ProtectedRoute><CompanyList /></ProtectedRoute>} />
+        <Route path='/stakeholder-list' element={<ProtectedRoute><StakeholderCategoriesList /></ProtectedRoute>} />
+        <Route path='/bank-ccount-type' element={<ProtectedRoute><BankAccountTypeList /></ProtectedRoute>} />
+         <Route path='/stakeholder-type' element={<ProtectedRoute><StakeholderTypeList /></ProtectedRoute>} />
+         <Route path='/ownership-type' element={<ProtectedRoute><OwnershipTypeList /></ProtectedRoute>} />
         {/* 404 Error Page */}
         <Route path='*' element={<ErrorPage />} />
       </Routes>

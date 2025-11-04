@@ -92,6 +92,12 @@ const CompanyList = () => {
                     hasNext: paginationData.nextPage || false,
                     hasPrevious: paginationData.previousPage || false
                 }));
+                setSelectedRows(prev => {
+                    const filtered = prev.filter(rowId =>
+                        response?.data.some(rowItems => rowItems.uuid === rowId)
+                    );
+                    return filtered;
+                });
             } else {
                 setCompanyListData([]);
                 setTableState(prev => ({
@@ -441,7 +447,7 @@ const CompanyList = () => {
                                     >
                                         Delete
                                     </button>
-                                    {selectedRows.length > 0 && (
+                                    {(selectedRows?.length > 0 && selectedRows?.length === companyListData?.length) && (
                                         <>
                                             <button
                                                 onClick={() => handleSelectAllOrNot("onlySelected")}

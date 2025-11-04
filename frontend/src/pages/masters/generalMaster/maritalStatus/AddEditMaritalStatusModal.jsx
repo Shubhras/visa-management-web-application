@@ -7,16 +7,6 @@ const AddEditMaritalStatusModal = ({ show, handleClose, mode = 'add', rowData = 
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
 
-  // Gender options
-  const genderOptions = [
-    { value: 'Single (Never Married)', label: 'Single (Never Married)' },
-    { value: 'Married', label: 'Married' },
-    { value: 'Widowed', label: 'Widowed' },
-    { value: 'Seperated', label: 'Seperated' },
-    { value: 'Divorced', label: 'Divorced' },
-    { value: 'Livig In Common Law Partenr', label: 'Livig In Common Law Partenr' }
-  ];
-
   // Form state
   const [formData, setFormData] = useState({
     uuid: '',
@@ -70,9 +60,9 @@ const AddEditMaritalStatusModal = ({ show, handleClose, mode = 'add', rowData = 
     const newErrors = {};
     let isValid = true;
 
-    // Gender Name validation
+    // Marital Status validation
     if (!formData.name.trim()) {
-      newErrors.name = 'Gender is required';
+      newErrors.name = 'Marital Status is required';
       isValid = false;
     }
     
@@ -142,14 +132,14 @@ const AddEditMaritalStatusModal = ({ show, handleClose, mode = 'add', rowData = 
       className="modal fade show common-ctl-popup"
       tabIndex={-1}
       role="dialog"
-      aria-labelledby="GenderModalLabel"
+      aria-labelledby="MaritalStatusModalLabel"
       aria-hidden={!show}
     >
       <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
         <div className="modal-content radius-16 bg-base">
           <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-            <h1 className="modal-title fs-5" id="GenderModalLabel">
-              {mode === 'edit' ? 'Edit Marital Status ' : 'Add Marital Status '}
+            <h1 className="modal-title fs-5" id="MaritalStatusModalLabel">
+              {mode === 'edit' ? 'Edit Marital Status' : 'Add Marital Status'}
             </h1>
             <button
               type="button"
@@ -162,24 +152,19 @@ const AddEditMaritalStatusModal = ({ show, handleClose, mode = 'add', rowData = 
           <div className="modal-body p-24">
             <form onSubmit={handleSubmit}>
               <div className="row">
-                {/* MaritalStatus Name */}
+                {/* Marital Status Name */}
                 <div className="col-12 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                     Marital Status <span className="text-danger">*</span>
                   </label>
-                  <select
+                  <input
+                    type="text"
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    className={`form-select radius-8 ${errors.name ? 'is-invalid' : ''}`}
-                  >
-                    <option value="">Select Marital Status </option>
-                    {genderOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
+                    className={`form-control radius-8 ${errors.name ? 'is-invalid' : ''}`}
+                    placeholder="Enter marital status"
+                  />
                   {errors.name && (
                     <div className="text-danger text-sm mt-1">
                       {errors.name}
