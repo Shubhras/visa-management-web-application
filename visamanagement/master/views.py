@@ -6496,7 +6496,7 @@ class AccreditationNameImportAPIView(APIView):
         duplicate_names = []
 
         required_headers = {'accrediation full name', 'country', 'category'}
-        optional_headers = {'accrediation short name', 'accrediation issuing authority', 'accrediation valid upto', 'description'}
+        optional_headers = {'accrediation short name', 'accrediation issuing authority name', 'accrediation valid upto', 'description'}
 
         try:
             data = []
@@ -6569,7 +6569,7 @@ class AccreditationNameImportAPIView(APIView):
                 country_name = str(row.get('country')).strip() if row.get('country') else None
                 category_name = str(row.get('category')).strip() if row.get('category') else None
                 short_name = str(row.get('accrediation short name')).strip() if row.get('accrediation short name') else ''
-                issuing_authority = str(row.get('accrediation issuing authority')).strip() if row.get('accrediation issuing authority') else ''
+                issuing_authority = str(row.get('accrediation issuing authority name')).strip() if row.get('accrediation issuing authority name') else ''
                 valid_upto = str(row.get('accrediation valid upto')).strip() if row.get('accrediation valid upto') else ''
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
