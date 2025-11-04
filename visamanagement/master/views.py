@@ -4883,11 +4883,7 @@ class OwnershipTypeExportAPIView(APIView):
 
 
 class OwnershipTypeImportAPIView(APIView):
-    """
-    Import OwnershipType data from XLSX or CSV.
-    Matches `company_type` by name instead of ID.
-    """
-
+    
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')
@@ -5648,11 +5644,14 @@ class StakeholderTypeExportAPIView(APIView):
         for obj in queryset:
             row = []
             for field in field_list:
-                value = getattr(obj, field, '')
-                if field in ['created_at', 'updated_at'] and value:
-                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-                elif isinstance(value, bool):
-                    value = int(value)
+                if field == 'category_name':
+                    value = obj.category.name if obj.category else ''
+                else:
+                    value = getattr(obj, field, '')
+                    if field in ['created_at', 'updated_at'] and value:
+                        value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                    elif isinstance(value, bool):
+                        value = int(value)
                 row.append(value if value is not None else '')
             dataset.append(row)
 
