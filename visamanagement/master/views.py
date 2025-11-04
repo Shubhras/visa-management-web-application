@@ -142,7 +142,7 @@ class GenderListAPIView(APIView):
 
         if search:
             queryset = queryset.filter(
-                Q(text__icontains=search) |
+                Q(name__icontains=search) |
                 Q(description__icontains=search)
             )
 
@@ -581,7 +581,7 @@ class MaritalstatusListAPIView(APIView):
             # Apply search filter
             if search:
                 queryset = queryset.filter(
-                    Q(text__icontains=search) |
+                    Q(name__icontains=search) |
                     Q(description__icontains=search)
                 )
 
