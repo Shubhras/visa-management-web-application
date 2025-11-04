@@ -6442,7 +6442,7 @@ class AccreditationNameExportAPIView(APIView):
                 if field in ['created_at', 'updated_at'] and value:
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif field in ['country', 'category'] and value:
-                    value = value.id  # Export ID for FK
+                    value = value.uuid  # Export ID for FK
                 elif isinstance(value, bool):
                     value = int(value)
                 row.append(value if value is not None else '')
