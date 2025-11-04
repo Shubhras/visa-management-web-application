@@ -222,12 +222,12 @@ class EducationLevelCodeAdmin(admin.ModelAdmin):
     list_display = ('name', 'description', 'is_deleted', 'created_at', 'updated_at')
     search_fields = ('name',)
     list_filter = ('is_deleted',)
-    ordering = ('level_code',)
+    ordering = ('name',)
 
 
 @admin.register(EducationLevel)
 class EducationLevelAdmin(admin.ModelAdmin):
-    list_display = ('level_code', 'description', 'is_deleted', 'created_at', 'updated_at')
+    list_display = ('name', 'description', 'is_deleted', 'created_at', 'updated_at')
     search_fields = ('level_code__level_code',)
     list_filter = ('is_deleted',)
     ordering = ('level_code__level_code',)
