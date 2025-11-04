@@ -414,18 +414,18 @@ class  EducationDuration(models.Model):
     
 
 
-    
+
 class Studymainarea(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    Mainarea=models.TextField(max_length=255,null=True,blank=True)
+    name=models.TextField(max_length=255,null=True,blank=True)
     description = models.TextField(max_length=255,blank=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.Mainarea
+        return self.name
 
 
 

@@ -377,7 +377,7 @@ class StudymainareaSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'uuid',
-            'Mainarea',
+            'name',
             'description',
             'is_deleted',
             'created_at',
