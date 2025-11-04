@@ -7214,12 +7214,20 @@ class LicenseNameExportAPIView(APIView):
                 else:
                     value = getattr(obj, field, '')
 
-                # Convert datetime fields to string in India timezone
-                if isinstance(value, datetime.datetime):
-                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-                # Convert boolean to integer
-                elif isinstance(value, bool):
-                    value = int(value)
+                # Safely convert datetime fields to string
+                if value:
+                    if isinstance(value, datetime.datetime):
+                        value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                    # If value is string but looks like datetime, try parsing
+                    elif isinstance(value, str):
+                        try:
+                            dt = datetime.datetime.fromisoformat(value)
+                            value = timezone.localtime(dt, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                        except ValueError:
+                            # Not a datetime string, keep as is
+                            pass
+                    elif isinstance(value, bool):
+                        value = int(value)
 
                 row.append(value if value is not None else '')
             dataset.append(row)
