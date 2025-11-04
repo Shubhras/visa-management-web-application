@@ -170,7 +170,10 @@ urlpatterns = [
     path("license-name/<uuid:uuid>/", LicenseNameRetrieveAPIView.as_view(),name='licensename-detail'),
     path("license-name/<uuid:uuid>/update/", LicenseNameUpdateAPIView.as_view(),name='licensename-update'),
     path("license-name/delete/", LicenseNameDeleteAPIView.as_view(),name='licensename-delete'),
-   
+    path('license-name/export/',   LicenseNameExportAPIView.as_view(), name=' LicenseName-export'),
+    path('license-name/import/',   LicenseNameImportAPIView.as_view(), name=' LicenseName-import'),
+
+
     path("LeadSource/create/", LeadSourceCreateAPIView.as_view(), name='LeadSource-create'),
     path("LeadSource/", LeadSourceListAPIView.as_view(), name='LeadSource-list'),
     path("LeadSource/<uuid:uuid>/", LeadSourceRetrieveAPIView.as_view(), name='LeadSource-detail'),

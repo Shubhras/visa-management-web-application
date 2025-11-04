@@ -6513,45 +6513,18 @@ class BankAccountTypeImportAPIView(APIView):
 
 
 #-------------------------------------------LicenseName---------------------------------
+class LicenseNameListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
 
-class LicenseNameCreateAPIView(APIView):
-    def post(self, request):
-        serializer = LicenseNameSerializer(data=request.data)
-        if serializer.is_valid():
-            full_name = serializer.validated_data.get("full_name")
-            if LicenseName.objects.filter(full_name=full_name, is_deleted=False).exists():
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "License Name with this full name already exists"
-                }, status=status.HTTP_400_BAD_REQUEST)
-
-            serializer.save()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": "License Name created successfully",
-                "data": serializer.data
-            }, status=status.HTTP_200_OK)
-
-        return Response({
-            "statusCode": 400,
-            "status": False,
-            "message": serializer.errors
-        }, status=status.HTTP_400_BAD_REQUEST)
-
-
-class LicenseNameListAPIView(APIView):    
     def get(self, request):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
+        sort_order = request.GET.get('sortOrder', 'desc')
 
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['full_name', 'short_name', 'issuing_authority', 'valid_upto', 'created_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
 
-        # Apply descending order for 'desc'
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
@@ -6559,8 +6532,11 @@ class LicenseNameListAPIView(APIView):
 
         if search:
             queryset = queryset.filter(
-                Q(name__icontains=search) |
-                Q(description__icontains=search)
+                Q(full_name__icontains=search) |
+                Q(short_name__icontains=search) |
+                Q(issuing_authority__icontains=search) |
+                Q(description__icontains=search) |
+                Q(country__name__icontains=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -6572,119 +6548,331 @@ class LicenseNameListAPIView(APIView):
         return paginator.get_paginated_response(serializer.data)
 
 
+# ------------------ Create API ------------------
+class LicenseNameCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
-class LicenseNameRetrieveAPIView(APIView):
-    def get(self, request, uuid):
-        try:
-            license_obj = LicenseName.objects.get(uuid=uuid, is_deleted=False)
-        except LicenseName.DoesNotExist:
+    def post(self, request):
+        full_name = request.data.get("full_name", "").strip()
+        country_id = request.data.get("country")
+
+        existing = LicenseName.objects.filter(full_name__iexact=full_name, country_id=country_id, is_deleted=False).first()
+        if existing:
             return Response({
-                "statusCode": 404,
+                "statusCode": 400,
                 "status": False,
-                "message": "License Name not found"
-            }, status=status.HTTP_404_NOT_FOUND)
+                "message": "License with this name and country already exists."
+            }, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = LicenseNameSerializer(license_obj)
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": "License Name retrieved successfully",
-            "data": serializer.data
-        }, status=status.HTTP_200_OK)
-
-
-
-class LicenseNameUpdateAPIView(APIView):
-    def put(self, request, uuid):
-        try:
-            license_obj = LicenseName.objects.get(uuid=uuid, is_deleted=False)
-        except LicenseName.DoesNotExist:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "License Name not found"
-            }, status=status.HTTP_404_NOT_FOUND)
-
-        serializer = LicenseNameSerializer(license_obj, data=request.data, partial=True)
+        serializer = LicenseNameSerializer(data=request.data)
         if serializer.is_valid():
-            new_full_name = serializer.validated_data.get("full_name", license_obj.full_name)
-            if LicenseName.objects.filter(full_name=new_full_name).exclude(uuid=uuid).exists():
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "License Name with this full name already exists"
-                }, status=status.HTTP_400_BAD_REQUEST)
-
             serializer.save()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "License Name updated successfully",
+                "message": "License created successfully",
                 "data": serializer.data
             }, status=status.HTTP_200_OK)
 
+        messages = [msg for msgs in serializer.errors.values() for msg in msgs]
         return Response({
             "statusCode": 400,
             "status": False,
-            "message": serializer.errors
+            "message": " ".join(messages)
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
+# ------------------ Retrieve API ------------------
+class LicenseNameRetrieveAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
+    def get(self, request, uuid):
+        try:
+            obj = LicenseName.objects.get(uuid=uuid, is_deleted=False)
+        except LicenseName.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "License not found",
+                "data": None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = LicenseNameSerializer(obj)
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": "License retrieved successfully",
+            "data": serializer.data
+        })
+
+
+# ------------------ Update API ------------------
+class LicenseNameUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def put(self, request, uuid):
+        try:
+            obj = LicenseName.objects.get(uuid=uuid, is_deleted=False)
+        except LicenseName.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "License not found",
+                "data": None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = LicenseNameSerializer(obj, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "License updated successfully",
+                "data": serializer.data
+            })
+
+        messages = [msg for msgs in serializer.errors.values() for msg in msgs]
+        return Response({
+            "statusCode": 400,
+            "status": False,
+            "message": " ".join(messages),
+            "data": None
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+# ------------------ Delete API ------------------
 class LicenseNameDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
-        uuids = request.data.get('uuids', [])
+        ids = request.data.get('id', None)
 
-        #  Case 1: Single delete (UUID in URL)
+        # Single delete via URL
         if uuid:
             try:
-                license_obj = LicenseName.objects.get(uuid=uuid, is_deleted=False)
+                obj = LicenseName.objects.get(uuid=uuid)
+                obj.delete()
+                return Response({
+                    "statusCode": 204,
+                    "status": True,
+                    "message": "License permanently deleted.",
+                    "data": None
+                }, status=status.HTTP_204_NO_CONTENT)
             except LicenseName.DoesNotExist:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "License Name not found"
+                    "message": "License not found.",
+                    "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-            license_obj.is_deleted = True
-            license_obj.save()
+        # Delete all
+        if ids == "all":
+            queryset = LicenseName.objects.all()
+            count = queryset.count()
+            queryset.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "License Name deleted successfully"
+                "message": f"All {count} licenses permanently deleted.",
+                "data": None
             }, status=status.HTTP_200_OK)
 
-        #  Case 2: Multiple delete (UUIDs in request body)
-        if not uuids or not isinstance(uuids, list):
+        # Bulk delete
+        if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Please provide a list of UUIDs in 'uuids' field.",
+                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
                 "data": None
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        license_objs = LicenseName.objects.filter(uuid__in=uuids, is_deleted=False)
+        valid_uuids = []
+        invalid_uuids = []
+        for u in ids:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(u)
 
-        if not license_objs.exists():
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "No matching License Names found.",
-                "data": None
-            }, status=status.HTTP_404_NOT_FOUND)
-
-        deleted_count = license_objs.count()
-        license_objs.delete()
+        queryset = LicenseName.objects.filter(uuid__in=valid_uuids)
+        count = queryset.count()
+        queryset.delete()
 
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f"{deleted_count} License Name(s) deleted successfully.",
-            "data": None
+            "message": f"{count} license(s) permanently deleted.",
+            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         }, status=status.HTTP_200_OK)
 
+
+# ------------------ Export API ------------------
+class LicenseNameExportAPIView(APIView):
+
+    def get(self, request):
+        format_type = request.GET.get('format', 'xlsx').lower()
+        fields = request.GET.get('fields')
+        uuids_param = request.GET.get('uuids', '')
+        uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+        field_header_map = {
+            'uuid': 'UUID',
+            'full_name': 'Full Name',
+            'short_name': 'Short Name',
+            'issuing_authority': 'Issuing Authority',
+            'description': 'Description',
+            'valid_upto': 'Valid Upto',
+            'country': 'Country ID',
+            'country_name': 'Country Name',
+            'is_deleted': 'Deleted',
+            'updated_at': 'Modified On',
+        }
+
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+        queryset = LicenseName.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-updated_at')
+
+        dataset = Dataset()
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'LicenseName'
+
+        for obj in queryset:
+            row = []
+            for field in field_list:
+                if field == 'country_name':
+                    value = obj.country.name if obj.country else ''
+                else:
+                    value = getattr(obj, field, '')
+                if field in ['created_at', 'updated_at', 'valid_upto'] and value:
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
+                    value = int(value)
+                row.append(value if value is not None else '')
+            dataset.append(row)
+
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'licenses.csv'
+        else:
+            file_data = io.BytesIO(dataset.export('xlsx'))
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'licenses.xlsx'
+
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        return response
+
+
+# ------------------ Import API ------------------
+class LicenseNameImportAPIView(APIView):
+
+    def post(self, request):
+        file = request.FILES.get('file')
+        sheet_name = request.data.get('sheet_name')
+
+        if not file:
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+
+        format_type = file.name.split('.')[-1].lower()
+        duplicate_names = []
+        required_headers = {'full_name', 'country'}
+        optional_headers = {'short_name', 'issuing_authority', 'description', 'valid_upto'}
+
+        try:
+            data = []
+            headers = []
+
+            if format_type == 'xlsx':
+                import openpyxl
+                wb = openpyxl.load_workbook(file, read_only=True)
+                available_sheets = wb.sheetnames
+
+                if not sheet_name:
+                    return Response({'error': 'Please provide sheet_name', 'available_sheets': available_sheets}, status=400)
+                if sheet_name not in available_sheets:
+                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
+
+                ws = wb[sheet_name]
+                if ws.max_row <= 1:
+                    return Response({"statusCode": 400, "status": False, "message": f'The uploaded XLSX sheet "{sheet_name}" is empty.'}, status=400)
+
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response({"statusCode": 400, "status": True, "message": f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'}, status=400)
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    if not any(row):
+                        continue
+                    data.append(dict(zip(headers, row)))
+
+            elif format_type == 'csv':
+                decoded_file = file.read().decode('utf-8')
+                dataset = Dataset()
+                dataset.load(decoded_file, format='csv')
+
+                for row in dataset.dict:
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({"statusCode": 400, "status": True, "message": f'Missing required headers. Required: {required_headers}. Found: {set(row_lower.keys())}'}, status=400)
+                    data.append(row_lower)
+            else:
+                return Response({"statusCode": 400, "status": True, 'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
+
+            imported_count = 0
+            for row in data:
+                full_name = str(row.get('full_name')).strip() if row.get('full_name') else None
+                country_id = row.get('country')
+                short_name = str(row.get('short_name')).strip() if row.get('short_name') else ''
+                issuing_authority = str(row.get('issuing_authority')).strip() if row.get('issuing_authority') else ''
+                description = str(row.get('description')).strip() if row.get('description') else ''
+                valid_upto = row.get('valid_upto')
+
+                if not full_name or not country_id:
+                    continue
+
+                existing = LicenseName.objects.filter(full_name__iexact=full_name, country_id=country_id).first()
+                if existing:
+                    if not existing.is_deleted:
+                        duplicate_names.append(full_name)
+                        continue
+                    else:
+                        existing.short_name = short_name
+                        existing.issuing_authority = issuing_authority
+                        existing.description = description
+                        existing.valid_upto = valid_upto
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
+                else:
+                    LicenseName.objects.create(
+                        full_name=full_name,
+                        country_id=country_id,
+                        short_name=short_name,
+                        issuing_authority=issuing_authority,
+                        description=description,
+                        valid_upto=valid_upto,
+                        is_deleted=False
+                    )
+                    imported_count += 1
+
+        except Exception as e:
+            return Response({"statusCode": 400, "status": True, 'message': str(e)}, status=400)
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "duplicates": list(set(duplicate_names)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count
+        }, status=200)
 
 
 
