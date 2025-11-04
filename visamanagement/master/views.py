@@ -7173,7 +7173,9 @@ class LicenseNameDeleteAPIView(APIView):
 
 
 # ------------------ Export API ------------------
+
 class LicenseNameExportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
@@ -7181,6 +7183,7 @@ class LicenseNameExportAPIView(APIView):
         uuids_param = request.GET.get('uuids', '')
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
+        # Map model fields to export headers
         field_header_map = {
             'uuid': 'UUID',
             'full_name': 'License Full Name',
@@ -7194,13 +7197,16 @@ class LicenseNameExportAPIView(APIView):
             'updated_at': 'Modified On',
         }
 
+        # Determine which fields to export
         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
+        # Fetch queryset
         queryset = LicenseName.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
         queryset = queryset.order_by('-updated_at')
 
+        # Prepare dataset
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = 'LicenseName'
@@ -7218,13 +7224,11 @@ class LicenseNameExportAPIView(APIView):
                 if value:
                     if isinstance(value, datetime.datetime):
                         value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-                    # If value is string but looks like datetime, try parsing
                     elif isinstance(value, str):
                         try:
                             dt = datetime.datetime.fromisoformat(value)
                             value = timezone.localtime(dt, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
                         except ValueError:
-                            # Not a datetime string, keep as is
                             pass
                     elif isinstance(value, bool):
                         value = int(value)
@@ -7232,22 +7236,24 @@ class LicenseNameExportAPIView(APIView):
                 row.append(value if value is not None else '')
             dataset.append(row)
 
+        # Export file
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
             file_name = 'licenses.csv'
+            response_content = file_data
         else:
             file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'licenses.xlsx'
+            response_content = file_data.getvalue()
 
         response = HttpResponse(
-            file_data if format_type == 'csv' else file_data.getvalue(),
+            response_content,
             content_type=content_type
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
-
 
 # ------------------ Import API ------------------
 class LicenseNameImportAPIView(APIView):
