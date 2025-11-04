@@ -4723,7 +4723,7 @@ class OwnershipTypeExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'company_type_name': 'Company Type ',
+            'company_type_name': 'Company Type',
             'name': 'Ownership Type',
             'description': 'Description',
             'is_deleted': 'Deleted',
@@ -4746,14 +4746,16 @@ class OwnershipTypeExportAPIView(APIView):
         for obj in queryset:
             row = []
             for field in field_list:
-                value = getattr(obj, field, '')
-                if field in ['created_at', 'updated_at'] and value:
-                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-                elif isinstance(value, bool):
-                    value = int(value)
+                if field == 'company_type_name':
+                    value = obj.company_type.name if obj.company_type else ''
+                else:
+                    value = getattr(obj, field, '')
+                    if field in ['created_at', 'updated_at'] and value:
+                        value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                    elif isinstance(value, bool):
+                        value = int(value)
                 row.append(value if value is not None else '')
             dataset.append(row)
-
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
