@@ -6087,7 +6087,7 @@ class AccreditationCategoryExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Accreditation Category',
+            'name': 'Accrediation Category',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',
@@ -6144,7 +6144,7 @@ class AccreditationCategoryImportAPIView(APIView):
 
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
-        required_headers = {'accreditation category'}
+        required_headers = {'accrediation category'}
         optional_headers = {'description'}
 
         try:
@@ -6189,7 +6189,7 @@ class AccreditationCategoryImportAPIView(APIView):
 
             imported_count = 0
             for row in data:
-                name = str(row.get('accreditation category')).strip() if row.get('accreditation category') else None
+                name = str(row.get('accrediation category')).strip() if row.get('accrediation category') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not name:
