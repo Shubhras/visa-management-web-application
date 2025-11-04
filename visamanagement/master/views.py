@@ -4692,70 +4692,178 @@ class OwnershipTypeDeleteAPIView(APIView):
 
 
 class OwnershipTypeExportAPIView(APIView):
-    # permission_classes = [IsAuthenticated]  # Uncomment and adjust as needed
+    """
+    Export OwnershipType data to XLSX or CSV with company_type info.
+    """
 
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
+        fields = request.GET.get('fields')  # comma-separated fields
+        uuids_param = request.GET.get('uuids', '')  # comma-separated UUIDs
+        uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+        field_header_map = {
+            'uuid': 'UUID',
+            'company_type_name': 'Company Type Name',
+            'name': 'Ownership Type',
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'created_at': 'Created On',
+            'updated_at': 'Modified On',
+        }
+
+        # Determine fields to export
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+        queryset = OwnershipType.objects.all()
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-updated_at')
+
         dataset = Dataset()
-        dataset.headers = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'OwnershipType'
 
-        for dept in OwnershipType.objects.all():
-            dataset.append([
-                str(dept.uuid),
-                dept.name or '',  # Handle potential None
-                dept.description or '',
-                int(dept.is_deleted),
-                dept.created_at.strftime("%Y-%m-%d %H:%M:%S") if dept.created_at else '',
-                dept.updated_at.strftime("%Y-%m-%d %H:%M:%S") if dept.updated_at else ''
-            ])
+        for obj in queryset:
+            row = []
+            for field in field_list:
+                if field == 'company_type_name':
+                    value = obj.company_type.name if obj.company_type else ''
+                else:
+                    value = getattr(obj, field, '')
 
-        if format_type == 'xlsx':
-            data = XLSX().export_data(dataset)  # Returns bytes
-            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'departments.xlsx'
+                if field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
+                    value = int(value)
+
+                row.append(value if value is not None else '')
+            dataset.append(row)
+
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'ownership_types.csv'
         else:
-            data = CSV().export_data(dataset)  # Returns bytes (ensure UTF-8)
-            content_type = 'text/csv; charset=utf-8'
-            file_name = 'departments.csv'
+            file_data = io.BytesIO(dataset.export('xlsx'))
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'ownership_types.xlsx'
 
-        response = HttpResponse(data, content_type=content_type)
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
 
 class OwnershipTypeImportAPIView(APIView):
-    
+    """
+    Import OwnershipType data from XLSX or CSV.
+    Matches `company_type` by name instead of ID.
+    """
+
     def post(self, request):
         file = request.FILES.get('file')
+        sheet_name = request.data.get('sheet_name')
         if not file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
-        dataset = Dataset()
+        duplicate_names = []
+        required_headers = {'ownership type'}  # Ownership type name is required
+        optional_headers = {'description', 'company type'}  # company_type optional
 
         try:
-            if format_type == 'xlsx':
-                dataset.load(file.read(), format='xlsx')
-            else:  # default CSV
-                dataset.load(file.read().decode('utf-8'), format='csv')
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            data = []
 
-        for row in dataset.dict:
-            OwnershipType.objects.update_or_create(
-                name=row.get('name'),
-                defaults={
-                    'description': row.get('description', ''),
-                    'is_deleted': row.get('is_deleted', False)
-                }
-            )
+            # XLSX
+            if format_type == 'xlsx':
+                import openpyxl
+                wb = openpyxl.load_workbook(file, read_only=True)
+                available_sheets = wb.sheetnames
+
+                if not sheet_name:
+                    return Response({'error': 'Please provide sheet_name', 'available_sheets': available_sheets},
+                                    status=status.HTTP_400_BAD_REQUEST)
+                if sheet_name not in available_sheets:
+                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets},
+                                    status=status.HTTP_400_BAD_REQUEST)
+
+                ws = wb[sheet_name]
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response({'statusCode': 400, 'status': True,
+                                     'message': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'},
+                                    status=status.HTTP_400_BAD_REQUEST)
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    if not any(row):
+                        continue
+                    row_dict = dict(zip(headers, row))
+                    data.append(row_dict)
+
+            # CSV
+            elif format_type == 'csv':
+                decoded_file = file.read().decode('utf-8')
+                dataset = Dataset()
+                dataset.load(decoded_file, format='csv')
+                for row in dataset.dict:
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({'statusCode': 400, 'status': True,
+                                         'message': f'Missing required headers. Required: {", ".join(required_headers)}. Found headers: {", ".join(row_lower.keys())}'},
+                                        status=status.HTTP_400_BAD_REQUEST)
+                    data.append(row_lower)
+            else:
+                return Response({'statusCode': 400, 'status': True, 'error': 'Unsupported file format. Use .xlsx or .csv'},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            imported_count = 0
+            for row in data:
+                name = str(row.get('ownership  type')).strip() if row.get('ownership type') else None
+                description = str(row.get('description')).strip() if row.get('description') else ''
+                company_type_name = str(row.get('company type')).strip() if row.get('company type') else None
+
+                if not name:
+                    continue
+
+                from your_app.models import CompanyType  # replace with your actual app name
+                company_type = None
+                if company_type_name:
+                    company_type = CompanyType.objects.filter(name__iexact=company_type_name).first()
+
+                existing = OwnershipType.objects.filter(name__iexact=name).first()
+                if existing:
+                    if not existing.is_deleted:
+                        duplicate_names.append(name)
+                        continue
+                    else:
+                        existing.description = description
+                        existing.company_type = company_type
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
+                else:
+                    OwnershipType.objects.create(
+                        name=name,
+                        description=description,
+                        company_type=company_type,
+                        is_deleted=False
+                    )
+                    imported_count += 1
+
+        except Exception as e:
+            return Response({'statusCode': 400, 'status': True, 'message': str(e)},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         return Response({
-            "statusCode": 200,
-            "status": True,
-            'message': 'Import successful'}, status=status.HTTP_200_OK)
-    
-
+            'statusCode': 200,
+            'status': True,
+            'duplicates': list(set(duplicate_names)),
+            'message': f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            'imported_count': imported_count
+        }, status=status.HTTP_200_OK)
 
 
 
