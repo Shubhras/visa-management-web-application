@@ -5766,7 +5766,17 @@ class StakeholderTypeImportAPIView(APIView):
             for row in data:
                 name = str(row.get('stakeholder type')).strip() if row.get('stakeholder type') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
-                category_id = row.get('stakeholder category')
+
+                # Match category by name
+                category_name = str(row.get('stakeholder category')).strip() if row.get('stakeholder category') else None
+                category_id = None
+                if category_name:
+                    category_obj = StakeholderCategory.objects.filter(name__iexact=category_name).first()
+                    if category_obj:
+                        category_id = category_obj.id
+                    else:
+                        category_obj = StakeholderCategory.objects.create(name=category_name)
+                        category_id = category_obj.id
 
                 if not name:
                     continue
