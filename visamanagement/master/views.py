@@ -5236,8 +5236,12 @@ class StakeholderCategoryExportAPIView(APIView):
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
-class StakeholderTypeImportAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
+class StakeholderCategoryImportAPIView(APIView):
+    """
+    API to import Stakeholder Categories from CSV or XLSX.
+    Handles headers with spaces/capitalization, ignores extra columns,
+    and handles duplicates/deleted records.
+    """
 
     def post(self, request):
         file = request.FILES.get('file')
@@ -5249,16 +5253,22 @@ class StakeholderTypeImportAPIView(APIView):
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
 
-        required_headers = {'stakeholder type'}
-        optional_headers = {'description', 'stakeholder category'}
+        # Define required and optional headers
+        required_headers = {'stakeholdercategory'}  # mandatory
+        optional_headers = {'description'}          # optional
+
+        # Normalize headers: keep only alphanumeric lowercase characters
+        def normalize_header(h):
+            if not h:
+                return ''
+            return ''.join(c for c in str(h).lower() if c.isalnum())
 
         try:
             data = []
             headers = []
 
-            # ---- XLSX Handling ----
+            # ---------- XLSX Handling ----------
             if format_type == 'xlsx':
-                import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
 
@@ -5267,9 +5277,10 @@ class StakeholderTypeImportAPIView(APIView):
                         'error': 'Please provide sheet_name',
                         'available_sheets': available_sheets
                     }, status=status.HTTP_400_BAD_REQUEST)
+
                 if sheet_name not in available_sheets:
                     return Response({
-                        'error': f'Sheet "{sheet_name}" not found',
+                        'error': f'Sheet "{sheet_name}" not found in uploaded file',
                         'available_sheets': available_sheets
                     }, status=status.HTTP_400_BAD_REQUEST)
 
@@ -5278,10 +5289,12 @@ class StakeholderTypeImportAPIView(APIView):
                     return Response({
                         "statusCode": 400,
                         "status": False,
-                        "message": f'Sheet "{sheet_name}" is empty. Provide at least one data row.'
+                        "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Please provide at least one data row.'
                     }, status=status.HTTP_400_BAD_REQUEST)
 
-                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                headers = [normalize_header(cell.value) for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+
+                # Validate only required headers
                 if not required_headers.issubset(set(headers)):
                     return Response({
                         "statusCode": 400,
@@ -5292,78 +5305,71 @@ class StakeholderTypeImportAPIView(APIView):
                 for row in ws.iter_rows(min_row=2, values_only=True):
                     if not any(row):
                         continue
-                    data.append(dict(zip(headers, row)))
+                    row_dict = dict(zip(headers, row))
+                    data.append(row_dict)
 
                 if not data:
                     return Response({
                         "statusCode": 400,
                         "status": False,
-                        "message": f'Sheet "{sheet_name}" has no data rows.'
+                        "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Please provide at least one data row.'
                     }, status=status.HTTP_400_BAD_REQUEST)
 
-            # ---- CSV Handling ----
+            # ---------- CSV Handling ----------
             elif format_type == 'csv':
                 decoded_file = file.read().decode('utf-8')
                 dataset = Dataset()
                 dataset.load(decoded_file, format='csv')
 
                 for row in dataset.dict:
-                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    row_lower = {normalize_header(k): v for k, v in row.items()}
+
+                    # Validate only required headers
                     if not required_headers.issubset(set(row_lower.keys())):
                         return Response({
                             "statusCode": 400,
                             "status": True,
-                            "message": f'Missing required headers. Required: {", ".join(required_headers)}. Found: {", ".join(row_lower.keys())}.'
+                            "message": f'Missing required headers. Required: {required_headers}. Found: {set(row_lower.keys())}.'
                         }, status=status.HTTP_400_BAD_REQUEST)
+
+                    if not any(row_lower.values()):
+                        continue
                     data.append(row_lower)
 
                 if not data:
                     return Response({
                         "statusCode": 400,
                         "status": False,
-                        "message": "CSV file is empty. Provide at least one data row."
+                        "message": "The uploaded CSV file is empty. Please provide at least one data row."
                     }, status=status.HTTP_400_BAD_REQUEST)
-            else:
-                return Response({
-                    "statusCode": 400,
-                    "status": True,
-                    'error': 'Unsupported file format. Use .xlsx or .csv'
-                }, status=status.HTTP_400_BAD_REQUEST)
 
-            # ---- Import Logic ----
+            else:
+                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # ---------- Process Each Row ----------
             imported_count = 0
             for row in data:
-                name = str(row.get('stakeholder type')).strip() if row.get('stakeholder type') else None
+                name = str(row.get('stakeholdercategory')).strip() if row.get('stakeholdercategory') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
-                category_name = str(row.get('stakeholder category')).strip() if row.get('stakeholder category') else None
 
                 if not name:
                     continue
 
-                # Resolve category name to UUID
-                category_uuid = None
-                if category_name:
-                    category_obj = StakeholderCategory.objects.filter(name__iexact=category_name, is_deleted=False).first()
-                    if category_obj:
-                        category_uuid = category_obj.uuid
+                existing = StakeholderCategory.objects.filter(name__iexact=name).first()
 
-                existing = StakeholderType.objects.filter(name__iexact=name).first()
                 if existing:
-                    if not existing.is_deleted:
-                        duplicate_names.append(name)
-                        continue
-                    else:
+                    if existing.is_deleted:
                         existing.description = description
-                        if category_uuid:
-                            existing.category_id = category_uuid
                         existing.is_deleted = False
                         existing.save()
                         imported_count += 1
+                    else:
+                        duplicate_names.append(name)
+                        continue
                 else:
-                    StakeholderType.objects.create(
+                    StakeholderCategory.objects.create(
                         name=name,
                         description=description,
-                        category_id=category_uuid,
                         is_deleted=False
                     )
                     imported_count += 1
@@ -5382,6 +5388,10 @@ class StakeholderTypeImportAPIView(APIView):
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=status.HTTP_200_OK)
+
+
+
+
 #-------------------------stakeholdertype-------------------------------
 class StakeholderTypeCreateAPIView(APIView):
     def post(self, request):
@@ -5680,6 +5690,7 @@ class StakeholderTypeImportAPIView(APIView):
             data = []
             headers = []
 
+            # ---- XLSX Handling ----
             if format_type == 'xlsx':
                 import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
@@ -5724,6 +5735,7 @@ class StakeholderTypeImportAPIView(APIView):
                         "message": f'Sheet "{sheet_name}" has no data rows.'
                     }, status=status.HTTP_400_BAD_REQUEST)
 
+            # ---- CSV Handling ----
             elif format_type == 'csv':
                 decoded_file = file.read().decode('utf-8')
                 dataset = Dataset()
@@ -5752,24 +5764,22 @@ class StakeholderTypeImportAPIView(APIView):
                     'error': 'Unsupported file format. Use .xlsx or .csv'
                 }, status=status.HTTP_400_BAD_REQUEST)
 
+            # ---- Import Logic ----
             imported_count = 0
             for row in data:
                 name = str(row.get('stakeholder type')).strip() if row.get('stakeholder type') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
-
-                # Match category by name
                 category_name = str(row.get('stakeholder category')).strip() if row.get('stakeholder category') else None
-                category_id = None
-                if category_name:
-                    category_obj = StakeholderCategory.objects.filter(name__iexact=category_name).first()
-                    if category_obj:
-                        category_id = category_obj.uuid
-                    else:
-                        category_obj = StakeholderCategory.objects.create(name=category_name)
-                        category_id = category_obj.id
 
                 if not name:
                     continue
+
+                # Resolve category name to UUID
+                category_uuid = None
+                if category_name:
+                    category_obj = StakeholderCategory.objects.filter(name__iexact=category_name, is_deleted=False).first()
+                    if category_obj:
+                        category_uuid = category_obj.uuid
 
                 existing = StakeholderType.objects.filter(name__iexact=name).first()
                 if existing:
@@ -5778,8 +5788,8 @@ class StakeholderTypeImportAPIView(APIView):
                         continue
                     else:
                         existing.description = description
-                        if category_id:
-                            existing.category_id = category_id
+                        if category_uuid:
+                            existing.category_id = category_uuid
                         existing.is_deleted = False
                         existing.save()
                         imported_count += 1
@@ -5787,7 +5797,7 @@ class StakeholderTypeImportAPIView(APIView):
                     StakeholderType.objects.create(
                         name=name,
                         description=description,
-                        category_id=category_id,
+                        category_id=category_uuid,
                         is_deleted=False
                     )
                     imported_count += 1
@@ -5806,9 +5816,6 @@ class StakeholderTypeImportAPIView(APIView):
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=status.HTTP_200_OK)
-
-
-
 
 
 
