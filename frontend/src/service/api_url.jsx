@@ -117,13 +117,23 @@ export const DELETE_MARITAL_STATUS_API = "api/v1/master/maritalstatus/";
 export const EXPORT_MARITAL_STATUS_API = "api/v1/master/maritalstatus/export/";
 export const IMPORT_MARITAL_STATUS_API = "api/v1/master/maritalstatus/import/";
 
-//Continents
+//CONTINENTS
 export const GET_CONTINENT_LIST_API = "/api/v1/master/continents/";
 export const Add_CONTINENT_LIST_API = "/api/v1/master/continents/create/";
 export const EDIT_CONTINENT_LIST_API = "api/v1/master/continents/";
 export const DELETE_CONTINENT_LIST_API = "api/v1/master/continents/";
 export const EXPORT_CONTINENT_LIST_API = "api/v1/master/continents/export/";
 export const IMPORT_CONTINENT_LIST_API = "api/v1/master/continents/import/";
+
+//COUNTRY
+export const GET_COUNTRY_LIST_API = "/api/v1/master/countries/";
+export const ADD_COUNTRY_LIST_API = "/api/v1/master/countries/create/";
+export const EDIT_COUNTRY_LIST_API = "/api/v1/master/countries/";
+export const DELETE_COUNTRY_LIST_API = "/api/v1/master/countries/";
+export const EXPORT_COUNTRY_LIST_API = "/api/v1/master/countries/export/";
+export const IMPORT_COUNTRY_LIST_API = "/api/v1/master/countries/import/";
+
+
 
 // STAKEHOLDER_TYPE
 export const GET_STAKEHOLDER_TYPE_LIST = "/api/v1/master/stakeholder-types/";

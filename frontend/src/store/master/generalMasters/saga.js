@@ -18,6 +18,12 @@ import {
   DELETE_CONTINENT,
   EXPORT_CONTINENT,
   IMPORT_CONTINENT,
+  COUNTRY_LIST,
+  ADD_COUNTRY,
+  EDIT_COUNTRY,
+  DELETE_COUNTRY,
+  EXPORT_COUNTRY,
+  IMPORT_COUNTRY,
 } from "./actionTypes";
 
 import {
@@ -206,6 +212,60 @@ function* continentImportDataSaga(action) {
   }
 }
 
+function* countryListSaga(action) {
+  try {
+    const response = yield call(getCountryListDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* countryAddSaga(action) {
+  try {
+    const response = yield call(addCountryDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* countryEditSaga(action) {
+  try {
+    const response = yield call(editCountryDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* countryDeleteSaga(action) {
+  try {
+    const response = yield call(deleteCountryDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* countryExportDataSaga(action) {
+  try {
+    const response = yield call(exportCountryDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* countryImportDataSaga(action) {
+  try {
+    const response = yield call(importCountryDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
 function* generalMasterSaga() {
   // Gender
   yield takeEvery(GENDER_LIST, genderListSaga);
@@ -230,6 +290,11 @@ function* generalMasterSaga() {
   yield takeEvery(DELETE_CONTINENT, continentDeleteSaga);
   yield takeEvery(EXPORT_CONTINENT, continentExportDataSaga);
   yield takeEvery(IMPORT_CONTINENT, continentImportDataSaga);
-}
 
-export default generalMasterSaga;
+  yield takeLatest(COUNTRY_LIST, countryListSaga);
+  yield takeLatest(ADD_COUNTRY, countryAddSaga);
+  yield takeLatest(EDIT_COUNTRY, countryEditSaga);
+  yield takeLatest(DELETE_COUNTRY, countryDeleteSaga);
+  yield takeLatest(EXPORT_COUNTRY, countryExportDataSaga);
+  yield takeLatest(IMPORT_COUNTRY, countryImportDataSaga);
+}
