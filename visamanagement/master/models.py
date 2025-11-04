@@ -412,6 +412,9 @@ class  EducationDuration(models.Model):
     def __str__(self):
         return self.durations 
     
+
+
+    
 class Studymainarea(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
