@@ -390,7 +390,13 @@ class StudymainareaSerializer(serializers.ModelSerializer):
 
 
 class StudyMajorAreaSerializer(serializers.ModelSerializer):
-    mainarea_name = serializers.CharField(source='mainarea.name', read_only=True)  # optional, if Studymainarea has 'name' field
+    mainarea = serializers.SlugRelatedField(
+        queryset=Studymainarea.objects.all(),
+        slug_field='uuid',  # Accept UUID instead of numeric ID
+        allow_null=True,
+        required=False
+    )
+    mainarea_name = serializers.CharField(source='mainarea.name', read_only=True)
 
     class Meta:
         model = Studymajorarea
@@ -398,7 +404,7 @@ class StudyMajorAreaSerializer(serializers.ModelSerializer):
             'id',
             'uuid',
             'mainarea',
-            'mainarea_name',  # optional
+            'mainarea_name',
             'majorarea',
             'description',
             'is_deleted',
