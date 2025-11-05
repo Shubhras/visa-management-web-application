@@ -11239,131 +11239,159 @@ class EducationLevelExportAPIView(APIView):
         uuids_param = request.GET.get('uuids', '')
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
-        field_list = [f.strip() for f in fields.split(',')] if fields else [
-            'uuid', 'level_code', 'level_code_detail', 'educationlevel', 'description', 'is_deleted', 'created_at', 'updated_at'
-        ]
+        field_header_map = {
+            'uuid': 'UUID',
+            'level_code': 'Education Level Code',
+            'educationlevel': 'Education Level',
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'created_at': 'Created On',
+            'updated_at': 'Modified On',
+        }
 
-        queryset = EducationLevel.objects.filter(uuid__in=uuids) if uuids else EducationLevel.objects.all()
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+        queryset = EducationLevel.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-updated_at')
 
         dataset = Dataset()
-        dataset.headers = field_list
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'EducationLevel'
 
         for obj in queryset:
             row = []
             for field in field_list:
                 if field == 'level_code_detail':
-                    value = obj.level_code.Levelcode if obj.level_code else ''
+                    value = obj.level_code.name if obj.level_code else ''
                 else:
                     value = getattr(obj, field, '')
                 if field in ['created_at', 'updated_at'] and value:
-                    # Convert the stored UTC datetime to IST and format it
-                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-                if isinstance(value, bool):
+                    value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
                     value = int(value)
                 row.append(value if value is not None else '')
             dataset.append(row)
 
-        if format_type == 'xlsx':
-            data = XLSX().export_data(dataset)
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'education_levels.csv'
+        else:
+            file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'education_levels.xlsx'
-        else:
-            data = CSV().export_data(dataset)
-            content_type = 'text/csv; charset=utf-8'
-            file_name = 'education_levels.csv'
 
-        response = HttpResponse(data, content_type=content_type)
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
 
+# ------------------ Import API ------------------
 class EducationLevelImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
         file = request.FILES.get('file')
-        sheet_name = request.data.get('sheet_name')  # optional, for XLSX
-        duplicate_entries = []
+        sheet_name = request.data.get('sheet_name')
 
         if not file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
-        dataset = Dataset()
+        duplicate_levels = []
+        required_headers = {'education level code', 'education level'}
+        optional_headers = {'description', 'is_deleted'}
 
         try:
+            data = []
+            headers = []
+
             # ---------- XLSX Handling ----------
             if format_type == 'xlsx':
+                import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
 
                 if not sheet_name:
-                    return Response({
-                        'error': 'Please provide sheet_name',
-                        'available_sheets': available_sheets
-                    }, status=status.HTTP_400_BAD_REQUEST)
-
+                    return Response({'error': 'Please provide sheet_name', 'available_sheets': available_sheets}, status=400)
                 if sheet_name not in available_sheets:
-                    return Response({
-                        'error': f'Sheet "{sheet_name}" not found',
-                        'available_sheets': available_sheets
-                    }, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
 
                 ws = wb[sheet_name]
-                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                data = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True)]
+                if ws.max_row <= 1:
+                    return Response({"statusCode": 400, "status": False, "message": f'The uploaded XLSX sheet "{sheet_name}" is empty.'}, status=400)
+
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response({"statusCode": 400, "status": True, "message": f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'}, status=400)
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    if not any(row):
+                        continue
+                    data.append(dict(zip(headers, row)))
 
             # ---------- CSV Handling ----------
             elif format_type == 'csv':
-                dataset.load(file.read().decode('utf-8'), format='csv')
-                data = dataset.dict
-
+                import csv
+                import io
+                decoded_file = file.read().decode('utf-8')
+                reader = csv.DictReader(io.StringIO(decoded_file))
+                for row in reader:
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({"statusCode": 400, "status": True, "message": f'Missing required headers. Required: {required_headers}. Found: {set(row_lower.keys())}'}, status=400)
+                    data.append(row_lower)
             else:
-                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"statusCode": 400, "status": True, 'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
 
-            # ---------- Process Each Row ----------
+            imported_count = 0
             for row in data:
-                code_id = row.get('level_code')
-                education_level_name = str(row.get('educationlevel')).strip() if row.get('educationlevel') else ''
+                level_code_id = row.get('education level code')
+                education_level_name = str(row.get('education level')).strip() if row.get('education level') else None
+                description = str(row.get('description')).strip() if row.get('description') else ''
+                is_deleted = bool(int(row.get('is_deleted', 0))) if row.get('is_deleted') is not None else False
 
-                # Skip if level_code invalid
-                if not code_id or not EducationLevelCode.objects.filter(id=code_id).exists():
+                if not level_code_id or not education_level_name:
                     continue
 
-                existing = EducationLevel.objects.filter(
-                    level_code_id=code_id, 
-                    educationlevel__iexact=education_level_name
-                ).first()
+                # Validate LevelCode existence
+                if not EducationLevelCode.objects.filter(id=level_code_id).exists():
+                    continue
 
+                existing = EducationLevel.objects.filter(level_code_id=level_code_id, educationlevel__iexact=education_level_name).first()
                 if existing:
-                    if existing.is_deleted:
-                        # Reactivate soft-deleted entry
-                        existing.description = row.get('description', '')
+                    if not existing.is_deleted:
+                        duplicate_levels.append(education_level_name)
+                        continue
+                    else:
+                        existing.description = description
                         existing.is_deleted = False
                         existing.save()
-                    else:
-                        # Already active — track as duplicate
-                        duplicate_entries.append(code_id)
-                        continue
+                        imported_count += 1
                 else:
-                    # Create new record
                     EducationLevel.objects.create(
-                        level_code_id=code_id,
+                        level_code_id=level_code_id,
                         educationlevel=education_level_name,
-                        description=row.get('description', ''),
-                        is_deleted=row.get('is_deleted', False)
+                        description=description,
+                        is_deleted=is_deleted
                     )
+                    imported_count += 1
 
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"statusCode": 400, "status": True, 'message': str(e)}, status=400)
 
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_entries)),
-            'message': f'Sheet "{sheet_name}" imported successfully' if sheet_name else 'Import successful'
-        }, status=status.HTTP_200_OK)
-
+            "duplicates": list(set(duplicate_levels)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count
+        }, status=200)
 
 #----------------------------EducationDuration----------------------
 
