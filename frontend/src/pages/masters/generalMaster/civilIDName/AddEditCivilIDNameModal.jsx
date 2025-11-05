@@ -1,20 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from "react-redux";
-import { licenceNameEdit, licenceNameAdd, countryDemoList } from '../../../../store/master/companyMasters/actions';
 import { toast } from "react-toastify";
+import {civilIdNameEdit, civilIdNameAdd } from '../../../../store/master/generalMasters/actions';
 
-const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
+const AddEditCivilIDNameModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
-  const [countryListData, setCountryListData] = useState([]);
-  
+
   // Form state
   const [formData, setFormData] = useState({
     uuid: '',
-    country: '',
+    name: '',
     full_name: '',
     short_name: '',
-    issuing_authority: '',
     valid_upto: '',
     valid_upto_type: '', // Permanent/Date/Valid Upto
     valid_upto_numeric: '',
@@ -24,10 +22,9 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
 
   // Validation errors state
   const [errors, setErrors] = useState({
-    country: '',
+    name: '',
     full_name: '',
     short_name: '',
-    issuing_authority: '',
     valid_upto: '',
     valid_upto_type: '',
     valid_upto_numeric: '',
@@ -40,10 +37,9 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
     if (mode === 'edit' && rowData) {
       setFormData({
         uuid: rowData.uuid || '',
-        country: rowData.country || '',
+        name: rowData.name || '',
         full_name: rowData.full_name || '',
         short_name: rowData.short_name || '',
-        issuing_authority: rowData.issuing_authority || '',
         valid_upto: rowData.valid_upto || '',
         valid_upto_type: rowData.valid_upto_type || '',
         valid_upto_numeric: rowData.valid_upto_numeric || '',
@@ -54,10 +50,9 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
       // Reset form when switching to add mode
       setFormData({
         uuid: '',
-        country: '',
+        name: '',
         full_name: '',
         short_name: '',
-        issuing_authority: '',
         valid_upto: '',
         valid_upto_type: '',
         valid_upto_numeric: '',
@@ -65,30 +60,7 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
         description: '',
       });
     }
-    fetchCountryListDemo();
   }, [mode, rowData, show]);
-
-
-  const fetchCountryListDemo = () => {
-    setLoading(true);
-    const params = {
-      page: 1,
-      limit: 2000,
-      search: '',
-      status: '',
-      sortBy: 'updated_at', // Field to sort by
-      sortOrder: 'desc', // 'asc' or 'desc'
-    };
-
-    dispatch(countryDemoList(params, (response, error) => {
-      setLoading(false);
-      if (response?.statusCode === 200 && response?.status === true) {
-        setCountryListData(response?.data || []);
-      } else {
-
-      }
-    }));
-  };
 
   // Handle input changes
   const handleChange = (e) => {
@@ -111,22 +83,10 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
   const validateForm = () => {
     const newErrors = {};
     let isValid = true;
-    
+
     // country validation
-    if (!formData.country) {
-      newErrors.country = 'Country is required';
-      isValid = false;
-    }
-    
-    // Full Name validation
-    if (!formData.full_name.trim()) {
-      newErrors.full_name = 'License full name is required';
-      isValid = false;
-    }
-    
-    // short Name validation
-    if (!formData.short_name.trim()) {
-      newErrors.short_name = 'License short name is required';
+    if (!formData.name) {
+      newErrors.name = 'Civil ID name is required';
       isValid = false;
     }
 
@@ -142,10 +102,9 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
       const sendPayload = mode === 'edit'
         ? {
           uuid: formData.uuid,
-          country: formData.country,
+          name: formData.name,
           full_name: formData.full_name,
           short_name: formData.short_name,
-          issuing_authority: formData.issuing_authority,
           valid_upto: formData.valid_upto,
           valid_upto_type: formData.valid_upto_type,
           valid_upto_numeric: formData.valid_upto_numeric,
@@ -153,10 +112,9 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
           description: formData.description,
         }
         : {
-          country: formData.country,
+          name: formData.name,
           full_name: formData.full_name,
           short_name: formData.short_name,
-          issuing_authority: formData.issuing_authority,
           valid_upto: formData.valid_upto,
           valid_upto_type: formData.valid_upto_type,
           valid_upto_numeric: formData.valid_upto_numeric,
@@ -166,7 +124,7 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
 
       setLoading(true);
 
-      const action = mode === 'edit' ? licenceNameEdit : licenceNameAdd;
+      const action = mode === 'edit' ? civilIdNameEdit : civilIdNameAdd;
 
       dispatch(action(sendPayload, (response, error) => {
         setLoading(false);
@@ -189,7 +147,7 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
   const resetForm = () => {
     setFormData({
       uuid: '',
-      country: '',
+      name: '',
       full_name: '',
       short_name: '',
       issuing_authority: '',
@@ -217,14 +175,14 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
       className="modal fade show common-ctl-popup"
       tabIndex={-1}
       role="dialog"
-      aria-labelledby="LicenceNameModalLabel"
+      aria-labelledby="CivilIDNameModalLabel"
       aria-hidden={!show}
     >
       <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
         <div className="modal-content radius-16 bg-base">
           <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-            <h1 className="modal-title fs-5" id="LicenceNameModalLabel">
-              {mode === 'edit' ? 'Edit Licence Name' : 'Add Licence Name'}
+            <h1 className="modal-title fs-5" id="CivilIDNameModalLabel">
+              {mode === 'edit' ? 'Edit Civil ID Name' : 'Add Civil ID Name'}
             </h1>
             <button
               type="button"
@@ -237,85 +195,56 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
           <div className="modal-body p-24">
             <form onSubmit={handleSubmit}>
               <div className="row">
-                {/* Country */}
+
                 <div className="col-12 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Country <span className="text-danger">*</span>
+                    Civil ID Name<span className="text-danger">*</span>
                   </label>
-                  <select
-                    name="country"
-                    value={formData.country}
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
                     onChange={handleChange}
-                    className={`form-control form-select radius-8 ${errors.country ? 'is-invalid' : ''}`}
-                  >
-                    <option value="">Select Country</option>
-                    {countryListData.map((option) => (
-                      <option key={option.uuid} value={option.uuid}>
-                        {option.name}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.country && (
+                    className={`form-control radius-8 ${errors.name ? 'is-invalid' : ''}`}
+                    placeholder="Enter civil ID name"
+                  />
+                  {errors.name && (
                     <div className="text-danger text-sm mt-1">
-                      {errors.country}
+                      {errors.name}
                     </div>
                   )}
                 </div>
-
-                {/* LicenceName */}
+            
                 <div className="col-12 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    License Full Name<span className="text-danger">*</span>
+                    Authority Full Name
                   </label>
                   <input
                     type="text"
                     name="full_name"
                     value={formData.full_name}
                     onChange={handleChange}
-                    className={`form-control radius-8 ${errors.full_name ? 'is-invalid' : ''}`}
-                    placeholder="Enter licence full name"
+                    className={`form-control radius-8`}
+                    placeholder="Enter authority full name"
                   />
-                  {errors.full_name && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.full_name}
-                    </div>
-                  )}
                 </div>
 
                 <div className="col-12 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    License Short Name<span className="text-danger">*</span>
+                   Authority Short Name
                   </label>
                   <input
                     type="text"
                     name="short_name"
                     value={formData.short_name}
                     onChange={handleChange}
-                    className={`form-control radius-8 ${errors.short_name ? 'is-invalid' : ''}`}
-                    placeholder="Enter licence short name"
+                    className={`form-control radius-8`}
+                    placeholder="Enter authority short name"
                   />
-                  {errors.short_name && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.short_name}
-                    </div>
-                  )}
                 </div>
                 <div className="col-12 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    License Issuing Authority Name
-                  </label>
-                  <input
-                    type="text"
-                    name="issuing_authority"
-                    value={formData.issuing_authority}
-                    onChange={handleChange}
-                    className={`form-control radius-8`}
-                    placeholder="Enter licence issuing authority name"
-                  />
-                </div>
-                 <div className="col-12 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    License Valid Upto
+                   ID Valid Duration
                   </label>
                   <div className="row g-2">
                     {/* Type Dropdown */}
@@ -421,4 +350,4 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
   );
 };
 
-export default AddEditLicenceNameModal;
+export default AddEditCivilIDNameModal;

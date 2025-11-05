@@ -18,24 +18,36 @@ import {
   DELETE_CONTINENT,
   EXPORT_CONTINENT,
   IMPORT_CONTINENT,
+  CIVIL_ID_NAME_LIST,
+  ADD_CIVIL_ID_NAME,
+  EDIT_CIVIL_ID_NAME,
+  DELETE_CIVIL_ID_NAME,
+  EXPORT_CIVIL_ID_NAME,
+  IMPORT_CIVIL_ID_NAME,
 } from "./actionTypes";
 
 import {
+  addCivilIdNameDataAPI,
   addContinentDataAPI,
   addGenderDataAPI,
   addMaritalStatusDataAPI,
+  deleteCivilIdNameDataAPI,
   deleteContinentDataAPI,
   deleteGenderDataAPI,
   deleteMaritalStatusDataAPI,
+  editCivilIdNameDataAPI,
   editContinentDataAPI,
   editGenderDataAPI,
   editMaritalStatusDataAPI,
+  exportCivilIdNameDataAPI,
   exportContinentDataAPI,
   exportGenderDataAPI,
   exportMaritalStatusDataAPI,
+  getCivilIdNameListDataAPI,
   getContinentListDataAPI,
   getGenderListDataAPI,
   getMaritalStatusListDataAPI,
+  importCivilIdNameDataAPI,
   importContinentDataAPI,
   importGenderDataAPI,
   importMaritalStatusDataAPI,
@@ -159,7 +171,7 @@ function* continentListSaga(action) {
     if (action.callback) action.callback(null, error);
   }
 }
- 
+
 function* continentAddSaga(action) {
   try {
     const response = yield call(addContinentDataAPI, action?.data);
@@ -168,7 +180,7 @@ function* continentAddSaga(action) {
     if (action.callback) action.callback(null, error);
   }
 }
- 
+
 function* continentEditSaga(action) {
   try {
     const response = yield call(editContinentDataAPI, action?.data);
@@ -177,7 +189,7 @@ function* continentEditSaga(action) {
     if (action.callback) action.callback(null, error);
   }
 }
- 
+
 function* continentDeleteSaga(action) {
   try {
     const response = yield call(deleteContinentDataAPI, action?.data);
@@ -186,7 +198,7 @@ function* continentDeleteSaga(action) {
     if (action.callback) action.callback(null, error);
   }
 }
- 
+
 function* continentExportDataSaga(action) {
   try {
     const response = yield call(exportContinentDataAPI, action?.data);
@@ -195,10 +207,65 @@ function* continentExportDataSaga(action) {
     if (action.callback) action.callback(null, error);
   }
 }
- 
+
 function* continentImportDataSaga(action) {
   try {
     const response = yield call(importContinentDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+// Civil ID Name
+function* civilIdNameListSaga(action) {
+  try {
+    const response = yield call(getCivilIdNameListDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* civilIdNameAddSaga(action) {
+  try {
+    const response = yield call(addCivilIdNameDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* civilIdNameEditSaga(action) {
+  try {
+    const response = yield call(editCivilIdNameDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* civilIdNameDeleteSaga(action) {
+  try {
+    const response = yield call(deleteCivilIdNameDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* civilIdNameExportDataSaga(action) {
+  try {
+    const response = yield call(exportCivilIdNameDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* civilIdNameImportDataSaga(action) {
+  try {
+    const response = yield call(importCivilIdNameDataAPI, action?.data);
     if (action.callback) action.callback(response);
   } catch (error) {
     if (action.callback) action.callback(null, error);
@@ -214,7 +281,7 @@ function* generalMasterSaga() {
   yield takeEvery(EXPORT_GENDER, genderExportDataSaga);
   yield takeEvery(IMPORT_GENDER, genderImportDataSaga);
 
-   // Marital Status
+  // Marital Status
   yield takeEvery(MARITAL_STATUS_LIST, maritalStatusListSaga);
   yield takeEvery(ADD_MARITAL_STATUS, maritalStatusAddSaga);
   yield takeEvery(EDIT_MARITAL_STATUS, maritalStatusEditSaga);
@@ -229,6 +296,14 @@ function* generalMasterSaga() {
   yield takeEvery(DELETE_CONTINENT, continentDeleteSaga);
   yield takeEvery(EXPORT_CONTINENT, continentExportDataSaga);
   yield takeEvery(IMPORT_CONTINENT, continentImportDataSaga);
+
+ //Civil ID Name
+  yield takeEvery(CIVIL_ID_NAME_LIST, civilIdNameListSaga);
+  yield takeEvery(ADD_CIVIL_ID_NAME, civilIdNameAddSaga);
+  yield takeEvery(EDIT_CIVIL_ID_NAME, civilIdNameEditSaga);
+  yield takeEvery(DELETE_CIVIL_ID_NAME, civilIdNameDeleteSaga);
+  yield takeEvery(EXPORT_CIVIL_ID_NAME, civilIdNameExportDataSaga);
+ yield takeEvery(IMPORT_CIVIL_ID_NAME, civilIdNameImportDataSaga);
 }
 
 export default generalMasterSaga;

@@ -17,6 +17,12 @@ import {
   DELETE_CONTINENT,
   EXPORT_CONTINENT,
   IMPORT_CONTINENT,
+  EXPORT_CIVIL_ID_NAME,
+  IMPORT_CIVIL_ID_NAME,
+  DELETE_CIVIL_ID_NAME,
+  EDIT_CIVIL_ID_NAME,
+  ADD_CIVIL_ID_NAME,
+  CIVIL_ID_NAME_LIST,
 } from "./actionTypes";
 
 // GENDER
@@ -126,6 +132,43 @@ export const continentExportData = (data, callback) => ({
  
 export const continentImportData = (data, callback) => ({
   type: IMPORT_CONTINENT,
+  data,
+  callback,
+});
+
+// CIVIL_ID_NAME
+export const civilIdNameList = (data, callback) => ({
+  type: CIVIL_ID_NAME_LIST,
+  data,
+  callback,
+});
+ 
+export const civilIdNameAdd = (data, callback) => ({
+  type: ADD_CIVIL_ID_NAME,
+  data,
+  callback,
+});
+ 
+export const civilIdNameEdit = (data, callback) => ({
+  type: EDIT_CIVIL_ID_NAME,
+  data,
+  callback,
+});
+ 
+export const civilIdNameDelete = (data, callback) => ({
+  type: DELETE_CIVIL_ID_NAME,
+  data,
+  callback,
+});
+ 
+export const civilIdNameExportData = (data, callback) => ({
+  type: EXPORT_CIVIL_ID_NAME,
+  data,
+  callback,
+});
+ 
+export const civilIdNameImportData = (data, callback) => ({
+  type: IMPORT_CIVIL_ID_NAME,
   data,
   callback,
 });

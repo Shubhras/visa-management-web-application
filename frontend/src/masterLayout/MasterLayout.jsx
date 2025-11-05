@@ -104,7 +104,6 @@ const MasterLayout = ({ children }) => {
             { name: 'Education Level Code', path: '/education-level-code' },
             { name: 'Education Level', path: '/education-level' },
             { name: 'Study Main Area', path: '/study-main-area' },
-          
           ]
         },
 

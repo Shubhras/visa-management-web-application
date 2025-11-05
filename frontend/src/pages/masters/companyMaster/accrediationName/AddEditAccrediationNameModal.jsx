@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from "react-redux";
-
 import { accreditationNameEdit, accreditationNameAdd, countryDemoList, accreditationCategoryList } from '../../../../store/master/companyMasters/actions';
 import { toast } from "react-toastify";
 
@@ -18,6 +17,9 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
     short_name: '',
     issuing_authority: '',
     valid_upto: '',
+    valid_upto_type: '', // Permanent/Date/Valid Upto
+    valid_upto_numeric: '',
+    valid_upto_unit: '', // Weeks/Months/Year
     description: '',
   });
 
@@ -29,6 +31,9 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
     short_name: '',
     issuing_authority: '',
     valid_upto: '',
+    valid_upto_type: '', // Permanent/Date/Valid Upto
+    valid_upto_numeric: '',
+    valid_upto_unit: '', // Weeks/Months/Year
     description: '',
   });
 
@@ -43,6 +48,9 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
         short_name: rowData.short_name || '',
         issuing_authority: rowData.issuing_authority || '',
         valid_upto: rowData.valid_upto || '',
+        valid_upto_type: rowData.valid_upto_type || '',
+        valid_upto_numeric: rowData.valid_upto_numeric || '',
+        valid_upto_unit: rowData.valid_upto_unit || '',
         description: rowData.description || '',
       });
     } else {
@@ -55,6 +63,9 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
         short_name: '',
         issuing_authority: '',
         valid_upto: '',
+        valid_upto_type: '',
+        valid_upto_numeric: '',
+        valid_upto_unit: '',
         description: '',
       });
     }
@@ -138,24 +149,10 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
     }
     // Full Name validation
     if (!formData.full_name.trim()) {
-      newErrors.full_name = 'Full name is required';
+      newErrors.full_name = 'Accrediation full name is required';
       isValid = false;
     }
-    // short Name validation
-    if (!formData.short_name.trim()) {
-      newErrors.short_name = 'Short name is required';
-      isValid = false;
-    }
-    // Issuing authority validation
-    if (!formData.issuing_authority.trim()) {
-      newErrors.issuing_authority = 'Issuing authority is required';
-      isValid = false;
-    }
-    // valid_upto validation
-    if (!formData.valid_upto.trim()) {
-      newErrors.valid_upto = 'Valid upto is required';
-      isValid = false;
-    }
+    
     setErrors(newErrors);
     return isValid;
   };
@@ -174,6 +171,9 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
           short_name: formData.short_name,
           issuing_authority: formData.issuing_authority,
           valid_upto: formData.valid_upto,
+          valid_upto_type: formData.valid_upto_type,
+          valid_upto_numeric: formData.valid_upto_numeric,
+          valid_upto_unit: formData.valid_upto_unit,
           description: formData.description,
         }
         : {
@@ -183,6 +183,9 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
           short_name: formData.short_name,
           issuing_authority: formData.issuing_authority,
           valid_upto: formData.valid_upto,
+          valid_upto_type: formData.valid_upto_type,
+          valid_upto_numeric: formData.valid_upto_numeric,
+          valid_upto_unit: formData.valid_upto_unit,
           description: formData.description,
         };
 
@@ -217,6 +220,9 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
       short_name: '',
       issuing_authority: '',
       valid_upto: '',
+      valid_upto_type: '',
+      valid_upto_numeric: '',
+      valid_upto_unit: '',
       description: '',
     });
     setErrors({});
@@ -326,57 +332,90 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
                 {/* Accrediation Short Name */}
                 <div className="col-12 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Accrediation Short Name <span className="text-danger">*</span>
+                    Accrediation Short Name
                   </label>
                   <input
                     type="text"
                     name="short_name"
                     value={formData.short_name}
                     onChange={handleChange}
-                    className={`form-control radius-8 ${errors.short_name ? 'is-invalid' : ''}`}
+                    className={`form-control radius-8`}
                     placeholder="Enter accrediation short name"
                   />
-                  {errors.short_name && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.short_name}
-                    </div>
-                  )}
                 </div>
                 <div className="col-12 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Accrediation Issuing Authority Name<span className="text-danger">*</span>
+                    Accrediation Issuing Authority Name
                   </label>
                   <input
                     type="text"
                     name="issuing_authority"
                     value={formData.issuing_authority}
                     onChange={handleChange}
-                    className={`form-control radius-8 ${errors.issuing_authority ? 'is-invalid' : ''}`}
+                    className={`form-control radius-8`}
                     placeholder="Enter accrediation issuing authority"
                   />
-                  {errors.issuing_authority && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.issuing_authority}
-                    </div>
-                  )}
                 </div>
-                <div className="col-12 mb-20">
+                 <div className="col-12 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Accrediation Valid Upto<span className="text-danger">*</span>
+                    Accrediation Valid Upto
                   </label>
-                  <input
-                    type="text"
-                    name="valid_upto"
-                    value={formData.valid_upto}
-                    onChange={handleChange}
-                    className={`form-control radius-8 ${errors.valid_upto ? 'is-invalid' : ''}`}
-                    placeholder="Enter accrediation Valid Upto"
-                  />
-                  {errors.valid_upto && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.valid_upto}
+                  <div className="row g-2">
+                    {/* Type Dropdown */}
+                    <div className="col-md-4">
+                      <select
+                        name="valid_upto_type"
+                        value={formData.valid_upto_type}
+                        onChange={handleChange}
+                        className="form-control form-select radius-8"
+                      >
+                        <option value="">Select Type</option>
+                        <option value="permanent">Permanent</option>
+                        <option value="date">Date</option>
+                        <option value="valid_upto">Valid Upto</option>
+                      </select>
                     </div>
-                  )}
+                    {/* Show Date Picker if Date is selected */}
+                    {formData.valid_upto_type === 'date' && (
+                      <div className="col-md-8">
+                        <input
+                          type="date"
+                          name="valid_upto"
+                          value={formData.valid_upto}
+                          onChange={handleChange}
+                          className="form-control radius-8"
+                        />
+                      </div>
+                    )}
+                    {/* Show Numeric and Unit fields if Permanent or Valid Upto is selected */}
+                    {(formData.valid_upto_type === 'valid_upto') && (
+                      <>
+                        <div className="col-md-4">
+                          <input
+                            type="number"
+                            name="valid_upto_numeric"
+                            value={formData.valid_upto_numeric}
+                            onChange={handleChange}
+                            className="form-control radius-8"
+                            placeholder="Enter number"
+                          />
+                        </div>
+                        <div className="col-md-4">
+                          <select
+                            name="valid_upto_unit"
+                            value={formData.valid_upto_unit}
+                            onChange={handleChange}
+                            className="form-control form-select radius-8"
+                          >
+                            <option value="">Select Period</option>
+                            <option value="weeks">Weeks</option>
+                            <option value="months">Months</option>
+                            <option value="years">Years</option>
+                          </select>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 {/* Description */}
