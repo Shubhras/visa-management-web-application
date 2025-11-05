@@ -11400,11 +11400,24 @@ class EducationDurationCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
-        educationlevel_id = request.data.get("educationlevel")
+        educationlevel_uuid = request.data.get("educationlevel", "").strip()
         durations = request.data.get("durations", "").strip()
 
+        # Get EducationLevel by UUID
+        educationlevel_obj = None
+        if educationlevel_uuid:
+            try:
+                educationlevel_obj = EducationLevel.objects.get(uuid=educationlevel_uuid)
+            except EducationLevel.DoesNotExist:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Education level not found for the provided UUID."
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check for duplicates
         existing = EducationDuration.objects.filter(
-            educationlevel_id=educationlevel_id, 
+            educationlevel=educationlevel_obj, 
             durations__iexact=durations, 
             is_deleted=False
         ).first()
@@ -11415,9 +11428,10 @@ class EducationDurationCreateAPIView(APIView):
                 "message": "Education duration with this level and duration already exists."
             }, status=status.HTTP_400_BAD_REQUEST)
 
+        # Save new EducationDuration
         serializer = EducationDurationSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(educationlevel=educationlevel_obj)  # assign object explicitly
             return Response({
                 "statusCode": 200,
                 "status": True,
@@ -11431,8 +11445,6 @@ class EducationDurationCreateAPIView(APIView):
             "status": False,
             "message": " ".join(messages)
         }, status=status.HTTP_400_BAD_REQUEST)
-
-
 # ------------------ Retrieve API ------------------
 class EducationDurationRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
