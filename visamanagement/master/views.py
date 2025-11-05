@@ -20,6 +20,7 @@ import openpyxl
 from django.http import HttpResponse
 from uuid import UUID
 from datetime import datetime  
+import csv
 import io
 import pytz
 from django.utils import timezone
@@ -1646,8 +1647,8 @@ class CountryImportAPIView(APIView):
 
         required_headers = {'country name'}
         optional_headers = {
-            'continent', 'short name', 'full name', 'official name', 'capital city',
-            'dial codes', 'currency full name', 'currency short name', 'currency code', 'status'
+            'continent', 'country short name', 'country full name', 'country official name', 'capital city',
+            'country calling code', 'currency full name', 'currency short name', 'currency code',
         }
 
         try:
@@ -1688,8 +1689,7 @@ class CountryImportAPIView(APIView):
 
             # ---------------- CSV Import ----------------
             elif format_type == 'csv':
-                import csv
-                import io
+                
                 decoded_file = file.read().decode('utf-8')
                 reader = csv.DictReader(io.StringIO(decoded_file))
                 for row in reader:
@@ -1716,15 +1716,15 @@ class CountryImportAPIView(APIView):
                     continue
 
                 continent_name = str(row.get('continent')).strip() if row.get('continent') else ''
-                short_name = str(row.get('short name')).strip() if row.get('short name') else ''
-                full_name = str(row.get('full name')).strip() if row.get('full name') else ''
-                official_name = str(row.get('official name')).strip() if row.get('official name') else ''
+                short_name = str(row.get('country short name')).strip() if row.get('country short name') else ''
+                full_name = str(row.get('country full name')).strip() if row.get('country full name') else ''
+                official_name = str(row.get('country official name')).strip() if row.get('country official name') else ''
                 capital_city = str(row.get('capital city')).strip() if row.get('capital city') else ''
                 dial_codes = row.get('dial codes')
                 currency_full_name = str(row.get('currency full name')).strip() if row.get('currency full name') else ''
                 currency_short_name = str(row.get('currency short name')).strip() if row.get('currency short name') else ''
                 currency_code = str(row.get('currency code')).strip() if row.get('currency code') else ''
-                status_value = row.get('status')
+        
 
                 # Parse JSON field safely
                 if dial_codes:
@@ -1755,7 +1755,6 @@ class CountryImportAPIView(APIView):
                         existing.currencyfullname = currency_full_name
                         existing.currencyshortname = currency_short_name
                         existing.currencyCode = currency_code
-                        existing.status = bool(status_value) if status_value else True
                         existing.is_deleted = False
                         existing.save()
                         imported_count += 1
@@ -1771,7 +1770,6 @@ class CountryImportAPIView(APIView):
                         currencyfullname=currency_full_name,
                         currencyshortname=currency_short_name,
                         currencyCode=currency_code,
-                        status=bool(status_value) if status_value else True,
                         is_deleted=False
                     )
                     imported_count += 1
@@ -1793,7 +1791,7 @@ class CountryImportAPIView(APIView):
 
 
 
-        
+
 
 class CountriesByContinentAPIView(APIView):
     def get(self, request):
@@ -2011,38 +2009,69 @@ class StateExportAPIView(APIView):
         fields = request.GET.get('fields')
         uuids_param = request.GET.get('uuids', '')
         uuids = [u.strip() for u in uuids_param.split(',') if u]
-        field_list = [f.strip() for f in fields.split(',')] if fields else [
-            'uuid', 'countryName', 'stateName', 'stateshortName', 'description', 'is_active', 'is_deleted', 'created_at', 'updated_at'
-        ]
-        queryset = State.objects.filter(uuid__in=uuids) if uuids else State.objects.all()
 
+        # Header map for export
+        field_header_map = {
+            'uuid': 'UUID',
+            'countryName': 'Country Name',
+            'stateName': 'State Name',
+            'stateshortName': 'State Short Name',
+            'description': 'Description',
+            'is_active': 'Active',
+            'is_deleted': 'Deleted',
+            'created_at': 'Created On',
+            'updated_at': 'Modified On',
+        }
+
+        # Choose fields
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+        # Fetch queryset
+        queryset = State.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-updated_at')
+
+        # Prepare dataset
         dataset = Dataset()
-        dataset.headers = field_list
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'State'
+
         for obj in queryset:
             row = []
             for field in field_list:
-                value = getattr(obj, field, '')
-                if field == "countryName" and obj.countryName:
-                    value = obj.countryName.name
-                if isinstance(value, datetime.datetime):
-                    value = value.strftime("%Y-%m-%d %H:%M:%S")
-                if isinstance(value, bool):
+                if field == 'country_name':
+                    value = obj.countryName.name if obj.countryName else ''
+                else:
+                    value = getattr(obj, field, '')
+                # Format date/time fields
+                if field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
                     value = int(value)
                 row.append(value if value is not None else '')
             dataset.append(row)
 
-        if format_type == 'xlsx':
-            data = XLSX().export_data(dataset)
+        # Export file
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'states.csv'
+        else:
+            file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'states.xlsx'
-        else:
-            data = CSV().export_data(dataset)
-            content_type = 'text/csv; charset=utf-8'
-            file_name = 'states.csv'
 
-        response = HttpResponse(data, content_type=content_type)
+        # Build response
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
+
+
+
 
 
 class StateImportAPIView(APIView):
@@ -2051,56 +2080,135 @@ class StateImportAPIView(APIView):
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')
+
         if not file:
-            return Response({'error': 'No file uploaded'}, status=400)
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
-        dataset = Dataset()
         duplicate_names = []
 
+        required_headers = {'state name', 'country name'}
+        optional_headers = {'state short name', 'description'}
+
         try:
+            data = []
+            headers = []
+
+            # ---------------- XLSX Import ----------------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
+
                 if not sheet_name:
-                    return Response({'error': 'Provide sheet_name', 'available_sheets': available_sheets}, status=400)
+                    return Response({
+                        'error': 'Please provide sheet_name',
+                        'available_sheets': available_sheets
+                    }, status=400)
+
                 if sheet_name not in available_sheets:
-                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
+                    return Response({
+                        'error': f'Sheet "{sheet_name}" not found',
+                        'available_sheets': available_sheets
+                    }, status=400)
 
                 ws = wb[sheet_name]
-                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                data = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True)]
+                if ws.max_row <= 1:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'The uploaded XLSX sheet "{sheet_name}" is empty.'
+                    }, status=400)
 
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+
+                if not required_headers.issubset(set(headers)):
+                    return Response({
+                        "statusCode": 400,
+                        "status": True,
+                        "message": f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
+                    }, status=400)
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    if not any(row):
+                        continue
+                    data.append(dict(zip(headers, row)))
+
+            # ---------------- CSV Import ----------------
             elif format_type == 'csv':
-                dataset.load(file.read().decode('utf-8'), format='csv')
-                data = dataset.dict
+                decoded_file = file.read().decode('utf-8')
+                reader = csv.DictReader(io.StringIO(decoded_file))
+                for row in reader:
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({
+                            "statusCode": 400,
+                            "status": True,
+                            "message": f'Missing required headers. Required: {required_headers}. Found: {set(row_lower.keys())}'
+                        }, status=400)
+                    data.append(row_lower)
             else:
-                return Response({'error': 'Unsupported format'}, status=400)
+                return Response({
+                    "statusCode": 400,
+                    "status": True,
+                    'error': 'Unsupported file format. Use .xlsx or .csv'
+                }, status=400)
 
+            # ---------------- Data Processing ----------------
+            imported_count = 0
             for row in data:
-                state_name = str(row.get('stateName')).strip() if row.get('stateName') else None
-                country_name = str(row.get('countryName')).strip() if row.get('countryName') else None
-                country = Country.objects.filter(name__iexact=country_name).first() if country_name else None
+                state_name = str(row.get('state name')).strip() if row.get('state name') else None
+                country_name = str(row.get('country name')).strip() if row.get('country name') else None
+                short_name = str(row.get('state short name')).strip() if row.get('state short name') else ''
+                description = str(row.get('description')).strip() if row.get('description') else ''
 
-                if not state_name or not country:
+                if not state_name or not country_name:
                     continue
 
-                existing = State.objects.filter(stateName__iexact=state_name, countryName=country).first()
+                # Get related Country object
+                country_obj = Country.objects.filter(name__iexact=country_name).first()
+                if not country_obj:
+                    continue  # skip row if country not found
+
+                # Check for existing state
+                existing = State.objects.filter(stateName__iexact=state_name, countryName=country_obj).first()
                 if existing:
-                    if existing.is_deleted:
-                        existing.is_deleted = False
-                        existing.countryName = country
-                        existing.save()
-                    else:
+                    if not existing.is_deleted:
                         duplicate_names.append(state_name)
                         continue
+                    else:
+                        # Restore deleted record
+                        existing.stateshortName = short_name
+                        existing.description = description
+                        existing.countryName = country_obj
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
                 else:
-                    State.objects.create(stateName=state_name, countryName=country)
+                    State.objects.create(
+                        stateName=state_name,
+                        stateshortName=short_name,
+                        description=description,
+                        countryName=country_obj,
+                        is_deleted=False
+                    )
+                    imported_count += 1
 
         except Exception as e:
-            return Response({'error': str(e)}, status=400)
+            return Response({
+                "statusCode": 400,
+                "status": True,
+                'message': str(e)
+            }, status=400)
 
-        return Response({"statusCode": 200, "status": True, "duplicates": list(set(duplicate_names)), "message": f'Import successful'}, status=200)
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "duplicates": list(set(duplicate_names)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count
+        }, status=200)
+
+
 
 
 
@@ -2336,40 +2444,72 @@ class DistrictExportAPIView(APIView):
         fields = request.GET.get('fields')
         uuids_param = request.GET.get('uuids', '')
         uuids = [u.strip() for u in uuids_param.split(',') if u]
-        field_list = [f.strip() for f in fields.split(',')] if fields else [
-            'uuid', 'countryName', 'stateName', 'districtName', 'description', 'is_deleted', 'created_at', 'updated_at'
-        ]
-        queryset = District.objects.filter(uuid__in=uuids) if uuids else District.objects.all()
 
+        # Header map for better readability
+        field_header_map = {
+            'uuid': 'UUID',
+            'countryName': 'Country Name',
+            'stateName': 'State Name',
+            'districtName': 'District Name',
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'created_at': 'Created On',
+            'updated_at': 'Modified On',
+        }
+
+        # Select fields to include in export
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+        # Queryset with filtering and ordering
+        queryset = District.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-updated_at')
+
+        # Initialize dataset
         dataset = Dataset()
-        dataset.headers = field_list
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'District'
+
         for obj in queryset:
             row = []
             for field in field_list:
-                value = getattr(obj, field, '')
-                if field == "countryName" and obj.countryName:
-                    value = obj.countryName.name
-                if field == "stateName" and obj.stateName:
-                    value = obj.stateName.stateName
-                if isinstance(value, datetime.datetime):
-                    value = value.strftime("%Y-%m-%d %H:%M:%S")
-                if isinstance(value, bool):
+                if field == 'country_name':
+                    value = obj.countryName.name if obj.countryName else ''
+                elif field == 'state_name':
+                    value = obj.stateName.stateName if obj.stateName else ''
+                else:
+                    value = getattr(obj, field, '')
+                # Format timestamps
+                if field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
                     value = int(value)
                 row.append(value if value is not None else '')
             dataset.append(row)
 
-        if format_type == 'xlsx':
-            data = XLSX().export_data(dataset)
+        # Export file based on requested format
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'districts.csv'
+        else:
+            file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'districts.xlsx'
-        else:
-            data = CSV().export_data(dataset)
-            content_type = 'text/csv; charset=utf-8'
-            file_name = 'districts.csv'
 
-        response = HttpResponse(data, content_type=content_type)
+        # Prepare response
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
+
+
+
+
+
 
 
 # -------------------- Import -------------------- 
@@ -2379,61 +2519,142 @@ class DistrictImportAPIView(APIView):
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')
-        if not file:
-            return Response({'error': 'No file uploaded'}, status=400)
 
-        dataset = Dataset()
-        duplicate_names = []
+        if not file:
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
+        duplicate_names = []
+
+        required_headers = {'district name', 'state name', 'country name'}
+        optional_headers = {'description'}
 
         try:
+            data = []
+            headers = []
+
+            # ---------------- XLSX Import ----------------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
+
                 if not sheet_name:
-                    return Response({'error': 'Provide sheet_name', 'available_sheets': available_sheets}, status=400)
+                    return Response({
+                        'error': 'Please provide sheet_name',
+                        'available_sheets': available_sheets
+                    }, status=400)
+
                 if sheet_name not in available_sheets:
-                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
+                    return Response({
+                        'error': f'Sheet "{sheet_name}" not found',
+                        'available_sheets': available_sheets
+                    }, status=400)
 
                 ws = wb[sheet_name]
-                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                data = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True)]
+                if ws.max_row <= 1:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'The uploaded XLSX sheet "{sheet_name}" is empty.'
+                    }, status=400)
 
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response({
+                        "statusCode": 400,
+                        "status": True,
+                        "message": f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
+                    }, status=400)
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    if not any(row):
+                        continue
+                    data.append(dict(zip(headers, row)))
+
+            # ---------------- CSV Import ----------------
             elif format_type == 'csv':
-                dataset.load(file.read().decode('utf-8'), format='csv')
-                data = dataset.dict
+                decoded_file = file.read().decode('utf-8')
+                reader = csv.DictReader(io.StringIO(decoded_file))
+                for row in reader:
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({
+                            "statusCode": 400,
+                            "status": True,
+                            "message": f'Missing required headers. Required: {required_headers}. Found: {set(row_lower.keys())}'
+                        }, status=400)
+                    data.append(row_lower)
             else:
-                return Response({'error': 'Unsupported format'}, status=400)
+                return Response({
+                    "statusCode": 400,
+                    "status": True,
+                    'error': 'Unsupported file format. Use .xlsx or .csv'
+                }, status=400)
 
+            # ---------------- Data Processing ----------------
+            imported_count = 0
             for row in data:
-                district_name = str(row.get('districtName')).strip() if row.get('districtName') else None
-                country_name = str(row.get('countryName')).strip() if row.get('countryName') else None
-                state_name = str(row.get('stateName')).strip() if row.get('stateName') else None
+                district_name = str(row.get('district name')).strip() if row.get('district name') else None
+                state_name = str(row.get('state name')).strip() if row.get('state name') else None
+                country_name = str(row.get('country name')).strip() if row.get('country name') else None
+                short_name = str(row.get('district short name')).strip() if row.get('district short name') else ''
+                description = str(row.get('description')).strip() if row.get('description') else ''
 
-                country = Country.objects.filter(name__iexact=country_name).first() if country_name else None
-                state = State.objects.filter(stateName__iexact=state_name, countryName=country).first() if state_name and country else None
-
-                if not district_name or not state or not country:
+                if not district_name or not state_name or not country_name:
                     continue
 
-                existing = District.objects.filter(districtName__iexact=district_name, stateName=state, countryName=country).first()
+                country_obj = Country.objects.filter(name__iexact=country_name).first()
+                state_obj = State.objects.filter(stateName__iexact=state_name, countryName=country_obj).first() if country_obj else None
+
+                if not country_obj or not state_obj:
+                    continue  # skip row if country or state not found
+
+                existing = District.objects.filter(
+                    districtName__iexact=district_name,
+                    stateName=state_obj,
+                    countryName=country_obj
+                ).first()
+
                 if existing:
-                    if existing.is_deleted:
-                        existing.is_deleted = False
-                        existing.countryName = country
-                        existing.stateName = state
-                        existing.save()
-                    else:
+                    if not existing.is_deleted:
                         duplicate_names.append(district_name)
                         continue
+                    else:
+                        # Restore deleted record
+                        existing.districtName = district_name
+                        existing.stateName = state_obj
+                        existing.countryName = country_obj
+                        existing.districtshortName = short_name
+                        existing.description = description
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
                 else:
-                    District.objects.create(districtName=district_name, countryName=country, stateName=state)
+                    District.objects.create(
+                        districtName=district_name,
+                        stateName=state_obj,
+                        countryName=country_obj,
+                        districtshortName=short_name,
+                        description=description,
+                        is_deleted=False
+                    )
+                    imported_count += 1
 
         except Exception as e:
-            return Response({'error': str(e)}, status=400)
+            return Response({
+                "statusCode": 400,
+                "status": True,
+                'message': str(e)
+            }, status=400)
 
-        return Response({"statusCode": 200, "status": True, "duplicates": list(set(duplicate_names)), "message": 'Import successful'}, status=200)
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "duplicates": list(set(duplicate_names)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count
+        }, status=200)
+
 
 
 class DistrictByFilterAPIView(APIView):
@@ -2758,95 +2979,134 @@ class CityImportAPIView(APIView):
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')
+
         if not file:
-            return Response({'error': 'No file uploaded'}, status=400)
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
 
         required_headers = {'cityname', 'countryname', 'statename', 'districtname'}
+        optional_headers = {'description'}
 
         try:
             data = []
             headers = []
 
-            # XLSX Handling
+            # ---------------- XLSX Import ----------------
             if format_type == 'xlsx':
-                import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
 
                 if not sheet_name:
-                    return Response({'error': 'Provide sheet_name', 'available_sheets': available_sheets}, status=400)
+                    return Response({
+                        'error': 'Please provide sheet_name',
+                        'available_sheets': available_sheets
+                    }, status=400)
+
                 if sheet_name not in available_sheets:
-                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
+                    return Response({
+                        'error': f'Sheet "{sheet_name}" not found',
+                        'available_sheets': available_sheets
+                    }, status=400)
 
                 ws = wb[sheet_name]
                 if ws.max_row <= 1:
-                    return Response({'error': f'Sheet "{sheet_name}" is empty.'}, status=400)
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'The uploaded XLSX sheet "{sheet_name}" is empty.'
+                    }, status=400)
 
                 headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
                 if not required_headers.issubset(set(headers)):
-                    return Response({'error': f'Missing required headers: {required_headers}'}, status=400)
+                    return Response({
+                        "statusCode": 400,
+                        "status": True,
+                        "message": f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
+                    }, status=400)
 
                 for row in ws.iter_rows(min_row=2, values_only=True):
                     if not any(row):
                         continue
-                    row_dict = dict(zip(headers, row))
-                    data.append(row_dict)
+                    data.append(dict(zip(headers, row)))
 
-            # CSV Handling
+            # ---------------- CSV Import ----------------
             elif format_type == 'csv':
-                dataset = Dataset()
-                dataset.load(file.read().decode('utf-8'), format='csv')
-                for row in dataset.dict:
+                decoded_file = file.read().decode('utf-8')
+                reader = csv.DictReader(io.StringIO(decoded_file))
+                for row in reader:
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
                     if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({'error': f'Missing required headers: {required_headers}'}, status=400)
+                        return Response({
+                            "statusCode": 400,
+                            "status": True,
+                            "message": f'Missing required headers. Required: {required_headers}. Found: {set(row_lower.keys())}'
+                        }, status=400)
                     data.append(row_lower)
             else:
-                return Response({'error': 'Unsupported format'}, status=400)
+                return Response({
+                    "statusCode": 400,
+                    "status": True,
+                    'error': 'Unsupported file format. Use .xlsx or .csv'
+                }, status=400)
 
+            # ---------------- Data Processing ----------------
             imported_count = 0
             for row in data:
-                city_name = str(row.get('cityname')).strip()
-                country_name = str(row.get('countryname')).strip()
-                state_name = str(row.get('statename')).strip()
-                district_name = str(row.get('districtname')).strip()
+                city_name = str(row.get('cityname')).strip() if row.get('cityname') else None
+                country_name = str(row.get('countryname')).strip() if row.get('countryname') else None
+                state_name = str(row.get('statename')).strip() if row.get('statename') else None
+                district_name = str(row.get('districtname')).strip() if row.get('districtname') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
-                country = Country.objects.filter(name__iexact=country_name).first()
-                state = State.objects.filter(stateName__iexact=state_name, countryName=country).first() if country else None
-                district = District.objects.filter(districtName__iexact=district_name, stateName=state, countryName=country).first() if state else None
-
-                if not city_name or not country or not state or not district:
+                if not city_name or not country_name or not state_name or not district_name:
                     continue
 
-                existing = City.objects.filter(cityName__iexact=city_name, districtName=district, stateName=state, countryName=country).first()
+                country_obj = Country.objects.filter(name__iexact=country_name).first()
+                state_obj = State.objects.filter(stateName__iexact=state_name, countryName=country_obj).first() if country_obj else None
+                district_obj = District.objects.filter(districtName__iexact=district_name, stateName=state_obj, countryName=country_obj).first() if state_obj else None
+
+                if not country_obj or not state_obj or not district_obj:
+                    continue  
+                existing = City.objects.filter(
+                    cityName__iexact=city_name,
+                    districtName=district_obj,
+                    stateName=state_obj,
+                    countryName=country_obj
+                ).first()
+
                 if existing:
-                    if existing.is_deleted:
-                        existing.is_deleted = False
-                        existing.countryName = country
-                        existing.stateName = state
-                        existing.districtName = district
-                        existing.description = description
-                        existing.save()
-                        imported_count += 1
-                    else:
+                    if not existing.is_deleted:
                         duplicate_names.append(city_name)
                         continue
+                    else:
+                        # Restore deleted record
+                        existing.cityName = city_name
+                        existing.countryName = country_obj
+                        existing.stateName = state_obj
+                        existing.districtName = district_obj
+                        existing.description = description
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
                 else:
                     City.objects.create(
                         cityName=city_name,
-                        countryName=country,
-                        stateName=state,
-                        districtName=district,
-                        description=description
+                        countryName=country_obj,
+                        stateName=state_obj,
+                        districtName=district_obj,
+                        description=description,
+                        is_deleted=False
                     )
                     imported_count += 1
 
         except Exception as e:
-            return Response({'error': str(e)}, status=400)
+            return Response({
+                "statusCode": 400,
+                "status": True,
+                'message': str(e)
+            }, status=400)
 
         return Response({
             "statusCode": 200,
@@ -2855,8 +3115,6 @@ class CityImportAPIView(APIView):
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=200)
-
-
 
         
 #--------------------------- Realtion -----------------------
@@ -3238,6 +3496,8 @@ class RelationImportAPIView(APIView):
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=status.HTTP_200_OK)
+
+
 
 class TimezoneCreateAPIView(APIView):
     def post(self, request):
