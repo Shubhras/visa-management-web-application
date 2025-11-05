@@ -227,7 +227,7 @@ class AccreditationName(models.Model):
     full_name = models.CharField(max_length=255, unique=True)
     short_name = models.CharField(max_length=255, unique=True)
     issuing_authority = models.CharField(max_length=255)
-    valid_upto = models.CharField(max_length=255)
+    valid_upto = models.CharField(max_length=255,null=True,blank=True)
     description = models.TextField(max_length=255, blank=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)

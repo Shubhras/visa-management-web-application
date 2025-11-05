@@ -12083,7 +12083,7 @@ class StudyMajorAreaCreateAPIView(APIView):
             "statusCode": 400,
             "status": False,
             "message": " ".join(messages)
-        }, status=status.HTTP_400_BAD_REQUEST)
+        }, status=status.HTTP_400_BAD_REQUEST)  
 
 
 # ------------------ Retrieve API ------------------
