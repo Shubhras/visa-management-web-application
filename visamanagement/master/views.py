@@ -11636,7 +11636,7 @@ class EducationDurationExportAPIView(APIView):
         for obj in queryset:
             row = []
             for field in field_list:
-                if field == 'educationlevel_detail':
+                if field == 'Education Level':
                     value = obj.educationlevel.educationlevel if obj.educationlevel else ''
                 else:
                     value = getattr(obj, field, '')
