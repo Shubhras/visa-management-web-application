@@ -226,7 +226,7 @@ class AccreditationName(models.Model):
     country = models.ForeignKey("Country", on_delete=models.SET_NULL, related_name="accreditation_names", blank=True, null=True)
     category = models.ForeignKey(AccreditationCategory, on_delete=models.SET_NULL, related_name="accreditation_names", blank=True, null=True)
     full_name = models.CharField(max_length=255, unique=True)
-    short_name = models.CharField(max_length=255, unique=True)
+    short_name = models.CharField(max_length=255, null=True,blank=True)
     issuing_authority = models.CharField(max_length=255)
     valid_upto = models.CharField(max_length=255,null=True,blank=True)
     description = models.TextField(max_length=255, blank=True)
