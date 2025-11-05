@@ -252,6 +252,7 @@ urlpatterns = [
     path('education-level/export/', EducationLevelExportAPIView.as_view(), name='educationlevel-export'),
     path('education-level/import/', EducationLevelImportAPIView.as_view(), name='educationlevel-import'),
 
+    path("education-duration/", EducationDurationListAPIView.as_view(), name='Educationduration-list'),
     path('education-duration/create/', EducationDurationCreateAPIView.as_view(), name='educationduration-create'),
     path('education-duration/<uuid:uuid>/', EducationDurationRetrieveAPIView.as_view(), name='educationduration-retrieve'),
     path('education-duration/<uuid:uuid>/update/', EducationDurationUpdateAPIView.as_view(), name='educationduration-update'),

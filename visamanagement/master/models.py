@@ -472,14 +472,14 @@ class StudySpecialisation(models.Model):
 class AcademicResultType(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    Academicresulttype=models.TextField(max_length=255,blank=True,null=True)
+    name=models.TextField(max_length=255,blank=True,null=True)
     description = models.TextField(max_length=255,blank=True,null=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.Academicresulttype
+        return self.name
 
 
 class AcademicResult(models.Model):

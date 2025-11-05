@@ -361,7 +361,7 @@ class EducationDurationSerializer(serializers.ModelSerializer):
         fields = [
             'uuid',
             'educationlevel',
-            'educationlevel_detail',  # optional for easy read
+            'educationlevel_detail',  
             'durations',
             'description',
             'is_deleted',
@@ -459,7 +459,7 @@ class AcademicResultTypeSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'uuid',
-            'Academicresulttype',
+            'name',
             'description',
             'is_deleted',
             'created_at',
