@@ -836,3 +836,37 @@ export const importCivilIdNameDataAPI = (payload) => {
   const apiUrl = `${url.IMPORT_CIVIL_ID_NAME_LIST_API}`;
   return post(apiUrl, payload);
 };
+
+// RELATION
+export const getRelationListDataAPI = (data) => {
+  const apiUrl = `${url.GET_RELATION_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
+
+export const addRelationDataAPI = (payload) => {
+  const apiUrl = `${url.ADD_RELATION_LIST_API}`;
+  return post(apiUrl, payload);
+};
+
+export const editRelationDataAPI = (payload) => {
+  const apiUrl = `${url.EDIT_RELATION_LIST_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+
+export const deleteRelationDataAPI = (payload) => {
+  const prepareDATA = {
+    id: payload,
+  };
+  const apiUrl = `${url.DELETE_RELATION_LIST_API}delete/`;
+  return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportRelationDataAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_RELATION_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+
+export const importRelationDataAPI = (payload) => {
+  const apiUrl = `${url.IMPORT_RELATION_LIST_API}`;
+  return post(apiUrl, payload);
+};

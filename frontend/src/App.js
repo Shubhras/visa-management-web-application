@@ -368,6 +368,7 @@ import EducationLevelCodeList from "./pages/masters/educationMaster/educationLev
 import EducationLevelList from "./pages/masters/educationMaster/educationLevel/EducationLevelList";
 import StudyMainAreaList from "./pages/masters/educationMaster/studyMainArea/StudyMainAreaList";
 import CivilIDNameList from "./pages/masters/generalMaster/civilIDName/CivilIDNameList";
+import RelationList from "./pages/masters/generalMaster/relation/RelationList";
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   // Check if user is authenticated
@@ -601,6 +602,7 @@ function App() {
         <Route path='/gender-list' element={<ProtectedRoute><GenderList /></ProtectedRoute>} />
         <Route path='/marital-status' element={<ProtectedRoute><MaritalStatusList /></ProtectedRoute>} />
         <Route path='/continent-list' element={<ProtectedRoute><ContinentsList /></ProtectedRoute>} />
+        <Route path='/relation-list' element={<ProtectedRoute><RelationList /></ProtectedRoute>} />
         {/* Company  Masters */}
         <Route path='/department' element={<ProtectedRoute><DepartmentList /></ProtectedRoute>} />
         <Route path='/employeetype' element={<ProtectedRoute><EmployeeTypeList /></ProtectedRoute>} />

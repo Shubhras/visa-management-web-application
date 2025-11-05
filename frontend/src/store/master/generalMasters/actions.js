@@ -23,6 +23,12 @@ import {
   EDIT_CIVIL_ID_NAME,
   ADD_CIVIL_ID_NAME,
   CIVIL_ID_NAME_LIST,
+  RELATION_LIST,
+  ADD_RELATION,
+  EDIT_RELATION,
+  DELETE_RELATION,
+  EXPORT_RELATION,
+  IMPORT_RELATION,
 } from "./actionTypes";
 
 // GENDER
@@ -169,6 +175,43 @@ export const civilIdNameExportData = (data, callback) => ({
  
 export const civilIdNameImportData = (data, callback) => ({
   type: IMPORT_CIVIL_ID_NAME,
+  data,
+  callback,
+});
+
+// RELATION
+export const relationList = (data, callback) => ({
+  type: RELATION_LIST,
+  data,
+  callback,
+});
+
+export const relationAdd = (data, callback) => ({
+  type: ADD_RELATION,
+  data,
+  callback,
+});
+
+export const relationEdit = (data, callback) => ({
+  type: EDIT_RELATION,
+  data,
+  callback,
+});
+
+export const relationDelete = (data, callback) => ({
+  type: DELETE_RELATION,
+  data,
+  callback,
+});
+
+export const relationExportData = (data, callback) => ({
+  type: EXPORT_RELATION,
+  data,
+  callback,
+});
+
+export const relationImportData = (data, callback) => ({
+  type: IMPORT_RELATION,
   data,
   callback,
 });

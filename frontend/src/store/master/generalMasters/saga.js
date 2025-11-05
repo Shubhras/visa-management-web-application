@@ -24,6 +24,12 @@ import {
   DELETE_CIVIL_ID_NAME,
   EXPORT_CIVIL_ID_NAME,
   IMPORT_CIVIL_ID_NAME,
+  RELATION_LIST,
+  ADD_RELATION,
+  EDIT_RELATION,
+  DELETE_RELATION,
+  EXPORT_RELATION,
+  IMPORT_RELATION,
 } from "./actionTypes";
 
 import {
@@ -31,26 +37,32 @@ import {
   addContinentDataAPI,
   addGenderDataAPI,
   addMaritalStatusDataAPI,
+  addRelationDataAPI,
   deleteCivilIdNameDataAPI,
   deleteContinentDataAPI,
   deleteGenderDataAPI,
   deleteMaritalStatusDataAPI,
+  deleteRelationDataAPI,
   editCivilIdNameDataAPI,
   editContinentDataAPI,
   editGenderDataAPI,
   editMaritalStatusDataAPI,
+  editRelationDataAPI,
   exportCivilIdNameDataAPI,
   exportContinentDataAPI,
   exportGenderDataAPI,
   exportMaritalStatusDataAPI,
+  exportRelationDataAPI,
   getCivilIdNameListDataAPI,
   getContinentListDataAPI,
   getGenderListDataAPI,
   getMaritalStatusListDataAPI,
+  getRelationListDataAPI,
   importCivilIdNameDataAPI,
   importContinentDataAPI,
   importGenderDataAPI,
   importMaritalStatusDataAPI,
+  importRelationDataAPI,
 } from "../../../service/api_helper";
 
 // Gender
@@ -272,6 +284,61 @@ function* civilIdNameImportDataSaga(action) {
   }
 }
 
+// Relation
+function* relationListSaga(action) {
+  try {
+    const response = yield call(getRelationListDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* relationAddSaga(action) {
+  try {
+    const response = yield call(addRelationDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* relationEditSaga(action) {
+  try {
+    const response = yield call(editRelationDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* relationDeleteSaga(action) {
+  try {
+    const response = yield call(deleteRelationDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* relationExportDataSaga(action) {
+  try {
+    const response = yield call(exportRelationDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* relationImportDataSaga(action) {
+  try {
+    const response = yield call(importRelationDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
 function* generalMasterSaga() {
   // Gender
   yield takeEvery(GENDER_LIST, genderListSaga);
@@ -297,13 +364,21 @@ function* generalMasterSaga() {
   yield takeEvery(EXPORT_CONTINENT, continentExportDataSaga);
   yield takeEvery(IMPORT_CONTINENT, continentImportDataSaga);
 
- //Civil ID Name
+  //Civil ID Name
   yield takeEvery(CIVIL_ID_NAME_LIST, civilIdNameListSaga);
   yield takeEvery(ADD_CIVIL_ID_NAME, civilIdNameAddSaga);
   yield takeEvery(EDIT_CIVIL_ID_NAME, civilIdNameEditSaga);
   yield takeEvery(DELETE_CIVIL_ID_NAME, civilIdNameDeleteSaga);
   yield takeEvery(EXPORT_CIVIL_ID_NAME, civilIdNameExportDataSaga);
- yield takeEvery(IMPORT_CIVIL_ID_NAME, civilIdNameImportDataSaga);
+  yield takeEvery(IMPORT_CIVIL_ID_NAME, civilIdNameImportDataSaga);
+
+  // Relation
+  yield takeEvery(RELATION_LIST, relationListSaga);
+  yield takeEvery(ADD_RELATION, relationAddSaga);
+  yield takeEvery(EDIT_RELATION, relationEditSaga);
+  yield takeEvery(DELETE_RELATION, relationDeleteSaga);
+  yield takeEvery(EXPORT_RELATION, relationExportDataSaga);
+  yield takeEvery(IMPORT_RELATION, relationImportDataSaga);
 }
 
 export default generalMasterSaga;
