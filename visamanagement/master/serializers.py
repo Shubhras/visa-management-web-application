@@ -352,7 +352,7 @@ class EducationLevelSerializer(serializers.ModelSerializer):
 
 class EducationDurationSerializer(serializers.ModelSerializer):
     # Optionally display the related EducationLevel's name
-    serializers.SlugRelatedField(
+    educationlevel=serializers.SlugRelatedField(
         queryset=EducationLevel.objects.all(),
         slug_field='uuid', 
         allow_null=True,
@@ -360,7 +360,7 @@ class EducationDurationSerializer(serializers.ModelSerializer):
     )
 
     educationlevel_detail = serializers.CharField(
-        source='educationlevel.name', read_only=True
+        source='educationlevel.educationlevel', read_only=True
     )
 
     class Meta:
