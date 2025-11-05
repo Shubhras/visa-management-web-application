@@ -802,3 +802,37 @@ export const importContinentDataAPI = (payload) => {
   const apiUrl = `${url.IMPORT_CONTINENT_LIST_API}`;
   return post(apiUrl, payload);
 };
+
+// CIVIL_ID_NAME
+export const getCivilIdNameListDataAPI = (data) => {
+  const apiUrl = `${url.GET_CIVIL_ID_NAME_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
+
+export const addCivilIdNameDataAPI = (payload) => {
+  const apiUrl = `${url.ADD_CIVIL_ID_NAME_LIST_API}`;
+  return post(apiUrl, payload);
+};
+
+export const editCivilIdNameDataAPI = (payload) => {
+  const apiUrl = `${url.EDIT_CIVIL_ID_NAME_LIST_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+
+export const deleteCivilIdNameDataAPI = (payload) => {
+  const prepareDATA = {
+    id: payload,
+  };
+  const apiUrl = `${url.DELETE_CIVIL_ID_NAME_LIST_API}delete/`;
+  return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportCivilIdNameDataAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_CIVIL_ID_NAME_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+
+export const importCivilIdNameDataAPI = (payload) => {
+  const apiUrl = `${url.IMPORT_CIVIL_ID_NAME_LIST_API}`;
+  return post(apiUrl, payload);
+};

@@ -367,6 +367,7 @@ import ContinentsList from "./pages/masters/generalMaster/continents/ContinentsL
 import EducationLevelCodeList from "./pages/masters/educationMaster/educationLevelCode/EducationLevelCodeList";
 import EducationLevelList from "./pages/masters/educationMaster/educationLevel/EducationLevelList";
 import StudyMainAreaList from "./pages/masters/educationMaster/studyMainArea/StudyMainAreaList";
+import CivilIDNameList from "./pages/masters/generalMaster/civilIDName/CivilIDNameList";
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   // Check if user is authenticated
@@ -616,6 +617,7 @@ function App() {
         <Route path='/education-level-code' element={<ProtectedRoute><EducationLevelCodeList /></ProtectedRoute>}></Route>
         <Route path='/education-level' element={<ProtectedRoute><EducationLevelList /></ProtectedRoute>}></Route>
         <Route path='/study-main-area' element={<ProtectedRoute><StudyMainAreaList /></ProtectedRoute>}></Route>
+        <Route path='/civil-name-list' element={<ProtectedRoute><CivilIDNameList /></ProtectedRoute>}></Route>
         {/* 404 Error Page */}
         <Route path='*' element={<ErrorPage />} />
       </Routes>

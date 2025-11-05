@@ -192,7 +192,14 @@ export const EDIT_CONTINENT_LIST_API = "api/v1/master/continents/";
 export const DELETE_CONTINENT_LIST_API = "api/v1/master/continents/";
 export const EXPORT_CONTINENT_LIST_API = "api/v1/master/continents/export/";
 export const IMPORT_CONTINENT_LIST_API = "api/v1/master/continents/import/";
- 
+
+// CIVIL_ID_NAME
+export const GET_CIVIL_ID_NAME_LIST_API = "/api/v1/master/civil-id-name/";
+export const ADD_CIVIL_ID_NAME_LIST_API = "/api/v1/master/civil-id-name/create/";
+export const EDIT_CIVIL_ID_NAME_LIST_API = "api/v1/master/civil-id-name/";
+export const DELETE_CIVIL_ID_NAME_LIST_API = "api/v1/master/civil-id-name/";
+export const EXPORT_CIVIL_ID_NAME_LIST_API = "api/v1/master/civil-id-name/export/";
+export const IMPORT_CIVIL_ID_NAME_LIST_API = "api/v1/master/civil-id-name/import/";
  
 
 // // export const TWO_STEP_VERIFICATION = 'api/national-admin/national-admin-verifyOtpAdmin'
