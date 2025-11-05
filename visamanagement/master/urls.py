@@ -291,6 +291,7 @@ urlpatterns = [
     path('academicresulttype/export/', AcademicResultTypeExportAPIView.as_view(), name='academicresulttype-export'),
     path('academicresulttype/import/', AcademicResultTypeImportAPIView.as_view(), name='academicresulttype-import'),
 
+    path('academicresult/', AcademicResultListAPIView.as_view(), name='academicresult-create'),
     path('academicresult/create/', AcademicResultCreateAPIView.as_view(), name='academicresult-create'),
     path('academicresult/<uuid:uuid>/', AcademicResultRetrieveAPIView.as_view(), name='academicresult-retrieve'),
     path('academicresult/<uuid:uuid>/update/', AcademicResultUpdateAPIView.as_view(), name='academicresult-update'),

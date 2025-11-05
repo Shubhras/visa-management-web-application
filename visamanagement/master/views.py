@@ -12526,7 +12526,7 @@ class StudySpecialisationListAPIView(APIView):
         return paginator.get_paginated_response(serializer.data)
 
 
-        
+
 class StudySpecialisationCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -13246,6 +13246,47 @@ class AcademicResultTypeImportAPIView(APIView):
 
 
 # -------------------- AcademicResult -------------------- #
+
+
+class AcademicResultListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # Optional search query parameters
+        search = request.GET.get('search', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_order = request.GET.get('sortOrder', 'desc')
+
+        # Allowed sort fields
+        allowed_sort_fields = ['Academicresult', 'description', 'created_at']
+        if sort_by not in allowed_sort_fields:
+            sort_by = 'created_at'
+        if sort_order == 'desc':
+            sort_by = f'-{sort_by}'
+
+        # Initial queryset filtered for non-deleted results
+        queryset = AcademicResult.objects.filter(is_deleted=False)
+
+        # Apply search filter if search query is provided
+        if search:
+            queryset = queryset.filter(
+                Q(Academicresult__icontains=search) |
+                Q(description__icontains=search) |
+                Q(AcademicResulttype__Academicresulttype__icontains=search)  # Assuming you want to search by AcademicResulttype
+            )
+
+        # Sorting
+        queryset = queryset.order_by(sort_by)
+
+        # Pagination
+        paginator = CustomPagination()  # CustomPagination should be implemented in your project
+        result_page = paginator.paginate_queryset(queryset, request)
+        
+        serializer = AcademicResultSerializer(result_page, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
+
+
 class AcademicResultCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
