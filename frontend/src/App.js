@@ -369,6 +369,13 @@ import EducationLevelList from "./pages/masters/educationMaster/educationLevel/E
 import StudyMainAreaList from "./pages/masters/educationMaster/studyMainArea/StudyMainAreaList";
 import CivilIDNameList from "./pages/masters/generalMaster/civilIDName/CivilIDNameList";
 import RelationList from "./pages/masters/generalMaster/relation/RelationList";
+import TimeZoneList from "./pages/masters/generalMaster/timeZone/TimeZoneList";
+import EducationDurationList from "./pages/masters/educationMaster/educationDuration/EducationDurationList";
+import StudyMajorAreaList from "./pages/masters/educationMaster/studyMajorArea/StudyMajorArea";
+import AcademicResultTypeList from "./pages/masters/educationMaster/academicResultType/AcademicResultTypeList";
+import EducationTypeList from "./pages/masters/educationMaster/educationType/EducationTypeList";
+import StudySpecialisationList from "./pages/masters/educationMaster/studySpecialisation/StudySpecialisationList";
+import CountryList from "./pages/masters/generalMaster/country/CountryList";
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   // Check if user is authenticated
@@ -602,7 +609,11 @@ function App() {
         <Route path='/gender-list' element={<ProtectedRoute><GenderList /></ProtectedRoute>} />
         <Route path='/marital-status' element={<ProtectedRoute><MaritalStatusList /></ProtectedRoute>} />
         <Route path='/continent-list' element={<ProtectedRoute><ContinentsList /></ProtectedRoute>} />
+          <Route path='/country-list' element={<ProtectedRoute><CountryList/></ProtectedRoute>} />
         <Route path='/relation-list' element={<ProtectedRoute><RelationList /></ProtectedRoute>} />
+        <Route path='/civil-name-list' element={<ProtectedRoute><CivilIDNameList /></ProtectedRoute>}></Route>
+        <Route path='/timezone-list' element={<ProtectedRoute><TimeZoneList /></ProtectedRoute>}></Route>
+        
         {/* Company  Masters */}
         <Route path='/department' element={<ProtectedRoute><DepartmentList /></ProtectedRoute>} />
         <Route path='/employeetype' element={<ProtectedRoute><EmployeeTypeList /></ProtectedRoute>} />
@@ -619,7 +630,12 @@ function App() {
         <Route path='/education-level-code' element={<ProtectedRoute><EducationLevelCodeList /></ProtectedRoute>}></Route>
         <Route path='/education-level' element={<ProtectedRoute><EducationLevelList /></ProtectedRoute>}></Route>
         <Route path='/study-main-area' element={<ProtectedRoute><StudyMainAreaList /></ProtectedRoute>}></Route>
-        <Route path='/civil-name-list' element={<ProtectedRoute><CivilIDNameList /></ProtectedRoute>}></Route>
+        <Route path='/education-duration' element={<ProtectedRoute><EducationDurationList /></ProtectedRoute>}></Route>
+        <Route path='/study-major-area' element={<ProtectedRoute><StudyMajorAreaList /></ProtectedRoute>}></Route>
+        <Route path='/academic-result-type' element={<ProtectedRoute><AcademicResultTypeList /></ProtectedRoute>}></Route>
+        <Route path='/education-type' element={<ProtectedRoute><EducationTypeList /></ProtectedRoute>}></Route>
+        <Route path='/study-specialisation' element={<ProtectedRoute><StudySpecialisationList /></ProtectedRoute>}></Route>
+
         {/* 404 Error Page */}
         <Route path='*' element={<ErrorPage />} />
       </Routes>

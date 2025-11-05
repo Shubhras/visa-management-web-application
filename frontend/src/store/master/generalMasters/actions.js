@@ -29,6 +29,18 @@ import {
   DELETE_RELATION,
   EXPORT_RELATION,
   IMPORT_RELATION,
+  EXPORT_TIME_ZONE,
+  IMPORT_TIME_ZONE,
+  DELETE_TIME_ZONE,
+  EDIT_TIME_ZONE,
+  ADD_TIME_ZONE,
+  TIME_ZONE_LIST,
+  IMPORT_COUNTRY,
+  EXPORT_COUNTRY,
+  DELETE_COUNTRY,
+  EDIT_COUNTRY,
+  ADD_COUNTRY,
+  COUNTRY_LIST,
 } from "./actionTypes";
 
 // GENDER
@@ -212,6 +224,80 @@ export const relationExportData = (data, callback) => ({
 
 export const relationImportData = (data, callback) => ({
   type: IMPORT_RELATION,
+  data,
+  callback,
+});
+
+// TIME_ZONE
+export const timeZoneList = (data, callback) => ({
+  type: TIME_ZONE_LIST,
+  data,
+  callback,
+});
+
+export const timeZoneAdd = (data, callback) => ({
+  type: ADD_TIME_ZONE,
+  data,
+  callback,
+});
+
+export const timeZoneEdit = (data, callback) => ({
+  type: EDIT_TIME_ZONE,
+  data,
+  callback,
+});
+
+export const timeZoneDelete = (data, callback) => ({
+  type: DELETE_TIME_ZONE,
+  data,
+  callback,
+});
+
+export const timeZoneExportData = (data, callback) => ({
+  type: EXPORT_TIME_ZONE,
+  data,
+  callback,
+});
+
+export const timeZoneImportData = (data, callback) => ({
+  type: IMPORT_TIME_ZONE,
+  data,
+  callback,
+});
+
+//COUNTRY
+export const countryList = (data, callback) => ({
+  type: COUNTRY_LIST,
+  data,
+  callback,
+});
+
+export const countryAdd = (data, callback) => ({
+  type: ADD_COUNTRY,
+  data,
+  callback,
+});
+
+export const countryEdit = (data, callback) => ({
+  type: EDIT_COUNTRY,
+  data,
+  callback,
+});
+
+export const countryDelete = (data, callback) => ({
+  type: DELETE_COUNTRY,
+  data,
+  callback,
+});
+
+export const countryExportData = (data, callback) => ({
+  type: EXPORT_COUNTRY,
+  data,
+  callback,
+});
+
+export const countryImportData = (data, callback) => ({
+  type: IMPORT_COUNTRY,
   data,
   callback,
 });

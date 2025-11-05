@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from "react-redux";
-import {  relationAdd, relationEdit  } from '../../../../store/master/generalMasters/actions';
+import {  timeZoneAdd, timeZoneEdit  } from '../../../../store/master/generalMasters/actions';
 import { toast } from "react-toastify";
 
-const AddEditRelationModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
+const AddEditTimeZoneModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
 
@@ -60,7 +60,7 @@ const AddEditRelationModal = ({ show, handleClose, mode = 'add', rowData = null 
     const newErrors = {};
     let isValid = true;
 
-    // Department Name validation
+    //  Name validation
     if (!formData.name.trim()) {
       newErrors.name = 'Name is required';
       isValid = false;
@@ -88,7 +88,7 @@ const AddEditRelationModal = ({ show, handleClose, mode = 'add', rowData = null 
 
       setLoading(true);
       
-      const action = mode === 'edit' ? relationEdit : relationAdd;
+      const action = mode === 'edit' ? timeZoneEdit : timeZoneAdd;
       
       dispatch(action(sendPayload, (response, error) => {
         setLoading(false);
@@ -132,14 +132,14 @@ const AddEditRelationModal = ({ show, handleClose, mode = 'add', rowData = null 
       className="modal fade show common-ctl-popup"
       tabIndex={-1}
       role="dialog"
-      aria-labelledby="RelationModalLabel"
+      aria-labelledby="TimeZoneModalLabel"
       aria-hidden={!show}
     >
       <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
         <div className="modal-content radius-16 bg-base">
           <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-            <h1 className="modal-title fs-5" id="RelationModalLabel">
-              {mode === 'edit' ? 'Edit Relation' : 'Add Relation'}
+            <h1 className="modal-title fs-5" id="TimeZoneModalLabel">
+              {mode === 'edit' ? 'Edit TimeZone' : 'Add TimeZone'}
             </h1>
             <button
               type="button"
@@ -152,10 +152,10 @@ const AddEditRelationModal = ({ show, handleClose, mode = 'add', rowData = null 
           <div className="modal-body p-24">
             <form onSubmit={handleSubmit}>
               <div className="row">
-                {/* Relation Name */}
+                {/* TimeZone Name */}
                 <div className="col-12 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Relation <span className="text-danger">*</span>
+                    TimeZone <span className="text-danger">*</span>
                   </label>
                   <input
                     type="text"
@@ -163,7 +163,7 @@ const AddEditRelationModal = ({ show, handleClose, mode = 'add', rowData = null 
                     value={formData.name}
                     onChange={handleChange}
                     className={`form-control radius-8 ${errors.name ? 'is-invalid' : ''}`}
-                    placeholder="Enter relation"
+                    placeholder="Enter time zone"
                   />
                   {errors.name && (
                     <div className="text-danger text-sm mt-1">
@@ -218,4 +218,4 @@ const AddEditRelationModal = ({ show, handleClose, mode = 'add', rowData = null 
   );
 };
 
-export default AddEditRelationModal;
+export default AddEditTimeZoneModal;
