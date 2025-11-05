@@ -73,6 +73,7 @@ class CountrySerializer(serializers.ModelSerializer):
         model = Country
         fields = [
             'uuid', 'name', 'continent', 'continent_id',
+            'currencyfullname','currencyshortname',
             'shortName', 'fullName', 'officialName', 'capitalCity',
             'dialCodes', 'currencyCode', 'status',
             'is_active', 'is_deleted', 'created_at', 'updated_at'

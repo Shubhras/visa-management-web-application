@@ -1570,6 +1570,8 @@ class CountryExportAPIView(APIView):
             'officialName': 'Official Name',
             'capitalCity': 'Capital City',
             'dialCodes': 'Dial Codes',
+            'currencyfullname':'Currency Full Name',
+            'currencyshortname':'Currency Short Name',
             'currencyCode': 'Currency Code',
             'status': 'Status',
             'is_active': 'Active',
@@ -1631,63 +1633,167 @@ class CountryExportAPIView(APIView):
 
 
 class CountryImportAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')
+
         if not file:
-            return Response({'error': 'No file uploaded'}, status=400)
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
-        dataset = Dataset()
         duplicate_names = []
 
+        required_headers = {'country name'}
+        optional_headers = {
+            'continent', 'short name', 'full name', 'official name', 'capital city',
+            'dial codes', 'currency full name', 'currency short name', 'currency code', 'status'
+        }
+
         try:
+            data = []
+            headers = []
+
+            # ---------------- XLSX Import ----------------
             if format_type == 'xlsx':
+                import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
+
                 if not sheet_name:
-                    return Response({'error': 'Provide sheet_name', 'available_sheets': available_sheets}, status=400)
+                    return Response({'error': 'Please provide sheet_name', 'available_sheets': available_sheets}, status=400)
                 if sheet_name not in available_sheets:
                     return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
 
                 ws = wb[sheet_name]
-                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                data = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True)]
+                if ws.max_row <= 1:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'The uploaded XLSX sheet "{sheet_name}" is empty.'
+                    }, status=400)
 
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response({
+                        "statusCode": 400,
+                        "status": True,
+                        "message": f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
+                    }, status=400)
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    if not any(row):
+                        continue
+                    data.append(dict(zip(headers, row)))
+
+            # ---------------- CSV Import ----------------
             elif format_type == 'csv':
-                dataset.load(file.read().decode('utf-8'), format='csv')
-                data = dataset.dict
+                import csv
+                import io
+                decoded_file = file.read().decode('utf-8')
+                reader = csv.DictReader(io.StringIO(decoded_file))
+                for row in reader:
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({
+                            "statusCode": 400,
+                            "status": True,
+                            "message": f'Missing required headers. Required: {required_headers}. Found: {set(row_lower.keys())}'
+                        }, status=400)
+                    data.append(row_lower)
             else:
-                return Response({'error': 'Unsupported format'}, status=400)
+                return Response({
+                    "statusCode": 400,
+                    "status": True,
+                    'error': 'Unsupported file format. Use .xlsx or .csv'
+                }, status=400)
 
+            # ---------------- Data Processing ----------------
+            imported_count = 0
             for row in data:
-                name = str(row.get('name')).strip() if row.get('name') else None
-                continent_name = str(row.get('continent')).strip() if row.get('continent') else None
-                continent = Continents.objects.filter(name__iexact=continent_name).first() if continent_name else None
-
-                if not name or not continent:
+                country_name = str(row.get('country name')).strip() if row.get('country name') else None
+                if not country_name:
                     continue
 
-                existing = Country.objects.filter(name__iexact=name).first()
+                continent_name = str(row.get('continent')).strip() if row.get('continent') else ''
+                short_name = str(row.get('short name')).strip() if row.get('short name') else ''
+                full_name = str(row.get('full name')).strip() if row.get('full name') else ''
+                official_name = str(row.get('official name')).strip() if row.get('official name') else ''
+                capital_city = str(row.get('capital city')).strip() if row.get('capital city') else ''
+                dial_codes = row.get('dial codes')
+                currency_full_name = str(row.get('currency full name')).strip() if row.get('currency full name') else ''
+                currency_short_name = str(row.get('currency short name')).strip() if row.get('currency short name') else ''
+                currency_code = str(row.get('currency code')).strip() if row.get('currency code') else ''
+                status_value = row.get('status')
+
+                # Parse JSON field safely
+                if dial_codes:
+                    import json
+                    try:
+                        dial_codes = json.loads(dial_codes) if isinstance(dial_codes, str) else dial_codes
+                    except Exception:
+                        dial_codes = [str(dial_codes)]
+
+                # Get continent object
+                continent_obj = None
+                if continent_name:
+                    continent_obj = Continents.objects.filter(name__iexact=continent_name).first()
+
+                # Check existing country
+                existing = Country.objects.filter(name__iexact=country_name).first()
                 if existing:
-                    if existing.is_deleted:
-                        existing.is_deleted = False
-                        existing.continent = continent
-                        existing.save()
-                    else:
-                        duplicate_names.append(name)
+                    if not existing.is_deleted:
+                        duplicate_names.append(country_name)
                         continue
+                    else:
+                        existing.continent = continent_obj
+                        existing.shortName = short_name
+                        existing.fullName = full_name
+                        existing.officialName = official_name
+                        existing.capitalCity = capital_city
+                        existing.dialCodes = dial_codes
+                        existing.currencyfullname = currency_full_name
+                        existing.currencyshortname = currency_short_name
+                        existing.currencyCode = currency_code
+                        existing.status = bool(status_value) if status_value else True
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
                 else:
-                    Country.objects.create(name=name, continent=continent)
+                    Country.objects.create(
+                        name=country_name,
+                        continent=continent_obj,
+                        shortName=short_name,
+                        fullName=full_name,
+                        officialName=official_name,
+                        capitalCity=capital_city,
+                        dialCodes=dial_codes,
+                        currencyfullname=currency_full_name,
+                        currencyshortname=currency_short_name,
+                        currencyCode=currency_code,
+                        status=bool(status_value) if status_value else True,
+                        is_deleted=False
+                    )
+                    imported_count += 1
 
         except Exception as e:
-            return Response({'error': str(e)}, status=400)
+            return Response({
+                "statusCode": 400,
+                "status": True,
+                'message': str(e)
+            }, status=400)
 
-        return Response({"statusCode": 200, "status": True, "duplicates": list(set(duplicate_names)), "message": f'Import successful'}, status=200)
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "duplicates": list(set(duplicate_names)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count
+        }, status=200)
 
 
+
+        
 
 class CountriesByContinentAPIView(APIView):
     def get(self, request):
@@ -6471,14 +6577,6 @@ class AccreditationNameExportAPIView(APIView):
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 # -------------------- IMPORT API --------------------
-
-
-
-
-
-
-
-
 
 
 

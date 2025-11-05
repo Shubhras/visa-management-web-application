@@ -49,6 +49,8 @@ class Country(models.Model):
     officialName = models.CharField(max_length=50, blank=True, null=True)
     capitalCity = models.CharField(max_length=50, blank=True, null=True)
     dialCodes = models.JSONField(blank=True, null=True)  
+    currencyfullname=models.CharField(max_length=50, blank=True, null=True)
+    currencyshortname=models.CharField(max_length=50, blank=True, null=True)
     currencyCode = models.CharField(max_length=50, blank=True, default="")  
     status = models.BooleanField(default=True)  
     created_at = models.DateTimeField(auto_now_add=True)  
