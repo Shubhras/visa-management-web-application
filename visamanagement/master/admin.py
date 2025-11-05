@@ -240,3 +240,210 @@ class EducationDurationAdmin(admin.ModelAdmin):
     search_fields = ('durations',)
     list_filter = ('is_deleted',)
     ordering = ('durations',)
+
+
+@admin.register(DocumentCategory)
+class DocumentCategoryAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "uuid",
+        "name",
+        "description",
+        "is_deleted",
+        "created_at",
+        "updated_at",
+    )
+    list_filter = ("is_deleted", "created_at", "updated_at")
+    search_fields = ("name", "description")
+    readonly_fields = ("uuid", "created_at", "updated_at")
+    ordering = ('name',)
+
+@admin.register(DocumentName)
+class DocumentNameAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "uuid",
+        "document_category",
+        "document_name",
+        "description",
+        "is_deleted",
+        "created_at",
+        "updated_at",
+    )
+    list_filter = ("is_deleted", "created_at", "updated_at", "document_category")
+    search_fields = ("document_name", "description", "document_category__name")
+    readonly_fields = ("uuid", "created_at", "updated_at")
+    ordering = ('document_name',)
+
+
+
+@admin.register(DocumentType)
+class DocumentTypeAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "uuid",
+        "name",
+        "description",
+        "is_deleted",
+        "created_at",
+        "updated_at",
+    )
+    list_filter = ("is_deleted", "created_at", "updated_at")
+    search_fields = ("name", "description")
+    readonly_fields = ("uuid", "created_at", "updated_at")
+    ordering = ('name',)
+
+
+@admin.register(PurposeOfVisit)
+class PurposeOfVisitAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "uuid",
+        "name",
+        "description",
+        "is_deleted",
+        "created_at",
+        "updated_at",
+    )
+    list_filter = ("is_deleted", "created_at", "updated_at")
+    search_fields = ("name", "description")
+    readonly_fields = ("uuid", "created_at", "updated_at")
+    ordering = ("name",)
+
+
+
+
+@admin.register(RequiredDocument)
+class RequiredDocumentAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "uuid",
+        "country",
+        "visa_main_category",
+        "visa_major_category",
+        "visa_name",
+        "document_category",
+        "document_name",
+        "description",
+        "is_deleted",
+        "created_at",
+        "updated_at",
+    )
+    list_filter = ("is_deleted", "created_at", "updated_at", "country", "visa_main_category", "visa_major_category")
+    search_fields = (
+        "country__name",
+        "visa_main_category__name",
+        "visa_major_category__name",
+        "visa_name__name",
+        "document_category__name",
+        "document_name__document_name",
+        "description",
+    )
+    readonly_fields = ("uuid", "created_at", "updated_at")
+    ordering = ("-created_at",)
+
+
+@admin.register(ProcessStatus)
+class ProcessStatusAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "uuid",
+        "country",
+        "visa_main_category",
+        "process_status_name",
+        "description",
+        "is_deleted",
+        "created_at",
+        "updated_at",
+    )
+    list_filter = ("is_deleted", "created_at", "updated_at", "country", "visa_main_category")
+    search_fields = (
+        "country__name",
+        "visa_main_category__name",
+        "process_status_name__name",
+        "description",
+    )
+    readonly_fields = ("uuid", "created_at", "updated_at")
+    ordering = ("-created_at",)
+
+
+
+@admin.register(ProcessSubStatus)
+class ProcessSubStatusAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "uuid",
+        "country",
+        "visa_main_category",
+        "process_status_name",
+        "process_sub_status_name",
+        "description",
+        "is_deleted",
+        "created_at",
+        "updated_at",
+    )
+    list_filter = ("is_deleted", "country", "visa_main_category", "process_status_name")
+    search_fields = (
+        "country__name",
+        "visa_main_category__name",
+        "process_status_name__name",
+        "process_sub_status_name",
+        "description",
+    )
+    readonly_fields = ("uuid", "created_at", "updated_at")
+    ordering = ("-created_at",)
+
+
+
+@admin.register(ProcessType)
+class ProcessTypeAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "uuid",
+        "name",
+        "description",
+        "is_deleted",
+        "created_at",
+        "updated_at",
+    )
+    list_filter = ("is_deleted", "created_at", "updated_at")
+    search_fields = ("name", "description")
+    readonly_fields = ("uuid", "created_at", "updated_at")
+    ordering = ("name",)
+
+
+@admin.register(PaymentTo)
+class PaymentToAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "uuid",
+        "name",
+        "description",
+        "is_deleted",
+        "created_at",
+        "updated_at",
+    )
+    list_filter = ("is_deleted", "created_at", "updated_at")
+    search_fields = ("name", "description")
+    readonly_fields = ("uuid", "created_at", "updated_at")
+    ordering = ("name",)
+
+
+
+
+@admin.register(PaymentCategory)
+class PaymentCategoryAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "uuid",
+        "payment_to",
+        "payment_category",
+        "description",
+        "is_deleted",
+        "created_at",
+        "updated_at",
+    )
+    list_filter = ("is_deleted", "created_at", "updated_at", "payment_to")
+    search_fields = ("payment_category", "description", "payment_to__name")
+    readonly_fields = ("uuid", "created_at", "updated_at")
+    ordering = ("payment_category",)

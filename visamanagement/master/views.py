@@ -2336,14 +2336,11 @@ class DepartmentDeleteAPIView(APIView):
 
 
 class DepartmentExportAPIView(APIView):
-    
-
     def get(self, request):
         # --- Get query params ---
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')  # comma-separated fields
         uuids_param = request.GET.get('uuids', '')  # comma-separated UUIDs
-
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
         # --- Field to header mapping ---
@@ -2556,6 +2553,8 @@ class DepartmentImportAPIView(APIView):
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=status.HTTP_200_OK)
+
+
 
 # -----------------------employeeType---------------------------------
 class EmployeeTypeListAPIView(APIView):    

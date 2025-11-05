@@ -1,6 +1,7 @@
 
 import uuid
 from django.db import models
+from django.utils import timezone
 
 class Gender(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -777,4 +778,147 @@ class ApplicantType(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class DocumentCategory(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    name = models.CharField(max_length=255, unique=True)
+    description = models.TextField(blank=True, null=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+    
+class DocumentName(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    document_category = models.ForeignKey(DocumentCategory,on_delete=models.CASCADE,related_name='document_names')
+    document_name = models.CharField(max_length=255)
+    description = models.CharField(max_length=500, blank=True, null=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.document_name
+
+class DocumentType(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    name = models.CharField(max_length=255, unique=True)
+    description = models.TextField(blank=True, null=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name    
+    
+
+class PurposeOfVisit(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    name = models.CharField(max_length=255, unique=True)
+    description = models.TextField(blank=True, null=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name    
+    
+
+class RequiredDocument(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    country = models.ForeignKey('Country', on_delete=models.CASCADE, related_name='required_documents')
+    visa_main_category = models.ForeignKey('master.VisaMain', on_delete=models.CASCADE, related_name='required_documents')
+    visa_major_category = models.ForeignKey('master.VisaMajor', on_delete=models.CASCADE, related_name='required_documents')
+    visa_name = models.ForeignKey('VisaName', on_delete=models.CASCADE, related_name='required_documents')
+    document_category = models.ForeignKey('DocumentCategory', on_delete=models.CASCADE, related_name='required_documents')
+    document_name = models.ForeignKey('DocumentName', on_delete=models.CASCADE, related_name='required_documents')
+    description = models.CharField(max_length=500, blank=True, null=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.country} - {self.visa_name} - {self.document_name}"
+
+
+
+class ProcessStatus(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    country = models.ForeignKey('Country', on_delete=models.CASCADE, related_name='process_statuses')
+    visa_main_category = models.ForeignKey('master.VisaMain', on_delete=models.CASCADE, related_name='process_statuses')
+    process_status_name = models.ForeignKey('ProcessStatusName', on_delete=models.CASCADE, related_name='process_statuses')
+    description = models.CharField(max_length=500, blank=True, null=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.country} - {self.visa_main_category} - {self.process_status_name}"
+
+
+
+class ProcessSubStatus(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    country = models.ForeignKey('Country', on_delete=models.CASCADE, related_name='process_sub_statuses')
+    visa_main_category = models.ForeignKey('master.VisaMain', on_delete=models.CASCADE, related_name='process_sub_statuses')
+    process_status_name = models.ForeignKey('ProcessStatusName', on_delete=models.CASCADE, related_name='process_sub_statuses')
+    process_sub_status_name = models.CharField(max_length=255)
+    description = models.CharField(max_length=500, blank=True, null=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.country} - {self.visa_main_category} - {self.process_status_name} - {self.process_sub_status_name}"
+
+
+class ProcessType(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    name = models.CharField(max_length=255, unique=True)
+    description = models.TextField(blank=True, null=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+
+class PaymentTo(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    name = models.CharField(max_length=255, unique=True)
+    description = models.TextField(blank=True, null=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+    
+
+class PaymentCategory(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    payment_to = models.ForeignKey(PaymentTo, on_delete=models.CASCADE, related_name="payment_categories")
+    payment_category = models.CharField(max_length=255, unique=True)
+    description = models.TextField(blank=True, null=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.payment_category} ({self.payment_to.name})"
+
 

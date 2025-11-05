@@ -2,7 +2,7 @@ from django.urls import path
 from .views import *
 from .test import *
 from .visamaster import *
-
+from .process import*
 urlpatterns = [
 
     path("login/", MasterTokenLoginAPIView.as_view(), name="master-login"),
@@ -397,6 +397,86 @@ urlpatterns = [
     path('applicanttype/export/', ApplicantTypeExportAPIView.as_view(), name='applicanttype-export'),
     path('applicanttype/import/', ApplicantTypeImportAPIView.as_view(), name='applicanttype-import'),
 
+    #-------------- Process Master-----------------
+    path("documentcategory/create/", DocumentCategoryCreateAPIView.as_view(), name='DocumentCategory-create'),
+    path("documentcategory/", DocumentCategoryListAPIView.as_view(), name='DocumentCategory-list'),
+    path("documentcategory/<uuid:uuid>/", DocumentCategoryRetrieveAPIView.as_view(), name='DocumentCategory-detail'),
+    path("documentcategory/<uuid:uuid>/update/", DocumentCategoryUpdateAPIView.as_view(), name='DocumentCategory-update'),
+    path("documentcategory/delete/", DocumentCategoryDeleteAPIView.as_view(), name='DocumentCategory-delete'),
+    path("documentcategory/export/", DocumentCategoryExportAPIView.as_view(), name='DocumentCategory-export'),
+    path("documentcategory/import/", DocumentCategoryImportAPIView.as_view(), name='DocumentCategory-import'),
+
+    path('document-type/create/', DocumentTypeCreateAPIView.as_view(), name='document_type_create'),
+    path('document-type/list/', DocumentTypeListAPIView.as_view(), name='document_type_list'),
+    path('document-type/<uuid:uuid>/', DocumentTypeRetrieveAPIView.as_view(), name='document_type_retrieve'),
+    path('document-type/<uuid:uuid>/update/', DocumentTypeUpdateAPIView.as_view(), name='document_type_update'),
+    path('document-type/delete/', DocumentTypeDeleteAPIView.as_view(), name='document_type_delete'),
+    path('document-type/export/', DocumentTypeExportAPIView.as_view(), name='document-type-export'),
+    path('document-type/import/', DocumentTypeImportAPIView.as_view(), name='document-type-import'),
+
+    path('document-name/create/',DocumentNameCreateAPIView.as_view(), name='document_name_create'),
+    path('document-name/list/', DocumentNameListAPIView.as_view(), name='document_name_list'),
+    path('document-name/<uuid:uuid>/', DocumentNameRetrieveAPIView.as_view(), name='document_name_retrieve'),
+    path('document-name/<uuid:uuid>/update/', DocumentNameUpdateAPIView.as_view(), name='document_name_update'),
+    path('document-name/delete/', DocumentNameDeleteAPIView.as_view(), name='document_name_delete'),
+    path('document-name/export/', DocumentNameExportAPIView.as_view(), name='document_name_export'),
+    path('document-name/import/', DocumentNameImportAPIView.as_view(), name='document_name_import'),
+
+    path('purpose-of-visit/create/',PurposeOfVisitCreateAPIView.as_view(), name='purpose_create'),
+    path('purpose-of-visit/list/', PurposeOfVisitListAPIView.as_view(), name='purpose_list'),
+    path('purpose-of-visit/<uuid:uuid>/', PurposeOfVisitRetrieveAPIView.as_view(), name='purpose_retrieve'),
+    path('purpose-of-visit/<uuid:uuid>/update/', PurposeOfVisitUpdateAPIView.as_view(), name='purpose_update'),
+    path('purpose-of-visit/<uuid:uuid>/delete/', PurposeOfVisitDeleteAPIView.as_view(), name='purpose_delete'),
+    path('purpose-of-visit/export/', PurposeOfVisitExportAPIView.as_view(), name='purpose_export'),
+    path('purpose-of-visit/import/', PurposeOfVisitImportAPIView.as_view(), name='purpose_import'),
+
+    path('required-document/create/', RequiredDocumentCreateAPIView.as_view(), name='required_document_create'),
+    path('required-document/list/', RequiredDocumentListAPIView.as_view(), name='required_document_list'),
+    path('required-document/<uuid:uuid>/', RequiredDocumentRetrieveAPIView.as_view(), name='required_document_retrieve'),
+    path('required-document/<uuid:uuid>/update/', RequiredDocumentUpdateAPIView.as_view(), name='required_document_update'),
+    path('required-document/delete/', RequiredDocumentDeleteAPIView.as_view(), name='required_document_delete'),
+    path('required-document/export/', RequiredDocumentExportAPIView.as_view(), name='required_document_export'),
+    path('required-document/import/', RequiredDocumentImportAPIView.as_view(), name='required_document_import'),
+
+    path('process-status/create/', ProcessStatusCreateAPIView.as_view(), name='process_status_create'),
+    path('process-status/list/', ProcessStatusListAPIView.as_view(), name='process_status_list'),
+    path('process-status/<uuid:uuid>/', ProcessStatusRetrieveAPIView.as_view(), name='process_status_retrieve'),
+    path('process-status/<uuid:uuid>/update/', ProcessStatusUpdateAPIView.as_view(), name='process_status_update'),
+    path('process-status/delete/', ProcessStatusDeleteAPIView.as_view(), name='process_status_delete'),
+    path('process-status/export/', ProcessStatusExportAPIView.as_view(), name='process_status_export'),
+    path('process-status/import/', ProcessStatusImportAPIView.as_view(), name='process_status_import'),
+
+    path('process-sub-status/create/', ProcessSubStatusCreateAPIView.as_view(), name='process_sub_status_create'),
+    path('process-sub-status/list/', ProcessSubStatusListAPIView.as_view(), name='process_sub_status_list'),
+    path('process-sub-status/<uuid:uuid>/', ProcessSubStatusRetrieveAPIView.as_view(), name='process_sub_status_retrieve'),
+    path('process-sub-status/<uuid:uuid>/update/', ProcessSubStatusUpdateAPIView.as_view(), name='process_sub_status_update'),
+    path('process-sub-status/delete/', ProcessSubStatusDeleteAPIView.as_view(), name='process_sub_status_delete'),
+    path('process-sub-status/export/', ProcessSubStatusExportAPIView.as_view(), name='process_sub_status_export'),
+    path('process-sub-status/import/', ProcessSubStatusImportAPIView.as_view(), name='process_sub_status_import'),
+
+    path("process-type/create/", ProcessTypeCreateAPIView.as_view(), name="process_type_create"),
+    path("process-type/list/", ProcessTypeListAPIView.as_view(), name="process_type_list"),
+    path("process-type/<uuid:uuid>/", ProcessTypeRetrieveAPIView.as_view(), name="process_type_retrieve"),
+    path("process-type/<uuid:uuid>/update/", ProcessTypeUpdateAPIView.as_view(), name="process_type_update"),
+    path("process-type/delete/", ProcessTypeDeleteAPIView.as_view(), name="process_type_delete"),
+    path("process-type/export/", ProcessTypeExportAPIView.as_view(), name="process_type_export"),
+    path("process-type/import/", ProcessTypeImportAPIView.as_view(), name="process_type_import"),
+
+    path("payment-to/create/", PaymentToCreateAPIView.as_view(), name="payment_to_create"),
+    path("payment-to/list/", PaymentToListAPIView.as_view(), name="payment_to_list"),
+    path("payment-to/<uuid:uuid>/", PaymentToRetrieveAPIView.as_view(), name="payment_to_retrieve"),
+    path("payment-to/<uuid:uuid>/update/", PaymentToUpdateAPIView.as_view(), name="payment_to_update"),
+    path("payment-to/delete/", PaymentToDeleteAPIView.as_view(), name="payment_to_delete"),
+    path("payment-to/export/", PaymentToExportAPIView.as_view(), name="payment_to_export"),
+    path("payment-to/import/", PaymentToImportAPIView.as_view(), name="payment_to_import"),
+
+    path("payment-category/create/", PaymentCategoryCreateAPIView.as_view(), name="payment_category_create"),
+    path("payment-category/list/", PaymentCategoryListAPIView.as_view(), name="payment_category_list"),
+    path("payment-category/<uuid:uuid>/", PaymentCategoryRetrieveAPIView.as_view(), name="payment_category_retrieve"),
+    path("payment-category/<uuid:uuid>/update/", PaymentCategoryUpdateAPIView.as_view(), name="payment_category_update"),
+    path("payment-category/delete/", PaymentCategoryDeleteAPIView.as_view(), name="payment_category_delete"),
+    path("payment-category/export/", PaymentCategoryExportAPIView.as_view(), name="payment_category_export"),
+    path("payment-category/import/", PaymentCategoryImportAPIView.as_view(), name="payment_category_import"),
 
 ]
 
