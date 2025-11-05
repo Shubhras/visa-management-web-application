@@ -373,7 +373,7 @@ class EducationLevelCode(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     def __str__(self):
-        return self.level_code
+        return self.name
 
     
 class EducationLevel(models.Model):
