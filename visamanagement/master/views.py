@@ -12041,9 +12041,26 @@ class StudyMajorAreaCreateAPIView(APIView):
 
     def post(self, request):
         majorarea = request.data.get("majorarea", "").strip()
-        mainarea_id = request.data.get("mainarea")
+        mainarea_uuid = request.data.get("mainarea_uuid")  # accept UUID
 
-        existing = Studymajorarea.objects.filter(majorarea__iexact=majorarea, mainarea_id=mainarea_id, is_deleted=False).first()
+        # Resolve UUID to object for existence check
+        mainarea_obj = None
+        if mainarea_uuid:
+            mainarea_obj = Studymainarea.objects.filter(uuid=mainarea_uuid).first()
+            if not mainarea_obj:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Invalid main area UUID."
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check duplicates
+        existing = Studymajorarea.objects.filter(
+            majorarea__iexact=majorarea,
+            mainarea=mainarea_obj,
+            is_deleted=False
+        ).first()
+
         if existing:
             return Response({
                 "statusCode": 400,

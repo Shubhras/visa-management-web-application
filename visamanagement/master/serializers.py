@@ -392,7 +392,7 @@ class StudymainareaSerializer(serializers.ModelSerializer):
 class StudyMajorAreaSerializer(serializers.ModelSerializer):
     mainarea = serializers.SlugRelatedField(
         queryset=Studymainarea.objects.all(),
-        slug_field='uuid',  # Accept UUID instead of numeric ID
+        slug_field='uuid',  
         allow_null=True,
         required=False
     )
