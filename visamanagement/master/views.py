@@ -1574,6 +1574,7 @@ class CountryExportAPIView(APIView):
             'currencyfullname':'Currency Full Name',
             'currencyshortname':'Currency Short Name',
             'currencyCode': 'Currency Code',
+            'description':'Description',
             'status': 'Status',
             'is_active': 'Active',
             'is_deleted': 'Deleted',
@@ -1648,7 +1649,7 @@ class CountryImportAPIView(APIView):
         required_headers = {'country name'}
         optional_headers = {
             'continent', 'country short name', 'country full name', 'country official name', 'capital city',
-            'country calling code', 'currency full name', 'currency short name', 'currency code',
+            'country calling code', 'currency full name', 'currency short name', 'currency code', 'description',
         }
 
         try:
@@ -1724,7 +1725,8 @@ class CountryImportAPIView(APIView):
                 currency_full_name = str(row.get('currency full name')).strip() if row.get('currency full name') else ''
                 currency_short_name = str(row.get('currency short name')).strip() if row.get('currency short name') else ''
                 currency_code = str(row.get('currency code')).strip() if row.get('currency code') else ''
-        
+                description = str(row.get('description')).strip() if row.get('description') else ''
+                                
 
                 # Parse JSON field safely
                 if dial_codes:
@@ -1755,6 +1757,7 @@ class CountryImportAPIView(APIView):
                         existing.currencyfullname = currency_full_name
                         existing.currencyshortname = currency_short_name
                         existing.currencyCode = currency_code
+                        existing.description=description
                         existing.is_deleted = False
                         existing.save()
                         imported_count += 1
@@ -1770,6 +1773,7 @@ class CountryImportAPIView(APIView):
                         currencyfullname=currency_full_name,
                         currencyshortname=currency_short_name,
                         currencyCode=currency_code,
+                        description=description,
                         is_deleted=False
                     )
                     imported_count += 1
