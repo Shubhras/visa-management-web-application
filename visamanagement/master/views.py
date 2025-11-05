@@ -11614,9 +11614,8 @@ class EducationDurationExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'educationlevel': 'Education Level ID',
-            'educationlevel_detail': 'Education Level',
-            'durations': 'Duration',
+            'educationlevel': 'Education Level',
+            'durations': 'Education Duration',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'created_at': 'Created On',
@@ -11678,7 +11677,7 @@ class EducationDurationImportAPIView(APIView):
 
         format_type = file.name.split('.')[-1].lower()
         duplicate_durations = []
-        required_headers = {'educationlevel', 'durations'}
+        required_headers = {'education level', 'education duration'}
         optional_headers = {'description'}
 
         try:
@@ -11723,8 +11722,8 @@ class EducationDurationImportAPIView(APIView):
 
             imported_count = 0
             for row in data:
-                educationlevel_name = str(row.get('educationlevel')).strip() if row.get('educationlevel') else None
-                durations = str(row.get('durations')).strip() if row.get('durations') else None
+                educationlevel_name = str(row.get('education level')).strip() if row.get('education level') else None
+                durations = str(row.get('education durations')).strip() if row.get('education durations') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not educationlevel_name or not durations:
