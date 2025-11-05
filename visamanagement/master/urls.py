@@ -267,7 +267,8 @@ urlpatterns = [
     path('studymainarea/delete/', StudymainareaDeleteAPIView.as_view(), name='studymainarea-delete'),
     path('studymainarea/export/', StudymainareaExportAPIView.as_view(), name='studymainarea-export'),
     path('studymainarea/import/', StudymainareaImportAPIView.as_view(), name='studymainarea-import'),
-
+    
+    path("studymainarea/", StudyMajorAreaListAPIView.as_view(), name='studymajorarea-list'),
     path('studymajorarea/create/', StudyMajorAreaCreateAPIView.as_view(), name='studymajorarea-create'),
     path('studymajorarea/<uuid:uuid>/', StudyMajorAreaRetrieveAPIView.as_view(), name='studymajorarea-retrieve'),
     path('studymajorarea/<uuid:uuid>/update/',StudyMajorAreaUpdateAPIView.as_view(), name='studymajorarea-update'),
@@ -275,6 +276,7 @@ urlpatterns = [
     path('studymajorarea/export/', StudyMajorAreaExportAPIView.as_view(), name='studymajorarea-export'),
     path('studymajorarea/import/', StudyMajorAreaImportAPIView.as_view(), name='studymajorarea-import'),
 
+    path("studyspecialisation/",StudySpecialisationListAPIView.as_view(), name='studyspecialisation-list'),
     path('studyspecialisation/create/', StudySpecialisationCreateAPIView.as_view(), name='studyspecialisation-create'),
     path('studyspecialisation/<uuid:uuid>/', StudySpecialisationRetrieveAPIView.as_view(), name='studyspecialisation-retrieve'),
     path('studyspecialisation/<uuid:uuid>/update/', StudySpecialisationUpdateAPIView.as_view(), name='studyspecialisation-update'),

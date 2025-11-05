@@ -12123,6 +12123,39 @@ class StudymainareaImportAPIView(APIView):
 
 
 # -------------------- Studymajor -------------------- #
+
+class StudyMajorAreaListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        search = request.GET.get('search', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_order = request.GET.get('sortOrder', 'desc')
+
+        allowed_sort_fields = ['majorarea', 'description', 'created_at']
+        if sort_by not in allowed_sort_fields:
+            sort_by = 'created_at'
+        if sort_order == 'desc':
+            sort_by = f'-{sort_by}'
+
+        queryset = Studymajorarea.objects.filter(is_deleted=False)
+
+        if search:
+            queryset = queryset.filter(
+                Q(majorarea__icontains=search) |
+                Q(description__icontains=search) |
+                Q(mainarea__name__icontains=search)
+            )
+
+        queryset = queryset.order_by(sort_by)
+
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = StudyMajorAreaSerializer(result_page, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
+
+
 class StudyMajorAreaCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -12310,9 +12343,8 @@ class StudyMajorAreaExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'mainarea': 'Main Area ID',
-            'mainarea_name': 'Main Area Name',
-            'majorarea': 'Major Area',
+            'mainarea': 'Study Main Area',
+            'majorarea': 'Study Major Area',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'created_at': 'Created On',
@@ -12371,7 +12403,7 @@ class StudyMajorAreaImportAPIView(APIView):
 
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
-        required_headers = {'majorarea', 'mainarea'}
+        required_headers = {'study major area', 'study main area'}
         optional_headers = {'description'}
 
         try:
@@ -12416,8 +12448,8 @@ class StudyMajorAreaImportAPIView(APIView):
 
             imported_count = 0
             for row in data:
-                majorarea_name = str(row.get('majorarea')).strip() if row.get('majorarea') else None
-                mainarea_name = str(row.get('mainarea')).strip() if row.get('mainarea') else None
+                majorarea_name = str(row.get('study major area')).strip() if row.get('study major area') else None
+                mainarea_name = str(row.get('study main area')).strip() if row.get('study main area') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not majorarea_name or not mainarea_name:
@@ -12461,7 +12493,40 @@ class StudyMajorAreaImportAPIView(APIView):
 # -------------------- Studyspecialisation -------------------- #
 
 
+class StudySpecialisationListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
 
+    def get(self, request):
+        search = request.GET.get('search', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_order = request.GET.get('sortOrder', 'desc')
+
+        allowed_sort_fields = ['studyspecialisation', 'description', 'created_at']
+        if sort_by not in allowed_sort_fields:
+            sort_by = 'created_at'
+        if sort_order == 'desc':
+            sort_by = f'-{sort_by}'
+
+        queryset = StudySpecialisation.objects.filter(is_deleted=False)
+
+        if search:
+            queryset = queryset.filter(
+                Q(studyspecialisation__icontains=search) |
+                Q(description__icontains=search) |
+                Q(mainarea__name__icontains=search) |
+                Q(majorarea__majorarea__icontains=search)
+            )
+
+        queryset = queryset.order_by(sort_by)
+
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = StudySpecialisationSerializer(result_page, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
+
+
+        
 class StudySpecialisationCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
