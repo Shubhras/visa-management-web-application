@@ -63,7 +63,7 @@ const MasterLayout = ({ children }) => {
             // { name: 'District', path: '/' },
             // { name: 'City', path: '/' },
             // { name: 'Timezone', path: '/' },
-            // { name: 'Relation', path: '/' },
+            { name: 'Relation', path: '/relation-list' },
             // { name: 'Civil ID Name', path: '/' },
           ]
         },

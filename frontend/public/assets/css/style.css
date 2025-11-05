@@ -16157,3 +16157,28 @@ td.fc-header-center {
   margin: 2px 0;
   line-height: 1.6;
 }
+
+
+.table-header-hide-show .form-check-input {
+  cursor: pointer;
+  margin-top: 0;
+  height: 18px;
+  width: 18px;
+  margin-left: 5px;
+}
+
+.table-header-hide-show .form-check-input:checked {
+  background-color: #5a6c5b;
+  border-color: #5a6c5b;
+}
+ .table-header-hide-show .form-label{
+      font-size: 15px;
+ }
+ .table-header-hide-show  .show-dropdowns-header{
+  right: 0;
+  top: calc(100% + 4px);
+  min-width: 280px;
+  z-index: 1000;
+  max-height: 300px;
+  overflow-y: auto;
+ }

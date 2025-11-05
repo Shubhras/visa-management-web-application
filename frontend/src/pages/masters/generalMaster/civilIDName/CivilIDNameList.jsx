@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 import { toast } from "react-toastify";
 import AddImportCivilIDNameModal from './AddImportCivilIDNameModal';
 import AddEditCivilIDNameModal from './AddEditCivilIDNameModal';
-import { civilIdNameList,civilIdNameDelete ,civilIdNameExportData} from '../../../../store/master/generalMasters/actions';
+import { civilIdNameList, civilIdNameDelete, civilIdNameExportData } from '../../../../store/master/generalMasters/actions';
 const CivilIDNameList = () => {
   const dispatch = useDispatch();
   const [modalState, setModalState] = useState({
@@ -46,6 +46,39 @@ const CivilIDNameList = () => {
   const [items] = useState(["Civil ID Name", "Authority Full Name", "Authority Short Name", "ID Valid Duration", "Description", "Modified On"]);
   const [selectedItems, setSelectedItems] = useState(["Civil ID Name"]);
   const [ItemsRequired] = useState(["Civil ID Name"]);
+
+  // Table columns configuration
+  const [tableColumns] = useState([
+    { id: 'civil_id_name', label: 'Civil ID Name', field: 'full_name', visible: true, required: true },
+    { id: 'authority_full_name', label: 'Authority Full Name', field: 'full_name', visible: true, required: false },
+    { id: 'authority_short_name', label: 'Authority Short Name', field: 'short_name', visible: true, required: false },
+    { id: 'id_valid_duration', label: 'ID Valid Duration', field: 'valid_upto', visible: true, required: false },
+    { id: 'description', label: 'Description', field: 'description', visible: true, required: false },
+    { id: 'modified_on', label: 'Modified On', field: 'updated_at', visible: true, required: false },
+  ]);
+
+  const [visibleColumns, setVisibleColumns] = useState(
+    tableColumns.filter(col => col.visible).map(col => col.id)
+  );
+  const [showColumnDropdown, setShowColumnDropdown] = useState(false);
+  // Column visibility toggle handler
+  const toggleColumnVisibility = (columnId) => {
+    const column = tableColumns.find(col => col.id === columnId);
+    if (column?.required) return; // Don't allow hiding required columns
+
+    setVisibleColumns(prev => {
+      if (prev.includes(columnId)) {
+        return prev.filter(id => id !== columnId);
+      } else {
+        return [...prev, columnId];
+      }
+    });
+  };
+
+  // Check if column is visible
+  const isColumnVisible = (columnId) => {
+    return visibleColumns.includes(columnId);
+  };
 
   // Updated state with sorting
   const [tableState, setTableState] = useState({
@@ -428,7 +461,7 @@ const CivilIDNameList = () => {
   return (
     <>
       <MasterLayout>
-        {/* <Breadcrumb title="Licence Name" subTitle="List" /> */}
+        {/* <Breadcrumb title="Civil ID Name" subTitle="List" /> */}
         <div className="card basic-data-table main-container-data">
           <div className="card-body container-data">
             <div className="row align-items-center gy-3 gx-2 flex-wrap filter-action-btn">
@@ -547,14 +580,58 @@ const CivilIDNameList = () => {
                     className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
                     onClick={handleShow}
                   >+ New</button>
+
+                   <div className="position-relative table-header-hide-show">
+                    <button
+                      className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
+                      onClick={() => setShowColumnDropdown(!showColumnDropdown)}
+                    >
+                      Columns
+                    </button>
+                    {showColumnDropdown && (
+                      <div
+                        className="position-absolute bg-white border rounded shadow-sm p-2"
+                        style={{
+                          right: "0px",
+                          top: 'calc(100% + 4px)',  // Button ke turant neeche
+                          minWidth: '200px',
+                          zIndex: 1000,
+                          maxHeight: '300px',
+                          overflowY: 'auto'
+                        }}
+                      >
+                        {tableColumns.map((column) => (
+                          <>
+                            <div
+                              key={column}
+                              className="bg-white p-2 mb-2 d-flex align-items-center gap-2"
+                            >
+                              <input
+                                type="checkbox"
+                                id={`column-${column.id}`}
+                                checked={isColumnVisible(column.id)}
+                                onChange={() => toggleColumnVisibility(column.id)}
+                                disabled={column.required}
+                                className="form-check-input"
+                              />
+                              <label htmlFor={`item-${column.id}`} className="mb-0 flex-grow-1 form-label">
+                                {column.label}
+                              </label>
+                            </div>
+                          </>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
+
           <div className="card-body pt-0 container-table" >
             <div className='container-table-div'>
               <table className="table mb-0"  >
-                <thead >
+                <thead>
                   <tr>
                     <th scope="col" className='sl-numbar-th'>
                       <div className="d-flex align-items-center gap-2">
@@ -568,51 +645,28 @@ const CivilIDNameList = () => {
                         <span>No.</span>
                       </div>
                     </th>
-                    <th scope="col" className='sorting-th' onClick={() => handleSort('full_name')}>
-                      <div className="d-flex align-items-center">
-                       Civil ID Name
-                        {getSortIcon('full_name')}
-                      </div>
-                    </th>
-                    <th scope="col" className='sorting-th' onClick={() => handleSort('full_name')}>
-                      <div className="d-flex align-items-center">
-                       Authority Full Name
-                        {getSortIcon('full_name')}
-                      </div>
-                    </th>
-                    <th scope="col" className='sorting-th' onClick={() => handleSort('short_name')}>
-                      <div className="d-flex align-items-center">
-                       Authority Short Name
-                        {getSortIcon('short_name')}
-                      </div>
-                    </th>
-                    <th scope="col" className='sorting-th' onClick={() => handleSort('valid_upto')}>
-                      <div className="d-flex align-items-center">
-                       ID Valid Duration
-                        {getSortIcon('valid_upto')}
-                      </div>
-                    </th>
-                    <th scope="col" className='sorting-th' onClick={() => handleSort('description')}>
-                      <div className="d-flex align-items-center">
-                        Description
-                        {getSortIcon('description')}
-                      </div>
-                    </th>
-                    <th scope="col" className='sorting-th' onClick={() => handleSort('updated_at')}>
-                      <div className="d-flex align-items-center">
-                        Modified On
-                        {getSortIcon('updated_at')}
-                      </div>
-                    </th>
-                    <th scope="col" className='action-th'>
-                      Action
-                    </th>
+                    {tableColumns.map((column) => (
+                      isColumnVisible(column.id) && (
+                        <th
+                          key={column.id}
+                          scope="col"
+                          className='sorting-th'
+                          onClick={() => handleSort(column.field)}
+                        >
+                          <div className="d-flex align-items-center">
+                            {column.label}
+                            {getSortIcon(column.field)}
+                          </div>
+                        </th>
+                      )
+                    ))}
+                    <th scope="col" className='action-th'>Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan="5" className='loding-data'>
+                      <td colSpan={visibleColumns.length + 2} className='loding-data'>
                         <div className="d-flex justify-content-center align-items-center gap-2">
                           <div className="spinner-border spinner-border-sm" role="status">
                             <span className="visually-hidden">Loading...</span>
@@ -623,8 +677,8 @@ const CivilIDNameList = () => {
                     </tr>
                   ) : civilIDNameData.length > 0 ? (
                     civilIDNameData.map((rowItem, index) => (
-                      <tr key={rowItem.uuid} >
-                        <td >
+                      <tr key={rowItem.uuid}>
+                        <td>
                           <div className="d-flex align-items-center gap-2">
                             <input
                               className="form-check-input"
@@ -632,56 +686,33 @@ const CivilIDNameList = () => {
                               checked={selectedRows.includes(rowItem.uuid)}
                               onChange={() => handleRowSelect(rowItem.uuid)}
                             />
-                            <span>
-                              {String(startIndex + index + 1).padStart(2, '0')}
-                            </span>
+                            <span>{String(startIndex + index + 1).padStart(2, '0')}</span>
                           </div>
                         </td>
-                        
-                        <td >
-                          <span >
-                            {rowItem.full_name}
-                          </span>
-                        </td>
-                        <td >
-                          <span >
-                            {rowItem.full_name}
-                          </span>
-                        </td>
-                        <td >
-                          <span >
-                            {rowItem.short_name}
-                          </span>
-                        </td>
-                        <td >
-                          <span >
-                            {rowItem.valid_upto}
-                          </span>
-                        </td>
-                        <td >
-                          <span >
-                            {rowItem.description}
-                          </span>
-                        </td>
+                        {isColumnVisible('civil_id_name') && (
+                          <td><span>{rowItem.full_name}</span></td>
+                        )}
+                        {isColumnVisible('authority_full_name') && (
+                          <td><span>{rowItem.full_name}</span></td>
+                        )}
+                        {isColumnVisible('authority_short_name') && (
+                          <td><span>{rowItem.short_name}</span></td>
+                        )}
+                        {isColumnVisible('id_valid_duration') && (
+                          <td><span>{rowItem.valid_upto}</span></td>
+                        )}
+                        {isColumnVisible('description') && (
+                          <td><span>{rowItem.description}</span></td>
+                        )}
+                        {isColumnVisible('modified_on') && (
+                          <td><span>{formatDateTime(rowItem.updated_at)}</span></td>
+                        )}
                         <td>
-                          <span>{formatDateTime(rowItem.updated_at)}</span>
-                        </td>
-                        <td >
                           <div className="d-flex align-items-center gap-2">
-                            <Link
-                              to="#"
-                              className='edit-btn-icone'
-                              onClick={(e) => {
-                                e.preventDefault();
-                                handleShowEdit(rowItem);
-                              }}
-                            >
+                            <Link to="#" className='edit-btn-icone' onClick={(e) => { e.preventDefault(); handleShowEdit(rowItem); }}>
                               <Icon icon="lucide:edit" width="18" className='icone' />
                             </Link>
-                            <button
-                              onClick={() => handleDelete(rowItem.uuid)}
-                              className='delete-btn-icone'
-                            >
+                            <button onClick={() => handleDelete(rowItem.uuid)} className='delete-btn-icone'>
                               <Icon icon="mingcute:delete-2-line" width="18" className='icone' />
                             </button>
                           </div>
@@ -690,7 +721,7 @@ const CivilIDNameList = () => {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="5" className='no-records-found'>
+                      <td colSpan={visibleColumns.length + 2} className='no-records-found'>
                         No records found
                       </td>
                     </tr>
@@ -853,7 +884,7 @@ const CivilIDNameList = () => {
             <div className="modal-dialog modal-xl modal-dialog-centered" role="document">
               <div className="modal-content radius-16 bg-base">
                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                  <h1 className="modal-title fs-5">Export Licence Name</h1>
+                  <h1 className="modal-title fs-5">Export Civil ID Name</h1>
                   <button
                     type="button"
                     className="btn-close"
