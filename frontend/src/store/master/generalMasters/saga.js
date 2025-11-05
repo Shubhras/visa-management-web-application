@@ -75,6 +75,7 @@ import {
   exportTimeZoneDataAPI,
   getCivilIdNameListDataAPI,
   getContinentListDataAPI,
+  getCountryListDataAPI,
   getGenderListDataAPI,
   getMaritalStatusListDataAPI,
   getRelationListDataAPI,
@@ -418,7 +419,7 @@ function* timeZoneImportDataSaga(action) {
   }
 }
 
-
+//country
 function* countryListSaga(action) {
   try {
     const response = yield call(getCountryListDataAPI, action?.data);
@@ -427,7 +428,7 @@ function* countryListSaga(action) {
     if (action.callback) action.callback(null, error);
   }
 }
-//country
+
 function* countryAddSaga(action) {
   try {
     const response = yield call(addCountryDataAPI, action?.data);
