@@ -73,7 +73,7 @@ class CountrySerializer(serializers.ModelSerializer):
         model = Country
         fields = [
             'uuid', 'name', 'continent', 'continent_id',
-            'currencyfullname','currencyshortname',
+            'currencyfullname','currencyshortname','description'
             'shortName', 'fullName', 'officialName', 'capitalCity',
             'dialCodes', 'currencyCode', 'status',
             'is_active', 'is_deleted', 'created_at', 'updated_at'
@@ -352,8 +352,15 @@ class EducationLevelSerializer(serializers.ModelSerializer):
 
 class EducationDurationSerializer(serializers.ModelSerializer):
     # Optionally display the related EducationLevel's name
+    serializers.SlugRelatedField(
+        queryset=EducationLevel.objects.all(),
+        slug_field='uuid', 
+        allow_null=True,
+        required=False
+    )
+
     educationlevel_detail = serializers.CharField(
-        source='educationlevel.educationlevel', read_only=True
+        source='educationlevel.name', read_only=True
     )
 
     class Meta:

@@ -51,6 +51,7 @@ class Country(models.Model):
     dialCodes = models.JSONField(blank=True, null=True)  
     currencyfullname=models.CharField(max_length=50, blank=True, null=True)
     currencyshortname=models.CharField(max_length=50, blank=True, null=True)
+    description = models.TextField(max_length=255)
     currencyCode = models.CharField(max_length=50, blank=True, default="")  
     status = models.BooleanField(default=True)  
     created_at = models.DateTimeField(auto_now_add=True)  
