@@ -38,8 +38,8 @@ urlpatterns = [
     path('country/<uuid:uuid>/', StateRetrieveAPIView.as_view(), name='state-detail'),
     path('country/<uuid:uuid>/update/', CountryUpdateAPIView.as_view(),name='country-update'),
     path('country/delete/', CountryDeleteAPIView.as_view(),name='country-delete'),
-    path('countries/export/', CountryExportAPIView.as_view(), name='country-export'),
-    path('countries/import/', CountryImportAPIView.as_view(), name='country-import'),
+    path('country/export/', CountryExportAPIView.as_view(), name='country-export'),
+    path('country/import/', CountryImportAPIView.as_view(), name='country-import'),
     path('countries/by-continent/', CountriesByContinentAPIView.as_view(), name='countries-by-continent'),
 
     path('state/create/', StateCreateAPIView.as_view(),name='state-create'),
@@ -291,6 +291,7 @@ urlpatterns = [
     path('academicresulttype/export/', AcademicResultTypeExportAPIView.as_view(), name='academicresulttype-export'),
     path('academicresulttype/import/', AcademicResultTypeImportAPIView.as_view(), name='academicresulttype-import'),
 
+    path('academicresult/', AcademicResultListAPIView.as_view(), name='academicresult-create'),
     path('academicresult/create/', AcademicResultCreateAPIView.as_view(), name='academicresult-create'),
     path('academicresult/<uuid:uuid>/', AcademicResultRetrieveAPIView.as_view(), name='academicresult-retrieve'),
     path('academicresult/<uuid:uuid>/update/', AcademicResultUpdateAPIView.as_view(), name='academicresult-update'),
