@@ -406,7 +406,7 @@ class StudymajorareaSerializer(serializers.ModelSerializer):
             'uuid',
             'mainarea',
             'mainarea_id',
-            'Majorarea',
+            'majorarea',
             'description',
             'is_deleted',
             'created_at',

@@ -12039,7 +12039,7 @@ class StudymajorareaCreateAPIView(APIView):
 
     def post(self, request):
         mainarea_id = request.data.get('mainarea_id')
-        majorarea_name = request.data.get('Majorarea', '').strip()
+        majorarea_name = request.data.get('majorarea', '').strip()
 
        
         if Studymajorarea.objects.filter(mainarea_id=mainarea_id, Majorarea__iexact=majorarea_name).exists():
