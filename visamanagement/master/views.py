@@ -20,6 +20,7 @@ import openpyxl
 from django.http import HttpResponse
 from uuid import UUID
 from datetime import datetime  
+import csv
 import io
 import pytz
 from django.utils import timezone
@@ -1570,7 +1571,10 @@ class CountryExportAPIView(APIView):
             'officialName': 'Official Name',
             'capitalCity': 'Capital City',
             'dialCodes': 'Dial Codes',
+            'currencyfullname':'Currency Full Name',
+            'currencyshortname':'Currency Short Name',
             'currencyCode': 'Currency Code',
+            'description':'Description',
             'status': 'Status',
             'is_active': 'Active',
             'is_deleted': 'Deleted',
@@ -1631,61 +1635,165 @@ class CountryExportAPIView(APIView):
 
 
 class CountryImportAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')
+
         if not file:
-            return Response({'error': 'No file uploaded'}, status=400)
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
-        dataset = Dataset()
         duplicate_names = []
 
+        required_headers = {'country name'}
+        optional_headers = {
+            'continent', 'country short name', 'country full name', 'country official name', 'capital city',
+            'country calling code', 'currency full name', 'currency short name', 'currency code', 'description',
+        }
+
         try:
+            data = []
+            headers = []
+
+            # ---------------- XLSX Import ----------------
             if format_type == 'xlsx':
+                import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
+
                 if not sheet_name:
-                    return Response({'error': 'Provide sheet_name', 'available_sheets': available_sheets}, status=400)
+                    return Response({'error': 'Please provide sheet_name', 'available_sheets': available_sheets}, status=400)
                 if sheet_name not in available_sheets:
                     return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
 
                 ws = wb[sheet_name]
-                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                data = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True)]
+                if ws.max_row <= 1:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'The uploaded XLSX sheet "{sheet_name}" is empty.'
+                    }, status=400)
 
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response({
+                        "statusCode": 400,
+                        "status": True,
+                        "message": f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
+                    }, status=400)
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    if not any(row):
+                        continue
+                    data.append(dict(zip(headers, row)))
+
+            # ---------------- CSV Import ----------------
             elif format_type == 'csv':
-                dataset.load(file.read().decode('utf-8'), format='csv')
-                data = dataset.dict
+                
+                decoded_file = file.read().decode('utf-8')
+                reader = csv.DictReader(io.StringIO(decoded_file))
+                for row in reader:
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({
+                            "statusCode": 400,
+                            "status": True,
+                            "message": f'Missing required headers. Required: {required_headers}. Found: {set(row_lower.keys())}'
+                        }, status=400)
+                    data.append(row_lower)
             else:
-                return Response({'error': 'Unsupported format'}, status=400)
+                return Response({
+                    "statusCode": 400,
+                    "status": True,
+                    'error': 'Unsupported file format. Use .xlsx or .csv'
+                }, status=400)
 
+            # ---------------- Data Processing ----------------
+            imported_count = 0
             for row in data:
-                name = str(row.get('name')).strip() if row.get('name') else None
-                continent_name = str(row.get('continent')).strip() if row.get('continent') else None
-                continent = Continents.objects.filter(name__iexact=continent_name).first() if continent_name else None
-
-                if not name or not continent:
+                country_name = str(row.get('country name')).strip() if row.get('country name') else None
+                if not country_name:
                     continue
 
-                existing = Country.objects.filter(name__iexact=name).first()
+                continent_name = str(row.get('continent')).strip() if row.get('continent') else ''
+                short_name = str(row.get('country short name')).strip() if row.get('country short name') else ''
+                full_name = str(row.get('country full name')).strip() if row.get('country full name') else ''
+                official_name = str(row.get('country official name')).strip() if row.get('country official name') else ''
+                capital_city = str(row.get('capital city')).strip() if row.get('capital city') else ''
+                dial_codes = row.get('dial codes')
+                currency_full_name = str(row.get('currency full name')).strip() if row.get('currency full name') else ''
+                currency_short_name = str(row.get('currency short name')).strip() if row.get('currency short name') else ''
+                currency_code = str(row.get('currency code')).strip() if row.get('currency code') else ''
+                description = str(row.get('description')).strip() if row.get('description') else ''
+                                
+
+                # Parse JSON field safely
+                if dial_codes:
+                    import json
+                    try:
+                        dial_codes = json.loads(dial_codes) if isinstance(dial_codes, str) else dial_codes
+                    except Exception:
+                        dial_codes = [str(dial_codes)]
+
+                # Get continent object
+                continent_obj = None
+                if continent_name:
+                    continent_obj = Continents.objects.filter(name__iexact=continent_name).first()
+
+                # Check existing country
+                existing = Country.objects.filter(name__iexact=country_name).first()
                 if existing:
-                    if existing.is_deleted:
-                        existing.is_deleted = False
-                        existing.continent = continent
-                        existing.save()
-                    else:
-                        duplicate_names.append(name)
+                    if not existing.is_deleted:
+                        duplicate_names.append(country_name)
                         continue
+                    else:
+                        existing.continent = continent_obj
+                        existing.shortName = short_name
+                        existing.fullName = full_name
+                        existing.officialName = official_name
+                        existing.capitalCity = capital_city
+                        existing.dialCodes = dial_codes
+                        existing.currencyfullname = currency_full_name
+                        existing.currencyshortname = currency_short_name
+                        existing.currencyCode = currency_code
+                        existing.description=description
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
                 else:
-                    Country.objects.create(name=name, continent=continent)
+                    Country.objects.create(
+                        name=country_name,
+                        continent=continent_obj,
+                        shortName=short_name,
+                        fullName=full_name,
+                        officialName=official_name,
+                        capitalCity=capital_city,
+                        dialCodes=dial_codes,
+                        currencyfullname=currency_full_name,
+                        currencyshortname=currency_short_name,
+                        currencyCode=currency_code,
+                        description=description,
+                        is_deleted=False
+                    )
+                    imported_count += 1
 
         except Exception as e:
-            return Response({'error': str(e)}, status=400)
+            return Response({
+                "statusCode": 400,
+                "status": True,
+                'message': str(e)
+            }, status=400)
 
-        return Response({"statusCode": 200, "status": True, "duplicates": list(set(duplicate_names)), "message": f'Import successful'}, status=200)
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "duplicates": list(set(duplicate_names)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count
+        }, status=200)
+
+
 
 
 
@@ -1905,38 +2013,69 @@ class StateExportAPIView(APIView):
         fields = request.GET.get('fields')
         uuids_param = request.GET.get('uuids', '')
         uuids = [u.strip() for u in uuids_param.split(',') if u]
-        field_list = [f.strip() for f in fields.split(',')] if fields else [
-            'uuid', 'countryName', 'stateName', 'stateshortName', 'description', 'is_active', 'is_deleted', 'created_at', 'updated_at'
-        ]
-        queryset = State.objects.filter(uuid__in=uuids) if uuids else State.objects.all()
 
+        # Header map for export
+        field_header_map = {
+            'uuid': 'UUID',
+            'countryName': 'Country Name',
+            'stateName': 'State Name',
+            'stateshortName': 'State Short Name',
+            'description': 'Description',
+            'is_active': 'Active',
+            'is_deleted': 'Deleted',
+            'created_at': 'Created On',
+            'updated_at': 'Modified On',
+        }
+
+        # Choose fields
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+        # Fetch queryset
+        queryset = State.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-updated_at')
+
+        # Prepare dataset
         dataset = Dataset()
-        dataset.headers = field_list
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'State'
+
         for obj in queryset:
             row = []
             for field in field_list:
-                value = getattr(obj, field, '')
-                if field == "countryName" and obj.countryName:
-                    value = obj.countryName.name
-                if isinstance(value, datetime.datetime):
-                    value = value.strftime("%Y-%m-%d %H:%M:%S")
-                if isinstance(value, bool):
+                if field == 'country_name':
+                    value = obj.countryName.name if obj.countryName else ''
+                else:
+                    value = getattr(obj, field, '')
+                # Format date/time fields
+                if field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
                     value = int(value)
                 row.append(value if value is not None else '')
             dataset.append(row)
 
-        if format_type == 'xlsx':
-            data = XLSX().export_data(dataset)
+        # Export file
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'states.csv'
+        else:
+            file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'states.xlsx'
-        else:
-            data = CSV().export_data(dataset)
-            content_type = 'text/csv; charset=utf-8'
-            file_name = 'states.csv'
 
-        response = HttpResponse(data, content_type=content_type)
+        # Build response
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
+
+
+
 
 
 class StateImportAPIView(APIView):
@@ -1945,56 +2084,135 @@ class StateImportAPIView(APIView):
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')
+
         if not file:
-            return Response({'error': 'No file uploaded'}, status=400)
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
-        dataset = Dataset()
         duplicate_names = []
 
+        required_headers = {'state name', 'country name'}
+        optional_headers = {'state short name', 'description'}
+
         try:
+            data = []
+            headers = []
+
+            # ---------------- XLSX Import ----------------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
+
                 if not sheet_name:
-                    return Response({'error': 'Provide sheet_name', 'available_sheets': available_sheets}, status=400)
+                    return Response({
+                        'error': 'Please provide sheet_name',
+                        'available_sheets': available_sheets
+                    }, status=400)
+
                 if sheet_name not in available_sheets:
-                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
+                    return Response({
+                        'error': f'Sheet "{sheet_name}" not found',
+                        'available_sheets': available_sheets
+                    }, status=400)
 
                 ws = wb[sheet_name]
-                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                data = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True)]
+                if ws.max_row <= 1:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'The uploaded XLSX sheet "{sheet_name}" is empty.'
+                    }, status=400)
 
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+
+                if not required_headers.issubset(set(headers)):
+                    return Response({
+                        "statusCode": 400,
+                        "status": True,
+                        "message": f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
+                    }, status=400)
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    if not any(row):
+                        continue
+                    data.append(dict(zip(headers, row)))
+
+            # ---------------- CSV Import ----------------
             elif format_type == 'csv':
-                dataset.load(file.read().decode('utf-8'), format='csv')
-                data = dataset.dict
+                decoded_file = file.read().decode('utf-8')
+                reader = csv.DictReader(io.StringIO(decoded_file))
+                for row in reader:
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({
+                            "statusCode": 400,
+                            "status": True,
+                            "message": f'Missing required headers. Required: {required_headers}. Found: {set(row_lower.keys())}'
+                        }, status=400)
+                    data.append(row_lower)
             else:
-                return Response({'error': 'Unsupported format'}, status=400)
+                return Response({
+                    "statusCode": 400,
+                    "status": True,
+                    'error': 'Unsupported file format. Use .xlsx or .csv'
+                }, status=400)
 
+            # ---------------- Data Processing ----------------
+            imported_count = 0
             for row in data:
-                state_name = str(row.get('stateName')).strip() if row.get('stateName') else None
-                country_name = str(row.get('countryName')).strip() if row.get('countryName') else None
-                country = Country.objects.filter(name__iexact=country_name).first() if country_name else None
+                state_name = str(row.get('state name')).strip() if row.get('state name') else None
+                country_name = str(row.get('country name')).strip() if row.get('country name') else None
+                short_name = str(row.get('state short name')).strip() if row.get('state short name') else ''
+                description = str(row.get('description')).strip() if row.get('description') else ''
 
-                if not state_name or not country:
+                if not state_name or not country_name:
                     continue
 
-                existing = State.objects.filter(stateName__iexact=state_name, countryName=country).first()
+                # Get related Country object
+                country_obj = Country.objects.filter(name__iexact=country_name).first()
+                if not country_obj:
+                    continue  # skip row if country not found
+
+                # Check for existing state
+                existing = State.objects.filter(stateName__iexact=state_name, countryName=country_obj).first()
                 if existing:
-                    if existing.is_deleted:
-                        existing.is_deleted = False
-                        existing.countryName = country
-                        existing.save()
-                    else:
+                    if not existing.is_deleted:
                         duplicate_names.append(state_name)
                         continue
+                    else:
+                        # Restore deleted record
+                        existing.stateshortName = short_name
+                        existing.description = description
+                        existing.countryName = country_obj
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
                 else:
-                    State.objects.create(stateName=state_name, countryName=country)
+                    State.objects.create(
+                        stateName=state_name,
+                        stateshortName=short_name,
+                        description=description,
+                        countryName=country_obj,
+                        is_deleted=False
+                    )
+                    imported_count += 1
 
         except Exception as e:
-            return Response({'error': str(e)}, status=400)
+            return Response({
+                "statusCode": 400,
+                "status": True,
+                'message': str(e)
+            }, status=400)
 
-        return Response({"statusCode": 200, "status": True, "duplicates": list(set(duplicate_names)), "message": f'Import successful'}, status=200)
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "duplicates": list(set(duplicate_names)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count
+        }, status=200)
+
+
 
 
 
@@ -2230,40 +2448,72 @@ class DistrictExportAPIView(APIView):
         fields = request.GET.get('fields')
         uuids_param = request.GET.get('uuids', '')
         uuids = [u.strip() for u in uuids_param.split(',') if u]
-        field_list = [f.strip() for f in fields.split(',')] if fields else [
-            'uuid', 'countryName', 'stateName', 'districtName', 'description', 'is_deleted', 'created_at', 'updated_at'
-        ]
-        queryset = District.objects.filter(uuid__in=uuids) if uuids else District.objects.all()
 
+        # Header map for better readability
+        field_header_map = {
+            'uuid': 'UUID',
+            'countryName': 'Country Name',
+            'stateName': 'State Name',
+            'districtName': 'District Name',
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'created_at': 'Created On',
+            'updated_at': 'Modified On',
+        }
+
+        # Select fields to include in export
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+        # Queryset with filtering and ordering
+        queryset = District.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-updated_at')
+
+        # Initialize dataset
         dataset = Dataset()
-        dataset.headers = field_list
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'District'
+
         for obj in queryset:
             row = []
             for field in field_list:
-                value = getattr(obj, field, '')
-                if field == "countryName" and obj.countryName:
-                    value = obj.countryName.name
-                if field == "stateName" and obj.stateName:
-                    value = obj.stateName.stateName
-                if isinstance(value, datetime.datetime):
-                    value = value.strftime("%Y-%m-%d %H:%M:%S")
-                if isinstance(value, bool):
+                if field == 'country_name':
+                    value = obj.countryName.name if obj.countryName else ''
+                elif field == 'state_name':
+                    value = obj.stateName.stateName if obj.stateName else ''
+                else:
+                    value = getattr(obj, field, '')
+                # Format timestamps
+                if field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
                     value = int(value)
                 row.append(value if value is not None else '')
             dataset.append(row)
 
-        if format_type == 'xlsx':
-            data = XLSX().export_data(dataset)
+        # Export file based on requested format
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'districts.csv'
+        else:
+            file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'districts.xlsx'
-        else:
-            data = CSV().export_data(dataset)
-            content_type = 'text/csv; charset=utf-8'
-            file_name = 'districts.csv'
 
-        response = HttpResponse(data, content_type=content_type)
+        # Prepare response
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
+
+
+
+
+
 
 
 # -------------------- Import -------------------- 
@@ -2273,61 +2523,142 @@ class DistrictImportAPIView(APIView):
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')
-        if not file:
-            return Response({'error': 'No file uploaded'}, status=400)
 
-        dataset = Dataset()
-        duplicate_names = []
+        if not file:
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
+        duplicate_names = []
+
+        required_headers = {'district name', 'state name', 'country name'}
+        optional_headers = {'description'}
 
         try:
+            data = []
+            headers = []
+
+            # ---------------- XLSX Import ----------------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
+
                 if not sheet_name:
-                    return Response({'error': 'Provide sheet_name', 'available_sheets': available_sheets}, status=400)
+                    return Response({
+                        'error': 'Please provide sheet_name',
+                        'available_sheets': available_sheets
+                    }, status=400)
+
                 if sheet_name not in available_sheets:
-                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
+                    return Response({
+                        'error': f'Sheet "{sheet_name}" not found',
+                        'available_sheets': available_sheets
+                    }, status=400)
 
                 ws = wb[sheet_name]
-                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                data = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True)]
+                if ws.max_row <= 1:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'The uploaded XLSX sheet "{sheet_name}" is empty.'
+                    }, status=400)
 
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response({
+                        "statusCode": 400,
+                        "status": True,
+                        "message": f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
+                    }, status=400)
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    if not any(row):
+                        continue
+                    data.append(dict(zip(headers, row)))
+
+            # ---------------- CSV Import ----------------
             elif format_type == 'csv':
-                dataset.load(file.read().decode('utf-8'), format='csv')
-                data = dataset.dict
+                decoded_file = file.read().decode('utf-8')
+                reader = csv.DictReader(io.StringIO(decoded_file))
+                for row in reader:
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({
+                            "statusCode": 400,
+                            "status": True,
+                            "message": f'Missing required headers. Required: {required_headers}. Found: {set(row_lower.keys())}'
+                        }, status=400)
+                    data.append(row_lower)
             else:
-                return Response({'error': 'Unsupported format'}, status=400)
+                return Response({
+                    "statusCode": 400,
+                    "status": True,
+                    'error': 'Unsupported file format. Use .xlsx or .csv'
+                }, status=400)
 
+            # ---------------- Data Processing ----------------
+            imported_count = 0
             for row in data:
-                district_name = str(row.get('districtName')).strip() if row.get('districtName') else None
-                country_name = str(row.get('countryName')).strip() if row.get('countryName') else None
-                state_name = str(row.get('stateName')).strip() if row.get('stateName') else None
+                district_name = str(row.get('district name')).strip() if row.get('district name') else None
+                state_name = str(row.get('state name')).strip() if row.get('state name') else None
+                country_name = str(row.get('country name')).strip() if row.get('country name') else None
+                short_name = str(row.get('district short name')).strip() if row.get('district short name') else ''
+                description = str(row.get('description')).strip() if row.get('description') else ''
 
-                country = Country.objects.filter(name__iexact=country_name).first() if country_name else None
-                state = State.objects.filter(stateName__iexact=state_name, countryName=country).first() if state_name and country else None
-
-                if not district_name or not state or not country:
+                if not district_name or not state_name or not country_name:
                     continue
 
-                existing = District.objects.filter(districtName__iexact=district_name, stateName=state, countryName=country).first()
+                country_obj = Country.objects.filter(name__iexact=country_name).first()
+                state_obj = State.objects.filter(stateName__iexact=state_name, countryName=country_obj).first() if country_obj else None
+
+                if not country_obj or not state_obj:
+                    continue  # skip row if country or state not found
+
+                existing = District.objects.filter(
+                    districtName__iexact=district_name,
+                    stateName=state_obj,
+                    countryName=country_obj
+                ).first()
+
                 if existing:
-                    if existing.is_deleted:
-                        existing.is_deleted = False
-                        existing.countryName = country
-                        existing.stateName = state
-                        existing.save()
-                    else:
+                    if not existing.is_deleted:
                         duplicate_names.append(district_name)
                         continue
+                    else:
+                        # Restore deleted record
+                        existing.districtName = district_name
+                        existing.stateName = state_obj
+                        existing.countryName = country_obj
+                        existing.districtshortName = short_name
+                        existing.description = description
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
                 else:
-                    District.objects.create(districtName=district_name, countryName=country, stateName=state)
+                    District.objects.create(
+                        districtName=district_name,
+                        stateName=state_obj,
+                        countryName=country_obj,
+                        districtshortName=short_name,
+                        description=description,
+                        is_deleted=False
+                    )
+                    imported_count += 1
 
         except Exception as e:
-            return Response({'error': str(e)}, status=400)
+            return Response({
+                "statusCode": 400,
+                "status": True,
+                'message': str(e)
+            }, status=400)
 
-        return Response({"statusCode": 200, "status": True, "duplicates": list(set(duplicate_names)), "message": 'Import successful'}, status=200)
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "duplicates": list(set(duplicate_names)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count
+        }, status=200)
+
 
 
 class DistrictByFilterAPIView(APIView):
@@ -2652,95 +2983,134 @@ class CityImportAPIView(APIView):
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')
+
         if not file:
-            return Response({'error': 'No file uploaded'}, status=400)
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
 
         required_headers = {'cityname', 'countryname', 'statename', 'districtname'}
+        optional_headers = {'description'}
 
         try:
             data = []
             headers = []
 
-            # XLSX Handling
+            # ---------------- XLSX Import ----------------
             if format_type == 'xlsx':
-                import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
 
                 if not sheet_name:
-                    return Response({'error': 'Provide sheet_name', 'available_sheets': available_sheets}, status=400)
+                    return Response({
+                        'error': 'Please provide sheet_name',
+                        'available_sheets': available_sheets
+                    }, status=400)
+
                 if sheet_name not in available_sheets:
-                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
+                    return Response({
+                        'error': f'Sheet "{sheet_name}" not found',
+                        'available_sheets': available_sheets
+                    }, status=400)
 
                 ws = wb[sheet_name]
                 if ws.max_row <= 1:
-                    return Response({'error': f'Sheet "{sheet_name}" is empty.'}, status=400)
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'The uploaded XLSX sheet "{sheet_name}" is empty.'
+                    }, status=400)
 
                 headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
                 if not required_headers.issubset(set(headers)):
-                    return Response({'error': f'Missing required headers: {required_headers}'}, status=400)
+                    return Response({
+                        "statusCode": 400,
+                        "status": True,
+                        "message": f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
+                    }, status=400)
 
                 for row in ws.iter_rows(min_row=2, values_only=True):
                     if not any(row):
                         continue
-                    row_dict = dict(zip(headers, row))
-                    data.append(row_dict)
+                    data.append(dict(zip(headers, row)))
 
-            # CSV Handling
+            # ---------------- CSV Import ----------------
             elif format_type == 'csv':
-                dataset = Dataset()
-                dataset.load(file.read().decode('utf-8'), format='csv')
-                for row in dataset.dict:
+                decoded_file = file.read().decode('utf-8')
+                reader = csv.DictReader(io.StringIO(decoded_file))
+                for row in reader:
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
                     if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({'error': f'Missing required headers: {required_headers}'}, status=400)
+                        return Response({
+                            "statusCode": 400,
+                            "status": True,
+                            "message": f'Missing required headers. Required: {required_headers}. Found: {set(row_lower.keys())}'
+                        }, status=400)
                     data.append(row_lower)
             else:
-                return Response({'error': 'Unsupported format'}, status=400)
+                return Response({
+                    "statusCode": 400,
+                    "status": True,
+                    'error': 'Unsupported file format. Use .xlsx or .csv'
+                }, status=400)
 
+            # ---------------- Data Processing ----------------
             imported_count = 0
             for row in data:
-                city_name = str(row.get('cityname')).strip()
-                country_name = str(row.get('countryname')).strip()
-                state_name = str(row.get('statename')).strip()
-                district_name = str(row.get('districtname')).strip()
+                city_name = str(row.get('cityname')).strip() if row.get('cityname') else None
+                country_name = str(row.get('countryname')).strip() if row.get('countryname') else None
+                state_name = str(row.get('statename')).strip() if row.get('statename') else None
+                district_name = str(row.get('districtname')).strip() if row.get('districtname') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
-                country = Country.objects.filter(name__iexact=country_name).first()
-                state = State.objects.filter(stateName__iexact=state_name, countryName=country).first() if country else None
-                district = District.objects.filter(districtName__iexact=district_name, stateName=state, countryName=country).first() if state else None
-
-                if not city_name or not country or not state or not district:
+                if not city_name or not country_name or not state_name or not district_name:
                     continue
 
-                existing = City.objects.filter(cityName__iexact=city_name, districtName=district, stateName=state, countryName=country).first()
+                country_obj = Country.objects.filter(name__iexact=country_name).first()
+                state_obj = State.objects.filter(stateName__iexact=state_name, countryName=country_obj).first() if country_obj else None
+                district_obj = District.objects.filter(districtName__iexact=district_name, stateName=state_obj, countryName=country_obj).first() if state_obj else None
+
+                if not country_obj or not state_obj or not district_obj:
+                    continue  
+                existing = City.objects.filter(
+                    cityName__iexact=city_name,
+                    districtName=district_obj,
+                    stateName=state_obj,
+                    countryName=country_obj
+                ).first()
+
                 if existing:
-                    if existing.is_deleted:
-                        existing.is_deleted = False
-                        existing.countryName = country
-                        existing.stateName = state
-                        existing.districtName = district
-                        existing.description = description
-                        existing.save()
-                        imported_count += 1
-                    else:
+                    if not existing.is_deleted:
                         duplicate_names.append(city_name)
                         continue
+                    else:
+                        # Restore deleted record
+                        existing.cityName = city_name
+                        existing.countryName = country_obj
+                        existing.stateName = state_obj
+                        existing.districtName = district_obj
+                        existing.description = description
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
                 else:
                     City.objects.create(
                         cityName=city_name,
-                        countryName=country,
-                        stateName=state,
-                        districtName=district,
-                        description=description
+                        countryName=country_obj,
+                        stateName=state_obj,
+                        districtName=district_obj,
+                        description=description,
+                        is_deleted=False
                     )
                     imported_count += 1
 
         except Exception as e:
-            return Response({'error': str(e)}, status=400)
+            return Response({
+                "statusCode": 400,
+                "status": True,
+                'message': str(e)
+            }, status=400)
 
         return Response({
             "statusCode": 200,
@@ -2749,8 +3119,6 @@ class CityImportAPIView(APIView):
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=200)
-
-
 
         
 #--------------------------- Realtion -----------------------
@@ -3132,6 +3500,8 @@ class RelationImportAPIView(APIView):
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=status.HTTP_200_OK)
+
+
 
 class TimezoneCreateAPIView(APIView):
     def post(self, request):
@@ -6471,14 +6841,6 @@ class AccreditationNameExportAPIView(APIView):
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 # -------------------- IMPORT API --------------------
-
-
-
-
-
-
-
-
 
 
 
@@ -10877,133 +11239,162 @@ class EducationLevelExportAPIView(APIView):
         uuids_param = request.GET.get('uuids', '')
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
-        field_list = [f.strip() for f in fields.split(',')] if fields else [
-            'uuid', 'level_code', 'level_code_detail', 'educationlevel', 'description', 'is_deleted', 'created_at', 'updated_at'
-        ]
+        field_header_map = {
+            'uuid': 'UUID',
+            'level_code': 'Education Level Code',
+            'educationlevel': 'Education Level',
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'created_at': 'Created On',
+            'updated_at': 'Modified On',
+        }
 
-        queryset = EducationLevel.objects.filter(uuid__in=uuids) if uuids else EducationLevel.objects.all()
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+        queryset = EducationLevel.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-updated_at')
 
         dataset = Dataset()
-        dataset.headers = field_list
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'EducationLevel'
 
         for obj in queryset:
             row = []
             for field in field_list:
                 if field == 'level_code_detail':
-                    value = obj.level_code.Levelcode if obj.level_code else ''
+                    value = obj.level_code.name if obj.level_code else ''
                 else:
                     value = getattr(obj, field, '')
                 if field in ['created_at', 'updated_at'] and value:
-                    # Convert the stored UTC datetime to IST and format it
-                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-                if isinstance(value, bool):
+                    value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
                     value = int(value)
                 row.append(value if value is not None else '')
             dataset.append(row)
 
-        if format_type == 'xlsx':
-            data = XLSX().export_data(dataset)
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'education_levels.csv'
+        else:
+            file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'education_levels.xlsx'
-        else:
-            data = CSV().export_data(dataset)
-            content_type = 'text/csv; charset=utf-8'
-            file_name = 'education_levels.csv'
 
-        response = HttpResponse(data, content_type=content_type)
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
 
+# ------------------ Import API ------------------
 class EducationLevelImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
         file = request.FILES.get('file')
-        sheet_name = request.data.get('sheet_name')  # optional, for XLSX
-        duplicate_entries = []
+        sheet_name = request.data.get('sheet_name')
 
         if not file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
-        dataset = Dataset()
+        duplicate_levels = []
+        required_headers = {'education level code', 'education level'}
+        optional_headers = {'description', 'is_deleted'}
 
         try:
+            data = []
+            headers = []
+
             # ---------- XLSX Handling ----------
             if format_type == 'xlsx':
+                import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
 
                 if not sheet_name:
-                    return Response({
-                        'error': 'Please provide sheet_name',
-                        'available_sheets': available_sheets
-                    }, status=status.HTTP_400_BAD_REQUEST)
-
+                    return Response({'error': 'Please provide sheet_name', 'available_sheets': available_sheets}, status=400)
                 if sheet_name not in available_sheets:
-                    return Response({
-                        'error': f'Sheet "{sheet_name}" not found',
-                        'available_sheets': available_sheets
-                    }, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
 
                 ws = wb[sheet_name]
-                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                data = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True)]
+                if ws.max_row <= 1:
+                    return Response({"statusCode": 400, "status": False, "message": f'The uploaded XLSX sheet "{sheet_name}" is empty.'}, status=400)
+
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response({"statusCode": 400, "status": True, "message": f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'}, status=400)
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    if not any(row):
+                        continue
+                    data.append(dict(zip(headers, row)))
 
             # ---------- CSV Handling ----------
             elif format_type == 'csv':
-                dataset.load(file.read().decode('utf-8'), format='csv')
-                data = dataset.dict
-
+                import csv
+                import io
+                decoded_file = file.read().decode('utf-8')
+                reader = csv.DictReader(io.StringIO(decoded_file))
+                for row in reader:
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({"statusCode": 400, "status": True, "message": f'Missing required headers. Required: {required_headers}. Found: {set(row_lower.keys())}'}, status=400)
+                    data.append(row_lower)
             else:
-                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"statusCode": 400, "status": True, 'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
 
-            # ---------- Process Each Row ----------
+            imported_count = 0
             for row in data:
-                code_id = row.get('level_code')
-                education_level_name = str(row.get('educationlevel')).strip() if row.get('educationlevel') else ''
+                level_code_id = row.get('education level code')
+                education_level_name = str(row.get('education level')).strip() if row.get('education level') else None
+                description = str(row.get('description')).strip() if row.get('description') else ''
+                is_deleted = bool(int(row.get('is_deleted', 0))) if row.get('is_deleted') is not None else False
 
-                # Skip if level_code invalid
-                if not code_id or not EducationLevelCode.objects.filter(id=code_id).exists():
+                if not level_code_id or not education_level_name:
                     continue
 
-                existing = EducationLevel.objects.filter(
-                    level_code_id=code_id, 
-                    educationlevel__iexact=education_level_name
-                ).first()
+                # Validate LevelCode existence
+                if not EducationLevelCode.objects.filter(id=level_code_id).exists():
+                    continue
 
+                existing = EducationLevel.objects.filter(level_code_id=level_code_id, educationlevel__iexact=education_level_name).first()
                 if existing:
-                    if existing.is_deleted:
-                        # Reactivate soft-deleted entry
-                        existing.description = row.get('description', '')
+                    if not existing.is_deleted:
+                        duplicate_levels.append(education_level_name)
+                        continue
+                    else:
+                        existing.description = description
                         existing.is_deleted = False
                         existing.save()
-                    else:
-                        # Already active — track as duplicate
-                        duplicate_entries.append(code_id)
-                        continue
+                        imported_count += 1
                 else:
-                    # Create new record
                     EducationLevel.objects.create(
-                        level_code_id=code_id,
+                        level_code_id=level_code_id,
                         educationlevel=education_level_name,
-                        description=row.get('description', ''),
-                        is_deleted=row.get('is_deleted', False)
+                        description=description,
+                        is_deleted=is_deleted
                     )
+                    imported_count += 1
 
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"statusCode": 400, "status": True, 'message': str(e)}, status=400)
 
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_entries)),
-            'message': f'Sheet "{sheet_name}" imported successfully' if sheet_name else 'Import successful'
-        }, status=status.HTTP_200_OK)
-
+            "duplicates": list(set(duplicate_levels)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count
+        }, status=200)
 
 #----------------------------EducationDuration----------------------
+
 
 class EducationDurationListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -11011,163 +11402,185 @@ class EducationDurationListAPIView(APIView):
     def get(self, request):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
+        sort_order = request.GET.get('sortOrder', 'desc')  # 'asc' or 'desc'
 
-        allowed_sort_fields = ['durations', 'description', 'created_at']
+        allowed_sort_fields = ['durations', 'description', 'created_at', 'updated_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
 
+        sort_prefix = '-' if sort_order == 'desc' else ''
         queryset = EducationDuration.objects.filter(is_deleted=False)
 
         if search:
             queryset = queryset.filter(
-                Q(durations__icontains=search) |
-                Q(description__icontains=search) |
-                Q(educationlevel__educationlevel__icontains=search)
+                Q(educationlevel__educationlevel__icontains=search) |
+                Q(durations__icontains=search)
             )
 
-        queryset = queryset.order_by(sort_by)
+        queryset = queryset.order_by(f'{sort_prefix}{sort_by}')
 
-        paginator = CustomPagination()
-        result_page = paginator.paginate_queryset(queryset, request)
-        serializer = EducationDurationSerializer(result_page, many=True)
-        return paginator.get_paginated_response(serializer.data)
+        serializer = EducationDurationSerializer(queryset, many=True)
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": "Education durations retrieved successfully",
+            "count": queryset.count(),
+            "data": serializer.data
+        }, status=status.HTTP_200_OK)
 
-# ----------------- Create API -----------------
 class EducationDurationCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
-        durations = request.data.get('durations', '').strip()
+        educationlevel_uuid = request.data.get("educationlevel", "").strip()
+        durations = request.data.get("durations", "").strip()
 
-        existing = EducationDuration.objects.filter(durations__iexact=durations, is_deleted=False).first()
+        # Get EducationLevel by UUID
+        educationlevel_obj = None
+        if educationlevel_uuid:
+            try:
+                educationlevel_obj = EducationLevel.objects.get(uuid=educationlevel_uuid)
+            except EducationLevel.DoesNotExist:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Education level not found for the provided UUID."
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check for duplicates
+        existing = EducationDuration.objects.filter(
+            educationlevel=educationlevel_obj, 
+            durations__iexact=durations, 
+            is_deleted=False
+        ).first()
         if existing:
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Education Duration with this value already exists."
-            }, status=400)
+                "message": "Education duration with this level and duration already exists."
+            }, status=status.HTTP_400_BAD_REQUEST)
 
+        # Save new EducationDuration
         serializer = EducationDurationSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(educationlevel=educationlevel_obj)  # assign object explicitly
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "Education Duration created successfully",
+                "message": "Education duration created successfully",
                 "data": serializer.data
-            })
-        else:
-            errors = serializer.errors
-            messages = []
-            for field, msgs in errors.items():
-                messages.extend(msgs)
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": " ".join(messages)
-            }, status=400)
+            }, status=status.HTTP_200_OK)
 
-# ----------------- Retrieve API -----------------
+        messages = [msg for msgs in serializer.errors.values() for msg in msgs]
+        return Response({
+            "statusCode": 400,
+            "status": False,
+            "message": " ".join(messages)
+        }, status=status.HTTP_400_BAD_REQUEST)
+# ------------------ Retrieve API ------------------
 class EducationDurationRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request, uuid):
         try:
-            duration = EducationDuration.objects.get(uuid=uuid, is_deleted=False)
+            obj = EducationDuration.objects.get(uuid=uuid, is_deleted=False)
         except EducationDuration.DoesNotExist:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "Education Duration not found",
+                "message": "Education duration not found",
                 "data": None
-            }, status=404)
+            }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = EducationDurationSerializer(duration)
+        serializer = EducationDurationSerializer(obj)
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": "Education Duration retrieved successfully",
+            "message": "Education duration retrieved successfully",
             "data": serializer.data
         })
 
-# ----------------- Update API -----------------
+
+# ------------------ Update API ------------------
 class EducationDurationUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def put(self, request, uuid):
         try:
-            duration = EducationDuration.objects.get(uuid=uuid, is_deleted=False)
+            obj = EducationDuration.objects.get(uuid=uuid, is_deleted=False)
         except EducationDuration.DoesNotExist:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "Education Duration not found",
+                "message": "Education duration not found",
                 "data": None
-            }, status=404)
+            }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = EducationDurationSerializer(duration, data=request.data)
+        serializer = EducationDurationSerializer(obj, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "Education Duration updated successfully",
+                "message": "Education duration updated successfully",
                 "data": serializer.data
             })
 
-        errors = serializer.errors
-        messages = []
-        for field, msgs in errors.items():
-            messages.extend(msgs)
+        messages = [msg for msgs in serializer.errors.values() for msg in msgs]
         return Response({
             "statusCode": 400,
             "status": False,
             "message": " ".join(messages),
             "data": None
-        }, status=400)
+        }, status=status.HTTP_400_BAD_REQUEST)
 
-# ----------------- Delete API -----------------
+
+# ------------------ Delete API ------------------
 class EducationDurationDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
-    def delete(self, request):
+    def delete(self, request, uuid=None):
         ids = request.data.get('id', None)
-        if not ids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Please provide 'id' field (UUID list or 'all').",
-                "data": None
-            }, status=400)
 
-        if ids == "all":
-            durations = EducationDuration.objects.filter(is_deleted=False)
-            count = durations.count()
-            if count == 0:
+        # Single delete via URL
+        if uuid:
+            try:
+                obj = EducationDuration.objects.get(uuid=uuid)
+                obj.delete()
+                return Response({
+                    "statusCode": 204,
+                    "status": True,
+                    "message": "Education duration permanently deleted.",
+                    "data": None
+                }, status=status.HTTP_204_NO_CONTENT)
+            except EducationDuration.DoesNotExist:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "No Education Durations found to delete.",
+                    "message": "Education duration not found.",
                     "data": None
-                }, status=404)
-            durations.delete()
+                }, status=status.HTTP_404_NOT_FOUND)
+
+        # Delete all
+        if ids == "all":
+            queryset = EducationDuration.objects.all()
+            count = queryset.count()
+            queryset.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} Education Duration(s) deleted successfully.",
+                "message": f"All {count} education durations permanently deleted.",
                 "data": None
-            })
+            }, status=status.HTTP_200_OK)
 
-        if not isinstance(ids, list):
+        # Bulk delete
+        if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
                 "status": False,
                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
                 "data": None
-            }, status=400)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         valid_uuids = []
         invalid_uuids = []
@@ -11177,33 +11590,19 @@ class EducationDurationDeleteAPIView(APIView):
             except ValueError:
                 invalid_uuids.append(u)
 
-        if not valid_uuids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "No valid UUIDs provided.",
-                "data": {"invalid_uuids": invalid_uuids}
-            }, status=400)
+        queryset = EducationDuration.objects.filter(uuid__in=valid_uuids)
+        count = queryset.count()
+        queryset.delete()
 
-        durations = EducationDuration.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = durations.count()
-        if count == 0:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "No matching Education Durations found.",
-                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=404)
-
-        durations.delete()
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f"{count} Education Duration(s) deleted successfully.",
+            "message": f"{count} education duration(s) permanently deleted.",
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        })
+        }, status=status.HTTP_200_OK)
 
-# ----------------- Export API -----------------
+
+# ------------------ Export API ------------------
 class EducationDurationExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -11213,41 +11612,59 @@ class EducationDurationExportAPIView(APIView):
         uuids_param = request.GET.get('uuids', '')
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
-        if fields:
-            field_list = [f.strip() for f in fields.split(',')]
-        else:
-            field_list = ['uuid', 'educationlevel', 'durations', 'description', 'is_deleted', 'created_at', 'updated_at']
+        field_header_map = {
+            'uuid': 'UUID',
+            'educationlevel': 'Education Level',
+            'durations': 'Education Duration',
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'created_at': 'Created On',
+            'updated_at': 'Modified On',
+        }
 
-        queryset = EducationDuration.objects.filter(uuid__in=uuids) if uuids else EducationDuration.objects.all()
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+        queryset = EducationDuration.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-updated_at')
 
         dataset = Dataset()
-        dataset.headers = field_list
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'EducationDuration'
 
-        for dur in queryset:
+        for obj in queryset:
             row = []
             for field in field_list:
-                value = getattr(dur, field, '')
-                if isinstance(value, datetime.datetime):
-                    value = value.strftime("%Y-%m-%d %H:%M:%S")
-                if isinstance(value, bool):
+                if field == 'Education Level':
+                    value = obj.educationlevel.educationlevel if obj.educationlevel else ''
+                else:
+                    value = getattr(obj, field, '')
+                if field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
                     value = int(value)
                 row.append(value if value is not None else '')
             dataset.append(row)
 
-        if format_type == 'xlsx':
-            data = XLSX().export_data(dataset)
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'education_durations.csv'
+        else:
+            file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'education_durations.xlsx'
-        else:
-            data = CSV().export_data(dataset)
-            content_type = 'text/csv; charset=utf-8'
-            file_name = 'education_durations.csv'
 
-        response = HttpResponse(data, content_type=content_type)
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
-# ----------------- Import API -----------------
+
+# ------------------ Import API ------------------
 class EducationDurationImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -11256,70 +11673,98 @@ class EducationDurationImportAPIView(APIView):
         sheet_name = request.data.get('sheet_name')
 
         if not file:
-            return Response({'error': 'No file uploaded'}, status=400)
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
-        dataset = Dataset()
-        duplicate_entries = []
+        duplicate_durations = []
+        required_headers = {'education level', 'education duration'}
+        optional_headers = {'description'}
 
         try:
-            # XLSX
+            data = []
+            headers = []
+
             if format_type == 'xlsx':
+                import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
+
                 if not sheet_name:
                     return Response({'error': 'Please provide sheet_name', 'available_sheets': available_sheets}, status=400)
                 if sheet_name not in available_sheets:
                     return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
+
                 ws = wb[sheet_name]
-                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                data = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True)]
+                if ws.max_row <= 1:
+                    return Response({"statusCode": 400, "status": False, "message": f'The uploaded XLSX sheet "{sheet_name}" is empty.'}, status=400)
 
-            # CSV
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response({"statusCode": 400, "status": True, "message": f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'}, status=400)
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    if not any(row):
+                        continue
+                    data.append(dict(zip(headers, row)))
+
             elif format_type == 'csv':
-                dataset.load(file.read().decode('utf-8'), format='csv')
-                data = dataset.dict
-
+                import csv
+                import io
+                decoded_file = file.read().decode('utf-8')
+                reader = csv.DictReader(io.StringIO(decoded_file))
+                for row in reader:
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({"statusCode": 400, "status": True, "message": f'Missing required headers. Required: {required_headers}. Found: {set(row_lower.keys())}'}, status=400)
+                    data.append(row_lower)
             else:
-                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
+                return Response({"statusCode": 400, "status": True, 'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
 
+            imported_count = 0
             for row in data:
-                durations = str(row.get('durations')).strip() if row.get('durations') else None
+                educationlevel_name = str(row.get('education level')).strip() if row.get('education level') else None
+                durations = str(row.get('education durations')).strip() if row.get('education durations') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
-                educationlevel_id = row.get('educationlevel')
 
-                if not durations:
+                if not educationlevel_name or not durations:
                     continue
 
-                existing = EducationDuration.objects.filter(durations__iexact=durations).first()
+                # Get education level object
+                educationlevel_obj = EducationLevel.objects.filter(educationlevel__iexact=educationlevel_name).first()
+                if not educationlevel_obj:
+                    continue  # skip row if level not found
+
+                existing = EducationDuration.objects.filter(
+                    educationlevel=educationlevel_obj, durations__iexact=durations
+                ).first()
                 if existing:
-                    if existing.is_deleted:
+                    if not existing.is_deleted:
+                        duplicate_durations.append(durations)
+                        continue
+                    else:
                         existing.description = description
                         existing.is_deleted = False
-                        if educationlevel_id:
-                            existing.educationlevel_id = educationlevel_id
                         existing.save()
-                    else:
-                        duplicate_entries.append(durations)
-                        continue
+                        imported_count += 1
                 else:
                     EducationDuration.objects.create(
+                        educationlevel=educationlevel_obj,
                         durations=durations,
                         description=description,
-                        educationlevel_id=educationlevel_id,
                         is_deleted=False
                     )
+                    imported_count += 1
 
         except Exception as e:
-            return Response({'error': str(e)}, status=400)
+            return Response({"statusCode": 400, "status": True, 'message': str(e)}, status=400)
 
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_entries)),
-            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
-        })
-    
+            "duplicates": list(set(duplicate_durations)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count
+        }, status=200)
 
     
 
@@ -11675,43 +12120,94 @@ class StudymainareaImportAPIView(APIView):
             "imported_count": imported_count
         }, status=status.HTTP_200_OK)
 
+
+
 # -------------------- Studymajor -------------------- #
-class StudymajorareaCreateAPIView(APIView):
+
+class StudyMajorAreaListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        search = request.GET.get('search', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_order = request.GET.get('sortOrder', 'desc')
+
+        allowed_sort_fields = ['majorarea', 'description', 'created_at']
+        if sort_by not in allowed_sort_fields:
+            sort_by = 'created_at'
+        if sort_order == 'desc':
+            sort_by = f'-{sort_by}'
+
+        queryset = Studymajorarea.objects.filter(is_deleted=False)
+
+        if search:
+            queryset = queryset.filter(
+                Q(majorarea__icontains=search) |
+                Q(description__icontains=search) |
+                Q(mainarea__name__icontains=search)
+            )
+
+        queryset = queryset.order_by(sort_by)
+
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = StudyMajorAreaSerializer(result_page, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
+
+
+class StudyMajorAreaCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
-        mainarea_id = request.data.get('mainarea_id')
-        majorarea_name = request.data.get('Majorarea', '').strip()
+        majorarea = request.data.get("majorarea", "").strip()
+        mainarea_uuid = request.data.get("mainarea_uuid")  # accept UUID
 
-       
-        if Studymajorarea.objects.filter(mainarea_id=mainarea_id, Majorarea__iexact=majorarea_name).exists():
+        # Resolve UUID to object for existence check
+        mainarea_obj = None
+        if mainarea_uuid:
+            mainarea_obj = Studymainarea.objects.filter(uuid=mainarea_uuid).first()
+            if not mainarea_obj:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Invalid main area UUID."
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check duplicates
+        existing = Studymajorarea.objects.filter(
+            majorarea__iexact=majorarea,
+            mainarea=mainarea_obj,
+            is_deleted=False
+        ).first()
+
+        if existing:
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "This Majorarea for the selected Mainarea already exists."
+                "message": "Study Major Area with this name and main area already exists."
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = StudymajorareaSerializer(data=request.data)
+        serializer = StudyMajorAreaSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "Studymajorarea created successfully",
+                "message": "Study Major Area created successfully",
                 "data": serializer.data
-            })
+            }, status=status.HTTP_200_OK)
 
-        errors = serializer.errors
-        messages = []
-        for field, msgs in errors.items():
-            messages.extend(msgs)
+        messages = [msg for msgs in serializer.errors.values() for msg in msgs]
         return Response({
             "statusCode": 400,
             "status": False,
             "message": " ".join(messages)
-        })
+        }, status=status.HTTP_400_BAD_REQUEST)  
 
-class StudymajorareaRetrieveAPIView(APIView):
+
+# ------------------ Retrieve API ------------------
+class StudyMajorAreaRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request, uuid):
@@ -11721,19 +12217,21 @@ class StudymajorareaRetrieveAPIView(APIView):
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "Studymajorarea not found",
+                "message": "Study Major Area not found",
                 "data": None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = StudymajorareaSerializer(obj)
+        serializer = StudyMajorAreaSerializer(obj)
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": "Studymajorarea retrieved successfully",
+            "message": "Study Major Area retrieved successfully",
             "data": serializer.data
         })
 
-class StudymajorareaUpdateAPIView(APIView):
+
+# ------------------ Update API ------------------
+class StudyMajorAreaUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def put(self, request, uuid):
@@ -11743,87 +12241,98 @@ class StudymajorareaUpdateAPIView(APIView):
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "Studymajorarea not found",
+                "message": "Study Major Area not found",
                 "data": None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        mainarea_id = request.data.get('mainarea_id')
-        majorarea_name = request.data.get('Majorarea', '').strip()
-
-        if Studymajorarea.objects.filter(mainarea_id=mainarea_id, Majorarea__iexact=majorarea_name).exclude(uuid=uuid).exists():
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "This Majorarea for the selected Mainarea already exists."
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer = StudymajorareaSerializer(obj, data=request.data)
+        serializer = StudyMajorAreaSerializer(obj, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "Studymajorarea updated successfully",
+                "message": "Study Major Area updated successfully",
                 "data": serializer.data
             })
 
-        errors = serializer.errors
-        messages = []
-        for field, msgs in errors.items():
-            messages.extend(msgs)
+        messages = [msg for msgs in serializer.errors.values() for msg in msgs]
         return Response({
             "statusCode": 400,
             "status": False,
-            "message": " ".join(messages)
-        })
+            "message": " ".join(messages),
+            "data": None
+        }, status=status.HTTP_400_BAD_REQUEST)
 
-class StudymajorareaDeleteAPIView(APIView):
+
+# ------------------ Delete API ------------------
+class StudyMajorAreaDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
-    def delete(self, request):
-        uuids = request.data.get('id', [])
-        if not uuids or not isinstance(uuids, list):
+    def delete(self, request, uuid=None):
+        ids = request.data.get('id', None)
+
+        # Single delete via URL
+        if uuid:
+            try:
+                obj = Studymajorarea.objects.get(uuid=uuid)
+                obj.delete()
+                return Response({
+                    "statusCode": 204,
+                    "status": True,
+                    "message": "Study Major Area permanently deleted.",
+                    "data": None
+                }, status=status.HTTP_204_NO_CONTENT)
+            except Studymajorarea.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "Study Major Area not found.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+
+        # Delete all
+        if ids == "all":
+            queryset = Studymajorarea.objects.all()
+            count = queryset.count()
+            queryset.delete()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"All {count} study major areas permanently deleted.",
+                "data": None
+            }, status=status.HTTP_200_OK)
+
+        # Bulk delete
+        if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Please provide a list of UUIDs in 'id' field.",
+                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
                 "data": None
             }, status=status.HTTP_400_BAD_REQUEST)
 
         valid_uuids = []
         invalid_uuids = []
-        for u in uuids:
+        for u in ids:
             try:
                 valid_uuids.append(UUID(u))
             except ValueError:
                 invalid_uuids.append(u)
 
-        if not valid_uuids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "No valid UUIDs provided.",
-                "data": {"invalid_uuids": invalid_uuids}
-            }, status=status.HTTP_400_BAD_REQUEST)
+        queryset = Studymajorarea.objects.filter(uuid__in=valid_uuids)
+        count = queryset.count()
+        queryset.delete()
 
-        objs = Studymajorarea.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = objs.count()
-        if count == 0:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "No matching Studymajorarea found.",
-                "data": {"invalid_uuids": invalid_uuids}
-            }, status=status.HTTP_404_NOT_FOUND)
-
-        objs.delete()
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f"{count} Studymajorarea(s) deleted successfully.",
-        })
+            "message": f"{count} study major area(s) permanently deleted.",
+            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+        }, status=status.HTTP_200_OK)
 
-class StudymajorareaExportAPIView(APIView):
+
+# ------------------ Export API ------------------
+class StudyMajorAreaExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
@@ -11832,43 +12341,57 @@ class StudymajorareaExportAPIView(APIView):
         uuids_param = request.GET.get('uuids', '')
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
-        field_list = [f.strip() for f in fields.split(',')] if fields else [
-            'uuid', 'mainarea', 'Majorarea', 'description', 'is_deleted', 'created_at', 'updated_at'
-        ]
+        field_header_map = {
+            'uuid': 'UUID',
+            'mainarea': 'Study Main Area',
+            'majorarea': 'Study Major Area',
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'created_at': 'Created On',
+            'updated_at': 'Modified On',
+        }
 
-        queryset = Studymajorarea.objects.filter(uuid__in=uuids) if uuids else Studymajorarea.objects.all()
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+        queryset = Studymajorarea.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-updated_at')
 
         dataset = Dataset()
-        dataset.headers = field_list
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'StudyMajorArea'
 
         for obj in queryset:
             row = []
             for field in field_list:
-                if field == 'mainarea':
-                    value = obj.mainarea.Mainarea if obj.mainarea else ''
+                if field == 'mainarea_name':
+                    value = obj.mainarea.name if obj.mainarea else ''
                 else:
                     value = getattr(obj, field, '')
-                if isinstance(value, datetime.datetime):
-                    value = value.strftime("%Y-%m-%d %H:%M:%S")
-                if isinstance(value, bool):
+                if field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
                     value = int(value)
                 row.append(value if value is not None else '')
             dataset.append(row)
 
-        if format_type == 'xlsx':
-            data = XLSX().export_data(dataset)
-            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'studymajorareas.xlsx'
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'study_major_areas.csv'
         else:
-            data = CSV().export_data(dataset)
-            content_type = 'text/csv; charset=utf-8'
-            file_name = 'studymajorareas.csv'
+            file_data = io.BytesIO(dataset.export('xlsx'))
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'study_major_areas.xlsx'
 
-        response = HttpResponse(data, content_type=content_type)
+        response = io.BytesIO(file_data) if format_type == 'csv' else HttpResponse(file_data.getvalue(), content_type=content_type)
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
-class StudymajorareaImportAPIView(APIView):
+
+# ------------------ Import API ------------------
+class StudyMajorAreaImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
@@ -11879,84 +12402,148 @@ class StudymajorareaImportAPIView(APIView):
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
-        dataset = Dataset()
-        duplicate_entries = []
+        duplicate_names = []
+        required_headers = {'study major area', 'study main area'}
+        optional_headers = {'description'}
 
         try:
+            data = []
+            headers = []
+
             if format_type == 'xlsx':
+                import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
 
                 if not sheet_name:
-                    return Response({'error': 'Please provide sheet_name', 'available_sheets': available_sheets},
-                                    status=status.HTTP_400_BAD_REQUEST)
-
+                    return Response({'error': 'Please provide sheet_name', 'available_sheets': available_sheets}, status=400)
                 if sheet_name not in available_sheets:
-                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets},
-                                    status=status.HTTP_400_BAD_REQUEST)
+                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
 
                 ws = wb[sheet_name]
-                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if ws.max_row <= 1:
+                    return Response({"statusCode": 400, "status": False, "message": f'The uploaded XLSX sheet "{sheet_name}" is empty.'}, status=400)
+
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response({"statusCode": 400, "status": True, "message": f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'}, status=400)
+
                 for row in ws.iter_rows(min_row=2, values_only=True):
-                    data = dict(zip(headers, row))
-                    mainarea_id = data.get('mainarea')
-                    majorarea_name = data.get('Majorarea')
-                    if Studymajorarea.objects.filter(mainarea_id=mainarea_id, Majorarea__iexact=majorarea_name).exists():
-                        duplicate_entries.append(f"{mainarea_id}-{majorarea_name}")
+                    if not any(row):
                         continue
-                    Studymajorarea.objects.create(
-                        mainarea_id=mainarea_id,
-                        Majorarea=majorarea_name,
-                        description=data.get('description', ''),
-                        is_deleted=data.get('is_deleted', False)
-                    )
-            else:  
-                dataset.load(file.read().decode('utf-8'), format='csv')
-                for row in dataset.dict:
-                    mainarea_id = row.get('mainarea_id')
-                    majorarea_name = row.get('Majorarea')
-                    if Studymajorarea.objects.filter(mainarea_id=mainarea_id, Majorarea__iexact=majorarea_name).exists():
-                        duplicate_entries.append(f"{mainarea_id}-{majorarea_name}")
+                    data.append(dict(zip(headers, row)))
+
+            elif format_type == 'csv':
+                import csv
+                import io
+                decoded_file = file.read().decode('utf-8')
+                reader = csv.DictReader(io.StringIO(decoded_file))
+                for row in reader:
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({"statusCode": 400, "status": True, "message": f'Missing required headers. Required: {required_headers}. Found: {set(row_lower.keys())}'}, status=400)
+                    data.append(row_lower)
+            else:
+                return Response({"statusCode": 400, "status": True, 'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
+
+            imported_count = 0
+            for row in data:
+                majorarea_name = str(row.get('study major area')).strip() if row.get('study major area') else None
+                mainarea_name = str(row.get('study main area')).strip() if row.get('study main area') else None
+                description = str(row.get('description')).strip() if row.get('description') else ''
+
+                if not majorarea_name or not mainarea_name:
+                    continue
+
+                # Get mainarea object
+                mainarea_obj = Studymainarea.objects.filter(name__iexact=mainarea_name).first()
+                if not mainarea_obj:
+                    continue  # skip row if mainarea not found
+
+                existing = Studymajorarea.objects.filter(majorarea__iexact=majorarea_name, mainarea=mainarea_obj).first()
+                if existing:
+                    if not existing.is_deleted:
+                        duplicate_names.append(majorarea_name)
                         continue
+                    else:
+                        existing.description = description
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
+                else:
                     Studymajorarea.objects.create(
-                        mainarea_id=mainarea_id,
-                        Majorarea=majorarea_name,
-                        description=row.get('description', ''),
-                        is_deleted=row.get('is_deleted', False)
+                        majorarea=majorarea_name,
+                        mainarea=mainarea_obj,
+                        description=description,
+                        is_deleted=False
                     )
+                    imported_count += 1
 
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"statusCode": 400, "status": True, 'message': str(e)}, status=400)
 
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_entries)),
-            'message': f'Sheet "{sheet_name}" imported successfully' if sheet_name else 'Import successful'
-        })
-
+            "duplicates": list(set(duplicate_names)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count
+        }, status=200)
 
 # -------------------- Studyspecialisation -------------------- #
 
 
+class StudySpecialisationListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
 
+    def get(self, request):
+        search = request.GET.get('search', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_order = request.GET.get('sortOrder', 'desc')
+
+        allowed_sort_fields = ['studyspecialisation', 'description', 'created_at']
+        if sort_by not in allowed_sort_fields:
+            sort_by = 'created_at'
+        if sort_order == 'desc':
+            sort_by = f'-{sort_by}'
+
+        queryset = StudySpecialisation.objects.filter(is_deleted=False)
+
+        if search:
+            queryset = queryset.filter(
+                Q(studyspecialisation__icontains=search) |
+                Q(description__icontains=search) |
+                Q(mainarea__name__icontains=search) |
+                Q(majorarea__majorarea__icontains=search)
+            )
+
+        queryset = queryset.order_by(sort_by)
+
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = StudySpecialisationSerializer(result_page, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
+
+
+        
 class StudySpecialisationCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
-        mainarea_id = request.data.get('mainarea_id')
-        majorarea_id = request.data.get('Majorarea_id')
-        specialisation_name = request.data.get('studyspecialisation', '').strip()
+        studyspecialisation = request.data.get("studyspecialisation", "").strip()
+        majorarea_id = request.data.get("majorarea_id")
 
-        if StudySpecialisation.objects.filter(
-            mainarea_id=mainarea_id,
-            Majorarea_id=majorarea_id,
-            studyspecialisation__iexact=specialisation_name
-        ).exists():
+        existing = StudySpecialisation.objects.filter(
+            studyspecialisation__iexact=studyspecialisation,
+            majorarea_id=majorarea_id,
+            is_deleted=False
+        ).first()
+        if existing:
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "This specialisation already exists for the selected main and major area."
+                "message": "Study Specialisation with this name and Major Area already exists."
             }, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = StudySpecialisationSerializer(data=request.data)
@@ -11967,13 +12554,9 @@ class StudySpecialisationCreateAPIView(APIView):
                 "status": True,
                 "message": "Study Specialisation created successfully",
                 "data": serializer.data
-            })
+            }, status=status.HTTP_200_OK)
 
-        errors = serializer.errors
-        messages = []
-        for field, msgs in errors.items():
-            messages.extend(msgs)
-
+        messages = [msg for msgs in serializer.errors.values() for msg in msgs]
         return Response({
             "statusCode": 400,
             "status": False,
@@ -11981,6 +12564,7 @@ class StudySpecialisationCreateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
+# ------------------ Retrieve API ------------------
 class StudySpecialisationRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -12004,6 +12588,7 @@ class StudySpecialisationRetrieveAPIView(APIView):
         })
 
 
+# ------------------ Update API ------------------
 class StudySpecialisationUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -12018,21 +12603,6 @@ class StudySpecialisationUpdateAPIView(APIView):
                 "data": None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        mainarea_id = request.data.get('mainarea_id')
-        majorarea_id = request.data.get('Majorarea_id')
-        specialisation_name = request.data.get('studyspecialisation', '').strip()
-
-        if StudySpecialisation.objects.filter(
-            mainarea_id=mainarea_id,
-            Majorarea_id=majorarea_id,
-            studyspecialisation__iexact=specialisation_name
-        ).exclude(uuid=uuid).exists():
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "This specialisation already exists for the selected main and major area."
-            }, status=status.HTTP_400_BAD_REQUEST)
-
         serializer = StudySpecialisationSerializer(obj, data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -12043,67 +12613,84 @@ class StudySpecialisationUpdateAPIView(APIView):
                 "data": serializer.data
             })
 
-        errors = serializer.errors
-        messages = []
-        for field, msgs in errors.items():
-            messages.extend(msgs)
-
+        messages = [msg for msgs in serializer.errors.values() for msg in msgs]
         return Response({
             "statusCode": 400,
             "status": False,
-            "message": " ".join(messages)
+            "message": " ".join(messages),
+            "data": None
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
+# ------------------ Delete API ------------------
 class StudySpecialisationDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
-    def delete(self, request):
-        uuids = request.data.get('id', [])
-        if not uuids or not isinstance(uuids, list):
+    def delete(self, request, uuid=None):
+        ids = request.data.get('id', None)
+
+        # Single delete via URL
+        if uuid:
+            try:
+                obj = StudySpecialisation.objects.get(uuid=uuid)
+                obj.delete()
+                return Response({
+                    "statusCode": 204,
+                    "status": True,
+                    "message": "Study Specialisation permanently deleted.",
+                    "data": None
+                }, status=status.HTTP_204_NO_CONTENT)
+            except StudySpecialisation.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "Study Specialisation not found.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+
+        # Delete all
+        if ids == "all":
+            queryset = StudySpecialisation.objects.all()
+            count = queryset.count()
+            queryset.delete()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"All {count} Study Specialisations permanently deleted.",
+                "data": None
+            }, status=status.HTTP_200_OK)
+
+        # Bulk delete
+        if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Please provide a list of UUIDs in 'id' field.",
+                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
                 "data": None
             }, status=status.HTTP_400_BAD_REQUEST)
 
         valid_uuids = []
         invalid_uuids = []
-        for u in uuids:
+        for u in ids:
             try:
                 valid_uuids.append(UUID(u))
             except ValueError:
                 invalid_uuids.append(u)
 
-        if not valid_uuids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "No valid UUIDs provided.",
-                "data": {"invalid_uuids": invalid_uuids}
-            }, status=status.HTTP_400_BAD_REQUEST)
+        queryset = StudySpecialisation.objects.filter(uuid__in=valid_uuids)
+        count = queryset.count()
+        queryset.delete()
 
-        objs = StudySpecialisation.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = objs.count()
-        if count == 0:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "No matching Study Specialisation found.",
-                "data": {"invalid_uuids": invalid_uuids}
-            }, status=status.HTTP_404_NOT_FOUND)
-
-        objs.delete()
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f"{count} Study Specialisation(s) deleted successfully.",
-        })
+            "message": f"{count} Study Specialisation(s) permanently deleted.",
+            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+        }, status=status.HTTP_200_OK)
 
 
+# ------------------ Export API ------------------
 class StudySpecialisationExportAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
@@ -12111,132 +12698,210 @@ class StudySpecialisationExportAPIView(APIView):
         uuids_param = request.GET.get('uuids', '')
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
-        field_list = [f.strip() for f in fields.split(',')] if fields else [
-            'uuid', 'mainarea', 'Majorarea', 'studyspecialisation', 'description', 'is_deleted', 'created_at', 'updated_at'
-        ]
+        field_header_map = {
+            'uuid': 'UUID',
+            'mainarea': 'Main Area',
+            'majorarea': 'Major Area',
+            'studyspecialisation': 'Study Specialisation',
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'created_at': 'Created On',
+            'updated_at': 'Modified On',
+        }
 
-        queryset = StudySpecialisation.objects.filter(uuid__in=uuids) if uuids else StudySpecialisation.objects.all()
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+        queryset = StudySpecialisation.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-updated_at')
 
         dataset = Dataset()
-        dataset.headers = field_list
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'StudySpecialisation'
 
         for obj in queryset:
             row = []
             for field in field_list:
                 if field == 'mainarea':
-                    value = obj.mainarea.Mainarea if obj.mainarea else ''
-                elif field == 'Majorarea':
-                    value = obj.Majorarea.Majorarea if obj.Majorarea else ''
+                    value = obj.mainarea.mainarea if obj.mainarea else ''
+                elif field == 'majorarea':
+                    value = obj.majorarea.majorarea if obj.majorarea else ''
                 else:
                     value = getattr(obj, field, '')
-                if isinstance(value, datetime.datetime):
-                    value = value.strftime("%Y-%m-%d %H:%M:%S")
-                if isinstance(value, bool):
+                if field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
                     value = int(value)
                 row.append(value if value is not None else '')
             dataset.append(row)
 
-        if format_type == 'xlsx':
-            data = XLSX().export_data(dataset)
-            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'studyspecialisations.xlsx'
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'study_specialisations.csv'
         else:
-            data = CSV().export_data(dataset)
-            content_type = 'text/csv; charset=utf-8'
-            file_name = 'studyspecialisations.csv'
+            file_data = io.BytesIO(dataset.export('xlsx'))
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'study_specialisations.xlsx'
 
-        response = HttpResponse(data, content_type=content_type)
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
 
+# ------------------ Import API ------------------
 class StudySpecialisationImportAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')
+
         if not file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
-        dataset = Dataset()
-        duplicate_entries = []
+        duplicate_names = []
+        required_headers = {'study specialisation', 'major area', 'main area'}
+        optional_headers = {'description'}
 
         try:
+            data = []
+            headers = []
+
             if format_type == 'xlsx':
+                import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
 
                 if not sheet_name:
-                    return Response({'error': 'Please provide sheet_name', 'available_sheets': available_sheets},
-                                    status=status.HTTP_400_BAD_REQUEST)
-
+                    return Response({'error': 'Please provide sheet_name', 'available_sheets': available_sheets}, status=400)
                 if sheet_name not in available_sheets:
-                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets},
-                                    status=status.HTTP_400_BAD_REQUEST)
+                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
 
                 ws = wb[sheet_name]
-                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if ws.max_row <= 1:
+                    return Response({"statusCode": 400, "status": False, "message": f'The uploaded XLSX sheet "{sheet_name}" is empty.'}, status=400)
+
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response({"statusCode": 400, "status": True, "message": f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'}, status=400)
+
                 for row in ws.iter_rows(min_row=2, values_only=True):
-                    data = dict(zip(headers, row))
-                    mainarea_id = data.get('mainarea_id')
-                    majorarea_id = data.get('Majorarea_id')
-                    specialisation_name = data.get('studyspecialisation')
-                    if StudySpecialisation.objects.filter(
-                        mainarea_id=mainarea_id,
-                        Majorarea_id=majorarea_id,
-                        studyspecialisation__iexact=specialisation_name
-                    ).exists():
-                        duplicate_entries.append(f"{mainarea_id}-{majorarea_id}-{specialisation_name}")
+                    if not any(row):
                         continue
-                    StudySpecialisation.objects.create(
-                        mainarea_id=mainarea_id,
-                        Majorarea_id=majorarea_id,
-                        studyspecialisation=specialisation_name,
-                        description=data.get('description', ''),
-                        is_deleted=data.get('is_deleted', False)
-                    )
-            else:  # CSV
-                dataset.load(file.read().decode('utf-8'), format='csv')
-                for row in dataset.dict:
-                    mainarea_id = row.get('mainarea_id')
-                    majorarea_id = row.get('Majorarea_id')
-                    specialisation_name = row.get('studyspecialisation')
-                    if StudySpecialisation.objects.filter(
-                        mainarea_id=mainarea_id,
-                        Majorarea_id=majorarea_id,
-                        studyspecialisation__iexact=specialisation_name
-                    ).exists():
-                        duplicate_entries.append(f"{mainarea_id}-{majorarea_id}-{specialisation_name}")
+                    data.append(dict(zip(headers, row)))
+
+            elif format_type == 'csv':
+                import csv
+                import io
+                decoded_file = file.read().decode('utf-8')
+                reader = csv.DictReader(io.StringIO(decoded_file))
+                for row in reader:
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({"statusCode": 400, "status": True, "message": f'Missing required headers. Required: {required_headers}. Found: {set(row_lower.keys())}'}, status=400)
+                    data.append(row_lower)
+            else:
+                return Response({"statusCode": 400, "status": True, 'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
+
+            imported_count = 0
+            for row in data:
+                studyspecialisation = str(row.get('study specialisation')).strip() if row.get('study specialisation') else None
+                majorarea_name = str(row.get('major area')).strip() if row.get('major area') else None
+                mainarea_name = str(row.get('main area')).strip() if row.get('main area') else None
+                description = str(row.get('description')).strip() if row.get('description') else ''
+
+                if not studyspecialisation or not majorarea_name or not mainarea_name:
+                    continue
+
+                # Fetch mainarea object
+                mainarea_obj = Studymainarea.objects.filter(mainarea__iexact=mainarea_name).first()
+                if not mainarea_obj:
+                    continue  # skip row if main area not found
+
+                # Fetch majorarea object and make sure it belongs to this mainarea
+                majorarea_obj = Studymajorarea.objects.filter(
+                    majorarea__iexact=majorarea_name,
+                    mainarea=mainarea_obj
+                ).first()
+                if not majorarea_obj:
+                    continue  # skip row if major area not found or doesn't belong to mainarea
+
+                # Existing check
+                existing = StudySpecialisation.objects.filter(
+                    studyspecialisation__iexact=studyspecialisation,
+                    majorarea=majorarea_obj
+                ).first()
+
+                if existing:
+                    if not existing.is_deleted:
+                        duplicate_names.append(studyspecialisation)
                         continue
+                    else:
+                        existing.description = description
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
+                else:
                     StudySpecialisation.objects.create(
-                        mainarea_id=mainarea_id,
-                        Majorarea_id=majorarea_id,
-                        studyspecialisation=specialisation_name,
-                        description=row.get('description', ''),
-                        is_deleted=row.get('is_deleted', False)
+                        studyspecialisation=studyspecialisation,
+                        majorarea=majorarea_obj,
+                        description=description,
+                        is_deleted=False
                     )
+                    imported_count += 1
 
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"statusCode": 400, "status": True, 'message': str(e)}, status=400)
 
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_entries)),
-            'message': f'Sheet "{sheet_name}" imported successfully' if sheet_name else 'Import successful'
-        })
-
+            "duplicates": list(set(duplicate_names)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count
+        }, status=200)
 
 
 # -------------------- AcademicResultType -------------------- 
+class AcademicResultTypeListAPIView(APIView):
+    def get(self, request):
+        search = request.GET.get('search', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_order = request.GET.get('sortOrder', 'desc')
+
+        allowed_sort_fields = ['name', 'description', 'created_at']
+        if sort_by not in allowed_sort_fields:
+            sort_by = 'created_at'
+        if sort_order == 'desc':
+            sort_by = f'-{sort_by}'
+
+        queryset = AcademicResultType.objects.filter(is_deleted=False)
+        if search:
+            queryset = queryset.filter(
+                Q(name__icontains=search) |
+                Q(description__icontains=search)
+            )
+
+        queryset = queryset.order_by(sort_by)
+
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = AcademicResultTypeSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+
+# --------------------- Create API ---------------------
 class AcademicResultTypeCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
-        name = request.data.get('Academicresulttype', '').strip()
-        if AcademicResultType.objects.filter(Academicresulttype__iexact=name).exists():
+        name = request.data.get("name", "").strip()
+        if AcademicResultType.objects.filter(name__iexact=name, is_deleted=False).exists():
             return Response({
                 "statusCode": 400,
                 "status": False,
@@ -12251,18 +12916,17 @@ class AcademicResultTypeCreateAPIView(APIView):
                 "status": True,
                 "message": "Academic Result Type created successfully",
                 "data": serializer.data
-            })
+            }, status=status.HTTP_200_OK)
 
-        errors = serializer.errors
-        messages = []
-        for field, msgs in errors.items():
-            messages.extend(msgs)
+        message_text = " ".join([str(msg) for msgs in serializer.errors.values() for msg in msgs])
         return Response({
             "statusCode": 400,
             "status": False,
-            "message": " ".join(messages)
+            "message": message_text
         }, status=status.HTTP_400_BAD_REQUEST)
 
+
+# --------------------- Retrieve API ---------------------
 class AcademicResultTypeRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -12285,6 +12949,8 @@ class AcademicResultTypeRetrieveAPIView(APIView):
             "data": serializer.data
         })
 
+
+# --------------------- Update API ---------------------
 class AcademicResultTypeUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -12299,14 +12965,6 @@ class AcademicResultTypeUpdateAPIView(APIView):
                 "data": None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        name = request.data.get('Academicresulttype', '').strip()
-        if AcademicResultType.objects.filter(Academicresulttype__iexact=name).exclude(uuid=uuid).exists():
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Academic Result Type with this name already exists."
-            }, status=status.HTTP_400_BAD_REQUEST)
-
         serializer = AcademicResultTypeSerializer(obj, data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -12317,62 +12975,97 @@ class AcademicResultTypeUpdateAPIView(APIView):
                 "data": serializer.data
             })
 
-        errors = serializer.errors
-        messages = []
-        for field, msgs in errors.items():
-            messages.extend(msgs)
+        message_text = " ".join([str(msg) for msgs in serializer.errors.values() for msg in msgs])
         return Response({
             "statusCode": 400,
             "status": False,
-            "message": " ".join(messages)
+            "message": message_text,
+            "data": None
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
+# --------------------- Delete API ---------------------
 class AcademicResultTypeDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
-    def delete(self, request):
-        uuids = request.data.get('id', [])
-        if not uuids or not isinstance(uuids, list):
+    def delete(self, request, uuid=None):
+        ids = request.data.get('id', None)
+
+        # Single delete via URL
+        if uuid:
+            try:
+                obj = AcademicResultType.objects.get(uuid=uuid)
+                obj.delete()
+                return Response({
+                    "statusCode": 204,
+                    "status": True,
+                    "message": "Academic Result Type permanently deleted.",
+                    "data": None
+                }, status=status.HTTP_204_NO_CONTENT)
+            except AcademicResultType.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "Academic Result Type not found.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+
+        # Delete all
+        if ids == "all":
+            queryset = AcademicResultType.objects.all()
+            count = queryset.count()
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No Academic Result Types found to delete.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+            queryset.delete()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"All {count} Academic Result Type(s) permanently deleted.",
+                "data": None
+            })
+
+        # Bulk delete via list of UUIDs
+        if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Please provide a list of UUIDs in 'id' field."
+                "message": "Provide a list of UUIDs in 'id' field or 'all'.",
+                "data": None
             }, status=status.HTTP_400_BAD_REQUEST)
 
         valid_uuids = []
         invalid_uuids = []
-        for u in uuids:
+        for u in ids:
             try:
                 valid_uuids.append(UUID(u))
             except ValueError:
                 invalid_uuids.append(u)
 
-        if not valid_uuids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "No valid UUIDs provided.",
-                "data": {"invalid_uuids": invalid_uuids}
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        objs = AcademicResultType.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = objs.count()
+        queryset = AcademicResultType.objects.filter(uuid__in=valid_uuids)
+        count = queryset.count()
         if count == 0:
             return Response({
                 "statusCode": 404,
                 "status": False,
                 "message": "No matching Academic Result Types found.",
-                "data": {"invalid_uuids": invalid_uuids}
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        objs.delete()
+        queryset.delete()
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f"{count} Academic Result Type(s) deleted successfully."
+            "message": f"{count} Academic Result Type(s) permanently deleted.",
+            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         })
 
+
+# --------------------- Export API ---------------------
 class AcademicResultTypeExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -12382,104 +13075,173 @@ class AcademicResultTypeExportAPIView(APIView):
         uuids_param = request.GET.get('uuids', '')
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
-        field_list = [f.strip() for f in fields.split(',')] if fields else [
-            'uuid', 'Academicresulttype', 'description', 'is_deleted', 'created_at', 'updated_at'
-        ]
+        field_header_map = {
+            'uuid': 'UUID',
+            'name': 'Name',
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'updated_at': 'Modified On',
+            'created_at': 'Created On',
+        }
 
-        queryset = AcademicResultType.objects.filter(uuid__in=uuids) if uuids else AcademicResultType.objects.all()
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+        queryset = AcademicResultType.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-updated_at')
 
         dataset = Dataset()
-        dataset.headers = field_list
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'AcademicResultType'
 
         for obj in queryset:
             row = []
             for field in field_list:
                 value = getattr(obj, field, '')
-                if isinstance(value, datetime.datetime):
-                    value = value.strftime("%Y-%m-%d %H:%M:%S")
-                if isinstance(value, bool):
+                if field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
                     value = int(value)
                 row.append(value if value is not None else '')
             dataset.append(row)
 
-        if format_type == 'xlsx':
-            data = XLSX().export_data(dataset)
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'academic_result_types.csv'
+        else:
+            file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'academic_result_types.xlsx'
-        else:
-            data = CSV().export_data(dataset)
-            content_type = 'text/csv; charset=utf-8'
-            file_name = 'academic_result_types.csv'
 
-        response = HttpResponse(data, content_type=content_type)
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
 
+# --------------------- Import API ---------------------
 class AcademicResultTypeImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')
+
         if not file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
-        dataset = Dataset()
-        duplicate_entries = []
+        duplicate_names = []
+
+        required_headers = {'name'}
+        optional_headers = {'description'}
 
         try:
+            data = []
+
             if format_type == 'xlsx':
+                import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
 
                 if not sheet_name:
-                    return Response({'error': 'Please provide sheet_name', 'available_sheets': available_sheets},
-                                    status=status.HTTP_400_BAD_REQUEST)
-
+                    return Response({
+                        'error': 'Please provide sheet_name',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
                 if sheet_name not in available_sheets:
-                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets},
-                                    status=status.HTTP_400_BAD_REQUEST)
+                    return Response({
+                        'error': f'Sheet "{sheet_name}" not found',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
                 ws = wb[sheet_name]
-                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if ws.max_row <= 1:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'The uploaded XLSX file is empty.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response({
+                        "statusCode": 400,
+                        "status": True,
+                        'message': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
                 for row in ws.iter_rows(min_row=2, values_only=True):
-                    data = dict(zip(headers, row))
-                    name = data.get('Academicresulttype')
-                    if AcademicResultType.objects.filter(Academicresulttype__iexact=name).exists():
-                        duplicate_entries.append(name)
+                    if not any(row):
                         continue
-                    AcademicResultType.objects.create(
-                        Academicresulttype=name,
-                        description=data.get('description', ''),
-                        is_deleted=data.get('is_deleted', False)
-                    )
-            else:
-                dataset.load(file.read().decode('utf-8'), format='csv')
+                    row_dict = dict(zip(headers, row))
+                    data.append(row_dict)
+
+            elif format_type == 'csv':
+                decoded_file = file.read().decode('utf-8')
+                dataset = Dataset()
+                dataset.load(decoded_file, format='csv')
+
                 for row in dataset.dict:
-                    name = row.get('Academicresulttype')
-                    if AcademicResultType.objects.filter(Academicresulttype__iexact=name).exists():
-                        duplicate_entries.append(name)
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({
+                            "statusCode": 400,
+                            "status": True,
+                            "message": f'Missing required headers. Required: {required_headers}'
+                        }, status=status.HTTP_400_BAD_REQUEST)
+                    data.append(row_lower)
+            else:
+                return Response({
+                    "statusCode": 400,
+                    "status": True,
+                    'error': 'Unsupported file format. Use .xlsx or .csv'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            imported_count = 0
+            for row in data:
+                name = str(row.get('name')).strip() if row.get('name') else None
+                description = str(row.get('description')).strip() if row.get('description') else ''
+
+                if not name:
+                    continue
+
+                existing = AcademicResultType.objects.filter(name__iexact=name).first()
+                if existing:
+                    if not existing.is_deleted:
+                        duplicate_names.append(name)
                         continue
+                    else:
+                        existing.description = description
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
+                else:
                     AcademicResultType.objects.create(
-                        Academicresulttype=name,
-                        description=row.get('description', ''),
-                        is_deleted=row.get('is_deleted', False)
+                        name=name,
+                        description=description,
+                        is_deleted=False
                     )
+                    imported_count += 1
 
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({
+                "statusCode": 400,
+                "status": True,
+                'message': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_entries)),
-            'message': f'Sheet "{sheet_name}" imported successfully' if sheet_name else 'Import successful'
-        })
-
-
-
+            "duplicates": list(set(duplicate_names)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count
+        }, status=status.HTTP_200_OK)
 
 
 

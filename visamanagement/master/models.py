@@ -49,6 +49,9 @@ class Country(models.Model):
     officialName = models.CharField(max_length=50, blank=True, null=True)
     capitalCity = models.CharField(max_length=50, blank=True, null=True)
     dialCodes = models.JSONField(blank=True, null=True)  
+    currencyfullname=models.CharField(max_length=50, blank=True, null=True)
+    currencyshortname=models.CharField(max_length=50, blank=True, null=True)
+    description = models.TextField(max_length=255)
     currencyCode = models.CharField(max_length=50, blank=True, default="")  
     status = models.BooleanField(default=True)  
     created_at = models.DateTimeField(auto_now_add=True)  
@@ -223,9 +226,9 @@ class AccreditationName(models.Model):
     country = models.ForeignKey("Country", on_delete=models.SET_NULL, related_name="accreditation_names", blank=True, null=True)
     category = models.ForeignKey(AccreditationCategory, on_delete=models.SET_NULL, related_name="accreditation_names", blank=True, null=True)
     full_name = models.CharField(max_length=255, unique=True)
-    short_name = models.CharField(max_length=255, unique=True)
+    short_name = models.CharField(max_length=255, null=True,blank=True)
     issuing_authority = models.CharField(max_length=255)
-    valid_upto = models.CharField(max_length=255)
+    valid_upto = models.CharField(max_length=255,null=True,blank=True)
     description = models.TextField(max_length=255, blank=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -368,11 +371,11 @@ class EducationLevelCode(models.Model):
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
+    
     def __str__(self):
-        return self.level_code
+        return self.name
 
-
+    
 class EducationLevel(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
@@ -390,7 +393,7 @@ class EducationLevel(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.level_code.level_code if self.level_code else "No Level Code"
+        return self.level_code.name if self.level_code else "No Level Code"
     
 
 class  EducationDuration(models.Model):
@@ -443,7 +446,8 @@ class Studymajorarea(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.Majorarea
+        return self.majorarea
+    
 
 class StudySpecialisation(models.Model):
     id = models.AutoField(primary_key=True)
@@ -469,14 +473,14 @@ class StudySpecialisation(models.Model):
 class AcademicResultType(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    Academicresulttype=models.TextField(max_length=255,blank=True,null=True)
+    name=models.TextField(max_length=255,blank=True,null=True)
     description = models.TextField(max_length=255,blank=True,null=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.Academicresulttype
+        return self.name
 
 
 class AcademicResult(models.Model):
