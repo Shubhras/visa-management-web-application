@@ -360,6 +360,13 @@ import GenderList from "./pages/masters/generalMaster/gender/GenderList";
 import MaritalStatusList from "./pages/masters/generalMaster/maritalStatus/MaritalStatusList";
 import StakeholderTypeList from "./pages/masters/companyMaster/stakeholderType/StakeholderTypeList";
 import OwnershipTypeList from "./pages/masters/companyMaster/ownershipType/OwnershipTypeList";
+import AccrediationCategoryList from "./pages/masters/companyMaster/accrediationCategory/AccrediationCategoryList";
+import LicenceNameList from "./pages/masters/companyMaster/licenceName/LicenceNameList";
+import AccrediationNameList from "./pages/masters/companyMaster/accrediationName/AccrediationNameList";
+import ContinentsList from "./pages/masters/generalMaster/continents/ContinentsList";
+import EducationLevelCodeList from "./pages/masters/educationMaster/educationLevelCode/EducationLevelCodeList";
+import EducationLevelList from "./pages/masters/educationMaster/educationLevel/EducationLevelList";
+import StudyMainAreaList from "./pages/masters/educationMaster/studyMainArea/StudyMainAreaList";
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   // Check if user is authenticated
@@ -587,20 +594,28 @@ function App() {
         <Route path='/activity-type' element={<ProtectedRoute><ActivityTypeList /></ProtectedRoute>} />
         <Route path='/lost-reason-B2C' element={<ProtectedRoute><LostReasonB2CList /></ProtectedRoute>} />
         <Route path='/lost-reason-B2B' element={<ProtectedRoute><LostReasonB2BList /></ProtectedRoute>} />
-        
+
 
         {/* General Masters */}
         <Route path='/gender-list' element={<ProtectedRoute><GenderList /></ProtectedRoute>} />
         <Route path='/marital-status' element={<ProtectedRoute><MaritalStatusList /></ProtectedRoute>} />
-
+        <Route path='/continent-list' element={<ProtectedRoute><ContinentsList /></ProtectedRoute>} />
         {/* Company  Masters */}
         <Route path='/department' element={<ProtectedRoute><DepartmentList /></ProtectedRoute>} />
         <Route path='/employeetype' element={<ProtectedRoute><EmployeeTypeList /></ProtectedRoute>} />
         <Route path='/companylist' element={<ProtectedRoute><CompanyList /></ProtectedRoute>} />
         <Route path='/stakeholder-list' element={<ProtectedRoute><StakeholderCategoriesList /></ProtectedRoute>} />
         <Route path='/bank-ccount-type' element={<ProtectedRoute><BankAccountTypeList /></ProtectedRoute>} />
-         <Route path='/stakeholder-type' element={<ProtectedRoute><StakeholderTypeList /></ProtectedRoute>} />
-         <Route path='/ownership-type' element={<ProtectedRoute><OwnershipTypeList /></ProtectedRoute>} />
+        <Route path='/stakeholder-type' element={<ProtectedRoute><StakeholderTypeList /></ProtectedRoute>} />
+        <Route path='/ownership-type' element={<ProtectedRoute><OwnershipTypeList /></ProtectedRoute>} />
+        <Route path='/accrediation-category' element={<ProtectedRoute><AccrediationCategoryList /></ProtectedRoute>} />
+        <Route path='/license-name' element={<ProtectedRoute><LicenceNameList /></ProtectedRoute>} />
+        <Route path='/accrediation-name' element={<ProtectedRoute><AccrediationNameList /></ProtectedRoute>} />
+
+        {/* education  Masters */}
+        <Route path='/education-level-code' element={<ProtectedRoute><EducationLevelCodeList /></ProtectedRoute>}></Route>
+        <Route path='/education-level' element={<ProtectedRoute><EducationLevelList /></ProtectedRoute>}></Route>
+        <Route path='/study-main-area' element={<ProtectedRoute><StudyMainAreaList /></ProtectedRoute>}></Route>
         {/* 404 Error Page */}
         <Route path='*' element={<ErrorPage />} />
       </Routes>

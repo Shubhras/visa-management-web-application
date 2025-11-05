@@ -1,11 +1,11 @@
 import React, { useState } from 'react'
 import { useDispatch } from "react-redux";
-import { employeeTypeImportData } from '../../../store/master/actions';
 import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
-import CommanSampleExcelDownloadModal from '../../../components/comman/CommanSampleExcelDownloadModal';
-const AddImportEmployeeModal = ({ show, handleClose }) => {
+import {licenceNameImportData} from '../../../../store/master/companyMasters/actions';
+import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
+const AddImportLicenceNameModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
     const [file, setFile] = useState(null);
@@ -13,6 +13,7 @@ const AddImportEmployeeModal = ({ show, handleClose }) => {
     const [sheetNames, setSheetNames] = useState([]);
     const [selectedSheet, setSelectedSheet] = useState('');
     const [showSampleExcelDownload, setShowSampleExcelDownload] = useState(false);
+
     // Handle file change and extract sheet names
     const handleFileChange = async (e) => {
         const selectedFile = e.target.files[0];
@@ -63,9 +64,8 @@ const AddImportEmployeeModal = ({ show, handleClose }) => {
         if (selectedSheet) {
             formData.append('sheet_name', selectedSheet);
         }
-
         setLoading(true);
-        dispatch(employeeTypeImportData(formData, (response, error) => {
+        dispatch(licenceNameImportData(formData, (response, error) => {
             setLoading(false);
             if (error) {
                 toast.error(error?.response?.data?.message || "Server error");
@@ -77,7 +77,7 @@ const AddImportEmployeeModal = ({ show, handleClose }) => {
                             <div>{response?.message}</div>
                             {response?.duplicates?.length > 0 && (
                                 <div style={{ marginTop: '6px' }}>
-                                    <strong>Duplicate employees skipped — the duplicate data from your uploaded file has been exported into an .xlsx file.</strong>
+                                    <strong>Duplicate licence name skipped — the duplicate data from your uploaded file has been exported into an .xlsx file.</strong>
                                 </div>
                             )}
                         </div>,
@@ -98,13 +98,14 @@ const AddImportEmployeeModal = ({ show, handleClose }) => {
             }
         }));
     };
+
     const handleExportToExcel = (duplicatesData) => {
-        const header = ["Employee Type"];
+        const header = ["Licence Name"];
         const duplicates = duplicatesData //["test1", "test3", "test3"];
         const worksheetData = [header, ...duplicates.map((item) => [item])];
         const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "EmployeetType");
+        XLSX.utils.book_append_sheet(workbook, worksheet, "LicenceName");
 
         const excelBuffer = XLSX.write(workbook, {
             bookType: "xlsx",
@@ -115,7 +116,7 @@ const AddImportEmployeeModal = ({ show, handleClose }) => {
             type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         });
 
-        saveAs(blob, `EmployeetType-Duplicate-Data.xlsx`);
+        saveAs(blob, `LicenceName-Duplicate-Data.xlsx`);
     };
     // Handle modal close
     const onClose = () => {
@@ -124,15 +125,14 @@ const AddImportEmployeeModal = ({ show, handleClose }) => {
         setSheetNames([]);
         setSelectedSheet('');
         handleClose();
+        setLoading(false);
     };
-
     const handleDownloadSample = () => {
         setShowSampleExcelDownload(true);
     };
     const handleCloseSampleExcelDownload = () => {
         setShowSampleExcelDownload(false);
     }
-
     if (!show) return null;
 
     return (
@@ -141,14 +141,14 @@ const AddImportEmployeeModal = ({ show, handleClose }) => {
                 className="modal fade show common-ctl-popup"
                 tabIndex={-1}
                 role="dialog"
-                aria-labelledby="EmployeeModalLabel"
+                aria-labelledby="license-nameModalLabel"
                 aria-hidden={!show}
             >
                 <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
                     <div className="modal-content radius-16 bg-base">
                         <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                            <h1 className="modal-title fs-5" id="EmployeeModalLabel">
-                                Upload Employee Type
+                            <h1 className="modal-title fs-5" id="license-nameModalLabel">
+                                Upload Licence Name
                             </h1>
                             <button
                                 type="button"
@@ -239,19 +239,17 @@ const AddImportEmployeeModal = ({ show, handleClose }) => {
                     </div>
                 </div>
             </div>
-            {
-                showSampleExcelDownload && (
-                    <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
-                        downloadFileName: "EmployeeType",
-                        items: ["Employee Type", "Description"],
-                        selectedItems: ["Employee Type"],
-                        ItemsRequired: ["Employee Type"]
-                    }
-                    } />
-                )
-            }
+            {showSampleExcelDownload && (
+                <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
+                    downloadFileName:"LicenceName",
+                    items: ["Country", "License Full Name","License Short Name","License Issuing Authority Name","License Valid Upto","Description"],
+                    selectedItems: ["Country", "License Full Name","License Short Name","License Issuing Authority Name","License Valid Upto"],
+                    ItemsRequired:["Country", "License Full Name","License Short Name","License Issuing Authority Name","License Valid Upto"]
+                }
+                } />
+            )}
         </>
     );
 };
 
-export default AddImportEmployeeModal;
+export default AddImportLicenceNameModal;

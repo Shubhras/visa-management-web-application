@@ -559,3 +559,246 @@ export const importOwnershipTypeDataAPI = (payload) => {
     const apiUrl = `${url.IMPORT_OWNERSHIP_TYPE_API}`;
     return post(apiUrl, payload);
 };
+
+// ACCREDITATION_CATEGORY
+export const getAccreditationCategoryListDataAPI = (data) => {
+    const apiUrl = `${url.GET_ACCREDITATION_CATEGORY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addAccreditationCategoryDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_ACCREDITATION_CATEGORY_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editAccreditationCategoryDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_ACCREDITATION_CATEGORY_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteAccreditationCategoryDataAPI = (payload) => {
+    const prepareDATA = {
+        id: payload
+    };
+    const apiUrl = `${url.DELETE_ACCREDITATION_CATEGORY_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportAccreditationCategoryDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_ACCREDITATION_CATEGORY_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importAccreditationCategoryDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_ACCREDITATION_CATEGORY_API}`;
+    return post(apiUrl, payload);
+};
+
+// LICENCE_NAME
+export const getLicenceNameListDataAPI = (data) => {
+    const apiUrl = `${url.GET_LICENCE_NAME_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addLicenceNameDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_LICENCE_NAME_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editLicenceNameDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_LICENCE_NAME_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteLicenceNameDataAPI = (payload) => {
+    const prepareDATA = {
+        id: payload
+    };
+    const apiUrl = `${url.DELETE_LICENCE_NAME_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportLicenceNameDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_LICENCE_NAME_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importLicenceNameDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_LICENCE_NAME_API}`;
+    return post(apiUrl, payload);
+};
+
+// ACCREDITATION_NAME
+export const getAccreditationNameListDataAPI = (data) => {
+    const apiUrl = `${url.GET_ACCREDITATION_NAME_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addAccreditationNameDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_ACCREDITATION_NAME_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editAccreditationNameDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_ACCREDITATION_NAME_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteAccreditationNameDataAPI = (payload) => {
+    const prepareDATA = {
+        id: payload
+    };
+    const apiUrl = `${url.DELETE_ACCREDITATION_NAME_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportAccreditationNameDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_ACCREDITATION_NAME_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importAccreditationNameDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_ACCREDITATION_NAME_API}`;
+    return post(apiUrl, payload);
+};
+
+export const getCountryListDataAPI = (data) => {
+    const apiUrl = `${url.GET_COUNTRY_LIST_DEMO}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+//education level code
+export const getEducationLevelCodeListDataAPI = (data) => {
+    const apiUrl = `${url.GET_EDUCATION_LEVEL_CODE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addEducationLevelCodeDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_EDUCATION_LEVEL_CODE_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editEducationLevelCodeDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_EDUCATION_LEVEL_CODE_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteEducationLevelCodeDataAPI = (payload) => {
+    const prepareDATA = {
+        id: payload
+    };
+    const apiUrl = `${url.DELETE_EDUCATION_LEVEL_CODE_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportEducationLevelCodeDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_EDUCATION_LEVEL_CODE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importEducationLevelCodeDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_EDUCATION_LEVEL_CODE_API}`;
+    return post(apiUrl, payload);
+};
+
+// EDUCATION_LEVEL
+export const getEducationLevelListDataAPI = (data) => {
+    const apiUrl = `${url.GET_EDUCATION_LEVEL_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addEducationLevelDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_EDUCATION_LEVEL_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editEducationLevelDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_EDUCATION_LEVEL_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteEducationLevelDataAPI = (payload) => {
+    const prepareDATA = {
+        id: payload
+    };
+    const apiUrl = `${url.DELETE_EDUCATION_LEVEL_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportEducationLevelDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_EDUCATION_LEVEL_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importEducationLevelDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_EDUCATION_LEVEL_API}`;
+    return post(apiUrl, payload);
+};
+
+//Study main area
+export const getStudyMainAreaListDataAPI = (data) => {
+    const apiUrl = `${url.GET_STUDY_MAIN_AREA_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addStudyMainAreaDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_STUDY_MAIN_AREA_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editStudyMainAreaDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_STUDY_MAIN_AREA_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteStudyMainAreaDataAPI = (payload) => {
+    const prepareDATA = {
+        id: payload,
+    };
+    const apiUrl = `${url.DELETE_STUDY_MAIN_AREA_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportStudyMainAreaDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_STUDY_MAIN_AREA_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importStudyMainAreaDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_STUDY_MAIN_AREA_API}`;
+    return post(apiUrl, payload);
+};
+
+// CONTINENT
+export const getContinentListDataAPI = (data) => {
+  const apiUrl = `${url.GET_CONTINENT_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
+ 
+export const addContinentDataAPI = (payload) => {
+  const apiUrl = `${url.Add_CONTINENT_LIST_API}`;
+  return post(apiUrl, payload);
+};
+ 
+export const editContinentDataAPI = (payload) => {
+  const apiUrl = `${url.EDIT_CONTINENT_LIST_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+ 
+export const deleteContinentDataAPI = (payload) => {
+  const prepareDATA = {
+    id: payload,
+  };
+  const apiUrl = `${url.DELETE_CONTINENT_LIST_API}delete/`;
+  return delWithPayload(apiUrl, prepareDATA);
+};
+ 
+export const exportContinentDataAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_CONTINENT_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+ 
+export const importContinentDataAPI = (payload) => {
+  const apiUrl = `${url.IMPORT_CONTINENT_LIST_API}`;
+  return post(apiUrl, payload);
+};

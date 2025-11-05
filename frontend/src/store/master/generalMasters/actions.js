@@ -11,6 +11,12 @@ import {
   DELETE_MARITAL_STATUS,
   IMPORT_MARITAL_STATUS,
   EXPORT_MARITAL_STATUS,
+  CONTINENT_LIST,
+  ADD_CONTINENT,
+  EDIT_CONTINENT,
+  DELETE_CONTINENT,
+  EXPORT_CONTINENT,
+  IMPORT_CONTINENT,
 } from "./actionTypes";
 
 // GENDER
@@ -86,3 +92,40 @@ export const maritalStatusImportData = (data, callback) => ({
   data,
   callback,
 })
+
+// CONTINENT
+export const continentList = (data, callback) => ({
+  type: CONTINENT_LIST,
+  data,
+  callback,
+});
+ 
+export const continentAdd = (data, callback) => ({
+  type: ADD_CONTINENT,
+  data,
+  callback,
+});
+ 
+export const continentEdit = (data, callback) => ({
+  type: EDIT_CONTINENT,
+  data,
+  callback,
+});
+ 
+export const continentDelete = (data, callback) => ({
+  type: DELETE_CONTINENT,
+  data,
+  callback,
+});
+ 
+export const continentExportData = (data, callback) => ({
+  type: EXPORT_CONTINENT,
+  data,
+  callback,
+});
+ 
+export const continentImportData = (data, callback) => ({
+  type: IMPORT_CONTINENT,
+  data,
+  callback,
+});

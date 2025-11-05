@@ -46,7 +46,7 @@ const OwnershipTypeList = () => {
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
   const [items] = useState(["Ownership Type","Company Type", "Description", "Modified On"]);
-  const [selectedItems, setSelectedItems] = useState(["Ownership Type"]);
+  const [selectedItems, setSelectedItems] = useState(["Ownership Type","Company Type"]);
   const [ItemsRequired] = useState(["Ownership Type","Company Type"]);
 
   // Updated state with sorting
@@ -555,10 +555,10 @@ const OwnershipTypeList = () => {
                         {getSortIcon('name')}
                       </div>
                     </th>
-                    <th scope="col" className='sorting-th' onClick={() => handleSort('category_name')}>
+                    <th scope="col" className='sorting-th' onClick={() => handleSort('company_type_name')}>
                       <div className="d-flex align-items-center">
-                        Company name
-                        {getSortIcon('category_name')}
+                        Company Type
+                        {getSortIcon('company_type_name')}
                       </div>
                     </th>
 
@@ -614,7 +614,7 @@ const OwnershipTypeList = () => {
                         </td>
                         <td >
                           <span >
-                            {rowItem.category_name}
+                            {rowItem.company_type_name}
                           </span>
                         </td>
 
