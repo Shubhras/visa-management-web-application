@@ -106,7 +106,7 @@ const AddImportStakeholderModal = ({ show, handleClose }) => {
         const worksheetData = [header, ...duplicates.map((item) => [item])];
         const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Stakeholder Category");
+        XLSX.utils.book_append_sheet(workbook, worksheet, "StakeholderCategory");
 
         const excelBuffer = XLSX.write(workbook, {
             bookType: "xlsx",
@@ -117,7 +117,7 @@ const AddImportStakeholderModal = ({ show, handleClose }) => {
             type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         });
 
-        saveAs(blob, `StakeholderCategory_${new Date().toISOString().split("T")[0]}.xlsx`);
+        saveAs(blob, `StakeholderCategory-Duplicate-Data.xlsx`);
     };
 
     // Handle modal close

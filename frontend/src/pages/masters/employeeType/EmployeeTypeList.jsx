@@ -30,7 +30,7 @@ const EmployeeTypeList = () => {
   const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this  employee type?");
   const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
-  const [deleteAllData, setDeleteAllData] = useState('');
+  const [selectAllOrNot, setSelectAllOrNot] = useState('');
   const [employeeTypeistData, setEmployeeTypeistData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
@@ -95,6 +95,12 @@ const EmployeeTypeList = () => {
           hasNext: paginationData.nextPage || false,
           hasPrevious: paginationData.previousPage || false
         }));
+        setSelectedRows(prev => {
+          const filtered = prev.filter(rowId =>
+            response?.data.some(rowItems => rowItems.uuid === rowId)
+          );
+          return filtered;
+        });
       } else {
         setEmployeeTypeistData([]);
         setTableState(prev => ({
@@ -177,12 +183,12 @@ const EmployeeTypeList = () => {
   };
   // For checkbox in table header
   const handleSelectAll = (e) => {
-
     const checked = e.target.checked;
     if (checked) {
       setSelectedRows(employeeTypeistData.map(dept => dept.uuid));
     } else {
       setSelectedRows([]);
+      setSelectAllOrNot('');
     }
   };
 
@@ -247,7 +253,9 @@ const EmployeeTypeList = () => {
     setShowEdit(true);
     setRowSelectData(rowData);
   };
-
+  const handleSelectAllOrNot = (a) => {
+    setSelectAllOrNot(a);
+  }
   const handleDelete = (uuid) => {
     setDeleteId(uuid);
     setShowDeleteConfirm(true);
@@ -255,20 +263,19 @@ const EmployeeTypeList = () => {
   };
 
   // Handle bulk delete
-  const handleBulkDelete = (deleteData) => {
+  const handleBulkDelete = () => {
     if (selectedRows.length === 0) {
-      toast.error('Please select rows to delete');
+      toast.error("Please select at least one row to delete");
       return;
     }
     // Choose message based on delete type
-    const message = deleteData === "all" ? `${tableState.total} all employee type` : `${selectedRows.length} selected employee type`;
+    const message = selectAllOrNot === "all" ? `${tableState.total} all employee type` : `${selectedRows.length} selected employee type`;
     setDeleteConfirmMessage(`Are you sure you want to delete this employee type (${message})?`);
     setShowDeleteConfirm(true);
-    setDeleteAllData(deleteData);
   };
   const confirmDelete = () => {
     // const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
-    const sendPayload = deleteAllData === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
+    const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
     if (!sendPayload || sendPayload.length === 0) {
       toast.error("No employee type selected for deletion.");
       return;
@@ -284,7 +291,8 @@ const EmployeeTypeList = () => {
           setEmployeeTypeistData(prevDepts => prevDepts.filter(dept => dept.uuid !== deleteId));
           setSelectedRows(prevSelected => prevSelected.filter(rowId => rowId !== deleteId));
           setShowDeleteConfirm(false);
-          setSelectedRows([])
+          setSelectedRows([]);
+          setSelectAllOrNot('');
           setDeleteId(null);
           fetchEmployeeTypeList();
 
@@ -300,7 +308,7 @@ const EmployeeTypeList = () => {
     setDeleteId(null);
     setSelectedRows([]);
     setDeleteConfirmMessage('');
-    setDeleteAllData('');
+    setSelectAllOrNot('');
   };
 
   const handleCloseImport = () => {
@@ -366,7 +374,7 @@ const EmployeeTypeList = () => {
     const sendPayload = {
       file: "xlsx",
       fields: fieldsString,
-      uuids: selectedRows, // your selected Employee Type IDs
+      uuids: selectAllOrNot === "all" ? [] : selectedRows,
     };
 
     setLoadingExport(true);
@@ -377,29 +385,6 @@ const EmployeeTypeList = () => {
         toast.error(error?.response?.message || "server error");
       } else {
         setLoadingExport(false);
-        // if (response?.status === 200) {
-        //   // Create a Blob from the CSV data
-        //   const blob = new Blob([response.data], { type: 'text/csv' });
-
-        //   // Create a temporary download link
-        //   const url = window.URL.createObjectURL(blob);
-        //   const link = document.createElement('a');
-        //   link.href = url;
-        //   link.download = `employeeTypeistData_${new Date().toISOString().split('T')[0]}.csv`;
-
-        //   // Trigger download
-        //   document.body.appendChild(link);
-        //   link.click();
-
-        //   // Cleanup
-        //   document.body.removeChild(link);
-        //   window.URL.revokeObjectURL(url);
-
-        //   toast.success("Export successful");
-        //   cancelExportTest();
-        // } else {
-        //   toast.error("Something went wrong.");
-        // }
         if (response?.status === 200) {
           const blob = new Blob([response.data], {
             type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -408,14 +393,16 @@ const EmployeeTypeList = () => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `employeeType_${new Date().toISOString().split('T')[0]}.xlsx`;
+          link.download = `EmployeeType.xlsx`;
           document.body.appendChild(link);
           link.click();
           link.remove();
           window.URL.revokeObjectURL(url);
-
           toast.success("Export successful");
           cancelExportTest();
+          setSelectedRows([]);
+          setSelectAllOrNot('');
+          setDeleteId(null);
         } else {
           toast.error("Something went wrong.");
         }
@@ -469,27 +456,27 @@ const EmployeeTypeList = () => {
                   >
                     Export
                   </button>
-                  {selectedRows.length == 0 && (
-                    <button
-                      onClick={handleSelectAllButton}
-                      className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
-                    >
-                      Delete
-                    </button>
-                  )}
-                  {selectedRows.length > 0 && (
-                    <button
-                      onClick={() => handleBulkDelete("")}
-                      className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
-                    >{`Delete Selected (${selectedRows.length})`}
-                    </button>
-                  )}
-                  {selectedRows.length > 0 && (
-                    <button
-                      onClick={() => handleBulkDelete("all")}
-                      className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
-                    >{`Delete All (${tableState.total})`}
-                    </button>
+                  <button
+                    onClick={handleBulkDelete}
+                    className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
+                  >
+                    Delete
+                  </button>
+                  {(selectedRows?.length > 0 && selectedRows?.length === employeeTypeistData?.length) && (
+                    <>
+                      <button
+                        onClick={() => handleSelectAllOrNot("onlySelected")}
+                        className={`btn btn-sm px-3 py-1 fw-medium ${selectAllOrNot === "onlySelected" ? "comman-btn-color" : "comman-inactive-btn"}`}
+                      >
+                        {`Select (${selectedRows.length})`}
+                      </button>
+                      <button
+                        onClick={() => handleSelectAllOrNot("all")}
+                        className={`btn btn-sm px-3 py-1 fw-medium ${selectAllOrNot === "all" ? "comman-btn-color" : "comman-inactive-btn"}`}
+                      >
+                        {`Select All (${tableState.total})`}
+                      </button>
+                    </>
                   )}
                 </div>
               </div>

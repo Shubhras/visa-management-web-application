@@ -33,18 +33,21 @@ class AdminUserLoginSerializer(serializers.Serializer):
         return data
 
 class GenderSerializer(serializers.ModelSerializer):
+    description = serializers.CharField(required=False, allow_blank=True)  # optional
+
     class Meta:
         model = Gender
-        fields = ['uuid', 'text', 'description', 'created_at', 'updated_at', 'is_active', 'is_deleted']
+        fields = ['uuid', 'name', 'description', 'created_at', 'updated_at', 'is_active', 'is_deleted']
         read_only_fields = ['uuid', 'created_at', 'updated_at', 'is_deleted']
 
 
 class MaritalstatusSerializer(serializers.ModelSerializer):
+    description = serializers.CharField(required=False, allow_blank=True)  # optional
+
     class Meta:
         model = Maritalstatus
-        fields = ['uuid', 'text', 'description', 'created_at', 'updated_at', 'is_active', 'is_deleted']
+        fields = ['uuid', 'name', 'description', 'created_at', 'updated_at', 'is_active', 'is_deleted']
         read_only_fields = ['uuid', 'created_at', 'updated_at', 'is_deleted']
-
 
 class ContinentSerializer(serializers.ModelSerializer):
     class Meta:
@@ -70,6 +73,7 @@ class CountrySerializer(serializers.ModelSerializer):
         model = Country
         fields = [
             'uuid', 'name', 'continent', 'continent_id',
+            'currencyfullname','currencyshortname','description',
             'shortName', 'fullName', 'officialName', 'capitalCity',
             'dialCodes', 'currencyCode', 'status',
             'is_active', 'is_deleted', 'created_at', 'updated_at'
@@ -157,7 +161,7 @@ class RelationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Relation
         fields = [
-            'uuid', 'relation', 'description',
+            'uuid', 'name', 'description',
             'is_deleted', 'created_at', 'updated_at'
         ]
         read_only_fields = ['uuid', 'created_at', 'updated_at']
@@ -315,15 +319,20 @@ class LostReasonB2BSerializer(serializers.ModelSerializer):
 class EducationLevelCodeSerializer(serializers.ModelSerializer):
     class Meta:
         model = EducationLevelCode
-        fields = ['uuid', 'Levelcode', 'description', 'created_at', 'updated_at']
+        fields = ['uuid', 'name', 'description', 'created_at', 'updated_at']
 
 
 
 
 class EducationLevelSerializer(serializers.ModelSerializer):
-    # Optionally display the related LevelCode's code
+    level_code = serializers.SlugRelatedField(
+        queryset=EducationLevelCode.objects.all(),
+        slug_field='uuid',  # Use UUID field in EducationLevelCode
+        allow_null=True,
+        required=False
+    )
     level_code_detail = serializers.CharField(
-        source='level_code.Levelcode', read_only=True
+        source='level_code.name', read_only=True
     )
 
     class Meta:
@@ -331,7 +340,7 @@ class EducationLevelSerializer(serializers.ModelSerializer):
         fields = [
             'uuid', 
             'level_code', 
-            'level_code_detail',  # optional for easy read
+            'level_code_detail',
             'educationlevel', 
             'description', 
             'is_deleted',
@@ -343,6 +352,13 @@ class EducationLevelSerializer(serializers.ModelSerializer):
 
 class EducationDurationSerializer(serializers.ModelSerializer):
     # Optionally display the related EducationLevel's name
+    educationlevel=serializers.SlugRelatedField(
+        queryset=EducationLevel.objects.all(),
+        slug_field='uuid', 
+        allow_null=True,
+        required=False
+    )
+
     educationlevel_detail = serializers.CharField(
         source='educationlevel.educationlevel', read_only=True
     )
@@ -352,7 +368,7 @@ class EducationDurationSerializer(serializers.ModelSerializer):
         fields = [
             'uuid',
             'educationlevel',
-            'educationlevel_detail',  # optional for easy read
+            'educationlevel_detail',  
             'durations',
             'description',
             'is_deleted',
@@ -369,7 +385,7 @@ class StudymainareaSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'uuid',
-            'Mainarea',
+            'name',
             'description',
             'is_deleted',
             'created_at',
@@ -380,15 +396,14 @@ class StudymainareaSerializer(serializers.ModelSerializer):
 
 
 
-class StudymajorareaSerializer(serializers.ModelSerializer):
-    mainarea = StudymainareaSerializer(read_only=True)
-    mainarea_id = serializers.PrimaryKeyRelatedField(
+class StudyMajorAreaSerializer(serializers.ModelSerializer):
+    mainarea = serializers.SlugRelatedField(
         queryset=Studymainarea.objects.all(),
-        source='mainarea',
-        write_only=True,
-        required=False,
-        allow_null=True
+        slug_field='uuid',  
+        allow_null=True,
+        required=False
     )
+    mainarea_name = serializers.CharField(source='mainarea.name', read_only=True)
 
     class Meta:
         model = Studymajorarea
@@ -396,15 +411,14 @@ class StudymajorareaSerializer(serializers.ModelSerializer):
             'id',
             'uuid',
             'mainarea',
-            'mainarea_id',
-            'Majorarea',
+            'mainarea_name',
+            'majorarea',
             'description',
             'is_deleted',
             'created_at',
-            'updated_at'
+            'updated_at',
         ]
         read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
-
 
 
 
@@ -418,10 +432,10 @@ class StudySpecialisationSerializer(serializers.ModelSerializer):
         allow_null=True
     )
 
-    Majorarea = StudymajorareaSerializer(read_only=True)
+    Majorarea = StudyMajorAreaSerializer(read_only=True)
     Majorarea_id = serializers.PrimaryKeyRelatedField(
         queryset=Studymajorarea.objects.all(),
-        source='Majorarea',
+        source='majorarea',
         write_only=True,
         required=False,
         allow_null=True
@@ -434,8 +448,8 @@ class StudySpecialisationSerializer(serializers.ModelSerializer):
             'uuid',
             'mainarea',
             'mainarea_id',
-            'Majorarea',
-            'Majorarea_id',
+            'majorarea',
+            'majorarea_id',
             'studyspecialisation',
             'description',
             'is_deleted',
@@ -452,7 +466,7 @@ class AcademicResultTypeSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'uuid',
-            'Academicresulttype',
+            'name',
             'description',
             'is_deleted',
             'created_at',

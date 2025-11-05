@@ -100,6 +100,108 @@ export const DELETE_BANK_ACCOUNT_TYPE_API = "api/v1/master/BankAccountType/";
 export const EXPORT_BANK_ACCOUNT_TYPE_API = "api/v1/master/BankAccountType/export/";
 export const IMPORT_BANK_ACCOUNT_TYPE_API = "api/v1/master/BankAccountType/import/";
 
+// GENDER
+export const GET_GENDER_LIST = "/api/v1/master/genders/";
+export const ADD_GENDER_API = "/api/v1/master/genders/create/";
+export const EDIT_GENDER_API = "api/v1/master/genders/";
+export const DELETE_GENDER_API = "api/v1/master/genders/";
+export const EXPORT_GENDER_API = "api/v1/master/genders/export/";
+export const IMPORT_GENDER_API = "api/v1/master/genders/import/";
+
+
+// MARITAL STATUS
+export const GET_MARITAL_STATUS_LIST = "/api/v1/master/maritalstatus/";
+export const ADD_MARITAL_STATUS_API = "/api/v1/master/maritalstatus/create/";
+export const EDIT_MARITAL_STATUS_API = "api/v1/master/maritalstatus/";
+export const DELETE_MARITAL_STATUS_API = "api/v1/master/maritalstatus/";
+export const EXPORT_MARITAL_STATUS_API = "api/v1/master/maritalstatus/export/";
+export const IMPORT_MARITAL_STATUS_API = "api/v1/master/maritalstatus/import/";
+
+
+
+// STAKEHOLDER_TYPE
+export const GET_STAKEHOLDER_TYPE_LIST = "/api/v1/master/stakeholder-types/";
+export const ADD_STAKEHOLDER_TYPE_API = "/api/v1/master/stakeholder-types/create/";
+export const EDIT_STAKEHOLDER_TYPE_API = "api/v1/master/stakeholder-types/";
+export const DELETE_STAKEHOLDER_TYPE_API = "api/v1/master/stakeholder-types/";
+export const EXPORT_STAKEHOLDER_TYPE_API = "api/v1/master/stakeholder-types/export/";
+export const IMPORT_STAKEHOLDER_TYPE_API = "api/v1/master/stakeholder-types/import/";
+
+// OWNERSHIP_TYPE
+export const GET_OWNERSHIP_TYPE_LIST = "/api/v1/master/ownership-types/";
+export const ADD_OWNERSHIP_TYPE_API = "/api/v1/master/ownership-types/create/";
+export const EDIT_OWNERSHIP_TYPE_API = "api/v1/master/ownership-types/";
+export const DELETE_OWNERSHIP_TYPE_API = "api/v1/master/ownership-types/";
+export const EXPORT_OWNERSHIP_TYPE_API = "api/v1/master/ownership-types/export/";
+export const IMPORT_OWNERSHIP_TYPE_API = "api/v1/master/ownership-types/import/";
+
+// ACCREDITATION_CATEGORY
+export const GET_ACCREDITATION_CATEGORY_LIST = "/api/v1/master/accreditation-category/";
+export const ADD_ACCREDITATION_CATEGORY_API = "/api/v1/master/accreditation-category/create/";
+export const EDIT_ACCREDITATION_CATEGORY_API = "api/v1/master/accreditation-category/";
+export const DELETE_ACCREDITATION_CATEGORY_API = "api/v1/master/accreditation-category/";
+export const EXPORT_ACCREDITATION_CATEGORY_API = "api/v1/master/accreditation-category/export/";
+export const IMPORT_ACCREDITATION_CATEGORY_API = "api/v1/master/accreditation-category/import/";
+
+// LICENCE_NAME
+export const GET_LICENCE_NAME_LIST = "/api/v1/master/license-name/";
+export const ADD_LICENCE_NAME_API = "/api/v1/master/license-name/create/";
+export const EDIT_LICENCE_NAME_API = "api/v1/master/license-name/";
+export const DELETE_LICENCE_NAME_API = "api/v1/master/license-name/";
+export const EXPORT_LICENCE_NAME_API = "api/v1/master/license-name/export/";
+export const IMPORT_LICENCE_NAME_API = "api/v1/master/license-name/import/";
+
+// ACCREDITATION_NAME
+export const GET_ACCREDITATION_NAME_LIST = "/api/v1/master/accreditation-name/";
+export const ADD_ACCREDITATION_NAME_API = "/api/v1/master/accreditation-name/create/";
+export const EDIT_ACCREDITATION_NAME_API = "api/v1/master/accreditation-name/";
+export const DELETE_ACCREDITATION_NAME_API = "api/v1/master/accreditation-name/";
+export const EXPORT_ACCREDITATION_NAME_API = "api/v1/master/accreditation-name/export/";
+export const IMPORT_ACCREDITATION_NAME_API = "api/v1/master/accreditation-name/import/";
+
+
+//Education level code
+export const GET_EDUCATION_LEVEL_CODE_LIST = "/api/v1/master/education-level-codes/";
+export const ADD_EDUCATION_LEVEL_CODE_API = "/api/v1/master/education-level-codes/create/";
+export const EDIT_EDUCATION_LEVEL_CODE_API = "api/v1/master/education-level-codes/";
+export const DELETE_EDUCATION_LEVEL_CODE_API = "api/v1/master/education-level-codes/";
+export const EXPORT_EDUCATION_LEVEL_CODE_API = "api/v1/master/education-level-codes/export/";
+export const IMPORT_EDUCATION_LEVEL_CODE_API = "api/v1/master/education-level-codes/import/";
+ 
+// EDUCATION_LEVEL
+export const GET_EDUCATION_LEVEL_LIST = "/api/v1/master/education-level/";
+export const ADD_EDUCATION_LEVEL_API = "/api/v1/master/education-level/create/";
+export const EDIT_EDUCATION_LEVEL_API = "api/v1/master/education-level/";
+export const DELETE_EDUCATION_LEVEL_API = "api/v1/master/education-level/";
+export const EXPORT_EDUCATION_LEVEL_API = "api/v1/master/education-level/export/";
+export const IMPORT_EDUCATION_LEVEL_API = "api/v1/master/education-level/import/";
+ 
+//Study Main Area
+export const GET_STUDY_MAIN_AREA_LIST = "/api/v1/master/studymainarea/";
+export const ADD_STUDY_MAIN_AREA_API = "/api/v1/master/studymainarea/create/";
+export const EDIT_STUDY_MAIN_AREA_API = "api/v1/master/studymainarea/";
+export const DELETE_STUDY_MAIN_AREA_API = "api/v1/master/studymainarea/";
+export const EXPORT_STUDY_MAIN_AREA_API = "api/v1/master/studymainarea/export/";
+export const IMPORT_STUDY_MAIN_AREA_API = "api/v1/master/studymainarea/import/";
+
+ 
+//CONTINENTS
+export const GET_CONTINENT_LIST_API = "/api/v1/master/continents/";
+export const Add_CONTINENT_LIST_API = "/api/v1/master/continents/create/";
+export const EDIT_CONTINENT_LIST_API = "api/v1/master/continents/";
+export const DELETE_CONTINENT_LIST_API = "api/v1/master/continents/";
+export const EXPORT_CONTINENT_LIST_API = "api/v1/master/continents/export/";
+export const IMPORT_CONTINENT_LIST_API = "api/v1/master/continents/import/";
+
+// CIVIL_ID_NAME
+export const GET_CIVIL_ID_NAME_LIST_API = "/api/v1/master/civil-id-name/";
+export const ADD_CIVIL_ID_NAME_LIST_API = "/api/v1/master/civil-id-name/create/";
+export const EDIT_CIVIL_ID_NAME_LIST_API = "api/v1/master/civil-id-name/";
+export const DELETE_CIVIL_ID_NAME_LIST_API = "api/v1/master/civil-id-name/";
+export const EXPORT_CIVIL_ID_NAME_LIST_API = "api/v1/master/civil-id-name/export/";
+export const IMPORT_CIVIL_ID_NAME_LIST_API = "api/v1/master/civil-id-name/import/";
+ 
+
 // // export const TWO_STEP_VERIFICATION = 'api/national-admin/national-admin-verifyOtpAdmin'
 // export const TWO_STEP_VERIFICATION = '/api/users/verifyUser'
 // export const FORGET_PASSWORD_URL = '/api/national-admin/forgotpassword/'
@@ -140,8 +242,7 @@ export const IMPORT_BANK_ACCOUNT_TYPE_API = "api/v1/master/BankAccountType/impor
 // export const GET_PORTAL_ACCESS = "/api/portalAnddocument/get-portal";
 // export const ADD_SUPERADMIN_IN_NATIONAL_ADMIN_URL="/api/national-admin/add-superAdmin-byNatioanalAdmin"
 // export const ADD_ADMIN_IN_NATIONAL_ADMIN_URL="/api/national-admin/add-admin-byNatioanalAdmin"
-// export const ADD_CUSTOMER_IN_NATIONAL_ADMIN_URL="/api/national-admin/add-customer-byNatioanalAdmin"
-
+ export const GET_COUNTRY_LIST_DEMO = "/api/v1/master/country/";
 
 
 

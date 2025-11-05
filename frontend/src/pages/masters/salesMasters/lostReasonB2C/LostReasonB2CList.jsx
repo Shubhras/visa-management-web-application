@@ -30,13 +30,13 @@ const LostReasonB2CList = () => {
   const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this lost reason (B2C)?");
   const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
-  const [deleteAllData, setDeleteAllData] = useState('');
+  const [selectAllOrNot, setSelectAllOrNot] = useState('');
   const [lostReasonB2CListData, setLostReasonB2CListData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [items] = useState(["Lost Reason(B2C)", "Description", "Modified On"]);
-  const [selectedItems, setSelectedItems] = useState(["Lost Reason(B2C)"]);
-  const [ItemsRequired] = useState(["Lost Reason(B2C)"]);
+  const [items] = useState(["Lost Reason (B2C)", "Description", "Modified On"]);
+  const [selectedItems, setSelectedItems] = useState(["Lost Reason (B2C)"]);
+  const [ItemsRequired] = useState(["Lost Reason (B2C)"]);
 
   // Updated state with sorting
   const [tableState, setTableState] = useState({
@@ -92,6 +92,12 @@ const LostReasonB2CList = () => {
           hasNext: paginationData.nextPage || false,
           hasPrevious: paginationData.previousPage || false
         }));
+        setSelectedRows(prev => {
+          const filtered = prev.filter(rowId =>
+            response?.data.some(rowItems => rowItems.uuid === rowId)
+          );
+          return filtered;
+        });
       } else {
         setLostReasonB2CListData([]);
         setTableState(prev => ({
@@ -174,12 +180,12 @@ const LostReasonB2CList = () => {
   };
   // For checkbox in table header
   const handleSelectAll = (e) => {
-
     const checked = e.target.checked;
     if (checked) {
       setSelectedRows(lostReasonB2CListData.map(dept => dept.uuid));
     } else {
       setSelectedRows([]);
+      setSelectAllOrNot('');
     }
   };
 
@@ -244,29 +250,29 @@ const LostReasonB2CList = () => {
     setShowEdit(true);
     setRowSelectData(rowData);
   };
-
+  const handleSelectAllOrNot = (a) => {
+    setSelectAllOrNot(a);
+  }
   const handleDelete = (uuid) => {
     setDeleteId(uuid);
     setShowDeleteConfirm(true);
     setDeleteConfirmMessage(`Are you sure you want to delete this lost reason (B2C)?`);
   };
 
-  const handleBulkDelete = (deleteData) => {
+  const handleBulkDelete = () => {
     if (selectedRows.length === 0) {
-      toast.error("Please select rows to delete");
+      toast.error("Please select at least one row to delete");
       return;
     }
     // Choose message based on delete type
-    const message = deleteData === "all" ? `${tableState.total} all lost reason (B2C)` : `${selectedRows.length} selected lost reason (B2C)`;
+    const message = selectAllOrNot === "all" ? `${tableState.total} all lost reason (B2C)` : `${selectedRows.length} selected lost reason (B2C)`;
     setDeleteConfirmMessage(`Are you sure you want to delete this lost reason (B2C) (${message})?`);
     setShowDeleteConfirm(true);
-    setDeleteAllData(deleteData);
   };
 
   const confirmDelete = () => {
     // const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
-    const sendPayload = deleteAllData === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
-
+    const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
     if (!sendPayload || sendPayload.length === 0) {
       toast.error("No lost reason (B2C) selected for deletion.");
       return;
@@ -281,7 +287,8 @@ const LostReasonB2CList = () => {
           setLostReasonB2CListData(prevDepts => prevDepts.filter(dept => dept.uuid !== deleteId));
           setSelectedRows(prevSelected => prevSelected.filter(rowId => rowId !== deleteId));
           setShowDeleteConfirm(false);
-          setSelectedRows([])
+          setSelectedRows([]);
+          setSelectAllOrNot('');
           setDeleteId(null);
           fetchLostReasonB2CList();
         } else {
@@ -360,9 +367,8 @@ const LostReasonB2CList = () => {
     const sendPayload = {
       file: "xlsx",
       fields: fieldsString,
-      uuids: selectedRows, // your selected LostReason(B2B) IDs
+      uuids: selectAllOrNot === "all" ? [] : selectedRows,
     };
-
     setLoadingExport(true);
 
     dispatch(lostReasonB2CExportData(sendPayload, (response, error) => {
@@ -379,14 +385,16 @@ const LostReasonB2CList = () => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `LostReason(B2B)_${new Date().toISOString().split('T')[0]}.xlsx`;
+          link.download = `LostReason(B2C).xlsx`;
           document.body.appendChild(link);
           link.click();
           link.remove();
           window.URL.revokeObjectURL(url);
-
           toast.success("Export successful");
           cancelExportTest();
+          setSelectedRows([]);
+          setSelectAllOrNot('');
+          setDeleteId(null);
         } else {
           toast.error("Something went wrong.");
         }
@@ -435,27 +443,27 @@ const LostReasonB2CList = () => {
                   >
                     Export
                   </button>
-                  {selectedRows.length == 0 && (
-                    <button
-                      onClick={handleSelectAllButton}
-                      className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
-                    >
-                      Delete
-                    </button>
-                  )}
-                  {selectedRows.length > 0 && (
-                    <button
-                      onClick={() => handleBulkDelete("")}
-                      className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
-                    >{`Delete Selected (${selectedRows.length})`}
-                    </button>
-                  )}
-                  {selectedRows.length > 0 && (
-                    <button
-                      onClick={() => handleBulkDelete("all")}
-                      className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
-                    >{`Delete All (${tableState.total})`}
-                    </button>
+                  <button
+                    onClick={handleBulkDelete}
+                    className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
+                  >
+                    Delete
+                  </button>
+                  {(selectedRows?.length > 0 && selectedRows?.length === lostReasonB2CListData?.length) && (
+                    <>
+                      <button
+                        onClick={() => handleSelectAllOrNot("onlySelected")}
+                        className={`btn btn-sm px-3 py-1 fw-medium ${selectAllOrNot === "onlySelected" ? "comman-btn-color" : "comman-inactive-btn"}`}
+                      >
+                        {`Select (${selectedRows.length})`}
+                      </button>
+                      <button
+                        onClick={() => handleSelectAllOrNot("all")}
+                        className={`btn btn-sm px-3 py-1 fw-medium ${selectAllOrNot === "all" ? "comman-btn-color" : "comman-inactive-btn"}`}
+                      >
+                        {`Select All (${tableState.total})`}
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
@@ -774,7 +782,7 @@ const LostReasonB2CList = () => {
             </div>
           </div>
         )}
-         {showExportPopop && (
+        {showExportPopop && (
           <div
             className="modal fade show common-ctl-popup"
             tabIndex={-1}

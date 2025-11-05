@@ -104,7 +104,7 @@ const AddImportEmployeeModal = ({ show, handleClose }) => {
         const worksheetData = [header, ...duplicates.map((item) => [item])];
         const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Employee Type");
+        XLSX.utils.book_append_sheet(workbook, worksheet, "EmployeetType");
 
         const excelBuffer = XLSX.write(workbook, {
             bookType: "xlsx",
@@ -115,7 +115,7 @@ const AddImportEmployeeModal = ({ show, handleClose }) => {
             type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         });
 
-        saveAs(blob, `EmployeetType_${new Date().toISOString().split("T")[0]}.xlsx`);
+        saveAs(blob, `EmployeetType-Duplicate-Data.xlsx`);
     };
     // Handle modal close
     const onClose = () => {
@@ -148,7 +148,7 @@ const AddImportEmployeeModal = ({ show, handleClose }) => {
                     <div className="modal-content radius-16 bg-base">
                         <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
                             <h1 className="modal-title fs-5" id="EmployeeModalLabel">
-                                Upload Employee
+                                Upload Employee Type
                             </h1>
                             <button
                                 type="button"

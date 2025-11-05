@@ -5,18 +5,18 @@ from master.models import *
 # ---------- BASIC MODELS ----------
 @admin.register(Gender)
 class GenderAdmin(admin.ModelAdmin):
-    list_display = ('text', 'description', 'is_active', 'is_deleted', 'created_at', 'updated_at')
-    search_fields = ('text',)
+    list_display = ('name', 'description', 'is_active', 'is_deleted', 'created_at', 'updated_at')
+    search_fields = ('name',)
     list_filter = ('is_active', 'is_deleted')
-    ordering = ('text',)
+    ordering = ('name',)
 
 
 @admin.register(Maritalstatus)
 class MaritalstatusAdmin(admin.ModelAdmin):
-    list_display = ('text', 'description', 'is_active', 'is_deleted', 'created_at', 'updated_at')
-    search_fields = ('text',)
+    list_display = ('name', 'description', 'is_active', 'is_deleted', 'created_at', 'updated_at')
+    search_fields = ('name',)
     list_filter = ('is_active', 'is_deleted')
-    ordering = ('text',)
+    ordering = ('name',)
 
 
 # ---------- LOCATION MODELS ----------
@@ -67,10 +67,10 @@ class CityAdmin(admin.ModelAdmin):
 # ---------- OTHER MASTER MODELS ----------
 @admin.register(Relation)
 class RelationAdmin(admin.ModelAdmin):
-    list_display = ('relation', 'description', 'is_deleted', 'created_at', 'updated_at')
-    search_fields = ('relation',)
+    list_display = ('name', 'description', 'is_deleted', 'created_at', 'updated_at')
+    search_fields = ('name',)
     list_filter = ('is_deleted',)
-    ordering = ('relation',)
+    ordering = ('name',)
 
 
 @admin.register(Timezone)
@@ -219,10 +219,10 @@ class LostReasonAdmin(admin.ModelAdmin):
 # ---------- EDUCATION ----------
 @admin.register(EducationLevelCode)
 class EducationLevelCodeAdmin(admin.ModelAdmin):
-    list_display = ('level_code', 'description', 'is_deleted', 'created_at', 'updated_at')
-    search_fields = ('level_code',)
+    list_display = ('name', 'description', 'is_deleted', 'created_at', 'updated_at')
+    search_fields = ('name',)
     list_filter = ('is_deleted',)
-    ordering = ('level_code',)
+    ordering = ('name',)
 
 
 @admin.register(EducationLevel)

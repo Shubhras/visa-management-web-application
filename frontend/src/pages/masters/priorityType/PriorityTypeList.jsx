@@ -30,7 +30,7 @@ const PriorityTypeList = () => {
   const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this priority?");
   const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
-  const [deleteAllData, setDeleteAllData] = useState('');
+  const [selectAllOrNot, setSelectAllOrNot] = useState('');
   const [priorityTypeListData, setPriorityTypeListData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
@@ -92,6 +92,13 @@ const PriorityTypeList = () => {
           hasNext: paginationData.nextPage || false,
           hasPrevious: paginationData.previousPage || false
         }));
+        setSelectedRows(prev => {
+          const filtered = prev.filter(rowId =>
+            response?.data.some(rowItems => rowItems.uuid === rowId)
+          );
+          return filtered;
+        });
+
       } else {
         setPriorityTypeListData([]);
         setTableState(prev => ({
@@ -180,6 +187,7 @@ const PriorityTypeList = () => {
       setSelectedRows(priorityTypeListData.map(dept => dept.uuid));
     } else {
       setSelectedRows([]);
+      setSelectAllOrNot('');
     }
   };
 
@@ -244,29 +252,29 @@ const PriorityTypeList = () => {
     setShowEdit(true);
     setRowSelectData(rowData);
   };
-
+  const handleSelectAllOrNot = (a) => {
+    setSelectAllOrNot(a);
+  }
   const handleDelete = (uuid) => {
     setDeleteId(uuid);
     setShowDeleteConfirm(true);
     setDeleteConfirmMessage(`Are you sure you want to delete this priority?`);
   };
 
-  const handleBulkDelete = (deleteData) => {
+  const handleBulkDelete = () => {
     if (selectedRows.length === 0) {
-      alert('Please select rows to delete');
+      toast.error("Please select at least one row to delete");
       return;
     }
     // Choose message based on delete type
-    const message = deleteData === "all" ? `${tableState.total} all priority` : `${selectedRows.length} selected priority`;
+    const message = selectAllOrNot === "all" ? `${tableState.total} all priority` : `${selectedRows.length} selected priority`;
     setDeleteConfirmMessage(`Are you sure you want to delete this priority (${message})?`);
     setShowDeleteConfirm(true);
-    setDeleteAllData(deleteData);
   };
 
   const confirmDelete = () => {
     // const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
-    const sendPayload = deleteAllData === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
-
+    const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
     if (!sendPayload || sendPayload.length === 0) {
       toast.error("No priority selected for deletion.");
       return;
@@ -281,7 +289,8 @@ const PriorityTypeList = () => {
           setPriorityTypeListData(prevDepts => prevDepts.filter(dept => dept.uuid !== deleteId));
           setSelectedRows(prevSelected => prevSelected.filter(rowId => rowId !== deleteId));
           setShowDeleteConfirm(false);
-          setSelectedRows([])
+          setSelectedRows([]);
+          setSelectAllOrNot('');
           setDeleteId(null);
           fetchPriorityTypeList();
         } else {
@@ -296,7 +305,7 @@ const PriorityTypeList = () => {
     setDeleteId(null);
     setSelectedRows([]);
     setDeleteConfirmMessage('');
-    setDeleteAllData('');
+    setSelectAllOrNot('');
   };
 
   const handleCloseImport = () => {
@@ -361,7 +370,7 @@ const PriorityTypeList = () => {
     const sendPayload = {
       file: "xlsx",
       fields: fieldsString,
-      uuids: selectedRows, // your selected priority IDs
+      uuids: selectAllOrNot === "all" ? [] : selectedRows,
     };
 
     setLoadingExport(true);
@@ -380,14 +389,16 @@ const PriorityTypeList = () => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `PriorityType_${new Date().toISOString().split('T')[0]}.xlsx`;
+          link.download = `PriorityType.xlsx`;
           document.body.appendChild(link);
           link.click();
           link.remove();
           window.URL.revokeObjectURL(url);
-
           toast.success("Export successful");
           cancelExportTest();
+          setSelectedRows([]);
+          setSelectAllOrNot('');
+          setDeleteId(null);
         } else {
           toast.error("Something went wrong.");
         }
@@ -436,33 +447,27 @@ const PriorityTypeList = () => {
                   >
                     Export
                   </button>
-                  {/* <button
-                                onClick={handleSelectAllButton}
-                                className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
-                              >
-                                {isAllSelected ? 'Deselect All' : 'Select All'}
-                              </button> */}
-                  {selectedRows.length == 0 && (
-                    <button
-                      onClick={handleSelectAllButton}
-                      className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
-                    >
-                      Delete
-                    </button>
-                  )}
-                  {selectedRows.length > 0 && (
-                    <button
-                      onClick={() => handleBulkDelete("")}
-                      className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
-                    >{`Delete Selected (${selectedRows.length})`}
-                    </button>
-                  )}
-                  {selectedRows.length > 0 && (
-                    <button
-                      onClick={() => handleBulkDelete("all")}
-                      className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
-                    >{`Delete All (${tableState.total})`}
-                    </button>
+                  <button
+                    onClick={handleBulkDelete}
+                    className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
+                  >
+                    Delete
+                  </button>
+                  {(selectedRows?.length > 0 && selectedRows?.length === priorityTypeListData?.length) && (
+                    <>
+                      <button
+                        onClick={() => handleSelectAllOrNot("onlySelected")}
+                        className={`btn btn-sm px-3 py-1 fw-medium ${selectAllOrNot === "onlySelected" ? "comman-btn-color" : "comman-inactive-btn"}`}
+                      >
+                        {`Select (${selectedRows.length})`}
+                      </button>
+                      <button
+                        onClick={() => handleSelectAllOrNot("all")}
+                        className={`btn btn-sm px-3 py-1 fw-medium ${selectAllOrNot === "all" ? "comman-btn-color" : "comman-inactive-btn"}`}
+                      >
+                        {`Select All (${tableState.total})`}
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
@@ -781,7 +786,7 @@ const PriorityTypeList = () => {
             </div>
           </div>
         )}
-         {showExportPopop && (
+        {showExportPopop && (
           <div
             className="modal fade show common-ctl-popup"
             tabIndex={-1}

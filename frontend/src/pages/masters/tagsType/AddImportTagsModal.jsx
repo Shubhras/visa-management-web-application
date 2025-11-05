@@ -115,7 +115,7 @@ const [showSampleExcelDownload, setShowSampleExcelDownload] = useState(false);
             type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         });
 
-        saveAs(blob, `Tags_${new Date().toISOString().split("T")[0]}.xlsx`);
+        saveAs(blob, `Tags-Duplicate-Data.xlsx`);
     };
     // Handle modal close
     const onClose = () => {

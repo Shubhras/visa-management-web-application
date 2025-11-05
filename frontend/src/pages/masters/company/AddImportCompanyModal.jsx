@@ -104,7 +104,7 @@ const AddImportCompanyModal = ({ show, handleClose }) => {
         const worksheetData = [header, ...duplicates.map((item) => [item])];
         const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Company Type");
+        XLSX.utils.book_append_sheet(workbook, worksheet, "CompanyType");
 
         const excelBuffer = XLSX.write(workbook, {
             bookType: "xlsx",
@@ -115,7 +115,7 @@ const AddImportCompanyModal = ({ show, handleClose }) => {
             type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         });
 
-        saveAs(blob, `CompanyType_${new Date().toISOString().split("T")[0]}.xlsx`);
+        saveAs(blob, `CompanyType-Duplicate-Data.xlsx`);
     };
     // Handle modal close
     const onClose = () => {

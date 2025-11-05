@@ -7,42 +7,42 @@ import { Link } from 'react-router-dom';
 import { toast } from "react-toastify";
 import AddImportBankAccountTypeModal from './AddImportBankAccountTypeModal';
 import AddEditBankAccountTypeModal from './AddEditBankAccountTypeModal';
-import { bankAccountTypeList ,bankAccountTypeDelete, bankAccountTypeExportData} from '../../../../store/master/companyMasters/actions';
+import { bankAccountTypeList, bankAccountTypeDelete, bankAccountTypeExportData } from '../../../../store/master/companyMasters/actions';
 
 const BankAccountTypeList = () => {
   const dispatch = useDispatch();
   const [modalState, setModalState] = useState({
-  show: false,
-  mode: 'add', // 'add' or 'edit'
-  rowData: null
-})
-  const handleShow = () => {
-  setModalState({
-    show: true,
-    mode: 'add',
-    rowData: null
-  });
-};
-// For closing modal
-const handleClose = () => {
-  setModalState({
     show: false,
-    mode: 'add',
+    mode: 'add', // 'add' or 'edit'
     rowData: null
-  });
-  fetchDepartmentList();
-}
+  })
+  const handleShow = () => {
+    setModalState({
+      show: true,
+      mode: 'add',
+      rowData: null
+    });
+  };
+  // For closing modal
+  const handleClose = () => {
+    setModalState({
+      show: false,
+      mode: 'add',
+      rowData: null
+    });
+    fetchBankAccountTypeList();
+  }
 
   // const [showEdit, setShowEdit] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [rowSelectData, setRowSelectData] = useState({});
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this department?");
+  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this bank account type?");
   const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
-  const [deleteAllData, setDeleteAllData] = useState('');
-  const [departments, setDepartments] = useState([]);
+  const [selectAllOrNot, setSelectAllOrNot] = useState('');
+  const [bankAccountTypeData, setBankAccountTypeData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
   const [items] = useState(["Bank Account Type", "Description", "Modified On"]);
@@ -67,7 +67,7 @@ const handleClose = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (tableState.search !== undefined) {
-        fetchDepartmentList();
+        fetchBankAccountTypeList();
       }
     }, 500);
 
@@ -75,10 +75,10 @@ const handleClose = () => {
   }, [tableState.search]);
 
   useEffect(() => {
-    fetchDepartmentList();
+    fetchBankAccountTypeList();
   }, [tableState.page, tableState.limit, tableState.status, tableState.sortBy, tableState.sortOrder]);
 
-  const fetchDepartmentList = () => {
+  const fetchBankAccountTypeList = () => {
     setLoading(true);
     const params = {
       page: tableState.page,
@@ -94,7 +94,7 @@ const handleClose = () => {
       if (response?.statusCode === 200 && response?.status === true) {
         const paginationData = response?.pagination || {};
 
-        setDepartments(response?.data || []);
+        setBankAccountTypeData(response?.data || []);
         setTableState(prev => ({
           ...prev,
           total: paginationData.totalItems || 0,
@@ -103,8 +103,14 @@ const handleClose = () => {
           hasNext: paginationData.nextPage || false,
           hasPrevious: paginationData.previousPage || false
         }));
+        setSelectedRows(prev => {
+          const filtered = prev.filter(rowId =>
+            response?.data.some(rowItems => rowItems.uuid === rowId)
+          );
+          return filtered;
+        });
       } else {
-        setDepartments([]);
+        setBankAccountTypeData([]);
         setTableState(prev => ({
           ...prev,
           total: 0,
@@ -173,17 +179,17 @@ const handleClose = () => {
     if (isAllSelected) {
       setSelectedRows([]);
     } else {
-      setSelectedRows(departments.map(Item => Item.uuid));
+      setSelectedRows(bankAccountTypeData.map(Item => Item.uuid));
     }
   };
   // For checkbox in table header
   const handleSelectAll = (e) => {
-
     const checked = e.target.checked;
     if (checked) {
-      setSelectedRows(departments.map(Item => Item.uuid));
+      setSelectedRows(bankAccountTypeData.map(Item => Item.uuid));
     } else {
       setSelectedRows([]);
+      setSelectAllOrNot('');
     }
   };
 
@@ -197,8 +203,8 @@ const handleClose = () => {
     });
   };
 
-  const isAllSelected = departments.length > 0 &&
-    departments.every(Item => selectedRows.includes(Item.uuid));
+  const isAllSelected = bankAccountTypeData.length > 0 &&
+    bankAccountTypeData.every(Item => selectedRows.includes(Item.uuid));
 
   const goToPage = (page) => {
     if (page >= 1 && page <= tableState.totalPages) {
@@ -241,38 +247,39 @@ const handleClose = () => {
 
   // const handleCloseEdit = () => {
   //   setShowEdit(false);
-  //   fetchDepartmentList();
+  //   fetchBankAccountTypeList();
   // };
 
-const handleShowEdit = (rowData) => {
-  setModalState({
-    show: true,
-    mode: 'edit',
-    rowData: rowData
-  });
-};
+  const handleShowEdit = (rowData) => {
+    setModalState({
+      show: true,
+      mode: 'edit',
+      rowData: rowData
+    });
+  };
+  const handleSelectAllOrNot = (a) => {
+    setSelectAllOrNot(a);
+  }
   const handleDelete = (uuid) => {
     setDeleteId(uuid);
     setShowDeleteConfirm(true);
     setDeleteConfirmMessage(`Are you sure you want to delete this bank account type?`);
   };
 
-  const handleBulkDelete = (deleteData) => {
+  const handleBulkDelete = () => {
     if (selectedRows.length === 0) {
-      toast.error("Please select rows to delete");
+      toast.error("Please select at least one row to delete");
       return;
     }
     // Choose message based on delete type
-    const message = deleteData === "all" ? `${tableState.total} all bank account type` : `${selectedRows.length} selected bank account type`;
+    const message = selectAllOrNot === "all" ? `${tableState.total} all bank account type` : `${selectedRows.length} selected bank account type`;
     setDeleteConfirmMessage(`Are you sure you want to delete this bank account type (${message})?`);
     setShowDeleteConfirm(true);
-    setDeleteAllData(deleteData);
   };
 
   const confirmDelete = () => {
     // const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
-    const sendPayload = deleteAllData === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
-
+    const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
     if (!sendPayload || sendPayload.length === 0) {
       toast.error("No bank account type selected for deletion.");
       return;
@@ -283,12 +290,13 @@ const handleShowEdit = (rowData) => {
       } else {
         if (response?.statusCode === 200 && response?.status === true) {
           toast.success(response?.message);
-          setDepartments(prevRowItems => prevRowItems.filter(Item => Item.uuid !== deleteId));
+          setBankAccountTypeData(prevRowItems => prevRowItems.filter(Item => Item.uuid !== deleteId));
           setSelectedRows(prevSelected => prevSelected.filter(rowId => rowId !== deleteId));
           setShowDeleteConfirm(false);
-          setSelectedRows([])
+          setSelectedRows([]);
+          setSelectAllOrNot('');
           setDeleteId(null);
-          fetchDepartmentList();
+          fetchBankAccountTypeList();
         } else {
           toast.error("Something went wrong.");
         }
@@ -301,12 +309,12 @@ const handleShowEdit = (rowData) => {
     setDeleteId(null);
     setSelectedRows([])
     setDeleteConfirmMessage('');
-    setDeleteAllData('');
+    setSelectAllOrNot('');
   };
 
   const handleCloseImport = () => {
     setShowImport(false);
-    fetchDepartmentList();
+    fetchBankAccountTypeList();
   };
 
   const handleShowImport = () => {
@@ -367,7 +375,7 @@ const handleShowEdit = (rowData) => {
     const sendPayload = {
       file: "xlsx",
       fields: fieldsString,
-      uuids: selectedRows, // your selected Bank Account Type IDs
+      uuids: selectAllOrNot === "all" ? [] : selectedRows,
     };
 
     setLoadingExport(true);
@@ -385,14 +393,16 @@ const handleShowEdit = (rowData) => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `BankAccountType_${new Date().toISOString().split('T')[0]}.xlsx`;
+          link.download = `BankAccountType.xlsx`;
           document.body.appendChild(link);
           link.click();
           link.remove();
           window.URL.revokeObjectURL(url);
-
           toast.success("Export successful");
           cancelExportTest();
+          setSelectedRows([]);
+          setSelectAllOrNot('');
+          setDeleteId(null);
         } else {
           toast.error("Something went wrong.");
         }
@@ -421,7 +431,7 @@ const handleShowEdit = (rowData) => {
   return (
     <>
       <MasterLayout>
-        {/* <Breadcrumb title="Department" subTitle="List" /> */}
+        {/* <Breadcrumb title="bank account type" subTitle="List" /> */}
         <div className="card basic-data-table main-container-data">
           <div className="card-body container-data">
             <div className="row align-items-center gy-3 gx-2 flex-wrap filter-action-btn">
@@ -441,27 +451,27 @@ const handleShowEdit = (rowData) => {
                   >
                     Export
                   </button>
-                  {selectedRows.length == 0 && (
-                    <button
-                      onClick={handleSelectAllButton}
-                      className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
-                    >
-                      Delete
-                    </button>
-                  )}
-                  {selectedRows.length > 0 && (
-                    <button
-                      onClick={() => handleBulkDelete("")}
-                      className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
-                    >{`Delete Selected (${selectedRows.length})`}
-                    </button>
-                  )}
-                  {selectedRows.length > 0 && (
-                    <button
-                      onClick={() => handleBulkDelete("all")}
-                      className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
-                    >{`Delete All (${tableState.total})`}
-                    </button>
+                  <button
+                    onClick={handleBulkDelete}
+                    className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
+                  >
+                    Delete
+                  </button>
+                  {(selectedRows?.length > 0 && selectedRows?.length === bankAccountTypeData?.length) && (
+                    <>
+                      <button
+                        onClick={() => handleSelectAllOrNot("onlySelected")}
+                        className={`btn btn-sm px-3 py-1 fw-medium ${selectAllOrNot === "onlySelected" ? "comman-btn-color" : "comman-inactive-btn"}`}
+                      >
+                        {`Select (${selectedRows.length})`}
+                      </button>
+                      <button
+                        onClick={() => handleSelectAllOrNot("all")}
+                        className={`btn btn-sm px-3 py-1 fw-medium ${selectAllOrNot === "all" ? "comman-btn-color" : "comman-inactive-btn"}`}
+                      >
+                        {`Select All (${tableState.total})`}
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
@@ -533,7 +543,7 @@ const handleShowEdit = (rowData) => {
                           type="checkbox"
                           checked={isAllSelected}
                           onChange={handleSelectAll}
-                          disabled={departments.length === 0}
+                          disabled={bankAccountTypeData.length === 0}
                         />
                         <span>No.</span>
                       </div>
@@ -573,8 +583,8 @@ const handleShowEdit = (rowData) => {
                         </div>
                       </td>
                     </tr>
-                  ) : departments.length > 0 ? (
-                    departments.map((rowItem, index) => (
+                  ) : bankAccountTypeData.length > 0 ? (
+                    bankAccountTypeData.map((rowItem, index) => (
                       <tr key={rowItem.uuid} >
                         <td >
                           <div className="d-flex align-items-center gap-2">

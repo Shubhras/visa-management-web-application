@@ -12,26 +12,26 @@ import AddEditDepartmentModal from './AddEditDepartmentModal';
 const DepartmentList = () => {
   const dispatch = useDispatch();
   const [modalState, setModalState] = useState({
-  show: false,
-  mode: 'add', // 'add' or 'edit'
-  rowData: null
-})
-  const handleShow = () => {
-  setModalState({
-    show: true,
-    mode: 'add',
-    rowData: null
-  });
-};
-// For closing modal
-const handleClose = () => {
-  setModalState({
     show: false,
-    mode: 'add',
+    mode: 'add', // 'add' or 'edit'
     rowData: null
-  });
-  fetchDepartmentList();
-}
+  })
+  const handleShow = () => {
+    setModalState({
+      show: true,
+      mode: 'add',
+      rowData: null
+    });
+  };
+  // For closing modal
+  const handleClose = () => {
+    setModalState({
+      show: false,
+      mode: 'add',
+      rowData: null
+    });
+    fetchDepartmentList();
+  }
 
   // const [showEdit, setShowEdit] = useState(false);
   const [showImport, setShowImport] = useState(false);
@@ -41,7 +41,7 @@ const handleClose = () => {
   const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this department?");
   const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
-  const [deleteAllData, setDeleteAllData] = useState('');
+  const [selectAllOrNot, setSelectAllOrNot] = useState('');
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
@@ -103,6 +103,13 @@ const handleClose = () => {
           hasNext: paginationData.nextPage || false,
           hasPrevious: paginationData.previousPage || false
         }));
+
+        setSelectedRows(prev => {
+          const filtered = prev.filter(rowId =>
+            response?.data.some(rowItems => rowItems.uuid === rowId)
+          );
+          return filtered;
+        });
       } else {
         setDepartments([]);
         setTableState(prev => ({
@@ -178,12 +185,12 @@ const handleClose = () => {
   };
   // For checkbox in table header
   const handleSelectAll = (e) => {
-
     const checked = e.target.checked;
     if (checked) {
       setSelectedRows(departments.map(Item => Item.uuid));
     } else {
       setSelectedRows([]);
+      setSelectAllOrNot('');
     }
   };
 
@@ -239,40 +246,37 @@ const handleClose = () => {
     return pages;
   };
 
-  // const handleCloseEdit = () => {
-  //   setShowEdit(false);
-  //   fetchDepartmentList();
-  // };
+  const handleShowEdit = (rowData) => {
+    setModalState({
+      show: true,
+      mode: 'edit',
+      rowData: rowData
+    });
+  };
 
-const handleShowEdit = (rowData) => {
-  setModalState({
-    show: true,
-    mode: 'edit',
-    rowData: rowData
-  });
-};
+  const handleSelectAllOrNot = (a) => {
+    setSelectAllOrNot(a);
+  }
   const handleDelete = (uuid) => {
     setDeleteId(uuid);
     setShowDeleteConfirm(true);
     setDeleteConfirmMessage(`Are you sure you want to delete this department?`);
   };
 
-  const handleBulkDelete = (deleteData) => {
+  const handleBulkDelete = () => {
     if (selectedRows.length === 0) {
-      toast.error("Please select rows to delete");
+      toast.error("Please select at least one row to delete");
       return;
     }
     // Choose message based on delete type
-    const message = deleteData === "all" ? `${tableState.total} all departments` : `${selectedRows.length} selected departments`;
+    const message = selectAllOrNot === "all" ? `${tableState.total} all departments` : `${selectedRows.length} selected departments`;
     setDeleteConfirmMessage(`Are you sure you want to delete this department (${message})?`);
     setShowDeleteConfirm(true);
-    setDeleteAllData(deleteData);
   };
 
   const confirmDelete = () => {
     // const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
-    const sendPayload = deleteAllData === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
-
+    const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
     if (!sendPayload || sendPayload.length === 0) {
       toast.error("No department selected for deletion.");
       return;
@@ -286,7 +290,8 @@ const handleShowEdit = (rowData) => {
           setDepartments(prevRowItems => prevRowItems.filter(Item => Item.uuid !== deleteId));
           setSelectedRows(prevSelected => prevSelected.filter(rowId => rowId !== deleteId));
           setShowDeleteConfirm(false);
-          setSelectedRows([])
+          setSelectedRows([]);
+          setSelectAllOrNot('');
           setDeleteId(null);
           fetchDepartmentList();
         } else {
@@ -301,7 +306,7 @@ const handleShowEdit = (rowData) => {
     setDeleteId(null);
     setSelectedRows([])
     setDeleteConfirmMessage('');
-    setDeleteAllData('');
+    setSelectAllOrNot('');
   };
 
   const handleCloseImport = () => {
@@ -367,9 +372,8 @@ const handleShowEdit = (rowData) => {
     const sendPayload = {
       file: "xlsx",
       fields: fieldsString,
-      uuids: selectedRows, // your selected department IDs
+      uuids: selectAllOrNot === "all" ? [] : selectedRows,
     };
-
     setLoadingExport(true);
     dispatch(departmentExportData(sendPayload, (response, error) => {
       if (error) {
@@ -385,14 +389,16 @@ const handleShowEdit = (rowData) => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `departments_${new Date().toISOString().split('T')[0]}.xlsx`;
+          link.download = `Department.xlsx`;
           document.body.appendChild(link);
           link.click();
           link.remove();
           window.URL.revokeObjectURL(url);
-
           toast.success("Export successful");
           cancelExportTest();
+          setSelectedRows([]);
+          setSelectAllOrNot('');
+          setDeleteId(null);
         } else {
           toast.error("Something went wrong.");
         }
@@ -441,7 +447,7 @@ const handleShowEdit = (rowData) => {
                   >
                     Export
                   </button>
-                  {selectedRows.length == 0 && (
+                  {/* {selectedRows.length == 0 && (
                     <button
                       onClick={handleSelectAllButton}
                       className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
@@ -462,6 +468,29 @@ const handleShowEdit = (rowData) => {
                       className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
                     >{`Delete All (${tableState.total})`}
                     </button>
+                  )} */}
+
+                  <button
+                    onClick={handleBulkDelete}
+                    className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
+                  >
+                    Delete
+                  </button>
+                  {(selectedRows?.length > 0 && selectedRows?.length === departments?.length) && (
+                    <>
+                      <button
+                        onClick={() => handleSelectAllOrNot("onlySelected")}
+                        className={`btn btn-sm px-3 py-1 fw-medium ${selectAllOrNot === "onlySelected" ? "comman-btn-color" : "comman-inactive-btn"}`}
+                      >
+                        {`Select (${selectedRows.length})`}
+                      </button>
+                      <button
+                        onClick={() => handleSelectAllOrNot("all")}
+                        className={`btn btn-sm px-3 py-1 fw-medium ${selectAllOrNot === "all" ? "comman-btn-color" : "comman-inactive-btn"}`}
+                      >
+                        {`Select All (${tableState.total})`}
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
