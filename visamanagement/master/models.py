@@ -393,7 +393,7 @@ class EducationLevel(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.level_code.level_code if self.level_code else "No Level Code"
+        return self.level_code.name if self.level_code else "No Level Code"
     
 
 class  EducationDuration(models.Model):
