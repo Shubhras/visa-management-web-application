@@ -11363,50 +11363,57 @@ class EducationLevelImportAPIView(APIView):
 
 #----------------------------EducationDuration----------------------
 
+
 class EducationDurationListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
+        sort_order = request.GET.get('sortOrder', 'desc')  # 'asc' or 'desc'
 
-        allowed_sort_fields = ['durations', 'description', 'created_at']
+        allowed_sort_fields = ['durations', 'description', 'created_at', 'updated_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
 
+        sort_prefix = '-' if sort_order == 'desc' else ''
         queryset = EducationDuration.objects.filter(is_deleted=False)
 
         if search:
             queryset = queryset.filter(
-                Q(durations__icontains=search) |
-                Q(description__icontains=search) |
-                Q(educationlevel__educationlevel__icontains=search)
+                Q(educationlevel__educationlevel__icontains=search) |
+                Q(durations__icontains=search)
             )
 
-        queryset = queryset.order_by(sort_by)
+        queryset = queryset.order_by(f'{sort_prefix}{sort_by}')
 
-        paginator = CustomPagination()
-        result_page = paginator.paginate_queryset(queryset, request)
-        serializer = EducationDurationSerializer(result_page, many=True)
-        return paginator.get_paginated_response(serializer.data)
+        serializer = EducationDurationSerializer(queryset, many=True)
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": "Education durations retrieved successfully",
+            "count": queryset.count(),
+            "data": serializer.data
+        }, status=status.HTTP_200_OK)
 
-# ----------------- Create API -----------------
 class EducationDurationCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
-        durations = request.data.get('durations', '').strip()
+        educationlevel_id = request.data.get("educationlevel")
+        durations = request.data.get("durations", "").strip()
 
-        existing = EducationDuration.objects.filter(durations__iexact=durations, is_deleted=False).first()
+        existing = EducationDuration.objects.filter(
+            educationlevel_id=educationlevel_id, 
+            durations__iexact=durations, 
+            is_deleted=False
+        ).first()
         if existing:
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Education Duration with this value already exists."
-            }, status=400)
+                "message": "Education duration with this level and duration already exists."
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = EducationDurationSerializer(data=request.data)
         if serializer.is_valid():
@@ -11414,118 +11421,122 @@ class EducationDurationCreateAPIView(APIView):
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "Education Duration created successfully",
+                "message": "Education duration created successfully",
                 "data": serializer.data
-            })
-        else:
-            errors = serializer.errors
-            messages = []
-            for field, msgs in errors.items():
-                messages.extend(msgs)
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": " ".join(messages)
-            }, status=400)
+            }, status=status.HTTP_200_OK)
 
-# ----------------- Retrieve API -----------------
+        messages = [msg for msgs in serializer.errors.values() for msg in msgs]
+        return Response({
+            "statusCode": 400,
+            "status": False,
+            "message": " ".join(messages)
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+# ------------------ Retrieve API ------------------
 class EducationDurationRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request, uuid):
         try:
-            duration = EducationDuration.objects.get(uuid=uuid, is_deleted=False)
+            obj = EducationDuration.objects.get(uuid=uuid, is_deleted=False)
         except EducationDuration.DoesNotExist:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "Education Duration not found",
+                "message": "Education duration not found",
                 "data": None
-            }, status=404)
+            }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = EducationDurationSerializer(duration)
+        serializer = EducationDurationSerializer(obj)
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": "Education Duration retrieved successfully",
+            "message": "Education duration retrieved successfully",
             "data": serializer.data
         })
 
-# ----------------- Update API -----------------
+
+# ------------------ Update API ------------------
 class EducationDurationUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def put(self, request, uuid):
         try:
-            duration = EducationDuration.objects.get(uuid=uuid, is_deleted=False)
+            obj = EducationDuration.objects.get(uuid=uuid, is_deleted=False)
         except EducationDuration.DoesNotExist:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "Education Duration not found",
+                "message": "Education duration not found",
                 "data": None
-            }, status=404)
+            }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = EducationDurationSerializer(duration, data=request.data)
+        serializer = EducationDurationSerializer(obj, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "Education Duration updated successfully",
+                "message": "Education duration updated successfully",
                 "data": serializer.data
             })
 
-        errors = serializer.errors
-        messages = []
-        for field, msgs in errors.items():
-            messages.extend(msgs)
+        messages = [msg for msgs in serializer.errors.values() for msg in msgs]
         return Response({
             "statusCode": 400,
             "status": False,
             "message": " ".join(messages),
             "data": None
-        }, status=400)
+        }, status=status.HTTP_400_BAD_REQUEST)
 
-# ----------------- Delete API -----------------
+
+# ------------------ Delete API ------------------
 class EducationDurationDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
-    def delete(self, request):
+    def delete(self, request, uuid=None):
         ids = request.data.get('id', None)
-        if not ids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Please provide 'id' field (UUID list or 'all').",
-                "data": None
-            }, status=400)
 
-        if ids == "all":
-            durations = EducationDuration.objects.filter(is_deleted=False)
-            count = durations.count()
-            if count == 0:
+        # Single delete via URL
+        if uuid:
+            try:
+                obj = EducationDuration.objects.get(uuid=uuid)
+                obj.delete()
+                return Response({
+                    "statusCode": 204,
+                    "status": True,
+                    "message": "Education duration permanently deleted.",
+                    "data": None
+                }, status=status.HTTP_204_NO_CONTENT)
+            except EducationDuration.DoesNotExist:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "No Education Durations found to delete.",
+                    "message": "Education duration not found.",
                     "data": None
-                }, status=404)
-            durations.delete()
+                }, status=status.HTTP_404_NOT_FOUND)
+
+        # Delete all
+        if ids == "all":
+            queryset = EducationDuration.objects.all()
+            count = queryset.count()
+            queryset.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} Education Duration(s) deleted successfully.",
+                "message": f"All {count} education durations permanently deleted.",
                 "data": None
-            })
+            }, status=status.HTTP_200_OK)
 
-        if not isinstance(ids, list):
+        # Bulk delete
+        if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
                 "status": False,
                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
                 "data": None
-            }, status=400)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         valid_uuids = []
         invalid_uuids = []
@@ -11535,33 +11546,19 @@ class EducationDurationDeleteAPIView(APIView):
             except ValueError:
                 invalid_uuids.append(u)
 
-        if not valid_uuids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "No valid UUIDs provided.",
-                "data": {"invalid_uuids": invalid_uuids}
-            }, status=400)
+        queryset = EducationDuration.objects.filter(uuid__in=valid_uuids)
+        count = queryset.count()
+        queryset.delete()
 
-        durations = EducationDuration.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = durations.count()
-        if count == 0:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "No matching Education Durations found.",
-                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=404)
-
-        durations.delete()
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f"{count} Education Duration(s) deleted successfully.",
+            "message": f"{count} education duration(s) permanently deleted.",
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        })
+        }, status=status.HTTP_200_OK)
 
-# ----------------- Export API -----------------
+
+# ------------------ Export API ------------------
 class EducationDurationExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -11571,41 +11568,60 @@ class EducationDurationExportAPIView(APIView):
         uuids_param = request.GET.get('uuids', '')
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
-        if fields:
-            field_list = [f.strip() for f in fields.split(',')]
-        else:
-            field_list = ['uuid', 'educationlevel', 'durations', 'description', 'is_deleted', 'created_at', 'updated_at']
+        field_header_map = {
+            'uuid': 'UUID',
+            'educationlevel': 'Education Level ID',
+            'educationlevel_detail': 'Education Level',
+            'durations': 'Duration',
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'created_at': 'Created On',
+            'updated_at': 'Modified On',
+        }
 
-        queryset = EducationDuration.objects.filter(uuid__in=uuids) if uuids else EducationDuration.objects.all()
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+        queryset = EducationDuration.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-updated_at')
 
         dataset = Dataset()
-        dataset.headers = field_list
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'EducationDuration'
 
-        for dur in queryset:
+        for obj in queryset:
             row = []
             for field in field_list:
-                value = getattr(dur, field, '')
-                if isinstance(value, datetime.datetime):
-                    value = value.strftime("%Y-%m-%d %H:%M:%S")
-                if isinstance(value, bool):
+                if field == 'educationlevel_detail':
+                    value = obj.educationlevel.educationlevel if obj.educationlevel else ''
+                else:
+                    value = getattr(obj, field, '')
+                if field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
                     value = int(value)
                 row.append(value if value is not None else '')
             dataset.append(row)
 
-        if format_type == 'xlsx':
-            data = XLSX().export_data(dataset)
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'education_durations.csv'
+        else:
+            file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'education_durations.xlsx'
-        else:
-            data = CSV().export_data(dataset)
-            content_type = 'text/csv; charset=utf-8'
-            file_name = 'education_durations.csv'
 
-        response = HttpResponse(data, content_type=content_type)
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
-# ----------------- Import API -----------------
+
+# ------------------ Import API ------------------
 class EducationDurationImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -11614,70 +11630,98 @@ class EducationDurationImportAPIView(APIView):
         sheet_name = request.data.get('sheet_name')
 
         if not file:
-            return Response({'error': 'No file uploaded'}, status=400)
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
-        dataset = Dataset()
-        duplicate_entries = []
+        duplicate_durations = []
+        required_headers = {'educationlevel', 'durations'}
+        optional_headers = {'description'}
 
         try:
-            # XLSX
+            data = []
+            headers = []
+
             if format_type == 'xlsx':
+                import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
+
                 if not sheet_name:
                     return Response({'error': 'Please provide sheet_name', 'available_sheets': available_sheets}, status=400)
                 if sheet_name not in available_sheets:
                     return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
+
                 ws = wb[sheet_name]
-                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                data = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True)]
+                if ws.max_row <= 1:
+                    return Response({"statusCode": 400, "status": False, "message": f'The uploaded XLSX sheet "{sheet_name}" is empty.'}, status=400)
 
-            # CSV
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response({"statusCode": 400, "status": True, "message": f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'}, status=400)
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    if not any(row):
+                        continue
+                    data.append(dict(zip(headers, row)))
+
             elif format_type == 'csv':
-                dataset.load(file.read().decode('utf-8'), format='csv')
-                data = dataset.dict
-
+                import csv
+                import io
+                decoded_file = file.read().decode('utf-8')
+                reader = csv.DictReader(io.StringIO(decoded_file))
+                for row in reader:
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({"statusCode": 400, "status": True, "message": f'Missing required headers. Required: {required_headers}. Found: {set(row_lower.keys())}'}, status=400)
+                    data.append(row_lower)
             else:
-                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
+                return Response({"statusCode": 400, "status": True, 'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
 
+            imported_count = 0
             for row in data:
+                educationlevel_name = str(row.get('educationlevel')).strip() if row.get('educationlevel') else None
                 durations = str(row.get('durations')).strip() if row.get('durations') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
-                educationlevel_id = row.get('educationlevel')
 
-                if not durations:
+                if not educationlevel_name or not durations:
                     continue
 
-                existing = EducationDuration.objects.filter(durations__iexact=durations).first()
+                # Get education level object
+                educationlevel_obj = EducationLevel.objects.filter(educationlevel__iexact=educationlevel_name).first()
+                if not educationlevel_obj:
+                    continue  # skip row if level not found
+
+                existing = EducationDuration.objects.filter(
+                    educationlevel=educationlevel_obj, durations__iexact=durations
+                ).first()
                 if existing:
-                    if existing.is_deleted:
+                    if not existing.is_deleted:
+                        duplicate_durations.append(durations)
+                        continue
+                    else:
                         existing.description = description
                         existing.is_deleted = False
-                        if educationlevel_id:
-                            existing.educationlevel_id = educationlevel_id
                         existing.save()
-                    else:
-                        duplicate_entries.append(durations)
-                        continue
+                        imported_count += 1
                 else:
                     EducationDuration.objects.create(
+                        educationlevel=educationlevel_obj,
                         durations=durations,
                         description=description,
-                        educationlevel_id=educationlevel_id,
                         is_deleted=False
                     )
+                    imported_count += 1
 
         except Exception as e:
-            return Response({'error': str(e)}, status=400)
+            return Response({"statusCode": 400, "status": True, 'message': str(e)}, status=400)
 
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_entries)),
-            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
-        })
-    
+            "duplicates": list(set(duplicate_durations)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count
+        }, status=200)
 
     
 
