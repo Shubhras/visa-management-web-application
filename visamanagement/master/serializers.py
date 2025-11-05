@@ -389,15 +389,8 @@ class StudymainareaSerializer(serializers.ModelSerializer):
 
 
 
-class StudymajorareaSerializer(serializers.ModelSerializer):
-    mainarea = StudymainareaSerializer(read_only=True)
-    mainarea_id = serializers.PrimaryKeyRelatedField(
-        queryset=Studymainarea.objects.all(),
-        source='mainarea',
-        write_only=True,
-        required=False,
-        allow_null=True
-    )
+class StudyMajorAreaSerializer(serializers.ModelSerializer):
+    mainarea_name = serializers.CharField(source='mainarea.name', read_only=True)  # optional, if Studymainarea has 'name' field
 
     class Meta:
         model = Studymajorarea
@@ -405,15 +398,14 @@ class StudymajorareaSerializer(serializers.ModelSerializer):
             'id',
             'uuid',
             'mainarea',
-            'mainarea_id',
+            'mainarea_name',  # optional
             'majorarea',
             'description',
             'is_deleted',
             'created_at',
-            'updated_at'
+            'updated_at',
         ]
         read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
-
 
 
 
@@ -427,10 +419,10 @@ class StudySpecialisationSerializer(serializers.ModelSerializer):
         allow_null=True
     )
 
-    Majorarea = StudymajorareaSerializer(read_only=True)
+    Majorarea = StudyMajorAreaSerializer(read_only=True)
     Majorarea_id = serializers.PrimaryKeyRelatedField(
         queryset=Studymajorarea.objects.all(),
-        source='Majorarea',
+        source='majorarea',
         write_only=True,
         required=False,
         allow_null=True
@@ -443,8 +435,8 @@ class StudySpecialisationSerializer(serializers.ModelSerializer):
             'uuid',
             'mainarea',
             'mainarea_id',
-            'Majorarea',
-            'Majorarea_id',
+            'majorarea',
+            'majorarea_id',
             'studyspecialisation',
             'description',
             'is_deleted',

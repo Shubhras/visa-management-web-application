@@ -12033,43 +12033,44 @@ class StudymainareaImportAPIView(APIView):
             "imported_count": imported_count
         }, status=status.HTTP_200_OK)
 
+
+
 # -------------------- Studymajor -------------------- #
-class StudymajorareaCreateAPIView(APIView):
+class StudyMajorAreaCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
-        mainarea_id = request.data.get('mainarea_id')
-        majorarea_name = request.data.get('majorarea', '').strip()
+        majorarea = request.data.get("majorarea", "").strip()
+        mainarea_id = request.data.get("mainarea")
 
-       
-        if Studymajorarea.objects.filter(mainarea_id=mainarea_id, Majorarea__iexact=majorarea_name).exists():
+        existing = Studymajorarea.objects.filter(majorarea__iexact=majorarea, mainarea_id=mainarea_id, is_deleted=False).first()
+        if existing:
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "This Majorarea for the selected Mainarea already exists."
+                "message": "Study Major Area with this name and main area already exists."
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = StudymajorareaSerializer(data=request.data)
+        serializer = StudyMajorAreaSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "Studymajorarea created successfully",
+                "message": "Study Major Area created successfully",
                 "data": serializer.data
-            })
+            }, status=status.HTTP_200_OK)
 
-        errors = serializer.errors
-        messages = []
-        for field, msgs in errors.items():
-            messages.extend(msgs)
+        messages = [msg for msgs in serializer.errors.values() for msg in msgs]
         return Response({
             "statusCode": 400,
             "status": False,
             "message": " ".join(messages)
-        })
+        }, status=status.HTTP_400_BAD_REQUEST)
 
-class StudymajorareaRetrieveAPIView(APIView):
+
+# ------------------ Retrieve API ------------------
+class StudyMajorAreaRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request, uuid):
@@ -12079,19 +12080,21 @@ class StudymajorareaRetrieveAPIView(APIView):
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "Studymajorarea not found",
+                "message": "Study Major Area not found",
                 "data": None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = StudymajorareaSerializer(obj)
+        serializer = StudyMajorAreaSerializer(obj)
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": "Studymajorarea retrieved successfully",
+            "message": "Study Major Area retrieved successfully",
             "data": serializer.data
         })
 
-class StudymajorareaUpdateAPIView(APIView):
+
+# ------------------ Update API ------------------
+class StudyMajorAreaUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def put(self, request, uuid):
@@ -12101,87 +12104,98 @@ class StudymajorareaUpdateAPIView(APIView):
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "Studymajorarea not found",
+                "message": "Study Major Area not found",
                 "data": None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        mainarea_id = request.data.get('mainarea_id')
-        majorarea_name = request.data.get('Majorarea', '').strip()
-
-        if Studymajorarea.objects.filter(mainarea_id=mainarea_id, Majorarea__iexact=majorarea_name).exclude(uuid=uuid).exists():
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "This Majorarea for the selected Mainarea already exists."
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer = StudymajorareaSerializer(obj, data=request.data)
+        serializer = StudyMajorAreaSerializer(obj, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "Studymajorarea updated successfully",
+                "message": "Study Major Area updated successfully",
                 "data": serializer.data
             })
 
-        errors = serializer.errors
-        messages = []
-        for field, msgs in errors.items():
-            messages.extend(msgs)
+        messages = [msg for msgs in serializer.errors.values() for msg in msgs]
         return Response({
             "statusCode": 400,
             "status": False,
-            "message": " ".join(messages)
-        })
+            "message": " ".join(messages),
+            "data": None
+        }, status=status.HTTP_400_BAD_REQUEST)
 
-class StudymajorareaDeleteAPIView(APIView):
+
+# ------------------ Delete API ------------------
+class StudyMajorAreaDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
-    def delete(self, request):
-        uuids = request.data.get('id', [])
-        if not uuids or not isinstance(uuids, list):
+    def delete(self, request, uuid=None):
+        ids = request.data.get('id', None)
+
+        # Single delete via URL
+        if uuid:
+            try:
+                obj = Studymajorarea.objects.get(uuid=uuid)
+                obj.delete()
+                return Response({
+                    "statusCode": 204,
+                    "status": True,
+                    "message": "Study Major Area permanently deleted.",
+                    "data": None
+                }, status=status.HTTP_204_NO_CONTENT)
+            except Studymajorarea.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "Study Major Area not found.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+
+        # Delete all
+        if ids == "all":
+            queryset = Studymajorarea.objects.all()
+            count = queryset.count()
+            queryset.delete()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"All {count} study major areas permanently deleted.",
+                "data": None
+            }, status=status.HTTP_200_OK)
+
+        # Bulk delete
+        if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Please provide a list of UUIDs in 'id' field.",
+                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
                 "data": None
             }, status=status.HTTP_400_BAD_REQUEST)
 
         valid_uuids = []
         invalid_uuids = []
-        for u in uuids:
+        for u in ids:
             try:
                 valid_uuids.append(UUID(u))
             except ValueError:
                 invalid_uuids.append(u)
 
-        if not valid_uuids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "No valid UUIDs provided.",
-                "data": {"invalid_uuids": invalid_uuids}
-            }, status=status.HTTP_400_BAD_REQUEST)
+        queryset = Studymajorarea.objects.filter(uuid__in=valid_uuids)
+        count = queryset.count()
+        queryset.delete()
 
-        objs = Studymajorarea.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = objs.count()
-        if count == 0:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "No matching Studymajorarea found.",
-                "data": {"invalid_uuids": invalid_uuids}
-            }, status=status.HTTP_404_NOT_FOUND)
-
-        objs.delete()
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f"{count} Studymajorarea(s) deleted successfully.",
-        })
+            "message": f"{count} study major area(s) permanently deleted.",
+            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+        }, status=status.HTTP_200_OK)
 
-class StudymajorareaExportAPIView(APIView):
+
+# ------------------ Export API ------------------
+class StudyMajorAreaExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
@@ -12190,43 +12204,58 @@ class StudymajorareaExportAPIView(APIView):
         uuids_param = request.GET.get('uuids', '')
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
-        field_list = [f.strip() for f in fields.split(',')] if fields else [
-            'uuid', 'mainarea', 'Majorarea', 'description', 'is_deleted', 'created_at', 'updated_at'
-        ]
+        field_header_map = {
+            'uuid': 'UUID',
+            'mainarea': 'Main Area ID',
+            'mainarea_name': 'Main Area Name',
+            'majorarea': 'Major Area',
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'created_at': 'Created On',
+            'updated_at': 'Modified On',
+        }
 
-        queryset = Studymajorarea.objects.filter(uuid__in=uuids) if uuids else Studymajorarea.objects.all()
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+        queryset = Studymajorarea.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-updated_at')
 
         dataset = Dataset()
-        dataset.headers = field_list
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'StudyMajorArea'
 
         for obj in queryset:
             row = []
             for field in field_list:
-                if field == 'mainarea':
-                    value = obj.mainarea.Mainarea if obj.mainarea else ''
+                if field == 'mainarea_name':
+                    value = obj.mainarea.name if obj.mainarea else ''
                 else:
                     value = getattr(obj, field, '')
-                if isinstance(value, datetime.datetime):
-                    value = value.strftime("%Y-%m-%d %H:%M:%S")
-                if isinstance(value, bool):
+                if field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
                     value = int(value)
                 row.append(value if value is not None else '')
             dataset.append(row)
 
-        if format_type == 'xlsx':
-            data = XLSX().export_data(dataset)
-            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'studymajorareas.xlsx'
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'study_major_areas.csv'
         else:
-            data = CSV().export_data(dataset)
-            content_type = 'text/csv; charset=utf-8'
-            file_name = 'studymajorareas.csv'
+            file_data = io.BytesIO(dataset.export('xlsx'))
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'study_major_areas.xlsx'
 
-        response = HttpResponse(data, content_type=content_type)
+        response = io.BytesIO(file_data) if format_type == 'csv' else HttpResponse(file_data.getvalue(), content_type=content_type)
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
-class StudymajorareaImportAPIView(APIView):
+
+# ------------------ Import API ------------------
+class StudyMajorAreaImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
@@ -12237,62 +12266,93 @@ class StudymajorareaImportAPIView(APIView):
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
-        dataset = Dataset()
-        duplicate_entries = []
+        duplicate_names = []
+        required_headers = {'majorarea', 'mainarea'}
+        optional_headers = {'description'}
 
         try:
+            data = []
+            headers = []
+
             if format_type == 'xlsx':
+                import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
 
                 if not sheet_name:
-                    return Response({'error': 'Please provide sheet_name', 'available_sheets': available_sheets},
-                                    status=status.HTTP_400_BAD_REQUEST)
-
+                    return Response({'error': 'Please provide sheet_name', 'available_sheets': available_sheets}, status=400)
                 if sheet_name not in available_sheets:
-                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets},
-                                    status=status.HTTP_400_BAD_REQUEST)
+                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
 
                 ws = wb[sheet_name]
-                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if ws.max_row <= 1:
+                    return Response({"statusCode": 400, "status": False, "message": f'The uploaded XLSX sheet "{sheet_name}" is empty.'}, status=400)
+
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response({"statusCode": 400, "status": True, "message": f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'}, status=400)
+
                 for row in ws.iter_rows(min_row=2, values_only=True):
-                    data = dict(zip(headers, row))
-                    mainarea_id = data.get('mainarea')
-                    majorarea_name = data.get('Majorarea')
-                    if Studymajorarea.objects.filter(mainarea_id=mainarea_id, Majorarea__iexact=majorarea_name).exists():
-                        duplicate_entries.append(f"{mainarea_id}-{majorarea_name}")
+                    if not any(row):
                         continue
-                    Studymajorarea.objects.create(
-                        mainarea_id=mainarea_id,
-                        Majorarea=majorarea_name,
-                        description=data.get('description', ''),
-                        is_deleted=data.get('is_deleted', False)
-                    )
-            else:  
-                dataset.load(file.read().decode('utf-8'), format='csv')
-                for row in dataset.dict:
-                    mainarea_id = row.get('mainarea_id')
-                    majorarea_name = row.get('Majorarea')
-                    if Studymajorarea.objects.filter(mainarea_id=mainarea_id, Majorarea__iexact=majorarea_name).exists():
-                        duplicate_entries.append(f"{mainarea_id}-{majorarea_name}")
+                    data.append(dict(zip(headers, row)))
+
+            elif format_type == 'csv':
+                import csv
+                import io
+                decoded_file = file.read().decode('utf-8')
+                reader = csv.DictReader(io.StringIO(decoded_file))
+                for row in reader:
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({"statusCode": 400, "status": True, "message": f'Missing required headers. Required: {required_headers}. Found: {set(row_lower.keys())}'}, status=400)
+                    data.append(row_lower)
+            else:
+                return Response({"statusCode": 400, "status": True, 'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
+
+            imported_count = 0
+            for row in data:
+                majorarea_name = str(row.get('majorarea')).strip() if row.get('majorarea') else None
+                mainarea_name = str(row.get('mainarea')).strip() if row.get('mainarea') else None
+                description = str(row.get('description')).strip() if row.get('description') else ''
+
+                if not majorarea_name or not mainarea_name:
+                    continue
+
+                # Get mainarea object
+                mainarea_obj = Studymainarea.objects.filter(name__iexact=mainarea_name).first()
+                if not mainarea_obj:
+                    continue  # skip row if mainarea not found
+
+                existing = Studymajorarea.objects.filter(majorarea__iexact=majorarea_name, mainarea=mainarea_obj).first()
+                if existing:
+                    if not existing.is_deleted:
+                        duplicate_names.append(majorarea_name)
                         continue
+                    else:
+                        existing.description = description
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
+                else:
                     Studymajorarea.objects.create(
-                        mainarea_id=mainarea_id,
-                        Majorarea=majorarea_name,
-                        description=row.get('description', ''),
-                        is_deleted=row.get('is_deleted', False)
+                        majorarea=majorarea_name,
+                        mainarea=mainarea_obj,
+                        description=description,
+                        is_deleted=False
                     )
+                    imported_count += 1
 
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"statusCode": 400, "status": True, 'message': str(e)}, status=400)
 
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_entries)),
-            'message': f'Sheet "{sheet_name}" imported successfully' if sheet_name else 'Import successful'
-        })
-
+            "duplicates": list(set(duplicate_names)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count
+        }, status=200)
 
 # -------------------- Studyspecialisation -------------------- #
 
@@ -12303,12 +12363,12 @@ class StudySpecialisationCreateAPIView(APIView):
 
     def post(self, request):
         mainarea_id = request.data.get('mainarea_id')
-        majorarea_id = request.data.get('Majorarea_id')
+        majorarea_id = request.data.get('majorarea_id')
         specialisation_name = request.data.get('studyspecialisation', '').strip()
 
         if StudySpecialisation.objects.filter(
             mainarea_id=mainarea_id,
-            Majorarea_id=majorarea_id,
+            majorarea_id=majorarea_id,
             studyspecialisation__iexact=specialisation_name
         ).exists():
             return Response({
