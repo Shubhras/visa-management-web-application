@@ -13287,6 +13287,12 @@ class AcademicResultListAPIView(APIView):
         return paginator.get_paginated_response(serializer.data)
 
 
+
+
+
+
+
+
 class AcademicResultCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
