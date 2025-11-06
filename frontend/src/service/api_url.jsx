@@ -189,15 +189,15 @@ export const EXPORT_CONTINENT_LIST_API = "api/v1/master/continents/export/";
 export const IMPORT_CONTINENT_LIST_API = "api/v1/master/continents/import/";
 
 // CIVIL_ID_NAME
-export const GET_CIVIL_ID_NAME_LIST_API = "/api/v1/master/license-name/";
-export const ADD_CIVIL_ID_NAME_LIST_API = "/api/v1/master/license-name/create/";
-export const EDIT_CIVIL_ID_NAME_LIST_API = "api/v1/master/license-name/";
-export const DELETE_CIVIL_ID_NAME_LIST_API = "api/v1/master/license-name/";
-export const EXPORT_CIVIL_ID_NAME_LIST_API = "api/v1/master/license-name/export/";
-export const IMPORT_CIVIL_ID_NAME_LIST_API = "api/v1/master/license-name/import/";
+export const GET_CIVIL_ID_NAME_LIST_API = "/api/v1/master/civil-id-name/";
+export const ADD_CIVIL_ID_NAME_LIST_API = "/api/v1/master/civil-id-name/create/";
+export const EDIT_CIVIL_ID_NAME_LIST_API = "api/v1/master/civil-id-name/";
+export const DELETE_CIVIL_ID_NAME_LIST_API = "api/v1/master/civil-id-name/";
+export const EXPORT_CIVIL_ID_NAME_LIST_API = "api/v1/master/civil-id-name/export/";
+export const IMPORT_CIVIL_ID_NAME_LIST_API = "api/v1/master/civil-id-name/import/";
 
 // RELATION
-export const GET_RELATION_LIST_API = "/api/v1/master/relations/list";
+export const GET_RELATION_LIST_API = "/api/v1/master/relations/";
 export const ADD_RELATION_LIST_API = "/api/v1/master/relations/create/";
 export const EDIT_RELATION_LIST_API = "api/v1/master/relations/";
 export const DELETE_RELATION_LIST_API = "api/v1/master/relations/";
@@ -205,12 +205,12 @@ export const EXPORT_RELATION_LIST_API = "api/v1/master/relations/export/";
 export const IMPORT_RELATION_LIST_API = "api/v1/master/relations/import/";
 
 // TIME_ZONE
-export const GET_TIME_ZONE_LIST_API = "/api/v1/master/time-zones/list";
-export const ADD_TIME_ZONE_LIST_API = "/api/v1/master/time-zones/create/";
-export const EDIT_TIME_ZONE_LIST_API = "api/v1/master/time-zones/";
-export const DELETE_TIME_ZONE_LIST_API = "api/v1/master/time-zones/";
-export const EXPORT_TIME_ZONE_LIST_API = "api/v1/master/time-zones/export/";
-export const IMPORT_TIME_ZONE_LIST_API = "api/v1/master/time-zones/import/";
+export const GET_TIME_ZONE_LIST_API = "/api/v1/master/timezones/";
+export const ADD_TIME_ZONE_LIST_API = "/api/v1/master/timezones/create/";
+export const EDIT_TIME_ZONE_LIST_API = "api/v1/master/timezones/";
+export const DELETE_TIME_ZONE_LIST_API = "api/v1/master/timezones/";
+export const EXPORT_TIME_ZONE_LIST_API = "api/v1/master/timezones/export/";
+export const IMPORT_TIME_ZONE_LIST_API = "api/v1/master/timezones/import/";
 
 // EDUCATION_DURATION
 export const GET_EDUCATION_DURATION_LIST = "/api/v1/master/education-duration/";
@@ -234,12 +234,12 @@ export const DELETE_ACADEMIC_RESULT_TYPE_API = "api/v1/master/academicresulttype
 export const EXPORT_ACADEMIC_RESULT_TYPE_API = "api/v1/master/academicresulttype/export/";
 export const IMPORT_ACADEMIC_RESULT_TYPE_API = "api/v1/master/academicresulttype/import/";
 // Education Type
-export const GET_EDUCATION_TYPE_LIST = "/api/v1/master/education-type/list/";
+export const GET_EDUCATION_TYPE_LIST = "/api/v1/master/education-type/";
 export const ADD_EDUCATION_TYPE_API = "/api/v1/master/education-type/create/";
 export const EDIT_EDUCATION_TYPE_API = "api/v1/master/education-type/";
-export const DELETE_EDUCATION_TYPE_API = "api/v1/master/'education-type/";
-export const EXPORT_EDUCATION_TYPE_API = "api/v1/master/'education-type/export";
-export const IMPORT_EDUCATION_TYPE_API = "api/v1/master/'education-type/import/";
+export const DELETE_EDUCATION_TYPE_API = "api/v1/master/education-type/";
+export const EXPORT_EDUCATION_TYPE_API = "api/v1/master/education-type/export";
+export const IMPORT_EDUCATION_TYPE_API = "api/v1/master/education-type/import/";
 // Study Specialisations
 export const GET_STUDY_SPECIALISATION_LIST = "/api/v1/master/studyspecialisation/";
 export const ADD_STUDY_SPECIALISATION_API = "/api/v1/master/studyspecialisation/create/";
@@ -247,7 +247,35 @@ export const EDIT_STUDY_SPECIALISATION_API = "/api/v1/master/studyspecialisation
 export const DELETE_STUDY_SPECIALISATION_API = "/api/v1/master/studyspecialisation/";
 export const EXPORT_STUDY_SPECIALISATION_API = "/api/v1/master/studyspecialisation/export/";
 export const IMPORT_STUDY_SPECIALISATION_API = "/api/v1/master/studyspecialisation/import/";
-
+ 
+// Degree Awarded By
+export const GET_DEGREE_AWARDED_BY_LIST = "/api/v1/master/degree-awarded-by/";
+export const ADD_DEGREE_AWARDED_BY_API = "/api/v1/master/degree-awarded-by/create/";
+export const EDIT_DEGREE_AWARDED_BY_API = "/api/v1/master/degree-awarded-by/";
+export const DELETE_DEGREE_AWARDED_BY_API = "/api/v1/master/degree-awarded-by/";
+export const EXPORT_DEGREE_AWARDED_BY_API = "/api/v1/master/degree-awarded-by/export/";
+export const IMPORT_DEGREE_AWARDED_BY_API = "/api/v1/master/degree-awarded-by/import/";
+// Academin Result
+export const GET_ACADEMIC_RESULT_LIST = "/api/v1/master/academicresult/";
+export const ADD_ACADEMIC_RESULT_API = "/api/v1/master/academicresult/create/";
+export const EDIT_ACADEMIC_RESULT_API = "/api/v1/master/academicresult/";
+export const DELETE_ACADEMIC_RESULT_API = "/api/v1/master/academicresult/";
+export const EXPORT_ACADEMIC_RESULT_API = "/api/v1/master/academicresult/export/";
+export const IMPORT_ACADEMIC_RESULT_API = "/api/v1/master/academicresult/import/";
+// Degree Awarded Institute
+export const GET_DEGREE_AWARDED_INSTITUTE_LIST = "/api/v1/master/degree-awarded-institute/";
+export const ADD_DEGREE_AWARDED_INSTITUTE_API = "/api/v1/master/degree-awarded-institute/create/";
+export const EDIT_DEGREE_AWARDED_INSTITUTE_API = "/api/v1/master/degree-awarded-institute/";
+export const DELETE_DEGREE_AWARDED_INSTITUTE_API = "/api/v1/master/degree-awarded-institute/";
+export const EXPORT_DEGREE_AWARDED_INSTITUTE_API = "/api/v1/master/degree-awarded-institute/export/";
+export const IMPORT_DEGREE_AWARDED_INSTITUTE_API = "/api/v1/master/degree-awarded-institute/import/";
+// academic result to result
+export const GET_ACADEMIC_RESULT_TO_RESULT_LIST = "/academic-result-to-result/list/";
+export const ADD_ACADEMIC_RESULT_TO_RESULT_API = "/academic-result-to-result/create/";
+export const EDIT_ACADEMIC_RESULT_TO_RESULT_API = "/academic-result-to-result/";
+export const DELETE_ACADEMIC_RESULT_TO_RESULT_API = "/academic-result-to-result/";
+export const EXPORT_ACADEMIC_RESULT_TO_RESULT_API = "/academic-result-to-result/export/";
+export const IMPORT_ACADEMIC_RESULT_TO_RESULT_API = "/academic-result-to-result/import/";
 
 //COUNTRY
 export const GET_COUNTRY_LIST_API = "/api/v1/master/country/";
@@ -256,6 +284,24 @@ export const EDIT_COUNTRY_LIST_API = "/api/v1/master/country/";
 export const DELETE_COUNTRY_LIST_API = "/api/v1/master/country/";
 export const EXPORT_COUNTRY_LIST_API = "/api/v1/master/country/export/";
 export const IMPORT_COUNTRY_LIST_API = "/api/v1/master/country/import/";
+
+// STATE
+export const GET_STATE_LIST_API = "/api/v1/master/state/";
+export const ADD_STATE_LIST_API = "/api/v1/master/state/create/";
+export const EDIT_STATE_LIST_API = "/api/v1/master/state/";
+export const DELETE_STATE_LIST_API = "/api/v1/master/state/";
+export const EXPORT_STATE_LIST_API = "/api/v1/master/state/export/";
+export const IMPORT_STATE_LIST_API = "/api/v1/master/state/import/";
+export const GET_STATE_LIST_BY_COUNTRY_API = "/api/v1/master/state/by-country/";
+
+// DISTRICT
+export const GET_DISTRICT_LIST_API = "/api/v1/master/district/";
+export const ADD_DISTRICT_LIST_API = "/api/v1/master/district/create/";
+export const EDIT_DISTRICT_LIST_API = "/api/v1/master/district/";
+export const DELETE_DISTRICT_LIST_API = "/api/v1/master/district/";
+export const EXPORT_DISTRICT_LIST_API = "/api/v1/master/district/export/";
+export const IMPORT_DISTRICT_LIST_API = "/api/v1/master/district/import/";
+
 
 
 export const GET_COUNTRY_LIST_DEMO = "/api/v1/master/country/";

@@ -60,8 +60,8 @@ const MasterLayout = ({ children }) => {
             { name: 'Marital Status', path: '/marital-status' },
             { name: 'Continents ', path: '/continent-list' },
             { name: "Country ", path: "/country-list" },
-            // { name: 'State', path: '/' },
-            // { name: 'District', path: '/' },
+            { name: 'State', path: '/state-list' },
+            { name: 'District', path: '/district-list' },
             // { name: 'City', path: '/' },
             { name: 'Time Zone', path: '/timezone-list' },
             { name: 'Relation', path: '/relation-list' },
@@ -109,8 +109,11 @@ const MasterLayout = ({ children }) => {
             { name: 'Study Major Area', path: '/study-major-area' },
             { name: 'Academic Result Type', path: '/academic-result-type' },
             { name: 'Education Type', path: '/education-type' },
-            { name: 'Study Specialisation', path: '/study-specialisation' }
- 
+            { name: 'Study Specialisation', path: '/study-specialisation' },
+            { name: 'Degree Awarded By', path: '/degree-awarded-by' },
+            { name: 'Academic Result', path: '/academic-result' },
+            { name: 'Degree Awarded Institute', path: '/degree-awarded-institute' },
+            {name: 'Compare : Academic Result To Result',path: '/academic-result-to-result'}
           ]
         },
 

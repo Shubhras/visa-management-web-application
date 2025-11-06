@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from "react-redux";
-import { stateListByCountry, timeZoneAdd, timeZoneEdit } from '../../../../store/master/generalMasters/actions';
+import { districtAdd, districtEdit, stateListByCountry } from '../../../../store/master/generalMasters/actions';
 import { toast } from "react-toastify";
 import { countryDemoList } from '../../../../store/master/companyMasters/actions';
 
-const AddEditTimeZoneModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
+const AddEditDistrictModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const [countryListData, setCountryListData] = useState([]);
@@ -29,11 +29,12 @@ const AddEditTimeZoneModal = ({ show, handleClose, mode = 'add', rowData = null 
   // Populate form data when in edit mode
   useEffect(() => {
     if (mode === 'edit' && rowData) {
+
       setFormData({
         uuid: rowData.uuid || '',
         country: rowData.country_uuid || '',
         state: rowData.state_uuid || '',
-        name: rowData.timezone || '',
+        name: rowData.districtName || '',
         description: rowData.description || '',
       });
       // If country is already selected in edit mode, fetch states
@@ -157,19 +158,19 @@ const AddEditTimeZoneModal = ({ show, handleClose, mode = 'add', rowData = null 
           uuid: formData.uuid,
           country_id: formData.country,
           state_id: formData.state || '', // Ensure empty string if no state
-          timezone: formData.name,
+          districtName: formData.name,
           description: formData.description,
         }
         : {
           country_id: formData.country,
           state_id: formData.state || '', // Ensure empty string if no state
-          timezone: formData.name,
+          districtName: formData.name,
           description: formData.description,
         };
 
       setLoading(true);
 
-      const action = mode === 'edit' ? timeZoneEdit : timeZoneAdd;
+      const action = mode === 'edit' ? districtEdit : districtAdd;
 
       dispatch(action(sendPayload, (response, error) => {
         setLoading(false);
@@ -216,14 +217,14 @@ const AddEditTimeZoneModal = ({ show, handleClose, mode = 'add', rowData = null 
       className="modal fade show common-ctl-popup"
       tabIndex={-1}
       role="dialog"
-      aria-labelledby="TimeZoneModalLabel"
+      aria-labelledby="AddEditDistrictModalLabel"
       aria-hidden={!show}
     >
       <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
         <div className="modal-content radius-16 bg-base">
           <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-            <h1 className="modal-title fs-5" id="TimeZoneModalLabel">
-              {mode === 'edit' ? 'Edit TimeZone' : 'Add TimeZone'}
+            <h1 className="modal-title fs-5" id="AddEditDistrictModalLabel">
+              {mode === 'edit' ? 'Edit District' : 'Add District'}
             </h1>
             <button
               type="button"
@@ -239,7 +240,7 @@ const AddEditTimeZoneModal = ({ show, handleClose, mode = 'add', rowData = null 
                 {/* Country Dropdown */}
                 <div className="col-12 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Country <span className="text-danger">*</span>
+                    Country Name <span className="text-danger">*</span>
                   </label>
                   <select
                     name="country"
@@ -264,7 +265,7 @@ const AddEditTimeZoneModal = ({ show, handleClose, mode = 'add', rowData = null 
                 {/* State Dropdown */}
                 <div className="col-12 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    State
+                    State Name
                   </label>
                   <select
                     name="state"
@@ -282,10 +283,10 @@ const AddEditTimeZoneModal = ({ show, handleClose, mode = 'add', rowData = null 
                   </select>
                 </div>
 
-                {/* TimeZone Name */}
+                {/* District Name  */}
                 <div className="col-12 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    TimeZone <span className="text-danger">*</span>
+                    District Name <span className="text-danger">*</span>
                   </label>
                   <input
                     type="text"
@@ -293,7 +294,7 @@ const AddEditTimeZoneModal = ({ show, handleClose, mode = 'add', rowData = null 
                     value={formData.name}
                     onChange={handleChange}
                     className={`form-control radius-8 ${errors.name ? 'is-invalid' : ''}`}
-                    placeholder="Enter time zone"
+                    placeholder="Enter district name"
                   />
                   {errors.name && (
                     <div className="text-danger text-sm mt-1">
@@ -348,4 +349,4 @@ const AddEditTimeZoneModal = ({ show, handleClose, mode = 'add', rowData = null 
   );
 };
 
-export default AddEditTimeZoneModal;
+export default AddEditDistrictModal;

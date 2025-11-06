@@ -1,21 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from "react-redux";
-import { stateListByCountry, timeZoneAdd, timeZoneEdit } from '../../../../store/master/generalMasters/actions';
 import { toast } from "react-toastify";
+import { stateAdd, stateEdit } from '../../../../store/master/generalMasters/actions';
 import { countryDemoList } from '../../../../store/master/companyMasters/actions';
 
-const AddEditTimeZoneModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
+const AddEditStateModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const [countryListData, setCountryListData] = useState([]);
-  const [stateListData, setStateListData] = useState([]);
-  
+
   // Form state
   const [formData, setFormData] = useState({
     uuid: '',
     country: '',
-    state: '',
     name: '',
+    short_name: '',
+    stateTerritory: '',
     description: '',
   });
 
@@ -23,6 +23,8 @@ const AddEditTimeZoneModal = ({ show, handleClose, mode = 'add', rowData = null 
   const [errors, setErrors] = useState({
     country: '',
     name: '',
+    short_name: '',
+    stateTerritory: '',
     description: '',
   });
 
@@ -31,29 +33,19 @@ const AddEditTimeZoneModal = ({ show, handleClose, mode = 'add', rowData = null 
     if (mode === 'edit' && rowData) {
       setFormData({
         uuid: rowData.uuid || '',
-        country: rowData.country_uuid || '',
-        state: rowData.state_uuid || '',
-        name: rowData.timezone || '',
+        country: rowData.country_id || '',
+        name: rowData.stateName || '',
+        short_name: rowData.stateshortName || '',
+        stateTerritory: rowData.state_display || '',//formData.state === "STATE" ? "State" : "Territory" || '',
         description: rowData.description || '',
       });
-      // If country is already selected in edit mode, fetch states
-      if (rowData.country_uuid) {
-        fetchStateList(rowData.country_uuid);
-      }
     } else {
-      // Reset form when switching to add mode
-      setFormData({
-        uuid: '',
-        country: '',
-        state: '',
-        name: '',
-        description: '',
-      });
-      setStateListData([]); // Clear state list
+      resetForm();
     }
     fetchCountryList();
   }, [mode, rowData, show]);
 
+  // Fetch country list
   const fetchCountryList = () => {
     setLoading(true);
     const params = {
@@ -73,49 +65,13 @@ const AddEditTimeZoneModal = ({ show, handleClose, mode = 'add', rowData = null 
     }));
   };
 
-  const fetchStateList = (countryId) => {
-    if (!countryId) {
-      setStateListData([]);
-      return;
-    }
-    
-    setLoading(true);
-    const params = {
-      countryId: countryId,
-    };
-
-    dispatch(stateListByCountry(params, (response, error) => {
-      setLoading(false);
-      if (response?.statusCode === 200 && response?.status === true) {
-        setStateListData(response?.data || []);
-      } else {
-        setStateListData([]);
-      }
-    }));
-  };
-
   // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
-  
-    // When country changes, fetch states and reset state selection
-    if (name === 'country') {
-      setFormData(prev => ({
-        ...prev,
-        country: value,
-        state: '' // Reset state when country changes
-      }));
-      fetchStateList(value);
-    } else {
-      // For all other fields including state
-      setFormData(prev => {
-        const newData = {
-          ...prev,
-          [name]: value
-        };
-        return newData;
-      });
-    }
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
 
     // Clear error when user starts typing
     if (errors[name]) {
@@ -137,9 +93,15 @@ const AddEditTimeZoneModal = ({ show, handleClose, mode = 'add', rowData = null 
       isValid = false;
     }
 
-    // Name validation
+    // State name validation
     if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
+      newErrors.name = 'State name is required';
+      isValid = false;
+    }
+
+
+    if (!formData.stateTerritory.trim()) {
+      newErrors.stateTerritory = 'State/Territory is required';
       isValid = false;
     }
 
@@ -156,33 +118,33 @@ const AddEditTimeZoneModal = ({ show, handleClose, mode = 'add', rowData = null 
         ? {
           uuid: formData.uuid,
           country_id: formData.country,
-          state_id: formData.state || '', // Ensure empty string if no state
-          timezone: formData.name,
-          description: formData.description,
+          stateName: formData.name.trim(),
+          stateshortName: formData.short_name.trim(),
+          //state: formData.stateTerritory.trim() === "State" ? "STATE" : "TERRITORY",
+          state: formData.stateTerritory?.toUpperCase() || '',
+          description: formData.description.trim(),
         }
         : {
           country_id: formData.country,
-          state_id: formData.state || '', // Ensure empty string if no state
-          timezone: formData.name,
-          description: formData.description,
+          stateName: formData.name.trim(),
+          stateshortName: formData.short_name.trim(),
+          state: formData.stateTerritory?.toUpperCase() || '',
+          description: formData.description.trim(),
         };
 
       setLoading(true);
-
-      const action = mode === 'edit' ? timeZoneEdit : timeZoneAdd;
+      const action = mode === 'edit' ? stateEdit : stateAdd;
 
       dispatch(action(sendPayload, (response, error) => {
         setLoading(false);
         if (error) {
           toast.error(error?.response?.data?.message || "Server error");
+        } else if (response?.statusCode === 200 && response?.status === true) {
+          toast.success(response?.message);
+          resetForm();
+          handleClose();
         } else {
-          if (response?.statusCode === 200 && response?.status === true) {
-            toast.success(response?.message);
-            resetForm();
-            handleClose();
-          } else {
-            toast.error("Something went wrong.");
-          }
+          toast.error("Something went wrong.");
         }
       }));
     }
@@ -193,12 +155,12 @@ const AddEditTimeZoneModal = ({ show, handleClose, mode = 'add', rowData = null 
     setFormData({
       uuid: '',
       country: '',
-      state: '',
       name: '',
+      short_name: '',
+      stateTerritory: '',
       description: '',
     });
     setErrors({});
-    setStateListData([]);
   };
 
   // Handle modal close
@@ -208,7 +170,7 @@ const AddEditTimeZoneModal = ({ show, handleClose, mode = 'add', rowData = null 
     handleClose();
   };
 
-  // Conditional return after all hooks
+  // Conditional render
   if (!show) return null;
 
   return (
@@ -216,21 +178,16 @@ const AddEditTimeZoneModal = ({ show, handleClose, mode = 'add', rowData = null 
       className="modal fade show common-ctl-popup"
       tabIndex={-1}
       role="dialog"
-      aria-labelledby="TimeZoneModalLabel"
+      aria-labelledby="AddEditStateModalLabel"
       aria-hidden={!show}
     >
       <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
         <div className="modal-content radius-16 bg-base">
           <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-            <h1 className="modal-title fs-5" id="TimeZoneModalLabel">
-              {mode === 'edit' ? 'Edit TimeZone' : 'Add TimeZone'}
+            <h1 className="modal-title fs-5" id="AddEditStateModalLabel">
+              {mode === 'edit' ? 'Edit State' : 'Add State'}
             </h1>
-            <button
-              type="button"
-              className="btn-close"
-              onClick={onClose}
-              aria-label="Close"
-            />
+            <button type="button" className="btn-close" onClick={onClose} aria-label="Close" />
           </div>
 
           <div className="modal-body p-24">
@@ -261,31 +218,10 @@ const AddEditTimeZoneModal = ({ show, handleClose, mode = 'add', rowData = null 
                   )}
                 </div>
 
-                {/* State Dropdown */}
+                {/* State Name */}
                 <div className="col-12 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    State
-                  </label>
-                  <select
-                    name="state"
-                    value={formData.state}
-                    onChange={handleChange}
-                    className="form-control form-select radius-8"
-                    disabled={!formData.country}
-                  >
-                    <option value="">Select State</option>
-                    {stateListData.map((option) => (
-                      <option key={option.uuid} value={option.uuid}>
-                        {option.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* TimeZone Name */}
-                <div className="col-12 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    TimeZone <span className="text-danger">*</span>
+                    State Name <span className="text-danger">*</span>
                   </label>
                   <input
                     type="text"
@@ -293,31 +229,60 @@ const AddEditTimeZoneModal = ({ show, handleClose, mode = 'add', rowData = null 
                     value={formData.name}
                     onChange={handleChange}
                     className={`form-control radius-8 ${errors.name ? 'is-invalid' : ''}`}
-                    placeholder="Enter time zone"
+                    placeholder="Enter state name"
                   />
                   {errors.name && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.name}
-                    </div>
+                    <div className="text-danger text-sm mt-1">{errors.name}</div>
                   )}
                 </div>
 
+                {/* State Short Name */}
+                <div className="col-12 mb-20">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                    State Short Name
+                  </label>
+                  <input
+                    type="text"
+                    name="short_name"
+                    value={formData.short_name}
+                    onChange={handleChange}
+                    className="form-control radius-8"
+                    placeholder="Enter short name"
+                  />
+                </div>
+                <div className="col-12 mb-20">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                    State / Territory <span className="text-danger">*</span>
+                  </label>
+                  <select
+                    name="stateTerritory"
+                    value={formData.stateTerritory}
+                    onChange={handleChange}
+                    className={`form-control form-select radius-8 ${errors.stateTerritory ? 'is-invalid' : ''}`}
+                  >
+                    <option value="">State / Territory</option>
+                    <option value="State">State</option>
+                    <option value="Territory">Territory</option>
+
+                  </select>
+                  {errors.stateTerritory && (
+                    <div className="text-danger text-sm mt-1">
+                      {errors.stateTerritory}
+                    </div>
+                  )}
+                </div>
                 {/* Description */}
                 <div className="col-12 mb-20">
-                  <label
-                    htmlFor="desc"
-                    className="form-label fw-semibold text-primary-light text-sm mb-8"
-                  >
+                  <label htmlFor="desc" className="form-label fw-semibold text-primary-light text-sm mb-8">
                     Description
                   </label>
                   <textarea
-                    className={`form-control ${errors.description ? 'is-invalid' : ''}`}
+                    className="form-control"
                     id="desc"
                     name="description"
                     value={formData.description}
                     onChange={handleChange}
                     rows={4}
-                    cols={50}
                     placeholder="Description"
                   />
                 </div>
@@ -328,6 +293,7 @@ const AddEditTimeZoneModal = ({ show, handleClose, mode = 'add', rowData = null 
                     type="button"
                     onClick={onClose}
                     className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-40 py-6 radius-8"
+                    disabled={loading}
                   >
                     Cancel
                   </button>
@@ -348,4 +314,4 @@ const AddEditTimeZoneModal = ({ show, handleClose, mode = 'add', rowData = null 
   );
 };
 
-export default AddEditTimeZoneModal;
+export default AddEditStateModal;

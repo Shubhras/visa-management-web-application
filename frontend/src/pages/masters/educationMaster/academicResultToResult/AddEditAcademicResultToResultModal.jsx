@@ -1,85 +1,89 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from "react-redux";
-import { studySpecialisationAdd, studySpecialisationEdit } from '../../../../store/master/educationMaster/action';
+import { academicResultToResultAdd, academicResultToResultEdit } from '../../../../store/master/educationMaster/action';
 import { toast } from "react-toastify";
-import { studyMainAreaList, studyMajorAreaList } from '../../../../store/master/educationMaster/action';
-const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
+import { academicResultTypeList } from '../../../../store/master/educationMaster/action';
+const AddEditAcademicResultToResultModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
-    const [studyMainArea, setStudyMainArea] = useState([]);
-    const [studyMajorArea, setStudyMajorArea] = useState([]);
-
-
-    // console.log("rowData",rowData);
+    const [educationLevelListData, setEducationLevelListData] = useState([]);
+    // Form state
     const [formData, setFormData] = useState({
         uuid: '',
-        studyMainAreaUuid: '',
-        studyMajorAreaUuid: '',
-        studySpecialisationName: '',
+        academicResultType: '',
+        academicResult: '',
+        compareAcademicResultType: '',
+        compareAcademicResult: '',
         description: '',
     });
 
+    // console.log("rowData",rowData);
+    // Validation errors state
     const [errors, setErrors] = useState({
-        studyMainAreaUuid: '',
-        studyMajorAreaUuid: '',
-        studySpecialisationName: '',
+        academicResultType: '',
+        academicResult: '',
+        compareAcademicResultType: '',
+        compareAcademicResult: '',
         description: '',
     });
 
+    // Populate form data when in edit mode
     useEffect(() => {
         if (mode === 'edit' && rowData) {
             setFormData({
                 uuid: rowData.uuid || '',
-                studySpecialisationName: rowData.studyspecialisation || '',
-                studyMainAreaUuid: rowData.mainarea || '',
-                studyMajorAreaUuid: rowData.majorarea || '',
+                academicResultType: rowData.academicResultTypeUuid || '',
+                academicResult: rowData.academicResult || '',
+                compareAcademicResultType: rowData.compareAcademicResultTypeUuid || '',
+                compareAcademicResult: rowData.compareAcademicResult || '',
                 description: rowData.description || '',
             });
         } else {
+            // Reset form when switching to add mode
             setFormData({
                 uuid: '',
-                studyMainAreaUuid: '',
-                studyMajorAreaUuid: '',
-                studySpecialisationName: '',
+                academicResultType: '',
+                academicResult: '',
+                compareAcademicResult: '',
+                compareAcademicResult: '',
                 description: '',
             });
         }
-        fetchStudyList();
+        fetchEducationLevelList();
     }, [mode, rowData, show]);
 
-    const fetchStudyList = () => {
+    const fetchEducationLevelList = () => {
         setLoading(true);
         const params = {
             page: 1,
             limit: 2000,
             search: '',
             status: '',
-            sortBy: 'updated_at',
-            sortOrder: 'desc',
+            sortBy: 'updated_at', // Field to sort by
+            sortOrder: 'desc', // 'asc' or 'desc'
         };
-        dispatch(studyMainAreaList(params, (response, error) => {
-            setLoading(false);
-            if (response?.statusCode === 200 && response?.status === true) {
-                setStudyMainArea(response?.data || []);
 
-            }
-        }));
-        dispatch(studyMajorAreaList(params, (response, error) => {
+        dispatch(academicResultTypeList(params, (response, error) => {
             setLoading(false);
             if (response?.statusCode === 200 && response?.status === true) {
-                setStudyMajorArea(response?.data || []);
+
+                setEducationLevelListData(response?.data || []);
+
+            } else {
 
             }
         }));
     };
 
-
+    // Handle input changes
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({
             ...prev,
             [name]: value
         }));
+
+        // Clear error when user starts typing
         if (errors[name]) {
             setErrors(prev => ({
                 ...prev,
@@ -88,20 +92,25 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
         }
     };
 
+    // Validate form
     const validateForm = () => {
         const newErrors = {};
         let isValid = true;
-        if (!formData.studyMainAreaUuid?.trim()) {
-            newErrors.studyMainAreaUuid = 'Study main area is required';
-            isValid = false;
-        }
-        if (!formData.studyMajorAreaUuid?.trim()) {
-            newErrors.studyMajorAreaUuid = 'Study major area is required';
-            isValid = false;
-        }
 
-        if (!formData.studySpecialisationName?.trim()) {
-            newErrors.studySpecialisationName = 'Study specialisation is required';
+        if (!formData.academicResultType) {
+            newErrors.academicResultType = "Academic result type is required";
+            isValid = false;
+        }
+        if (!formData.academicResult.trim()) {
+            newErrors.academicResult = "Academic result is required";
+            isValid = false;
+        }
+        if (!formData.compareAcademicResultType) {
+            newErrors.compareAcademicResultType = "Compare academic result type is required";
+            isValid = false;
+        }
+        if (!formData.compareAcademicResult.trim()) {
+            newErrors.compareAcademicResult = "Compare academic result is required";
             isValid = false;
         }
 
@@ -109,6 +118,8 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
         return isValid;
     };
 
+
+    // Handle form submission
     const handleSubmit = (e) => {
         e.preventDefault();
 
@@ -116,21 +127,24 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
             const sendPayload = mode === 'edit'
                 ? {
                     uuid: formData.uuid,
-                    studyspecialisation: formData.studySpecialisationName,
-                    mainarea_id: formData.studyMainAreaUuid,
-                    majorarea_id: formData.studyMajorAreaUuid,
+                    AcademicResulttype_id: formData.academicResultType,
+                    Academicresult: formData.academicResult,
+                    CompareAcademicResultType_id: formData.compareAcademicResultType,
+                    CompareAcademicResult: formData.compareAcademicResult,
                     description: formData.description,
                 }
                 : {
-                    studyspecialisation: formData.studySpecialisationName,
-                    mainarea_id: formData.studyMainAreaUuid,
-                    majorarea_id: formData.studyMajorAreaUuid,
+                    AcademicResulttype_id: formData.academicResultType,
+                    Academicresult: formData.academicResult,
+                    CompareAcademicResultType_id: formData.compareAcademicResultType,
+                    CompareAcademicResult: formData.compareAcademicResult,
                     description: formData.description,
                 };
 
             setLoading(true);
 
-            const action = mode === 'edit' ? studySpecialisationEdit : studySpecialisationAdd;
+            const action = mode === 'edit' ? academicResultToResultEdit : academicResultToResultAdd;
+
             dispatch(action(sendPayload, (response, error) => {
                 setLoading(false);
                 if (error) {
@@ -148,12 +162,14 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
         }
     };
 
+    // Reset form
     const resetForm = () => {
         setFormData({
             uuid: '',
-            studyMainAreaUuid: '',
-            studyMajorAreaUuid: '',
-            studySpecialisationName: '',
+            academicResultType: '',
+            academicResult: '',
+            compareAcademicResultType: '',
+            compareAcademicResult: '',
             description: '',
         });
         setErrors({});
@@ -181,7 +197,7 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
                 <div className="modal-content radius-16 bg-base">
                     <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
                         <h1 className="modal-title fs-5" id="departmentModalLabel">
-                            {mode === 'edit' ? 'Edit Study Specialisation' : 'Add Study Specialisation'}
+                            {mode === 'edit' ? 'Edit Academic Result' : 'Add Academic Result'}
                         </h1>
                         <button
                             type="button"
@@ -197,69 +213,81 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
                                 {/* Department Name */}
                                 <div className="col-12 mb-20">
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                                        Study Main Area <span className="text-danger">*</span>
+                                        Academic Result Type <span className="text-danger">*</span>
                                     </label>
                                     <select
-                                        name="studyMainAreaUuid"
-                                        value={formData.studyMainAreaUuid}
+                                        name="academicResultType"
+                                        value={formData.academicResultType}
                                         onChange={handleChange}
-                                        className={`form-control form-select radius-8 ${errors.studyMainAreaUuid ? 'is-invalid' : ''}`}
+                                        className={`form-control form-select radius-8 ${errors.academicResultType ? 'is-invalid' : ''}`}
                                     >
-                                        <option value="">Select  Study Main Area</option>
-                                        {studyMainArea.map((option) => (
+                                        <option value="">Select Academic Result Type</option>
+                                        {educationLevelListData.map((option) => (
                                             <option key={option.uuid} value={option.uuid}>
                                                 {option.name}
                                             </option>
                                         ))}
                                     </select>
-                                    {errors.studyMainAreaUuid && (
+                                    {errors.academicResultType && (
                                         <div className="text-danger text-sm mt-1">
-                                            {errors.studyMainAreaUuid}
+                                            {errors.academicResultType}
                                         </div>
                                     )}
                                 </div>
                                 <div className="col-12 mb-20">
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                                        Study Major Area <span className="text-danger">*</span>
-                                    </label>
-                                    <select
-                                        name="studyMajorAreaUuid"
-                                        value={formData.studyMajorAreaUuid}
-                                        onChange={handleChange}
-                                        className={`form-control form-select radius-8 ${errors.studyMajorAreaUuid ? 'is-invalid' : ''}`}
-                                    >
-                                        <option value="">Select  Study Major Area</option>
-                                        {studyMajorArea.map((option) => (
-                                            <option key={option.uuid} value={option.uuid}>
-                                                {option.majorarea}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    {errors.studyMajorAreaUuid && (
-                                        <div className="text-danger text-sm mt-1">
-                                            {errors.studyMajorAreaUuid}
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="col-12 mb-20">
-                                    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                                        Study Specialisation <span className="text-danger">*</span>
+                                        Academic Result <span className="text-danger">*</span>
                                     </label>
                                     <input
                                         type="text"
-                                        name="studySpecialisationName"
-                                        value={formData.studySpecialisationName}
+                                        name="academicResult"
+                                        value={formData.academicResult}
                                         onChange={handleChange}
-                                        className={`form-control radius-8 ${errors.studySpecialisationName ? 'is-invalid' : ''}`}
-                                        placeholder="Enter study specialisation"
+                                        className={`form-control radius-8 ${errors.academicResult ? 'is-invalid' : ''}`}
+                                        placeholder="Enter academic result"
                                     />
-                                    {errors.studySpecialisationName && (
+                                    {errors.academicResult && (
                                         <div className="text-danger text-sm mt-1">
-                                            {errors.studySpecialisationName}
+                                            {errors.academicResult}
                                         </div>
                                     )}
                                 </div>
-
+                                <div className="col-12 mb-20">
+                                    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                                        Compare : Academic Result Type <span className="text-danger">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="compareAcademicResultType"
+                                        value={formData.compareAcademicResultType}
+                                        onChange={handleChange}
+                                        className={`form-control radius-8 ${errors.compareAcademicResultType ? 'is-invalid' : ''}`}
+                                        placeholder="Enter academic result"
+                                    />
+                                    {errors.compareAcademicResultType && (
+                                        <div className="text-danger text-sm mt-1">
+                                            {errors.compareAcademicResultType}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="col-12 mb-20">
+                                    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                                        Compare : Academic Result <span className="text-danger">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="compareAcademicResult"
+                                        value={formData.compareAcademicResult}
+                                        onChange={handleChange}
+                                        className={`form-control radius-8 ${errors.compareAcademicResult ? 'is-invalid' : ''}`}
+                                        placeholder="Enter academic result"
+                                    />
+                                    {errors.compareAcademicResult && (
+                                        <div className="text-danger text-sm mt-1">
+                                            {errors.compareAcademicResult}
+                                        </div>
+                                    )}
+                                </div>
 
                                 {/* Description */}
                                 <div className="col-12 mb-20">
@@ -307,4 +335,4 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
     );
 };
 
-export default AddEditStudySpecialisationModal;
+export default AddEditAcademicResultToResultModal;

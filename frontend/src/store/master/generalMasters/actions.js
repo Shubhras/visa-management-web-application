@@ -41,6 +41,19 @@ import {
   EDIT_COUNTRY,
   ADD_COUNTRY,
   COUNTRY_LIST,
+    STATE_LIST,
+  ADD_STATE,
+  EDIT_STATE,
+  DELETE_STATE,
+  EXPORT_STATE,
+  IMPORT_STATE,
+  STATE_LIST_BY_COUNTRY,
+  IMPORT_DISTRICT,
+  EXPORT_DISTRICT,
+  DELETE_DISTRICT,
+  EDIT_DISTRICT,
+  ADD_DISTRICT,
+  DISTRICT_LIST,
 } from "./actionTypes";
 
 // GENDER
@@ -298,6 +311,85 @@ export const countryExportData = (data, callback) => ({
 
 export const countryImportData = (data, callback) => ({
   type: IMPORT_COUNTRY,
+  data,
+  callback,
+});
+
+// STATE
+export const stateList = (data, callback) => ({
+  type: STATE_LIST,
+  data,
+  callback,
+});
+
+export const stateAdd = (data, callback) => ({
+  type: ADD_STATE,
+  data,
+  callback,
+});
+
+export const stateEdit = (data, callback) => ({
+  type: EDIT_STATE,
+  data,
+  callback,
+});
+
+export const stateDelete = (data, callback) => ({
+  type: DELETE_STATE,
+  data,
+  callback,
+});
+
+export const stateExportData = (data, callback) => ({
+  type: EXPORT_STATE,
+  data,
+  callback,
+});
+
+export const stateImportData = (data, callback) => ({
+  type: IMPORT_STATE,
+  data,
+  callback,
+});
+export const stateListByCountry = (data, callback) => ({
+  type: STATE_LIST_BY_COUNTRY,
+  data,
+  callback,
+});
+
+// DISTRICT
+export const districtList = (data, callback) => ({
+  type: DISTRICT_LIST,
+  data,
+  callback,
+});
+
+export const districtAdd = (data, callback) => ({
+  type: ADD_DISTRICT,
+  data,
+  callback,
+});
+
+export const districtEdit = (data, callback) => ({
+  type: EDIT_DISTRICT,
+  data,
+  callback,
+});
+
+export const districtDelete = (data, callback) => ({
+  type: DELETE_DISTRICT,
+  data,
+  callback,
+});
+
+export const districtExportData = (data, callback) => ({
+  type: EXPORT_DISTRICT,
+  data,
+  callback,
+});
+
+export const districtImportData = (data, callback) => ({
+  type: IMPORT_DISTRICT,
   data,
   callback,
 });

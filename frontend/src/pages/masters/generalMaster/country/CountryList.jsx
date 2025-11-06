@@ -643,7 +643,7 @@ const CountryList = () => {
                       onClick={() => handleSort("name")}
                     >
                       <div className="d-flex align-items-center">
-                        Country
+                        Country Name
                         {getSortIcon("name")}
                       </div>
                     </th>{" "}

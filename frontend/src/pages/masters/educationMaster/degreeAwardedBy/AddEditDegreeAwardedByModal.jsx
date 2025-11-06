@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from "react-redux";
-import { studySpecialisationAdd, studySpecialisationEdit } from '../../../../store/master/educationMaster/action';
+import { degreeAwardedByAdd, degreeAwardedByEdit } from '../../../../store/master/educationMaster/action';
 import { toast } from "react-toastify";
-import { studyMainAreaList, studyMajorAreaList } from '../../../../store/master/educationMaster/action';
-const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
+import { educationLevelList } from "../../../../store/master/educationMaster/action";
+import {countryList} from "../../../../store/master/generalMasters/actions";
+const AddEditDegreeAwardedByModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
     const [studyMainArea, setStudyMainArea] = useState([]);
@@ -57,14 +58,14 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
             sortBy: 'updated_at',
             sortOrder: 'desc',
         };
-        dispatch(studyMainAreaList(params, (response, error) => {
+        dispatch(countryList(params, (response, error) => {
             setLoading(false);
             if (response?.statusCode === 200 && response?.status === true) {
                 setStudyMainArea(response?.data || []);
 
             }
         }));
-        dispatch(studyMajorAreaList(params, (response, error) => {
+        dispatch(educationLevelList(params, (response, error) => {
             setLoading(false);
             if (response?.statusCode === 200 && response?.status === true) {
                 setStudyMajorArea(response?.data || []);
@@ -92,16 +93,16 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
         const newErrors = {};
         let isValid = true;
         if (!formData.studyMainAreaUuid?.trim()) {
-            newErrors.studyMainAreaUuid = 'Study main area is required';
+            newErrors.studyMainAreaUuid = 'Country is required';
             isValid = false;
         }
         if (!formData.studyMajorAreaUuid?.trim()) {
-            newErrors.studyMajorAreaUuid = 'Study major area is required';
+            newErrors.studyMajorAreaUuid = 'Education level is required';
             isValid = false;
         }
 
         if (!formData.studySpecialisationName?.trim()) {
-            newErrors.studySpecialisationName = 'Study specialisation is required';
+            newErrors.studySpecialisationName = 'Degree awarded by is required';
             isValid = false;
         }
 
@@ -130,7 +131,7 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
 
             setLoading(true);
 
-            const action = mode === 'edit' ? studySpecialisationEdit : studySpecialisationAdd;
+            const action = mode === 'edit' ? degreeAwardedByEdit : degreeAwardedByAdd;
             dispatch(action(sendPayload, (response, error) => {
                 setLoading(false);
                 if (error) {
@@ -181,7 +182,7 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
                 <div className="modal-content radius-16 bg-base">
                     <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
                         <h1 className="modal-title fs-5" id="departmentModalLabel">
-                            {mode === 'edit' ? 'Edit Study Specialisation' : 'Add Study Specialisation'}
+                            {mode === 'edit' ? 'Edit Degree Awarded By' : 'Add Degree Awarded By'}
                         </h1>
                         <button
                             type="button"
@@ -197,7 +198,7 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
                                 {/* Department Name */}
                                 <div className="col-12 mb-20">
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                                        Study Main Area <span className="text-danger">*</span>
+                                        Country<span className="text-danger">*</span>
                                     </label>
                                     <select
                                         name="studyMainAreaUuid"
@@ -205,7 +206,7 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
                                         onChange={handleChange}
                                         className={`form-control form-select radius-8 ${errors.studyMainAreaUuid ? 'is-invalid' : ''}`}
                                     >
-                                        <option value="">Select  Study Main Area</option>
+                                        <option value="">Select country</option>
                                         {studyMainArea.map((option) => (
                                             <option key={option.uuid} value={option.uuid}>
                                                 {option.name}
@@ -220,7 +221,7 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
                                 </div>
                                 <div className="col-12 mb-20">
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                                        Study Major Area <span className="text-danger">*</span>
+                                        Education Level <span className="text-danger">*</span>
                                     </label>
                                     <select
                                         name="studyMajorAreaUuid"
@@ -228,10 +229,10 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
                                         onChange={handleChange}
                                         className={`form-control form-select radius-8 ${errors.studyMajorAreaUuid ? 'is-invalid' : ''}`}
                                     >
-                                        <option value="">Select  Study Major Area</option>
+                                        <option value="">Select education level</option>
                                         {studyMajorArea.map((option) => (
                                             <option key={option.uuid} value={option.uuid}>
-                                                {option.majorarea}
+                                                {option.educationlevel}
                                             </option>
                                         ))}
                                     </select>
@@ -243,7 +244,7 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
                                 </div>
                                 <div className="col-12 mb-20">
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                                        Study Specialisation <span className="text-danger">*</span>
+                                        Degree Awarded By <span className="text-danger">*</span>
                                     </label>
                                     <input
                                         type="text"
@@ -251,7 +252,7 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
                                         value={formData.studySpecialisationName}
                                         onChange={handleChange}
                                         className={`form-control radius-8 ${errors.studySpecialisationName ? 'is-invalid' : ''}`}
-                                        placeholder="Enter study specialisation"
+                                        placeholder="Enter degree awarded by"
                                     />
                                     {errors.studySpecialisationName && (
                                         <div className="text-danger text-sm mt-1">
@@ -306,5 +307,4 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
         </div>
     );
 };
-
-export default AddEditStudySpecialisationModal;
+export default AddEditDegreeAwardedByModal;

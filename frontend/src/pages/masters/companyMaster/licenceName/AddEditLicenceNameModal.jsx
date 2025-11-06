@@ -65,11 +65,11 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
         description: '',
       });
     }
-    fetchCountryListDemo();
+    fetchCountryList();
   }, [mode, rowData, show]);
 
 
-  const fetchCountryListDemo = () => {
+  const fetchCountryList = () => {
     setLoading(true);
     const params = {
       page: 1,

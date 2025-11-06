@@ -15855,6 +15855,15 @@ td.fc-header-center {
   cursor: pointer;
   transition: all 0.2s;
 }
+.basic-data-table .container-table .hide-show-column-btn-icone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
 
 .basic-data-table .container-table .edit-btn-icone {
   display: inline-flex;
