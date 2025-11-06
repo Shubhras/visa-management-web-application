@@ -3452,7 +3452,7 @@ class RelationImportAPIView(APIView):
                 if not name:
                     continue  # skip rows without relation name
 
-                existing = Relation.objects.filter(relation__iexact=name).first()
+                existing = Relation.objects.filter(name__iexact=name).first()
 
                 if existing:
                     if not existing.is_deleted:
