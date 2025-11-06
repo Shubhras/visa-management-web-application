@@ -1948,527 +1948,527 @@ class RequiredDocumentImportAPIView(APIView):
 #--------------  Process Status Name -----------
 
 
-class ProcessStatusCreateAPIView(APIView):
-    def post(self, request):
-        serializer = ProcessStatusSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": "Process Status created successfully",
-                "data": serializer.data
-            }, status=status.HTTP_200_OK)
-        return Response({
-            "statusCode": 400,
-            "status": False,
-            "message": serializer.errors
-        }, status=status.HTTP_400_BAD_REQUEST)
+# class ProcessStatusCreateAPIView(APIView):
+#     def post(self, request):
+#         serializer = ProcessStatusSerializer(data=request.data)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": "Process Status created successfully",
+#                 "data": serializer.data
+#             }, status=status.HTTP_200_OK)
+#         return Response({
+#             "statusCode": 400,
+#             "status": False,
+#             "message": serializer.errors
+#         }, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ProcessStatusListAPIView(APIView):
-    def get(self, request):
-        search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
+# class ProcessStatusListAPIView(APIView):
+#     def get(self, request):
+#         search = request.GET.get('search', '').strip()
+#         sort_by = request.GET.get('sortBy', 'created_at')
+#         sort_order = request.GET.get('sortOrder', 'desc')
 
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+#         if sort_order == 'desc':
+#             sort_by = f'-{sort_by}'
 
-        queryset = ProcessStatus.objects.filter(is_deleted=False).select_related(
-            'country', 'visa_main_category', 'process_status_name'
-        )
+#         queryset = ProcessStatus.objects.filter(is_deleted=False).select_related(
+#             'country', 'visa_main_category', 'process_status_name'
+#         )
 
-        if search:
-            queryset = queryset.filter(
-                Q(country__name__icontains=search) |
-                Q(visa_main_category__name__icontains=search) |
-                Q(process_status_name__name__icontains=search) |
-                Q(description__icontains=search)
-            )
+#         if search:
+#             queryset = queryset.filter(
+#                 Q(country__name__icontains=search) |
+#                 Q(visa_main_category__name__icontains=search) |
+#                 Q(process_status_name__name__icontains=search) |
+#                 Q(description__icontains=search)
+#             )
 
-        queryset = queryset.order_by(sort_by)
-        paginator = CustomPagination()
-        result_page = paginator.paginate_queryset(queryset, request)
-        serializer = ProcessStatusSerializer(result_page, many=True)
-        return paginator.get_paginated_response(serializer.data)
-
-
-class ProcessStatusRetrieveAPIView(APIView):
-    def get(self, request, uuid):
-        try:
-            obj = ProcessStatus.objects.get(uuid=uuid, is_deleted=False)
-        except ProcessStatus.DoesNotExist:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "Process Status not found"
-            }, status=status.HTTP_404_NOT_FOUND)
-
-        serializer = ProcessStatusSerializer(obj)
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "data": serializer.data
-        }, status=status.HTTP_200_OK)
+#         queryset = queryset.order_by(sort_by)
+#         paginator = CustomPagination()
+#         result_page = paginator.paginate_queryset(queryset, request)
+#         serializer = ProcessStatusSerializer(result_page, many=True)
+#         return paginator.get_paginated_response(serializer.data)
 
 
-class ProcessStatusUpdateAPIView(APIView):
-    def put(self, request, uuid):
-        try:
-            obj = ProcessStatus.objects.get(uuid=uuid, is_deleted=False)
-        except ProcessStatus.DoesNotExist:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "Process Status not found"
-            }, status=status.HTTP_404_NOT_FOUND)
+# class ProcessStatusRetrieveAPIView(APIView):
+#     def get(self, request, uuid):
+#         try:
+#             obj = ProcessStatus.objects.get(uuid=uuid, is_deleted=False)
+#         except ProcessStatus.DoesNotExist:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "Process Status not found"
+#             }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = ProcessStatusSerializer(obj, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": "Process Status updated successfully",
-                "data": serializer.data
-            })
-        return Response({
-            "statusCode": 400,
-            "status": False,
-            "message": serializer.errors
-        }, status=status.HTTP_400_BAD_REQUEST)
+#         serializer = ProcessStatusSerializer(obj)
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "data": serializer.data
+#         }, status=status.HTTP_200_OK)
 
 
-class ProcessStatusDeleteAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
+# class ProcessStatusUpdateAPIView(APIView):
+#     def put(self, request, uuid):
+#         try:
+#             obj = ProcessStatus.objects.get(uuid=uuid, is_deleted=False)
+#         except ProcessStatus.DoesNotExist:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "Process Status not found"
+#             }, status=status.HTTP_404_NOT_FOUND)
 
-    def delete(self, request):
-        ids = request.data.get("id")
-
-        if not ids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Provide 'id' (UUID list or 'all')"
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        if ids == "all":
-            count = ProcessStatus.objects.filter(is_deleted=False).update(is_deleted=True)
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": f"All ({count}) Process Status records deleted."
-            })
-
-        if not isinstance(ids, list):
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Send list of UUIDs or 'all'."
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        valid_uuids, invalid_uuids = [], []
-        for u in ids:
-            try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
-
-        objs = ProcessStatus.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = objs.count()
-        objs.update(is_deleted=True)
-
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"{count} Process Status deleted successfully",
-            "invalid_uuids": invalid_uuids
-        })
+#         serializer = ProcessStatusSerializer(obj, data=request.data, partial=True)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": "Process Status updated successfully",
+#                 "data": serializer.data
+#             })
+#         return Response({
+#             "statusCode": 400,
+#             "status": False,
+#             "message": serializer.errors
+#         }, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ProcessStatusExportAPIView(APIView):
-    def get(self, request):
-        format_type = request.GET.get('format', 'xlsx').lower()
-        queryset = ProcessStatus.objects.filter(is_deleted=False).select_related(
-            'country', 'visa_main_category', 'process_status_name'
-        )
+# class ProcessStatusDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
 
-        dataset = Dataset()
-        dataset.headers = [
-            "UUID",
-            "Country",
-            "Visa Main Category",
-            "Process Status Name",
-            "Description",
-            "Created At",
-            "Updated At"
-        ]
+#     def delete(self, request):
+#         ids = request.data.get("id")
 
-        for obj in queryset:
-            dataset.append([
-                str(obj.uuid),
-                obj.country.name if obj.country else '',
-                obj.visa_main_category.name if obj.visa_main_category else '',
-                obj.process_status_name.name if obj.process_status_name else '',
-                obj.description or '',
-                timezone.localtime(obj.created_at, india_tz).strftime("%d-%m-%Y %I:%M:%S %p"),
-                timezone.localtime(obj.updated_at, india_tz).strftime("%d-%m-%Y %I:%M:%S %p"),
-            ])
+#         if not ids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Provide 'id' (UUID list or 'all')"
+#             }, status=status.HTTP_400_BAD_REQUEST)
 
-        if format_type == 'csv':
-            response = HttpResponse(dataset.export('csv'), content_type='text/csv')
-            response['Content-Disposition'] = 'attachment; filename="process_status.csv"'
-        else:
-            stream = io.BytesIO(dataset.export('xlsx'))
-            response = HttpResponse(
-                stream.getvalue(),
-                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            )
-            response['Content-Disposition'] = 'attachment; filename="process_status.xlsx"'
-        return response
+#         if ids == "all":
+#             count = ProcessStatus.objects.filter(is_deleted=False).update(is_deleted=True)
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All ({count}) Process Status records deleted."
+#             })
+
+#         if not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Send list of UUIDs or 'all'."
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         valid_uuids, invalid_uuids = [], []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         objs = ProcessStatus.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+#         count = objs.count()
+#         objs.update(is_deleted=True)
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} Process Status deleted successfully",
+#             "invalid_uuids": invalid_uuids
+#         })
 
 
-class ProcessStatusImportAPIView(APIView):
-    def post(self, request):
-        file = request.FILES.get('file')
-        sheet_name = request.data.get('sheet_name')
+# class ProcessStatusExportAPIView(APIView):
+#     def get(self, request):
+#         format_type = request.GET.get('format', 'xlsx').lower()
+#         queryset = ProcessStatus.objects.filter(is_deleted=False).select_related(
+#             'country', 'visa_main_category', 'process_status_name'
+#         )
 
-        if not file:
-            return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
+#         dataset = Dataset()
+#         dataset.headers = [
+#             "UUID",
+#             "Country",
+#             "Visa Main Category",
+#             "Process Status Name",
+#             "Description",
+#             "Created At",
+#             "Updated At"
+#         ]
 
-        format_type = file.name.split('.')[-1].lower()
-        required_headers = {'country', 'visa main category', 'process status name', 'description'}
+#         for obj in queryset:
+#             dataset.append([
+#                 str(obj.uuid),
+#                 obj.country.name if obj.country else '',
+#                 obj.visa_main_category.name if obj.visa_main_category else '',
+#                 obj.process_status_name.name if obj.process_status_name else '',
+#                 obj.description or '',
+#                 timezone.localtime(obj.created_at, india_tz).strftime("%d-%m-%Y %I:%M:%S %p"),
+#                 timezone.localtime(obj.updated_at, india_tz).strftime("%d-%m-%Y %I:%M:%S %p"),
+#             ])
 
-        data = []
-        if format_type == 'xlsx':
-            wb = openpyxl.load_workbook(file)
-            if not sheet_name:
-                return Response({"error": "Please provide sheet_name"}, status=400)
-            ws = wb[sheet_name]
-            headers = [cell.value.lower().strip() for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-            if not required_headers.issubset(set(headers)):
-                return Response({"error": f"Missing required headers {required_headers}"}, status=400)
-            for row in ws.iter_rows(min_row=2, values_only=True):
-                data.append(dict(zip(headers, row)))
-        else:
-            dataset = Dataset().load(file.read().decode('utf-8'), format='csv')
-            for row in dataset.dict:
-                data.append({k.lower(): v for k, v in row.items()})
+#         if format_type == 'csv':
+#             response = HttpResponse(dataset.export('csv'), content_type='text/csv')
+#             response['Content-Disposition'] = 'attachment; filename="process_status.csv"'
+#         else:
+#             stream = io.BytesIO(dataset.export('xlsx'))
+#             response = HttpResponse(
+#                 stream.getvalue(),
+#                 content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+#             )
+#             response['Content-Disposition'] = 'attachment; filename="process_status.xlsx"'
+#         return response
 
-        imported = 0
-        duplicates = []
-        for row in data:
-            c_name = str(row.get('country', '')).strip()
-            v_name = str(row.get('visa main category', '')).strip()
-            p_name = str(row.get('process status name', '')).strip()
-            desc = row.get('description', '')
 
-            country = Country.objects.filter(name__iexact=c_name, is_deleted=False).first()
-            visa_main = VisaMain.objects.filter(name__iexact=v_name, is_deleted=False).first()
-            process_name = ProcessStatus.objects.filter(name__iexact=p_name, is_deleted=False).first()
+# class ProcessStatusImportAPIView(APIView):
+#     def post(self, request):
+#         file = request.FILES.get('file')
+#         sheet_name = request.data.get('sheet_name')
 
-            if not all([country, visa_main, process_name]):
-                continue
+#         if not file:
+#             return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
 
-            existing = ProcessStatus.objects.filter(
-                country=country,
-                visa_main_category=visa_main,
-                process_status_name=process_name
-            ).first()
+#         format_type = file.name.split('.')[-1].lower()
+#         required_headers = {'country', 'visa main category', 'process status name', 'description'}
 
-            if existing and not existing.is_deleted:
-                duplicates.append(row)
-                continue
+#         data = []
+#         if format_type == 'xlsx':
+#             wb = openpyxl.load_workbook(file)
+#             if not sheet_name:
+#                 return Response({"error": "Please provide sheet_name"}, status=400)
+#             ws = wb[sheet_name]
+#             headers = [cell.value.lower().strip() for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+#             if not required_headers.issubset(set(headers)):
+#                 return Response({"error": f"Missing required headers {required_headers}"}, status=400)
+#             for row in ws.iter_rows(min_row=2, values_only=True):
+#                 data.append(dict(zip(headers, row)))
+#         else:
+#             dataset = Dataset().load(file.read().decode('utf-8'), format='csv')
+#             for row in dataset.dict:
+#                 data.append({k.lower(): v for k, v in row.items()})
 
-            if existing and existing.is_deleted:
-                existing.is_deleted = False
-                existing.description = desc
-                existing.save()
-                imported += 1
-                continue
+#         imported = 0
+#         duplicates = []
+#         for row in data:
+#             c_name = str(row.get('country', '')).strip()
+#             v_name = str(row.get('visa main category', '')).strip()
+#             p_name = str(row.get('process status name', '')).strip()
+#             desc = row.get('description', '')
 
-            ProcessStatus.objects.create(
-                country=country,
-                visa_main_category=visa_main,
-                process_status_name=process_name,
-                description=desc
-            )
-            imported += 1
+#             country = Country.objects.filter(name__iexact=c_name, is_deleted=False).first()
+#             visa_main = VisaMain.objects.filter(name__iexact=v_name, is_deleted=False).first()
+#             process_name = ProcessStatus.objects.filter(name__iexact=p_name, is_deleted=False).first()
 
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "imported": imported,
-            "duplicates": len(duplicates),
-            "message": "Import completed"
-        })
+#             if not all([country, visa_main, process_name]):
+#                 continue
+
+#             existing = ProcessStatus.objects.filter(
+#                 country=country,
+#                 visa_main_category=visa_main,
+#                 process_status_name=process_name
+#             ).first()
+
+#             if existing and not existing.is_deleted:
+#                 duplicates.append(row)
+#                 continue
+
+#             if existing and existing.is_deleted:
+#                 existing.is_deleted = False
+#                 existing.description = desc
+#                 existing.save()
+#                 imported += 1
+#                 continue
+
+#             ProcessStatus.objects.create(
+#                 country=country,
+#                 visa_main_category=visa_main,
+#                 process_status_name=process_name,
+#                 description=desc
+#             )
+#             imported += 1
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "imported": imported,
+#             "duplicates": len(duplicates),
+#             "message": "Import completed"
+#         })
 
 #------------ Process Sub Status Name -------
 
 
-class ProcessSubStatusCreateAPIView(APIView):
-    def post(self, request):
-        serializer = ProcessSubStatusSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": "Process Sub Status created successfully",
-                "data": serializer.data
-            })
-        return Response({
-            "statusCode": 400,
-            "status": False,
-            "message": serializer.errors
-        }, status=400)
+# class ProcessSubStatusCreateAPIView(APIView):
+#     def post(self, request):
+#         serializer = ProcessSubStatusSerializer(data=request.data)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": "Process Sub Status created successfully",
+#                 "data": serializer.data
+#             })
+#         return Response({
+#             "statusCode": 400,
+#             "status": False,
+#             "message": serializer.errors
+#         }, status=400)
 
 
-class ProcessSubStatusListAPIView(APIView):
-    def get(self, request):
-        search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
+# class ProcessSubStatusListAPIView(APIView):
+#     def get(self, request):
+#         search = request.GET.get('search', '').strip()
+#         sort_by = request.GET.get('sortBy', 'created_at')
+#         sort_order = request.GET.get('sortOrder', 'desc')
 
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+#         if sort_order == 'desc':
+#             sort_by = f'-{sort_by}'
 
-        queryset = ProcessSubStatus.objects.filter(is_deleted=False).select_related(
-            'country', 'visa_main_category', 'process_status_name'
-        )
+#         queryset = ProcessSubStatus.objects.filter(is_deleted=False).select_related(
+#             'country', 'visa_main_category', 'process_status_name'
+#         )
 
-        if search:
-            queryset = queryset.filter(
-                Q(country__name__icontains=search) |
-                Q(visa_main_category__name__icontains=search) |
-                Q(process_status_name__name__icontains=search) |
-                Q(process_sub_status_name__icontains=search) |
-                Q(description__icontains=search)
-            )
+#         if search:
+#             queryset = queryset.filter(
+#                 Q(country__name__icontains=search) |
+#                 Q(visa_main_category__name__icontains=search) |
+#                 Q(process_status_name__name__icontains=search) |
+#                 Q(process_sub_status_name__icontains=search) |
+#                 Q(description__icontains=search)
+#             )
 
-        queryset = queryset.order_by(sort_by)
-        paginator = CustomPagination()
-        result_page = paginator.paginate_queryset(queryset, request)
-        serializer = ProcessSubStatusSerializer(result_page, many=True)
-        return paginator.get_paginated_response(serializer.data)
-
-
-class ProcessSubStatusRetrieveAPIView(APIView):
-    def get(self, request, uuid):
-        try:
-            obj = ProcessSubStatus.objects.get(uuid=uuid, is_deleted=False)
-        except ProcessSubStatus.DoesNotExist:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "Process Sub Status not found"
-            }, status=404)
-        serializer = ProcessSubStatusSerializer(obj)
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "data": serializer.data
-        })
+#         queryset = queryset.order_by(sort_by)
+#         paginator = CustomPagination()
+#         result_page = paginator.paginate_queryset(queryset, request)
+#         serializer = ProcessSubStatusSerializer(result_page, many=True)
+#         return paginator.get_paginated_response(serializer.data)
 
 
-class ProcessSubStatusUpdateAPIView(APIView):
-    def put(self, request, uuid):
-        try:
-            obj = ProcessSubStatus.objects.get(uuid=uuid, is_deleted=False)
-        except ProcessSubStatus.DoesNotExist:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "Process Sub Status not found"
-            }, status=404)
-
-        serializer = ProcessSubStatusSerializer(obj, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": "Process Sub Status updated successfully",
-                "data": serializer.data
-            })
-        return Response({
-            "statusCode": 400,
-            "status": False,
-            "message": serializer.errors
-        }, status=400)
+# class ProcessSubStatusRetrieveAPIView(APIView):
+#     def get(self, request, uuid):
+#         try:
+#             obj = ProcessSubStatus.objects.get(uuid=uuid, is_deleted=False)
+#         except ProcessSubStatus.DoesNotExist:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "Process Sub Status not found"
+#             }, status=404)
+#         serializer = ProcessSubStatusSerializer(obj)
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "data": serializer.data
+#         })
 
 
-class ProcessSubStatusDeleteAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
+# class ProcessSubStatusUpdateAPIView(APIView):
+#     def put(self, request, uuid):
+#         try:
+#             obj = ProcessSubStatus.objects.get(uuid=uuid, is_deleted=False)
+#         except ProcessSubStatus.DoesNotExist:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "Process Sub Status not found"
+#             }, status=404)
 
-    def delete(self, request):
-        ids = request.data.get("id")
-
-        if not ids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Provide 'id' (UUID list or 'all')"
-            }, status=400)
-
-        if ids == "all":
-            count = ProcessSubStatus.objects.filter(is_deleted=False).update(is_deleted=True)
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": f"All ({count}) Process Sub Status records deleted."
-            })
-
-        if not isinstance(ids, list):
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Send list of UUIDs or 'all'."
-            }, status=400)
-
-        valid_uuids, invalid_uuids = [], []
-        for u in ids:
-            try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
-
-        objs = ProcessSubStatus.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = objs.count()
-        objs.update(is_deleted=True)
-
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"{count} Process Sub Status deleted successfully",
-            "invalid_uuids": invalid_uuids
-        })
+#         serializer = ProcessSubStatusSerializer(obj, data=request.data, partial=True)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": "Process Sub Status updated successfully",
+#                 "data": serializer.data
+#             })
+#         return Response({
+#             "statusCode": 400,
+#             "status": False,
+#             "message": serializer.errors
+#         }, status=400)
 
 
-class ProcessSubStatusExportAPIView(APIView):
-    def get(self, request):
-        format_type = request.GET.get('format', 'xlsx').lower()
-        queryset = ProcessSubStatus.objects.filter(is_deleted=False).select_related(
-            'country', 'visa_main_category', 'process_status_name'
-        )
+# class ProcessSubStatusDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
 
-        dataset = Dataset()
-        dataset.headers = [
-            "UUID",
-            "Country",
-            "Visa Main Category",
-            "Process Status Name",
-            "Process Sub Status Name",
-            "Description",
-            "Created At",
-            "Updated At"
-        ]
+#     def delete(self, request):
+#         ids = request.data.get("id")
 
-        for obj in queryset:
-            dataset.append([
-                str(obj.uuid),
-                obj.country.name if obj.country else '',
-                obj.visa_main_category.name if obj.visa_main_category else '',
-                obj.process_status_name.name if obj.process_status_name else '',
-                obj.process_sub_status_name,
-                obj.description or '',
-                timezone.localtime(obj.created_at, india_tz).strftime("%d-%m-%Y %I:%M:%S %p"),
-                timezone.localtime(obj.updated_at, india_tz).strftime("%d-%m-%Y %I:%M:%S %p"),
-            ])
+#         if not ids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Provide 'id' (UUID list or 'all')"
+#             }, status=400)
 
-        if format_type == 'csv':
-            response = HttpResponse(dataset.export('csv'), content_type='text/csv')
-            response['Content-Disposition'] = 'attachment; filename="process_sub_status.csv"'
-        else:
-            stream = io.BytesIO(dataset.export('xlsx'))
-            response = HttpResponse(
-                stream.getvalue(),
-                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            )
-            response['Content-Disposition'] = 'attachment; filename="process_sub_status.xlsx"'
-        return response
+#         if ids == "all":
+#             count = ProcessSubStatus.objects.filter(is_deleted=False).update(is_deleted=True)
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All ({count}) Process Sub Status records deleted."
+#             })
+
+#         if not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Send list of UUIDs or 'all'."
+#             }, status=400)
+
+#         valid_uuids, invalid_uuids = [], []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         objs = ProcessSubStatus.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+#         count = objs.count()
+#         objs.update(is_deleted=True)
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} Process Sub Status deleted successfully",
+#             "invalid_uuids": invalid_uuids
+#         })
 
 
-class ProcessSubStatusImportAPIView(APIView):
-    def post(self, request):
-        file = request.FILES.get('file')
-        sheet_name = request.data.get('sheet_name')
+# class ProcessSubStatusExportAPIView(APIView):
+#     def get(self, request):
+#         format_type = request.GET.get('format', 'xlsx').lower()
+#         queryset = ProcessSubStatus.objects.filter(is_deleted=False).select_related(
+#             'country', 'visa_main_category', 'process_status_name'
+#         )
 
-        if not file:
-            return Response({"error": "No file uploaded"}, status=400)
+#         dataset = Dataset()
+#         dataset.headers = [
+#             "UUID",
+#             "Country",
+#             "Visa Main Category",
+#             "Process Status Name",
+#             "Process Sub Status Name",
+#             "Description",
+#             "Created At",
+#             "Updated At"
+#         ]
 
-        format_type = file.name.split('.')[-1].lower()
-        required_headers = {
-            'country', 'visa main category', 'process status name', 'process sub status name', 'description'
-        }
+#         for obj in queryset:
+#             dataset.append([
+#                 str(obj.uuid),
+#                 obj.country.name if obj.country else '',
+#                 obj.visa_main_category.name if obj.visa_main_category else '',
+#                 obj.process_status_name.name if obj.process_status_name else '',
+#                 obj.process_sub_status_name,
+#                 obj.description or '',
+#                 timezone.localtime(obj.created_at, india_tz).strftime("%d-%m-%Y %I:%M:%S %p"),
+#                 timezone.localtime(obj.updated_at, india_tz).strftime("%d-%m-%Y %I:%M:%S %p"),
+#             ])
 
-        data = []
-        if format_type == 'xlsx':
-            wb = openpyxl.load_workbook(file)
-            if not sheet_name:
-                return Response({"error": "Please provide sheet_name"}, status=400)
-            ws = wb[sheet_name]
-            headers = [cell.value.lower().strip() for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-            if not required_headers.issubset(set(headers)):
-                return Response({"error": f"Missing required headers {required_headers}"}, status=400)
-            for row in ws.iter_rows(min_row=2, values_only=True):
-                data.append(dict(zip(headers, row)))
-        else:
-            dataset = Dataset().load(file.read().decode('utf-8'), format='csv')
-            for row in dataset.dict:
-                data.append({k.lower(): v for k, v in row.items()})
+#         if format_type == 'csv':
+#             response = HttpResponse(dataset.export('csv'), content_type='text/csv')
+#             response['Content-Disposition'] = 'attachment; filename="process_sub_status.csv"'
+#         else:
+#             stream = io.BytesIO(dataset.export('xlsx'))
+#             response = HttpResponse(
+#                 stream.getvalue(),
+#                 content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+#             )
+#             response['Content-Disposition'] = 'attachment; filename="process_sub_status.xlsx"'
+#         return response
 
-        imported = 0
-        duplicates = []
-        for row in data:
-            c_name = str(row.get('country', '')).strip()
-            v_name = str(row.get('visa main category', '')).strip()
-            ps_name = str(row.get('process status name', '')).strip()
-            pss_name = str(row.get('process sub status name', '')).strip()
-            desc = row.get('description', '')
 
-            country = Country.objects.filter(name__iexact=c_name, is_deleted=False).first()
-            visa_main = VisaMain.objects.filter(name__iexact=v_name, is_deleted=False).first()
-            process_status = ProcessStatus.objects.filter(name__iexact=ps_name, is_deleted=False).first()
+# class ProcessSubStatusImportAPIView(APIView):
+#     def post(self, request):
+#         file = request.FILES.get('file')
+#         sheet_name = request.data.get('sheet_name')
 
-            if not all([country, visa_main, process_status]):
-                continue
+#         if not file:
+#             return Response({"error": "No file uploaded"}, status=400)
 
-            existing = ProcessSubStatus.objects.filter(
-                country=country,
-                visa_main_category=visa_main,
-                process_status_name=process_status,
-                process_sub_status_name__iexact=pss_name
-            ).first()
+#         format_type = file.name.split('.')[-1].lower()
+#         required_headers = {
+#             'country', 'visa main category', 'process status name', 'process sub status name', 'description'
+#         }
 
-            if existing and not existing.is_deleted:
-                duplicates.append(row)
-                continue
+#         data = []
+#         if format_type == 'xlsx':
+#             wb = openpyxl.load_workbook(file)
+#             if not sheet_name:
+#                 return Response({"error": "Please provide sheet_name"}, status=400)
+#             ws = wb[sheet_name]
+#             headers = [cell.value.lower().strip() for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+#             if not required_headers.issubset(set(headers)):
+#                 return Response({"error": f"Missing required headers {required_headers}"}, status=400)
+#             for row in ws.iter_rows(min_row=2, values_only=True):
+#                 data.append(dict(zip(headers, row)))
+#         else:
+#             dataset = Dataset().load(file.read().decode('utf-8'), format='csv')
+#             for row in dataset.dict:
+#                 data.append({k.lower(): v for k, v in row.items()})
 
-            if existing and existing.is_deleted:
-                existing.is_deleted = False
-                existing.description = desc
-                existing.save()
-                imported += 1
-                continue
+#         imported = 0
+#         duplicates = []
+#         for row in data:
+#             c_name = str(row.get('country', '')).strip()
+#             v_name = str(row.get('visa main category', '')).strip()
+#             ps_name = str(row.get('process status name', '')).strip()
+#             pss_name = str(row.get('process sub status name', '')).strip()
+#             desc = row.get('description', '')
 
-            ProcessSubStatus.objects.create(
-                country=country,
-                visa_main_category=visa_main,
-                process_status_name=process_status,
-                process_sub_status_name=pss_name,
-                description=desc
-            )
-            imported += 1
+#             country = Country.objects.filter(name__iexact=c_name, is_deleted=False).first()
+#             visa_main = VisaMain.objects.filter(name__iexact=v_name, is_deleted=False).first()
+#             process_status = ProcessStatus.objects.filter(name__iexact=ps_name, is_deleted=False).first()
 
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "imported": imported,
-            "duplicates": len(duplicates),
-            "message": "Import completed"
-        })
+#             if not all([country, visa_main, process_status]):
+#                 continue
+
+#             existing = ProcessSubStatus.objects.filter(
+#                 country=country,
+#                 visa_main_category=visa_main,
+#                 process_status_name=process_status,
+#                 process_sub_status_name__iexact=pss_name
+#             ).first()
+
+#             if existing and not existing.is_deleted:
+#                 duplicates.append(row)
+#                 continue
+
+#             if existing and existing.is_deleted:
+#                 existing.is_deleted = False
+#                 existing.description = desc
+#                 existing.save()
+#                 imported += 1
+#                 continue
+
+#             ProcessSubStatus.objects.create(
+#                 country=country,
+#                 visa_main_category=visa_main,
+#                 process_status_name=process_status,
+#                 process_sub_status_name=pss_name,
+#                 description=desc
+#             )
+#             imported += 1
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "imported": imported,
+#             "duplicates": len(duplicates),
+#             "message": "Import completed"
+#         })
 
 #--------------  Process Type ------------------
 

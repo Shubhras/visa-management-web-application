@@ -475,7 +475,7 @@ class AcademicResultType(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     name=models.TextField(max_length=255,blank=True,null=True)
-    description = models.TextField(max_length=255,blank=True,null=True)
+    description = models.TextField(max_length=255,blank=True, null=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -857,36 +857,36 @@ class RequiredDocument(models.Model):
 
 
 
-class ProcessStatus(models.Model):
-    id = models.AutoField(primary_key=True)
-    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    country = models.ForeignKey('Country', on_delete=models.CASCADE, related_name='process_statuses')
-    visa_main_category = models.ForeignKey('master.VisaMain', on_delete=models.CASCADE, related_name='process_statuses')
-    process_status_name = models.ForeignKey('ProcessStatusName', on_delete=models.CASCADE, related_name='process_statuses')
-    description = models.CharField(max_length=500, blank=True, null=True)
-    is_deleted = models.BooleanField(default=False)
-    created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(auto_now=True)
+# class ProcessStatus(models.Model):
+#     id = models.AutoField(primary_key=True)
+#     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+#     country = models.ForeignKey('Country', on_delete=models.CASCADE, related_name='process_statuses')
+#     visa_main_category = models.ForeignKey('master.VisaMain', on_delete=models.CASCADE, related_name='process_statuses')
+#     process_status_name = models.ForeignKey('ProcessStatusName', on_delete=models.CASCADE, related_name='process_statuses')
+#     description = models.CharField(max_length=500, blank=True, null=True)
+#     is_deleted = models.BooleanField(default=False)
+#     created_at = models.DateTimeField(default=timezone.now)
+#     updated_at = models.DateTimeField(auto_now=True)
 
-    def __str__(self):
-        return f"{self.country} - {self.visa_main_category} - {self.process_status_name}"
+#     def __str__(self):
+#         return f"{self.country} - {self.visa_main_category} - {self.process_status_name}"
 
 
 
-class ProcessSubStatus(models.Model):
-    id = models.AutoField(primary_key=True)
-    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    country = models.ForeignKey('Country', on_delete=models.CASCADE, related_name='process_sub_statuses')
-    visa_main_category = models.ForeignKey('master.VisaMain', on_delete=models.CASCADE, related_name='process_sub_statuses')
-    process_status_name = models.ForeignKey('ProcessStatusName', on_delete=models.CASCADE, related_name='process_sub_statuses')
-    process_sub_status_name = models.CharField(max_length=255)
-    description = models.CharField(max_length=500, blank=True, null=True)
-    is_deleted = models.BooleanField(default=False)
-    created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(auto_now=True)
+# class ProcessSubStatus(models.Model):
+#     id = models.AutoField(primary_key=True)
+#     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+#     country = models.ForeignKey('Country', on_delete=models.CASCADE, related_name='process_sub_statuses')
+#     visa_main_category = models.ForeignKey('master.VisaMain', on_delete=models.CASCADE, related_name='process_sub_statuses')
+#     process_status_name = models.ForeignKey('ProcessStatusName', on_delete=models.CASCADE, related_name='process_sub_statuses')
+#     process_sub_status_name = models.CharField(max_length=255)
+#     description = models.CharField(max_length=500, blank=True, null=True)
+#     is_deleted = models.BooleanField(default=False)
+#     created_at = models.DateTimeField(default=timezone.now)
+#     updated_at = models.DateTimeField(auto_now=True)
 
-    def __str__(self):
-        return f"{self.country} - {self.visa_main_category} - {self.process_status_name} - {self.process_sub_status_name}"
+#     def __str__(self):
+#         return f"{self.country} - {self.visa_main_category} - {self.process_status_name} - {self.process_sub_status_name}"
 
 
 class ProcessType(models.Model):
@@ -928,4 +928,53 @@ class PaymentCategory(models.Model):
     def __str__(self):
         return f"{self.payment_category} ({self.payment_to.name})"
 
+
+
+# class CivilIdName(models.Model):
+#     id = models.AutoField(primary_key=True)
+#     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+
+#     civil_id_name = models.CharField(max_length=255)
+#     authority_full_name = models.CharField(max_length=255)
+#     authority_short_name = models.CharField(max_length=255, blank=True, null=True)
+
+#     id_valid_duration = models.CharField(max_length=100, blank=True, null=True)
+
+#     is_deleted = models.BooleanField(default=False)
+#     created_at = models.DateTimeField(default=timezone.now)
+#     updated_at = models.DateTimeField(auto_now=True)
+
+#     def __str__(self):
+#         return self.civil_id_name
+
+
+
+class CivilIdName(models.Model):
+    VALID_TYPE_CHOICES = (
+        ("PERMANENT", "Permanent"),
+        ("VALID_UP_TO", "Valid Up To"),
+    )
+
+    VALID_UNIT_CHOICES = (
+        ("MONTHS", "Months"),
+        ("YEARS", "Years"),
+    )
+
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+
+    civil_id_name = models.CharField(max_length=255)
+    authority_full_name = models.CharField(max_length=255)
+    authority_short_name = models.CharField(max_length=255, blank=True, null=True)
+
+    valid_type = models.CharField(max_length=20, choices=VALID_TYPE_CHOICES)
+    valid_duration_value = models.IntegerField(blank=True, null=True)
+    valid_duration_unit = models.CharField(max_length=20, choices=VALID_UNIT_CHOICES, blank=True, null=True)
+    description = models.CharField(max_length=500, blank=True, null=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.civil_id_name
 

@@ -291,6 +291,19 @@ urlpatterns = [
     path('academicresulttype/export/', AcademicResultTypeExportAPIView.as_view(), name='academicresulttype-export'),
     path('academicresulttype/import/', AcademicResultTypeImportAPIView.as_view(), name='academicresulttype-import'),
 
+
+    #Education Type
+
+    path('education-type/', EducationTypeListAPIView.as_view(), name='education-type-list'),
+    path('education-type/create/', EducationTypeCreateAPIView.as_view(), name='education-type-create'),
+    path('education-type/<uuid:uuid>/', EducationTypeRetrieveAPIView.as_view(), name='education-type-detail'),
+    path('education-type/update/<uuid:uuid>/', EducationTypeUpdateAPIView.as_view(), name='education-type-update'),
+    path('education-type/delete/', EducationTypeDeleteAPIView.as_view(), name='education-type-delete'),
+    path('education-type/export/', EducationTypeExportAPIView.as_view(), name='education-type-export'),
+    path('education-type/import/', EducationTypeImportAPIView.as_view(), name='education-type-import'),
+
+
+
     path('academicresult/create/', AcademicResultCreateAPIView.as_view(), name='academicresult-create'),
     path('academicresult/<uuid:uuid>/', AcademicResultRetrieveAPIView.as_view(), name='academicresult-retrieve'),
     path('academicresult/<uuid:uuid>/update/', AcademicResultUpdateAPIView.as_view(), name='academicresult-update'),
@@ -451,21 +464,21 @@ urlpatterns = [
     path('required-document/export/', RequiredDocumentExportAPIView.as_view(), name='required_document_export'),
     path('required-document/import/', RequiredDocumentImportAPIView.as_view(), name='required_document_import'),
 
-    path('process-status/create/', ProcessStatusCreateAPIView.as_view(), name='process_status_create'),
-    path('process-status/list/', ProcessStatusListAPIView.as_view(), name='process_status_list'),
-    path('process-status/<uuid:uuid>/', ProcessStatusRetrieveAPIView.as_view(), name='process_status_retrieve'),
-    path('process-status/<uuid:uuid>/update/', ProcessStatusUpdateAPIView.as_view(), name='process_status_update'),
-    path('process-status/delete/', ProcessStatusDeleteAPIView.as_view(), name='process_status_delete'),
-    path('process-status/export/', ProcessStatusExportAPIView.as_view(), name='process_status_export'),
-    path('process-status/import/', ProcessStatusImportAPIView.as_view(), name='process_status_import'),
+    # path('process-status/create/', ProcessStatusCreateAPIView.as_view(), name='process_status_create'),
+    # path('process-status/list/', ProcessStatusListAPIView.as_view(), name='process_status_list'),
+    # path('process-status/<uuid:uuid>/', ProcessStatusRetrieveAPIView.as_view(), name='process_status_retrieve'),
+    # path('process-status/<uuid:uuid>/update/', ProcessStatusUpdateAPIView.as_view(), name='process_status_update'),
+    # path('process-status/delete/', ProcessStatusDeleteAPIView.as_view(), name='process_status_delete'),
+    # path('process-status/export/', ProcessStatusExportAPIView.as_view(), name='process_status_export'),
+    # path('process-status/import/', ProcessStatusImportAPIView.as_view(), name='process_status_import'),
 
-    path('process-sub-status/create/', ProcessSubStatusCreateAPIView.as_view(), name='process_sub_status_create'),
-    path('process-sub-status/list/', ProcessSubStatusListAPIView.as_view(), name='process_sub_status_list'),
-    path('process-sub-status/<uuid:uuid>/', ProcessSubStatusRetrieveAPIView.as_view(), name='process_sub_status_retrieve'),
-    path('process-sub-status/<uuid:uuid>/update/', ProcessSubStatusUpdateAPIView.as_view(), name='process_sub_status_update'),
-    path('process-sub-status/delete/', ProcessSubStatusDeleteAPIView.as_view(), name='process_sub_status_delete'),
-    path('process-sub-status/export/', ProcessSubStatusExportAPIView.as_view(), name='process_sub_status_export'),
-    path('process-sub-status/import/', ProcessSubStatusImportAPIView.as_view(), name='process_sub_status_import'),
+    # path('process-sub-status/create/', ProcessSubStatusCreateAPIView.as_view(), name='process_sub_status_create'),
+    # path('process-sub-status/list/', ProcessSubStatusListAPIView.as_view(), name='process_sub_status_list'),
+    # path('process-sub-status/<uuid:uuid>/', ProcessSubStatusRetrieveAPIView.as_view(), name='process_sub_status_retrieve'),
+    # path('process-sub-status/<uuid:uuid>/update/', ProcessSubStatusUpdateAPIView.as_view(), name='process_sub_status_update'),
+    # path('process-sub-status/delete/', ProcessSubStatusDeleteAPIView.as_view(), name='process_sub_status_delete'),
+    # path('process-sub-status/export/', ProcessSubStatusExportAPIView.as_view(), name='process_sub_status_export'),
+    # path('process-sub-status/import/', ProcessSubStatusImportAPIView.as_view(), name='process_sub_status_import'),
 
     path("process-type/create/", ProcessTypeCreateAPIView.as_view(), name="process_type_create"),
     path("process-type/list/", ProcessTypeListAPIView.as_view(), name="process_type_list"),
@@ -490,6 +503,18 @@ urlpatterns = [
     path("payment-category/delete/", PaymentCategoryDeleteAPIView.as_view(), name="payment_category_delete"),
     path("payment-category/export/", PaymentCategoryExportAPIView.as_view(), name="payment_category_export"),
     path("payment-category/import/", PaymentCategoryImportAPIView.as_view(), name="payment_category_import"),
+
+
+    #Civil ID Name
+
+    path("civil-id-name/create/", CivilIdNameCreateAPIView.as_view(), name="civil_id_name_create"),
+    path("civil-id-name/list/", CivilIdNameListAPIView.as_view(), name="civil_id_name_list"),
+    path("civil-id-name/<uuid:uuid>/", CivilIdNameRetrieveAPIView.as_view(), name="civil_id_name_retrieve"),
+    path("civil-id-name/<uuid:uuid>/update/", CivilIdNameUpdateAPIView.as_view(), name="civil_id_name_update"),
+    path("civil-id-name/<uuid:uuid>/delete/",CivilIdNameDeleteAPIView.as_view(),name="civil_id_name_delete_single"),
+    path("civil-id-name/export/", CivilIdNameExportAPIView.as_view(), name="civil_id_name_export"),
+    path("civil-id-name/import/", CivilIdNameImportAPIView.as_view(), name="civil_id_name_import"),
+
 
 ]
 

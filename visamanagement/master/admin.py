@@ -343,55 +343,55 @@ class RequiredDocumentAdmin(admin.ModelAdmin):
     ordering = ("-created_at",)
 
 
-@admin.register(ProcessStatus)
-class ProcessStatusAdmin(admin.ModelAdmin):
-    list_display = (
-        "id",
-        "uuid",
-        "country",
-        "visa_main_category",
-        "process_status_name",
-        "description",
-        "is_deleted",
-        "created_at",
-        "updated_at",
-    )
-    list_filter = ("is_deleted", "created_at", "updated_at", "country", "visa_main_category")
-    search_fields = (
-        "country__name",
-        "visa_main_category__name",
-        "process_status_name__name",
-        "description",
-    )
-    readonly_fields = ("uuid", "created_at", "updated_at")
-    ordering = ("-created_at",)
+# @admin.register(ProcessStatus)
+# class ProcessStatusAdmin(admin.ModelAdmin):
+#     list_display = (
+#         "id",
+#         "uuid",
+#         "country",
+#         "visa_main_category",
+#         "process_status_name",
+#         "description",
+#         "is_deleted",
+#         "created_at",
+#         "updated_at",
+#     )
+#     list_filter = ("is_deleted", "created_at", "updated_at", "country", "visa_main_category")
+#     search_fields = (
+#         "country__name",
+#         "visa_main_category__name",
+#         "process_status_name__name",
+#         "description",
+#     )
+#     readonly_fields = ("uuid", "created_at", "updated_at")
+#     ordering = ("-created_at",)
 
 
 
-@admin.register(ProcessSubStatus)
-class ProcessSubStatusAdmin(admin.ModelAdmin):
-    list_display = (
-        "id",
-        "uuid",
-        "country",
-        "visa_main_category",
-        "process_status_name",
-        "process_sub_status_name",
-        "description",
-        "is_deleted",
-        "created_at",
-        "updated_at",
-    )
-    list_filter = ("is_deleted", "country", "visa_main_category", "process_status_name")
-    search_fields = (
-        "country__name",
-        "visa_main_category__name",
-        "process_status_name__name",
-        "process_sub_status_name",
-        "description",
-    )
-    readonly_fields = ("uuid", "created_at", "updated_at")
-    ordering = ("-created_at",)
+# @admin.register(ProcessSubStatus)
+# class ProcessSubStatusAdmin(admin.ModelAdmin):
+#     list_display = (
+#         "id",
+#         "uuid",
+#         "country",
+#         "visa_main_category",
+#         "process_status_name",
+#         "process_sub_status_name",
+#         "description",
+#         "is_deleted",
+#         "created_at",
+#         "updated_at",
+#     )
+#     list_filter = ("is_deleted", "country", "visa_main_category", "process_status_name")
+#     search_fields = (
+#         "country__name",
+#         "visa_main_category__name",
+#         "process_status_name__name",
+#         "process_sub_status_name",
+#         "description",
+#     )
+#     readonly_fields = ("uuid", "created_at", "updated_at")
+#     ordering = ("-created_at",)
 
 
 
@@ -434,11 +434,7 @@ class PaymentToAdmin(admin.ModelAdmin):
 @admin.register(PaymentCategory)
 class PaymentCategoryAdmin(admin.ModelAdmin):
     list_display = (
-        "id",
-        "uuid",
-        "payment_to",
-        "payment_category",
-        "description",
+        "id","uuid","payment_to","payment_category","description",
         "is_deleted",
         "created_at",
         "updated_at",
@@ -447,3 +443,31 @@ class PaymentCategoryAdmin(admin.ModelAdmin):
     search_fields = ("payment_category", "description", "payment_to__name")
     readonly_fields = ("uuid", "created_at", "updated_at")
     ordering = ("payment_category",)
+
+
+
+@admin.register(CivilIdName)
+class CivilIdNameAdmin(admin.ModelAdmin):
+    list_display = (
+        "civil_id_name",
+        "authority_full_name",
+        "authority_short_name",
+        "valid_type",
+        "valid_duration_value",
+        "valid_duration_unit",
+        "is_deleted",
+        "created_at",
+        "updated_at",
+    )
+
+    search_fields = (
+        "civil_id_name",
+        "authority_full_name",
+        "authority_short_name",
+    )
+
+    list_filter = (
+        "valid_type",
+        "valid_duration_unit",
+        # "is_deleted",
+    )

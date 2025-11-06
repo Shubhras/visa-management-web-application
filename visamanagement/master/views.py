@@ -13671,6 +13671,193 @@ class EducationTypeDeleteAPIView(APIView):
             "invalid_uuids": invalid_uuids
         })
 
+
+class EducationTypeExportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        format_type = request.GET.get('format', 'xlsx').lower()
+        fields = request.GET.get('fields')
+        uuids_param = request.GET.get('uuids', '')
+        uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+        field_header_map = {
+            'uuid': 'UUID',
+            'educationType': 'Education Type',
+            'Perticulars': 'Particulars',
+            'is_deleted': 'Deleted',
+            'created_at': 'Created On',
+            'updated_at': 'Updated On',
+        }
+
+        if fields:
+            field_list = [f.strip() for f in fields.split(',')]
+        else:
+            field_list = list(field_header_map.keys())
+
+        queryset = EducationType.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-updated_at')
+
+        dataset = Dataset()
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'EducationType'
+
+        for obj in queryset:
+            row = []
+            for field in field_list:
+                value = getattr(obj, field, '')
+
+                if field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
+                    value = int(value)
+
+                row.append(value if value is not None else '')
+
+            dataset.append(row)
+
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'education-type.csv'
+        else:
+            file_data = io.BytesIO(dataset.export('xlsx'))
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'education-type.xlsx'
+
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        return response
+
+
+class EducationTypeImportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        file = request.FILES.get('file')
+        sheet_name = request.data.get('sheet_name')
+
+        if not file:
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+
+        format_type = file.name.split('.')[-1].lower()
+        duplicate_names = []
+
+        required_headers = {'educationtype'}
+        optional_headers = {'perticulars'}
+
+        try:
+            data = []
+            headers = []
+
+            # XLSX
+            if format_type == 'xlsx':
+                import openpyxl
+                wb = openpyxl.load_workbook(file, read_only=True)
+                available_sheets = wb.sheetnames
+
+                if not sheet_name:
+                    return Response({
+                        'error': 'Please provide sheet_name',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                if sheet_name not in available_sheets:
+                    return Response({
+                        'error': f'Sheet "{sheet_name}" not found',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                ws = wb[sheet_name]
+
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'Missing required headers. Required: {required_headers}'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    if not any(row):
+                        continue
+                    row_dict = dict(zip(headers, row))
+                    data.append(row_dict)
+
+            # CSV
+            elif format_type == 'csv':
+                decoded_file = file.read().decode('utf-8')
+                dataset = Dataset()
+                dataset.load(decoded_file, format='csv')
+
+                for row in dataset.dict:
+                    row_l = {k.strip().lower(): v for k, v in row.items()}
+
+                    if not required_headers.issubset(set(row_l.keys())):
+                        return Response({
+                            "statusCode": 400,
+                            "status": False,
+                            "message": f'Missing required headers. Required: {required_headers}'
+                        }, status=status.HTTP_400_BAD_REQUEST)
+
+                    data.append(row_l)
+
+            else:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "error": "Unsupported file format. Use .xlsx or .csv"
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            imported_count = 0
+
+            for row in data:
+                name = str(row.get('educationtype')).strip() if row.get('educationtype') else None
+                perticulars = str(row.get('perticulars')).strip() if row.get('perticulars') else ""
+
+                if not name:
+                    continue
+
+                existing = EducationType.objects.filter(educationType__iexact=name).first()
+
+                if existing:
+                    if not existing.is_deleted:
+                        duplicate_names.append(name)
+                        continue
+                    else:
+                        existing.Perticulars = perticulars
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
+
+                else:
+                    EducationType.objects.create(
+                        educationType=name,
+                        Perticulars=perticulars,
+                        is_deleted=False
+                    )
+                    imported_count += 1
+
+        except Exception as e:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "duplicates": list(set(duplicate_names)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count
+        }, status=status.HTTP_200_OK)
+
 # -------------------- MediumofEducation CRUD -------------------- #
 
 class MediumofEducationListAPIView(APIView):
@@ -14028,3 +14215,428 @@ class MediumofEducationImportAPIView(APIView):
             "duplicates": list(set(duplicate_names)),
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
         }, status=status.HTTP_200_OK)
+
+
+#------------------------------------------------------------------------------------------------
+
+
+#Civil Id
+
+
+class CivilIdNameCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        serializer = CivilIdNameSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "Civil ID created successfully",
+                "data": serializer.data
+            })
+
+        msg = " ".join([m for v in serializer.errors.values() for m in v])
+        return Response({
+            "statusCode": 400,
+            "status": False,
+            "message": msg
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CivilIdNameListAPIView(APIView):
+    def get(self, request):
+        search = request.GET.get("search", "").strip()
+        sort_by = request.GET.get("sortBy", "created_at")
+        sort_order = request.GET.get("sortOrder", "desc")
+
+        allowed_sort_fields = [
+            "civil_id_name",
+            "authority_full_name",
+            "authority_short_name",
+            "created_at",
+        ]
+
+        if sort_by not in allowed_sort_fields:
+            sort_by = "created_at"
+
+        if sort_order == "desc":
+            sort_by = f"-{sort_by}"
+
+        queryset = CivilIdName.objects.filter(is_deleted=False)
+
+        if search:
+            queryset = queryset.filter(
+                Q(civil_id_name__icontains=search) |
+                Q(authority_full_name__icontains=search) |
+                Q(authority_short_name__icontains=search) |
+                Q(description__icontains=search)
+            )
+
+        queryset = queryset.order_by(sort_by)
+
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+
+        serializer = CivilIdNameSerializer(result_page, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
+
+
+class CivilIdNameRetrieveAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request, uuid):
+        try:
+            obj = CivilIdName.objects.get(uuid=uuid)
+        except CivilIdName.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "Civil ID not found",
+                "data": None
+            })
+
+        serializer = CivilIdNameSerializer(obj)
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": "Civil ID retrieved successfully",
+            "data": serializer.data
+        })
+
+
+class CivilIdNameUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def put(self, request, uuid):
+        try:
+            civil = CivilIdName.objects.get(uuid=uuid)
+        except CivilIdName.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "Civil ID not found",
+                "data": None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = CivilIdNameSerializer(civil, data=request.data, partial=True)   # ✅ FIX HERE
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "Civil ID updated successfully",
+                "data": serializer.data
+            })
+
+        errors = serializer.errors
+        messages = []
+        for field, msgs in errors.items():
+            messages.extend(msgs)
+        return Response({
+            "statusCode": 400,
+            "status": False,
+            "message": " ".join(messages),
+            "data": None
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CivilIdNameDeleteAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def delete(self, request, uuid=None):
+        ids = request.data.get("id", None)
+
+        if uuid:
+            try:
+                CivilIdName.objects.get(uuid=uuid).delete()
+                return Response({
+                    "statusCode": 204,
+                    "status": True,
+                    "message": "Civil ID deleted successfully",
+                    "data": None
+                }, status=status.HTTP_204_NO_CONTENT)
+
+            except CivilIdName.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "Civil ID not found",
+                    "data": None
+                })
+
+        if ids == "all":
+            count = CivilIdName.objects.count()
+            CivilIdName.objects.all().delete()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"All {count} Civil ID(s) deleted",
+                "data": None
+            })
+
+        if not ids or not isinstance(ids, list):
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Provide list of UUIDs in 'id' or use 'all'",
+                "data": None
+            })
+
+        valid = []
+        invalid = []
+
+        for u in ids:
+            try:
+                valid.append(UUID(u))
+            except:
+                invalid.append(u)
+
+        queryset = CivilIdName.objects.filter(uuid__in=valid)
+        count = queryset.count()
+        queryset.delete()
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": f"{count} Civil ID(s) deleted",
+            "data": {"invalid_uuids": invalid} if invalid else None
+        })
+
+
+
+
+
+class CivilIdNameExportAPIView(APIView):
+    permission_classes = []  # Add IsAuthenticated if required
+
+    def get(self, request):
+        format_type = request.GET.get("format", "xlsx").lower()
+        fields = request.GET.get("fields")
+        uuids_param = request.GET.get("uuids", "")
+
+        # Convert UUID strings to Python UUID objects
+        uuids = []
+        invalid_uuids = []
+        for u in [u.strip() for u in uuids_param.split(",") if u]:
+            try:
+                uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(u)
+
+        field_header_map = {
+            "uuid": "UUID",
+            "civil_id_name": "Civil ID Name",
+            "authority_full_name": "Authority Full Name",
+            "authority_short_name": "Authority Short Name",
+            "valid_type": "Valid Type",
+            "valid_duration_value": "Valid Duration Value",
+            "valid_duration_unit": "Valid Duration Unit",
+            "description": "Description",
+            "created_at": "Created On",
+            "updated_at": "Modified On",
+        }
+
+        field_list = [f.strip() for f in fields.split(",")] if fields else list(field_header_map.keys())
+
+        queryset = CivilIdName.objects.all()
+
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+
+        queryset = queryset.order_by("-updated_at")
+
+        # Handle empty queryset
+        if not queryset.exists():
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "No Civil ID records found for export"
+            }, status=404)
+
+        dataset = Dataset()
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = "CivilIdName"
+
+        for obj in queryset:
+            row = []
+            for field in field_list:
+                value = getattr(obj, field, "")
+
+                # display choice labels
+                if field == "valid_type" and obj.valid_type:
+                    value = obj.get_valid_type_display()
+
+                if field == "valid_duration_unit" and obj.valid_duration_unit:
+                    value = obj.get_valid_duration_unit_display()
+
+                # Format date
+                if field in ["created_at", "updated_at"] and value:
+                    value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
+
+                row.append(value if value is not None else "")
+            dataset.append(row)
+
+        if format_type == "csv":
+            file_data = dataset.export("csv")
+            content_type = "text/csv"
+            file_name = "civil_id_names.csv"
+        else:
+            file_data = io.BytesIO(dataset.export("xlsx"))
+            content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            file_name = "civil_id_names.xlsx"
+
+        response = HttpResponse(
+            file_data if format_type == "csv" else file_data.getvalue(),
+            content_type=content_type
+        )
+        response["Content-Disposition"] = f'attachment; filename="{file_name}"'
+        return response
+
+
+class CivilIdNameImportAPIView(APIView):
+    def post(self, request):
+        file = request.FILES.get("file")
+        sheet_name = request.data.get("sheet_name")
+
+        if not file:
+            return Response({"error": "No file uploaded"}, status=400)
+
+        format_type = file.name.split(".")[-1].lower()
+        duplicate_names = []
+
+        required_headers = {
+            "civil id name",
+            "authority full name"
+        }
+
+        optional_headers = {
+            "authority short name",
+            "valid type",
+            "valid duration value",
+            "valid duration unit",
+            "description"
+        }
+
+        try:
+            data = []
+            headers = []
+
+            # ---------- XLSX ----------
+            if format_type == "xlsx":
+                import openpyxl
+                wb = openpyxl.load_workbook(file, read_only=True)
+
+                if not sheet_name:
+                    return Response(
+                        {"error": "Provide sheet_name", "available_sheets": wb.sheetnames},
+                        status=400,
+                    )
+
+                if sheet_name not in wb.sheetnames:
+                    return Response(
+                        {"error": f'Sheet "{sheet_name}" not found', "available_sheets": wb.sheetnames},
+                        status=400,
+                    )
+
+                ws = wb[sheet_name]
+                if ws.max_row <= 1:
+                    return Response(
+                        {"statusCode": 400, "status": False, "message": "Sheet is empty"},
+                        status=400,
+                    )
+
+                headers = [str(cell.value).strip().lower() if cell.value else "" for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response(
+                        {
+                            "statusCode": 400,
+                            "status": False,
+                            "message": f"Missing required headers: {required_headers}",
+                        },
+                        status=400,
+                    )
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    if not any(row):
+                        continue
+                    row_dict = dict(zip(headers, row))
+                    data.append(row_dict)
+
+            # ---------- CSV ----------
+            elif format_type == "csv":
+                decoded_file = file.read().decode("utf-8")
+                dataset = Dataset()
+                dataset.load(decoded_file, format="csv")
+
+                for row in dataset.dict:
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response(
+                            {
+                                "statusCode": 400,
+                                "status": False,
+                                "message": f"Missing required headers: {required_headers}",
+                            },
+                            status=400,
+                        )
+                    data.append(row_lower)
+
+            else:
+                return Response(
+                    {"statusCode": 400, "status": False, "error": "Unsupported file format"},
+                    status=400,
+                )
+
+            imported_count = 0
+            skipped_rows = []
+
+            for row in data:
+                civil_id_name = str(row.get("civil id name")).strip() if row.get("civil id name") else None
+                authority_full_name = str(row.get("authority full name")).strip() if row.get("authority full name") else None
+                authority_short_name = str(row.get("authority short name")).strip() if row.get("authority short name") else ""
+                valid_type = str(row.get("valid type")).strip() if row.get("valid type") else None
+                valid_duration_value = row.get("valid duration value") or None
+                valid_duration_unit = str(row.get("valid duration unit")).strip() if row.get("valid duration unit") else None
+                description = str(row.get("description")).strip() if row.get("description") else ""
+
+                if not civil_id_name or not authority_full_name:
+                    skipped_rows.append({
+                        "civil_id_name": civil_id_name or "Unknown",
+                        "reason": "Missing required fields",
+                    })
+                    continue
+
+                existing = CivilIdName.objects.filter(
+                    civil_id_name__iexact=civil_id_name
+                ).first()
+
+                if existing:
+                    duplicate_names.append(civil_id_name)
+                    continue
+
+                CivilIdName.objects.create(
+                    civil_id_name=civil_id_name,
+                    authority_full_name=authority_full_name,
+                    authority_short_name=authority_short_name,
+                    valid_type=valid_type,
+                    valid_duration_value=valid_duration_value,
+                    valid_duration_unit=valid_duration_unit,
+                    description=description
+                )
+                imported_count += 1
+
+        except Exception as e:
+            return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "duplicates": list(set(duplicate_names)),
+            "skipped_rows": skipped_rows,
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count
+        })
