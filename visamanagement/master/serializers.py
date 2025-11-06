@@ -180,15 +180,15 @@ class TimezoneSerializer(serializers.ModelSerializer):
     state_id = serializers.UUIDField(write_only=True, required=False, allow_null=True)
 
     # read-only IDs
-    country_uuid = serializers.UUIDField(source='countryName.uuid', read_only=True)
-    state_uuid = serializers.UUIDField(source='stateName.uuid', read_only=True)
+    country_id = serializers.UUIDField(source='countryName.uuid', read_only=True)
+    state_id = serializers.UUIDField(source='stateName.uuid', read_only=True)
 
     timezone = serializers.CharField(source='Timezone')
 
     class Meta:
         model = Timezone
         fields = [
-            'uuid', 'countryName', 'country_uuid', 'country_id',
+            'uuid', 'countryName', 'country_id', 'country_id',
             'stateName', 'state_uuid', 'state_id',
             'timezone', 'description',
             'is_deleted', 'created_at', 'updated_at'
