@@ -140,6 +140,12 @@ class DistrictSerializer(serializers.ModelSerializer):
             'is_deleted', 'created_at', 'updated_at'
         ]
         read_only_fields = ['uuid', 'created_at', 'updated_at']
+    
+    def validate(self, attrs):
+        # Convert empty string "" to None for state_id
+        if 'stateName' in attrs and attrs['stateName'] == "":
+            attrs['stateName'] = None
+        return super().validate(attrs)
 
 
 class CitySerializer(serializers.ModelSerializer):
