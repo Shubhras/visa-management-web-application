@@ -535,7 +535,7 @@ class AcademicResult(models.Model):
 class EducationType(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    educationType= models.TextField(max_length=255,blank=True,null=True)
+    name= models.TextField(max_length=255,blank=True,null=True)
     Perticulars = models.TextField(max_length=255,blank=True,null=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)

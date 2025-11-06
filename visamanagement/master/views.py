@@ -13128,8 +13128,8 @@ class StudySpecialisationExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'mainarea': 'Main Area',
-            'majorarea': 'Major Area',
+            'mainarea': 'Study Main Area',
+            'majorarea': 'Study Major Area',
             'studyspecialisation': 'Study Specialisation',
             'description': 'Description',
             'is_deleted': 'Deleted',
@@ -13152,7 +13152,7 @@ class StudySpecialisationExportAPIView(APIView):
             row = []
             for field in field_list:
                 if field == 'mainarea':
-                    value = obj.mainarea.mainarea if obj.mainarea else ''
+                    value = obj.mainarea.name if obj.mainarea else ''
                 elif field == 'majorarea':
                     value = obj.majorarea.majorarea if obj.majorarea else ''
                 else:
@@ -13193,7 +13193,7 @@ class StudySpecialisationImportAPIView(APIView):
 
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
-        required_headers = {'study specialisation', 'major area', 'main area'}
+        required_headers = {'study specialisation', 'study major area', 'study main area'}
         optional_headers = {'description'}
 
         try:
@@ -13239,8 +13239,8 @@ class StudySpecialisationImportAPIView(APIView):
             imported_count = 0
             for row in data:
                 studyspecialisation = str(row.get('study specialisation')).strip() if row.get('study specialisation') else None
-                majorarea_name = str(row.get('major area')).strip() if row.get('major area') else None
-                mainarea_name = str(row.get('main area')).strip() if row.get('main area') else None
+                majorarea_name = str(row.get('study major area')).strip() if row.get('study  major area') else None
+                mainarea_name = str(row.get('study main area')).strip() if row.get('study main area') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not studyspecialisation or not majorarea_name or not mainarea_name:
