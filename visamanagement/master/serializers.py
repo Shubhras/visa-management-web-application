@@ -88,14 +88,14 @@ class StateSerializer(serializers.ModelSerializer):
         queryset=Country.objects.all(),
         slug_field='uuid',
         source='countryName',
-        write_only=True
+        required=False
     )
 
     class Meta:
         model = State
         fields = [
             'uuid', 'countryName', 'country_id',
-            'stateName', 'stateshortName', 'description',
+            'stateName', 'state', 'stateshortName', 'description',
             'is_active', 'is_deleted', 'created_at', 'updated_at'
         ]
         read_only_fields = ['uuid', 'created_at', 'updated_at']
