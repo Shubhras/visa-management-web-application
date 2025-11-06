@@ -225,7 +225,7 @@ class CivilIdNameSerializer(serializers.ModelSerializer):
         return obj.get_valid_type_display() if obj.valid_type else None
  
     def get_valid_duration_unit_detail(self, obj):
-        return obj.get_valid_duration_unit_display() if obj.valid_duration_unit else Non
+        return obj.get_valid_duration_unit_display() if obj.valid_duration_unit else None
 
 class DepartmentSerializer(serializers.ModelSerializer):
     class Meta:
@@ -462,15 +462,17 @@ class StudySpecialisationSerializer(serializers.ModelSerializer):
     mainarea_id = serializers.SlugRelatedField(
         queryset=Studymainarea.objects.all(),
         slug_field='uuid',
+        source='mainarea',
         write_only=True,
         required=False,
         allow_null=True
     )
 
-    Majorarea = StudyMajorAreaSerializer(read_only=True)
-    Majorarea_id = serializers.SlugRelatedField(
+    majorarea = StudyMajorAreaSerializer(read_only=True)
+    majorarea_id = serializers.SlugRelatedField(
         queryset=Studymajorarea.objects.all(),
         slug_field='uuid',
+        source='majorarea',
         write_only=True,
         required=False,
         allow_null=True
@@ -492,6 +494,7 @@ class StudySpecialisationSerializer(serializers.ModelSerializer):
             'updated_at'
         ]
         read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
 
 
 
