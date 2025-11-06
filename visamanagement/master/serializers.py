@@ -185,15 +185,16 @@ class TimezoneSerializer(serializers.ModelSerializer):
         required=False,
         write_only=True
     )
-    timezone = serializers.CharField(write_only=True)  # maps input field
+
+    # map lowercase input to model field
+    timezone = serializers.CharField(source='Timezone')
 
     class Meta:
         model = Timezone
         fields = [
             'uuid', 'countryName', 'country_id',
             'stateName', 'state_id',
-            'Timezone', 'timezone',  # include both
-            'description',
+            'timezone', 'description',
             'is_deleted', 'created_at', 'updated_at'
         ]
         read_only_fields = ['uuid', 'created_at', 'updated_at']
@@ -201,15 +202,13 @@ class TimezoneSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         country = validated_data.pop('country_id', None)
         state = validated_data.pop('state_id', None)
-        tz = validated_data.pop('timezone')  # get the lowercase input
 
-        instance = Timezone.objects.create(
+        timezone_instance = Timezone.objects.create(
             countryName=country,
             stateName=state,
-            Timezone=tz,
             **validated_data
         )
-        return instance
+        return timezone_instance
 
 class CivilIdNameSerializer(serializers.ModelSerializer):
     # Show choice label for valid_type
