@@ -169,20 +169,21 @@ class RelationSerializer(serializers.ModelSerializer):
 
 class TimezoneSerializer(serializers.ModelSerializer):
     countryName = serializers.CharField(source='countryName.name', read_only=True)
-    country_id =  serializers.SlugRelatedField(
-        queryset=Country.objects.all(),
-        slug_field='uuid', 
-        allow_null=True,
-        required=False
-    )
     stateName = serializers.CharField(source='stateName.stateName', read_only=True)
 
-
-    state_id =  serializers.SlugRelatedField(
-        queryset=State.objects.all(),
-        slug_field='uuid',  
+    country_id = serializers.SlugRelatedField(
+        queryset=Country.objects.all(),
+        slug_field='uuid',
         allow_null=True,
-        required=False
+        required=False,
+        write_only=True  # important!
+    )
+    state_id = serializers.SlugRelatedField(
+        queryset=State.objects.all(),
+        slug_field='uuid',
+        allow_null=True,
+        required=False,
+        write_only=True  # important!
     )
 
     class Meta:
@@ -194,6 +195,18 @@ class TimezoneSerializer(serializers.ModelSerializer):
             'is_deleted', 'created_at', 'updated_at'
         ]
         read_only_fields = ['uuid', 'created_at', 'updated_at']
+
+    def create(self, validated_data):
+        # Pop the fields that are different from model field names
+        country = validated_data.pop('country_id', None)
+        state = validated_data.pop('state_id', None)
+
+        timezone_instance = Timezone.objects.create(
+            countryName=country,
+            stateName=state,
+            **validated_data
+        )
+        return timezone_instance
 
 
 class CivilIdNameSerializer(serializers.ModelSerializer):
