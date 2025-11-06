@@ -2589,7 +2589,6 @@ class DistrictImportAPIView(APIView):
                 district_name = str(row.get('district name')).strip() if row.get('district name') else None
                 state_name = str(row.get('state name')).strip() if row.get('state name') else None
                 country_name = str(row.get('country name')).strip() if row.get('country name') else None
-                short_name = str(row.get('district short name')).strip() if row.get('district short name') else ''
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not district_name or not state_name or not country_name:
