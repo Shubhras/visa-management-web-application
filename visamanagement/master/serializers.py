@@ -90,7 +90,7 @@ class StateSerializer(serializers.ModelSerializer):
         source='countryName',
         required=False
     )
-
+    state = serializers.CharField(source='get_state_display', read_only=True)  # <-- display value
     class Meta:
         model = State
         fields = [
@@ -99,6 +99,10 @@ class StateSerializer(serializers.ModelSerializer):
             'is_active', 'is_deleted', 'created_at', 'updated_at'
         ]
         read_only_fields = ['uuid', 'created_at', 'updated_at']
+
+
+
+    
 
 class DistrictSerializer(serializers.ModelSerializer):
     countryName = CountrySerializer(read_only=True)

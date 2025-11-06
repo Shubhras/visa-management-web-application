@@ -75,7 +75,7 @@ class State(models.Model):
     stateName=models.CharField(max_length=255, unique=True)
     state = models.CharField(max_length=20, choices=STATE_CHOICES)
     stateshortName=models.CharField(max_length=50, blank=True, null=True)
-    description = models.TextField(max_length=255)
+    description = models.TextField(max_length=255,blank=True, null=True)
     is_active = models.BooleanField(default=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)  
