@@ -459,18 +459,18 @@ class StudyMajorAreaSerializer(serializers.ModelSerializer):
 
 class StudySpecialisationSerializer(serializers.ModelSerializer):
     mainarea = StudymainareaSerializer(read_only=True)
-    mainarea_id = serializers.PrimaryKeyRelatedField(
+    mainarea_id = serializers.SlugRelatedField(
         queryset=Studymainarea.objects.all(),
-        source='mainarea',
+        slug_field='uuid',
         write_only=True,
         required=False,
         allow_null=True
     )
 
     Majorarea = StudyMajorAreaSerializer(read_only=True)
-    Majorarea_id = serializers.PrimaryKeyRelatedField(
+    Majorarea_id = serializers.SlugRelatedField(
         queryset=Studymajorarea.objects.all(),
-        source='majorarea',
+        slug_field='uuid',
         write_only=True,
         required=False,
         allow_null=True
