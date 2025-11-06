@@ -3527,7 +3527,7 @@ class TimezoneCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
-        timezone_name = request.data.get("Timezone", "").strip()
+        timezone_name = request.data.get("timezone", "").strip()
 
         existing = Timezone.objects.filter(Timezone__iexact=timezone_name, is_deleted=False).first()
         if existing:
