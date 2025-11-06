@@ -129,7 +129,7 @@ class AdminLogoutView(APIView):
 class GenderListAPIView(APIView):
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'asc')
 
         allowed_sort_fields = ['text', 'description', 'created_at']
@@ -566,7 +566,7 @@ class MaritalstatusListAPIView(APIView):
     def get(self, request):
         try:
             search = request.GET.get('search', '').strip()
-            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_by = request.GET.get('sortBy', 'updated_at')
             sort_order = request.GET.get('sortOrder', 'asc')
 
             # Allowed fields to sort
@@ -1011,9 +1011,9 @@ class ContinentListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
 
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
@@ -1403,7 +1403,7 @@ class CountryListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
         allowed_sort_fields = ['name', 'shortName', 'fullName', 'capitalCity', 'created_at']
 
@@ -1842,7 +1842,7 @@ class StateListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
         allowed_sort_fields = ['stateName', 'stateshortName', 'created_at']
 
@@ -2265,7 +2265,7 @@ class DistrictListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
         allowed_sort_fields = ['districtName', 'created_at']
 
@@ -2731,7 +2731,7 @@ class CityListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
         allowed_sort_fields = ['cityName', 'created_at']
 
@@ -3118,7 +3118,7 @@ class RelationListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
         allowed_sort_fields = ['relation', 'description', 'created_at']
 
@@ -4089,10 +4089,10 @@ class CivilIdNameImportAPIView(APIView):
 class DepartmentListAPIView(APIView):
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
+        sort_by = request.GET.get('sortBy', 'updated_at')
+        sort_order = request.GET.get('sortOrder', 'desc')  
 
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
 
@@ -4963,10 +4963,10 @@ class EmployeeTypeImportAPIView(APIView):
 class CompanyTypeListAPIView(APIView):    
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
 
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
 
@@ -5365,10 +5365,10 @@ class CompanyTypeImportAPIView(APIView):
 class OwnershipTypeListAPIView(APIView):    
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
 
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
 
@@ -5874,10 +5874,10 @@ class StakeholderCategoryCreateAPIView(APIView):
 class StakeholderCategoryListAPIView(APIView):    
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
 
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
 
@@ -6273,10 +6273,10 @@ class StakeholderTypeListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
 
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
 
@@ -6678,10 +6678,10 @@ class AccreditationCategoryListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
 
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
 
@@ -7015,7 +7015,7 @@ class AccreditationCategoryImportAPIView(APIView):
 class AccreditationNameListAPIView(APIView):
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
 
         allowed_sort_fields = ['full_name', 'short_name', 'valid_upto', 'created_at']
@@ -7438,10 +7438,10 @@ class BankAccountTypeCreateAPIView(APIView):
 class BankAccountTypeListAPIView(APIView):    
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
 
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
 
@@ -7822,7 +7822,7 @@ class LicenseNameListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
 
         allowed_sort_fields = ['full_name', 'short_name', 'issuing_authority', 'valid_upto', 'created_at']
@@ -8221,10 +8221,10 @@ class LeadSourceCreateAPIView(APIView):
 class LeadSourceListAPIView(APIView):    
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
 
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
 
@@ -8636,10 +8636,10 @@ class InterestLevelCreateAPIView(APIView):
 class InterestLevelListAPIView(APIView):    
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
 
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
 
@@ -9065,10 +9065,10 @@ class PriorityCreateAPIView(APIView):
 class PriorityListAPIView(APIView):    
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
 
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
 
@@ -9512,10 +9512,10 @@ class TagsCreateAPIView(APIView):
 class TagsListAPIView(APIView):    
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
 
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
 
@@ -9935,10 +9935,10 @@ class ActivityTypeCreateAPIView(APIView):
 class ActivityTypeListAPIView(APIView):    
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
 
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
 
@@ -10349,10 +10349,10 @@ class LostReasonCreateAPIView(APIView):
 class LostReasonListAPIView(APIView):    
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
 
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
 
@@ -10754,10 +10754,10 @@ class LostReasonB2BCreateAPIView(APIView):
 class LostReasonB2BListAPIView(APIView):    
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
 
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
 
@@ -11108,7 +11108,7 @@ class LostReasonB2BImportAPIView(APIView):
 class EducationLevelCodeListAPIView(APIView):
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
         allowed_sort_fields = ['Levelcode', 'created_at']
 
@@ -11137,10 +11137,10 @@ class EducationLevelCodeListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
 
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
 
@@ -11477,7 +11477,7 @@ class EducationLevelListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
 
         # Allowed sort fields
@@ -11818,7 +11818,7 @@ class EducationDurationListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')  # 'asc' or 'desc'
 
         allowed_sort_fields = ['durations', 'description', 'created_at', 'updated_at']
@@ -12189,10 +12189,10 @@ class EducationDurationImportAPIView(APIView):
 class StudymainareaListAPIView(APIView):
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
 
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
         if sort_order == 'desc':
@@ -12546,7 +12546,7 @@ class StudyMajorAreaListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
 
         allowed_sort_fields = ['majorarea', 'description', 'created_at']
@@ -12915,7 +12915,7 @@ class StudySpecialisationListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
 
         allowed_sort_fields = ['studyspecialisation', 'description', 'created_at']
@@ -13299,10 +13299,10 @@ class StudySpecialisationImportAPIView(APIView):
 class AcademicResultTypeListAPIView(APIView):
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
 
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
         if sort_order == 'desc':
@@ -13682,7 +13682,7 @@ class AcademicResultListAPIView(APIView):
     def get(self, request):
         # Optional search query parameters
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
 
         # Allowed sort fields
@@ -14001,7 +14001,7 @@ class EducationTypeListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
 
         allowed_sort_fields = ['educationType', 'Perticulars', 'created_at']
@@ -14341,7 +14341,7 @@ class MediumofEducationListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
 
         allowed_sort_fields = ['name', 'Perticulars', 'created_at']
