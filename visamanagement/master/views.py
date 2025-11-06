@@ -2033,11 +2033,17 @@ class StateExportAPIView(APIView):
                     value = obj.countryName.name if obj.countryName else ''
                 else:
                     value = getattr(obj, field, '')
+                
+                # Convert state/territory to Title Case
+                if field == 'state' and value:
+                    value = value.capitalize()  # STATE -> State, TERRITORY -> Territory
+
                 # Format date/time fields
                 if field in ['created_at', 'updated_at'] and value:
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
                     value = int(value)
+                
                 row.append(value if value is not None else '')
             dataset.append(row)
 
