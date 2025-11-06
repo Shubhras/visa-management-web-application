@@ -2222,7 +2222,8 @@ class StateByCountryAPIView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            country = Country.objects.get(id=country_id)
+            country = Country.objects.get(uuid=country_uuid)
+
         except Country.DoesNotExist:
             return Response({
                 "statusCode": 404,
