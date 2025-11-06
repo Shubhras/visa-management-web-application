@@ -90,16 +90,24 @@ class StateSerializer(serializers.ModelSerializer):
         source='countryName',
         required=False
     )
-    state = serializers.CharField(source='get_state_display', read_only=True)  # <-- display value
+
+    state = serializers.SerializerMethodField()  # custom output
+    state_input = serializers.ChoiceField(
+        choices=State.STATE_CHOICES, write_only=True, source='state'
+    )  # for input only
+
     class Meta:
         model = State
         fields = [
             'uuid', 'countryName', 'country_id',
-            'stateName', 'state', 'stateshortName', 'description',
+            'stateName', 'state', 'state_input',
+            'stateshortName', 'description',
             'is_active', 'is_deleted', 'created_at', 'updated_at'
         ]
         read_only_fields = ['uuid', 'created_at', 'updated_at']
 
+    def get_state(self, obj):
+        return obj.get_state_display()
 
 
     
