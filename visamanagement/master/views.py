@@ -14506,7 +14506,7 @@ class EducationTypeImportAPIView(APIView):
             imported_count = 0
  
             for row in data:
-                name = str(row.get('educationtype')).strip() if row.get('educationtype') else None
+                name = str(row.get('education type')).strip() if row.get('education type') else None
                 perticulars = str(row.get('perticulars')).strip() if row.get('perticulars') else ""
  
                 if not name:
