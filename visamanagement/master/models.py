@@ -144,7 +144,7 @@ class CivilIdName(models.Model):
     valid_duration_unit = models.CharField(max_length=20, choices=VALID_UNIT_CHOICES, blank=True, null=True)
     description = models.CharField(max_length=500, blank=True, null=True)
     is_deleted = models.BooleanField(default=False)
-    created_at = models.DateTimeField(default=timezone.now)
+    created_at = models.DateTimeField(auto_now_add=True)  
     updated_at = models.DateTimeField(auto_now=True)
  
     def __str__(self):
