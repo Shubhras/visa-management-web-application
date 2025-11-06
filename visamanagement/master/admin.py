@@ -158,13 +158,13 @@ class BankAccountTypeAdmin(admin.ModelAdmin):
     ordering = ('name',)
 
 
-@admin.register(LicenseName)
-class LicenseNameAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'short_name', 'country', 'issuing_authority', 'valid_upto', 'is_deleted', 'created_at', 'updated_at')
-    search_fields = ('full_name', 'short_name', 'issuing_authority')
-    list_filter = ('is_deleted', 'country')
-    ordering = ('full_name',)
-    autocomplete_fields = ('country',)
+# @admin.register(LicenseName)
+# class LicenseNameAdmin(admin.ModelAdmin):
+#     list_display = ('full_name', 'short_name', 'country', 'issuing_authority', 'valid_upto', 'is_deleted', 'created_at', 'updated_at')
+#     search_fields = ('full_name', 'short_name', 'issuing_authority')
+#     list_filter = ('is_deleted', 'country')
+#     ordering = ('full_name',)
+#     autocomplete_fields = ('country',)
 
 
 # ---------- LEADS & PRIORITY ----------
