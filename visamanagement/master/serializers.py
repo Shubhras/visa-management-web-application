@@ -83,7 +83,7 @@ class CountrySerializer(serializers.ModelSerializer):
 
 
 class StateSerializer(serializers.ModelSerializer):
-    countryName = CountrySerializer(read_only=True)
+    countryName = serializers.CharField(source='countryName.name', read_only=True)
     country_id = serializers.SlugRelatedField(
         queryset=Country.objects.all(),
         slug_field='uuid',
