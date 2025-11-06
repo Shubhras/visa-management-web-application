@@ -126,7 +126,8 @@ class DistrictSerializer(serializers.ModelSerializer):
         slug_field='uuid',
         source='stateName',
         write_only=True,
-        required=False
+        required=False,
+        allow_null=True
     )
 
     class Meta:
