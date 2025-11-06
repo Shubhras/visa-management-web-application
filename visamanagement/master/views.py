@@ -3140,7 +3140,7 @@ class RelationCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
-        relation_name = request.data.get("relation", "").strip()
+        relation_name = request.data.get("name", "").strip()
         existing = Relation.objects.filter(relation__iexact=relation_name, is_deleted=False).first()
         if existing:
             return Response({"statusCode": 400, "status": False, "message": "Relation with this name already exists."}, status=400)
