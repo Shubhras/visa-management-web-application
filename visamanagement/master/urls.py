@@ -81,6 +81,17 @@ urlpatterns = [
     path('relations/export/', RelationExportAPIView.as_view(), name='relation-export'),
     path('relations/import/', RelationImportAPIView.as_view(), name='relation-import'),
 
+   
+    path("civil-id-name/create/", CivilIdNameCreateAPIView.as_view(), name="civil_id_name_create"),
+    path("civil-id-name/", CivilIdNameListAPIView.as_view(), name="civil_id_name_list"),
+    path("civil-id-name/<uuid:uuid>/", CivilIdNameRetrieveAPIView.as_view(), name="civil_id_name_retrieve"),
+    path("civil-id-name/<uuid:uuid>/update/", CivilIdNameUpdateAPIView.as_view(), name="civil_id_name_update"),
+    path("civil-id-name/<uuid:uuid>/delete/",CivilIdNameDeleteAPIView.as_view(),name="civil_id_name_delete_single"),
+    path("civil-id-name/export/", CivilIdNameExportAPIView.as_view(), name="civil_id_name_export"),
+    path("civil-id-name/import/", CivilIdNameImportAPIView.as_view(), name="civil_id_name_import"),
+ 
+   
+   
     path('timezones/create/', TimezoneCreateAPIView.as_view(), name='timezone-create'),
     path('timezones/list/', TimezoneListAPIView.as_view(), name='timezone-list'),
     path('timezones/update/<uuid:uuid>/', TimezoneUpdateAPIView.as_view(), name='timezone-update'),
