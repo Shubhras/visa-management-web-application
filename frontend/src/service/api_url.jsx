@@ -204,7 +204,58 @@ export const DELETE_RELATION_LIST_API = "api/v1/master/relations/";
 export const EXPORT_RELATION_LIST_API = "api/v1/master/relations/export/";
 export const IMPORT_RELATION_LIST_API = "api/v1/master/relations/import/";
 
+// TIME_ZONE
+export const GET_TIME_ZONE_LIST_API = "/api/v1/master/time-zones/list";
+export const ADD_TIME_ZONE_LIST_API = "/api/v1/master/time-zones/create/";
+export const EDIT_TIME_ZONE_LIST_API = "api/v1/master/time-zones/";
+export const DELETE_TIME_ZONE_LIST_API = "api/v1/master/time-zones/";
+export const EXPORT_TIME_ZONE_LIST_API = "api/v1/master/time-zones/export/";
+export const IMPORT_TIME_ZONE_LIST_API = "api/v1/master/time-zones/import/";
 
+// EDUCATION_DURATION
+export const GET_EDUCATION_DURATION_LIST = "/api/v1/master/education-duration/";
+export const ADD_EDUCATION_DURATION_API = "/api/v1/master/education-duration/create/";
+export const EDIT_EDUCATION_DURATION_API = "api/v1/master/education-duration/";
+export const DELETE_EDUCATION_DURATION_API = "api/v1/master/education-duration/";
+export const EXPORT_EDUCATION_DURATION_API = "api/v1/master/education-duration/export/";
+export const IMPORT_EDUCATION_DURATION_API = "api/v1/master/education-duration/import/";
+// Study Major Area
+export const GET_STUDY_MAJOR_AREA_LIST = "/api/v1/master/studymajorarea/";
+export const ADD_STUDY_MAJOR_AREA_API = "/api/v1/master/studymajorarea/create/";
+export const EDIT_STUDY_MAJOR_AREA_API = "/api/v1/master/studymajorarea/";
+export const DELETE_STUDY_MAJOR_AREA_API = "/api/v1/master/studymajorarea/";
+export const EXPORT_STUDY_MAJOR_AREA_API = "/api/v1/master/studymajorarea/export/";
+export const IMPORT_STUDY_MAJOR_AREA_API = "/api/v1/master/studymajorarea/import/";
+// Academic Result Type
+export const GET_ACADEMIC_RESULT_TYPE_LIST = "/api/v1/master/academicresulttype/";
+export const ADD_ACADEMIC_RESULT_TYPE_API = "/api/v1/master/academicresulttype/create/";
+export const EDIT_ACADEMIC_RESULT_TYPE_API = "api/v1/master/academicresulttype/";
+export const DELETE_ACADEMIC_RESULT_TYPE_API = "api/v1/master/academicresulttype/";
+export const EXPORT_ACADEMIC_RESULT_TYPE_API = "api/v1/master/academicresulttype/export/";
+export const IMPORT_ACADEMIC_RESULT_TYPE_API = "api/v1/master/academicresulttype/import/";
+// Education Type
+export const GET_EDUCATION_TYPE_LIST = "/api/v1/master/education-type/list/";
+export const ADD_EDUCATION_TYPE_API = "/api/v1/master/education-type/create/";
+export const EDIT_EDUCATION_TYPE_API = "api/v1/master/education-type/";
+export const DELETE_EDUCATION_TYPE_API = "api/v1/master/'education-type/";
+export const EXPORT_EDUCATION_TYPE_API = "api/v1/master/'education-type/export";
+export const IMPORT_EDUCATION_TYPE_API = "api/v1/master/'education-type/import/";
+// Study Specialisations
+export const GET_STUDY_SPECIALISATION_LIST = "/api/v1/master/studyspecialisation/";
+export const ADD_STUDY_SPECIALISATION_API = "/api/v1/master/studyspecialisation/create/";
+export const EDIT_STUDY_SPECIALISATION_API = "/api/v1/master/studyspecialisation/";
+export const DELETE_STUDY_SPECIALISATION_API = "/api/v1/master/studyspecialisation/";
+export const EXPORT_STUDY_SPECIALISATION_API = "/api/v1/master/studyspecialisation/export/";
+export const IMPORT_STUDY_SPECIALISATION_API = "/api/v1/master/studyspecialisation/import/";
+
+
+//COUNTRY
+export const GET_COUNTRY_LIST_API = "/api/v1/master/country/";
+export const ADD_COUNTRY_LIST_API = "/api/v1/master/country/create/";
+export const EDIT_COUNTRY_LIST_API = "/api/v1/master/country/";
+export const DELETE_COUNTRY_LIST_API = "/api/v1/master/country/";
+export const EXPORT_COUNTRY_LIST_API = "/api/v1/master/country/export/";
+export const IMPORT_COUNTRY_LIST_API = "/api/v1/master/country/import/";
 
 
 export const GET_COUNTRY_LIST_DEMO = "/api/v1/master/country/";

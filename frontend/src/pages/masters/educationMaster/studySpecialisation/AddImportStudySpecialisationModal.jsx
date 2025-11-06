@@ -1,11 +1,11 @@
 import React, { useState } from 'react'
 import { useDispatch } from "react-redux";
-import { educationLevelCodeImportData } from "../../../../store/master/educationMaster/action";
+import { studySpecialisationImportData } from '../../../../store/master/educationMaster/action';
 import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
 import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
-const AddImportEducationLevelCodeModal = ({ show, handleClose }) => {
+const AddImportStudySpecialisationModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
     const [file, setFile] = useState(null);
@@ -65,7 +65,7 @@ const AddImportEducationLevelCodeModal = ({ show, handleClose }) => {
             formData.append('sheet_name', selectedSheet);
         }
         setLoading(true);
-        dispatch(educationLevelCodeImportData(formData, (response, error) => {
+        dispatch(studySpecialisationImportData(formData, (response, error) => {
             setLoading(false);
             if (error) {
                 toast.error(error?.response?.data?.message || "Server error");
@@ -77,7 +77,7 @@ const AddImportEducationLevelCodeModal = ({ show, handleClose }) => {
                             <div>{response?.message}</div>
                             {response?.duplicates?.length > 0 && (
                                 <div style={{ marginTop: '6px' }}>
-                                    <strong>Duplicate education level code skipped — the duplicate data from your uploaded file has been exported into an .xlsx file.</strong>
+                                    <strong>Duplicate study main areas skipped — the duplicate data from your uploaded file has been exported into an .xlsx file.</strong>
                                 </div>
                             )}
                         </div>,
@@ -100,12 +100,12 @@ const AddImportEducationLevelCodeModal = ({ show, handleClose }) => {
     };
 
     const handleExportToExcel = (duplicatesData) => {
-        const header = ["Education level code"];
+        const header = ["Study Main Area"];
         const duplicates = duplicatesData //["test1", "test3", "test3"];
         const worksheetData = [header, ...duplicates.map((item) => [item])];
         const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "EducationLevelCode");
+        XLSX.utils.book_append_sheet(workbook, worksheet, "StudyMainArea");
 
         const excelBuffer = XLSX.write(workbook, {
             bookType: "xlsx",
@@ -116,7 +116,7 @@ const AddImportEducationLevelCodeModal = ({ show, handleClose }) => {
             type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         });
 
-        saveAs(blob, `EducationLevelCode-Duplicate-Data.xlsx`);
+        saveAs(blob, `StudyMainArea-Duplicate-Data.xlsx`);
     };
     // Handle modal close
     const onClose = () => {
@@ -148,7 +148,7 @@ const AddImportEducationLevelCodeModal = ({ show, handleClose }) => {
                     <div className="modal-content radius-16 bg-base">
                         <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
                             <h1 className="modal-title fs-5" id="departmentModalLabel">
-                                Upload Education Level Code
+                                Upload Study Main Area
                             </h1>
                             <button
                                 type="button"
@@ -241,10 +241,10 @@ const AddImportEducationLevelCodeModal = ({ show, handleClose }) => {
             </div>
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
-                    downloadFileName: "EducationLevelCode",
-                    items: ["Education Level Code", "Description"],
-                    selectedItems: ["Education Level Code"],
-                    ItemsRequired: ["Education Level Code"]
+                    downloadFileName:"StudyMainArea",
+                    items: ["Study Main Area", "Description"],
+                    selectedItems: ["Study Main Area"],
+                    ItemsRequired:["Study Main Area"]
                 }
                 } />
             )}
@@ -252,4 +252,4 @@ const AddImportEducationLevelCodeModal = ({ show, handleClose }) => {
     );
 };
 
-export default AddImportEducationLevelCodeModal;
+export default AddImportStudySpecialisationModal;

@@ -30,39 +30,63 @@ import {
   DELETE_RELATION,
   EXPORT_RELATION,
   IMPORT_RELATION,
+  TIME_ZONE_LIST,
+  ADD_TIME_ZONE,
+  EDIT_TIME_ZONE,
+  DELETE_TIME_ZONE,
+  EXPORT_TIME_ZONE,
+  IMPORT_TIME_ZONE,
+  COUNTRY_LIST,
+  ADD_COUNTRY,
+  EDIT_COUNTRY,
+  DELETE_COUNTRY,
+  EXPORT_COUNTRY,
+  IMPORT_COUNTRY,
 } from "./actionTypes";
 
 import {
   addCivilIdNameDataAPI,
   addContinentDataAPI,
+  addCountryDataAPI,
   addGenderDataAPI,
   addMaritalStatusDataAPI,
   addRelationDataAPI,
+  addTimeZoneDataAPI,
   deleteCivilIdNameDataAPI,
   deleteContinentDataAPI,
+  deleteCountryDataAPI,
   deleteGenderDataAPI,
   deleteMaritalStatusDataAPI,
   deleteRelationDataAPI,
+  deleteTimeZoneDataAPI,
   editCivilIdNameDataAPI,
   editContinentDataAPI,
+  editCountryDataAPI,
   editGenderDataAPI,
   editMaritalStatusDataAPI,
   editRelationDataAPI,
+  editTimeZoneDataAPI,
   exportCivilIdNameDataAPI,
   exportContinentDataAPI,
+  exportCountryDataAPI,
   exportGenderDataAPI,
   exportMaritalStatusDataAPI,
   exportRelationDataAPI,
+  exportTimeZoneDataAPI,
   getCivilIdNameListDataAPI,
   getContinentListDataAPI,
+  getCountryListDataAPI,
   getGenderListDataAPI,
   getMaritalStatusListDataAPI,
   getRelationListDataAPI,
+  getTimeZoneListDataAPI,
   importCivilIdNameDataAPI,
   importContinentDataAPI,
+  importCountryDataAPI,
   importGenderDataAPI,
   importMaritalStatusDataAPI,
   importRelationDataAPI,
+  importTimeZoneDataAPI,
 } from "../../../service/api_helper";
 
 // Gender
@@ -339,6 +363,117 @@ function* relationImportDataSaga(action) {
   }
 }
 
+
+// Time Zone
+function* timeZoneListSaga(action) {
+  try {
+    const response = yield call(getTimeZoneListDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* timeZoneAddSaga(action) {
+  try {
+    const response = yield call(addTimeZoneDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* timeZoneEditSaga(action) {
+  try {
+    const response = yield call(editTimeZoneDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* timeZoneDeleteSaga(action) {
+  try {
+    const response = yield call(deleteTimeZoneDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* timeZoneExportDataSaga(action) {
+  try {
+    const response = yield call(exportTimeZoneDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* timeZoneImportDataSaga(action) {
+  try {
+    const response = yield call(importTimeZoneDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+//country
+function* countryListSaga(action) {
+  try {
+    const response = yield call(getCountryListDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* countryAddSaga(action) {
+  try {
+    const response = yield call(addCountryDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* countryEditSaga(action) {
+  try {
+    const response = yield call(editCountryDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* countryDeleteSaga(action) {
+  try {
+    const response = yield call(deleteCountryDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* countryExportDataSaga(action) {
+  try {
+    const response = yield call(exportCountryDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* countryImportDataSaga(action) {
+  try {
+    const response = yield call(importCountryDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
 function* generalMasterSaga() {
   // Gender
   yield takeEvery(GENDER_LIST, genderListSaga);
@@ -379,6 +514,21 @@ function* generalMasterSaga() {
   yield takeEvery(DELETE_RELATION, relationDeleteSaga);
   yield takeEvery(EXPORT_RELATION, relationExportDataSaga);
   yield takeEvery(IMPORT_RELATION, relationImportDataSaga);
+
+  // Time Zone
+yield takeEvery(TIME_ZONE_LIST, timeZoneListSaga);
+yield takeEvery(ADD_TIME_ZONE, timeZoneAddSaga);
+yield takeEvery(EDIT_TIME_ZONE, timeZoneEditSaga);
+yield takeEvery(DELETE_TIME_ZONE, timeZoneDeleteSaga);
+yield takeEvery(EXPORT_TIME_ZONE, timeZoneExportDataSaga);
+yield takeEvery(IMPORT_TIME_ZONE, timeZoneImportDataSaga);
+
+  yield takeEvery(COUNTRY_LIST, countryListSaga);
+  yield takeEvery(ADD_COUNTRY, countryAddSaga);
+  yield takeEvery(EDIT_COUNTRY, countryEditSaga);
+  yield takeEvery(DELETE_COUNTRY, countryDeleteSaga);
+  yield takeEvery(EXPORT_COUNTRY, countryExportDataSaga);
+  yield takeEvery(IMPORT_COUNTRY, countryImportDataSaga);
 }
 
 export default generalMasterSaga;

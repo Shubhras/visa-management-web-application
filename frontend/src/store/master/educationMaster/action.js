@@ -17,6 +17,36 @@ import {
     DELETE_STUDY_MAIN_AREA,
     EXPORT_STUDY_MAIN_AREA,
     IMPORT_STUDY_MAIN_AREA,
+    EDUCATION_DURATION_LIST,
+    ADD_EDUCATION_DURATION,
+    EDIT_EDUCATION_DURATION,
+    DELETE_EDUCATION_DURATION,
+    EXPORT_EDUCATION_DURATION,
+    IMPORT_EDUCATION_DURATION,
+    STUDY_MAJOR_AREA_LIST,
+    ADD_STUDY_MAJOR_AREA,
+    EDIT_STUDY_MAJOR_AREA,
+    DELETE_STUDY_MAJOR_AREA,
+    EXPORT_STUDY_MAJOR_AREA,
+    IMPORT_STUDY_MAJOR_AREA,
+    ACADEMIC_RESULT_TYPE_LIST,
+    ADD_ACADEMIC_RESULT_TYPE,
+    EDIT_ACADEMIC_RESULT_TYPE,
+    DELETE_ACADEMIC_RESULT_TYPE,
+    EXPORT_ACADEMIC_RESULT_TYPE,
+    IMPORT_ACADEMIC_RESULT_TYPE,
+    EDUCATION_TYPE_LIST,
+    ADD_EDUCATION_TYPE,
+    EDIT_EDUCATION_TYPE,
+    DELETE_EDUCATION_TYPE,
+    EXPORT_EDUCATION_TYPE,
+    IMPORT_EDUCATION_TYPE,
+    STUDY_SPECIALISATION_LIST,
+    ADD_STUDY_SPECIALISATION,
+    EDIT_STUDY_SPECIALISATION,
+    DELETE_STUDY_SPECIALISATION,
+    EXPORT_STUDY_SPECIALISATION,
+    IMPORT_STUDY_SPECIALISATION,
 } from "./actionType";
 
 //Education level Code
@@ -128,4 +158,190 @@ export const studyMainAreaImportData = (data, callback) => ({
     data,
     callback,
 });
+
+// Education Duration
+export const educationDurationList = (data, callback) => ({
+    type: EDUCATION_DURATION_LIST,
+    data,
+    callback,
+});
+
+export const educationDurationAdd = (data, callback) => ({
+    type: ADD_EDUCATION_DURATION,
+    data,
+    callback,
+});
+
+export const educationDurationEdit = (data, callback) => ({
+    type: EDIT_EDUCATION_DURATION,
+    data,
+    callback,
+});
+
+export const educationDurationDelete = (data, callback) => ({
+    type: DELETE_EDUCATION_DURATION,
+    data,
+    callback,
+});
+
+export const educationDurationExportData = (data, callback) => ({
+    type: EXPORT_EDUCATION_DURATION,
+    data,
+    callback,
+});
+
+export const educationDurationImportData = (data, callback) => ({
+    type: IMPORT_EDUCATION_DURATION,
+    data,
+    callback,
+});
+
+// Study Major Area
+export const studyMajorAreaList = (data, callback) => ({
+    type: STUDY_MAJOR_AREA_LIST,
+    data,
+    callback,
+});
+
+export const studyMajorAreaAdd = (data, callback) => ({
+    type: ADD_STUDY_MAJOR_AREA,
+    data,
+    callback,
+});
+
+export const studyMajorAreaEdit = (data, callback) => ({
+    type: EDIT_STUDY_MAJOR_AREA,
+    data,
+    callback,
+});
+
+export const studyMajorAreaDelete = (data, callback) => ({
+    type: DELETE_STUDY_MAJOR_AREA,
+    data,
+    callback,
+});
+
+export const studyMajorAreaExportData = (data, callback) => ({
+    type: EXPORT_STUDY_MAJOR_AREA,
+    data,
+    callback,
+});
+
+export const studyMajorAreaImportData = (data, callback) => ({
+    type: IMPORT_STUDY_MAJOR_AREA,
+    data,
+    callback,
+});
+//Academic Result Type
+export const academicResultTypeList = (data, callback) => ({
+    type: ACADEMIC_RESULT_TYPE_LIST,
+    data,
+    callback,
+});
+
+export const academicResultTypeAdd = (data, callback) => ({
+    type: ADD_ACADEMIC_RESULT_TYPE,
+    data,
+    callback,
+});
+
+export const academicResultTypeEdit = (data, callback) => ({
+    type: EDIT_ACADEMIC_RESULT_TYPE,
+    data,
+    callback,
+});
+
+export const academicResultTypeDelete = (data, callback) => ({
+    type: DELETE_ACADEMIC_RESULT_TYPE,
+    data,
+    callback,
+});
+
+export const academicResultTypeExportData = (data, callback) => ({
+    type: EXPORT_ACADEMIC_RESULT_TYPE,
+    data,
+    callback,
+});
+
+export const academicResultTypeImportData = (data, callback) => ({
+    type: IMPORT_ACADEMIC_RESULT_TYPE,
+    data,
+    callback,
+});
+// Education Type
+export const educationTypeList = (data, callback) => ({
+    type: EDUCATION_TYPE_LIST,
+    data,
+    callback,
+});
+
+export const educationTypeAdd = (data, callback) => ({
+    type: ADD_EDUCATION_TYPE,
+    data,
+    callback,
+});
+
+export const educationTypeEdit = (data, callback) => ({
+    type: EDIT_EDUCATION_TYPE,
+    data,
+    callback,
+});
+
+export const educationTypeDelete = (data, callback) => ({
+    type: DELETE_EDUCATION_TYPE,
+    data,
+    callback,
+});
+
+export const educationTypeExportData = (data, callback) => ({
+    type: EXPORT_EDUCATION_TYPE,
+    data,
+    callback,
+});
+
+export const educationTypeImportData = (data, callback) => ({
+    type: IMPORT_EDUCATION_TYPE,
+    data,
+    callback,
+});
+// Study Specialisation
+export const studySpecialisationList = (data, callback) => ({
+  type: STUDY_SPECIALISATION_LIST,
+  data,
+  callback,
+});
+
+export const studySpecialisationAdd = (data, callback) => ({
+  type: ADD_STUDY_SPECIALISATION,
+  data,
+  callback,
+});
+
+export const studySpecialisationEdit = (data, callback) => ({
+  type: EDIT_STUDY_SPECIALISATION,
+  data,
+  callback,
+});
+
+export const studySpecialisationDelete = (data, callback) => ({
+  type: DELETE_STUDY_SPECIALISATION,
+  data,
+  callback,
+});
+
+export const studySpecialisationExportData = (data, callback) => ({
+  type: EXPORT_STUDY_SPECIALISATION,
+  data,
+  callback,
+});
+
+export const studySpecialisationImportData = (data, callback) => ({
+  type: IMPORT_STUDY_SPECIALISATION,
+  data,
+  callback,
+});
+
+
+
+
 
