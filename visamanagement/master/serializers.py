@@ -175,36 +175,32 @@ class TimezoneSerializer(serializers.ModelSerializer):
     countryName = serializers.CharField(source='countryName.name', read_only=True)
     stateName = serializers.CharField(source='stateName.stateName', read_only=True)
 
-    country_id = serializers.SlugRelatedField(
-        queryset=Country.objects.all(),
-        slug_field='uuid',
-        allow_null=True,
-        required=False
-    )
-    state_id = serializers.SlugRelatedField(
-        queryset=State.objects.all(),
-        slug_field='uuid',
-        allow_null=True,
-        required=False
-        
-    )
+    # write-only UUID input
+    country_id = serializers.UUIDField(write_only=True, required=False, allow_null=True)
+    state_id = serializers.UUIDField(write_only=True, required=False, allow_null=True)
 
-    # map lowercase input to model field
+    # read-only IDs
+    country_uuid = serializers.UUIDField(source='countryName.uuid', read_only=True)
+    state_uuid = serializers.UUIDField(source='stateName.uuid', read_only=True)
+
     timezone = serializers.CharField(source='Timezone')
 
     class Meta:
         model = Timezone
         fields = [
-            'uuid', 'countryName', 'country_id',
-            'stateName', 'state_id',
+            'uuid', 'countryName', 'country_uuid', 'country_id',
+            'stateName', 'state_uuid', 'state_id',
             'timezone', 'description',
             'is_deleted', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['uuid', 'created_at', 'updated_at']
+        read_only_fields = ['uuid', 'created_at', 'updated_at', 'countryName', 'stateName', 'country_uuid', 'state_uuid']
 
     def create(self, validated_data):
-        country = validated_data.pop('country_id', None)
-        state = validated_data.pop('state_id', None)
+        country_uuid = validated_data.pop('country_id', None)
+        state_uuid = validated_data.pop('state_id', None)
+
+        country = Country.objects.filter(uuid=country_uuid).first() if country_uuid else None
+        state = State.objects.filter(uuid=state_uuid).first() if state_uuid else None
 
         timezone_instance = Timezone.objects.create(
             countryName=country,
