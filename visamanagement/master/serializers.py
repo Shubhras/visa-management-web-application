@@ -168,17 +168,21 @@ class RelationSerializer(serializers.ModelSerializer):
 
 
 class TimezoneSerializer(serializers.ModelSerializer):
-    countryName = CountrySerializer(read_only=True)
-    country_id = serializers.PrimaryKeyRelatedField(
+    countryName = serializers.CharField(source='countryName.name', read_only=True)
+    country_id =  serializers.SlugRelatedField(
         queryset=Country.objects.all(),
-        source='countryName',
-        write_only=True
+        slug_field='uuid', 
+        allow_null=True,
+        required=False
     )
-    stateName = StateSerializer(read_only=True)
-    state_id = serializers.PrimaryKeyRelatedField(
+    stateName = serializers.CharField(source='stateName.stateName', read_only=True)
+
+
+    state_id =  serializers.SlugRelatedField(
         queryset=State.objects.all(),
-        source='stateName',
-        write_only=True
+        slug_field='uuid',  
+        allow_null=True,
+        required=False
     )
 
     class Meta:

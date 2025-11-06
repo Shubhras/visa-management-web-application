@@ -1844,10 +1844,10 @@ class StateListAPIView(APIView):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['stateName', 'stateshortName', 'created_at']
+        allowed_sort_fields = ['stateName', 'stateshortName', 'updated_at']
 
         if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
+            sort_by = 'updated_at'
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
@@ -1994,8 +1994,6 @@ class StateDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-
-
 class StateExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -2064,10 +2062,6 @@ class StateExportAPIView(APIView):
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
-
-
-
-
 
 class StateImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -3120,10 +3114,10 @@ class RelationListAPIView(APIView):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['relation', 'description', 'created_at']
+        allowed_sort_fields = ['relation', 'description', 'updated_at']
 
         if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
+            sort_by = 'updated_at'
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
@@ -3282,7 +3276,7 @@ class RelationExportAPIView(APIView):
         # --- Field to header mapping ---
         field_header_map = {
             'uuid': 'UUID',
-            'relation': 'Relation',
+            'name': 'Relation',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'created_at': 'Created On',
@@ -3493,171 +3487,375 @@ class RelationImportAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+#-----------------------TimeZone---------------
 
-class TimezoneCreateAPIView(APIView):
-    def post(self, request):
-        try:
-            timezone_name = request.data.get("Timezone")
-            country_id = request.data.get("country_id")
-            state_id = request.data.get("state_id")
-            description = request.data.get("description", "")
+class TimezoneListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
 
-            if not timezone_name:
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "Timezone name is required"
-                }, status=status.HTTP_400_BAD_REQUEST)
+    def get(self, request):
+        search = request.GET.get('search', '').strip()
+        sort_by = request.GET.get('sortBy', 'updated_at')
+        sort_order = request.GET.get('sortOrder', 'desc')
 
-            if Timezone.objects.filter(Timezone__iexact=timezone_name, is_deleted=False).exists():
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "Timezone with this name already exists"
-                }, status=status.HTTP_400_BAD_REQUEST)
+        allowed_sort_fields = ['Timezone', 'description', 'updated_at']
+        if sort_by not in allowed_sort_fields:
+            sort_by = 'updated_at'
 
-            country = Country.objects.filter(id=country_id).first() if country_id else None
-            state = State.objects.filter(id=state_id).first() if state_id else None
+        if sort_order == 'desc':
+            sort_by = f'-{sort_by}'
 
-            timezone_obj = Timezone.objects.create(
-                id=uuid.uuid4(),
-                Timezone=timezone_name,
-                countryName=country,
-                stateName=state,
-                description=description
+        queryset = Timezone.objects.filter(is_deleted=False)
+
+        if search:
+            queryset = queryset.filter(
+                Q(Timezone__icontains=search) |
+                Q(description__icontains=search) |
+                Q(countryName__name__icontains=search) |
+                Q(stateName__stateName__icontains=search)
             )
 
+        queryset = queryset.order_by(sort_by)
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = TimezoneSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+
+class TimezoneCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        timezone_name = request.data.get("Timezone", "").strip()
+
+        existing = Timezone.objects.filter(Timezone__iexact=timezone_name, is_deleted=False).first()
+        if existing:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Timezone with this name already exists."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = TimezoneSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
             return Response({
                 "statusCode": 200,
                 "status": True,
                 "message": "Timezone created successfully",
-                "data": {
-                    "id": str(timezone_obj.uuid),
-                    "Timezone": timezone_obj.Timezone,
-                    "country": timezone_obj.countryName.name if timezone_obj.countryName else None,
-                    "state": timezone_obj.stateName.stateName if timezone_obj.stateName else None,
-                    "description": timezone_obj.description
-                }
+                "data": serializer.data
             }, status=status.HTTP_200_OK)
+
+        errors = serializer.errors
+        messages = []
+        for field, msgs in errors.items():
+            messages.extend(msgs)
+        return Response({
+            "statusCode": 400,
+            "status": False,
+            "message": " ".join(messages),
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class TimezoneRetrieveAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request, uuid):
+        try:
+            tz = Timezone.objects.get(uuid=uuid, is_deleted=False)
+        except Timezone.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "Timezone not found",
+                "data": None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = TimezoneSerializer(tz)
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": "Timezone retrieved successfully",
+            "data": serializer.data
+        })
+
+
+class TimezoneUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def put(self, request, uuid):
+        try:
+            tz = Timezone.objects.get(uuid=uuid, is_deleted=False)
+        except Timezone.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "Timezone not found",
+                "data": None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = TimezoneSerializer(tz, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "Timezone updated successfully",
+                "data": serializer.data
+            })
+
+        errors = serializer.errors
+        messages = []
+        for field, msgs in errors.items():
+            messages.extend(msgs)
+        return Response({
+            "statusCode": 400,
+            "status": False,
+            "message": " ".join(messages),
+            "data": None
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class TimezoneDeleteAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def delete(self, request, uuid=None):
+        ids = request.data.get('id', None)
+
+        if uuid:
+            try:
+                tz = Timezone.objects.get(uuid=uuid)
+                tz.delete()
+                return Response({
+                    "statusCode": 204,
+                    "status": True,
+                    "message": "Timezone permanently deleted.",
+                    "data": None
+                }, status=status.HTTP_204_NO_CONTENT)
+            except Timezone.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "Timezone not found.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+
+        if ids == "all":
+            tzs = Timezone.objects.all()
+            count = tzs.count()
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No timezones found to delete.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+            tzs.delete()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"All {count} timezone(s) permanently deleted.",
+                "data": None
+            }, status=status.HTTP_200_OK)
+
+        if not ids or not isinstance(ids, list):
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        valid_uuids = []
+        invalid_uuids = []
+        for u in ids:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(u)
+
+        tzs = Timezone.objects.filter(uuid__in=valid_uuids)
+        count = tzs.count()
+
+        if count == 0:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "No matching timezones found.",
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        tzs.delete()
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": f"{count} timezone(s) permanently deleted.",
+            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+        }, status=status.HTTP_200_OK)
+
+
+class TimezoneExportAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        format_type = request.GET.get('format', 'xlsx').lower()
+        fields = request.GET.get('fields')
+        uuids_param = request.GET.get('uuids', '')
+        uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+        field_header_map = {
+            'uuid': 'UUID',
+            'countryName': 'Country',
+            'stateName': 'State',
+            'Timezone': 'Timezone',
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'updated_at': 'Modified On'
+        }
+
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+        queryset = Timezone.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-updated_at')
+
+        dataset = Dataset()
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'Timezone'
+
+        for tz in queryset:
+            row = []
+            for field in field_list:
+                value = getattr(tz, field, '')
+                if field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
+                    value = int(value)
+                row.append(value if value is not None else '')
+            dataset.append(row)
+
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'timezones.csv'
+        else:
+            file_data = io.BytesIO(dataset.export('xlsx'))
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'timezones.xlsx'
+
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        return response
+
+
+class TimezoneImportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        file = request.FILES.get('file')
+        sheet_name = request.data.get('sheet_name')
+
+        if not file:
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+
+        format_type = file.name.split('.')[-1].lower()
+        duplicate_names = []
+
+        required_headers = {'timezone'}
+        optional_headers = {'countryName', 'stateName', 'description'}
+
+        try:
+            data = []
+            headers = []
+
+            # XLSX Handling
+            if format_type == 'xlsx':
+                import openpyxl
+                wb = openpyxl.load_workbook(file, read_only=True)
+                available_sheets = wb.sheetnames
+
+                if not sheet_name:
+                    return Response({'error': 'Please provide sheet_name', 'available_sheets': available_sheets}, status=400)
+                if sheet_name not in available_sheets:
+                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
+
+                ws = wb[sheet_name]
+                if ws.max_row <= 1:
+                    return Response({'error': f'Sheet "{sheet_name}" is empty'}, status=400)
+
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response({'error': f'Missing required headers: {required_headers}'}, status=400)
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    if not any(row):
+                        continue
+                    row_dict = dict(zip(headers, row))
+                    data.append(row_dict)
+
+            # CSV Handling
+            elif format_type == 'csv':
+                from tablib import Dataset
+                decoded_file = file.read().decode('utf-8')
+                dataset = Dataset()
+                dataset.load(decoded_file, format='csv')
+
+                for row in dataset.dict:
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({'error': f'Missing required headers: {required_headers}'}, status=400)
+                    data.append(row_lower)
+
+            else:
+                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
+
+            imported_count = 0
+
+            for row in data:
+                tz_name = str(row.get('timezone')).strip() if row.get('timezone') else None
+                if not tz_name:
+                    continue
+
+                existing = Timezone.objects.filter(Timezone__iexact=tz_name).first()
+                description = str(row.get('description')).strip() if row.get('description') else ''
+                if existing:
+                    if not existing.is_deleted:
+                        duplicate_names.append(tz_name)
+                        continue
+                    else:
+                        existing.description = description
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
+                else:
+                    Timezone.objects.create(
+                        Timezone=tz_name,
+                        description=description,
+                        is_deleted=False
+                    )
+                    imported_count += 1
 
         except Exception as e:
             return Response({
-                "statusCode": 500,
-                "status": False,
-                "message": str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-class TimezoneListAPIView(APIView):
-    def get(self, request):
-        search = request.GET.get("search", "")
-        page = int(request.GET.get("page", 1))
-        per_page = int(request.GET.get("per_page", 10))
-
-        timezones = Timezone.objects.filter(is_deleted=False)
-        if search:
-            timezones = timezones.filter(Timezone__icontains=search)
-
-        paginator = Paginator(timezones, per_page)
-        page_obj = paginator.get_page(page)
-
-        data = []
-        for tz in page_obj:
-            data.append({
-                "id": str(tz.uuid),
-                "Timezone": tz.Timezone,
-                "country": tz.countryName.name if tz.countryName else None,
-                "state": tz.stateName.stateName if tz.stateName else None,
-                "description": tz.description
-            })
+                "statusCode": 400,
+                "status": True,
+                'message': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({
             "statusCode": 200,
             "status": True,
-            "total": paginator.count,
-            "total_pages": paginator.num_pages,
-            "current_page": page,
-            "message": "Timezones fetched successfully",
-            "data": data
+            "duplicates": list(set(duplicate_names)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count
         }, status=status.HTTP_200_OK)
 
 
 
 
-class TimezoneUpdateAPIView(APIView):
-    def put(self, request, pk):
-        try:
-            try:
-                timezone_obj = Timezone.objects.get(id=pk, is_deleted=False)
-            except Timezone.DoesNotExist:
-                return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "Timezone not found"
-                }, status=status.HTTP_404_NOT_FOUND)
-
-            timezone_obj.Timezone = request.data.get("Timezone", timezone_obj.Timezone)
-            timezone_obj.description = request.data.get("description", timezone_obj.description)
-
-            country_id = request.data.get("country_id")
-            state_id = request.data.get("state_id")
-
-            if country_id:
-                timezone_obj.countryName = Country.objects.filter(id=country_id).first()
-            if state_id:
-                timezone_obj.stateName = State.objects.filter(id=state_id).first()
-
-            timezone_obj.save()
-
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": "Timezone updated successfully",
-                "data": {
-                    "id": str(timezone_obj.uuid),
-                    "Timezone": timezone_obj.Timezone,
-                    "country": timezone_obj.countryName.name if timezone_obj.countryName else None,
-                    "state": timezone_obj.stateName.stateName if timezone_obj.stateName else None,
-                    "description": timezone_obj.description
-                }
-            }, status=status.HTTP_200_OK)
-
-        except Exception as e:
-            return Response({
-                "statusCode": 500,
-                "status": False,
-                "message": str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-class TimezoneDeleteAPIView(APIView):
-    def delete(self, request, pk):
-        try:
-            try:
-                timezone_obj = Timezone.objects.get(id=pk, is_deleted=False)
-            except Timezone.DoesNotExist:
-                return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "Timezone not found"
-                }, status=status.HTTP_404_NOT_FOUND)
-
-            timezone_obj.is_deleted = True
-            timezone_obj.save()
-
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": "Timezone deleted successfully"
-            }, status=status.HTTP_200_OK)
-
-        except Exception as e:
-            return Response({
-                "statusCode": 500,
-                "status": False,
-                "message": str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
 
 
 class CivilIdNameCreateAPIView(APIView):

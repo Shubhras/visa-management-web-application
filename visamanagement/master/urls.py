@@ -73,7 +73,7 @@ urlpatterns = [
 
 
 
-    path('relations/list/', RelationListAPIView.as_view(), name='relation-list'),
+    path('relations/', RelationListAPIView.as_view(), name='relation-list'),
     path('relations/create/', RelationCreateAPIView.as_view(), name='relation-create'),
     path('relations/<uuid:uuid>/', RelationRetrieveAPIView.as_view(), name='relation-detail'),
     path('relations/update/<uuid:uuid>/', RelationUpdateAPIView.as_view(), name='relation-update'),
@@ -86,16 +86,19 @@ urlpatterns = [
     path("civil-id-name/", CivilIdNameListAPIView.as_view(), name="civil_id_name_list"),
     path("civil-id-name/<uuid:uuid>/", CivilIdNameRetrieveAPIView.as_view(), name="civil_id_name_retrieve"),
     path("civil-id-name/<uuid:uuid>/update/", CivilIdNameUpdateAPIView.as_view(), name="civil_id_name_update"),
-    path("civil-id-name/<uuid:uuid>/delete/",CivilIdNameDeleteAPIView.as_view(),name="civil_id_name_delete_single"),
+    path("civil-id-name/delete/",CivilIdNameDeleteAPIView.as_view(),name="civil_id_name_delete_single"),
     path("civil-id-name/export/", CivilIdNameExportAPIView.as_view(), name="civil_id_name_export"),
     path("civil-id-name/import/", CivilIdNameImportAPIView.as_view(), name="civil_id_name_import"),
  
    
    
     path('timezones/create/', TimezoneCreateAPIView.as_view(), name='timezone-create'),
-    path('timezones/list/', TimezoneListAPIView.as_view(), name='timezone-list'),
-    path('timezones/update/<uuid:uuid>/', TimezoneUpdateAPIView.as_view(), name='timezone-update'),
-    path('timezones/<uuid:uuid>/delete/', TimezoneDeleteAPIView.as_view(), name='timezone-delete'),
+    path('timezones/', TimezoneListAPIView.as_view(), name='timezone-list'),
+    path('timezones/<uuid:uuid>/', TimezoneRetrieveAPIView.as_view(), name='timezone-details'),
+    path('timezones/<uuid:uuid>/update/', TimezoneUpdateAPIView.as_view(), name='timezone-update'),
+    path('timezones/delete/', TimezoneDeleteAPIView.as_view(), name='timezone-delete'),
+    path('timezones/export/', TimezoneExportAPIView.as_view(), name='timezone-export'),
+    path('timezones/import/', TimezoneImportAPIView.as_view(), name='timezone-import'),
 
     path('departments/', DepartmentListAPIView.as_view(), name='department-list'),
     path('departments/create/', DepartmentCreateAPIView.as_view(), name='department-create'),
