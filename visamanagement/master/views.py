@@ -3114,7 +3114,7 @@ class RelationListAPIView(APIView):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['relation', 'description', 'updated_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
 
         if sort_by not in allowed_sort_fields:
             sort_by = 'updated_at'
@@ -3124,7 +3124,7 @@ class RelationListAPIView(APIView):
         queryset = Relation.objects.filter(is_deleted=False)
         if search:
             queryset = queryset.filter(
-                Q(relation__icontains=search) |
+                Q(name__icontains=search) |
                 Q(description__icontains=search)
             )
 
