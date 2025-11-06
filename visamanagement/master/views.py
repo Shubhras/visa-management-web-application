@@ -12920,7 +12920,7 @@ class StudySpecialisationListAPIView(APIView):
 
         allowed_sort_fields = ['studyspecialisation', 'description', 'created_at']
         if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
+            sort_by = 'updated_at'
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 

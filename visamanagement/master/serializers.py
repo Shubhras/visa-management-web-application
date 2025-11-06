@@ -467,9 +467,8 @@ class StudySpecialisationSerializer(serializers.ModelSerializer):
         required=False,
         allow_null=True
     )
-    mainarea = serializers.CharField(source='mainarea_id.name', read_only=True)
+    mainarea = serializers.CharField(source='mainarea.name', read_only=True)
 
-    
     majorarea_id = serializers.SlugRelatedField(
         queryset=Studymajorarea.objects.all(),
         slug_field='uuid',
@@ -478,8 +477,7 @@ class StudySpecialisationSerializer(serializers.ModelSerializer):
         required=False,
         allow_null=True
     )
-    majorarea = serializers.CharField(source='majorarea_id.majorarea', read_only=True)
-
+    majorarea = serializers.CharField(source='majorarea.majorarea', read_only=True)
 
     class Meta:
         model = StudySpecialisation
@@ -497,8 +495,6 @@ class StudySpecialisationSerializer(serializers.ModelSerializer):
             'updated_at'
         ]
         read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
-
-
 
 
 class AcademicResultTypeSerializer(serializers.ModelSerializer):
