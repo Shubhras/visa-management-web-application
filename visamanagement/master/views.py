@@ -4082,7 +4082,7 @@ class CivilIdNameImportAPIView(APIView):
 
 
 
-        
+
 
 
 
@@ -12949,13 +12949,24 @@ class StudySpecialisationCreateAPIView(APIView):
 
     def post(self, request):
         studyspecialisation = request.data.get("studyspecialisation", "").strip()
-        majorarea_id = request.data.get("majorarea_id")
+        majorarea_uuid = request.data.get("majorarea_id")  # <-- you're sending uuid here
 
+        # validate uuid lookup properly
+        majorarea = Studymajorarea.objects.filter(uuid=majorarea_uuid).first()
+        if not majorarea:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Invalid Major Area UUID."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # prevent duplicates
         existing = StudySpecialisation.objects.filter(
             studyspecialisation__iexact=studyspecialisation,
-            majorarea_id=majorarea_id,
+            majorarea=majorarea,
             is_deleted=False
         ).first()
+
         if existing:
             return Response({
                 "statusCode": 400,
@@ -12963,6 +12974,7 @@ class StudySpecialisationCreateAPIView(APIView):
                 "message": "Study Specialisation with this name and Major Area already exists."
             }, status=status.HTTP_400_BAD_REQUEST)
 
+        # now let serializer handle relation via SlugRelatedField
         serializer = StudySpecialisationSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -12973,6 +12985,7 @@ class StudySpecialisationCreateAPIView(APIView):
                 "data": serializer.data
             }, status=status.HTTP_200_OK)
 
+        # collect all validation errors in a readable format
         messages = [msg for msgs in serializer.errors.values() for msg in msgs]
         return Response({
             "statusCode": 400,
