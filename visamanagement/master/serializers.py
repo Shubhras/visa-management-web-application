@@ -33,7 +33,7 @@ class AdminUserLoginSerializer(serializers.Serializer):
         return data
 
 class GenderSerializer(serializers.ModelSerializer):
-    description = serializers.CharField(required=False, allow_blank=True)  # optional
+    description = serializers.CharField(required=False, allow_blank=True)  
 
     class Meta:
         model = Gender
@@ -42,12 +42,13 @@ class GenderSerializer(serializers.ModelSerializer):
 
 
 class MaritalstatusSerializer(serializers.ModelSerializer):
-    description = serializers.CharField(required=False, allow_blank=True)  # optional
+    description = serializers.CharField(required=False, allow_blank=True)  
 
     class Meta:
         model = Maritalstatus
         fields = ['uuid', 'name', 'description', 'created_at', 'updated_at', 'is_active', 'is_deleted']
         read_only_fields = ['uuid', 'created_at', 'updated_at', 'is_deleted']
+
 
 class ContinentSerializer(serializers.ModelSerializer):
     class Meta:

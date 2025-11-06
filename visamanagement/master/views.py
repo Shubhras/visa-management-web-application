@@ -1627,7 +1627,6 @@ class CountryExportAPIView(APIView):
         return response
 
 
-
 class CountryImportAPIView(APIView):
 
     def post(self, request):
@@ -1783,10 +1782,6 @@ class CountryImportAPIView(APIView):
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=200)
-
-
-
-
 
 class CountriesByContinentAPIView(APIView):
     def get(self, request):
@@ -2009,6 +2004,7 @@ class StateExportAPIView(APIView):
             'countryName': 'Country Name',
             'stateName': 'State Name',
             'stateshortName': 'State Short Name',
+            'state':'State / Territory',
             'description': 'Description',
             'is_active': 'Active',
             'is_deleted': 'Deleted',
@@ -2077,7 +2073,7 @@ class StateImportAPIView(APIView):
         duplicate_names = []
 
         required_headers = {'state name', 'country name'}
-        optional_headers = {'state short name', 'description'}
+        optional_headers = { 'state / territory','state short name', 'description'}
 
         try:
             data = []
@@ -2196,10 +2192,6 @@ class StateImportAPIView(APIView):
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=200)
-
-
-
-
 
 class StateByCountryAPIView(APIView):
     def get(self, request):
@@ -2495,9 +2487,6 @@ class DistrictExportAPIView(APIView):
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
-
-
-
 
 
 
