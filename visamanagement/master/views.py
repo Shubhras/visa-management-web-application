@@ -2901,10 +2901,10 @@ class CityExportAPIView(APIView):
         # Field to header mapping
         field_header_map = {
             'uuid': 'UUID',
-            'countryName': 'Country',
-            'stateName': 'State',
-            'districtName': 'District',
-            'cityName': 'City',
+            'countryName': 'Country Name',
+            'stateName': 'State Name',
+            'districtName': 'District Name',
+            'cityName': 'City Name',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'created_at': 'Created On',
@@ -2975,7 +2975,7 @@ class CityImportAPIView(APIView):
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
 
-        required_headers = {'cityname', 'countryname', 'statename', 'districtname'}
+        required_headers = {'city name', 'country name', 'state name', 'district name'}
         optional_headers = {'description'}
 
         try:
@@ -3043,10 +3043,10 @@ class CityImportAPIView(APIView):
             # ---------------- Data Processing ----------------
             imported_count = 0
             for row in data:
-                city_name = str(row.get('cityname')).strip() if row.get('cityname') else None
-                country_name = str(row.get('countryname')).strip() if row.get('countryname') else None
-                state_name = str(row.get('statename')).strip() if row.get('statename') else None
-                district_name = str(row.get('districtname')).strip() if row.get('districtname') else None
+                city_name = str(row.get('city name')).strip() if row.get('city name') else None
+                country_name = str(row.get('country name')).strip() if row.get('country name') else None
+                state_name = str(row.get('state name')).strip() if row.get('state name') else None
+                district_name = str(row.get('district name')).strip() if row.get('districtname') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not city_name or not country_name or not state_name or not district_name:
@@ -3706,7 +3706,7 @@ class TimezoneExportAPIView(APIView):
             'uuid': 'UUID',
             'countryName': 'Country',
             'stateName': 'State',
-            'Timezone': 'Timezone',
+            'Timezone': 'Time Zone',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On'
@@ -3764,7 +3764,7 @@ class TimezoneImportAPIView(APIView):
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
 
-        required_headers = {'timezone'}
+        required_headers = {'time zone'}
         optional_headers = {'countryName', 'stateName', 'description'}
 
         try:
@@ -3815,7 +3815,7 @@ class TimezoneImportAPIView(APIView):
             imported_count = 0
 
             for row in data:
-                tz_name = str(row.get('timezone')).strip() if row.get('timezone') else None
+                tz_name = str(row.get('timez one')).strip() if row.get('time zone') else None
                 if not tz_name:
                     continue
 
