@@ -33,7 +33,7 @@ class AdminUserLoginSerializer(serializers.Serializer):
         return data
 
 class GenderSerializer(serializers.ModelSerializer):
-    description = serializers.CharField(required=False, allow_blank=True)  # optional
+    description = serializers.CharField(required=False, allow_blank=True)  
 
     class Meta:
         model = Gender
@@ -42,12 +42,13 @@ class GenderSerializer(serializers.ModelSerializer):
 
 
 class MaritalstatusSerializer(serializers.ModelSerializer):
-    description = serializers.CharField(required=False, allow_blank=True)  # optional
+    description = serializers.CharField(required=False, allow_blank=True)  
 
     class Meta:
         model = Maritalstatus
         fields = ['uuid', 'name', 'description', 'created_at', 'updated_at', 'is_active', 'is_deleted']
         read_only_fields = ['uuid', 'created_at', 'updated_at', 'is_deleted']
+
 
 class ContinentSerializer(serializers.ModelSerializer):
     class Meta:
@@ -66,7 +67,8 @@ class CountrySerializer(serializers.ModelSerializer):
     continent_id = serializers.PrimaryKeyRelatedField(
         queryset=Continents.objects.all(),
         source='continent',
-        write_only=True
+        write_only=True,
+        required=False
     )
 
     class Meta:
@@ -83,42 +85,57 @@ class CountrySerializer(serializers.ModelSerializer):
 
 
 class StateSerializer(serializers.ModelSerializer):
-    countryName = CountrySerializer(read_only=True)
-    country_id = serializers.PrimaryKeyRelatedField(
+    countryName = serializers.CharField(source='countryName.name', read_only=True)
+    country_id = serializers.SlugRelatedField(
         queryset=Country.objects.all(),
+        slug_field='uuid',
         source='countryName',
-        write_only=True
+        required=False
     )
+    state_display = serializers.CharField(source='get_state_display', read_only=True)  # shows "State"/"Territory"
 
     class Meta:
         model = State
         fields = [
             'uuid', 'countryName', 'country_id',
-            'stateName', 'stateshortName', 'description',
+            'stateName', 'state', 'state_display',  # <-- state is input, state_display is output
+            'stateshortName', 'description',
             'is_active', 'is_deleted', 'created_at', 'updated_at'
         ]
         read_only_fields = ['uuid', 'created_at', 'updated_at']
 
+    
 
 class DistrictSerializer(serializers.ModelSerializer):
-    countryName = CountrySerializer(read_only=True)
-    country_id = serializers.PrimaryKeyRelatedField(
+    # Flat read-only fields for response
+    countryName = serializers.CharField(source='countryName.name', read_only=True)
+    country_uuid = serializers.UUIDField(source='countryName.uuid', read_only=True)
+
+    stateName = serializers.CharField(source='stateName.stateName', read_only=True)
+    state_uuid = serializers.UUIDField(source='stateName.uuid', read_only=True)
+
+    # UUID input fields for write operations
+    country_id = serializers.SlugRelatedField(
         queryset=Country.objects.all(),
+        slug_field='uuid',
         source='countryName',
         write_only=True
     )
-    stateName = StateSerializer(read_only=True)
-    state_id = serializers.PrimaryKeyRelatedField(
+    state_id = serializers.SlugRelatedField(
         queryset=State.objects.all(),
+        slug_field='uuid',
         source='stateName',
-        write_only=True
+        write_only=True,
+        required=False,
+        allow_null=True
     )
 
     class Meta:
         model = District
         fields = [
-            'uuid', 'countryName', 'country_id',
-            'stateName', 'state_id',
+            'uuid',
+            'countryName', 'country_uuid', 'country_id',
+            'stateName', 'state_uuid', 'state_id',
             'districtName', 'description',
             'is_deleted', 'created_at', 'updated_at'
         ]
@@ -126,21 +143,31 @@ class DistrictSerializer(serializers.ModelSerializer):
 
 
 class CitySerializer(serializers.ModelSerializer):
-    countryName = CountrySerializer(read_only=True)
-    country_id = serializers.PrimaryKeyRelatedField(
+    countryName = serializers.CharField(source='countryName.name', read_only=True)
+    country_uuid = serializers.UUIDField(source='countryName.uuid', read_only=True)
+    
+    stateName = serializers.CharField(source='stateName.stateName', read_only=True)
+    state_uuid = serializers.UUIDField(source='stateName.uuid', read_only=True)
+    
+    districtName = serializers.CharField(source='districtName.districtName', read_only=True)
+    district_uuid = serializers.UUIDField(source='districtName.uuid', read_only=True)
+
+    # UUID input fields
+    country_id = serializers.SlugRelatedField(
         queryset=Country.objects.all(),
+        slug_field='uuid',
         source='countryName',
         write_only=True
     )
-    stateName = StateSerializer(read_only=True)
-    state_id = serializers.PrimaryKeyRelatedField(
+    state_id = serializers.SlugRelatedField(
         queryset=State.objects.all(),
+        slug_field='uuid',
         source='stateName',
         write_only=True
     )
-    districtName = DistrictSerializer(read_only=True)
-    district_id = serializers.PrimaryKeyRelatedField(
+    district_id = serializers.SlugRelatedField(
         queryset=District.objects.all(),
+        slug_field='uuid',
         source='districtName',
         write_only=True
     )
@@ -148,9 +175,10 @@ class CitySerializer(serializers.ModelSerializer):
     class Meta:
         model = City
         fields = [
-            'uuid', 'countryName', 'country_id',
-            'stateName', 'state_id',
-            'districtName', 'district_id',
+            'uuid',
+            'countryName', 'country_uuid', 'country_id',
+            'stateName', 'state_uuid', 'state_id',
+            'districtName', 'district_uuid', 'district_id',
             'cityName', 'description',
             'is_deleted', 'created_at', 'updated_at'
         ]
@@ -168,29 +196,77 @@ class RelationSerializer(serializers.ModelSerializer):
 
 
 class TimezoneSerializer(serializers.ModelSerializer):
-    countryName = CountrySerializer(read_only=True)
-    country_id = serializers.PrimaryKeyRelatedField(
-        queryset=Country.objects.all(),
-        source='countryName',
-        write_only=True
-    )
-    stateName = StateSerializer(read_only=True)
-    state_id = serializers.PrimaryKeyRelatedField(
-        queryset=State.objects.all(),
-        source='stateName',
-        write_only=True
-    )
+    countryName = serializers.CharField(source='countryName.name', read_only=True)
+    stateName = serializers.CharField(source='stateName.stateName', read_only=True)
+
+    # write-only UUID input
+    country_id = serializers.UUIDField(write_only=True, required=False, allow_null=True)
+    state_id = serializers.UUIDField(write_only=True, required=False, allow_null=True)
+
+    # read-only IDs
+    country_uuid = serializers.UUIDField(source='countryName.uuid', read_only=True)
+    state_uuid = serializers.UUIDField(source='stateName.uuid', read_only=True)
+
+    timezone = serializers.CharField(source='Timezone')
 
     class Meta:
         model = Timezone
         fields = [
-            'uuid', 'countryName', 'country_id',
-            'stateName', 'state_id',
-            'Timezone', 'description',
+            'uuid', 'countryName', 'country_uuid', 'country_id',
+            'stateName', 'state_uuid', 'state_id',
+            'timezone', 'description',
             'is_deleted', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['uuid', 'created_at', 'updated_at']
+        read_only_fields = ['uuid', 'created_at', 'updated_at', 'countryName', 'stateName', 'country_uuid', 'state_uuid']
 
+    def create(self, validated_data):
+        country_uuid = validated_data.pop('country_id', None)
+        state_uuid = validated_data.pop('state_id', None)
+
+        country = Country.objects.filter(uuid=country_uuid).first() if country_uuid else None
+        state = State.objects.filter(uuid=state_uuid).first() if state_uuid else None
+
+        timezone_instance = Timezone.objects.create(
+            countryName=country,
+            stateName=state,
+            **validated_data
+        )
+        return timezone_instance
+
+class CivilIdNameSerializer(serializers.ModelSerializer):
+    # Show choice label for valid_type
+    valid_type_detail = serializers.SerializerMethodField()
+ 
+    # Show choice label for valid_duration_unit
+    valid_duration_unit_detail = serializers.SerializerMethodField()
+ 
+    class Meta:
+        model = CivilIdName
+        fields = [
+            'uuid',
+            'civil_id_name',
+            'authority_full_name',
+            'authority_short_name',
+ 
+            'valid_type',
+            'valid_type_detail',
+ 
+            'valid_duration_value',
+            'valid_duration_unit',
+            'valid_duration_unit_detail',
+ 
+            'description',
+            'is_deleted',
+            'created_at',
+            'updated_at'
+        ]
+        read_only_fields = ['uuid', 'created_at', 'updated_at','is_deleted']
+ 
+    def get_valid_type_detail(self, obj):
+        return obj.get_valid_type_display() if obj.valid_type else None
+ 
+    def get_valid_duration_unit_detail(self, obj):
+        return obj.get_valid_duration_unit_display() if obj.valid_duration_unit else None
 
 class DepartmentSerializer(serializers.ModelSerializer):
     class Meta:
@@ -271,12 +347,21 @@ class LicenseNameSerializer(serializers.ModelSerializer):
     class Meta:
         model = LicenseName
         fields = [
-            'uuid', 'id', 'country', 'country_name',
-            'full_name', 'short_name', 'issuing_authority',
-            'description', 'valid_upto',
-            'created_at', 'updated_at'
+            'uuid',
+            'id',
+            'country',
+            'country_name',
+            'full_name',
+            'short_name',
+            'issuing_authority',
+            'description',
+            'valid_type',
+            'valid_duration_value',
+            'valid_duration_unit',
+            'is_deleted',
+            'created_at',
+            'updated_at',
         ]
-    
 
 
 class LeadSourceSerializer(serializers.ModelSerializer):
@@ -423,23 +508,26 @@ class StudyMajorAreaSerializer(serializers.ModelSerializer):
 
 
 class StudySpecialisationSerializer(serializers.ModelSerializer):
-    mainarea = StudymainareaSerializer(read_only=True)
-    mainarea_id = serializers.PrimaryKeyRelatedField(
+    
+    mainarea_id = serializers.SlugRelatedField(
         queryset=Studymainarea.objects.all(),
+        slug_field='uuid',
         source='mainarea',
         write_only=True,
         required=False,
         allow_null=True
     )
+    mainarea = serializers.CharField(source='mainarea.name', read_only=True)
 
-    Majorarea = StudyMajorAreaSerializer(read_only=True)
-    Majorarea_id = serializers.PrimaryKeyRelatedField(
+    majorarea_id = serializers.SlugRelatedField(
         queryset=Studymajorarea.objects.all(),
+        slug_field='uuid',
         source='majorarea',
         write_only=True,
         required=False,
         allow_null=True
     )
+    majorarea = serializers.CharField(source='majorarea.majorarea', read_only=True)
 
     class Meta:
         model = StudySpecialisation
@@ -457,7 +545,6 @@ class StudySpecialisationSerializer(serializers.ModelSerializer):
             'updated_at'
         ]
         read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
-
 
 
 class AcademicResultTypeSerializer(serializers.ModelSerializer):

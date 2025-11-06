@@ -65,7 +65,7 @@ urlpatterns = [
     path('city/', CityListAPIView.as_view(), name='city-list'),
     path('city/create/', CityCreateAPIView.as_view(), name='city-create'),
     path('city/<uuid:uuid>/', CityRetrieveAPIView.as_view(), name='city-detail'),
-    path('city/update/<uuid:uuid>/', CityUpdateAPIView.as_view(), name='city-update'),
+    path('city/<uuid:uuid>/update/', CityUpdateAPIView.as_view(), name='city-update'),
     path('city/delete/', CityDeleteAPIView.as_view(), name='city-delete'),
     path('city/export/', CityExportAPIView.as_view(), name='city-export'),
     path('city/import/', CityImportAPIView.as_view(), name='city-import'),
@@ -73,18 +73,32 @@ urlpatterns = [
 
 
 
-    path('relations/list/', RelationListAPIView.as_view(), name='relation-list'),
+    path('relations/', RelationListAPIView.as_view(), name='relation-list'),
     path('relations/create/', RelationCreateAPIView.as_view(), name='relation-create'),
     path('relations/<uuid:uuid>/', RelationRetrieveAPIView.as_view(), name='relation-detail'),
-    path('relations/update/<uuid:uuid>/', RelationUpdateAPIView.as_view(), name='relation-update'),
+    path('relations/<uuid:uuid>/update/', RelationUpdateAPIView.as_view(), name='relation-update'),
     path('relations/delete/', RelationDeleteAPIView.as_view(), name='relation-delete'),
     path('relations/export/', RelationExportAPIView.as_view(), name='relation-export'),
     path('relations/import/', RelationImportAPIView.as_view(), name='relation-import'),
 
+   
+    path("civil-id-name/create/", CivilIdNameCreateAPIView.as_view(), name="civil_id_name_create"),
+    path("civil-id-name/", CivilIdNameListAPIView.as_view(), name="civil_id_name_list"),
+    path("civil-id-name/<uuid:uuid>/", CivilIdNameRetrieveAPIView.as_view(), name="civil_id_name_retrieve"),
+    path("civil-id-name/<uuid:uuid>/update/", CivilIdNameUpdateAPIView.as_view(), name="civil_id_name_update"),
+    path("civil-id-name/delete/",CivilIdNameDeleteAPIView.as_view(),name="civil_id_name_delete_single"),
+    path("civil-id-name/export/", CivilIdNameExportAPIView.as_view(), name="civil_id_name_export"),
+    path("civil-id-name/import/", CivilIdNameImportAPIView.as_view(), name="civil_id_name_import"),
+ 
+   
+   
     path('timezones/create/', TimezoneCreateAPIView.as_view(), name='timezone-create'),
-    path('timezones/list/', TimezoneListAPIView.as_view(), name='timezone-list'),
-    path('timezones/update/<uuid:uuid>/', TimezoneUpdateAPIView.as_view(), name='timezone-update'),
-    path('timezones/<uuid:uuid>/delete/', TimezoneDeleteAPIView.as_view(), name='timezone-delete'),
+    path('timezones/', TimezoneListAPIView.as_view(), name='timezone-list'),
+    path('timezones/<uuid:uuid>/', TimezoneRetrieveAPIView.as_view(), name='timezone-details'),
+    path('timezones/<uuid:uuid>/update/', TimezoneUpdateAPIView.as_view(), name='timezone-update'),
+    path('timezones/delete/', TimezoneDeleteAPIView.as_view(), name='timezone-delete'),
+    path('timezones/export/', TimezoneExportAPIView.as_view(), name='timezone-export'),
+    path('timezones/import/', TimezoneImportAPIView.as_view(), name='timezone-import'),
 
     path('departments/', DepartmentListAPIView.as_view(), name='department-list'),
     path('departments/create/', DepartmentCreateAPIView.as_view(), name='department-create'),
@@ -174,7 +188,7 @@ urlpatterns = [
     path("license-name/delete/", LicenseNameDeleteAPIView.as_view(),name='licensename-delete'),
     path('license-name/export/',   LicenseNameExportAPIView.as_view(), name=' LicenseName-export'),
     path('license-name/import/',   LicenseNameImportAPIView.as_view(), name=' LicenseName-import'),
-
+    
 
     path("LeadSource/create/", LeadSourceCreateAPIView.as_view(), name='LeadSource-create'),
     path("LeadSource/", LeadSourceListAPIView.as_view(), name='LeadSource-list'),
@@ -259,7 +273,16 @@ urlpatterns = [
     path('education-duration/delete/', EducationDurationDeleteAPIView.as_view(), name='educationduration-delete'),
     path('education-duration/export/', EducationDurationExportAPIView.as_view(), name='educationduration-export'),
     path('education-duration/import/', EducationDurationImportAPIView.as_view(), name='educationduration-import'),
+    
 
+    path('education-type/', EducationTypeListAPIView.as_view(), name='education-type-list'),
+    path('education-type/create/', EducationTypeCreateAPIView.as_view(), name='education-type-create'),
+    path('education-type/<uuid:uuid>/', EducationTypeRetrieveAPIView.as_view(), name='education-type-detail'),
+    path('education-type/<uuid:uuid>/update/', EducationTypeUpdateAPIView.as_view(), name='education-type-update'),
+    path('education-type/delete/', EducationTypeDeleteAPIView.as_view(), name='education-type-delete'),
+    path('education-type/export/', EducationTypeExportAPIView.as_view(), name='education-type-export'),
+    path('education-type/import/', EducationTypeImportAPIView.as_view(), name='education-type-import'),
+ 
     path("studymainarea/", StudymainareaListAPIView.as_view(), name='studymainarea-list'),
     path('studymainarea/create/', StudymainareaCreateAPIView.as_view(), name='studymainarea-create'),
     path('studymainarea/<uuid:uuid>/', StudymainareaRetrieveAPIView.as_view(), name='studymainarea-retrieve'),
@@ -284,9 +307,10 @@ urlpatterns = [
     path('studyspecialisation/export/', StudySpecialisationExportAPIView.as_view(), name='studyspecialisation-export'),
     path('studyspecialisation/import/', StudySpecialisationImportAPIView.as_view(), name='studyspecialisation-import'),
 
+    path('academicresulttype/', AcademicResultTypeListAPIView.as_view(), name='academicresulttype-list'),
     path('academicresulttype/create/', AcademicResultTypeCreateAPIView.as_view(), name='academicresulttype-create'),
     path('academicresulttype/<uuid:uuid>/', AcademicResultTypeRetrieveAPIView.as_view(), name='academicresulttype-retrieve'),
-    path('academicresulttype/update/<uuid:uuid>/', AcademicResultTypeUpdateAPIView.as_view(), name='academicresulttype-update'),
+    path('academicresulttype/<uuid:uuid>/update/', AcademicResultTypeUpdateAPIView.as_view(), name='academicresulttype-update'),
     path('academicresulttype/delete/', AcademicResultTypeDeleteAPIView.as_view(), name='academicresulttype-delete'),
     path('academicresulttype/export/', AcademicResultTypeExportAPIView.as_view(), name='academicresulttype-export'),
     path('academicresulttype/import/', AcademicResultTypeImportAPIView.as_view(), name='academicresulttype-import'),

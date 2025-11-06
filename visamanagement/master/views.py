@@ -129,7 +129,7 @@ class AdminLogoutView(APIView):
 class GenderListAPIView(APIView):
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'asc')
 
         allowed_sort_fields = ['text', 'description', 'created_at']
@@ -566,7 +566,7 @@ class MaritalstatusListAPIView(APIView):
     def get(self, request):
         try:
             search = request.GET.get('search', '').strip()
-            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_by = request.GET.get('sortBy', 'updated_at')
             sort_order = request.GET.get('sortOrder', 'asc')
 
             # Allowed fields to sort
@@ -1011,12 +1011,12 @@ class ContinentListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
 
         if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
+            sort_by = 'updated_at'
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
@@ -1403,7 +1403,7 @@ class CountryListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
         allowed_sort_fields = ['name', 'shortName', 'fullName', 'capitalCity', 'created_at']
 
@@ -1582,19 +1582,16 @@ class CountryExportAPIView(APIView):
             'updated_at': 'Modified On'
         }
 
-        # --- Determine which fields to export ---
         if fields:
             field_list = [f.strip() for f in fields.split(',')]
         else:
             field_list = list(field_header_map.keys())
 
-        # --- Fetch queryset ---
         queryset = Country.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
         queryset = queryset.order_by('-updated_at')
 
-        # --- Prepare dataset ---
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
 
@@ -1606,7 +1603,6 @@ class CountryExportAPIView(APIView):
                 if field == 'continent' and obj.continent:
                     value = obj.continent.name
                 elif field in ['created_at', 'updated_at'] and value:
-                    # Convert to IST and format
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
                     value = int(value)
@@ -1614,7 +1610,6 @@ class CountryExportAPIView(APIView):
                 row.append(value if value is not None else '')
             dataset.append(row)
 
-        # --- Export data ---
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv; charset=utf-8'
@@ -1624,14 +1619,12 @@ class CountryExportAPIView(APIView):
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'countries.xlsx'
 
-        # --- Return response ---
         response = HttpResponse(
             file_data if format_type == 'csv' else file_data.getvalue(),
             content_type=content_type
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
-
 
 
 class CountryImportAPIView(APIView):
@@ -1656,7 +1649,6 @@ class CountryImportAPIView(APIView):
             data = []
             headers = []
 
-            # ---------------- XLSX Import ----------------
             if format_type == 'xlsx':
                 import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
@@ -1688,7 +1680,6 @@ class CountryImportAPIView(APIView):
                         continue
                     data.append(dict(zip(headers, row)))
 
-            # ---------------- CSV Import ----------------
             elif format_type == 'csv':
                 
                 decoded_file = file.read().decode('utf-8')
@@ -1709,7 +1700,6 @@ class CountryImportAPIView(APIView):
                     'error': 'Unsupported file format. Use .xlsx or .csv'
                 }, status=400)
 
-            # ---------------- Data Processing ----------------
             imported_count = 0
             for row in data:
                 country_name = str(row.get('country name')).strip() if row.get('country name') else None
@@ -1793,10 +1783,6 @@ class CountryImportAPIView(APIView):
             "imported_count": imported_count
         }, status=200)
 
-
-
-
-
 class CountriesByContinentAPIView(APIView):
     def get(self, request):
         continent_id = request.GET.get("continent_id")
@@ -1851,12 +1837,12 @@ class StateListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['stateName', 'stateshortName', 'created_at']
+        allowed_sort_fields = ['stateName', 'stateshortName', 'updated_at']
 
         if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
+            sort_by = 'updated_at'
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
@@ -2003,8 +1989,6 @@ class StateDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-
-
 class StateExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -2020,6 +2004,7 @@ class StateExportAPIView(APIView):
             'countryName': 'Country Name',
             'stateName': 'State Name',
             'stateshortName': 'State Short Name',
+            'state':'State / Territory',
             'description': 'Description',
             'is_active': 'Active',
             'is_deleted': 'Deleted',
@@ -2048,11 +2033,17 @@ class StateExportAPIView(APIView):
                     value = obj.countryName.name if obj.countryName else ''
                 else:
                     value = getattr(obj, field, '')
+                
+                # Convert state/territory to Title Case
+                if field == 'state' and value:
+                    value = value.capitalize()  # STATE -> State, TERRITORY -> Territory
+
                 # Format date/time fields
                 if field in ['created_at', 'updated_at'] and value:
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
                     value = int(value)
+                
                 row.append(value if value is not None else '')
             dataset.append(row)
 
@@ -2074,10 +2065,6 @@ class StateExportAPIView(APIView):
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
-
-
-
-
 class StateImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -2092,7 +2079,7 @@ class StateImportAPIView(APIView):
         duplicate_names = []
 
         required_headers = {'state name', 'country name'}
-        optional_headers = {'state short name', 'description'}
+        optional_headers = { 'state / territory','state short name', 'description'}
 
         try:
             data = []
@@ -2164,6 +2151,11 @@ class StateImportAPIView(APIView):
                 country_name = str(row.get('country name')).strip() if row.get('country name') else None
                 short_name = str(row.get('state short name')).strip() if row.get('state short name') else ''
                 description = str(row.get('description')).strip() if row.get('description') else ''
+                
+                # Convert state/territory value to uppercase
+                state_type = str(row.get('state / territory')).strip().upper() if row.get('state / territory') else 'STATE'
+                if state_type and state_type not in ['STATE', 'TERRITORY']:
+                    state_type = None
 
                 if not state_name or not country_name:
                     continue
@@ -2184,6 +2176,7 @@ class StateImportAPIView(APIView):
                         existing.stateshortName = short_name
                         existing.description = description
                         existing.countryName = country_obj
+                        existing.state = state_type  # set uppercase value
                         existing.is_deleted = False
                         existing.save()
                         imported_count += 1
@@ -2193,6 +2186,7 @@ class StateImportAPIView(APIView):
                         stateshortName=short_name,
                         description=description,
                         countryName=country_obj,
+                        state=state_type,  # set uppercase value
                         is_deleted=False
                     )
                     imported_count += 1
@@ -2211,10 +2205,6 @@ class StateImportAPIView(APIView):
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=200)
-
-
-
-
 
 class StateByCountryAPIView(APIView):
     def get(self, request):
@@ -2237,7 +2227,8 @@ class StateByCountryAPIView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            country = Country.objects.get(id=country_id)
+            country = Country.objects.get(uuid=country_uuid)
+
         except Country.DoesNotExist:
             return Response({
                 "statusCode": 404,
@@ -2249,7 +2240,7 @@ class StateByCountryAPIView(APIView):
         data = []
         for state in states:
             data.append({
-                "id": str(state.uuid),
+                "uuid": str(state.uuid),
                 "name": state.stateName,
                 "shortName": state.stateshortName,
                 "fullName": state.description
@@ -2274,7 +2265,7 @@ class DistrictListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
         allowed_sort_fields = ['districtName', 'created_at']
 
@@ -2513,9 +2504,6 @@ class DistrictExportAPIView(APIView):
 
 
 
-
-
-
 # -------------------- Import -------------------- 
 class DistrictImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -2530,8 +2518,8 @@ class DistrictImportAPIView(APIView):
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
 
-        required_headers = {'district name', 'state name', 'country name'}
-        optional_headers = {'description'}
+        required_headers = {'district name', 'country name'}
+        optional_headers = {'description','state name'}
 
         try:
             data = []
@@ -2601,21 +2589,23 @@ class DistrictImportAPIView(APIView):
                 district_name = str(row.get('district name')).strip() if row.get('district name') else None
                 state_name = str(row.get('state name')).strip() if row.get('state name') else None
                 country_name = str(row.get('country name')).strip() if row.get('country name') else None
-                short_name = str(row.get('district short name')).strip() if row.get('district short name') else ''
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
-                if not district_name or not state_name or not country_name:
-                    continue
+                if not district_name or not country_name:
+                    continue  # Only skip if district or country is missing
 
                 country_obj = Country.objects.filter(name__iexact=country_name).first()
-                state_obj = State.objects.filter(stateName__iexact=state_name, countryName=country_obj).first() if country_obj else None
+                state_obj = None
+                if state_name and country_obj:
+                    state_obj = State.objects.filter(stateName__iexact=state_name, countryName=country_obj).first()
 
-                if not country_obj or not state_obj:
-                    continue  # skip row if country or state not found
+                # If country not found, skip the row
+                if not country_obj:
+                    continue
 
                 existing = District.objects.filter(
                     districtName__iexact=district_name,
-                    stateName=state_obj,
+                    stateName=state_obj,  # can be None
                     countryName=country_obj
                 ).first()
 
@@ -2628,8 +2618,7 @@ class DistrictImportAPIView(APIView):
                         existing.districtName = district_name
                         existing.stateName = state_obj
                         existing.countryName = country_obj
-                        existing.districtshortName = short_name
-                        existing.description = description
+                        existing.description = description  # fixed typo
                         existing.is_deleted = False
                         existing.save()
                         imported_count += 1
@@ -2638,12 +2627,10 @@ class DistrictImportAPIView(APIView):
                         districtName=district_name,
                         stateName=state_obj,
                         countryName=country_obj,
-                        districtshortName=short_name,
                         description=description,
                         is_deleted=False
                     )
                     imported_count += 1
-
         except Exception as e:
             return Response({
                 "statusCode": 400,
@@ -2740,7 +2727,7 @@ class CityListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
         allowed_sort_fields = ['cityName', 'created_at']
 
@@ -2916,10 +2903,10 @@ class CityExportAPIView(APIView):
         # Field to header mapping
         field_header_map = {
             'uuid': 'UUID',
-            'countryName': 'Country',
-            'stateName': 'State',
-            'districtName': 'District',
-            'cityName': 'City',
+            'countryName': 'Country Name',
+            'stateName': 'State Name',
+            'districtName': 'District Name',
+            'cityName': 'City Name',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'created_at': 'Created On',
@@ -2990,7 +2977,7 @@ class CityImportAPIView(APIView):
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
 
-        required_headers = {'cityname', 'countryname', 'statename', 'districtname'}
+        required_headers = {'city name', 'country name', 'state name', 'district name'}
         optional_headers = {'description'}
 
         try:
@@ -3058,10 +3045,10 @@ class CityImportAPIView(APIView):
             # ---------------- Data Processing ----------------
             imported_count = 0
             for row in data:
-                city_name = str(row.get('cityname')).strip() if row.get('cityname') else None
-                country_name = str(row.get('countryname')).strip() if row.get('countryname') else None
-                state_name = str(row.get('statename')).strip() if row.get('statename') else None
-                district_name = str(row.get('districtname')).strip() if row.get('districtname') else None
+                city_name = str(row.get('city name')).strip() if row.get('city name') else None
+                country_name = str(row.get('country name')).strip() if row.get('country name') else None
+                state_name = str(row.get('state name')).strip() if row.get('state name') else None
+                district_name = str(row.get('district name')).strip() if row.get('districtname') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not city_name or not country_name or not state_name or not district_name:
@@ -3127,19 +3114,19 @@ class RelationListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['relation', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
 
         if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
+            sort_by = 'updated_at'
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
         queryset = Relation.objects.filter(is_deleted=False)
         if search:
             queryset = queryset.filter(
-                Q(relation__icontains=search) |
+                Q(name__icontains=search) |
                 Q(description__icontains=search)
             )
 
@@ -3155,8 +3142,9 @@ class RelationCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
-        relation_name = request.data.get("relation", "").strip()
-        existing = Relation.objects.filter(relation__iexact=relation_name, is_deleted=False).first()
+        relation_name = request.data.get("name", "").strip()
+        existing = Relation.objects.filter(name__iexact=relation_name, is_deleted=False).first()
+
         if existing:
             return Response({"statusCode": 400, "status": False, "message": "Relation with this name already exists."}, status=400)
 
@@ -3291,7 +3279,7 @@ class RelationExportAPIView(APIView):
         # --- Field to header mapping ---
         field_header_map = {
             'uuid': 'UUID',
-            'relation': 'Relation',
+            'name': 'Relation',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'created_at': 'Created On',
@@ -3466,7 +3454,7 @@ class RelationImportAPIView(APIView):
                 if not name:
                     continue  # skip rows without relation name
 
-                existing = Relation.objects.filter(relation__iexact=name).first()
+                existing = Relation.objects.filter(name__iexact=name).first()
 
                 if existing:
                     if not existing.is_deleted:
@@ -3480,7 +3468,7 @@ class RelationImportAPIView(APIView):
                         imported_count += 1
                 else:
                     Relation.objects.create(
-                        relation=name,
+                        name=name,
                         description=description,
                         is_deleted=False
                     )
@@ -3502,180 +3490,829 @@ class RelationImportAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+#-----------------------TimeZone---------------
 
-class TimezoneCreateAPIView(APIView):
-    def post(self, request):
-        try:
-            timezone_name = request.data.get("Timezone")
-            country_id = request.data.get("country_id")
-            state_id = request.data.get("state_id")
-            description = request.data.get("description", "")
+class TimezoneListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
 
-            if not timezone_name:
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "Timezone name is required"
-                }, status=status.HTTP_400_BAD_REQUEST)
+    def get(self, request):
+        search = request.GET.get('search', '').strip()
+        sort_by = request.GET.get('sortBy', 'updated_at')
+        sort_order = request.GET.get('sortOrder', 'desc')
 
-            if Timezone.objects.filter(Timezone__iexact=timezone_name, is_deleted=False).exists():
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "Timezone with this name already exists"
-                }, status=status.HTTP_400_BAD_REQUEST)
+        allowed_sort_fields = ['Timezone', 'description', 'updated_at']
+        if sort_by not in allowed_sort_fields:
+            sort_by = 'updated_at'
 
-            country = Country.objects.filter(id=country_id).first() if country_id else None
-            state = State.objects.filter(id=state_id).first() if state_id else None
+        if sort_order == 'desc':
+            sort_by = f'-{sort_by}'
 
-            timezone_obj = Timezone.objects.create(
-                id=uuid.uuid4(),
-                Timezone=timezone_name,
-                countryName=country,
-                stateName=state,
-                description=description
+        queryset = Timezone.objects.filter(is_deleted=False)
+
+        if search:
+            queryset = queryset.filter(
+                Q(Timezone__icontains=search) |
+                Q(description__icontains=search) |
+                Q(countryName__name__icontains=search) |
+                Q(stateName__stateName__icontains=search)
             )
 
+        queryset = queryset.order_by(sort_by)
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = TimezoneSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+
+class TimezoneCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        timezone_name = request.data.get("timezone", "").strip()
+
+        existing = Timezone.objects.filter(Timezone__iexact=timezone_name, is_deleted=False).first()
+        if existing:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Timezone with this name already exists."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = TimezoneSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
             return Response({
                 "statusCode": 200,
                 "status": True,
                 "message": "Timezone created successfully",
-                "data": {
-                    "id": str(timezone_obj.uuid),
-                    "Timezone": timezone_obj.Timezone,
-                    "country": timezone_obj.countryName.name if timezone_obj.countryName else None,
-                    "state": timezone_obj.stateName.stateName if timezone_obj.stateName else None,
-                    "description": timezone_obj.description
-                }
+                "data": serializer.data
             }, status=status.HTTP_200_OK)
 
-        except Exception as e:
+        errors = serializer.errors
+        messages = []
+        for field, msgs in errors.items():
+            messages.extend(msgs)
+        return Response({
+            "statusCode": 400,
+            "status": False,
+            "message": " ".join(messages),
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class TimezoneRetrieveAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request, uuid):
+        try:
+            tz = Timezone.objects.get(uuid=uuid, is_deleted=False)
+        except Timezone.DoesNotExist:
             return Response({
-                "statusCode": 500,
+                "statusCode": 404,
                 "status": False,
-                "message": str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                "message": "Timezone not found",
+                "data": None
+            }, status=status.HTTP_404_NOT_FOUND)
 
-
-class TimezoneListAPIView(APIView):
-    def get(self, request):
-        search = request.GET.get("search", "")
-        page = int(request.GET.get("page", 1))
-        per_page = int(request.GET.get("per_page", 10))
-
-        timezones = Timezone.objects.filter(is_deleted=False)
-        if search:
-            timezones = timezones.filter(Timezone__icontains=search)
-
-        paginator = Paginator(timezones, per_page)
-        page_obj = paginator.get_page(page)
-
-        data = []
-        for tz in page_obj:
-            data.append({
-                "id": str(tz.uuid),
-                "Timezone": tz.Timezone,
-                "country": tz.countryName.name if tz.countryName else None,
-                "state": tz.stateName.stateName if tz.stateName else None,
-                "description": tz.description
-            })
-
+        serializer = TimezoneSerializer(tz)
         return Response({
             "statusCode": 200,
             "status": True,
-            "total": paginator.count,
-            "total_pages": paginator.num_pages,
-            "current_page": page,
-            "message": "Timezones fetched successfully",
-            "data": data
-        }, status=status.HTTP_200_OK)
-
-
+            "message": "Timezone retrieved successfully",
+            "data": serializer.data
+        })
 
 
 class TimezoneUpdateAPIView(APIView):
-    def put(self, request, pk):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def put(self, request, uuid):
         try:
-            try:
-                timezone_obj = Timezone.objects.get(id=pk, is_deleted=False)
-            except Timezone.DoesNotExist:
-                return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "Timezone not found"
-                }, status=status.HTTP_404_NOT_FOUND)
+            tz = Timezone.objects.get(uuid=uuid, is_deleted=False)
+        except Timezone.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "Timezone not found",
+                "data": None
+            }, status=status.HTTP_404_NOT_FOUND)
 
-            timezone_obj.Timezone = request.data.get("Timezone", timezone_obj.Timezone)
-            timezone_obj.description = request.data.get("description", timezone_obj.description)
-
-            country_id = request.data.get("country_id")
-            state_id = request.data.get("state_id")
-
-            if country_id:
-                timezone_obj.countryName = Country.objects.filter(id=country_id).first()
-            if state_id:
-                timezone_obj.stateName = State.objects.filter(id=state_id).first()
-
-            timezone_obj.save()
-
+        serializer = TimezoneSerializer(tz, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
             return Response({
                 "statusCode": 200,
                 "status": True,
                 "message": "Timezone updated successfully",
-                "data": {
-                    "id": str(timezone_obj.uuid),
-                    "Timezone": timezone_obj.Timezone,
-                    "country": timezone_obj.countryName.name if timezone_obj.countryName else None,
-                    "state": timezone_obj.stateName.stateName if timezone_obj.stateName else None,
-                    "description": timezone_obj.description
-                }
-            }, status=status.HTTP_200_OK)
+                "data": serializer.data
+            })
 
-        except Exception as e:
-            return Response({
-                "statusCode": 500,
-                "status": False,
-                "message": str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        errors = serializer.errors
+        messages = []
+        for field, msgs in errors.items():
+            messages.extend(msgs)
+        return Response({
+            "statusCode": 400,
+            "status": False,
+            "message": " ".join(messages),
+            "data": None
+        }, status=status.HTTP_400_BAD_REQUEST)
 
 
 class TimezoneDeleteAPIView(APIView):
-    def delete(self, request, pk):
-        try:
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def delete(self, request, uuid=None):
+        ids = request.data.get('id', None)
+
+        if uuid:
             try:
-                timezone_obj = Timezone.objects.get(id=pk, is_deleted=False)
+                tz = Timezone.objects.get(uuid=uuid)
+                tz.delete()
+                return Response({
+                    "statusCode": 204,
+                    "status": True,
+                    "message": "Timezone permanently deleted.",
+                    "data": None
+                }, status=status.HTTP_204_NO_CONTENT)
             except Timezone.DoesNotExist:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "Timezone not found"
+                    "message": "Timezone not found.",
+                    "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-            timezone_obj.is_deleted = True
-            timezone_obj.save()
-
+        if ids == "all":
+            tzs = Timezone.objects.all()
+            count = tzs.count()
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No timezones found to delete.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+            tzs.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "Timezone deleted successfully"
+                "message": f"All {count} timezone(s) permanently deleted.",
+                "data": None
             }, status=status.HTTP_200_OK)
+
+        if not ids or not isinstance(ids, list):
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        valid_uuids = []
+        invalid_uuids = []
+        for u in ids:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(u)
+
+        tzs = Timezone.objects.filter(uuid__in=valid_uuids)
+        count = tzs.count()
+
+        if count == 0:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "No matching timezones found.",
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        tzs.delete()
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": f"{count} timezone(s) permanently deleted.",
+            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+        }, status=status.HTTP_200_OK)
+
+
+class TimezoneExportAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        format_type = request.GET.get('format', 'xlsx').lower()
+        fields = request.GET.get('fields')
+        uuids_param = request.GET.get('uuids', '')
+        uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+        field_header_map = {
+            'uuid': 'UUID',
+            'countryName': 'Country',
+            'stateName': 'State',
+            'Timezone': 'Time Zone',
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'updated_at': 'Modified On'
+        }
+
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+        queryset = Timezone.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-updated_at')
+
+        dataset = Dataset()
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'Timezone'
+
+        for tz in queryset:
+            row = []
+            for field in field_list:
+                value = getattr(tz, field, '')
+                if field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
+                    value = int(value)
+                row.append(value if value is not None else '')
+            dataset.append(row)
+
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'timezones.csv'
+        else:
+            file_data = io.BytesIO(dataset.export('xlsx'))
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'timezones.xlsx'
+
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        return response
+
+
+class TimezoneImportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        file = request.FILES.get('file')
+        sheet_name = request.data.get('sheet_name')
+
+        if not file:
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+
+        format_type = file.name.split('.')[-1].lower()
+        duplicate_names = []
+
+        required_headers = {'time zone'}
+        optional_headers = {'country', 'state', 'description'}
+
+        try:
+            data = []
+            headers = []
+
+            # XLSX Handling
+            if format_type == 'xlsx':
+                import openpyxl
+                wb = openpyxl.load_workbook(file, read_only=True)
+                available_sheets = wb.sheetnames
+
+                if not sheet_name:
+                    return Response({'error': 'Please provide sheet_name', 'available_sheets': available_sheets}, status=400)
+                if sheet_name not in available_sheets:
+                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
+
+                ws = wb[sheet_name]
+                if ws.max_row <= 1:
+                    return Response({'error': f'Sheet "{sheet_name}" is empty'}, status=400)
+
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response({'error': f'Missing required headers: {required_headers}'}, status=400)
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    if not any(row):
+                        continue
+                    row_dict = dict(zip(headers, row))
+                    data.append(row_dict)
+
+            # CSV Handling
+            elif format_type == 'csv':
+                from tablib import Dataset
+                decoded_file = file.read().decode('utf-8')
+                dataset = Dataset()
+                dataset.load(decoded_file, format='csv')
+
+                for row in dataset.dict:
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({'error': f'Missing required headers: {required_headers}'}, status=400)
+                    data.append(row_lower)
+
+            else:
+                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
+
+            imported_count = 0
+
+            for row in data:
+                tz_name = str(row.get('time zone')).strip() if row.get('time zone') else None
+                if not tz_name:
+                    continue
+
+                # Fetch or create related Country and State
+                country_obj = None
+                state_obj = None
+
+                country_name = str(row.get('country')).strip() if row.get('country') else None
+                state_name = str(row.get('state')).strip() if row.get('state') else None
+
+                if country_name:
+                    country_obj = Country.objects.filter(name__iexact=country_name, is_deleted=False).first()
+                    if not country_obj:
+                        country_obj = Country.objects.create(name=country_name, description='', is_deleted=False)
+
+                if state_name:
+                    state_obj = State.objects.filter(stateName__iexact=state_name, is_deleted=False).first()
+                    if not state_obj:
+                        state_obj = State.objects.create(stateName=state_name, countryName=country_obj, description='', is_deleted=False)
+
+                description = str(row.get('description')).strip() if row.get('description') else ''
+
+                existing = Timezone.objects.filter(Timezone__iexact=tz_name).first()
+                if existing:
+                    if not existing.is_deleted:
+                        duplicate_names.append(tz_name)
+                        continue
+                    else:
+                        existing.description = description
+                        existing.countryName = country_obj
+                        existing.stateName = state_obj
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
+                else:
+                    Timezone.objects.create(
+                        Timezone=tz_name,
+                        description=description,
+                        countryName=country_obj,
+                        stateName=state_obj,
+                        is_deleted=False
+                    )
+                    imported_count += 1
 
         except Exception as e:
             return Response({
-                "statusCode": 500,
+                "statusCode": 400,
                 "status": False,
-                "message": str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+                'message': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "duplicates": list(set(duplicate_names)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count
+        }, status=status.HTTP_200_OK)
+
+
+
+class CivilIdNameCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+ 
+    def post(self, request):
+        serializer = CivilIdNameSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "Civil ID created successfully",
+                "data": serializer.data
+            })
+ 
+        msg = " ".join([m for v in serializer.errors.values() for m in v])
+        return Response({
+            "statusCode": 400,
+            "status": False,
+            "message": msg
+        }, status=status.HTTP_400_BAD_REQUEST)
+ 
+ 
+class CivilIdNameListAPIView(APIView):
+    def get(self, request):
+        search = request.GET.get("search", "").strip()
+        sort_by = request.GET.get("sortBy", "created_at")
+        sort_order = request.GET.get("sortOrder", "desc")
+ 
+        allowed_sort_fields = [
+            "civil_id_name",
+            "authority_full_name",
+            "authority_short_name",
+            "created_at",
+        ]
+ 
+        if sort_by not in allowed_sort_fields:
+            sort_by = "created_at"
+ 
+        if sort_order == "desc":
+            sort_by = f"-{sort_by}"
+ 
+        queryset = CivilIdName.objects.filter(is_deleted=False)
+ 
+        if search:
+            queryset = queryset.filter(
+                Q(civil_id_name__icontains=search) |
+                Q(authority_full_name__icontains=search) |
+                Q(authority_short_name__icontains=search) |
+                Q(description__icontains=search)
+            )
+ 
+        queryset = queryset.order_by(sort_by)
+ 
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+ 
+        serializer = CivilIdNameSerializer(result_page, many=True)
+ 
+        return paginator.get_paginated_response(serializer.data)
+ 
+ 
+class CivilIdNameRetrieveAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+ 
+    def get(self, request, uuid):
+        try:
+            obj = CivilIdName.objects.get(uuid=uuid)
+        except CivilIdName.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "Civil ID not found",
+                "data": None
+            })
+ 
+        serializer = CivilIdNameSerializer(obj)
+ 
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": "Civil ID retrieved successfully",
+            "data": serializer.data
+        })
+ 
+ 
+class CivilIdNameUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+ 
+    def put(self, request, uuid):
+        try:
+            civil = CivilIdName.objects.get(uuid=uuid)
+        except CivilIdName.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "Civil ID not found",
+                "data": None
+            }, status=status.HTTP_404_NOT_FOUND)
+ 
+        serializer = CivilIdNameSerializer(civil, data=request.data, partial=True)   # ✅ FIX HERE
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "Civil ID updated successfully",
+                "data": serializer.data
+            })
+ 
+        errors = serializer.errors
+        messages = []
+        for field, msgs in errors.items():
+            messages.extend(msgs)
+        return Response({
+            "statusCode": 400,
+            "status": False,
+            "message": " ".join(messages),
+            "data": None
+        }, status=status.HTTP_400_BAD_REQUEST)
+ 
+ 
+class CivilIdNameDeleteAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+ 
+    def delete(self, request, uuid=None):
+        ids = request.data.get("id", None)
+ 
+        if uuid:
+            try:
+                CivilIdName.objects.get(uuid=uuid).delete()
+                return Response({
+                    "statusCode": 204,
+                    "status": True,
+                    "message": "Civil ID deleted successfully",
+                    "data": None
+                }, status=status.HTTP_204_NO_CONTENT)
+ 
+            except CivilIdName.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "Civil ID not found",
+                    "data": None
+                })
+ 
+        if ids == "all":
+            count = CivilIdName.objects.count()
+            CivilIdName.objects.all().delete()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"All {count} Civil ID(s) deleted",
+                "data": None
+            })
+ 
+        if not ids or not isinstance(ids, list):
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Provide list of UUIDs in 'id' or use 'all'",
+                "data": None
+            })
+ 
+        valid = []
+        invalid = []
+ 
+        for u in ids:
+            try:
+                valid.append(UUID(u))
+            except:
+                invalid.append(u)
+ 
+        queryset = CivilIdName.objects.filter(uuid__in=valid)
+        count = queryset.count()
+        queryset.delete()
+ 
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": f"{count} Civil ID(s) deleted",
+            "data": {"invalid_uuids": invalid} if invalid else None
+        })
+ 
+ 
+ 
+ 
+ 
+class CivilIdNameExportAPIView(APIView):
+    permission_classes = []  # Add IsAuthenticated if required
+ 
+    def get(self, request):
+        format_type = request.GET.get("format", "xlsx").lower()
+        fields = request.GET.get("fields")
+        uuids_param = request.GET.get("uuids", "")
+ 
+        # Convert UUID strings to Python UUID objects
+        uuids = []
+        invalid_uuids = []
+        for u in [u.strip() for u in uuids_param.split(",") if u]:
+            try:
+                uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(u)
+ 
+        field_header_map = {
+            "uuid": "UUID",
+            "civil_id_name": "Civil ID Name",
+            "authority_full_name": "Authority Full Name",
+            "authority_short_name": "Authority Short Name",
+            "valid_type": "Valid Type",
+            "valid_duration_value": "Valid Duration Value",
+            "valid_duration_unit": "Valid Duration Unit",
+            "description": "Description",
+            "created_at": "Created On",
+            "updated_at": "Modified On",
+        }
+ 
+        field_list = [f.strip() for f in fields.split(",")] if fields else list(field_header_map.keys())
+ 
+        queryset = CivilIdName.objects.all()
+ 
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+ 
+        queryset = queryset.order_by("-updated_at")
+ 
+        # Handle empty queryset
+        if not queryset.exists():
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "No Civil ID records found for export"
+            }, status=404)
+ 
+        dataset = Dataset()
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = "CivilIdName"
+ 
+        for obj in queryset:
+            row = []
+            for field in field_list:
+                value = getattr(obj, field, "")
+ 
+                # display choice labels
+                if field == "valid_type" and obj.valid_type:
+                    value = obj.get_valid_type_display()
+ 
+                if field == "valid_duration_unit" and obj.valid_duration_unit:
+                    value = obj.get_valid_duration_unit_display()
+ 
+                # Format date
+                if field in ["created_at", "updated_at"] and value:
+                    value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
+ 
+                row.append(value if value is not None else "")
+            dataset.append(row)
+ 
+        if format_type == "csv":
+            file_data = dataset.export("csv")
+            content_type = "text/csv"
+            file_name = "civil_id_names.csv"
+        else:
+            file_data = io.BytesIO(dataset.export("xlsx"))
+            content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            file_name = "civil_id_names.xlsx"
+ 
+        response = HttpResponse(
+            file_data if format_type == "csv" else file_data.getvalue(),
+            content_type=content_type
+        )
+        response["Content-Disposition"] = f'attachment; filename="{file_name}"'
+        return response
+ 
+ 
+class CivilIdNameImportAPIView(APIView):
+    def post(self, request):
+        file = request.FILES.get("file")
+        sheet_name = request.data.get("sheet_name")
+ 
+        if not file:
+            return Response({"error": "No file uploaded"}, status=400)
+ 
+        format_type = file.name.split(".")[-1].lower()
+        duplicate_names = []
+ 
+        required_headers = {
+            "civil id name",
+            "authority full name"
+        }
+ 
+        optional_headers = {
+            "authority short name",
+            "valid type",
+            "valid duration value",
+            "valid duration unit",
+            "description"
+        }
+ 
+        try:
+            data = []
+            headers = []
+ 
+            # ---------- XLSX ----------
+            if format_type == "xlsx":
+                import openpyxl
+                wb = openpyxl.load_workbook(file, read_only=True)
+ 
+                if not sheet_name:
+                    return Response(
+                        {"error": "Provide sheet_name", "available_sheets": wb.sheetnames},
+                        status=400,
+                    )
+ 
+                if sheet_name not in wb.sheetnames:
+                    return Response(
+                        {"error": f'Sheet "{sheet_name}" not found', "available_sheets": wb.sheetnames},
+                        status=400,
+                    )
+ 
+                ws = wb[sheet_name]
+                if ws.max_row <= 1:
+                    return Response(
+                        {"statusCode": 400, "status": False, "message": "Sheet is empty"},
+                        status=400,
+                    )
+ 
+                headers = [str(cell.value).strip().lower() if cell.value else "" for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response(
+                        {
+                            "statusCode": 400,
+                            "status": False,
+                            "message": f"Missing required headers: {required_headers}",
+                        },
+                        status=400,
+                    )
+ 
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    if not any(row):
+                        continue
+                    row_dict = dict(zip(headers, row))
+                    data.append(row_dict)
+ 
+            # ---------- CSV ----------
+            elif format_type == "csv":
+                decoded_file = file.read().decode("utf-8")
+                dataset = Dataset()
+                dataset.load(decoded_file, format="csv")
+ 
+                for row in dataset.dict:
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response(
+                            {
+                                "statusCode": 400,
+                                "status": False,
+                                "message": f"Missing required headers: {required_headers}",
+                            },
+                            status=400,
+                        )
+                    data.append(row_lower)
+ 
+            else:
+                return Response(
+                    {"statusCode": 400, "status": False, "error": "Unsupported file format"},
+                    status=400,
+                )
+ 
+            imported_count = 0
+            skipped_rows = []
+ 
+            for row in data:
+                civil_id_name = str(row.get("civil id name")).strip() if row.get("civil id name") else None
+                authority_full_name = str(row.get("authority full name")).strip() if row.get("authority full name") else None
+                authority_short_name = str(row.get("authority short name")).strip() if row.get("authority short name") else ""
+                valid_type = str(row.get("valid type")).strip() if row.get("valid type") else None
+                valid_duration_value = row.get("valid duration value") or None
+                valid_duration_unit = str(row.get("valid duration unit")).strip() if row.get("valid duration unit") else None
+                description = str(row.get("description")).strip() if row.get("description") else ""
+ 
+                if not civil_id_name or not authority_full_name:
+                    skipped_rows.append({
+                        "civil_id_name": civil_id_name or "Unknown",
+                        "reason": "Missing required fields",
+                    })
+                    continue
+ 
+                existing = CivilIdName.objects.filter(
+                    civil_id_name__iexact=civil_id_name
+                ).first()
+ 
+                if existing:
+                    duplicate_names.append(civil_id_name)
+                    continue
+ 
+                CivilIdName.objects.create(
+                    civil_id_name=civil_id_name,
+                    authority_full_name=authority_full_name,
+                    authority_short_name=authority_short_name,
+                    valid_type=valid_type,
+                    valid_duration_value=valid_duration_value,
+                    valid_duration_unit=valid_duration_unit,
+                    description=description
+                )
+                imported_count += 1
+ 
+        except Exception as e:
+            return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
+ 
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "duplicates": list(set(duplicate_names)),
+            "skipped_rows": skipped_rows,
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count
+        })
+
+
+
+
+
+
+
 
 
 class DepartmentListAPIView(APIView):
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
+        sort_by = request.GET.get('sortBy', 'updated_at')
+        sort_order = request.GET.get('sortOrder', 'desc')  
 
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
 
@@ -4119,10 +4756,10 @@ class EmployeeTypeListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
 
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
 
@@ -4546,10 +5183,10 @@ class EmployeeTypeImportAPIView(APIView):
 class CompanyTypeListAPIView(APIView):    
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
 
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
 
@@ -4948,10 +5585,10 @@ class CompanyTypeImportAPIView(APIView):
 class OwnershipTypeListAPIView(APIView):    
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
 
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
 
@@ -5457,10 +6094,10 @@ class StakeholderCategoryCreateAPIView(APIView):
 class StakeholderCategoryListAPIView(APIView):    
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
 
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
 
@@ -5856,10 +6493,10 @@ class StakeholderTypeListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
 
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
 
@@ -6261,10 +6898,10 @@ class AccreditationCategoryListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
 
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
 
@@ -6598,7 +7235,7 @@ class AccreditationCategoryImportAPIView(APIView):
 class AccreditationNameListAPIView(APIView):
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
 
         allowed_sort_fields = ['full_name', 'short_name', 'valid_upto', 'created_at']
@@ -7021,10 +7658,10 @@ class BankAccountTypeCreateAPIView(APIView):
 class BankAccountTypeListAPIView(APIView):    
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
 
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
 
@@ -7405,7 +8042,7 @@ class LicenseNameListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
 
         allowed_sort_fields = ['full_name', 'short_name', 'issuing_authority', 'valid_upto', 'created_at']
@@ -7804,10 +8441,10 @@ class LeadSourceCreateAPIView(APIView):
 class LeadSourceListAPIView(APIView):    
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
 
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
 
@@ -8219,10 +8856,10 @@ class InterestLevelCreateAPIView(APIView):
 class InterestLevelListAPIView(APIView):    
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
 
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
 
@@ -8648,10 +9285,10 @@ class PriorityCreateAPIView(APIView):
 class PriorityListAPIView(APIView):    
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
 
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
 
@@ -9095,10 +9732,10 @@ class TagsCreateAPIView(APIView):
 class TagsListAPIView(APIView):    
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
 
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
 
@@ -9518,10 +10155,10 @@ class ActivityTypeCreateAPIView(APIView):
 class ActivityTypeListAPIView(APIView):    
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
 
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
 
@@ -9932,10 +10569,10 @@ class LostReasonCreateAPIView(APIView):
 class LostReasonListAPIView(APIView):    
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
 
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
 
@@ -10337,10 +10974,10 @@ class LostReasonB2BCreateAPIView(APIView):
 class LostReasonB2BListAPIView(APIView):    
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
 
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
 
@@ -10691,7 +11328,7 @@ class LostReasonB2BImportAPIView(APIView):
 class EducationLevelCodeListAPIView(APIView):
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
         allowed_sort_fields = ['Levelcode', 'created_at']
 
@@ -10720,10 +11357,10 @@ class EducationLevelCodeListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
 
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
 
@@ -11060,7 +11697,7 @@ class EducationLevelListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
 
         # Allowed sort fields
@@ -11401,7 +12038,7 @@ class EducationDurationListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')  # 'asc' or 'desc'
 
         allowed_sort_fields = ['durations', 'description', 'created_at', 'updated_at']
@@ -11772,12 +12409,12 @@ class EducationDurationImportAPIView(APIView):
 class StudymainareaListAPIView(APIView):
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
 
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
+            sort_by = 'updated_at'
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
@@ -12129,12 +12766,12 @@ class StudyMajorAreaListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
 
-        allowed_sort_fields = ['majorarea', 'description', 'created_at']
+        allowed_sort_fields = ['majorarea', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
+            sort_by = 'updated_at'
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
@@ -12498,12 +13135,12 @@ class StudySpecialisationListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
 
-        allowed_sort_fields = ['studyspecialisation', 'description', 'created_at']
+        allowed_sort_fields = ['studyspecialisation', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
+            sort_by = 'updated_at'
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
@@ -12532,11 +13169,21 @@ class StudySpecialisationCreateAPIView(APIView):
 
     def post(self, request):
         studyspecialisation = request.data.get("studyspecialisation", "").strip()
-        majorarea_id = request.data.get("majorarea_id")
+        majorarea_uuid = request.data.get("majorarea_id")
 
+        # validate major area UUID
+        majorarea = Studymajorarea.objects.filter(uuid=majorarea_uuid, is_deleted=False).first()
+        if not majorarea:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Invalid Major Area UUID."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # prevent duplicate within same major area
         existing = StudySpecialisation.objects.filter(
             studyspecialisation__iexact=studyspecialisation,
-            majorarea_id=majorarea_id,
+            majorarea=majorarea,
             is_deleted=False
         ).first()
         if existing:
@@ -12546,6 +13193,7 @@ class StudySpecialisationCreateAPIView(APIView):
                 "message": "Study Specialisation with this name and Major Area already exists."
             }, status=status.HTTP_400_BAD_REQUEST)
 
+        # save normally using serializer
         serializer = StudySpecialisationSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -12556,13 +13204,13 @@ class StudySpecialisationCreateAPIView(APIView):
                 "data": serializer.data
             }, status=status.HTTP_200_OK)
 
+        # handle validation errors
         messages = [msg for msgs in serializer.errors.values() for msg in msgs]
         return Response({
             "statusCode": 400,
             "status": False,
             "message": " ".join(messages)
         }, status=status.HTTP_400_BAD_REQUEST)
-
 
 # ------------------ Retrieve API ------------------
 class StudySpecialisationRetrieveAPIView(APIView):
@@ -12700,8 +13348,8 @@ class StudySpecialisationExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'mainarea': 'Main Area',
-            'majorarea': 'Major Area',
+            'mainarea': 'Study Main Area',
+            'majorarea': 'Study Major Area',
             'studyspecialisation': 'Study Specialisation',
             'description': 'Description',
             'is_deleted': 'Deleted',
@@ -12724,7 +13372,7 @@ class StudySpecialisationExportAPIView(APIView):
             row = []
             for field in field_list:
                 if field == 'mainarea':
-                    value = obj.mainarea.mainarea if obj.mainarea else ''
+                    value = obj.mainarea.name if obj.mainarea else ''
                 elif field == 'majorarea':
                     value = obj.majorarea.majorarea if obj.majorarea else ''
                 else:
@@ -12765,7 +13413,7 @@ class StudySpecialisationImportAPIView(APIView):
 
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
-        required_headers = {'study specialisation', 'major area', 'main area'}
+        required_headers = {'study specialisation', 'study major area', 'study main area'}
         optional_headers = {'description'}
 
         try:
@@ -12811,8 +13459,8 @@ class StudySpecialisationImportAPIView(APIView):
             imported_count = 0
             for row in data:
                 studyspecialisation = str(row.get('study specialisation')).strip() if row.get('study specialisation') else None
-                majorarea_name = str(row.get('major area')).strip() if row.get('major area') else None
-                mainarea_name = str(row.get('main area')).strip() if row.get('main area') else None
+                majorarea_name = str(row.get('study major area')).strip() if row.get('study  major area') else None
+                mainarea_name = str(row.get('study main area')).strip() if row.get('study main area') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not studyspecialisation or not majorarea_name or not mainarea_name:
@@ -12871,10 +13519,10 @@ class StudySpecialisationImportAPIView(APIView):
 class AcademicResultTypeListAPIView(APIView):
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
 
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
         if sort_order == 'desc':
@@ -13068,33 +13716,33 @@ class AcademicResultTypeDeleteAPIView(APIView):
 # --------------------- Export API ---------------------
 class AcademicResultTypeExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
-
+ 
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')
         uuids_param = request.GET.get('uuids', '')
         uuids = [u.strip() for u in uuids_param.split(',') if u]
-
+ 
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Name',
+            'name': 'Academic Result Type',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',
             'created_at': 'Created On',
         }
-
+ 
         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
-
+ 
         queryset = AcademicResultType.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
         queryset = queryset.order_by('-updated_at')
-
+ 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = 'AcademicResultType'
-
+ 
         for obj in queryset:
             row = []
             for field in field_list:
@@ -13105,7 +13753,7 @@ class AcademicResultTypeExportAPIView(APIView):
                     value = int(value)
                 row.append(value if value is not None else '')
             dataset.append(row)
-
+ 
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
@@ -13114,40 +13762,40 @@ class AcademicResultTypeExportAPIView(APIView):
             file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'academic_result_types.xlsx'
-
+ 
         response = HttpResponse(
             file_data if format_type == 'csv' else file_data.getvalue(),
             content_type=content_type
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
-
-
+ 
+ 
 # --------------------- Import API ---------------------
 class AcademicResultTypeImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
-
+ 
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')
-
+ 
         if not file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
-
+ 
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
-
-        required_headers = {'name'}
+ 
+        required_headers = {'academic result type'}
         optional_headers = {'description'}
-
+ 
         try:
             data = []
-
+ 
             if format_type == 'xlsx':
                 import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
-
+ 
                 if not sheet_name:
                     return Response({
                         'error': 'Please provide sheet_name',
@@ -13158,7 +13806,7 @@ class AcademicResultTypeImportAPIView(APIView):
                         'error': f'Sheet "{sheet_name}" not found',
                         'available_sheets': available_sheets
                     }, status=status.HTTP_400_BAD_REQUEST)
-
+ 
                 ws = wb[sheet_name]
                 if ws.max_row <= 1:
                     return Response({
@@ -13166,7 +13814,7 @@ class AcademicResultTypeImportAPIView(APIView):
                         "status": False,
                         "message": f'The uploaded XLSX file is empty.'
                     }, status=status.HTTP_400_BAD_REQUEST)
-
+ 
                 headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
                 if not required_headers.issubset(set(headers)):
                     return Response({
@@ -13174,18 +13822,18 @@ class AcademicResultTypeImportAPIView(APIView):
                         "status": True,
                         'message': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
                     }, status=status.HTTP_400_BAD_REQUEST)
-
+ 
                 for row in ws.iter_rows(min_row=2, values_only=True):
                     if not any(row):
                         continue
                     row_dict = dict(zip(headers, row))
                     data.append(row_dict)
-
+ 
             elif format_type == 'csv':
                 decoded_file = file.read().decode('utf-8')
                 dataset = Dataset()
                 dataset.load(decoded_file, format='csv')
-
+ 
                 for row in dataset.dict:
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
                     if not required_headers.issubset(set(row_lower.keys())):
@@ -13201,15 +13849,15 @@ class AcademicResultTypeImportAPIView(APIView):
                     "status": True,
                     'error': 'Unsupported file format. Use .xlsx or .csv'
                 }, status=status.HTTP_400_BAD_REQUEST)
-
+ 
             imported_count = 0
             for row in data:
                 name = str(row.get('name')).strip() if row.get('name') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
-
+ 
                 if not name:
                     continue
-
+ 
                 existing = AcademicResultType.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
@@ -13227,14 +13875,14 @@ class AcademicResultTypeImportAPIView(APIView):
                         is_deleted=False
                     )
                     imported_count += 1
-
+ 
         except Exception as e:
             return Response({
                 "statusCode": 400,
                 "status": True,
                 'message': str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
-
+ 
         return Response({
             "statusCode": 200,
             "status": True,
@@ -13242,9 +13890,7 @@ class AcademicResultTypeImportAPIView(APIView):
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=status.HTTP_200_OK)
-
-
-
+ 
 # -------------------- AcademicResult -------------------- #
 
 
@@ -13254,7 +13900,7 @@ class AcademicResultListAPIView(APIView):
     def get(self, request):
         # Optional search query parameters
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
 
         # Allowed sort fields
@@ -13573,7 +14219,7 @@ class EducationTypeListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
 
         allowed_sort_fields = ['educationType', 'Perticulars', 'created_at']
@@ -13719,6 +14365,193 @@ class EducationTypeDeleteAPIView(APIView):
             "invalid_uuids": invalid_uuids
         })
 
+
+class EducationTypeExportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+ 
+    def get(self, request):
+        format_type = request.GET.get('format', 'xlsx').lower()
+        fields = request.GET.get('fields')
+        uuids_param = request.GET.get('uuids', '')
+        uuids = [u.strip() for u in uuids_param.split(',') if u]
+ 
+        field_header_map = {
+            'uuid': 'UUID',
+            'educationType': 'Education Type',
+            'Perticulars': 'Particulars',
+            'is_deleted': 'Deleted',
+            'created_at': 'Created On',
+            'updated_at': 'Updated On',
+        }
+ 
+        if fields:
+            field_list = [f.strip() for f in fields.split(',')]
+        else:
+            field_list = list(field_header_map.keys())
+ 
+        queryset = EducationType.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-updated_at')
+ 
+        dataset = Dataset()
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'EducationType'
+ 
+        for obj in queryset:
+            row = []
+            for field in field_list:
+                value = getattr(obj, field, '')
+ 
+                if field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
+                    value = int(value)
+ 
+                row.append(value if value is not None else '')
+ 
+            dataset.append(row)
+ 
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'education-type.csv'
+        else:
+            file_data = io.BytesIO(dataset.export('xlsx'))
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'education-type.xlsx'
+ 
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        return response
+ 
+ 
+class EducationTypeImportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+ 
+    def post(self, request):
+        file = request.FILES.get('file')
+        sheet_name = request.data.get('sheet_name')
+ 
+        if not file:
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+ 
+        format_type = file.name.split('.')[-1].lower()
+        duplicate_names = []
+ 
+        required_headers = {'education type'}
+        optional_headers = {'perticulars'}
+ 
+        try:
+            data = []
+            headers = []
+ 
+            # XLSX
+            if format_type == 'xlsx':
+                import openpyxl
+                wb = openpyxl.load_workbook(file, read_only=True)
+                available_sheets = wb.sheetnames
+ 
+                if not sheet_name:
+                    return Response({
+                        'error': 'Please provide sheet_name',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
+ 
+                if sheet_name not in available_sheets:
+                    return Response({
+                        'error': f'Sheet "{sheet_name}" not found',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
+ 
+                ws = wb[sheet_name]
+ 
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'Missing required headers. Required: {required_headers}'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+ 
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    if not any(row):
+                        continue
+                    row_dict = dict(zip(headers, row))
+                    data.append(row_dict)
+ 
+            # CSV
+            elif format_type == 'csv':
+                decoded_file = file.read().decode('utf-8')
+                dataset = Dataset()
+                dataset.load(decoded_file, format='csv')
+ 
+                for row in dataset.dict:
+                    row_l = {k.strip().lower(): v for k, v in row.items()}
+ 
+                    if not required_headers.issubset(set(row_l.keys())):
+                        return Response({
+                            "statusCode": 400,
+                            "status": False,
+                            "message": f'Missing required headers. Required: {required_headers}'
+                        }, status=status.HTTP_400_BAD_REQUEST)
+ 
+                    data.append(row_l)
+ 
+            else:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "error": "Unsupported file format. Use .xlsx or .csv"
+                }, status=status.HTTP_400_BAD_REQUEST)
+ 
+            imported_count = 0
+ 
+            for row in data:
+                name = str(row.get('education type')).strip() if row.get('education type') else None
+                perticulars = str(row.get('perticulars')).strip() if row.get('perticulars') else ""
+ 
+                if not name:
+                    continue
+ 
+                existing = EducationType.objects.filter(educationType__iexact=name).first()
+ 
+                if existing:
+                    if not existing.is_deleted:
+                        duplicate_names.append(name)
+                        continue
+                    else:
+                        existing.Perticulars = perticulars
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
+ 
+                else:
+                    EducationType.objects.create(
+                        educationType=name,
+                        Perticulars=perticulars,
+                        is_deleted=False
+                    )
+                    imported_count += 1
+ 
+        except Exception as e:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+ 
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "duplicates": list(set(duplicate_names)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count
+        }, status=status.HTTP_200_OK)
+ 
 # -------------------- MediumofEducation CRUD -------------------- #
 
 class MediumofEducationListAPIView(APIView):
@@ -13726,7 +14559,7 @@ class MediumofEducationListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
 
         allowed_sort_fields = ['name', 'Perticulars', 'created_at']

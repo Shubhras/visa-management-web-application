@@ -5,7 +5,7 @@ from django.db import models
 class Gender(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255, unique=True)
-    description = models.TextField(max_length=255)
+    description = models.TextField(max_length=255,null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
@@ -17,7 +17,7 @@ class Gender(models.Model):
 class Maritalstatus(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255, unique=True)
-    description = models.TextField(max_length=255)
+    description = models.TextField(max_length=255,null=True, blank=True),
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
@@ -30,7 +30,7 @@ class Maritalstatus(models.Model):
 class Continents(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name= models.CharField(max_length=255, unique=True)
-    description = models.TextField(max_length=255)
+    description = models.TextField(max_length=255,null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
@@ -51,7 +51,7 @@ class Country(models.Model):
     dialCodes = models.JSONField(blank=True, null=True)  
     currencyfullname=models.CharField(max_length=50, blank=True, null=True)
     currencyshortname=models.CharField(max_length=50, blank=True, null=True)
-    description = models.TextField(max_length=255)
+    description = models.TextField(max_length=255,null=True, blank=True)
     currencyCode = models.CharField(max_length=50, blank=True, default="")  
     status = models.BooleanField(default=True)  
     created_at = models.DateTimeField(auto_now_add=True)  
@@ -66,11 +66,16 @@ class Country(models.Model):
 
 
 class State(models.Model):
+    STATE_CHOICES = (
+        ("STATE", "State"),
+        ("TERRITORY","Territory"),
+    )
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     countryName=models.ForeignKey(Country,on_delete=models.SET_NULL,related_name="states", blank=True, null=True)
     stateName=models.CharField(max_length=255, unique=True)
+    state = models.CharField(max_length=20, choices=STATE_CHOICES)
     stateshortName=models.CharField(max_length=50, blank=True, null=True)
-    description = models.TextField(max_length=255)
+    description = models.TextField(max_length=255,blank=True, null=True)
     is_active = models.BooleanField(default=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)  
@@ -85,7 +90,7 @@ class District(models.Model):
     countryName=models.ForeignKey(Country,on_delete=models.SET_NULL,related_name="districts_by_country", blank=True, null=True)
     stateName=models.ForeignKey(State,on_delete=models.SET_NULL,related_name="districts", blank=True, null=True)
     districtName=models.CharField(max_length=255, unique=True)
-    description = models.TextField(max_length=255)
+    description = models.TextField(max_length=255,null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)  
     is_deleted = models.BooleanField(default=False,null=True, blank=True)  
     updated_at = models.DateTimeField(auto_now=True) 
@@ -100,7 +105,7 @@ class City(models.Model):
     stateName=models.ForeignKey(State,on_delete=models.SET_NULL,related_name="cities_in_state", blank=True, null=True)
     districtName=models.ForeignKey(District,on_delete=models.SET_NULL,related_name="cities_in_district", blank=True, null=True)
     cityName=models.CharField(max_length=255, unique=True)
-    description = models.TextField(max_length=255)
+    description = models.TextField(max_length=255,null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     is_deleted = models.BooleanField(default=False,null=True, blank=True)  
     updated_at = models.DateTimeField(auto_now=True) 
@@ -112,7 +117,7 @@ class City(models.Model):
 class Relation(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name=models.CharField(max_length=255, unique=True)
-    description = models.TextField(max_length=255)
+    description = models.TextField(max_length=255,blank=True,null=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)  
     updated_at = models.DateTimeField(auto_now=True) 
@@ -120,12 +125,45 @@ class Relation(models.Model):
     def __str__(self):
         return self.name
 
+
+class CivilIdName(models.Model):
+    VALID_TYPE_CHOICES = (
+        ("PERMANENT", "Permanent"),
+        ("VALID_UP_TO", "Valid Up To"),
+    )
+ 
+    VALID_UNIT_CHOICES = (
+        ("MONTHS", "Months"),
+        ("WEEKS","Weeks"),
+        ("YEARS", "Years"),
+    )
+ 
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+ 
+    civil_id_name = models.CharField(max_length=255)
+    authority_full_name = models.CharField(max_length=255)
+    authority_short_name = models.CharField(max_length=255, blank=True, null=True)
+ 
+    valid_type = models.CharField(max_length=20, choices=VALID_TYPE_CHOICES)
+    valid_duration_value = models.IntegerField(blank=True, null=True)
+    valid_duration_unit = models.CharField(max_length=20, choices=VALID_UNIT_CHOICES, blank=True, null=True)
+    description = models.CharField(max_length=500, blank=True, null=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)  
+    updated_at = models.DateTimeField(auto_now=True)
+ 
+    def __str__(self):
+        return self.civil_id_name
+    
+    
+
 class Timezone(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     countryName=models.ForeignKey(Country,on_delete=models.SET_NULL,related_name="timezone", blank=True, null=True)
     stateName=models.ForeignKey(State,on_delete=models.SET_NULL,related_name="timezone", blank=True, null=True)
     Timezone =models.CharField(max_length=255, unique=True)
-    description = models.TextField(max_length=255)
+    description = models.TextField(max_length=255,null=True,blank=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)  
     updated_at = models.DateTimeField(auto_now=True) 
@@ -256,6 +294,17 @@ class BankAccountType(models.Model):
 
 
 class LicenseName(models.Model):
+
+    VALID_TYPE_CHOICES = (
+        ("PERMANENT", "Permanent"),
+        ("VALID_UP_TO", "Valid Up To"),
+    )
+ 
+    VALID_UNIT_CHOICES = (
+        ("MONTHS", "Months"),
+        ("WEEKS","Weeks"),
+        ("YEARS", "Years"),
+    )
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)  
     country = models.ForeignKey("Country", on_delete=models.SET_NULL, related_name="license_name", blank=True, null=True)
@@ -263,7 +312,9 @@ class LicenseName(models.Model):
     short_name = models.CharField(max_length=255,unique=True)
     issuing_authority= models.CharField(max_length=255,blank=True)
     description = models.TextField(max_length=255,blank=True)
-    valid_upto = models.CharField(max_length=255,blank=True)
+    valid_type = models.CharField(max_length=20, choices=VALID_TYPE_CHOICES)
+    valid_duration_value = models.IntegerField(blank=True, null=True)
+    valid_duration_unit = models.CharField(max_length=20, choices=VALID_UNIT_CHOICES, blank=True, null=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

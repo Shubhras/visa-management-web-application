@@ -160,7 +160,7 @@ class BankAccountTypeAdmin(admin.ModelAdmin):
 
 @admin.register(LicenseName)
 class LicenseNameAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'short_name', 'country', 'issuing_authority', 'valid_upto', 'is_deleted', 'created_at', 'updated_at')
+    list_display = ('full_name', 'short_name', 'country', 'issuing_authority', 'is_deleted', 'created_at', 'updated_at')
     search_fields = ('full_name', 'short_name', 'issuing_authority')
     list_filter = ('is_deleted', 'country')
     ordering = ('full_name',)
@@ -240,3 +240,17 @@ class EducationDurationAdmin(admin.ModelAdmin):
     search_fields = ('durations',)
     list_filter = ('is_deleted',)
     ordering = ('durations',)
+
+@admin.register(Studymainarea)
+class StudymainareaAdmin(admin.ModelAdmin):
+    list_display = ('uuid','name', 'description', 'is_deleted', 'created_at', 'updated_at')
+    search_fields = ('name',)
+    list_filter = ('is_deleted',)
+    ordering = ('name',)
+
+@admin.register(Studymajorarea)
+class StudymajorareaAdmin(admin.ModelAdmin):
+    list_display = ('uuid','mainarea', 'description', 'majorarea','is_deleted', 'created_at', 'updated_at')
+    search_fields = ('majorarea',)
+    list_filter = ('is_deleted',)
+    ordering = ('majorarea',)
