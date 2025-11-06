@@ -4536,10 +4536,10 @@ class EmployeeTypeListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
 
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
 
