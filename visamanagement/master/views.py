@@ -2518,8 +2518,8 @@ class DistrictImportAPIView(APIView):
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
 
-        required_headers = {'district name', 'state name', 'country name'}
-        optional_headers = {'description'}
+        required_headers = {'district name', 'country name'}
+        optional_headers = {'description','state name'}
 
         try:
             data = []
