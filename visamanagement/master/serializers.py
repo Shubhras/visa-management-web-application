@@ -66,7 +66,8 @@ class CountrySerializer(serializers.ModelSerializer):
     continent_id = serializers.PrimaryKeyRelatedField(
         queryset=Continents.objects.all(),
         source='continent',
-        write_only=True
+        write_only=True,
+        required=False
     )
 
     class Meta:
@@ -105,15 +106,23 @@ class StateSerializer(serializers.ModelSerializer):
     
 
 class DistrictSerializer(serializers.ModelSerializer):
-    countryName = CountrySerializer(read_only=True)
-    country_id = serializers.PrimaryKeyRelatedField(
+    # Flat read-only fields for response
+    countryName = serializers.CharField(source='countryName.name', read_only=True)
+    country_uuid = serializers.UUIDField(source='countryName.uuid', read_only=True)
+
+    stateName = serializers.CharField(source='stateName.stateName', read_only=True)
+    state_uuid = serializers.UUIDField(source='stateName.uuid', read_only=True)
+
+    # UUID input fields for write operations
+    country_id = serializers.SlugRelatedField(
         queryset=Country.objects.all(),
+        slug_field='uuid',
         source='countryName',
         write_only=True
     )
-    stateName = StateSerializer(read_only=True)
-    state_id = serializers.PrimaryKeyRelatedField(
+    state_id = serializers.SlugRelatedField(
         queryset=State.objects.all(),
+        slug_field='uuid',
         source='stateName',
         write_only=True
     )
@@ -121,8 +130,9 @@ class DistrictSerializer(serializers.ModelSerializer):
     class Meta:
         model = District
         fields = [
-            'uuid', 'countryName', 'country_id',
-            'stateName', 'state_id',
+            'uuid',
+            'countryName', 'country_uuid', 'country_id',
+            'stateName', 'state_uuid', 'state_id',
             'districtName', 'description',
             'is_deleted', 'created_at', 'updated_at'
         ]
@@ -130,21 +140,31 @@ class DistrictSerializer(serializers.ModelSerializer):
 
 
 class CitySerializer(serializers.ModelSerializer):
-    countryName = CountrySerializer(read_only=True)
-    country_id = serializers.PrimaryKeyRelatedField(
+    countryName = serializers.CharField(source='countryName.name', read_only=True)
+    country_uuid = serializers.UUIDField(source='countryName.uuid', read_only=True)
+    
+    stateName = serializers.CharField(source='stateName.stateName', read_only=True)
+    state_uuid = serializers.UUIDField(source='stateName.uuid', read_only=True)
+    
+    districtName = serializers.CharField(source='districtName.districtName', read_only=True)
+    district_uuid = serializers.UUIDField(source='districtName.uuid', read_only=True)
+
+    # UUID input fields
+    country_id = serializers.SlugRelatedField(
         queryset=Country.objects.all(),
+        slug_field='uuid',
         source='countryName',
         write_only=True
     )
-    stateName = StateSerializer(read_only=True)
-    state_id = serializers.PrimaryKeyRelatedField(
+    state_id = serializers.SlugRelatedField(
         queryset=State.objects.all(),
+        slug_field='uuid',
         source='stateName',
         write_only=True
     )
-    districtName = DistrictSerializer(read_only=True)
-    district_id = serializers.PrimaryKeyRelatedField(
+    district_id = serializers.SlugRelatedField(
         queryset=District.objects.all(),
+        slug_field='uuid',
         source='districtName',
         write_only=True
     )
@@ -152,9 +172,10 @@ class CitySerializer(serializers.ModelSerializer):
     class Meta:
         model = City
         fields = [
-            'uuid', 'countryName', 'country_id',
-            'stateName', 'state_id',
-            'districtName', 'district_id',
+            'uuid',
+            'countryName', 'country_uuid', 'country_id',
+            'stateName', 'state_uuid', 'state_id',
+            'districtName', 'district_uuid', 'district_id',
             'cityName', 'description',
             'is_deleted', 'created_at', 'updated_at'
         ]
