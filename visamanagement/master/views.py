@@ -3466,7 +3466,7 @@ class RelationImportAPIView(APIView):
                         imported_count += 1
                 else:
                     Relation.objects.create(
-                        relation=name,
+                        name=name,
                         description=description,
                         is_deleted=False
                     )
