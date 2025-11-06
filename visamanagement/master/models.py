@@ -5,7 +5,7 @@ from django.db import models
 class Gender(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255, unique=True)
-     description = models.TextField(max_length=255,null=True, blank=True)
+    description = models.TextField(max_length=255,null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
@@ -51,7 +51,7 @@ class Country(models.Model):
     dialCodes = models.JSONField(blank=True, null=True)  
     currencyfullname=models.CharField(max_length=50, blank=True, null=True)
     currencyshortname=models.CharField(max_length=50, blank=True, null=True)
-   description = models.TextField(max_length=255,null=True, blank=True)
+    description = models.TextField(max_length=255,null=True, blank=True)
     currencyCode = models.CharField(max_length=50, blank=True, default="")  
     status = models.BooleanField(default=True)  
     created_at = models.DateTimeField(auto_now_add=True)  
