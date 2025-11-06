@@ -187,15 +187,14 @@ class TimezoneSerializer(serializers.ModelSerializer):
         queryset=Country.objects.all(),
         slug_field='uuid',
         allow_null=True,
-        required=False,
-        write_only=True
+        required=False
     )
     state_id = serializers.SlugRelatedField(
         queryset=State.objects.all(),
         slug_field='uuid',
         allow_null=True,
-        required=False,
-        write_only=True
+        required=False
+        
     )
 
     # map lowercase input to model field
