@@ -2235,7 +2235,7 @@ class StateByCountryAPIView(APIView):
         data = []
         for state in states:
             data.append({
-                "id": str(state.uuid),
+                "uuid": str(state.uuid),
                 "name": state.stateName,
                 "shortName": state.stateshortName,
                 "fullName": state.description
