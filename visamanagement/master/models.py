@@ -129,6 +129,7 @@ class CivilIdName(models.Model):
  
     VALID_UNIT_CHOICES = (
         ("MONTHS", "Months"),
+        ("WEEKS","Weeks"),
         ("YEARS", "Years"),
     )
  
@@ -288,6 +289,17 @@ class BankAccountType(models.Model):
 
 
 class LicenseName(models.Model):
+
+    VALID_TYPE_CHOICES = (
+        ("PERMANENT", "Permanent"),
+        ("VALID_UP_TO", "Valid Up To"),
+    )
+ 
+    VALID_UNIT_CHOICES = (
+        ("MONTHS", "Months"),
+        ("WEEKS","Weeks"),
+        ("YEARS", "Years"),
+    )
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)  
     country = models.ForeignKey("Country", on_delete=models.SET_NULL, related_name="license_name", blank=True, null=True)
@@ -295,7 +307,9 @@ class LicenseName(models.Model):
     short_name = models.CharField(max_length=255,unique=True)
     issuing_authority= models.CharField(max_length=255,blank=True)
     description = models.TextField(max_length=255,blank=True)
-    valid_upto = models.CharField(max_length=255,blank=True)
+    valid_type = models.CharField(max_length=20, choices=VALID_TYPE_CHOICES)
+    valid_duration_value = models.IntegerField(blank=True, null=True)
+    valid_duration_unit = models.CharField(max_length=20, choices=VALID_UNIT_CHOICES, blank=True, null=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -535,7 +549,7 @@ class AcademicResult(models.Model):
 class EducationType(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    name= models.TextField(max_length=255,blank=True,null=True)
+    educationType= models.TextField(max_length=255,blank=True,null=True)
     Perticulars = models.TextField(max_length=255,blank=True,null=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
