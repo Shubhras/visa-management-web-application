@@ -84,8 +84,9 @@ class CountrySerializer(serializers.ModelSerializer):
 
 class StateSerializer(serializers.ModelSerializer):
     countryName = CountrySerializer(read_only=True)
-    country_id = serializers.PrimaryKeyRelatedField(
+    country_id = serializers.SlugRelatedField(
         queryset=Country.objects.all(),
+        slug_field='uuid',
         source='countryName',
         write_only=True
     )
@@ -98,7 +99,6 @@ class StateSerializer(serializers.ModelSerializer):
             'is_active', 'is_deleted', 'created_at', 'updated_at'
         ]
         read_only_fields = ['uuid', 'created_at', 'updated_at']
-
 
 class DistrictSerializer(serializers.ModelSerializer):
     countryName = CountrySerializer(read_only=True)
@@ -324,12 +324,21 @@ class LicenseNameSerializer(serializers.ModelSerializer):
     class Meta:
         model = LicenseName
         fields = [
-            'uuid', 'id', 'country', 'country_name',
-            'full_name', 'short_name', 'issuing_authority',
-            'description', 'valid_upto',
-            'created_at', 'updated_at'
+            'uuid',
+            'id',
+            'country',
+            'country_name',
+            'full_name',
+            'short_name',
+            'issuing_authority',
+            'description',
+            'valid_type',
+            'valid_duration_value',
+            'valid_duration_unit',
+            'is_deleted',
+            'created_at',
+            'updated_at',
         ]
-    
 
 
 class LeadSourceSerializer(serializers.ModelSerializer):
