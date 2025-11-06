@@ -241,37 +241,3 @@ class EducationDurationAdmin(admin.ModelAdmin):
     list_filter = ('is_deleted',)
     ordering = ('durations',)
 
-
-@admin.register(EducationLevelCode)
-class EducationLevelCodeAdmin(admin.ModelAdmin):
-    list_display = ('name', 'description', 'is_deleted', 'created_at', 'updated_at')
-    search_fields = ('name',)
-    list_filter = ('is_deleted', 'created_at')
-    ordering = ('name',)
-
-
-#
-@admin.register(Studymainarea)
-class StudymainareaAdmin(admin.ModelAdmin):
-    list_display = ('name', 'description', 'is_deleted', 'created_at')
-    search_fields = ('name',)
-    list_filter = ('is_deleted',)
-    ordering = ('name',)
-
-
-
-@admin.register(Studymajorarea)
-class StudymajorareaAdmin(admin.ModelAdmin):
-    list_display = ('majorarea', 'mainarea', 'description', 'is_deleted', 'created_at')
-    search_fields = ('majorarea', 'mainarea__name')
-    list_filter = ('is_deleted', 'mainarea')
-    autocomplete_fields = ('mainarea',)
-
-
-
-@admin.register(StudySpecialisation)
-class StudySpecialisationAdmin(admin.ModelAdmin):
-    list_display = ('studyspecialisation', 'majorarea', 'mainarea', 'description', 'is_deleted', 'created_at')
-    search_fields = ('studyspecialisation', 'majorarea__majorarea', 'mainarea__name')
-    list_filter = ('is_deleted', 'mainarea', 'majorarea')
-    autocomplete_fields = ('mainarea', 'majorarea')
