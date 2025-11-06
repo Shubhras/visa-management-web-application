@@ -2145,6 +2145,11 @@ class StateImportAPIView(APIView):
                 country_name = str(row.get('country name')).strip() if row.get('country name') else None
                 short_name = str(row.get('state short name')).strip() if row.get('state short name') else ''
                 description = str(row.get('description')).strip() if row.get('description') else ''
+                
+                # Convert state/territory value to uppercase
+                state_type = str(row.get('state / territory')).strip().upper() if row.get('state / territory') else 'STATE'
+                if state_type and state_type not in ['STATE', 'TERRITORY']:
+                    state_type = None
 
                 if not state_name or not country_name:
                     continue
@@ -2165,6 +2170,7 @@ class StateImportAPIView(APIView):
                         existing.stateshortName = short_name
                         existing.description = description
                         existing.countryName = country_obj
+                        existing.state = state_type  # set uppercase value
                         existing.is_deleted = False
                         existing.save()
                         imported_count += 1
@@ -2174,6 +2180,7 @@ class StateImportAPIView(APIView):
                         stateshortName=short_name,
                         description=description,
                         countryName=country_obj,
+                        state=state_type,  # set uppercase value
                         is_deleted=False
                     )
                     imported_count += 1
