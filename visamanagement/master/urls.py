@@ -295,6 +295,7 @@ urlpatterns = [
     path('studyspecialisation/export/', StudySpecialisationExportAPIView.as_view(), name='studyspecialisation-export'),
     path('studyspecialisation/import/', StudySpecialisationImportAPIView.as_view(), name='studyspecialisation-import'),
 
+    path('academicresulttype/', AcademicResultTypeListAPIView.as_view(), name='academicresulttype-list'),
     path('academicresulttype/create/', AcademicResultTypeCreateAPIView.as_view(), name='academicresulttype-create'),
     path('academicresulttype/<uuid:uuid>/', AcademicResultTypeRetrieveAPIView.as_view(), name='academicresulttype-retrieve'),
     path('academicresulttype/update/<uuid:uuid>/', AcademicResultTypeUpdateAPIView.as_view(), name='academicresulttype-update'),
