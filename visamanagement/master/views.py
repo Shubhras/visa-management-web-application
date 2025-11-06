@@ -13696,13 +13696,13 @@ class AcademicResultTypeDeleteAPIView(APIView):
 # --------------------- Export API ---------------------
 class AcademicResultTypeExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
-
+ 
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')
         uuids_param = request.GET.get('uuids', '')
         uuids = [u.strip() for u in uuids_param.split(',') if u]
-
+ 
         field_header_map = {
             'uuid': 'UUID',
             'name': 'Academic Result Type',
@@ -13711,18 +13711,18 @@ class AcademicResultTypeExportAPIView(APIView):
             'updated_at': 'Modified On',
             'created_at': 'Created On',
         }
-
+ 
         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
-
+ 
         queryset = AcademicResultType.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
         queryset = queryset.order_by('-updated_at')
-
+ 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = 'AcademicResultType'
-
+ 
         for obj in queryset:
             row = []
             for field in field_list:
@@ -13733,7 +13733,7 @@ class AcademicResultTypeExportAPIView(APIView):
                     value = int(value)
                 row.append(value if value is not None else '')
             dataset.append(row)
-
+ 
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
@@ -13742,40 +13742,40 @@ class AcademicResultTypeExportAPIView(APIView):
             file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'academic_result_types.xlsx'
-
+ 
         response = HttpResponse(
             file_data if format_type == 'csv' else file_data.getvalue(),
             content_type=content_type
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
-
-
+ 
+ 
 # --------------------- Import API ---------------------
 class AcademicResultTypeImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
-
+ 
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')
-
+ 
         if not file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
-
+ 
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
-
-        required_headers = {'name'}
+ 
+        required_headers = {'academic result type'}
         optional_headers = {'description'}
-
+ 
         try:
             data = []
-
+ 
             if format_type == 'xlsx':
                 import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
-
+ 
                 if not sheet_name:
                     return Response({
                         'error': 'Please provide sheet_name',
@@ -13786,7 +13786,7 @@ class AcademicResultTypeImportAPIView(APIView):
                         'error': f'Sheet "{sheet_name}" not found',
                         'available_sheets': available_sheets
                     }, status=status.HTTP_400_BAD_REQUEST)
-
+ 
                 ws = wb[sheet_name]
                 if ws.max_row <= 1:
                     return Response({
@@ -13794,7 +13794,7 @@ class AcademicResultTypeImportAPIView(APIView):
                         "status": False,
                         "message": f'The uploaded XLSX file is empty.'
                     }, status=status.HTTP_400_BAD_REQUEST)
-
+ 
                 headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
                 if not required_headers.issubset(set(headers)):
                     return Response({
@@ -13802,18 +13802,18 @@ class AcademicResultTypeImportAPIView(APIView):
                         "status": True,
                         'message': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
                     }, status=status.HTTP_400_BAD_REQUEST)
-
+ 
                 for row in ws.iter_rows(min_row=2, values_only=True):
                     if not any(row):
                         continue
                     row_dict = dict(zip(headers, row))
                     data.append(row_dict)
-
+ 
             elif format_type == 'csv':
                 decoded_file = file.read().decode('utf-8')
                 dataset = Dataset()
                 dataset.load(decoded_file, format='csv')
-
+ 
                 for row in dataset.dict:
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
                     if not required_headers.issubset(set(row_lower.keys())):
@@ -13829,15 +13829,15 @@ class AcademicResultTypeImportAPIView(APIView):
                     "status": True,
                     'error': 'Unsupported file format. Use .xlsx or .csv'
                 }, status=status.HTTP_400_BAD_REQUEST)
-
+ 
             imported_count = 0
             for row in data:
                 name = str(row.get('name')).strip() if row.get('name') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
-
+ 
                 if not name:
                     continue
-
+ 
                 existing = AcademicResultType.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
@@ -13855,14 +13855,14 @@ class AcademicResultTypeImportAPIView(APIView):
                         is_deleted=False
                     )
                     imported_count += 1
-
+ 
         except Exception as e:
             return Response({
                 "statusCode": 400,
                 "status": True,
                 'message': str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
-
+ 
         return Response({
             "statusCode": 200,
             "status": True,
@@ -13870,9 +13870,7 @@ class AcademicResultTypeImportAPIView(APIView):
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=status.HTTP_200_OK)
-
-
-
+ 
 # -------------------- AcademicResult -------------------- #
 
 
