@@ -14437,7 +14437,7 @@ class EducationTypeImportAPIView(APIView):
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
  
-        required_headers = {'educationtype'}
+        required_headers = {'education type'}
         optional_headers = {'perticulars'}
  
         try:
