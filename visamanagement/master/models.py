@@ -5,7 +5,7 @@ from django.db import models
 class Gender(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255, unique=True)
-   description = models.TextField(max_length=255,null=True, blank=True)
+     description = models.TextField(max_length=255,null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
@@ -17,7 +17,7 @@ class Gender(models.Model):
 class Maritalstatus(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255, unique=True)
-   description = models.TextField(max_length=255,null=True, blank=True)
+    description = models.TextField(max_length=255,null=True, blank=True),
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
@@ -30,7 +30,7 @@ class Maritalstatus(models.Model):
 class Continents(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name= models.CharField(max_length=255, unique=True)
-   description = models.TextField(max_length=255,null=True, blank=True)
+    description = models.TextField(max_length=255,null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
