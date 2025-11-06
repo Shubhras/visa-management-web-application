@@ -13505,7 +13505,7 @@ class AcademicResultTypeExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Name',
+            'name': 'Academic Result Type',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',
@@ -14147,6 +14147,193 @@ class EducationTypeDeleteAPIView(APIView):
             "invalid_uuids": invalid_uuids
         })
 
+
+class EducationTypeExportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+ 
+    def get(self, request):
+        format_type = request.GET.get('format', 'xlsx').lower()
+        fields = request.GET.get('fields')
+        uuids_param = request.GET.get('uuids', '')
+        uuids = [u.strip() for u in uuids_param.split(',') if u]
+ 
+        field_header_map = {
+            'uuid': 'UUID',
+            'educationType': 'Education Type',
+            'Perticulars': 'Particulars',
+            'is_deleted': 'Deleted',
+            'created_at': 'Created On',
+            'updated_at': 'Updated On',
+        }
+ 
+        if fields:
+            field_list = [f.strip() for f in fields.split(',')]
+        else:
+            field_list = list(field_header_map.keys())
+ 
+        queryset = EducationType.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-updated_at')
+ 
+        dataset = Dataset()
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'EducationType'
+ 
+        for obj in queryset:
+            row = []
+            for field in field_list:
+                value = getattr(obj, field, '')
+ 
+                if field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
+                    value = int(value)
+ 
+                row.append(value if value is not None else '')
+ 
+            dataset.append(row)
+ 
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'education-type.csv'
+        else:
+            file_data = io.BytesIO(dataset.export('xlsx'))
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'education-type.xlsx'
+ 
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        return response
+ 
+ 
+class EducationTypeImportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+ 
+    def post(self, request):
+        file = request.FILES.get('file')
+        sheet_name = request.data.get('sheet_name')
+ 
+        if not file:
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+ 
+        format_type = file.name.split('.')[-1].lower()
+        duplicate_names = []
+ 
+        required_headers = {'educationtype'}
+        optional_headers = {'perticulars'}
+ 
+        try:
+            data = []
+            headers = []
+ 
+            # XLSX
+            if format_type == 'xlsx':
+                import openpyxl
+                wb = openpyxl.load_workbook(file, read_only=True)
+                available_sheets = wb.sheetnames
+ 
+                if not sheet_name:
+                    return Response({
+                        'error': 'Please provide sheet_name',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
+ 
+                if sheet_name not in available_sheets:
+                    return Response({
+                        'error': f'Sheet "{sheet_name}" not found',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
+ 
+                ws = wb[sheet_name]
+ 
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'Missing required headers. Required: {required_headers}'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+ 
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    if not any(row):
+                        continue
+                    row_dict = dict(zip(headers, row))
+                    data.append(row_dict)
+ 
+            # CSV
+            elif format_type == 'csv':
+                decoded_file = file.read().decode('utf-8')
+                dataset = Dataset()
+                dataset.load(decoded_file, format='csv')
+ 
+                for row in dataset.dict:
+                    row_l = {k.strip().lower(): v for k, v in row.items()}
+ 
+                    if not required_headers.issubset(set(row_l.keys())):
+                        return Response({
+                            "statusCode": 400,
+                            "status": False,
+                            "message": f'Missing required headers. Required: {required_headers}'
+                        }, status=status.HTTP_400_BAD_REQUEST)
+ 
+                    data.append(row_l)
+ 
+            else:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "error": "Unsupported file format. Use .xlsx or .csv"
+                }, status=status.HTTP_400_BAD_REQUEST)
+ 
+            imported_count = 0
+ 
+            for row in data:
+                name = str(row.get('educationtype')).strip() if row.get('educationtype') else None
+                perticulars = str(row.get('perticulars')).strip() if row.get('perticulars') else ""
+ 
+                if not name:
+                    continue
+ 
+                existing = EducationType.objects.filter(educationType__iexact=name).first()
+ 
+                if existing:
+                    if not existing.is_deleted:
+                        duplicate_names.append(name)
+                        continue
+                    else:
+                        existing.Perticulars = perticulars
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
+ 
+                else:
+                    EducationType.objects.create(
+                        educationType=name,
+                        Perticulars=perticulars,
+                        is_deleted=False
+                    )
+                    imported_count += 1
+ 
+        except Exception as e:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+ 
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "duplicates": list(set(duplicate_names)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count
+        }, status=status.HTTP_200_OK)
+ 
 # -------------------- MediumofEducation CRUD -------------------- #
 
 class MediumofEducationListAPIView(APIView):
