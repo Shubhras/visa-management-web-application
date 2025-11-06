@@ -3767,7 +3767,7 @@ class TimezoneImportAPIView(APIView):
         duplicate_names = []
 
         required_headers = {'time zone'}
-        optional_headers = {'countryName', 'stateName', 'description'}
+        optional_headers = {'country', 'state', 'description'}
 
         try:
             data = []
@@ -3817,18 +3817,38 @@ class TimezoneImportAPIView(APIView):
             imported_count = 0
 
             for row in data:
-                tz_name = str(row.get('timez one')).strip() if row.get('time zone') else None
+                tz_name = str(row.get('time zone')).strip() if row.get('time zone') else None
                 if not tz_name:
                     continue
 
-                existing = Timezone.objects.filter(Timezone__iexact=tz_name).first()
+                # Fetch or create related Country and State
+                country_obj = None
+                state_obj = None
+
+                country_name = str(row.get('country')).strip() if row.get('country') else None
+                state_name = str(row.get('state')).strip() if row.get('state') else None
+
+                if country_name:
+                    country_obj = Country.objects.filter(name__iexact=country_name, is_deleted=False).first()
+                    if not country_obj:
+                        country_obj = Country.objects.create(name=country_name, description='', is_deleted=False)
+
+                if state_name:
+                    state_obj = State.objects.filter(stateName__iexact=state_name, is_deleted=False).first()
+                    if not state_obj:
+                        state_obj = State.objects.create(stateName=state_name, countryName=country_obj, description='', is_deleted=False)
+
                 description = str(row.get('description')).strip() if row.get('description') else ''
+
+                existing = Timezone.objects.filter(Timezone__iexact=tz_name).first()
                 if existing:
                     if not existing.is_deleted:
                         duplicate_names.append(tz_name)
                         continue
                     else:
                         existing.description = description
+                        existing.countryName = country_obj
+                        existing.stateName = state_obj
                         existing.is_deleted = False
                         existing.save()
                         imported_count += 1
@@ -3836,6 +3856,8 @@ class TimezoneImportAPIView(APIView):
                     Timezone.objects.create(
                         Timezone=tz_name,
                         description=description,
+                        countryName=country_obj,
+                        stateName=state_obj,
                         is_deleted=False
                     )
                     imported_count += 1
@@ -3843,7 +3865,7 @@ class TimezoneImportAPIView(APIView):
         except Exception as e:
             return Response({
                 "statusCode": 400,
-                "status": True,
+                "status": False,
                 'message': str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
 
@@ -3854,9 +3876,6 @@ class TimezoneImportAPIView(APIView):
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=status.HTTP_200_OK)
-
-
-
 
 
 
