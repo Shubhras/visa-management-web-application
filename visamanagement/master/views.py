@@ -2615,8 +2615,7 @@ class DistrictImportAPIView(APIView):
                         existing.districtName = district_name
                         existing.stateName = state_obj
                         existing.countryName = country_obj
-                        existing.districtshortName = short_name
-                        existing.description = description
+                        existing.descrition = description
                         existing.is_deleted = False
                         existing.save()
                         imported_count += 1
@@ -2625,7 +2624,6 @@ class DistrictImportAPIView(APIView):
                         districtName=district_name,
                         stateName=state_obj,
                         countryName=country_obj,
-                        districtshortName=short_name,
                         description=description,
                         is_deleted=False
                     )
