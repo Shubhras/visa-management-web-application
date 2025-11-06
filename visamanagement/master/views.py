@@ -2591,18 +2591,21 @@ class DistrictImportAPIView(APIView):
                 country_name = str(row.get('country name')).strip() if row.get('country name') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
-                if not district_name or not state_name or not country_name:
-                    continue
+                if not district_name or not country_name:
+                    continue  # Only skip if district or country is missing
 
                 country_obj = Country.objects.filter(name__iexact=country_name).first()
-                state_obj = State.objects.filter(stateName__iexact=state_name, countryName=country_obj).first() if country_obj else None
+                state_obj = None
+                if state_name and country_obj:
+                    state_obj = State.objects.filter(stateName__iexact=state_name, countryName=country_obj).first()
 
-                if not country_obj or not state_obj:
-                    continue  # skip row if country or state not found
+                # If country not found, skip the row
+                if not country_obj:
+                    continue
 
                 existing = District.objects.filter(
                     districtName__iexact=district_name,
-                    stateName=state_obj,
+                    stateName=state_obj,  # can be None
                     countryName=country_obj
                 ).first()
 
@@ -2615,7 +2618,7 @@ class DistrictImportAPIView(APIView):
                         existing.districtName = district_name
                         existing.stateName = state_obj
                         existing.countryName = country_obj
-                        existing.descrition = description
+                        existing.description = description  # fixed typo
                         existing.is_deleted = False
                         existing.save()
                         imported_count += 1
@@ -2628,7 +2631,6 @@ class DistrictImportAPIView(APIView):
                         is_deleted=False
                     )
                     imported_count += 1
-
         except Exception as e:
             return Response({
                 "statusCode": 400,
