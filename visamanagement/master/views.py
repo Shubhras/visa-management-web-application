@@ -11754,8 +11754,7 @@ class EducationLevelListAPIView(APIView):
         if search:
             queryset = queryset.filter(
                 Q(educationlevel__icontains=search) |
-                Q(description__icontains=search) |
-                Q(level_code__Levelcode__icontains=search)  # optional: search by level_code detail
+                Q(description__icontains=search)  # optional: search by level_code detail
             )
 
         queryset = queryset.order_by(sort_by)
@@ -12662,7 +12661,7 @@ class StudymainareaExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Study Main',
+            'name': 'Study Main Area',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'created_at': 'Created On',
@@ -12719,7 +12718,7 @@ class StudymainareaImportAPIView(APIView):
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
 
-        required_headers = {'study main'}
+        required_headers = {'study main area'}
         optional_headers = {'description'}
 
         try:
@@ -12767,7 +12766,7 @@ class StudymainareaImportAPIView(APIView):
             imported_count = 0
 
             for row in data:
-                name = str(row.get('study main')).strip() if row.get('study main') else None
+                name = str(row.get('study main area')).strip() if row.get('study main area') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not name:
