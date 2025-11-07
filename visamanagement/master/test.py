@@ -157,7 +157,7 @@ class LanguageDeleteAPIView(APIView):
                     "message": "No Language records found to delete.",
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
-            langs.update(is_deleted=True)
+            langs.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
@@ -202,7 +202,7 @@ class LanguageDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        langs.update(is_deleted=True)
+        langs.delete()
 
         return Response({
             "statusCode": 200,
@@ -217,10 +217,10 @@ class LanguageListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
 
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
 
@@ -235,7 +235,7 @@ class LanguageListAPIView(APIView):
                 Q(description__icontains=search)
             )
 
-        queryset = queryset.order_by('-created_at')
+        queryset = queryset.order_by(sort_by)
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = LanguageSerializer(result_page, many=True)
@@ -376,7 +376,7 @@ class LanguageTestListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
         allowed_sort_fields = ['name', 'fullname', 'description', 'created_at']
 
@@ -458,7 +458,7 @@ class LanguageTestDeleteAPIView(APIView):
         if ids == "all":
             objs = LanguageTest.objects.filter(is_deleted=False)
             count = objs.count()
-            objs.update(is_deleted=True)
+            objs.delete()
             return Response({"statusCode": 200, "status": True, "message": f"All {count} LanguageTest(s) deleted", "data": None})
 
         if not isinstance(ids, list):
@@ -476,7 +476,7 @@ class LanguageTestDeleteAPIView(APIView):
         if count == 0:
             return Response({"statusCode": 404, "status": False, "message": "No matching LanguageTest found", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None}, status=404)
 
-        objs.update(is_deleted=True)
+        objs.delete()
         return Response({"statusCode": 200, "status": True, "message": f"{count} LanguageTest(s) deleted", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None})
 
 
@@ -588,9 +588,9 @@ class LanguagetestmoduleNameListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
 
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
@@ -669,7 +669,7 @@ class LanguagetestmoduleNameDeleteAPIView(APIView):
         if ids == "all":
             objs = LanguagetestmoduleName.objects.filter(is_deleted=False)
             count = objs.count()
-            objs.update(is_deleted=True)
+            objs.delete()
             return Response({"statusCode": 200, "status": True, "message": f"All {count} module(s) deleted", "data": None})
 
         if not isinstance(ids, list):
@@ -687,7 +687,7 @@ class LanguagetestmoduleNameDeleteAPIView(APIView):
         if count == 0:
             return Response({"statusCode": 404, "status": False, "message": "No matching module found", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None}, status=404)
 
-        objs.update(is_deleted=True)
+        objs.delete()
         return Response({"statusCode": 200, "status": True, "message": f"{count} module(s) deleted", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None})
 
 
@@ -789,9 +789,9 @@ class CLBLevelListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
 
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
@@ -869,7 +869,7 @@ class CLBLevelDeleteAPIView(APIView):
         if ids == "all":
             objs = CLBLevel.objects.filter(is_deleted=False)
             count = objs.count()
-            objs.update(is_deleted=True)
+            objs.delete()
             return Response({"statusCode": 200, "status": True, "message": f"All {count} CLB Level(s) deleted", "data": None})
 
         if not isinstance(ids, list):
@@ -887,7 +887,7 @@ class CLBLevelDeleteAPIView(APIView):
         if count == 0:
             return Response({"statusCode": 404, "status": False, "message": "No matching CLB Level found", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None}, status=404)
 
-        objs.update(is_deleted=True)
+        objs.delete()
         return Response({"statusCode": 200, "status": True, "message": f"{count} CLB Level(s) deleted", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None})
 
 
@@ -997,9 +997,9 @@ class StudyLanguageBanchmarkListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
 
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
@@ -1077,7 +1077,7 @@ class StudyLanguageBanchmarkDeleteAPIView(APIView):
         if ids == "all":
             objs = StudyLanguageBanchmark.objects.filter(is_deleted=False)
             count = objs.count()
-            objs.update(is_deleted=True)
+            objs.delete()
             return Response({"statusCode": 200, "status": True, "message": f"All {count} benchmark(s) deleted", "data": None})
 
         if not isinstance(ids, list):
@@ -1095,7 +1095,7 @@ class StudyLanguageBanchmarkDeleteAPIView(APIView):
         if count == 0:
             return Response({"statusCode": 404, "status": False, "message": "No matching benchmark found", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None}, status=404)
 
-        objs.update(is_deleted=True)
+        objs.delete()
         return Response({"statusCode": 200, "status": True, "message": f"{count} benchmark(s) deleted", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None})
 
 
@@ -1197,7 +1197,7 @@ class EntranceTestNameListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
         allowed_sort_fields = ['fullname', 'shortname', 'description', 'created_at']
 
@@ -1284,7 +1284,7 @@ class EntranceTestNameDeleteAPIView(APIView):
         if ids == "all":
             objs = EntranceTestName.objects.filter(is_deleted=False)
             count = objs.count()
-            objs.update(is_deleted=True)
+            objs.delete()
             return Response({"statusCode": 200, "status": True, "message": f"All {count} entrance test(s) deleted", "data": None})
 
         if not isinstance(ids, list):
@@ -1302,7 +1302,7 @@ class EntranceTestNameDeleteAPIView(APIView):
         if count == 0:
             return Response({"statusCode": 404, "status": False, "message": "No matching entrance test found", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None}, status=404)
 
-        objs.update(is_deleted=True)
+        objs.delete()
         return Response({"statusCode": 200, "status": True, "message": f"{count} entrance test(s) deleted", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None})
 
 
@@ -1410,7 +1410,7 @@ class EntranceTestModuleNameListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
         allowed_sort_fields = ['moduleName', 'description', 'created_at']
 
@@ -1494,7 +1494,7 @@ class EntranceTestModuleNameDeleteAPIView(APIView):
         if ids == "all":
             objs = EntranceTestModuleName.objects.filter(is_deleted=False)
             count = objs.count()
-            objs.update(is_deleted=True)
+            objs.delete()
             return Response({"statusCode": 200, "status": True, "message": f"All {count} module(s) deleted", "data": None})
 
         if not isinstance(ids, list):
@@ -1512,7 +1512,7 @@ class EntranceTestModuleNameDeleteAPIView(APIView):
         if count == 0:
             return Response({"statusCode": 404, "status": False, "message": "No matching module found", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None}, status=404)
 
-        objs.update(is_deleted=True)
+        objs.delete()
         return Response({"statusCode": 200, "status": True, "message": f"{count} module(s) deleted", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None})
 
 
@@ -1522,7 +1522,7 @@ class EntranceTestResultListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
         allowed_sort_fields = ['testresult', 'description', 'created_at']
 
@@ -1615,7 +1615,7 @@ class EntranceTestResultDeleteAPIView(APIView):
         if ids == "all":
             objs = EntranceTestResult.objects.filter(is_deleted=False)
             count = objs.count()
-            objs.update(is_deleted=True)
+            objs.delete()
             return Response({"statusCode": 200, "status": True, "message": f"All {count} result(s) deleted", "data": None})
 
         if not isinstance(ids, list):
@@ -1633,7 +1633,7 @@ class EntranceTestResultDeleteAPIView(APIView):
         if count == 0:
             return Response({"statusCode": 404, "status": False, "message": "No matching result found", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None}, status=404)
 
-        objs.update(is_deleted=True)
+        objs.delete()
         return Response({"statusCode": 200, "status": True, "message": f"{count} result(s) deleted", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None})
 
 
