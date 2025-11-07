@@ -588,7 +588,7 @@ const LicenceNameList = () => {
                           lineHeight: 1
                         }}
                         onClick={() => {
-                          console.log("Close clicked");
+                         
                           handleSearchChange('');
                         }}
                       >
@@ -870,8 +870,8 @@ const LicenceNameList = () => {
                           <td><span>{formatDateTime(rowItem.updated_at)}</span></td>
                         )}
 
-                        <td>
-                          <div className="d-flex align-items-center gap-2">
+                        <td className='action-td'>
+                          <div className="d-flex align-items-end gap-2">
                             <Link to="#" className='edit-btn-icone' onClick={(e) => { e.preventDefault(); handleShowEdit(rowItem); }}>
                               <Icon icon="lucide:edit" width="18" className='icone' />
                             </Link>

@@ -301,7 +301,14 @@ export const EDIT_DISTRICT_LIST_API = "/api/v1/master/district/";
 export const DELETE_DISTRICT_LIST_API = "/api/v1/master/district/";
 export const EXPORT_DISTRICT_LIST_API = "/api/v1/master/district/export/";
 export const IMPORT_DISTRICT_LIST_API = "/api/v1/master/district/import/";
-
+export const GET_DISTRICT_LIST_BY_STATE_API = "/api/v1/master/district/by-state/";
+// CITY
+export const GET_CITY_LIST_API = "/api/v1/master/city/";
+export const ADD_CITY_LIST_API = "/api/v1/master/city/create/";
+export const EDIT_CITY_LIST_API = "/api/v1/master/city/";
+export const DELETE_CITY_LIST_API = "/api/v1/master/city/";
+export const EXPORT_CITY_LIST_API = "/api/v1/master/city/export/";
+export const IMPORT_CITY_LIST_API = "/api/v1/master/city/import/";
 
 
 export const GET_COUNTRY_LIST_DEMO = "/api/v1/master/country/";

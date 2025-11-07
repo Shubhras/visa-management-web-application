@@ -1,14 +1,15 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useDispatch } from "react-redux";
 import MasterLayout from "../../../../masterLayout/MasterLayout";
+// import Breadcrumb from "../../../components/Breadcrumb";
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { Link } from 'react-router-dom';
 import { toast } from "react-toastify";
-import AddImportInterestLevelModal from './AddImportInterestLevelModal';
-import AddEditInterestLevelModal from './AddEditInterestLevelModal';
-import { interestLevelList, interestLevelDelete, interestLevelExportData } from '../../../../store/master/salesMasters/actions';
+import { cityList, cityDelete, cityExportData } from '../../../../store/master/generalMasters/actions';
+import AddImportCityModal from './AddImportCityModal';
+import AddEditCityModal from './AddEditCityModal';
 
-const InterestLevelList = () => {
+const CityList = () => {
   const dispatch = useDispatch();
   const [modalState, setModalState] = useState({
     show: false,
@@ -29,25 +30,74 @@ const InterestLevelList = () => {
       mode: 'add',
       rowData: null
     });
-    fetchInterestLevelList();
+    fetchCityList();
   }
 
-  const [showEdit, setShowEdit] = useState(false);
+  // const [showEdit, setShowEdit] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [rowSelectData, setRowSelectData] = useState({});
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this Interest Level?");
+  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this city?");
   const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [selectAllOrNot, setSelectAllOrNot] = useState('');
-  const [interestLevelData, setInterestLevelData] = useState([]);
+  const [cityDataList, setCityDataList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [items] = useState(["Interest Level", "Description", "Modified On"]);
-  const [selectedItems, setSelectedItems] = useState(["Interest Level"]);
-  const [ItemsRequired] = useState(["Interest Level"]);
+  const [items] = useState(["Country Name", "State Name", "District Name", "City Name", "Description", "Modified On"]);
+  const [selectedItems, setSelectedItems] = useState(["Country Name", "City Name"]);
+  const [ItemsRequired] = useState(["Country Name", "City Name"]);
 
+  // Table columns configuration
+  const [tableColumns] = useState([
+    { id: 'countryName', label: 'Country Name', field: 'countryName', visible: true, required: false },
+    { id: 'stateName', label: 'State Name', field: 'stateName', visible: true, required: false },
+    { id: 'districtName', label: 'District Name ', field: 'districtName', visible: true, required: false },
+    { id: 'cityName', label: 'City Name', field: 'cityName', visible: true, required: false },
+    { id: 'description', label: 'Description', field: 'description', visible: true, required: false },
+    { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false },
+  ]);
+
+  const [visibleColumns, setVisibleColumns] = useState(
+    tableColumns.filter(col => col.visible).map(col => col.id)
+  );
+  const [showColumnDropdown, setShowColumnDropdown] = useState(false);
+  const columnDropdownRef = useRef(null);
+  // Column visibility toggle handler
+  const toggleColumnVisibility = (columnId) => {
+    const column = tableColumns.find(col => col.id === columnId);
+    if (column?.required) return; // Don't allow hiding required columns
+
+    setVisibleColumns(prev => {
+      if (prev.includes(columnId)) {
+        return prev.filter(id => id !== columnId);
+      } else {
+        return [...prev, columnId];
+      }
+    });
+  };
+
+  // Check if column is visible
+  const isColumnVisible = (columnId) => {
+    return visibleColumns.includes(columnId);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (columnDropdownRef.current && !columnDropdownRef.current.contains(event.target)) {
+        setShowColumnDropdown(false);
+      }
+    };
+
+    if (showColumnDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showColumnDropdown]);
   // Updated state with sorting
   const [tableState, setTableState] = useState({
     page: 1,
@@ -66,7 +116,7 @@ const InterestLevelList = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (tableState.search !== undefined) {
-        fetchInterestLevelList();
+        fetchCityList();
       }
     }, 500);
 
@@ -74,10 +124,10 @@ const InterestLevelList = () => {
   }, [tableState.search]);
 
   useEffect(() => {
-    fetchInterestLevelList();
+    fetchCityList();
   }, [tableState.page, tableState.limit, tableState.status, tableState.sortBy, tableState.sortOrder]);
 
-  const fetchInterestLevelList = () => {
+  const fetchCityList = () => {
     setLoading(true);
     const params = {
       page: tableState.page,
@@ -88,12 +138,12 @@ const InterestLevelList = () => {
       sortOrder: tableState.sortOrder || ''
     };
 
-    dispatch(interestLevelList(params, (response, error) => {
+    dispatch(cityList(params, (response, error) => {
       setLoading(false);
       if (response?.statusCode === 200 && response?.status === true) {
         const paginationData = response?.pagination || {};
 
-        setInterestLevelData(response?.data || []);
+        setCityDataList(response?.data || []);
         setTableState(prev => ({
           ...prev,
           total: paginationData.totalItems || 0,
@@ -102,14 +152,15 @@ const InterestLevelList = () => {
           hasNext: paginationData.nextPage || false,
           hasPrevious: paginationData.previousPage || false
         }));
-          setSelectedRows(prev => {
+
+        setSelectedRows(prev => {
           const filtered = prev.filter(rowId =>
             response?.data.some(rowItems => rowItems.uuid === rowId)
           );
           return filtered;
         });
       } else {
-        setInterestLevelData([]);
+        setCityDataList([]);
         setTableState(prev => ({
           ...prev,
           total: 0,
@@ -178,14 +229,14 @@ const InterestLevelList = () => {
     if (isAllSelected) {
       setSelectedRows([]);
     } else {
-      setSelectedRows(interestLevelData.map(Item => Item.uuid));
+      setSelectedRows(cityDataList.map(Item => Item.uuid));
     }
   };
   // For checkbox in table header
   const handleSelectAll = (e) => {
     const checked = e.target.checked;
     if (checked) {
-      setSelectedRows(interestLevelData.map(Item => Item.uuid));
+      setSelectedRows(cityDataList.map(Item => Item.uuid));
     } else {
       setSelectedRows([]);
       setSelectAllOrNot('');
@@ -202,8 +253,8 @@ const InterestLevelList = () => {
     });
   };
 
-  const isAllSelected = interestLevelData.length > 0 &&
-    interestLevelData.every(Item => selectedRows.includes(Item.uuid));
+  const isAllSelected = cityDataList.length > 0 &&
+    cityDataList.every(Item => selectedRows.includes(Item.uuid));
 
   const goToPage = (page) => {
     if (page >= 1 && page <= tableState.totalPages) {
@@ -244,11 +295,6 @@ const InterestLevelList = () => {
     return pages;
   };
 
-  const handleCloseEdit = () => {
-    setShowEdit(false);
-    fetchInterestLevelList();
-  };
-
   const handleShowEdit = (rowData) => {
     setModalState({
       show: true,
@@ -256,13 +302,14 @@ const InterestLevelList = () => {
       rowData: rowData
     });
   };
+
   const handleSelectAllOrNot = (a) => {
     setSelectAllOrNot(a);
   }
   const handleDelete = (uuid) => {
     setDeleteId(uuid);
     setShowDeleteConfirm(true);
-    setDeleteConfirmMessage(`Are you sure you want to delete this interest level?`);
+    setDeleteConfirmMessage(`Are you sure you want to delete this city?`);
   };
 
   const handleBulkDelete = () => {
@@ -271,8 +318,8 @@ const InterestLevelList = () => {
       return;
     }
     // Choose message based on delete type
-    const message = selectAllOrNot === "all" ? `${tableState.total} all interest level` : `${selectedRows.length} selected interest level`;
-    setDeleteConfirmMessage(`Are you sure you want to delete this interest level (${message})?`);
+    const message = selectAllOrNot === "all" ? `${tableState.total} all city` : `${selectedRows.length} selected city`;
+    setDeleteConfirmMessage(`Are you sure you want to delete this city (${message})?`);
     setShowDeleteConfirm(true);
   };
 
@@ -280,22 +327,22 @@ const InterestLevelList = () => {
     // const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
     const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
     if (!sendPayload || sendPayload.length === 0) {
-      toast.error("No interest level selected for deletion.");
+      toast.error("No city selected for deletion.");
       return;
     }
-    dispatch(interestLevelDelete(sendPayload, (response, error) => {
+    dispatch(cityDelete(sendPayload, (response, error) => {
       if (error) {
         toast.error(error?.response?.data?.message || "server error");
       } else {
         if (response?.statusCode === 200 && response?.status === true) {
           toast.success(response?.message);
-          setInterestLevelData(prevRowItems => prevRowItems.filter(Item => Item.uuid !== deleteId));
+          setCityDataList(prevRowItems => prevRowItems.filter(Item => Item.uuid !== deleteId));
           setSelectedRows(prevSelected => prevSelected.filter(rowId => rowId !== deleteId));
           setShowDeleteConfirm(false);
           setSelectedRows([]);
           setSelectAllOrNot('');
           setDeleteId(null);
-          fetchInterestLevelList();
+          fetchCityList();
         } else {
           toast.error("Something went wrong.");
         }
@@ -313,7 +360,7 @@ const InterestLevelList = () => {
 
   const handleCloseImport = () => {
     setShowImport(false);
-    fetchInterestLevelList();
+    fetchCityList();
   };
 
   const handleShowImport = () => {
@@ -363,7 +410,10 @@ const InterestLevelList = () => {
     }
     // Map frontend labels to backend field names
     const fieldMapping = {
-      "Interest Level": "name",
+      "Country Name": "countryName",
+      "State Name": "stateName",
+      "District Name": "districtName",
+      "City Name": "cityName",
       "Modified On": "updated_at",
       "Description": "description",
     };
@@ -376,9 +426,8 @@ const InterestLevelList = () => {
       fields: fieldsString,
       uuids: selectAllOrNot === "all" ? [] : selectedRows,
     };
-
     setLoadingExport(true);
-    dispatch(interestLevelExportData(sendPayload, (response, error) => {
+    dispatch(cityExportData(sendPayload, (response, error) => {
       if (error) {
         setLoadingExport(false);
         toast.error(error?.response?.message || "server error");
@@ -392,7 +441,7 @@ const InterestLevelList = () => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `InterestLevel.xlsx`;
+          link.download = `City.xlsx`;
           document.body.appendChild(link);
           link.click();
           link.remove();
@@ -430,6 +479,7 @@ const InterestLevelList = () => {
   return (
     <>
       <MasterLayout>
+        {/* <Breadcrumb title="TimeZone" subTitle="List" /> */}
         <div className="card basic-data-table main-container-data">
           <div className="card-body container-data">
             <div className="row align-items-center gy-3 gx-2 flex-wrap filter-action-btn">
@@ -455,7 +505,7 @@ const InterestLevelList = () => {
                   >
                     Delete
                   </button>
-                  {(selectedRows?.length > 0 && selectedRows?.length === interestLevelData?.length)  && (
+                  {(selectedRows?.length > 0 && selectedRows?.length === cityDataList?.length) && (
                     <>
                       <button
                         onClick={() => handleSelectAllOrNot("onlySelected")}
@@ -513,7 +563,7 @@ const InterestLevelList = () => {
                           lineHeight: 1
                         }}
                         onClick={() => {
-                          
+                       
                           handleSearchChange('');
                         }}
                       >
@@ -531,8 +581,8 @@ const InterestLevelList = () => {
           </div>
           <div className="card-body pt-0 container-table" >
             <div className='container-table-div'>
-              <table className="table mb-0"  >
-                <thead >
+              <table className="table mb-0">
+                <thead>
                   <tr>
                     <th scope="col" className='sl-numbar-th'>
                       <div className="d-flex align-items-center gap-2">
@@ -541,38 +591,64 @@ const InterestLevelList = () => {
                           type="checkbox"
                           checked={isAllSelected}
                           onChange={handleSelectAll}
-                          disabled={interestLevelData.length === 0}
+                          disabled={cityDataList.length === 0}
                         />
                         <span>No.</span>
                       </div>
                     </th>
-                    <th scope="col" className='sorting-th' onClick={() => handleSort('name')}>
-                      <div className="d-flex align-items-center">
-                        Interest Level
-                        {getSortIcon('name')}
-                      </div>
-                    </th>
-                    <th scope="col" className='sorting-th' onClick={() => handleSort('description')}>
-                      <div className="d-flex align-items-center">
-                        Description
-                        {getSortIcon('description')}
-                      </div>
-                    </th>
-                    <th scope="col" className='sorting-th' onClick={() => handleSort('updated_at')}>
-                      <div className="d-flex align-items-center">
-                        Modified On
-                        {getSortIcon('updated_at')}
-                      </div>
-                    </th>
+                    {tableColumns.map((column) => (
+                      isColumnVisible(column.id) && (
+                        <th
+                          key={column.id}
+                          scope="col"
+                          className='sorting-th'
+                          onClick={() => handleSort(column.field)}
+                        >
+                          <div className="d-flex align-items-center">
+                            {column.label}
+                            {getSortIcon(column.field)}
+                          </div>
+                        </th>
+                      )
+                    ))}
                     <th scope="col" className='action-th'>
-                      Action
+                      <div className="position-relative table-header-hide-show" ref={columnDropdownRef}>
+                        <button
+                          className="position-relative table-header-hide-show"
+                          onClick={() => setShowColumnDropdown(!showColumnDropdown)}
+                        >
+                          Action <Icon icon="mdi:table-column" width="20" className='icone' />
+                        </button>
+                        {showColumnDropdown && (
+                          <div className="position-absolute bg-white border rounded shadow-sm p-2 show-dropdowns-header">
+                            {tableColumns.map((column) => (
+                              <div
+                                key={column.id}
+                                className="bg-white p-2 mb-2 d-flex align-items-center gap-2"
+                              >
+                                <input
+                                  type="checkbox"
+                                  id={`column-${column.id}`}
+                                  checked={isColumnVisible(column.id)}
+                                  onChange={() => toggleColumnVisibility(column.id)}
+                                  disabled={column.required}
+                                  className="form-check-input"
+                                />
+                                <label htmlFor={`column-${column.id}`} className="mb-0 flex-grow-1 form-label">
+                                  {column.label}
+                                </label>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan="5" className='loding-data'>
+                      <td colSpan={visibleColumns.length + 2} className='loding-data'>
                         <div className="d-flex justify-content-center align-items-center gap-2">
                           <div className="spinner-border spinner-border-sm" role="status">
                             <span className="visually-hidden">Loading...</span>
@@ -581,10 +657,10 @@ const InterestLevelList = () => {
                         </div>
                       </td>
                     </tr>
-                  ) : interestLevelData.length > 0 ? (
-                    interestLevelData.map((rowItem, index) => (
-                      <tr key={rowItem.uuid} >
-                        <td >
+                  ) : cityDataList.length > 0 ? (
+                    cityDataList.map((rowItem, index) => (
+                      <tr key={rowItem.uuid}>
+                        <td>
                           <div className="d-flex align-items-center gap-2">
                             <input
                               className="form-check-input"
@@ -592,40 +668,33 @@ const InterestLevelList = () => {
                               checked={selectedRows.includes(rowItem.uuid)}
                               onChange={() => handleRowSelect(rowItem.uuid)}
                             />
-                            <span>
-                              {String(startIndex + index + 1).padStart(2, '0')}
-                            </span>
+                            <span>{String(startIndex + index + 1).padStart(2, '0')}</span>
                           </div>
                         </td>
-                        <td >
-                          <span >
-                            {rowItem.name}
-                          </span>
-                        </td>
-                        <td >
-                          <span >
-                            {rowItem.description}
-                          </span>
-                        </td>
-                        <td>
-                          <span>{formatDateTime(rowItem.updated_at)}</span>
-                        </td>
-                        <td >
-                          <div className="d-flex align-items-center gap-2">
-                            <Link
-                              to="#"
-                              className='edit-btn-icone'
-                              onClick={(e) => {
-                                e.preventDefault();
-                                handleShowEdit(rowItem);
-                              }}
-                            >
+                        {isColumnVisible('countryName') && (
+                          <td><span>{rowItem.countryName}</span></td>
+                        )}
+                        {isColumnVisible('stateName') && (
+                          <td><span>{rowItem.stateName}</span></td>
+                        )}
+                        {isColumnVisible('districtName') && (
+                          <td><span>{rowItem.districtName}</span></td>
+                        )}
+                        {isColumnVisible('cityName') && (
+                          <td><span>{rowItem.cityName}</span></td>
+                        )}
+                        {isColumnVisible('description') && (
+                          <td><span>{rowItem.description}</span></td>
+                        )}
+                        {isColumnVisible('updated_at') && (
+                          <td><span>{formatDateTime(rowItem.updated_at)}</span></td>
+                        )}
+                        <td className='action-td'>
+                          <div className="d-flex align-items-end gap-2">
+                            <Link to="#" className='edit-btn-icone' onClick={(e) => { e.preventDefault(); handleShowEdit(rowItem); }}>
                               <Icon icon="lucide:edit" width="18" className='icone' />
                             </Link>
-                            <button
-                              onClick={() => handleDelete(rowItem.uuid)}
-                              className='delete-btn-icone'
-                            >
+                            <button onClick={() => handleDelete(rowItem.uuid)} className='delete-btn-icone'>
                               <Icon icon="mingcute:delete-2-line" width="18" className='icone' />
                             </button>
                           </div>
@@ -634,7 +703,7 @@ const InterestLevelList = () => {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="5" className='no-records-found'>
+                      <td colSpan={visibleColumns.length + 2} className='no-records-found'>
                         No records found
                       </td>
                     </tr>
@@ -749,14 +818,14 @@ const InterestLevelList = () => {
             </div>
           </div>
         </div>
-        <AddEditInterestLevelModal
+        <AddEditCityModal
           show={modalState.show}
           handleClose={handleClose}
           mode={modalState.mode}
           rowData={modalState.rowData}
         />
         {showImport && (
-          <AddImportInterestLevelModal show={showImport} handleClose={handleCloseImport} />)}
+          <AddImportCityModal show={showImport} handleClose={handleCloseImport} />)}
         {showDeleteConfirm && (
           <div className="modal fade show common-ctl-popup">
             <div className="modal-dialog modal-dialog-centered">
@@ -797,7 +866,7 @@ const InterestLevelList = () => {
             <div className="modal-dialog modal-xl modal-dialog-centered" role="document">
               <div className="modal-content radius-16 bg-base">
                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                  <h1 className="modal-title fs-5">Export Interest Level</h1>
+                  <h1 className="modal-title fs-5">Export City</h1>
                   <button
                     type="button"
                     className="btn-close"
@@ -895,4 +964,4 @@ const InterestLevelList = () => {
   );
 };
 
-export default InterestLevelList;
+export default CityList;

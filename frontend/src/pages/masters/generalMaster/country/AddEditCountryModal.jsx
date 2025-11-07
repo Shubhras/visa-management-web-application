@@ -18,8 +18,7 @@ const AddEditCountryModal = ({
   const [loading, setLoading] = useState(false);
   const [continentListData, setContinentListData] = useState([]);
   const [countryListData, setCountryListData] = useState([]);
-  console.log(continentList);
-  console.log(countryListData);
+ 
   const initialForm = {
     uuid: "",
     countryName: "",

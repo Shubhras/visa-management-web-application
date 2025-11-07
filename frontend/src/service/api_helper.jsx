@@ -1304,4 +1304,39 @@ export const importDistrictDataAPI = (payload) => {
   const apiUrl = `${url.IMPORT_DISTRICT_LIST_API}`;
   return post(apiUrl, payload);
 };
+export const getDistrictDataByStateAPI = (payload) => {
+   const apiUrl = `${url.GET_DISTRICT_LIST_BY_STATE_API}?country_id=${payload.countryId}&state_id=${payload.stateId}`;
+    return get(apiUrl);
+};
 
+// CITY
+export const getCityListDataAPI = (data) => {
+  const apiUrl = `${url.GET_CITY_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
+
+export const addCityDataAPI = (payload) => {
+  const apiUrl = `${url.ADD_CITY_LIST_API}`;
+  return post(apiUrl, payload);
+};
+
+export const editCityDataAPI = (payload) => {
+  const apiUrl = `${url.EDIT_CITY_LIST_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+
+export const deleteCityDataAPI = (payload) => {
+  const prepareDATA = { id: payload };
+  const apiUrl = `${url.DELETE_CITY_LIST_API}delete/`;
+  return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportCityDataAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_CITY_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+
+export const importCityDataAPI = (payload) => {
+  const apiUrl = `${url.IMPORT_CITY_LIST_API}`;
+  return post(apiUrl, payload);
+};

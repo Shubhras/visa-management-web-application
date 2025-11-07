@@ -55,9 +55,17 @@ import {
   EDIT_DISTRICT,
   ADD_DISTRICT,
   DISTRICT_LIST,
+  CITY_LIST,
+  ADD_CITY,
+  EDIT_CITY,
+  DELETE_CITY,
+  EXPORT_CITY,
+  IMPORT_CITY,
+  DISTRICT_LIST_BY_STATE,
 } from "./actionTypes";
 
 import {
+  addCityDataAPI,
   addCivilIdNameDataAPI,
   addContinentDataAPI,
   addCountryDataAPI,
@@ -67,6 +75,7 @@ import {
   addRelationDataAPI,
   addStateDataAPI,
   addTimeZoneDataAPI,
+  deleteCityDataAPI,
   deleteCivilIdNameDataAPI,
   deleteContinentDataAPI,
   deleteCountryDataAPI,
@@ -76,6 +85,7 @@ import {
   deleteRelationDataAPI,
   deleteStateDataAPI,
   deleteTimeZoneDataAPI,
+  editCityDataAPI,
   editCivilIdNameDataAPI,
   editContinentDataAPI,
   editCountryDataAPI,
@@ -85,6 +95,7 @@ import {
   editRelationDataAPI,
   editStateDataAPI,
   editTimeZoneDataAPI,
+  exportCityDataAPI,
   exportCivilIdNameDataAPI,
   exportContinentDataAPI,
   exportCountryDataAPI,
@@ -92,12 +103,14 @@ import {
   exportGenderDataAPI,
   exportMaritalStatusDataAPI,
   exportRelationDataAPI,
-  exportStakeholderTypeDataAPI,
+  // exportStakeholderTypeDataAPI,
   exportStateDataAPI,
   exportTimeZoneDataAPI,
+  getCityListDataAPI,
   getCivilIdNameListDataAPI,
   getContinentListDataAPI,
   getCountryListDataAPI,
+  getDistrictDataByStateAPI,
   getDistrictListDataAPI,
   getGenderListDataAPI,
   getMaritalStatusListDataAPI,
@@ -105,6 +118,7 @@ import {
   getStateDataByCountryAPI,
   getStateListDataAPI,
   getTimeZoneListDataAPI,
+  importCityDataAPI,
   importCivilIdNameDataAPI,
   importContinentDataAPI,
   importCountryDataAPI,
@@ -619,6 +633,71 @@ function* districtImportDataSaga(action) {
   }
 }
 
+function* districtListByStateSaga(action) {
+  try {
+    const response = yield call(getDistrictDataByStateAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+
+// City
+function* cityListSaga(action) {
+  try {
+    const response = yield call(getCityListDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* cityAddSaga(action) {
+  try {
+    const response = yield call(addCityDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* cityEditSaga(action) {
+  try {
+    const response = yield call(editCityDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* cityDeleteSaga(action) {
+  try {
+    const response = yield call(deleteCityDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* cityExportDataSaga(action) {
+  try {
+    const response = yield call(exportCityDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* cityImportDataSaga(action) {
+  try {
+    const response = yield call(importCityDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
 function* generalMasterSaga() {
   // Gender
   yield takeEvery(GENDER_LIST, genderListSaga);
@@ -683,6 +762,7 @@ function* generalMasterSaga() {
   yield takeEvery(EXPORT_STATE, stateExportDataSaga);
   yield takeEvery(IMPORT_STATE, stateImportDataSaga);
   yield takeEvery(STATE_LIST_BY_COUNTRY, stateListByCountrySaga);
+  
   //District
   yield takeEvery(DISTRICT_LIST, districtListSaga);
   yield takeEvery(ADD_DISTRICT, districtAddSaga);
@@ -690,6 +770,15 @@ function* generalMasterSaga() {
   yield takeEvery(DELETE_DISTRICT, districtDeleteSaga);
   yield takeEvery(EXPORT_DISTRICT, districtExportDataSaga);
   yield takeEvery(IMPORT_DISTRICT, districtImportDataSaga);
+  yield takeEvery(DISTRICT_LIST_BY_STATE, districtListByStateSaga);
+
+  // Saga Watchers
+  yield takeEvery(CITY_LIST, cityListSaga);
+  yield takeEvery(ADD_CITY, cityAddSaga);
+  yield takeEvery(EDIT_CITY, cityEditSaga);
+  yield takeEvery(DELETE_CITY, cityDeleteSaga);
+  yield takeEvery(EXPORT_CITY, cityExportDataSaga);
+  yield takeEvery(IMPORT_CITY, cityImportDataSaga);
 }
 
 export default generalMasterSaga;
