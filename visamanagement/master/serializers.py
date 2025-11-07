@@ -349,7 +349,11 @@ class AccreditationNameSerializer(serializers.ModelSerializer):
         model = AccreditationName
         fields = [
             'uuid', 'country', 'country_name', 'category', 'category_name',
-            'full_name', 'short_name', 'issuing_authority', 'valid_upto',
+            'valid_type',
+            'valid_date',
+            'valid_duration_value',
+            'valid_duration_unit',
+            'full_name', 'short_name', 'issuing_authority',
             'description', 'created_at', 'updated_at'
         ]
 
@@ -530,6 +534,7 @@ class StudyMajorAreaSerializer(serializers.ModelSerializer):
 
 class StudySpecialisationSerializer(serializers.ModelSerializer):
     
+    # Write-only UUID fields for input
     mainarea_id = serializers.SlugRelatedField(
         queryset=Studymainarea.objects.all(),
         slug_field='uuid',
@@ -538,8 +543,6 @@ class StudySpecialisationSerializer(serializers.ModelSerializer):
         required=False,
         allow_null=True
     )
-    mainarea = serializers.CharField(source='mainarea.name', read_only=True)
-
     majorarea_id = serializers.SlugRelatedField(
         queryset=Studymajorarea.objects.all(),
         slug_field='uuid',
@@ -548,16 +551,23 @@ class StudySpecialisationSerializer(serializers.ModelSerializer):
         required=False,
         allow_null=True
     )
-    majorarea = serializers.CharField(source='majorarea.majorarea', read_only=True)
+
+    # Read-only flat fields for output
+    mainarea_uuid = serializers.UUIDField(source='mainarea.uuid', read_only=True)
+    mainarea_name = serializers.CharField(source='mainarea.name', read_only=True)
+    majorarea_uuid = serializers.UUIDField(source='majorarea.uuid', read_only=True)
+    majorarea_name = serializers.CharField(source='majorarea.majorarea', read_only=True)
 
     class Meta:
         model = StudySpecialisation
         fields = [
             'id',
             'uuid',
-            'mainarea',
+            'mainarea_uuid',
+            'mainarea_name',
             'mainarea_id',
-            'majorarea',
+            'majorarea_uuid',
+            'majorarea_name',
             'majorarea_id',
             'studyspecialisation',
             'description',
@@ -583,11 +593,17 @@ class AcademicResultTypeSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
 
 
+
 class AcademicResultSerializer(serializers.ModelSerializer):
-    AcademicResulttype = serializers.SerializerMethodField()
-    AcademicResulttype_id = serializers.PrimaryKeyRelatedField(
+    # Show type details as separate keys
+    AcademicResulttype_uuid = serializers.SerializerMethodField()
+    AcademicResulttype_name = serializers.SerializerMethodField()
+
+    # Accept UUID to set the relation
+    AcademicResulttype_id = serializers.SlugRelatedField(
         queryset=AcademicResultType.objects.all(),
         source='AcademicResulttype',
+        slug_field='uuid',
         write_only=True,
         required=False,
         allow_null=True
@@ -598,23 +614,26 @@ class AcademicResultSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'uuid',
-            'AcademicResulttype',
-            'AcademicResulttype_id',
+            'AcademicResulttype_id',      # for input only
+            'AcademicResulttype_uuid',    # separate key for output
+            'AcademicResulttype_name',    # separate key for output
             'Academicresult',
             'description',
             'is_deleted',
             'created_at',
             'updated_at'
         ]
-        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at', 
+                            'AcademicResulttype_uuid', 'AcademicResulttype_name']
 
-    def get_AcademicResulttype(self, obj):
-        """Return a minimal representation of AcademicResultType."""
+    def get_AcademicResulttype_uuid(self, obj):
         if obj.AcademicResulttype:
-            return {
-                "id": obj.AcademicResulttype.id,
-                "Academicresulttype": obj.AcademicResulttype.Academicresulttype
-            }
+            return obj.AcademicResulttype.uuid
+        return None
+
+    def get_AcademicResulttype_name(self, obj):
+        if obj.AcademicResulttype:
+            return obj.AcademicResulttype.name
         return None
 
 
@@ -637,12 +656,12 @@ class MediumofEducationSerializer(serializers.ModelSerializer):
         fields = [
             'uuid',  
             'name',
-            'Perticulars',
+            'perticulars',
             'is_deleted',
             'created_at',
             'updated_at'
         ]
-        read_only_fields = ['uuid', 'created_at', 'updated_at']
+        read_only_fields = ['id','uuid', 'created_at', 'updated_at']
 
 
 

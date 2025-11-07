@@ -140,13 +140,13 @@ class AccreditationCategoryAdmin(admin.ModelAdmin):
     ordering = ('name',)
 
 
-@admin.register(AccreditationName)
-class AccreditationNameAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'short_name', 'country', 'category', 'issuing_authority', 'valid_upto', 'is_deleted', 'created_at', 'updated_at')
-    search_fields = ('full_name', 'short_name', 'issuing_authority')
-    list_filter = ('is_deleted', 'country', 'category')
-    ordering = ('full_name',)
-    autocomplete_fields = ('country', 'category')
+# @admin.register(AccreditationName)
+# class AccreditationNameAdmin(admin.ModelAdmin):
+#     list_display = ('full_name', 'short_name', 'country', 'category', 'issuing_authority', 'valid_upto', 'is_deleted', 'created_at', 'updated_at')
+#     search_fields = ('full_name', 'short_name', 'issuing_authority')
+#     list_filter = ('is_deleted', 'country', 'category')
+#     ordering = ('full_name',)
+#     autocomplete_fields = ('country', 'category')
 
 
 # ---------- BANK & LICENSE ----------
@@ -254,3 +254,5 @@ class StudymajorareaAdmin(admin.ModelAdmin):
     search_fields = ('majorarea',)
     list_filter = ('is_deleted',)
     ordering = ('majorarea',)
+
+
