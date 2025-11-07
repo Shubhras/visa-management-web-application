@@ -103,7 +103,7 @@ import {
   exportGenderDataAPI,
   exportMaritalStatusDataAPI,
   exportRelationDataAPI,
-  exportStakeholderTypeDataAPI,
+  // exportStakeholderTypeDataAPI,
   exportStateDataAPI,
   exportTimeZoneDataAPI,
   getCityListDataAPI,
