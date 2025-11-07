@@ -678,9 +678,9 @@ class LanguageTestExportAPIView(APIView):
         # --- Field to header mapping ---
         field_header_map = {
             'uuid': 'UUID',
-            'language': 'Language',
-            'name': 'Name',
-            'fullname': 'Full Name',
+            'language': 'Language Name (Test',
+            'name': 'Language Test Name',
+            'fullname': 'Language Test Full Name',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'created_at': 'Created On',
@@ -758,8 +758,8 @@ class LanguageTestImportAPIView(APIView):
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
 
-        required_headers = {'language', 'name'}
-        optional_headers = {'fullname', 'description', 'is_deleted'}
+        required_headers = {'language name (Test)', 'language test name'}
+        optional_headers = {'language test full name', 'description', 'is_deleted'}
 
         try:
             data = []
@@ -1112,7 +1112,7 @@ class LanguagetestmoduleNameImportAPIView(APIView):
         duplicate_names = []
 
         # Required & optional headers
-        required_headers = {'language test module'}
+        required_headers = {'language test module name'}
         optional_headers = {'description', 'is_deleted'}
 
         try:
@@ -1219,6 +1219,10 @@ class LanguagetestmoduleNameImportAPIView(APIView):
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=status.HTTP_200_OK)
+
+
+
+
 
 class CLBLevelListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -1413,7 +1417,7 @@ class CLBLevelImportAPIView(APIView):
         duplicate_names = []
 
         # Define required and optional headers
-        required_headers = {'CLBLevel'}           # must be present
+        required_headers = {'CLB Level'}           # must be present
         optional_headers = {'description'}    # optional
 
         try:
@@ -2050,8 +2054,8 @@ class EntranceTestNameImportAPIView(APIView):
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
 
-        required_headers = {'Entrance Test Full Name'}  # Must exist
-        optional_headers = {'Entrance Test Short Name', 'description'}
+        required_headers = {'entrance test full name'}  # Must exist
+        optional_headers = {'entrance test short name', 'description'}
 
         try:
             data = []
@@ -2123,8 +2127,8 @@ class EntranceTestNameImportAPIView(APIView):
 
             # ---------- Import Rows ----------
             for row in data:
-                fullname = str(row.get('fullname')).strip() if row.get('fullname') else None
-                shortname = str(row.get('shortname')).strip() if row.get('shortname') else ''
+                fullname = str(row.get('entrance test full name')).strip() if row.get('entrance test full name') else None
+                shortname = str(row.get('entrance test short name')).strip() if row.get('entrance test short name') else ''
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not fullname:
@@ -2167,8 +2171,7 @@ class EntranceTestNameImportAPIView(APIView):
 
 
 
-
-        
+#------------------modulename-----------    
 
 class EntranceTestModuleNameListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -2281,7 +2284,179 @@ class EntranceTestModuleNameDeleteAPIView(APIView):
         return Response({"statusCode": 200, "status": True, "message": f"{count} module(s) deleted", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None})
 
 
+class EntranceTestModuleExportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
+    def get(self, request):
+        format_type = request.GET.get('format', 'xlsx').lower()
+        fields = request.GET.get('fields')
+        uuids_param = request.GET.get('uuids', '')
+        uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+        field_header_map = {
+            'uuid': 'UUID',
+            'entrancetest': 'Entrance Test Short Name',
+            'moduleName': 'Entrance Test Module Name',
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'created_at': 'Created On',
+            'updated_at': 'Modified On',
+        }
+
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+        queryset = EntranceTestModuleName.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-updated_at')
+
+        dataset = Dataset()
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'Entrance Test Modules'
+
+        for obj in queryset:
+            row = []
+            for field in field_list:
+                value = getattr(obj, field, '')
+                # Foreign key handling
+                if field == 'entrancetest' and value:
+                    value = value.shortname if hasattr(value, 'shortname') else str(value)
+                # Datetime formatting
+                elif field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                # Boolean formatting
+                elif isinstance(value, bool):
+                    value = int(value)
+                row.append(value if value is not None else '')
+            dataset.append(row)
+
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'entrance_test_modules.csv'
+        else:
+            file_data = io.BytesIO(dataset.export('xlsx'))
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'entrance_test_modules.xlsx'
+
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        return response
+
+
+# ------------------- IMPORT API -------------------
+class EntranceTestModuleImportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        file = request.FILES.get('file')
+        sheet_name = request.data.get('sheet_name')
+
+        if not file:
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+
+        format_type = file.name.split('.')[-1].lower()
+        duplicate_entries = []
+        required_headers = {'entrance test short name', 'entrance test module name'}
+        optional_headers = {'description'}
+
+        try:
+            data = []
+
+            # XLSX handling
+            if format_type == 'xlsx':
+                wb = openpyxl.load_workbook(file, read_only=True)
+                available_sheets = wb.sheetnames
+
+                if not sheet_name:
+                    return Response({'error': 'Provide sheet_name', 'available_sheets': available_sheets}, status=400)
+                if sheet_name not in available_sheets:
+                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
+
+                ws = wb[sheet_name]
+                if ws.max_row <= 1:
+                    return Response({'error': f'Sheet "{sheet_name}" is empty.'}, status=400)
+
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response({
+                        'error': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
+                    }, status=400)
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    if not any(row):
+                        continue
+                    row_dict = dict(zip(headers, row))
+                    data.append(row_dict)
+
+            # CSV handling
+            elif format_type == 'csv':
+                dataset = Dataset()
+                dataset.load(file.read().decode('utf-8'), format='csv')
+                for row in dataset.dict:
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({
+                            'error': f'Missing required headers. Required: {", ".join(required_headers)}. Found: {", ".join(row_lower.keys())}'
+                        }, status=400)
+                    data.append(row_lower)
+            else:
+                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
+
+            imported_count = 0
+
+            for row in data:
+                entrancetest_name = str(row.get('entrance test short name')).strip() if row.get('entrance test short name') else None
+                module_name = str(row.get('entrance test module name')).strip() if row.get('module name') else None
+                description = str(row.get('description')).strip() if row.get('description') else ''
+
+                if not entrancetest_name or not module_name:
+                    continue
+
+                entrancetest_obj = EntranceTestName.objects.filter(shortname__iexact=entrancetest_name).first()
+                if not entrancetest_obj:
+                    continue
+
+                existing = EntranceTestModuleName.objects.filter(
+                    entrancetest=entrancetest_obj,
+                    moduleName__iexact=module_name
+                ).first()
+
+                if existing:
+                    if not existing.is_deleted:
+                        duplicate_entries.append(f"{entrancetest_name} - {module_name}")
+                        continue
+                    else:
+                        existing.description = description
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
+                else:
+                    EntranceTestModuleName.objects.create(
+                        entrancetest=entrancetest_obj,
+                        moduleName=module_name,
+                        description=description,
+                        is_deleted=False
+                    )
+                    imported_count += 1
+
+        except Exception as e:
+            return Response({'error': str(e)}, status=400)
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "duplicates": list(set(duplicate_entries)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count
+        }, status=200)
+
+
+
+#----------------------------result--------------
 class EntranceTestResultListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -2310,7 +2485,6 @@ class EntranceTestResultListAPIView(APIView):
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = EntranceTestResultSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
-
 
 # -------------------- Create -------------------- #
 class EntranceTestResultCreateAPIView(APIView):
@@ -2407,49 +2581,73 @@ class EntranceTestResultExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
-        format_type = request.GET.get('format', 'csv').lower()
+        format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')
         uuids_param = request.GET.get('uuids', '')
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
-        field_list = [f.strip() for f in fields.split(',')] if fields else [
-            'uuid', 'entrancetest', 'moduleName', 'testresult', 'description', 'is_deleted', 'created_at', 'updated_at'
-        ]
+        # Field to header mapping
+        field_header_map = {
+            'uuid': 'UUID',
+            'entrancetest': 'Entrance Test Short Name',
+            'moduleName': 'Entrance Test Module Name',
+            'testresult': 'Entrance Test Result',
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'created_at': 'Created On',
+            'updated_at': 'Modified On',
+        }
 
-        queryset = EntranceTestResult.objects.filter(uuid__in=uuids) if uuids else EntranceTestResult.objects.all()
+        # Fields to export
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
+        # Fetch queryset
+        queryset = EntranceTestResult.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-updated_at')
+
+        # Prepare dataset
         dataset = Dataset()
-        dataset.headers = field_list
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'Entrance Test Results'
 
         for obj in queryset:
             row = []
             for field in field_list:
                 value = getattr(obj, field, '')
-                if isinstance(value, datetime.datetime):
-                    value = value.strftime("%Y-%m-%d %H:%M:%S")
-                if isinstance(value, bool):
+                # Foreign keys
+                if field == 'entrancetest' and value:
+                    value = value.shortname
+                elif field == 'moduleName' and value:
+                    value = value.moduleName
+                # Datetime formatting
+                elif field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                # Boolean formatting
+                elif isinstance(value, bool):
                     value = int(value)
-                # For foreign keys, show readable name
-                if field in ['entrancetest', 'moduleName']:
-                    value = getattr(obj, field).fullname if field == 'entrancetest' else getattr(obj, field).moduleName
                 row.append(value if value is not None else '')
             dataset.append(row)
 
-        if format_type == 'xlsx':
-            data = XLSX().export_data(dataset)
+        # Export data
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'entrance_test_results.csv'
+        else:
+            file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'entrance_test_results.xlsx'
-        else:
-            data = CSV().export_data(dataset)
-            content_type = 'text/csv; charset=utf-8'
-            file_name = 'entrance_test_results.csv'
 
-        response = HttpResponse(data, content_type=content_type)
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
 
-# -------------------- Import -------------------- #
 class EntranceTestResultImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -2458,60 +2656,101 @@ class EntranceTestResultImportAPIView(APIView):
         sheet_name = request.data.get('sheet_name')
 
         if not file:
-            return Response({'error': 'No file uploaded'}, status=400)
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
-        dataset = Dataset()
         duplicate_entries = []
+        required_headers = {'entrance test short name', 'entrance test module name', 'entrance test result'}
+        optional_headers = {'description'}
 
         try:
+            data = []
+
             # XLSX handling
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
+
                 if not sheet_name:
                     return Response({'error': 'Provide sheet_name', 'available_sheets': available_sheets}, status=400)
                 if sheet_name not in available_sheets:
                     return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
+
                 ws = wb[sheet_name]
-                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                data = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True)]
+                if ws.max_row <= 1:
+                    return Response({'error': f'Sheet "{sheet_name}" is empty.'}, status=400)
+
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response({
+                        'error': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
+                    }, status=400)
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    if not any(row):
+                        continue
+                    row_dict = dict(zip(headers, row))
+                    data.append(row_dict)
+
+            # CSV handling
             elif format_type == 'csv':
+                dataset = Dataset()
                 dataset.load(file.read().decode('utf-8'), format='csv')
-                data = dataset.dict
+                for row in dataset.dict:
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({
+                            'error': f'Missing required headers. Required: {", ".join(required_headers)}. Found: {", ".join(row_lower.keys())}'
+                        }, status=400)
+                    data.append(row_lower)
             else:
-                return Response({'error': 'Unsupported format'}, status=400)
+                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
+
+            imported_count = 0
 
             for row in data:
-                entrancetest_name = row.get('entrancetest', '').strip()
-                moduleName_name = row.get('moduleName', '').strip()
-                testresult = row.get('testresult', '').strip()
-                description = row.get('description', '').strip() if row.get('description') else ''
+                entrancetest_name = str(row.get('entrance test short name')).strip() if row.get('entrance test short name') else None
+                moduleName_name = str(row.get('entrance test module name')).strip() if row.get('entrance test module name') else None
+                testresult = str(row.get('entrance test result')).strip() if row.get('entrance test result') else None
+                description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not entrancetest_name or not moduleName_name or not testresult:
                     continue
 
-                # Check for duplicates
                 existing = EntranceTestResult.objects.filter(
                     entrancetest__fullname__iexact=entrancetest_name,
-                    moduleName__moduleName__iexact=moduleName_name,
-                    is_deleted=False
+                    moduleName__moduleName__iexact=moduleName_name
                 ).first()
-                if existing:
-                    duplicate_entries.append(f"{entrancetest_name} - {moduleName_name}")
-                    continue
 
-                # Create new entry
-                EntranceTestResult.objects.create(
-                    entrancetest=EntranceTestName.objects.get(fullname__iexact=entrancetest_name),
-                    moduleName=EntranceTestModuleName.objects.get(moduleName__iexact=moduleName_name),
-                    testresult=testresult,
-                    description=description,
-                    is_deleted=False
-                )
+                if existing:
+                    if not existing.is_deleted:
+                        duplicate_entries.append(f"{entrancetest_name} - {moduleName_name}")
+                        continue
+                    else:
+                        existing.testresult = testresult
+                        existing.description = description
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
+                else:
+                    EntranceTestResult.objects.create(
+                        entrancetest=EntranceTestName.objects.get(fullname__iexact=entrancetest_name),
+                        moduleName=EntranceTestModuleName.objects.get(moduleName__iexact=moduleName_name),
+                        testresult=testresult,
+                        description=description,
+                        is_deleted=False
+                    )
+                    imported_count += 1
+
         except Exception as e:
             return Response({'error': str(e)}, status=400)
 
-        return Response({"statusCode": 200, "status": True, "duplicates": list(set(duplicate_entries)), "message": "Import successful"}, status=200)
-    
-    
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "duplicates": list(set(duplicate_entries)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count
+        }, status=200)
+
+
