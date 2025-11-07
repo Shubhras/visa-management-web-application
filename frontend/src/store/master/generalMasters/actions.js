@@ -41,7 +41,7 @@ import {
   EDIT_COUNTRY,
   ADD_COUNTRY,
   COUNTRY_LIST,
-    STATE_LIST,
+  STATE_LIST,
   ADD_STATE,
   EDIT_STATE,
   DELETE_STATE,
@@ -54,6 +54,13 @@ import {
   EDIT_DISTRICT,
   ADD_DISTRICT,
   DISTRICT_LIST,
+  CITY_LIST,
+  ADD_CITY,
+  EDIT_CITY,
+  DELETE_CITY,
+  EXPORT_CITY,
+  IMPORT_CITY,
+  DISTRICT_LIST_BY_STATE,
 } from "./actionTypes";
 
 // GENDER
@@ -136,31 +143,31 @@ export const continentList = (data, callback) => ({
   data,
   callback,
 });
- 
+
 export const continentAdd = (data, callback) => ({
   type: ADD_CONTINENT,
   data,
   callback,
 });
- 
+
 export const continentEdit = (data, callback) => ({
   type: EDIT_CONTINENT,
   data,
   callback,
 });
- 
+
 export const continentDelete = (data, callback) => ({
   type: DELETE_CONTINENT,
   data,
   callback,
 });
- 
+
 export const continentExportData = (data, callback) => ({
   type: EXPORT_CONTINENT,
   data,
   callback,
 });
- 
+
 export const continentImportData = (data, callback) => ({
   type: IMPORT_CONTINENT,
   data,
@@ -173,31 +180,31 @@ export const civilIdNameList = (data, callback) => ({
   data,
   callback,
 });
- 
+
 export const civilIdNameAdd = (data, callback) => ({
   type: ADD_CIVIL_ID_NAME,
   data,
   callback,
 });
- 
+
 export const civilIdNameEdit = (data, callback) => ({
   type: EDIT_CIVIL_ID_NAME,
   data,
   callback,
 });
- 
+
 export const civilIdNameDelete = (data, callback) => ({
   type: DELETE_CIVIL_ID_NAME,
   data,
   callback,
 });
- 
+
 export const civilIdNameExportData = (data, callback) => ({
   type: EXPORT_CIVIL_ID_NAME,
   data,
   callback,
 });
- 
+
 export const civilIdNameImportData = (data, callback) => ({
   type: IMPORT_CIVIL_ID_NAME,
   data,
@@ -390,6 +397,50 @@ export const districtExportData = (data, callback) => ({
 
 export const districtImportData = (data, callback) => ({
   type: IMPORT_DISTRICT,
+  data,
+  callback,
+});
+
+export const districtListByState = (data, callback) => ({
+  type: DISTRICT_LIST_BY_STATE,
+  data,
+  callback,
+});
+
+
+// CITY
+export const cityList = (data, callback) => ({
+  type: CITY_LIST,
+  data,
+  callback,
+});
+
+export const cityAdd = (data, callback) => ({
+  type: ADD_CITY,
+  data,
+  callback,
+});
+
+export const cityEdit = (data, callback) => ({
+  type: EDIT_CITY,
+  data,
+  callback,
+});
+
+export const cityDelete = (data, callback) => ({
+  type: DELETE_CITY,
+  data,
+  callback,
+});
+
+export const cityExportData = (data, callback) => ({
+  type: EXPORT_CITY,
+  data,
+  callback,
+});
+
+export const cityImportData = (data, callback) => ({
+  type: IMPORT_CITY,
   data,
   callback,
 });

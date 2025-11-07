@@ -70,3 +70,13 @@ export const EDIT_DISTRICT = "EDIT_DISTRICT";
 export const DELETE_DISTRICT = "DELETE_DISTRICT";
 export const EXPORT_DISTRICT = "EXPORT_DISTRICT";
 export const IMPORT_DISTRICT = "IMPORT_DISTRICT";
+export const DISTRICT_LIST_BY_STATE = "DISTRICT_LIST_BY_STATE";
+
+
+// CITY
+export const CITY_LIST = "CITY_LIST";
+export const ADD_CITY = "ADD_CITY";
+export const EDIT_CITY = "EDIT_CITY";
+export const DELETE_CITY = "DELETE_CITY";
+export const EXPORT_CITY = "EXPORT_CITY";
+export const IMPORT_CITY = "IMPORT_CITY";

@@ -3,9 +3,9 @@ import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
-import { districtImportData } from '../../../../store/master/generalMasters/actions';
+import { cityImportData } from '../../../../store/master/generalMasters/actions';
 import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
-const AddImportDistrictModal = ({ show, handleClose }) => {
+const AddImportCityModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
     const [file, setFile] = useState(null);
@@ -65,7 +65,7 @@ const AddImportDistrictModal = ({ show, handleClose }) => {
             formData.append('sheet_name', selectedSheet);
         }
         setLoading(true);
-        dispatch(districtImportData(formData, (response, error) => {
+        dispatch(cityImportData(formData, (response, error) => {
             setLoading(false);
             if (error) {
                 toast.error(error?.response?.data?.message || "Server error");
@@ -77,7 +77,7 @@ const AddImportDistrictModal = ({ show, handleClose }) => {
                             <div>{response?.message}</div>
                             {response?.duplicates?.length > 0 && (
                                 <div style={{ marginTop: '6px' }}>
-                                    <strong>Duplicate district skipped — the duplicate data from your uploaded file has been exported into an .xlsx file.</strong>
+                                    <strong>Duplicate city skipped — the duplicate data from your uploaded file has been exported into an .xlsx file.</strong>
                                 </div>
                             )}
                         </div>,
@@ -100,12 +100,12 @@ const AddImportDistrictModal = ({ show, handleClose }) => {
     };
 
     const handleExportToExcel = (duplicatesData) => {
-        const header = ["District Name"];
+        const header = ["City Name"];
         const duplicates = duplicatesData //["test1", "test3", "test3"];
         const worksheetData = [header, ...duplicates.map((item) => [item])];
         const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "District");
+        XLSX.utils.book_append_sheet(workbook, worksheet, "City");
 
         const excelBuffer = XLSX.write(workbook, {
             bookType: "xlsx",
@@ -116,7 +116,7 @@ const AddImportDistrictModal = ({ show, handleClose }) => {
             type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         });
 
-        saveAs(blob, `District-Duplicate-Data.xlsx`);
+        saveAs(blob, `City-Duplicate-Data.xlsx`);
     };
     // Handle modal close
     const onClose = () => {
@@ -141,14 +141,14 @@ const AddImportDistrictModal = ({ show, handleClose }) => {
                 className="modal fade show common-ctl-popup"
                 tabIndex={-1}
                 role="dialog"
-                aria-labelledby="DistrictImportModalLabel"
+                aria-labelledby="CityImportModalLabel"
                 aria-hidden={!show}
             >
                 <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
                     <div className="modal-content radius-16 bg-base">
                         <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                            <h1 className="modal-title fs-5" id="DistrictImportModalLabel">
-                                Upload District
+                            <h1 className="modal-title fs-5" id="CityImportModalLabel">
+                                Upload City
                             </h1>
                             <button
                                 type="button"
@@ -241,10 +241,10 @@ const AddImportDistrictModal = ({ show, handleClose }) => {
             </div>
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
-                    downloadFileName:"District",
-                    items: ["Country Name","State Name", "District Name","Description"],
-                    selectedItems: ["Country Name", "District Name"],
-                    ItemsRequired:["Country Name", "District Name"]
+                    downloadFileName:"City",
+                    items: ["Country Name", "State Name", "District Name", "City Name","Description"],
+                    selectedItems: ["Country Name", "City Name"],
+                    ItemsRequired:["Country Name", "City Name"]
                 }
                 } />
             )}
@@ -252,4 +252,4 @@ const AddImportDistrictModal = ({ show, handleClose }) => {
     );
 };
 
-export default AddImportDistrictModal;
+export default AddImportCityModal;

@@ -533,7 +533,7 @@ const AccrediationCategoryList = () => {
                           lineHeight: 1
                         }}
                         onClick={() => {
-                          console.log("Close clicked");
+              
                           handleSearchChange('');
                         }}
                       >

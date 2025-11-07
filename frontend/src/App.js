@@ -382,6 +382,7 @@ import AcademicResultList from "./pages/masters/educationMaster/academicResult/A
 import DegreeAwardedInstituteList from "./pages/masters/educationMaster/degreeAwardedInstitute/DegreeAwardedInstituteList";
 import AcademicResultToResultList from "./pages/masters/educationMaster/academicResultToResult/AcademicResultToResultList";
 import DistrictList from "./pages/masters/generalMaster/district/DistrictList";
+import CityList from "./pages/masters/generalMaster/city/CitytList";
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   // Check if user is authenticated
@@ -621,8 +622,8 @@ function App() {
         <Route path='/relation-list' element={<ProtectedRoute><RelationList /></ProtectedRoute>} />
         <Route path='/civil-name-list' element={<ProtectedRoute><CivilIDNameList /></ProtectedRoute>}></Route>
         <Route path='/district-list' element={<ProtectedRoute><DistrictList /></ProtectedRoute>}></Route>
-
-
+        <Route path='/city-list' element={<ProtectedRoute><CityList /></ProtectedRoute>}></Route>
+        <Route path='/timezone-list' element={<ProtectedRoute><TimeZoneList /></ProtectedRoute>}></Route>
 
         {/* Company  Masters */}
         <Route path='/department' element={<ProtectedRoute><DepartmentList /></ProtectedRoute>} />

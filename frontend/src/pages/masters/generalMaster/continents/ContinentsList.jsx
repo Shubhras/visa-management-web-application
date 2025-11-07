@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
 // import Breadcrumb from "../../../components/Breadcrumb";
 import { Icon } from "@iconify/react/dist/iconify.js";
@@ -56,6 +56,52 @@ const ContinentsList = () => {
   const [selectedItems, setSelectedItems] = useState(["Continent"]);
   const [ItemsRequired] = useState(["Continent"]);
 
+  // Table columns configuration
+  const [tableColumns] = useState([
+    { id: 'name', label: 'Continent', field: 'name', visible: true, required: false },
+    { id: 'description', label: 'Description', field: 'description', visible: true, required: false },
+    { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false },
+  ]);
+
+  const [visibleColumns, setVisibleColumns] = useState(
+    tableColumns.filter(col => col.visible).map(col => col.id)
+  );
+  const [showColumnDropdown, setShowColumnDropdown] = useState(false);
+  const columnDropdownRef = useRef(null);
+  // Column visibility toggle handler
+  const toggleColumnVisibility = (columnId) => {
+    const column = tableColumns.find(col => col.id === columnId);
+    if (column?.required) return; // Don't allow hiding required columns
+
+    setVisibleColumns(prev => {
+      if (prev.includes(columnId)) {
+        return prev.filter(id => id !== columnId);
+      } else {
+        return [...prev, columnId];
+      }
+    });
+  };
+
+  // Check if column is visible
+  const isColumnVisible = (columnId) => {
+    return visibleColumns.includes(columnId);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (columnDropdownRef.current && !columnDropdownRef.current.contains(event.target)) {
+        setShowColumnDropdown(false);
+      }
+    };
+
+    if (showColumnDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showColumnDropdown]);
   // Updated state with sorting
   const [tableState, setTableState] = useState({
     page: 1,
@@ -470,54 +516,23 @@ const ContinentsList = () => {
                   >
                     Export
                   </button>
-                  {/* {selectedRows.length == 0 && (
-                    <button
-                      onClick={handleSelectAllButton}
-                      className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
-                    >
-                      Delete
-                    </button>
-                  )}
-                  {selectedRows.length > 0 && (
-                    <button
-                      onClick={() => handleBulkDelete("")}
-                      className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
-                    >{`Delete Selected (${selectedRows.length})`}
-                    </button>
-                  )}
-                  {selectedRows.length > 0 && (
-                    <button
-                      onClick={() => handleBulkDelete("all")}
-                      className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
-                    >{`Delete All (${tableState.total})`}
-                    </button>
-                  )} */}
-
                   <button
                     onClick={handleBulkDelete}
                     className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
                   >
                     Delete
                   </button>
-                  {selectedRows.length > 0 && (
+                   {(selectedRows?.length > 0 && selectedRows?.length === continents?.length) && (
                     <>
                       <button
                         onClick={() => handleSelectAllOrNot("onlySelected")}
-                        className={`btn btn-sm px-3 py-1 fw-medium ${
-                          selectAllOrNot === "onlySelected"
-                            ? "comman-btn-color"
-                            : "comman-inactive-btn"
-                        }`}
+                        className={`btn btn-sm px-3 py-1 fw-medium ${selectAllOrNot === "onlySelected" ? "comman-btn-color" : "comman-inactive-btn"}`}
                       >
                         {`Select (${selectedRows.length})`}
                       </button>
                       <button
                         onClick={() => handleSelectAllOrNot("all")}
-                        className={`btn btn-sm px-3 py-1 fw-medium ${
-                          selectAllOrNot === "all"
-                            ? "comman-btn-color"
-                            : "comman-inactive-btn"
-                        }`}
+                        className={`btn btn-sm px-3 py-1 fw-medium ${selectAllOrNot === "all" ? "comman-btn-color" : "comman-inactive-btn"}`}
                       >
                         {`Select All (${tableState.total})`}
                       </button>
@@ -565,7 +580,7 @@ const ContinentsList = () => {
                           lineHeight: 1,
                         }}
                         onClick={() => {
-                          console.log("Close clicked");
+                         
                           handleSearchChange("");
                         }}
                       >
@@ -588,7 +603,7 @@ const ContinentsList = () => {
               <table className="table mb-0">
                 <thead>
                   <tr>
-                    <th scope="col" className="sl-numbar-th">
+                    <th scope="col" className='sl-numbar-th'>
                       <div className="d-flex align-items-center gap-2">
                         <input
                           className="form-check-input"
@@ -600,50 +615,61 @@ const ContinentsList = () => {
                         <span>No.</span>
                       </div>
                     </th>
-                    <th
-                      scope="col"
-                      className="sorting-th"
-                      onClick={() => handleSort("name")}
-                    >
-                      <div className="d-flex align-items-center">
-                        Continent
-                        {getSortIcon("name")}
+                    {tableColumns.map((column) => (
+                      isColumnVisible(column.id) && (
+                        <th
+                          key={column.id}
+                          scope="col"
+                          className='sorting-th'
+                          onClick={() => handleSort(column.field)}
+                        >
+                          <div className="d-flex align-items-center">
+                            {column.label}
+                            {getSortIcon(column.field)}
+                          </div>
+                        </th>
+                      )
+                    ))}
+                    <th scope="col" className='action-th'>
+                      <div className="position-relative table-header-hide-show" ref={columnDropdownRef}>
+                        <button
+                          className="position-relative table-header-hide-show"
+                          onClick={() => setShowColumnDropdown(!showColumnDropdown)}
+                        >
+                          Action <Icon icon="mdi:table-column" width="20" className='icone' />
+                        </button>
+                        {showColumnDropdown && (
+                          <div className="position-absolute bg-white border rounded shadow-sm p-2 show-dropdowns-header">
+                            {tableColumns.map((column) => (
+                              <div
+                                key={column.id}
+                                className="bg-white p-2 mb-2 d-flex align-items-center gap-2"
+                              >
+                                <input
+                                  type="checkbox"
+                                  id={`column-${column.id}`}
+                                  checked={isColumnVisible(column.id)}
+                                  onChange={() => toggleColumnVisibility(column.id)}
+                                  disabled={column.required}
+                                  className="form-check-input"
+                                />
+                                <label htmlFor={`column-${column.id}`} className="mb-0 flex-grow-1 form-label">
+                                  {column.label}
+                                </label>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    </th>
-                    <th
-                      scope="col"
-                      className="sorting-th"
-                      onClick={() => handleSort("description")}
-                    >
-                      <div className="d-flex align-items-center">
-                        Description
-                        {getSortIcon("description")}
-                      </div>
-                    </th>
-                    <th
-                      scope="col"
-                      className="sorting-th"
-                      onClick={() => handleSort("updated_at")}
-                    >
-                      <div className="d-flex align-items-center">
-                        Modified On
-                        {getSortIcon("updated_at")}
-                      </div>
-                    </th>
-                    <th scope="col" className="action-th">
-                      Action
                     </th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan="5" className="loding-data">
+                      <td colSpan={visibleColumns.length + 2} className='loding-data'>
                         <div className="d-flex justify-content-center align-items-center gap-2">
-                          <div
-                            className="spinner-border spinner-border-sm"
-                            role="status"
-                          >
+                          <div className="spinner-border spinner-border-sm" role="status">
                             <span className="visually-hidden">Loading...</span>
                           </div>
                           Loading...
@@ -661,45 +687,25 @@ const ContinentsList = () => {
                               checked={selectedRows.includes(rowItem.uuid)}
                               onChange={() => handleRowSelect(rowItem.uuid)}
                             />
-                            <span>
-                              {String(startIndex + index + 1).padStart(2, "0")}
-                            </span>
+                            <span>{String(startIndex + index + 1).padStart(2, '0')}</span>
                           </div>
                         </td>
-                        <td>
-                          <span>{rowItem.name}</span>
-                        </td>
-                        <td>
-                          <span>{rowItem.description}</span>
-                        </td>
-                        <td>
-                          <span>{formatDateTime(rowItem.updated_at)}</span>
-                        </td>
-                        <td>
-                          <div className="d-flex align-items-center gap-2">
-                            <Link
-                              to="#"
-                              className="edit-btn-icone"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                handleShowEdit(rowItem);
-                              }}
-                            >
-                              <Icon
-                                icon="lucide:edit"
-                                width="18"
-                                className="icone"
-                              />
+                        {isColumnVisible('name') && (
+                          <td><span>{rowItem.name}</span></td>
+                        )}
+                        {isColumnVisible('description') && (
+                          <td><span>{rowItem.description}</span></td>
+                        )}
+                        {isColumnVisible('updated_at') && (
+                          <td><span>{formatDateTime(rowItem.updated_at)}</span></td>
+                        )}
+                        <td className='action-td'>
+                          <div className="d-flex align-items-end gap-2">
+                            <Link to="#" className='edit-btn-icone' onClick={(e) => { e.preventDefault(); handleShowEdit(rowItem); }}>
+                              <Icon icon="lucide:edit" width="18" className='icone' />
                             </Link>
-                            <button
-                              onClick={() => handleDelete(rowItem.uuid)}
-                              className="delete-btn-icone"
-                            >
-                              <Icon
-                                icon="mingcute:delete-2-line"
-                                width="18"
-                                className="icone"
-                              />
+                            <button onClick={() => handleDelete(rowItem.uuid)} className='delete-btn-icone'>
+                              <Icon icon="mingcute:delete-2-line" width="18" className='icone' />
                             </button>
                           </div>
                         </td>
@@ -707,7 +713,7 @@ const ContinentsList = () => {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="5" className="no-records-found">
+                      <td colSpan={visibleColumns.length + 2} className='no-records-found'>
                         No records found
                       </td>
                     </tr>
@@ -725,9 +731,8 @@ const ContinentsList = () => {
                   <nav>
                     <ul className="pagination mb-0" style={{ gap: "4px" }}>
                       <li
-                        className={`page-item ${
-                          !tableState.hasPrevious ? "disabled" : ""
-                        }`}
+                        className={`page-item ${!tableState.hasPrevious ? "disabled" : ""
+                          }`}
                       >
                         <button
                           className="border-0 bg-transparent"
@@ -746,9 +751,8 @@ const ContinentsList = () => {
                         </button>
                       </li>
                       <li
-                        className={`page-item ${
-                          !tableState.hasPrevious ? "disabled" : ""
-                        }`}
+                        className={`page-item ${!tableState.hasPrevious ? "disabled" : ""
+                          }`}
                       >
                         <button
                           className="border-0 bg-transparent"
@@ -809,9 +813,8 @@ const ContinentsList = () => {
                         </li>
                       ))}
                       <li
-                        className={`page-item ${
-                          !tableState.hasNext ? "disabled" : ""
-                        }`}
+                        className={`page-item ${!tableState.hasNext ? "disabled" : ""
+                          }`}
                       >
                         <button
                           className=" border-0 bg-transparent"
@@ -830,9 +833,8 @@ const ContinentsList = () => {
                         </button>
                       </li>
                       <li
-                        className={`page-item ${
-                          !tableState.hasNext ? "disabled" : ""
-                        }`}
+                        className={`page-item ${!tableState.hasNext ? "disabled" : ""
+                          }`}
                       >
                         <button
                           className="border-0 bg-transparent"
