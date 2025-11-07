@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useDispatch } from "react-redux";
 import MasterLayout from "../../../../masterLayout/MasterLayout";
 import { Icon } from '@iconify/react/dist/iconify.js';
@@ -50,9 +50,9 @@ const LicenceNameList = () => {
 
   // Table columns configuration
   const [tableColumns] = useState([
-    { id: 'country_name', label: 'Country', field: 'country_name', visible: true, required: true },
-    { id: 'full_name', label: 'License Full Name', field: 'full_name', visible: true, required: true },
-    { id: 'short_name', label: 'License Short Name', field: 'short_name', visible: true, required: true },
+    { id: 'country_name', label: 'Country', field: 'country_name', visible: true, required: false },
+    { id: 'full_name', label: 'License Full Name', field: 'full_name', visible: true, required: false },
+    { id: 'short_name', label: 'License Short Name', field: 'short_name', visible: true, required: false },
     { id: 'issuing_authority', label: 'License Issuing Authority Name', field: 'issuing_authority', visible: false, required: false },
     { id: 'valid_upto', label: 'License Valid Upto', field: 'valid_upto', visible: false, required: false },
     { id: 'description', label: 'Description', field: 'description', visible: false, required: false },
@@ -63,6 +63,7 @@ const LicenceNameList = () => {
     tableColumns.filter(col => col.visible).map(col => col.id)
   );
   const [showColumnDropdown, setShowColumnDropdown] = useState(false);
+  const columnDropdownRef = useRef(null);
   // Column visibility toggle handler
   const toggleColumnVisibility = (columnId) => {
     const column = tableColumns.find(col => col.id === columnId);
@@ -81,6 +82,22 @@ const LicenceNameList = () => {
   const isColumnVisible = (columnId) => {
     return visibleColumns.includes(columnId);
   };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (columnDropdownRef.current && !columnDropdownRef.current.contains(event.target)) {
+        setShowColumnDropdown(false);
+      }
+    };
+
+    if (showColumnDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showColumnDropdown]);
 
   // Updated state with sorting
   const [tableState, setTableState] = useState({
@@ -583,36 +600,6 @@ const LicenceNameList = () => {
                     className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
                     onClick={handleShow}
                   >+ New</button>
-                  <div className="position-relative table-header-hide-show">
-                    <button
-                      className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
-                      onClick={() => setShowColumnDropdown(!showColumnDropdown)}
-                    >
-                      <Icon icon="mdi:table-column" width="16" className="me-1" /> Columns
-                    </button>
-                    {showColumnDropdown && (
-                      <div className="position-absolute bg-white border rounded shadow-sm p-2 show-dropdowns-header">
-                        {tableColumns.map((column) => (
-                          <div
-                            key={column.id}
-                            className="bg-white p-2 mb-2 d-flex align-items-center gap-2"
-                          >
-                            <input
-                              type="checkbox"
-                              id={`column-${column.id}`}
-                              checked={isColumnVisible(column.id)}
-                              onChange={() => toggleColumnVisibility(column.id)}
-                              disabled={column.required}
-                              className="form-check-input"
-                            />
-                            <label htmlFor={`column-${column.id}`} className="mb-0 flex-grow-1 form-label">
-                              {column.label}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
                 </div>
               </div>
             </div>
@@ -801,10 +788,37 @@ const LicenceNameList = () => {
                         </th>
                       )
                     ))}
-                    <th scope="col" className='action-th'>Action 
-                      <button  className='hide-show-column-btn-icone'>
-                      <Icon icon="mdi:table-column" width="20" className='icone' />
-                    </button>
+                    <th scope="col" className='action-th'>
+                      <div className="position-relative table-header-hide-show" ref={columnDropdownRef}>
+                        <button
+                          className="position-relative table-header-hide-show"
+                          onClick={() => setShowColumnDropdown(!showColumnDropdown)}
+                        >
+                          Action <Icon icon="mdi:table-column" width="20" className='icone' />
+                        </button>
+                        {showColumnDropdown && (
+                          <div className="position-absolute bg-white border rounded shadow-sm p-2 show-dropdowns-header">
+                            {tableColumns.map((column) => (
+                              <div
+                                key={column.id}
+                                className="bg-white p-2 mb-2 d-flex align-items-center gap-2"
+                              >
+                                <input
+                                  type="checkbox"
+                                  id={`column-${column.id}`}
+                                  checked={isColumnVisible(column.id)}
+                                  onChange={() => toggleColumnVisibility(column.id)}
+                                  disabled={column.required}
+                                  className="form-check-input"
+                                />
+                                <label htmlFor={`column-${column.id}`} className="mb-0 flex-grow-1 form-label">
+                                  {column.label}
+                                </label>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </th>
                   </tr>
                 </thead>
