@@ -48,6 +48,30 @@ import {
     DELETE_STUDY_SPECIALISATION,
     EXPORT_STUDY_SPECIALISATION,
     IMPORT_STUDY_SPECIALISATION,
+    DEGREE_AWARDED_BY_LIST,
+    ADD_DEGREE_AWARDED_BY,
+    EDIT_DEGREE_AWARDED_BY,
+    DELETE_DEGREE_AWARDED_BY,
+    EXPORT_DEGREE_AWARDED_BY,
+    IMPORT_DEGREE_AWARDED_BY,
+    ACADEMIC_RESULT_LIST,
+    ADD_ACADEMIC_RESULT,
+    EDIT_ACADEMIC_RESULT,
+    DELETE_ACADEMIC_RESULT,
+    EXPORT_ACADEMIC_RESULT,
+    IMPORT_ACADEMIC_RESULT,
+    DEGREE_AWARDED_INSTITUTE_LIST,
+    ADD_DEGREE_AWARDED_INSTITUTE,
+    EDIT_DEGREE_AWARDED_INSTITUTE,
+    DELETE_DEGREE_AWARDED_INSTITUTE,
+    EXPORT_DEGREE_AWARDED_INSTITUTE,
+    IMPORT_DEGREE_AWARDED_INSTITUTE,
+    ACADEMIC_RESULT_TO_RESULT_LIST,
+    ADD_ACADEMIC_RESULT_TO_RESULT,
+    EDIT_ACADEMIC_RESULT_TO_RESULT,
+    DELETE_ACADEMIC_RESULT_TO_RESULT,
+    EXPORT_ACADEMIC_RESULT_TO_RESULT,
+    IMPORT_ACADEMIC_RESULT_TO_RESULT
 } from "./actionType";
 
 import {
@@ -99,6 +123,30 @@ import {
     deleteStudySpecialisationDataAPI,
     exportStudySpecialisationDataAPI,
     importStudySpecialisationDataAPI,
+    getDegreeAwardedByListDataAPI,
+    addDegreeAwardedByDataAPI,
+    editDegreeAwardedByDataAPI,
+    deleteDegreeAwardedByDataAPI,
+    exportDegreeAwardedByDataAPI,
+    importDegreeAwardedByDataAPI,
+    getAcademicResultListDataAPI,
+    addAcademicResultDataAPI,
+    editAcademicResultDataAPI,
+    deleteAcademicResultDataAPI,
+    exportAcademicResultDataAPI,
+    importAcademicResultDataAPI,
+    getDegreeAwardedInstituteListDataAPI,
+    addDegreeAwardedInstituteDataAPI,
+    editDegreeAwardedInstituteDataAPI,
+    deleteDegreeAwardedInstituteDataAPI,
+    exportDegreeAwardedInstituteDataAPI,
+    importDegreeAwardedInstituteDataAPI,
+    getAcademicResultToResultListAPI,
+    addAcademicResultToResultAPI,
+    editAcademicResultToResultAPI,
+    deleteAcademicResultToResultAPI,
+    exportAcademicResultToResultAPI,
+    importAcademicResultToResultAPI
 } from "../../../service/api_helper";
 
 // --- EDUCATION LEVEL CODE SAGAS ---
@@ -538,6 +586,222 @@ function* studySpecialisationImportDataSaga(action) {
         if (action.callback) action.callback(null, error);
     }
 }
+// Degree Awarded By
+function* degreeAwardedByListSaga(action) {
+    try {
+        const response = yield call(getDegreeAwardedByListDataAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
+
+function* degreeAwardedByAddSaga(action) {
+    try {
+        const response = yield call(addDegreeAwardedByDataAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
+
+function* degreeAwardedByEditSaga(action) {
+    try {
+        const response = yield call(editDegreeAwardedByDataAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
+
+function* degreeAwardedByDeleteSaga(action) {
+    try {
+        const response = yield call(deleteDegreeAwardedByDataAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
+
+function* degreeAwardedByExportDataSaga(action) {
+    try {
+        const response = yield call(exportDegreeAwardedByDataAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
+
+function* degreeAwardedByImportDataSaga(action) {
+    try {
+        const response = yield call(importDegreeAwardedByDataAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
+// Academic Result
+function* academicResultListSaga(action) {
+    try {
+        const response = yield call(getAcademicResultListDataAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
+
+function* academicResultAddSaga(action) {
+    try {
+        const response = yield call(addAcademicResultDataAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
+
+function* academicResultEditSaga(action) {
+    try {
+        const response = yield call(editAcademicResultDataAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
+
+function* academicResultDeleteSaga(action) {
+    try {
+        const response = yield call(deleteAcademicResultDataAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
+
+function* academicResultExportDataSaga(action) {
+    try {
+        const response = yield call(exportAcademicResultDataAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
+
+function* academicResultImportDataSaga(action) {
+    try {
+        const response = yield call(importAcademicResultDataAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
+// Degree Awarded Institute
+function* degreeAwardedInstituteListSaga(action) {
+    try {
+        const response = yield call(getDegreeAwardedInstituteListDataAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
+
+function* degreeAwardedInstituteAddSaga(action) {
+    try {
+        const response = yield call(addDegreeAwardedInstituteDataAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
+
+function* degreeAwardedInstituteEditSaga(action) {
+    try {
+        const response = yield call(editDegreeAwardedInstituteDataAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
+
+function* degreeAwardedInstituteDeleteSaga(action) {
+    try {
+        const response = yield call(deleteDegreeAwardedInstituteDataAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
+
+function* degreeAwardedInstituteExportDataSaga(action) {
+    try {
+        const response = yield call(exportDegreeAwardedInstituteDataAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
+
+function* degreeAwardedInstituteImportDataSaga(action) {
+    try {
+        const response = yield call(importDegreeAwardedInstituteDataAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
+// Academic Result To Result (Compare Mapping)
+function* academicResultToResultListSaga(action) {
+    try {
+        const response = yield call(getAcademicResultToResultListAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
+
+function* academicResultToResultAddSaga(action) {
+    try {
+        const response = yield call(addAcademicResultToResultAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
+
+function* academicResultToResultEditSaga(action) {
+    try {
+        const response = yield call(editAcademicResultToResultAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
+
+function* academicResultToResultDeleteSaga(action) {
+    try {
+        const response = yield call(deleteAcademicResultToResultAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
+
+function* academicResultToResultExportDataSaga(action) {
+    try {
+        const response = yield call(exportAcademicResultToResultAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
+
+function* academicResultToResultImportDataSaga(action) {
+    try {
+        const response = yield call(importAcademicResultToResultAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
 
 
 
@@ -592,7 +856,30 @@ function* educationmasterSaga() {
     yield takeEvery(DELETE_STUDY_SPECIALISATION, studySpecialisationDeleteSaga);
     yield takeEvery(EXPORT_STUDY_SPECIALISATION, studySpecialisationExportDataSaga);
     yield takeEvery(IMPORT_STUDY_SPECIALISATION, studySpecialisationImportDataSaga);
-
+    yield takeEvery(DEGREE_AWARDED_BY_LIST, degreeAwardedByListSaga);
+    yield takeEvery(ADD_DEGREE_AWARDED_BY, degreeAwardedByAddSaga);
+    yield takeEvery(EDIT_DEGREE_AWARDED_BY, degreeAwardedByEditSaga);
+    yield takeEvery(DELETE_DEGREE_AWARDED_BY, degreeAwardedByDeleteSaga);
+    yield takeEvery(EXPORT_DEGREE_AWARDED_BY, degreeAwardedByExportDataSaga);
+    yield takeEvery(IMPORT_DEGREE_AWARDED_BY, degreeAwardedByImportDataSaga);
+    yield takeEvery(ACADEMIC_RESULT_LIST, academicResultListSaga);
+    yield takeEvery(ADD_ACADEMIC_RESULT, academicResultAddSaga);
+    yield takeEvery(EDIT_ACADEMIC_RESULT, academicResultEditSaga);
+    yield takeEvery(DELETE_ACADEMIC_RESULT, academicResultDeleteSaga);
+    yield takeEvery(EXPORT_ACADEMIC_RESULT, academicResultExportDataSaga);
+    yield takeEvery(IMPORT_ACADEMIC_RESULT, academicResultImportDataSaga);
+    yield takeEvery(DEGREE_AWARDED_INSTITUTE_LIST, degreeAwardedInstituteListSaga);
+    yield takeEvery(ADD_DEGREE_AWARDED_INSTITUTE, degreeAwardedInstituteAddSaga);
+    yield takeEvery(EDIT_DEGREE_AWARDED_INSTITUTE, degreeAwardedInstituteEditSaga);
+    yield takeEvery(DELETE_DEGREE_AWARDED_INSTITUTE, degreeAwardedInstituteDeleteSaga);
+    yield takeEvery(EXPORT_DEGREE_AWARDED_INSTITUTE, degreeAwardedInstituteExportDataSaga);
+    yield takeEvery(IMPORT_DEGREE_AWARDED_INSTITUTE, degreeAwardedInstituteImportDataSaga);
+    yield takeEvery(ACADEMIC_RESULT_TO_RESULT_LIST, academicResultToResultListSaga);
+    yield takeEvery(ADD_ACADEMIC_RESULT_TO_RESULT, academicResultToResultAddSaga);
+    yield takeEvery(EDIT_ACADEMIC_RESULT_TO_RESULT, academicResultToResultEditSaga);
+    yield takeEvery(DELETE_ACADEMIC_RESULT_TO_RESULT, academicResultToResultDeleteSaga);
+    yield takeEvery(EXPORT_ACADEMIC_RESULT_TO_RESULT, academicResultToResultExportDataSaga);
+    yield takeEvery(IMPORT_ACADEMIC_RESULT_TO_RESULT, academicResultToResultImportDataSaga);
 
 
 }

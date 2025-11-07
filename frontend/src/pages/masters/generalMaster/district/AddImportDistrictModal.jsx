@@ -3,9 +3,9 @@ import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
-import { timeZoneImportData } from '../../../../store/master/generalMasters/actions';
+import { districtImportData } from '../../../../store/master/generalMasters/actions';
 import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
-const AddImportTimeZoneModal = ({ show, handleClose }) => {
+const AddImportDistrictModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
     const [file, setFile] = useState(null);
@@ -65,7 +65,7 @@ const AddImportTimeZoneModal = ({ show, handleClose }) => {
             formData.append('sheet_name', selectedSheet);
         }
         setLoading(true);
-        dispatch(timeZoneImportData(formData, (response, error) => {
+        dispatch(districtImportData(formData, (response, error) => {
             setLoading(false);
             if (error) {
                 toast.error(error?.response?.data?.message || "Server error");
@@ -77,7 +77,7 @@ const AddImportTimeZoneModal = ({ show, handleClose }) => {
                             <div>{response?.message}</div>
                             {response?.duplicates?.length > 0 && (
                                 <div style={{ marginTop: '6px' }}>
-                                    <strong>Duplicate Time Zone skipped — the duplicate data from your uploaded file has been exported into an .xlsx file.</strong>
+                                    <strong>Duplicate district skipped — the duplicate data from your uploaded file has been exported into an .xlsx file.</strong>
                                 </div>
                             )}
                         </div>,
@@ -105,7 +105,7 @@ const AddImportTimeZoneModal = ({ show, handleClose }) => {
         const worksheetData = [header, ...duplicates.map((item) => [item])];
         const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "TimeZone");
+        XLSX.utils.book_append_sheet(workbook, worksheet, "District");
 
         const excelBuffer = XLSX.write(workbook, {
             bookType: "xlsx",
@@ -116,7 +116,7 @@ const AddImportTimeZoneModal = ({ show, handleClose }) => {
             type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         });
 
-        saveAs(blob, `TimeZone-Duplicate-Data.xlsx`);
+        saveAs(blob, `District-Duplicate-Data.xlsx`);
     };
     // Handle modal close
     const onClose = () => {
@@ -141,14 +141,14 @@ const AddImportTimeZoneModal = ({ show, handleClose }) => {
                 className="modal fade show common-ctl-popup"
                 tabIndex={-1}
                 role="dialog"
-                aria-labelledby="TimeZoneModalLabel"
+                aria-labelledby="DistrictImportModalLabel"
                 aria-hidden={!show}
             >
                 <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
                     <div className="modal-content radius-16 bg-base">
                         <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                            <h1 className="modal-title fs-5" id="TimeZoneModalLabel">
-                                Upload Time Zone
+                            <h1 className="modal-title fs-5" id="DistrictImportModalLabel">
+                                Upload District
                             </h1>
                             <button
                                 type="button"
@@ -241,10 +241,10 @@ const AddImportTimeZoneModal = ({ show, handleClose }) => {
             </div>
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
-                    downloadFileName:"TimeZone",
-                    items: ["Country","State", "Time Zone","Description"],
-                    selectedItems: ["Country", "Time Zone"],
-                    ItemsRequired:["Country", "Time Zone"]
+                    downloadFileName:"District",
+                    items: ["Country Name","State Name", "District Name","Description"],
+                    selectedItems: ["Country Name", "District Name"],
+                    ItemsRequired:["Country Name", "District Name"]
                 }
                 } />
             )}
@@ -252,4 +252,4 @@ const AddImportTimeZoneModal = ({ show, handleClose }) => {
     );
 };
 
-export default AddImportTimeZoneModal;
+export default AddImportDistrictModal;

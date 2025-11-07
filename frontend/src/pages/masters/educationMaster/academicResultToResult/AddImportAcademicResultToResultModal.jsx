@@ -1,11 +1,11 @@
 import React, { useState } from 'react'
 import { useDispatch } from "react-redux";
-import { studySpecialisationImportData } from '../../../../store/master/educationMaster/action';
+import { academicResultToResultImportData } from '../../../../store/master/educationMaster/action';
 import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
 import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
-const AddImportStudySpecialisationModal = ({ show, handleClose }) => {
+const AddImportAcademicResultToResultModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
     const [file, setFile] = useState(null);
@@ -65,7 +65,7 @@ const AddImportStudySpecialisationModal = ({ show, handleClose }) => {
             formData.append('sheet_name', selectedSheet);
         }
         setLoading(true);
-        dispatch(studySpecialisationImportData(formData, (response, error) => {
+        dispatch(academicResultToResultImportData(formData, (response, error) => {
             setLoading(false);
             if (error) {
                 toast.error(error?.response?.data?.message || "Server error");
@@ -77,7 +77,7 @@ const AddImportStudySpecialisationModal = ({ show, handleClose }) => {
                             <div>{response?.message}</div>
                             {response?.duplicates?.length > 0 && (
                                 <div style={{ marginTop: '6px' }}>
-                                    <strong>Duplicate study specialisations skipped — the duplicate data from your uploaded file has been exported into an .xlsx file.</strong>
+                                    <strong>Duplicate compare : academic result to result skipped — the duplicate data from your uploaded file has been exported into an .xlsx file.</strong>
                                 </div>
                             )}
                         </div>,
@@ -100,12 +100,12 @@ const AddImportStudySpecialisationModal = ({ show, handleClose }) => {
     };
 
     const handleExportToExcel = (duplicatesData) => {
-        const header = ["Study Specialisation"];
+        const header = ["Compare : Academic Result To Result"];
         const duplicates = duplicatesData //["test1", "test3", "test3"];
         const worksheetData = [header, ...duplicates.map((item) => [item])];
         const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "StudySpecialisation");
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Compare:AcademicResultToResult");
 
         const excelBuffer = XLSX.write(workbook, {
             bookType: "xlsx",
@@ -116,7 +116,7 @@ const AddImportStudySpecialisationModal = ({ show, handleClose }) => {
             type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         });
 
-        saveAs(blob, `StudySpecialisation-Duplicate-Data.xlsx`);
+        saveAs(blob, `Compare:AcademicResultToResult-Duplicate-Data.xlsx`);
     };
     // Handle modal close
     const onClose = () => {
@@ -148,7 +148,7 @@ const AddImportStudySpecialisationModal = ({ show, handleClose }) => {
                     <div className="modal-content radius-16 bg-base">
                         <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
                             <h1 className="modal-title fs-5" id="departmentModalLabel">
-                                Upload Study Specialisation
+                                Upload Compare : Academic Result To Result
                             </h1>
                             <button
                                 type="button"
@@ -241,10 +241,10 @@ const AddImportStudySpecialisationModal = ({ show, handleClose }) => {
             </div>
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
-                    downloadFileName:"StudySpecialisation",
-                    items: ["Study Main Area","Study Major Area","Study Specialisation","Description"],
-                    selectedItems: ["Study Main Area","Study Major Area","Study Specialisation"],
-                    ItemsRequired:["Study Main Area","Study Major Area","Study Specialisation" ]
+                    downloadFileName: "Compare:AcademicResultToResult",
+                    items: ["Academic Result Type", "Academic Result","Compare : Academic Result Type","Compare : Academic Result","Description"],
+                    selectedItems: ["Academic Result Type", "Academic Result","Compare : Academic Result Type","Compare : Academic Result"],
+                    ItemsRequired: ["Academic Result Type", "Academic Result","Compare : Academic Result Type","Compare : Academic Result"]
                 }
                 } />
             )}
@@ -252,4 +252,4 @@ const AddImportStudySpecialisationModal = ({ show, handleClose }) => {
     );
 };
 
-export default AddImportStudySpecialisationModal;
+export default AddImportAcademicResultToResultModal;

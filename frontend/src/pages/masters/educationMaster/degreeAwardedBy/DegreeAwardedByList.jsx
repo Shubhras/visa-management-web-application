@@ -5,11 +5,11 @@ import MasterLayout from "../../../../masterLayout/MasterLayout";
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { Link } from 'react-router-dom';
 import { toast } from "react-toastify";
-import { studySpecialisationList, studySpecialisationDelete, studySpecialisationExportData } from "../../../../store/master/educationMaster/action";
-import AddImportStudySpecialisationModal from './AddImportStudySpecialisationModal';
-import AddEditStudySpecialisationModal from './AddEditStudySpecialisationModal';
+import { degreeAwardedByList, degreeAwardedByDelete, degreeAwardedByExportData } from "../../../../store/master/educationMaster/action";
+import AddImportDegreeAwardedByModal from './AddImportDegreeAwardedByModal';
+import AddEditDegreeAwardedByModal from './AddEditDegreeAwardedByModal';
 
-const StudySpecialisationList = () => {
+const DegreeAwardedByList = () => {
   const dispatch = useDispatch();
   const [modalState, setModalState] = useState({
     show: false,
@@ -45,9 +45,9 @@ const StudySpecialisationList = () => {
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [items] = useState(["Study Main Area", "Study Major Area", "Study Specialisation", "Description", "Modified On"]);
-  const [selectedItems, setSelectedItems] = useState(["Study Main Area", "Study Major Area", "Study Specialisation"]);
-  const [ItemsRequired] = useState(["Study Main Area", "Study Major Area", "Study Specialisation"]);
+  const [items] = useState(["Country", "Education Level", "Degree Awarded By", "Description", "Modified On"]);
+  const [selectedItems, setSelectedItems] = useState(["Country", "Education Level", "Degree Awarded By"]);
+  const [ItemsRequired] = useState(["Country", "Education Level", "Degree Awarded By"]);
 
   // Updated state with sorting
   const [tableState, setTableState] = useState({
@@ -89,7 +89,7 @@ const StudySpecialisationList = () => {
       sortOrder: tableState.sortOrder || ''
     };
 
-    dispatch(studySpecialisationList(params, (response, error) => {
+    dispatch(degreeAwardedByList(params, (response, error) => {
       setLoading(false);
       if (response?.statusCode === 200 && response?.status === true) {
         const paginationData = response?.pagination || {};
@@ -260,7 +260,7 @@ const StudySpecialisationList = () => {
   const handleDelete = (uuid) => {
     setDeleteId(uuid);
     setShowDeleteConfirm(true);
-    setDeleteConfirmMessage(`Are you sure you want to delete this study specialisation?`);
+    setDeleteConfirmMessage(`Are you sure you want to delete this degree awarded by?`);
   };
 
   const handleBulkDelete = () => {
@@ -269,8 +269,8 @@ const StudySpecialisationList = () => {
       return;
     }
     // Choose message based on delete type
-    const message = selectAllOrNot === "all" ? `${tableState.total} all study specialisations` : `${selectedRows.length} selected study specialisation`;
-    setDeleteConfirmMessage(`Are you sure you want to delete this study specialisation (${message})?`);
+    const message = selectAllOrNot === "all" ? `${tableState.total} all degree awarded by` : `${selectedRows.length} selected degree awarded by`;
+    setDeleteConfirmMessage(`Are you sure you want to delete this degree awarded by (${message})?`);
     setShowDeleteConfirm(true);
   };
 
@@ -278,10 +278,10 @@ const StudySpecialisationList = () => {
     // const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
     const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
     if (!sendPayload || sendPayload.length === 0) {
-      toast.error("No Study specialisation selected for deletion.");
+      toast.error("No degree awarded by selected for deletion.");
       return;
     }
-    dispatch(studySpecialisationDelete(sendPayload, (response, error) => {
+    dispatch(degreeAwardedByDelete(sendPayload, (response, error) => {
       if (error) {
         toast.error(error?.response?.data?.message || "server error");
       } else {
@@ -361,9 +361,9 @@ const StudySpecialisationList = () => {
     }
     // Map frontend labels to backend field names
     const fieldMapping = {
-      "Study Main Area": "mainarea_id",
-      "Study Major Area":"majorarea_id",
-      "Study Specialisation":"studyspecialisation",
+      "Country": "name",
+      "Education Level":"",
+      "Degree Awarded By":"",
       "Modified On": "updated_at",
       "Description": "description",
     };
@@ -377,7 +377,7 @@ const StudySpecialisationList = () => {
       uuids: selectAllOrNot === "all" ? [] : selectedRows,
     };
     setLoadingExport(true);
-    dispatch(studySpecialisationExportData(sendPayload, (response, error) => {
+    dispatch(degreeAwardedByExportData(sendPayload, (response, error) => {
       if (error) {
         setLoadingExport(false);
         toast.error(error?.response?.message || "server error");
@@ -391,7 +391,7 @@ const StudySpecialisationList = () => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `StudySpecialisation.xlsx`;
+          link.download = `DegreeAwardedBy.xlsx`;
           document.body.appendChild(link);
           link.click();
           link.remove();
@@ -571,19 +571,19 @@ const StudySpecialisationList = () => {
                     </th>
                     <th scope="col" className='sorting-th' onClick={() => handleSort('name')}>
                       <div className="d-flex align-items-center">
-                        Study Main Area
+                        Country
                         {getSortIcon('mainarea')}
                       </div>
                     </th>
                     <th scope="col" className='sorting-th' onClick={() => handleSort('name')}>
                       <div className="d-flex align-items-center">
-                        Study Major Area
+                        Education Level
                         {getSortIcon('majorarea')}
                       </div>
                     </th>
                      <th scope="col" className='sorting-th' onClick={() => handleSort('name')}>
                       <div className="d-flex align-items-center">
-                        Study Specialisation
+                        Degree Awarded By
                         {getSortIcon('studyspecialisation')}
                       </div>
                     </th>
@@ -794,14 +794,14 @@ const StudySpecialisationList = () => {
             </div>
           </div>
         </div>
-        <AddEditStudySpecialisationModal
+        <AddEditDegreeAwardedByModal
           show={modalState.show}
           handleClose={handleClose}
           mode={modalState.mode}
           rowData={modalState.rowData}
         />
         {showImport && (
-          <AddImportStudySpecialisationModal show={showImport} handleClose={handleCloseImport} />)}
+          <AddImportDegreeAwardedByModal show={showImport} handleClose={handleCloseImport} />)}
         {showDeleteConfirm && (
           <div className="modal fade show common-ctl-popup">
             <div className="modal-dialog modal-dialog-centered">
@@ -845,7 +845,7 @@ const StudySpecialisationList = () => {
             <div className="modal-dialog modal-xl modal-dialog-centered" role="document">
               <div className="modal-content radius-16 bg-base">
                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                  <h1 className="modal-title fs-5">Export Study Specialisation</h1>
+                  <h1 className="modal-title fs-5">Export Degree Awarded By</h1>
                   <button
                     type="button"
                     className="btn-close"
@@ -943,4 +943,4 @@ const StudySpecialisationList = () => {
   );
 };
 
-export default StudySpecialisationList;
+export default DegreeAwardedByList;

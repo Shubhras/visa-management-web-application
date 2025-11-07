@@ -102,23 +102,23 @@ const AddEditCivilIDNameModal = ({ show, handleClose, mode = 'add', rowData = nu
       const sendPayload = mode === 'edit'
         ? {
           uuid: formData.uuid,
-          name: formData.name,
-          full_name: formData.full_name,
-          short_name: formData.short_name,
+          civil_id_name: formData.civil_id_name,
+          authority_full_name: formData.authority_full_name,
+          authority_short_name: formData.authority_short_name,
           valid_upto: formData.valid_upto,
-          valid_upto_type: formData.valid_upto_type,
-          valid_upto_numeric: formData.valid_upto_numeric,
-          valid_upto_unit: formData.valid_upto_unit,
+          valid_type: formData.valid_upto_type?.toUpperCase() || '',
+          valid_duration_value: formData.valid_upto_numeric,
+          valid_duration_unit: formData.valid_upto_unit,
           description: formData.description,
         }
         : {
-          name: formData.name,
-          full_name: formData.full_name,
-          short_name: formData.short_name,
+          civil_id_name: formData.name,
+          authority_full_name: formData.full_name,
+          authority_short_name: formData.short_name,
           valid_upto: formData.valid_upto,
-          valid_upto_type: formData.valid_upto_type,
-          valid_upto_numeric: formData.valid_upto_numeric,
-          valid_upto_unit: formData.valid_upto_unit,
+          valid_type: formData.valid_upto_type?.toUpperCase() || '',
+          valid_duration_value: formData.valid_upto_numeric,
+          valid_duration_unit: formData.valid_upto_unit,
           description: formData.description,
         };
 

@@ -5,11 +5,10 @@ import MasterLayout from "../../../../masterLayout/MasterLayout";
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { Link } from 'react-router-dom';
 import { toast } from "react-toastify";
-import { timeZoneList, timeZoneDelete, timeZoneExportData } from '../../../../store/master/generalMasters/actions';
-import AddImportTimeZoneModal from './AddImportTimeZoneModal';
-import AddEditTimeZoneModal from './AddEditTimeZoneModal';
-
-const TimeZoneList = () => {
+import AddImportStateModal from './AddImportStateModal';
+import AddEditStateModal from './AddEditStateModal';
+import { stateList, stateDelete, stateExportData } from '../../../../store/master/generalMasters/actions';
+const StateList = () => {
   const dispatch = useDispatch();
   const [modalState, setModalState] = useState({
     show: false,
@@ -30,7 +29,7 @@ const TimeZoneList = () => {
       mode: 'add',
       rowData: null
     });
-    fetchTimeZoneList();
+    fetchDepartmentList();
   }
 
   // const [showEdit, setShowEdit] = useState(false);
@@ -38,16 +37,16 @@ const TimeZoneList = () => {
   const [rowSelectData, setRowSelectData] = useState({});
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this time zone?");
+  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this department?");
   const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [selectAllOrNot, setSelectAllOrNot] = useState('');
-  const [timeZoneDataList, setTimeZoneDataList] = useState([]);
+  const [stateListData, setStateListData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [items] = useState(["Country", "State", "Time Zone", "Description", "Modified On"]);
-  const [selectedItems, setSelectedItems] = useState(["Country", "Time Zone"]);
-  const [ItemsRequired] = useState(["Country", "Time Zone"]);
+  const [items] = useState(["Country Name", "State Name", "State Short Name", "State / Territory", "Description", "Modified On"]);
+  const [selectedItems, setSelectedItems] = useState(["Country Name", "State Name", "State / Territory"]);
+  const [ItemsRequired] = useState(["Country Name", "State Name", "State / Territory"]);
 
   // Updated state with sorting
   const [tableState, setTableState] = useState({
@@ -67,7 +66,7 @@ const TimeZoneList = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (tableState.search !== undefined) {
-        fetchTimeZoneList();
+        fetchDepartmentList();
       }
     }, 500);
 
@@ -75,10 +74,10 @@ const TimeZoneList = () => {
   }, [tableState.search]);
 
   useEffect(() => {
-    fetchTimeZoneList();
+    fetchDepartmentList();
   }, [tableState.page, tableState.limit, tableState.status, tableState.sortBy, tableState.sortOrder]);
 
-  const fetchTimeZoneList = () => {
+  const fetchDepartmentList = () => {
     setLoading(true);
     const params = {
       page: tableState.page,
@@ -89,12 +88,12 @@ const TimeZoneList = () => {
       sortOrder: tableState.sortOrder || ''
     };
 
-    dispatch(timeZoneList(params, (response, error) => {
+    dispatch(stateList(params, (response, error) => {
       setLoading(false);
       if (response?.statusCode === 200 && response?.status === true) {
         const paginationData = response?.pagination || {};
 
-        setTimeZoneDataList(response?.data || []);
+        setStateListData(response?.data || []);
         setTableState(prev => ({
           ...prev,
           total: paginationData.totalItems || 0,
@@ -103,7 +102,6 @@ const TimeZoneList = () => {
           hasNext: paginationData.nextPage || false,
           hasPrevious: paginationData.previousPage || false
         }));
-
         setSelectedRows(prev => {
           const filtered = prev.filter(rowId =>
             response?.data.some(rowItems => rowItems.uuid === rowId)
@@ -111,7 +109,7 @@ const TimeZoneList = () => {
           return filtered;
         });
       } else {
-        setTimeZoneDataList([]);
+        setStateListData([]);
         setTableState(prev => ({
           ...prev,
           total: 0,
@@ -180,14 +178,14 @@ const TimeZoneList = () => {
     if (isAllSelected) {
       setSelectedRows([]);
     } else {
-      setSelectedRows(timeZoneDataList.map(Item => Item.uuid));
+      setSelectedRows(stateListData.map(Item => Item.uuid));
     }
   };
   // For checkbox in table header
   const handleSelectAll = (e) => {
     const checked = e.target.checked;
     if (checked) {
-      setSelectedRows(timeZoneDataList.map(Item => Item.uuid));
+      setSelectedRows(stateListData.map(Item => Item.uuid));
     } else {
       setSelectedRows([]);
       setSelectAllOrNot('');
@@ -204,8 +202,8 @@ const TimeZoneList = () => {
     });
   };
 
-  const isAllSelected = timeZoneDataList.length > 0 &&
-    timeZoneDataList.every(Item => selectedRows.includes(Item.uuid));
+  const isAllSelected = stateListData.length > 0 &&
+    stateListData.every(Item => selectedRows.includes(Item.uuid));
 
   const goToPage = (page) => {
     if (page >= 1 && page <= tableState.totalPages) {
@@ -246,6 +244,11 @@ const TimeZoneList = () => {
     return pages;
   };
 
+  // const handleCloseEdit = () => {
+  //   setShowEdit(false);
+  //   fetchDepartmentList();
+  // };
+
   const handleShowEdit = (rowData) => {
     setModalState({
       show: true,
@@ -253,14 +256,13 @@ const TimeZoneList = () => {
       rowData: rowData
     });
   };
-
   const handleSelectAllOrNot = (a) => {
     setSelectAllOrNot(a);
   }
   const handleDelete = (uuid) => {
     setDeleteId(uuid);
     setShowDeleteConfirm(true);
-    setDeleteConfirmMessage(`Are you sure you want to delete this time zone?`);
+    setDeleteConfirmMessage(`Are you sure you want to delete this state?`);
   };
 
   const handleBulkDelete = () => {
@@ -269,8 +271,8 @@ const TimeZoneList = () => {
       return;
     }
     // Choose message based on delete type
-    const message = selectAllOrNot === "all" ? `${tableState.total} all time zone` : `${selectedRows.length} selected time zone`;
-    setDeleteConfirmMessage(`Are you sure you want to delete this time zone (${message})?`);
+    const message = selectAllOrNot === "all" ? `${tableState.total} all state` : `${selectedRows.length} selected state`;
+    setDeleteConfirmMessage(`Are you sure you want to delete this state (${message})?`);
     setShowDeleteConfirm(true);
   };
 
@@ -278,22 +280,22 @@ const TimeZoneList = () => {
     // const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
     const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
     if (!sendPayload || sendPayload.length === 0) {
-      toast.error("No time zone selected for deletion.");
+      toast.error("No state selected for deletion.");
       return;
     }
-    dispatch(timeZoneDelete(sendPayload, (response, error) => {
+    dispatch(stateDelete(sendPayload, (response, error) => {
       if (error) {
         toast.error(error?.response?.data?.message || "server error");
       } else {
         if (response?.statusCode === 200 && response?.status === true) {
           toast.success(response?.message);
-          setTimeZoneDataList(prevRowItems => prevRowItems.filter(Item => Item.uuid !== deleteId));
+          setStateListData(prevRowItems => prevRowItems.filter(Item => Item.uuid !== deleteId));
           setSelectedRows(prevSelected => prevSelected.filter(rowId => rowId !== deleteId));
           setShowDeleteConfirm(false);
           setSelectedRows([]);
           setSelectAllOrNot('');
           setDeleteId(null);
-          fetchTimeZoneList();
+          fetchDepartmentList();
         } else {
           toast.error("Something went wrong.");
         }
@@ -311,7 +313,7 @@ const TimeZoneList = () => {
 
   const handleCloseImport = () => {
     setShowImport(false);
-    fetchTimeZoneList();
+    fetchDepartmentList();
   };
 
   const handleShowImport = () => {
@@ -359,15 +361,17 @@ const TimeZoneList = () => {
       toast.error("Please select at least one field");
       return
     }
-    // Map frontend labels to backend field names
+    // Map frontend labels to State field names
+
     const fieldMapping = {
-      "Country": "countryName",
-      "State": "stateName",
-      "Time Zone": "Timezone",
+      "Country Name": "countryName",
+      "State Name": "stateName",
+      "State Short Name": "stateshortName",
+      "State / Territory": "state",
       "Modified On": "updated_at",
       "Description": "description",
     };
-    // Convert selectedItems to backend field names
+    // Convert selectedItems to State field names
     const mappedFields = selectedItems.map((item) => fieldMapping[item] || item);
     // Convert to comma-separated string
     const fieldsString = mappedFields.join(",");
@@ -376,8 +380,9 @@ const TimeZoneList = () => {
       fields: fieldsString,
       uuids: selectAllOrNot === "all" ? [] : selectedRows,
     };
+
     setLoadingExport(true);
-    dispatch(timeZoneExportData(sendPayload, (response, error) => {
+    dispatch(stateExportData(sendPayload, (response, error) => {
       if (error) {
         setLoadingExport(false);
         toast.error(error?.response?.message || "server error");
@@ -391,7 +396,7 @@ const TimeZoneList = () => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `TimeZone.xlsx`;
+          link.download = `State.xlsx`;
           document.body.appendChild(link);
           link.click();
           link.remove();
@@ -429,7 +434,7 @@ const TimeZoneList = () => {
   return (
     <>
       <MasterLayout>
-        {/* <Breadcrumb title="TimeZone" subTitle="List" /> */}
+        {/* <Breadcrumb title="Department" subTitle="List" /> */}
         <div className="card basic-data-table main-container-data">
           <div className="card-body container-data">
             <div className="row align-items-center gy-3 gx-2 flex-wrap filter-action-btn">
@@ -455,7 +460,7 @@ const TimeZoneList = () => {
                   >
                     Delete
                   </button>
-                  {(selectedRows?.length > 0 && selectedRows?.length === timeZoneDataList?.length) && (
+                  {(selectedRows?.length > 0 && selectedRows?.length === stateListData?.length) && (
                     <>
                       <button
                         onClick={() => handleSelectAllOrNot("onlySelected")}
@@ -541,27 +546,33 @@ const TimeZoneList = () => {
                           type="checkbox"
                           checked={isAllSelected}
                           onChange={handleSelectAll}
-                          disabled={timeZoneDataList.length === 0}
+                          disabled={stateListData.length === 0}
                         />
                         <span>No.</span>
                       </div>
                     </th>
                     <th scope="col" className='sorting-th' onClick={() => handleSort('countryName')}>
                       <div className="d-flex align-items-center">
-                        Country
+                        Country Name
                         {getSortIcon('countryName')}
                       </div>
                     </th>
                     <th scope="col" className='sorting-th' onClick={() => handleSort('stateName')}>
                       <div className="d-flex align-items-center">
-                        State
+                        State Name
                         {getSortIcon('stateName')}
                       </div>
                     </th>
-                    <th scope="col" className='sorting-th' onClick={() => handleSort('timezone')}>
+                    <th scope="col" className='sorting-th' onClick={() => handleSort('stateshortName')}>
                       <div className="d-flex align-items-center">
-                        Time Zone
-                        {getSortIcon('timezone')}
+                        State Short Name
+                        {getSortIcon('stateshortName')}
+                      </div>
+                    </th>
+                    <th scope="col" className='sorting-th' onClick={() => handleSort('state')}>
+                      <div className="d-flex align-items-center">
+                        State / Territory
+                        {getSortIcon('state')}
                       </div>
                     </th>
                     <th scope="col" className='sorting-th' onClick={() => handleSort('description')}>
@@ -593,8 +604,8 @@ const TimeZoneList = () => {
                         </div>
                       </td>
                     </tr>
-                  ) : timeZoneDataList.length > 0 ? (
-                    timeZoneDataList.map((rowItem, index) => (
+                  ) : stateListData.length > 0 ? (
+                    stateListData.map((rowItem, index) => (
                       <tr key={rowItem.uuid} >
                         <td >
                           <div className="d-flex align-items-center gap-2">
@@ -621,9 +632,15 @@ const TimeZoneList = () => {
                         </td>
                         <td >
                           <span >
-                            {rowItem.timezone}
+                            {rowItem.stateshortName}
                           </span>
                         </td>
+                        <td >
+                          <span >
+                            {rowItem.state_display}
+                          </span>
+                        </td>
+
                         <td >
                           <span >
                             {rowItem.description}
@@ -771,14 +788,14 @@ const TimeZoneList = () => {
             </div>
           </div>
         </div>
-        <AddEditTimeZoneModal
+        <AddEditStateModal
           show={modalState.show}
           handleClose={handleClose}
           mode={modalState.mode}
           rowData={modalState.rowData}
         />
         {showImport && (
-          <AddImportTimeZoneModal show={showImport} handleClose={handleCloseImport} />)}
+          <AddImportStateModal show={showImport} handleClose={handleCloseImport} />)}
         {showDeleteConfirm && (
           <div className="modal fade show common-ctl-popup">
             <div className="modal-dialog modal-dialog-centered">
@@ -789,6 +806,7 @@ const TimeZoneList = () => {
                 </div>
                 <div className="modal-body">
                   <p className="mb-0">{deleteConfirmMessage}</p>
+
                 </div>
                 <div className="modal-footer">
                   <button
@@ -819,7 +837,7 @@ const TimeZoneList = () => {
             <div className="modal-dialog modal-xl modal-dialog-centered" role="document">
               <div className="modal-content radius-16 bg-base">
                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                  <h1 className="modal-title fs-5">Export Time Zone</h1>
+                  <h1 className="modal-title fs-5">Export State</h1>
                   <button
                     type="button"
                     className="btn-close"
@@ -917,4 +935,4 @@ const TimeZoneList = () => {
   );
 };
 
-export default TimeZoneList;
+export default StateList;

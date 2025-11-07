@@ -5,11 +5,11 @@ import MasterLayout from "../../../../masterLayout/MasterLayout";
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { Link } from 'react-router-dom';
 import { toast } from "react-toastify";
-import { educationTypeList, educationTypeDelete, educationTypeExportData } from '../../../../store/master/educationMaster/action';
-import AddImportAcademicResultTypeModal from './AddImportEducationTypeModal';
-import AddEditAcademicResultTypeModal from './AddEditEducationTypeModal';
+import { academicResultList, academicResultDelete, academicResultExportData } from '../../../../store/master/educationMaster/action';
+import AddImportAcademicResultModal from './AddImportAcademicResultModal';
+import AddEditAcademicResultModal from './AddEditAcademicResultModal';
 
-const EducationTypeList = () => {
+const AcademicResultList = () => {
     const dispatch = useDispatch();
     const [modalState, setModalState] = useState({
         show: false,
@@ -38,16 +38,16 @@ const EducationTypeList = () => {
     const [rowSelectData, setRowSelectData] = useState({});
     const [selectedRows, setSelectedRows] = useState([]);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-    const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this education type?");
+    const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this academic result?");
     const [showExportPopop, setShowExportPopop] = useState(false);
     const [deleteId, setDeleteId] = useState(null);
     const [selectAllOrNot, setSelectAllOrNot] = useState('');
     const [departments, setDepartments] = useState([]);
     const [loading, setLoading] = useState(false);
     const [loadingExport, setLoadingExport] = useState(false);
-    const [items] = useState(["Education Type", "Perticulars", "Modified On"]);
-    const [selectedItems, setSelectedItems] = useState(["Education Type"]);
-    const [ItemsRequired] = useState(["Education Type"]);
+    const [items] = useState(["Academic Result Type", "Academic Result", "Description", "Modified On"]);
+    const [selectedItems, setSelectedItems] = useState(["Academic Result Type", "Academic Result"]);
+    const [ItemsRequired] = useState(["Academic Result Type", "Academic Result"]);
 
     // Updated state with sorting
     const [tableState, setTableState] = useState({
@@ -89,7 +89,7 @@ const EducationTypeList = () => {
             sortOrder: tableState.sortOrder || ''
         };
 
-        dispatch(educationTypeList(params, (response, error) => {
+        dispatch(academicResultList(params, (response, error) => {
             setLoading(false);
             if (response?.statusCode === 200 && response?.status === true) {
                 const paginationData = response?.pagination || {};
@@ -260,7 +260,7 @@ const EducationTypeList = () => {
     const handleDelete = (uuid) => {
         setDeleteId(uuid);
         setShowDeleteConfirm(true);
-        setDeleteConfirmMessage(`Are you sure you want to delete this education type?`);
+        setDeleteConfirmMessage(`Are you sure you want to delete this academic result?`);
     };
 
     const handleBulkDelete = () => {
@@ -269,8 +269,8 @@ const EducationTypeList = () => {
             return;
         }
         // Choose message based on delete type
-        const message = selectAllOrNot === "all" ? `${tableState.total} all education type` : `${selectedRows.length} selected education types`;
-        setDeleteConfirmMessage(`Are you sure you want to delete this education type (${message})?`);
+        const message = selectAllOrNot === "all" ? `${tableState.total} all academic results` : `${selectedRows.length} selected academic result`;
+        setDeleteConfirmMessage(`Are you sure you want to delete this academic result (${message})?`);
         setShowDeleteConfirm(true);
     };
 
@@ -278,10 +278,10 @@ const EducationTypeList = () => {
         // const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
         const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
         if (!sendPayload || sendPayload.length === 0) {
-            toast.error("No education type selected for deletion.");
+            toast.error("No academic result selected for deletion.");
             return;
         }
-        dispatch(educationTypeDelete(sendPayload, (response, error) => {
+        dispatch(academicResultDelete(sendPayload, (response, error) => {
             if (error) {
                 toast.error(error?.response?.data?.message || "server error");
             } else {
@@ -361,9 +361,10 @@ const EducationTypeList = () => {
         }
         // Map frontend labels to backend field names
         const fieldMapping = {
-            "Education Type": "educationType",
+            "Academic Result Type": "AcademicResulttype_id",
+            "Academic Result": "Academicresult",
             "Modified On": "updated_at",
-            "Perticulars": "Perticulars",
+            "Description": "description",
         };
         // Convert selectedItems to backend field names
         const mappedFields = selectedItems.map((item) => fieldMapping[item] || item);
@@ -375,7 +376,7 @@ const EducationTypeList = () => {
             uuids: selectAllOrNot === "all" ? [] : selectedRows,
         };
         setLoadingExport(true);
-        dispatch(educationTypeExportData(sendPayload, (response, error) => {
+        dispatch(academicResultExportData(sendPayload, (response, error) => {
             if (error) {
                 setLoadingExport(false);
                 toast.error(error?.response?.message || "server error");
@@ -389,7 +390,7 @@ const EducationTypeList = () => {
                     const url = window.URL.createObjectURL(blob);
                     const link = document.createElement('a');
                     link.href = url;
-                    link.download = `EducationType.xlsx`;
+                    link.download = `AcademicResult.xlsx`;
                     document.body.appendChild(link);
                     link.click();
                     link.remove();
@@ -567,16 +568,22 @@ const EducationTypeList = () => {
                                                 <span>No.</span>
                                             </div>
                                         </th>
-                                        <th scope="col" className='sorting-th' onClick={() => handleSort('name')}>
+                                        <th scope="col" className='sorting-th' onClick={() => handleSort('AcademicResulttype')}>
                                             <div className="d-flex align-items-center">
-                                                Education Type
-                                                {getSortIcon('educationType')}
+                                                Academic Result Type
+                                                {getSortIcon('AcademicResulttype')}
+                                            </div>
+                                        </th>
+                                        <th scope="col" className='sorting-th' onClick={() => handleSort('Academicresult')}>
+                                            <div className="d-flex align-items-center">
+                                                Academic Result
+                                                {getSortIcon('Academicresult')}
                                             </div>
                                         </th>
                                         <th scope="col" className='sorting-th' onClick={() => handleSort('description')}>
                                             <div className="d-flex align-items-center">
-                                                Perticulars
-                                                {getSortIcon('Perticulars')}
+                                                Description
+                                                {getSortIcon('description')}
                                             </div>
                                         </th>
                                         <th scope="col" className='sorting-th' onClick={() => handleSort('updated_at')}>
@@ -620,12 +627,17 @@ const EducationTypeList = () => {
                                                 </td>
                                                 <td >
                                                     <span >
-                                                        {rowItem.educationType}
+                                                        {rowItem.AcademicResulttype}
                                                     </span>
                                                 </td>
                                                 <td >
                                                     <span >
-                                                        {rowItem.Perticulars}
+                                                        {rowItem.Academicresult}
+                                                    </span>
+                                                </td>
+                                                <td >
+                                                    <span >
+                                                        {rowItem.description}
                                                     </span>
                                                 </td>
                                                 <td>
@@ -770,14 +782,14 @@ const EducationTypeList = () => {
                         </div>
                     </div>
                 </div>
-                <AddEditAcademicResultTypeModal
+                <AddEditAcademicResultModal
                     show={modalState.show}
                     handleClose={handleClose}
                     mode={modalState.mode}
                     rowData={modalState.rowData}
                 />
                 {showImport && (
-                    <AddImportAcademicResultTypeModal show={showImport} handleClose={handleCloseImport} />)}
+                    <AddImportAcademicResultModal show={showImport} handleClose={handleCloseImport} />)}
                 {showDeleteConfirm && (
                     <div className="modal fade show common-ctl-popup">
                         <div className="modal-dialog modal-dialog-centered">
@@ -821,7 +833,7 @@ const EducationTypeList = () => {
                         <div className="modal-dialog modal-xl modal-dialog-centered" role="document">
                             <div className="modal-content radius-16 bg-base">
                                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                                    <h1 className="modal-title fs-5">Export Education Type</h1>
+                                    <h1 className="modal-title fs-5">Export Academic Result</h1>
                                     <button
                                         type="button"
                                         className="btn-close"
@@ -919,4 +931,4 @@ const EducationTypeList = () => {
     );
 };
 
-export default EducationTypeList;
+export default AcademicResultList;

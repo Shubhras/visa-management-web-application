@@ -588,7 +588,7 @@ const LicenceNameList = () => {
                       className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
                       onClick={() => setShowColumnDropdown(!showColumnDropdown)}
                     >
-                      Columns
+                      <Icon icon="mdi:table-column" width="16" className="me-1" /> Columns
                     </button>
                     {showColumnDropdown && (
                       <div className="position-absolute bg-white border rounded shadow-sm p-2 show-dropdowns-header">
@@ -801,7 +801,11 @@ const LicenceNameList = () => {
                         </th>
                       )
                     ))}
-                    <th scope="col" className='action-th'>Action</th>
+                    <th scope="col" className='action-th'>Action 
+                      <button  className='hide-show-column-btn-icone'>
+                      <Icon icon="mdi:table-column" width="20" className='icone' />
+                    </button>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>

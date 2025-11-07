@@ -1,28 +1,37 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from "react-redux";
-import { studySpecialisationAdd, studySpecialisationEdit } from '../../../../store/master/educationMaster/action';
+import { degreeAwardedByAdd, degreeAwardedByEdit } from '../../../../store/master/educationMaster/action';
 import { toast } from "react-toastify";
-import { studyMainAreaList, studyMajorAreaList } from '../../../../store/master/educationMaster/action';
-const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
+import { educationLevelList } from "../../../../store/master/educationMaster/action";
+import { countryDemoList } from '../../../../store/master/companyMasters/actions';
+import { stateListByCountry } from '../../../../store/master/generalMasters/actions';
+const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
     const [studyMainArea, setStudyMainArea] = useState([]);
     const [studyMajorArea, setStudyMajorArea] = useState([]);
+    const [countryListData, setCountryListData] = useState([]);
+    const [stateListData, setStateListData] = useState([]);
+
 
 
     // console.log("rowData",rowData);
     const [formData, setFormData] = useState({
-        uuid: '',
-        studyMainAreaUuid: '',
-        studyMajorAreaUuid: '',
-        studySpecialisationName: '',
-        description: '',
+        uuid: "",
+        countryUuid: "",
+        stateUuid: "",
+        educationLevelUuid: "",
+        degreeAwardedBy: "",
+        degreeAwardedInstitute: "",
+        description: "",
     });
 
     const [errors, setErrors] = useState({
-        studyMainAreaUuid: '',
-        studyMajorAreaUuid: '',
-        studySpecialisationName: '',
+        countryUuid: '',
+        stateUuid: '',
+        educationLevelUuid: '',
+        degreeAwardedBy: '',
+        degreeAwardedInstitute: '',
         description: '',
     });
 
@@ -30,21 +39,31 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
         if (mode === 'edit' && rowData) {
             setFormData({
                 uuid: rowData.uuid || '',
-                studySpecialisationName: rowData.studyspecialisation || '',
-                studyMainAreaUuid: rowData.mainarea || '',
-                studyMajorAreaUuid: rowData.majorarea || '',
-                description: rowData.description || '',
+                countryUuid: rowData.countryUuid || "",
+                stateUuid: rowData.stateUuid || "",
+                educationLevelUuid: rowData.educationLevelUuid || "",
+                degreeAwardedBy: rowData.degreeAwardedBy || "",
+                degreeAwardedInstitute: rowData.degreeAwardedInstitute || "",
+                description: rowData.description || "",
+
             });
+            if (rowData.countryUuid) {
+                fetchStateList(rowData.countryUuid);
+            }
         } else {
             setFormData({
                 uuid: '',
-                studyMainAreaUuid: '',
-                studyMajorAreaUuid: '',
-                studySpecialisationName: '',
-                description: '',
+                countryUuid: '',
+                stateUuid: '',
+                educationLevelUuid: '',
+                degreeAwardedBy: '',
+                degreeAwardedInstitute: '',
+                description: ''
+
             });
         }
         fetchStudyList();
+        fetchCountryList();
     }, [mode, rowData, show]);
 
     const fetchStudyList = () => {
@@ -57,14 +76,7 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
             sortBy: 'updated_at',
             sortOrder: 'desc',
         };
-        dispatch(studyMainAreaList(params, (response, error) => {
-            setLoading(false);
-            if (response?.statusCode === 200 && response?.status === true) {
-                setStudyMainArea(response?.data || []);
-
-            }
-        }));
-        dispatch(studyMajorAreaList(params, (response, error) => {
+        dispatch(educationLevelList(params, (response, error) => {
             setLoading(false);
             if (response?.statusCode === 200 && response?.status === true) {
                 setStudyMajorArea(response?.data || []);
@@ -72,6 +84,30 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
             }
         }));
     };
+
+    const fetchCountryList = () => {
+        const params = { page: 1, limit: 2000, search: '', sortBy: 'updated_at', sortOrder: 'desc' };
+
+        dispatch(countryDemoList(params, (response, error) => {
+            if (response?.statusCode === 200 && response?.status) {
+                setCountryListData(response?.data || []);
+            }
+        }));
+    };
+
+    const fetchStateList = (countryId) => {
+        if (!countryId) return setStateListData([]);
+
+        const params = { countryId };
+        dispatch(stateListByCountry(params, (response, error) => {
+            if (response?.statusCode === 200 && response?.status) {
+                setStateListData(response?.data || []);
+            } else {
+                setStateListData([]);
+            }
+        }));
+    };
+
 
 
     const handleChange = (e) => {
@@ -91,23 +127,32 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
     const validateForm = () => {
         const newErrors = {};
         let isValid = true;
-        if (!formData.studyMainAreaUuid?.trim()) {
-            newErrors.studyMainAreaUuid = 'Study main area is required';
-            isValid = false;
-        }
-        if (!formData.studyMajorAreaUuid?.trim()) {
-            newErrors.studyMajorAreaUuid = 'Study major area is required';
-            isValid = false;
-        }
 
-        if (!formData.studySpecialisationName?.trim()) {
-            newErrors.studySpecialisationName = 'Study specialisation is required';
+        if (!formData.countryUuid.trim()) {
+            newErrors.countryUuid = "Country is required";
+            isValid = false;
+        }
+        if (!formData.stateUuid.trim()) {
+            newErrors.stateUuid = "State is required";
+            isValid = false;
+        }
+        if (!formData.educationLevelUuid.trim()) {
+            newErrors.educationLevelUuid = "Education level is required";
+            isValid = false;
+        }
+        if (!formData.degreeAwardedBy.trim()) {
+            newErrors.degreeAwardedBy = "Degree awarded by is required";
+            isValid = false;
+        }
+        if (!formData.degreeAwardedInstitute.trim()) {
+            newErrors.degreeAwardedInstitute = "Degree awarded institute is required";
             isValid = false;
         }
 
         setErrors(newErrors);
         return isValid;
     };
+
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -116,21 +161,25 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
             const sendPayload = mode === 'edit'
                 ? {
                     uuid: formData.uuid,
-                    studyspecialisation: formData.studySpecialisationName,
-                    mainarea_id: formData.studyMainAreaUuid,
-                    majorarea_id: formData.studyMajorAreaUuid,
+                    countryUuid: formData.countryUuid,
+                    stateUuid: formData.stateUuid,
+                    educationLevelUuid: formData.educationLevelUuid,
+                    degreeAwardedBy: formData.degreeAwardedBy,
+                    degreeAwardedInstitute: formData.degreeAwardedInstitute,
                     description: formData.description,
                 }
                 : {
-                    studyspecialisation: formData.studySpecialisationName,
-                    mainarea_id: formData.studyMainAreaUuid,
-                    majorarea_id: formData.studyMajorAreaUuid,
+                    countryUuid: formData.countryUuid,
+                    stateUuid: formData.stateUuid,
+                    educationLevelUuid: formData.educationLevelUuid,
+                    degreeAwardedBy: formData.degreeAwardedBy,
+                    degreeAwardedInstitute: formData.degreeAwardedInstitute,
                     description: formData.description,
                 };
 
             setLoading(true);
 
-            const action = mode === 'edit' ? studySpecialisationEdit : studySpecialisationAdd;
+            const action = mode === 'edit' ? degreeAwardedByEdit : degreeAwardedByAdd;
             dispatch(action(sendPayload, (response, error) => {
                 setLoading(false);
                 if (error) {
@@ -150,11 +199,13 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
 
     const resetForm = () => {
         setFormData({
-            uuid: '',
-            studyMainAreaUuid: '',
-            studyMajorAreaUuid: '',
-            studySpecialisationName: '',
-            description: '',
+            uuid: "",
+            countryUuid: "",
+            stateUuid: "",
+            educationLevelUuid: "",
+            degreeAwardedBy: "",
+            degreeAwardedInstitute: "",
+            description: "",
         });
         setErrors({});
     };
@@ -181,7 +232,7 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
                 <div className="modal-content radius-16 bg-base">
                     <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
                         <h1 className="modal-title fs-5" id="departmentModalLabel">
-                            {mode === 'edit' ? 'Edit Study Specialisation' : 'Add Study Specialisation'}
+                            {mode === 'edit' ? 'Edit Degree Awarded By' : 'Add Degree Awarded By'}
                         </h1>
                         <button
                             type="button"
@@ -197,65 +248,106 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
                                 {/* Department Name */}
                                 <div className="col-12 mb-20">
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                                        Study Main Area <span className="text-danger">*</span>
+                                        Country<span className="text-danger">*</span>
                                     </label>
                                     <select
-                                        name="studyMainAreaUuid"
-                                        value={formData.studyMainAreaUuid}
+                                        name="countryUuid"
+                                        value={formData.countryUuid}
                                         onChange={handleChange}
-                                        className={`form-control form-select radius-8 ${errors.studyMainAreaUuid ? 'is-invalid' : ''}`}
+                                        className={`form-control form-select radius-8 ${errors.countryUuid ? 'is-invalid' : ''}`}
                                     >
-                                        <option value="">Select  Study Main Area</option>
-                                        {studyMainArea.map((option) => (
+                                        <option value="">Select country</option>
+                                        {countryListData.map((option) => (
                                             <option key={option.uuid} value={option.uuid}>
                                                 {option.name}
                                             </option>
                                         ))}
                                     </select>
-                                    {errors.studyMainAreaUuid && (
+                                    {errors.countryUuid && (
                                         <div className="text-danger text-sm mt-1">
-                                            {errors.studyMainAreaUuid}
+                                            {errors.countryUuid}
                                         </div>
                                     )}
                                 </div>
                                 <div className="col-12 mb-20">
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                                        Study Major Area <span className="text-danger">*</span>
+                                        State<span className="text-danger">*</span>
                                     </label>
                                     <select
-                                        name="studyMajorAreaUuid"
-                                        value={formData.studyMajorAreaUuid}
+                                        name="stateUuid"
+                                        value={formData.stateUuid}
                                         onChange={handleChange}
-                                        className={`form-control form-select radius-8 ${errors.studyMajorAreaUuid ? 'is-invalid' : ''}`}
+                                        className={`form-control form-select radius-8 ${errors.stateUuid ? 'is-invalid' : ''}`}
                                     >
-                                        <option value="">Select  Study Major Area</option>
-                                        {studyMajorArea.map((option) => (
+                                        <option value="">Select state</option>
+                                        {stateListData.map((option) => (
                                             <option key={option.uuid} value={option.uuid}>
-                                                {option.majorarea}
+                                                {option.name}
                                             </option>
                                         ))}
                                     </select>
-                                    {errors.studyMajorAreaUuid && (
+                                    {errors.stateUuid && (
                                         <div className="text-danger text-sm mt-1">
-                                            {errors.studyMajorAreaUuid}
+                                            {errors.stateUuid}
                                         </div>
                                     )}
                                 </div>
                                 <div className="col-12 mb-20">
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                                        Study Specialisation <span className="text-danger">*</span>
+                                        Education Level <span className="text-danger">*</span>
+                                    </label>
+                                    <select
+                                        name="educationLevelUuid"
+                                        value={formData.educationLevelUuid}
+                                        onChange={handleChange}
+                                        className={`form-control form-select radius-8 ${errors.educationLevelUuid ? 'is-invalid' : ''}`}
+                                    >
+                                        <option value="">Select education level</option>
+                                        {studyMajorArea.map((option) => (
+                                            <option key={option.uuid} value={option.uuid}>
+                                                {option.educationlevel}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {errors.educationLevelUuid && (
+                                        <div className="text-danger text-sm mt-1">
+                                            {errors.educationLevelUuid}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="col-12 mb-20">
+                                    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                                        Degree Awarded By <span className="text-danger">*</span>
                                     </label>
                                     <input
                                         type="text"
-                                        name="studySpecialisationName"
-                                        value={formData.studySpecialisationName}
+                                        name="degreeAwardedBy"
+                                        value={formData.degreeAwardedBy}
                                         onChange={handleChange}
-                                        className={`form-control radius-8 ${errors.studySpecialisationName ? 'is-invalid' : ''}`}
-                                        placeholder="Enter study specialisation"
+                                        className={`form-control radius-8 ${errors.degreeAwardedBy ? 'is-invalid' : ''}`}
+                                        placeholder="Enter degree awarded by"
                                     />
-                                    {errors.studySpecialisationName && (
+                                    {errors.degreeAwardedBy && (
                                         <div className="text-danger text-sm mt-1">
-                                            {errors.studySpecialisationName}
+                                            {errors.degreeAwardedBy}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="col-12 mb-20">
+                                    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                                        Degree Awarded Institute <span className="text-danger">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="degreeAwardedInstitute"
+                                        value={formData.degreeAwardedInstitute}
+                                        onChange={handleChange}
+                                        className={`form-control radius-8 ${errors.degreeAwardedInstitute ? 'is-invalid' : ''}`}
+                                        placeholder="Enter degree awarded institute"
+                                    />
+                                    {errors.degreeAwardedInstitute && (
+                                        <div className="text-danger text-sm mt-1">
+                                            {errors.degreeAwardedInstitute}
                                         </div>
                                     )}
                                 </div>
@@ -306,5 +398,4 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
         </div>
     );
 };
-
-export default AddEditStudySpecialisationModal;
+export default AddEditDegreeAwardedInstituteModal;

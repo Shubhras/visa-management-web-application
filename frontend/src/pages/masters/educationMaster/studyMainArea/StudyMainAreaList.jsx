@@ -38,16 +38,16 @@ const StudyMainAreaList = () => {
   const [rowSelectData, setRowSelectData] = useState({});
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this study main area*?");
+  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this study main area?");
   const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [selectAllOrNot, setSelectAllOrNot] = useState('');
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [items] = useState(["Study Main Area*", "Description", "Modified On"]);
-  const [selectedItems, setSelectedItems] = useState(["Study Main Area*"]);
-  const [ItemsRequired] = useState(["Study Main Area*"]);
+  const [items] = useState(["Study Main Area", "Description", "Modified On"]);
+  const [selectedItems, setSelectedItems] = useState(["Study Main Area"]);
+  const [ItemsRequired] = useState(["Study Main Area"]);
 
   // Updated state with sorting
   const [tableState, setTableState] = useState({
@@ -260,7 +260,7 @@ const StudyMainAreaList = () => {
   const handleDelete = (uuid) => {
     setDeleteId(uuid);
     setShowDeleteConfirm(true);
-    setDeleteConfirmMessage(`Are you sure you want to delete this study main area*?`);
+    setDeleteConfirmMessage(`Are you sure you want to delete this study main area?`);
   };
 
   const handleBulkDelete = () => {
@@ -269,8 +269,8 @@ const StudyMainAreaList = () => {
       return;
     }
     // Choose message based on delete type
-    const message = selectAllOrNot === "all" ? `${tableState.total} all study main areas*` : `${selectedRows.length} selected study main areas*`;
-    setDeleteConfirmMessage(`Are you sure you want to delete this study main area* (${message})?`);
+    const message = selectAllOrNot === "all" ? `${tableState.total} all study main areas` : `${selectedRows.length} selected study main areas`;
+    setDeleteConfirmMessage(`Are you sure you want to delete this study main area (${message})?`);
     setShowDeleteConfirm(true);
   };
 
@@ -361,7 +361,7 @@ const StudyMainAreaList = () => {
     }
     // Map frontend labels to backend field names
     const fieldMapping = {
-      "Study Main Area*": "name",
+      "Study Main Area": "name",
       "Modified On": "updated_at",
       "Description": "description",
     };
@@ -389,7 +389,7 @@ const StudyMainAreaList = () => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `StudyMainArea*.xlsx`;
+          link.download = `StudyMainArea.xlsx`;
           document.body.appendChild(link);
           link.click();
           link.remove();

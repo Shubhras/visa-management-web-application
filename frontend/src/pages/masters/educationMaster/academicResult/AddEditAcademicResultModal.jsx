@@ -1,22 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from "react-redux";
-import { educationTypeAdd, educationTypeEdit } from '../../../../store/master/educationMaster/action';
+import { academicResultAdd, academicResultEdit } from '../../../../store/master/educationMaster/action';
 import { toast } from "react-toastify";
-
-const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
+import { academicResultTypeList } from '../../../../store/master/educationMaster/action';
+const AddEditAcademicResultModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
-
+  const [educationLevelListData, setEducationLevelListData] = useState([]);
   // Form state
   const [formData, setFormData] = useState({
     uuid: '',
     departmentName: '',
+    category: '',
     description: '',
   });
 
+  // console.log("rowData",rowData);
   // Validation errors state
   const [errors, setErrors] = useState({
     departmentName: '',
+    category: '',
     description: '',
   });
 
@@ -25,18 +28,44 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
     if (mode === 'edit' && rowData) {
       setFormData({
         uuid: rowData.uuid || '',
-        departmentName: rowData.educationType || '',
-        description: rowData.Perticulars || '',
+        departmentName: rowData.majorarea || '',
+        category: rowData.mainarea || '',
+        description: rowData.description || '',
       });
     } else {
       // Reset form when switching to add mode
       setFormData({
         uuid: '',
         departmentName: '',
+        category: '',
         description: '',
       });
     }
+    fetchEducationLevelList();
   }, [mode, rowData, show]);
+
+  const fetchEducationLevelList = () => {
+    setLoading(true);
+    const params = {
+      page: 1,
+      limit: 2000,
+      search: '',
+      status: '',
+      sortBy: 'updated_at', // Field to sort by
+      sortOrder: 'desc', // 'asc' or 'desc'
+    };
+
+    dispatch(academicResultTypeList(params, (response, error) => {
+      setLoading(false);
+      if (response?.statusCode === 200 && response?.status === true) {
+
+        setEducationLevelListData(response?.data || []);
+
+      } else {
+
+      }
+    }));
+  };
 
   // Handle input changes
   const handleChange = (e) => {
@@ -62,10 +91,14 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
 
     // Department Name validation
     if (!formData.departmentName.trim()) {
-      newErrors.departmentName = 'Education type is required';
+      newErrors.departmentName = 'Academic result  is required';
       isValid = false;
     }
-    
+    if (!formData.category) {
+      newErrors.category = 'Academic result type is required';
+      isValid = false;
+    }
+
     setErrors(newErrors);
     return isValid;
   };
@@ -75,21 +108,23 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
     e.preventDefault();
 
     if (validateForm()) {
-      const sendPayload = mode === 'edit' 
+      const sendPayload = mode === 'edit'
         ? {
-            uuid: formData.uuid,
-            educationType: formData.departmentName,
-            Perticulars: formData.description,
-          }
+          uuid: formData.uuid,
+          Academicresult: formData.departmentName,
+          AcademicResulttype_id: formData.category,
+          description: formData.description,
+        }
         : {
-            educationType: formData.departmentName,
-            Perticulars: formData.description,
-          };
+          Academicresult: formData.departmentName,
+          AcademicResulttype_id: formData.category,
+          description: formData.description,
+        };
 
       setLoading(true);
-      
-      const action = mode === 'edit' ? educationTypeEdit : educationTypeAdd;
-      
+
+      const action = mode === 'edit' ? academicResultEdit : academicResultAdd;
+
       dispatch(action(sendPayload, (response, error) => {
         setLoading(false);
         if (error) {
@@ -112,6 +147,7 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
     setFormData({
       uuid: '',
       departmentName: '',
+      category: '',
       description: '',
     });
     setErrors({});
@@ -139,7 +175,7 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
         <div className="modal-content radius-16 bg-base">
           <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
             <h1 className="modal-title fs-5" id="departmentModalLabel">
-              {mode === 'edit' ? 'Edit Education Type' : 'Add Education Type'}
+              {mode === 'edit' ? 'Edit Academic Result' : 'Add Academic Result'}
             </h1>
             <button
               type="button"
@@ -155,7 +191,30 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
                 {/* Department Name */}
                 <div className="col-12 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Education Type <span className="text-danger">*</span>
+                    Academic Result Type <span className="text-danger">*</span>
+                  </label>
+                  <select
+                    name="category"
+                    value={formData.category}
+                    onChange={handleChange}
+                    className={`form-control form-select radius-8 ${errors.category ? 'is-invalid' : ''}`}
+                  >
+                    <option value="">Select Academic Result Type</option>
+                    {educationLevelListData.map((option) => (
+                      <option key={option.uuid} value={option.uuid}>
+                        {option.name}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.category && (
+                    <div className="text-danger text-sm mt-1">
+                      {errors.category}
+                    </div>
+                  )}
+                </div>
+                <div className="col-12 mb-20">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                    Academic Result <span className="text-danger">*</span>
                   </label>
                   <input
                     type="text"
@@ -163,7 +222,7 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
                     value={formData.departmentName}
                     onChange={handleChange}
                     className={`form-control radius-8 ${errors.departmentName ? 'is-invalid' : ''}`}
-                    placeholder="Enter education type"
+                    placeholder="Enter academic result"
                   />
                   {errors.departmentName && (
                     <div className="text-danger text-sm mt-1">
@@ -178,7 +237,7 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
                     htmlFor="desc"
                     className="form-label fw-semibold text-primary-light text-sm mb-8"
                   >
-                    Perticulars
+                    Description
                   </label>
                   <textarea
                     className={`form-control ${errors.description ? 'is-invalid' : ''}`}
@@ -188,7 +247,7 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
                     onChange={handleChange}
                     rows={4}
                     cols={50}
-                    placeholder="Perticular"
+                    placeholder="Description"
                   />
                 </div>
 
@@ -218,4 +277,4 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
   );
 };
 
-export default AddEditAcademicResultTypeModal;
+export default AddEditAcademicResultModal;

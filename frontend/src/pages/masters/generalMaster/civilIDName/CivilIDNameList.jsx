@@ -49,7 +49,7 @@ const CivilIDNameList = () => {
 
   // Table columns configuration
   const [tableColumns] = useState([
-    { id: 'civil_id_name', label: 'Civil ID Name', field: 'full_name', visible: true, required: true },
+    { id: 'civil_id_name', label: 'Civil ID Name', field: 'full_name', visible: true, required: false },
     { id: 'authority_full_name', label: 'Authority Full Name', field: 'full_name', visible: true, required: false },
     { id: 'authority_short_name', label: 'Authority Short Name', field: 'short_name', visible: true, required: false },
     { id: 'id_valid_duration', label: 'ID Valid Duration', field: 'valid_upto', visible: true, required: false },
@@ -580,49 +580,6 @@ const CivilIDNameList = () => {
                     className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
                     onClick={handleShow}
                   >+ New</button>
-
-                   <div className="position-relative table-header-hide-show">
-                    <button
-                      className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
-                      onClick={() => setShowColumnDropdown(!showColumnDropdown)}
-                    >
-                      Columns
-                    </button>
-                    {showColumnDropdown && (
-                      <div
-                        className="position-absolute bg-white border rounded shadow-sm p-2"
-                        style={{
-                          right: "0px",
-                          top: 'calc(100% + 4px)',  // Button ke turant neeche
-                          minWidth: '200px',
-                          zIndex: 1000,
-                          maxHeight: '300px',
-                          overflowY: 'auto'
-                        }}
-                      >
-                        {tableColumns.map((column) => (
-                          <>
-                            <div
-                              key={column}
-                              className="bg-white p-2 mb-2 d-flex align-items-center gap-2"
-                            >
-                              <input
-                                type="checkbox"
-                                id={`column-${column.id}`}
-                                checked={isColumnVisible(column.id)}
-                                onChange={() => toggleColumnVisibility(column.id)}
-                                disabled={column.required}
-                                className="form-check-input"
-                              />
-                              <label htmlFor={`item-${column.id}`} className="mb-0 flex-grow-1 form-label">
-                                {column.label}
-                              </label>
-                            </div>
-                          </>
-                        ))}
-                      </div>
-                    )}
-                  </div>
                 </div>
               </div>
             </div>
