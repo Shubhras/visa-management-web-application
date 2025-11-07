@@ -4751,6 +4751,11 @@ class DepartmentImportAPIView(APIView):
             "imported_count": imported_count
         }, status=status.HTTP_200_OK)
 
+
+
+
+
+
 # -----------------------employeeType---------------------------------
 class EmployeeTypeListAPIView(APIView):    
 
@@ -8244,11 +8249,13 @@ class LicenseNameExportAPIView(APIView):
             'uuid': 'UUID',
             'full_name': 'License Full Name',
             'short_name': 'License Short Name',
-            'issuing_authority': 'License Issuing Authority',
+            'issuing_authority': 'License Issuing Authority Name',
             'description': 'Description',
-            'valid_upto': 'License Valid Upto',
-            'country': 'Country ID',
-            'country_name': 'Country Name',
+            'valid_type': 'License Valid Type',
+            'valid_duration_value': 'License Valid Duration Value',
+            'valid_duration_unit': 'License Valid Duration Unit',
+            'valid_date': 'License Valid Date',
+            'country': 'Country Name',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',
         }
@@ -8267,14 +8274,18 @@ class LicenseNameExportAPIView(APIView):
         for obj in queryset:
             row = []
             for field in field_list:
-                if field == 'country_name':
+                if field == 'country':
                     value = obj.country.name if obj.country else ''
                 else:
                     value = getattr(obj, field, '')
+
                 if field in ['created_at', 'updated_at'] and value:
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif field == 'valid_date' and value:
+                    value = value.strftime("%Y-%m-%d")
                 elif isinstance(value, bool):
                     value = int(value)
+
                 row.append(value if value is not None else '')
             dataset.append(row)
 
@@ -8295,6 +8306,8 @@ class LicenseNameExportAPIView(APIView):
         return response
 
 
+
+
 # ------------------ Import API ------------------
 class LicenseNameImportAPIView(APIView):
 
@@ -8308,7 +8321,15 @@ class LicenseNameImportAPIView(APIView):
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
         required_headers = {'license full name', 'country'}
-        optional_headers = {'license short name', 'license issuing authority name', 'description', 'license valid upto'}
+        optional_headers = {
+            'license short name',
+            'license issuing authority name',
+            'description',
+            'license valid type',
+            'license valid duration value',
+            'license valid duration unit',
+            'license valid date',
+        }
 
         try:
             data = []
@@ -8357,15 +8378,26 @@ class LicenseNameImportAPIView(APIView):
                 short_name = str(row.get('license short name')).strip() if row.get('license short name') else ''
                 issuing_authority = str(row.get('license issuing authority name')).strip() if row.get('license issuing authority name') else ''
                 description = str(row.get('description')).strip() if row.get('description') else ''
-                valid_upto = str(row.get('license valid upto')).strip() if row.get('license valid upto') else ''
+                valid_type = str(row.get('license valid type')).strip().upper() if row.get('license valid type') else None
+                valid_duration_value = row.get('license valid duration value')
+                valid_duration_unit = str(row.get('license valid duration unit')).strip().upper() if row.get('license valid duration unit') else None
+                valid_date = row.get('license valid date')
 
                 if not full_name or not country_name:
                     continue
 
-                # Get country object
                 country_obj = Country.objects.filter(name__iexact=country_name).first()
                 if not country_obj:
-                    continue  # skip row if country not found
+                    continue
+
+                # Convert date safely
+                if valid_date:
+                    try:
+                        from datetime import datetime
+                        if isinstance(valid_date, str):
+                            valid_date = datetime.strptime(valid_date, "%Y-%m-%d").date()
+                    except:
+                        valid_date = None
 
                 existing = LicenseName.objects.filter(full_name__iexact=full_name, country=country_obj).first()
                 if existing:
@@ -8376,7 +8408,10 @@ class LicenseNameImportAPIView(APIView):
                         existing.short_name = short_name
                         existing.issuing_authority = issuing_authority
                         existing.description = description
-                        existing.valid_upto = valid_upto
+                        existing.valid_type = valid_type
+                        existing.valid_duration_value = valid_duration_value
+                        existing.valid_duration_unit = valid_duration_unit
+                        existing.valid_date = valid_date
                         existing.is_deleted = False
                         existing.save()
                         imported_count += 1
@@ -8387,7 +8422,10 @@ class LicenseNameImportAPIView(APIView):
                         short_name=short_name,
                         issuing_authority=issuing_authority,
                         description=description,
-                        valid_upto=valid_upto,
+                        valid_type=valid_type,
+                        valid_duration_value=valid_duration_value,
+                        valid_duration_unit=valid_duration_unit,
+                        valid_date=valid_date,
                         is_deleted=False
                     )
                     imported_count += 1
@@ -8405,6 +8443,7 @@ class LicenseNameImportAPIView(APIView):
 
 
 
+        
 #-------------------------------------------LeadSource---------------------------------
 
 

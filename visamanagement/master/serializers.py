@@ -356,6 +356,7 @@ class LicenseNameSerializer(serializers.ModelSerializer):
             'issuing_authority',
             'description',
             'valid_type',
+            'valid_date',
             'valid_duration_value',
             'valid_duration_unit',
             'is_deleted',
