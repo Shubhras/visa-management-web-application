@@ -375,9 +375,9 @@ const EducationLevelList = () => {
         // console.log("mappedFields",mappedFields);
         // Convert to comma-separated string
         const fieldsString = mappedFields.join(",");
-        console.log("User selected:", selectedItems);
-        console.log("Mapped to backend:", mappedFields);
-        console.log("Sending to API:", fieldsString);
+        // console.log("User selected:", selectedItems);
+        // console.log("Mapped to backend:", mappedFields);
+        // console.log("Sending to API:", fieldsString);
         const sendPayload = {
             file: "xlsx",
             fields: fieldsString,
@@ -520,7 +520,7 @@ const EducationLevelList = () => {
                                                     lineHeight: 1
                                                 }}
                                                 onClick={() => {
-                                                    console.log("Close clicked");
+                                                    // console.log("Close clicked");
                                                     handleSearchChange('');
                                                 }}
                                             >

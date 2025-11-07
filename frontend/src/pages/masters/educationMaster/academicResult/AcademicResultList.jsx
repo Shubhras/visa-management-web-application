@@ -535,7 +535,7 @@ const AcademicResultList = () => {
                                                     lineHeight: 1
                                                 }}
                                                 onClick={() => {
-                                                  
+                                                    // console.log("Close clicked");
                                                     handleSearchChange('');
                                                 }}
                                             >
@@ -568,10 +568,10 @@ const AcademicResultList = () => {
                                                 <span>No.</span>
                                             </div>
                                         </th>
-                                        <th scope="col" className='sorting-th' onClick={() => handleSort('AcademicResulttype')}>
+                                        <th scope="col" className='sorting-th' onClick={() => handleSort('AcademicResulttype_name')}>
                                             <div className="d-flex align-items-center">
                                                 Academic Result Type
-                                                {getSortIcon('AcademicResulttype')}
+                                                {getSortIcon('AcademicResulttype_name')}
                                             </div>
                                         </th>
                                         <th scope="col" className='sorting-th' onClick={() => handleSort('Academicresult')}>
@@ -627,7 +627,7 @@ const AcademicResultList = () => {
                                                 </td>
                                                 <td >
                                                     <span >
-                                                        {rowItem.AcademicResulttype}
+                                                        {rowItem.AcademicResulttype_name}
                                                     </span>
                                                 </td>
                                                 <td >

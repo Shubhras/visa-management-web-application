@@ -70,7 +70,19 @@ import {
     EDIT_ACADEMIC_RESULT_TO_RESULT,
     DELETE_ACADEMIC_RESULT_TO_RESULT,
     EXPORT_ACADEMIC_RESULT_TO_RESULT,
-    IMPORT_ACADEMIC_RESULT_TO_RESULT
+    IMPORT_ACADEMIC_RESULT_TO_RESULT,
+    ECA_AWARDING_BODY_LIST,
+    ADD_ECA_AWARDING_BODY,
+    EDIT_ECA_AWARDING_BODY,
+    DELETE_ECA_AWARDING_BODY,
+    EXPORT_ECA_AWARDING_BODY,
+    IMPORT_ECA_AWARDING_BODY,
+    MEDIUM_OF_EDUCATION_LIST,
+    ADD_MEDIUM_OF_EDUCATION,
+    EDIT_MEDIUM_OF_EDUCATION,
+    DELETE_MEDIUM_OF_EDUCATION,
+    EXPORT_MEDIUM_OF_EDUCATION,
+    IMPORT_MEDIUM_OF_EDUCATION
 } from "./actionType";
 
 //Education level Code
@@ -511,6 +523,80 @@ export const academicResultToResultImportData = (data, callback) => ({
     data,
     callback,
 });
+// ECA Awarding Body
+export const ecaAwardingBodyList = (data, callback) => ({
+    type: ECA_AWARDING_BODY_LIST,
+    data,
+    callback,
+});
+
+export const ecaAwardingBodyAdd = (data, callback) => ({
+    type: ADD_ECA_AWARDING_BODY,
+    data,
+    callback,
+});
+
+export const ecaAwardingBodyEdit = (data, callback) => ({
+    type: EDIT_ECA_AWARDING_BODY,
+    data,
+    callback,
+});
+
+export const ecaAwardingBodyDelete = (data, callback) => ({
+    type: DELETE_ECA_AWARDING_BODY,
+    data,
+    callback,
+});
+
+export const ecaAwardingBodyExportData = (data, callback) => ({
+    type: EXPORT_ECA_AWARDING_BODY,
+    data,
+    callback,
+});
+
+export const ecaAwardingBodyImportData = (data, callback) => ({
+    type: IMPORT_ECA_AWARDING_BODY,
+    data,
+    callback,
+});
+// Medium of Education
+export const mediumOfEducationList = (data, callback) => ({
+    type: MEDIUM_OF_EDUCATION_LIST,
+    data,
+    callback,
+});
+
+export const mediumOfEducationAdd = (data, callback) => ({
+    type: ADD_MEDIUM_OF_EDUCATION,
+    data,
+    callback,
+});
+
+export const mediumOfEducationEdit = (data, callback) => ({
+    type: EDIT_MEDIUM_OF_EDUCATION,
+    data,
+    callback,
+});
+
+export const mediumOfEducationDelete = (data, callback) => ({
+    type: DELETE_MEDIUM_OF_EDUCATION,
+    data,
+    callback,
+});
+
+export const mediumOfEducationExportData = (data, callback) => ({
+    type: EXPORT_MEDIUM_OF_EDUCATION,
+    data,
+    callback,
+});
+
+export const mediumOfEducationImportData = (data, callback) => ({
+    type: IMPORT_MEDIUM_OF_EDUCATION,
+    data,
+    callback,
+});
+
+
 
 
 

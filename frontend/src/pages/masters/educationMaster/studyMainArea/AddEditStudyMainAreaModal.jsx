@@ -62,7 +62,7 @@ const AddEditStudyMainAreaModal = ({ show, handleClose, mode = 'add', rowData = 
 
     // Department Name validation
     if (!formData.departmentName.trim()) {
-      newErrors.departmentName = 'Name is required';
+      newErrors.departmentName = 'Study main area is required';
       isValid = false;
     }
 

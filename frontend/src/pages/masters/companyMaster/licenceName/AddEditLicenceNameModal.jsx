@@ -7,7 +7,7 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const [countryListData, setCountryListData] = useState([]);
-  
+
   // Form state
   const [formData, setFormData] = useState({
     uuid: '',
@@ -90,13 +90,42 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
     }));
   };
 
-  // Handle input changes
+  // // Handle input changes
+  // const handleChange = (e) => {
+  //   const { name, value } = e.target;
+  //   setFormData(prev => ({
+  //     ...prev,
+  //     [name]: value
+  //   }));
+
+  //   // Clear error when user starts typing
+  //   if (errors[name]) {
+  //     setErrors(prev => ({
+  //       ...prev,
+  //       [name]: ''
+  //     }));
+  //   }
+  // };
+
+   // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    
+    // If valid_upto_type changes, reset related fields
+    if (name === 'valid_upto_type') {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+        valid_upto: '',
+        valid_upto_numeric: '',
+        valid_upto_unit: ''
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
 
     // Clear error when user starts typing
     if (errors[name]) {
@@ -111,19 +140,19 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
   const validateForm = () => {
     const newErrors = {};
     let isValid = true;
-    
+
     // country validation
     if (!formData.country) {
       newErrors.country = 'Country is required';
       isValid = false;
     }
-    
+
     // Full Name validation
     if (!formData.full_name.trim()) {
       newErrors.full_name = 'License full name is required';
       isValid = false;
     }
-    
+
     // short Name validation
     if (!formData.short_name.trim()) {
       newErrors.short_name = 'License short name is required';
@@ -146,10 +175,18 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
           full_name: formData.full_name,
           short_name: formData.short_name,
           issuing_authority: formData.issuing_authority,
-          valid_upto: formData.valid_upto,
-          valid_upto_type: formData.valid_upto_type,
-          valid_upto_numeric: formData.valid_upto_numeric,
-          valid_upto_unit: formData.valid_upto_unit,
+
+          valid_date: formData.valid_upto || null,
+          valid_type:
+            formData.valid_upto_type === "permanent"
+              ? "PERMANENT"
+              : formData.valid_upto_type === "date"
+                ? "DATE"
+                : formData.valid_upto_type === "valid_upto"
+                  ? "VALID_UP_TO"
+                  : "",
+          valid_duration_value: formData.valid_upto_numeric,
+         valid_duration_unit: formData.valid_upto_unit ? formData.valid_upto_unit.toUpperCase() : null,
           description: formData.description,
         }
         : {
@@ -157,10 +194,17 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
           full_name: formData.full_name,
           short_name: formData.short_name,
           issuing_authority: formData.issuing_authority,
-          valid_upto: formData.valid_upto,
-          valid_upto_type: formData.valid_upto_type,
-          valid_upto_numeric: formData.valid_upto_numeric,
-          valid_upto_unit: formData.valid_upto_unit,
+          valid_date: formData.valid_upto || null,
+          valid_type:
+            formData.valid_upto_type === "permanent"
+              ? "PERMANENT"
+              : formData.valid_upto_type === "date"
+                ? "DATE"
+                : formData.valid_upto_type === "valid_upto"
+                  ? "VALID_UP_TO"
+                  : "",
+          valid_duration_value: formData.valid_upto_numeric  || null,
+          valid_duration_unit: formData.valid_upto_unit ? formData.valid_upto_unit.toUpperCase() : null,
           description: formData.description,
         };
 
@@ -313,7 +357,7 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
                     placeholder="Enter licence issuing authority name"
                   />
                 </div>
-                 <div className="col-12 mb-20">
+                <div className="col-12 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                     License Valid Upto
                   </label>

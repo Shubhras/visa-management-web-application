@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch } from "react-redux";
 import { academicResultToResultAdd, academicResultToResultEdit } from '../../../../store/master/educationMaster/action';
 import { toast } from "react-toastify";
-import { academicResultTypeList } from '../../../../store/master/educationMaster/action';
+import { academicResultTypeList, academicResultList } from '../../../../store/master/educationMaster/action';
 const AddEditAcademicResultToResultModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
-    const [educationLevelListData, setEducationLevelListData] = useState([]);
+    const [academicResult, setAcademicResult] = useState([]);
+    const [academicResultType, setAcademicResultType] = useState([]);
     // Form state
     const [formData, setFormData] = useState({
         uuid: '',
@@ -62,17 +63,20 @@ const AddEditAcademicResultToResultModal = ({ show, handleClose, mode = 'add', r
             sortBy: 'updated_at', // Field to sort by
             sortOrder: 'desc', // 'asc' or 'desc'
         };
-
         dispatch(academicResultTypeList(params, (response, error) => {
             setLoading(false);
             if (response?.statusCode === 200 && response?.status === true) {
-
-                setEducationLevelListData(response?.data || []);
-
-            } else {
+                setAcademicResultType(response?.data || []);
 
             }
         }));
+        dispatch(academicResultList(params, (response, erroe) => {
+            setLoading(false);
+            if (response?.statusCode === 200 && response?.status === true) {
+                setAcademicResult(response?.data || []);
+            }
+
+        }))
     };
 
     // Handle input changes
@@ -197,7 +201,7 @@ const AddEditAcademicResultToResultModal = ({ show, handleClose, mode = 'add', r
                 <div className="modal-content radius-16 bg-base">
                     <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
                         <h1 className="modal-title fs-5" id="departmentModalLabel">
-                            {mode === 'edit' ? 'Edit Academic Result' : 'Add Academic Result'}
+                            {mode === 'edit' ? 'Edit Compare : Academic Result To Result' : 'Add Compare : Academic Result To Result'}
                         </h1>
                         <button
                             type="button"
@@ -222,7 +226,7 @@ const AddEditAcademicResultToResultModal = ({ show, handleClose, mode = 'add', r
                                         className={`form-control form-select radius-8 ${errors.academicResultType ? 'is-invalid' : ''}`}
                                     >
                                         <option value="">Select Academic Result Type</option>
-                                        {educationLevelListData.map((option) => (
+                                        {academicResultType.map((option) => (
                                             <option key={option.uuid} value={option.uuid}>
                                                 {option.name}
                                             </option>
@@ -238,19 +242,28 @@ const AddEditAcademicResultToResultModal = ({ show, handleClose, mode = 'add', r
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                                         Academic Result <span className="text-danger">*</span>
                                     </label>
-                                    <input
-                                        type="text"
+                                    <select
                                         name="academicResult"
                                         value={formData.academicResult}
                                         onChange={handleChange}
-                                        className={`form-control radius-8 ${errors.academicResult ? 'is-invalid' : ''}`}
-                                        placeholder="Enter academic result"
-                                    />
+                                        className={`form-control form-select radius-8 ${errors.academicResult ? 'is-invalid' : ''}`}
+                                    >
+                                        <option value=""> Select Academic Result</option>
+                                        {
+                                            academicResult.map((option) => (
+                                                <option key={option.uuid} value={option.uuid}>
+                                                    {option.name}
+                                                </option>
+
+                                            ))
+                                        }
+                                    </select>
                                     {errors.academicResult && (
                                         <div className="text-danger text-sm mt-1">
                                             {errors.academicResult}
                                         </div>
                                     )}
+
                                 </div>
                                 <div className="col-12 mb-20">
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">

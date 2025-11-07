@@ -7,7 +7,7 @@ const AddEditAcademicResultModal = ({ show, handleClose, mode = 'add', rowData =
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const [educationLevelListData, setEducationLevelListData] = useState([]);
-  // Form state
+ 
   const [formData, setFormData] = useState({
     uuid: '',
     departmentName: '',
@@ -15,25 +15,22 @@ const AddEditAcademicResultModal = ({ show, handleClose, mode = 'add', rowData =
     description: '',
   });
 
-
-  // Validation errors state
   const [errors, setErrors] = useState({
     departmentName: '',
     category: '',
     description: '',
   });
 
-  // Populate form data when in edit mode
   useEffect(() => {
     if (mode === 'edit' && rowData) {
       setFormData({
         uuid: rowData.uuid || '',
-        departmentName: rowData.majorarea || '',
-        category: rowData.mainarea || '',
+        departmentName: rowData.Academicresult || '',
+        category: rowData.AcademicResulttype_uuid || '',
         description: rowData.description || '',
       });
     } else {
-      // Reset form when switching to add mode
+    
       setFormData({
         uuid: '',
         departmentName: '',
@@ -51,8 +48,8 @@ const AddEditAcademicResultModal = ({ show, handleClose, mode = 'add', rowData =
       limit: 2000,
       search: '',
       status: '',
-      sortBy: 'updated_at', // Field to sort by
-      sortOrder: 'desc', // 'asc' or 'desc'
+      sortBy: 'updated_at', 
+      sortOrder: 'desc', 
     };
 
     dispatch(academicResultTypeList(params, (response, error) => {
@@ -103,7 +100,6 @@ const AddEditAcademicResultModal = ({ show, handleClose, mode = 'add', rowData =
     return isValid;
   };
 
-  // Handle form submission
   const handleSubmit = (e) => {
     e.preventDefault();
 

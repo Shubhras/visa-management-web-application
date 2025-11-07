@@ -71,7 +71,19 @@ import {
     EDIT_ACADEMIC_RESULT_TO_RESULT,
     DELETE_ACADEMIC_RESULT_TO_RESULT,
     EXPORT_ACADEMIC_RESULT_TO_RESULT,
-    IMPORT_ACADEMIC_RESULT_TO_RESULT
+    IMPORT_ACADEMIC_RESULT_TO_RESULT,
+    ECA_AWARDING_BODY_LIST,
+    ADD_ECA_AWARDING_BODY,
+    EDIT_ECA_AWARDING_BODY,
+    DELETE_ECA_AWARDING_BODY,
+    EXPORT_ECA_AWARDING_BODY,
+    IMPORT_ECA_AWARDING_BODY,
+    MEDIUM_OF_EDUCATION_LIST,
+    ADD_MEDIUM_OF_EDUCATION,
+    EDIT_MEDIUM_OF_EDUCATION,
+    DELETE_MEDIUM_OF_EDUCATION,
+    EXPORT_MEDIUM_OF_EDUCATION,
+    IMPORT_MEDIUM_OF_EDUCATION
 } from "./actionType";
 
 import {
@@ -146,7 +158,20 @@ import {
     editAcademicResultToResultAPI,
     deleteAcademicResultToResultAPI,
     exportAcademicResultToResultAPI,
-    importAcademicResultToResultAPI
+    importAcademicResultToResultAPI,
+    getEcaAwardingBodyListAPI,
+    addEcaAwardingBodyAPI,
+    editEcaAwardingBodyAPI,
+    deleteEcaAwardingBodyAPI,
+    exportEcaAwardingBodyAPI,
+    importEcaAwardingBodyAPI,
+    getMediumOfEducationListAPI,
+    addMediumOfEducationAPI,
+    editMediumOfEducationAPI,
+    deleteMediumOfEducationAPI,
+    exportMediumOfEducationAPI,
+    importMediumOfEducationAPI
+
 } from "../../../service/api_helper";
 
 // --- EDUCATION LEVEL CODE SAGAS ---
@@ -204,7 +229,6 @@ function* educationLevelCodeImportDataSaga(action) {
     }
 }
 
-//Education Level
 // Education Level
 function* educationLevelListSaga(action) {
     try {
@@ -802,6 +826,114 @@ function* academicResultToResultImportDataSaga(action) {
         if (action.callback) action.callback(null, error);
     }
 }
+// ECA Awarding Body 
+function* ecaAwardingBodyListSaga(action) {
+    try {
+        const response = yield call(getEcaAwardingBodyListAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
+
+function* ecaAwardingBodyAddSaga(action) {
+    try {
+        const response = yield call(addEcaAwardingBodyAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
+
+function* ecaAwardingBodyEditSaga(action) {
+    try {
+        const response = yield call(editEcaAwardingBodyAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
+
+function* ecaAwardingBodyDeleteSaga(action) {
+    try {
+        const response = yield call(deleteEcaAwardingBodyAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
+
+function* ecaAwardingBodyExportDataSaga(action) {
+    try {
+        const response = yield call(exportEcaAwardingBodyAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
+
+function* ecaAwardingBodyImportDataSaga(action) {
+    try {
+        const response = yield call(importEcaAwardingBodyAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
+// Medium of Education
+function* mediumOfEducationListSaga(action) {
+    try {
+        const response = yield call(getMediumOfEducationListAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
+
+function* mediumOfEducationAddSaga(action) {
+    try {
+        const response = yield call(addMediumOfEducationAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
+
+function* mediumOfEducationEditSaga(action) {
+    try {
+        const response = yield call(editMediumOfEducationAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
+
+function* mediumOfEducationDeleteSaga(action) {
+    try {
+        const response = yield call(deleteMediumOfEducationAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
+
+function* mediumOfEducationExportDataSaga(action) {
+    try {
+        const response = yield call(exportMediumOfEducationAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
+
+function* mediumOfEducationImportDataSaga(action) {
+    try {
+        const response = yield call(importMediumOfEducationAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
 
 
 
@@ -880,6 +1012,19 @@ function* educationmasterSaga() {
     yield takeEvery(DELETE_ACADEMIC_RESULT_TO_RESULT, academicResultToResultDeleteSaga);
     yield takeEvery(EXPORT_ACADEMIC_RESULT_TO_RESULT, academicResultToResultExportDataSaga);
     yield takeEvery(IMPORT_ACADEMIC_RESULT_TO_RESULT, academicResultToResultImportDataSaga);
+    yield takeEvery(ECA_AWARDING_BODY_LIST, ecaAwardingBodyListSaga);
+    yield takeEvery(ADD_ECA_AWARDING_BODY, ecaAwardingBodyAddSaga);
+    yield takeEvery(EDIT_ECA_AWARDING_BODY, ecaAwardingBodyEditSaga);
+    yield takeEvery(DELETE_ECA_AWARDING_BODY, ecaAwardingBodyDeleteSaga);
+    yield takeEvery(EXPORT_ECA_AWARDING_BODY, ecaAwardingBodyExportDataSaga);
+    yield takeEvery(IMPORT_ECA_AWARDING_BODY, ecaAwardingBodyImportDataSaga);
+    yield takeEvery(MEDIUM_OF_EDUCATION_LIST, mediumOfEducationListSaga);
+    yield takeEvery(ADD_MEDIUM_OF_EDUCATION, mediumOfEducationAddSaga);
+    yield takeEvery(EDIT_MEDIUM_OF_EDUCATION, mediumOfEducationEditSaga);
+    yield takeEvery(DELETE_MEDIUM_OF_EDUCATION, mediumOfEducationDeleteSaga);
+    yield takeEvery(EXPORT_MEDIUM_OF_EDUCATION, mediumOfEducationExportDataSaga);
+    yield takeEvery(IMPORT_MEDIUM_OF_EDUCATION, mediumOfEducationImportDataSaga);
+
 
 
 }

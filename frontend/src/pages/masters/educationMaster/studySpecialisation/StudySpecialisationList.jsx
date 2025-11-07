@@ -38,7 +38,7 @@ const StudySpecialisationList = () => {
   const [rowSelectData, setRowSelectData] = useState({});
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this study main area*?");
+  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this study specialisation?");
   const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [selectAllOrNot, setSelectAllOrNot] = useState('');
@@ -361,8 +361,8 @@ const StudySpecialisationList = () => {
     }
     // Map frontend labels to backend field names
     const fieldMapping = {
-      "Study Main Area": "mainarea_id",
-      "Study Major Area":"majorarea_id",
+      "Study Main Area": "mainarea_name",
+      "Study Major Area":"majorarea_name",
       "Study Specialisation":"studyspecialisation",
       "Modified On": "updated_at",
       "Description": "description",
@@ -536,7 +536,7 @@ const StudySpecialisationList = () => {
                           lineHeight: 1
                         }}
                         onClick={() => {
-                       
+                          // console.log("Close clicked");
                           handleSearchChange('');
                         }}
                       >
@@ -569,16 +569,16 @@ const StudySpecialisationList = () => {
                         <span>No.</span>
                       </div>
                     </th>
-                    <th scope="col" className='sorting-th' onClick={() => handleSort('name')}>
+                    <th scope="col" className='sorting-th' onClick={() => handleSort('mainarea_name')}>
                       <div className="d-flex align-items-center">
                         Study Main Area
-                        {getSortIcon('mainarea')}
+                        {getSortIcon('mainarea_name')}
                       </div>
                     </th>
-                    <th scope="col" className='sorting-th' onClick={() => handleSort('name')}>
+                    <th scope="col" className='sorting-th' onClick={() => handleSort('majorarea_name')}>
                       <div className="d-flex align-items-center">
                         Study Major Area
-                        {getSortIcon('majorarea')}
+                        {getSortIcon('majorarea_name')}
                       </div>
                     </th>
                      <th scope="col" className='sorting-th' onClick={() => handleSort('name')}>
@@ -634,12 +634,12 @@ const StudySpecialisationList = () => {
                         </td>
                         <td >
                           <span >
-                            {rowItem.mainarea}
+                            {rowItem.mainarea_name}
                           </span>
                         </td>
                          <td >
                           <span >
-                            {rowItem.majorarea}
+                            {rowItem.majorarea_name}
                           </span>
                         </td>
                          <td >

@@ -113,7 +113,10 @@ const MasterLayout = ({ children }) => {
             { name: 'Degree Awarded By', path: '/degree-awarded-by' },
             { name: 'Academic Result', path: '/academic-result' },
             { name: 'Degree Awarded Institute', path: '/degree-awarded-institute' },
-            {name: 'Compare : Academic Result To Result',path: '/academic-result-to-result'}
+            { name: 'Compare : Academic Result To Result', path: '/academic-result-to-result' },
+            { name: 'ECA Awarding Body', path: '/eca-awarding-body' },
+            { name: 'Medium of Education', path: '/medium-of-education' },
+
           ]
         },
 

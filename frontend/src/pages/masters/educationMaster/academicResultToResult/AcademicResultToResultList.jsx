@@ -45,9 +45,9 @@ const AcademicResultToResultList = () => {
     const [departments, setDepartments] = useState([]);
     const [loading, setLoading] = useState(false);
     const [loadingExport, setLoadingExport] = useState(false);
-    const [items] = useState(["Academic Result Type", "Academic Result","Compare : Academic Result Type","Compare : Academic Result","Description", "Modified On"]);
-    const [selectedItems, setSelectedItems] = useState(["Academic Result Type", "Academic Result","Compare : Academic Result Type","Compare : Academic Result"]);
-    const [ItemsRequired] = useState(["Academic Result Type", "Academic Result","Compare : Academic Result Type","Compare : Academic Result"]);
+    const [items] = useState(["Academic Result Type", "Academic Result", "Compare : Academic Result Type", "Compare : Academic Result", "Description", "Modified On"]);
+    const [selectedItems, setSelectedItems] = useState(["Academic Result Type", "Academic Result", "Compare : Academic Result Type", "Compare : Academic Result"]);
+    const [ItemsRequired] = useState(["Academic Result Type", "Academic Result", "Compare : Academic Result Type", "Compare : Academic Result"]);
 
     // Updated state with sorting
     const [tableState, setTableState] = useState({
@@ -363,8 +363,8 @@ const AcademicResultToResultList = () => {
         const fieldMapping = {
             "Academic Result Type": "AcademicResulttype_id",
             "Academic Result": "Academicresult",
-            "Compare : Academic Result Type":"",
-            "Compare : Academic Result":"",
+            "Compare : Academic Result Type": "CompareAcademicResultType_id",
+            "Compare : Academic Result": "CompareAcademicResult",
             "Modified On": "updated_at",
             "Description": "description",
         };
@@ -388,7 +388,6 @@ const AcademicResultToResultList = () => {
                     const blob = new Blob([response.data], {
                         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                     });
-
                     const url = window.URL.createObjectURL(blob);
                     const link = document.createElement('a');
                     link.href = url;
@@ -537,7 +536,7 @@ const AcademicResultToResultList = () => {
                                                     lineHeight: 1
                                                 }}
                                                 onClick={() => {
-                                                    console.log("Close clicked");
+                                                    // console.log("Close clicked");
                                                     handleSearchChange('');
                                                 }}
                                             >

@@ -3,7 +3,7 @@ import { useDispatch } from "react-redux";
 import { degreeAwardedByAdd, degreeAwardedByEdit } from '../../../../store/master/educationMaster/action';
 import { toast } from "react-toastify";
 import { educationLevelList } from "../../../../store/master/educationMaster/action";
-import {countryList} from "../../../../store/master/generalMasters/actions";
+import { countryList } from "../../../../store/master/generalMasters/actions";
 const AddEditDegreeAwardedByModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
@@ -14,16 +14,16 @@ const AddEditDegreeAwardedByModal = ({ show, handleClose, mode = 'add', rowData 
     // console.log("rowData",rowData);
     const [formData, setFormData] = useState({
         uuid: '',
-        studyMainAreaUuid: '',
-        studyMajorAreaUuid: '',
-        studySpecialisationName: '',
+        countryUuid: '',
+        educationLevelUuid: '',
+        degreeAwardedByName: '',
         description: '',
     });
 
     const [errors, setErrors] = useState({
-        studyMainAreaUuid: '',
-        studyMajorAreaUuid: '',
-        studySpecialisationName: '',
+        countryUuid: '',
+        educationLevelUuid: '',
+        degreeAwardedByName: '',
         description: '',
     });
 
@@ -31,17 +31,17 @@ const AddEditDegreeAwardedByModal = ({ show, handleClose, mode = 'add', rowData 
         if (mode === 'edit' && rowData) {
             setFormData({
                 uuid: rowData.uuid || '',
-                studySpecialisationName: rowData.studyspecialisation || '',
-                studyMainAreaUuid: rowData.mainarea || '',
-                studyMajorAreaUuid: rowData.majorarea || '',
+                degreeAwardedByName: rowData.degreeAwardedByName || '',
+                countryUuid: rowData.countryUuid || '',
+                educationLevelUuid: rowData.educationlevel_id || '',
                 description: rowData.description || '',
             });
         } else {
             setFormData({
                 uuid: '',
-                studyMainAreaUuid: '',
-                studyMajorAreaUuid: '',
-                studySpecialisationName: '',
+                degreeAwardedByName: '',
+                countryUuid: '',
+                educationLevelUuid: '',
                 description: '',
             });
         }
@@ -92,17 +92,17 @@ const AddEditDegreeAwardedByModal = ({ show, handleClose, mode = 'add', rowData 
     const validateForm = () => {
         const newErrors = {};
         let isValid = true;
-        if (!formData.studyMainAreaUuid?.trim()) {
-            newErrors.studyMainAreaUuid = 'Country is required';
+        if (!formData.countryUuid?.trim()) {
+            newErrors.countryUuid = 'Country is required';
             isValid = false;
         }
-        if (!formData.studyMajorAreaUuid?.trim()) {
-            newErrors.studyMajorAreaUuid = 'Education level is required';
+        if (!formData.educationLevelUuid?.trim()) {
+            newErrors.educationLevelUuid = 'Education level is required';
             isValid = false;
         }
 
-        if (!formData.studySpecialisationName?.trim()) {
-            newErrors.studySpecialisationName = 'Degree awarded by is required';
+        if (!formData.degreeAwardedByName?.trim()) {
+            newErrors.degreeAwardedByName = 'Degree awarded by is required';
             isValid = false;
         }
 
@@ -117,15 +117,15 @@ const AddEditDegreeAwardedByModal = ({ show, handleClose, mode = 'add', rowData 
             const sendPayload = mode === 'edit'
                 ? {
                     uuid: formData.uuid,
-                    studyspecialisation: formData.studySpecialisationName,
-                    mainarea_id: formData.studyMainAreaUuid,
-                    majorarea_id: formData.studyMajorAreaUuid,
+                    degree_awarded_by: formData.degreeAwardedByName,
+                    country_id: formData.countryUuid,
+                    educationlevel_id: formData.educationLevelUuid,
                     description: formData.description,
                 }
                 : {
-                    studyspecialisation: formData.studySpecialisationName,
-                    mainarea_id: formData.studyMainAreaUuid,
-                    majorarea_id: formData.studyMajorAreaUuid,
+                    degree_awarded_by: formData.degreeAwardedByName,
+                    country_id: formData.countryUuid,
+                    educationlevel_id: formData.educationLevelUuid,
                     description: formData.description,
                 };
 
@@ -152,9 +152,9 @@ const AddEditDegreeAwardedByModal = ({ show, handleClose, mode = 'add', rowData 
     const resetForm = () => {
         setFormData({
             uuid: '',
-            studyMainAreaUuid: '',
-            studyMajorAreaUuid: '',
-            studySpecialisationName: '',
+            countryUuid: '',
+            educationLevelUuid: '',
+            degreeAwardedByName: '',
             description: '',
         });
         setErrors({});
@@ -201,10 +201,10 @@ const AddEditDegreeAwardedByModal = ({ show, handleClose, mode = 'add', rowData 
                                         Country<span className="text-danger">*</span>
                                     </label>
                                     <select
-                                        name="studyMainAreaUuid"
-                                        value={formData.studyMainAreaUuid}
+                                        name="countryUuid"
+                                        value={formData.countryUuid}
                                         onChange={handleChange}
-                                        className={`form-control form-select radius-8 ${errors.studyMainAreaUuid ? 'is-invalid' : ''}`}
+                                        className={`form-control form-select radius-8 ${errors.countryUuid ? 'is-invalid' : ''}`}
                                     >
                                         <option value="">Select country</option>
                                         {studyMainArea.map((option) => (
@@ -213,9 +213,9 @@ const AddEditDegreeAwardedByModal = ({ show, handleClose, mode = 'add', rowData 
                                             </option>
                                         ))}
                                     </select>
-                                    {errors.studyMainAreaUuid && (
+                                    {errors.countryUuid && (
                                         <div className="text-danger text-sm mt-1">
-                                            {errors.studyMainAreaUuid}
+                                            {errors.countryUuid}
                                         </div>
                                     )}
                                 </div>
@@ -224,10 +224,10 @@ const AddEditDegreeAwardedByModal = ({ show, handleClose, mode = 'add', rowData 
                                         Education Level <span className="text-danger">*</span>
                                     </label>
                                     <select
-                                        name="studyMajorAreaUuid"
-                                        value={formData.studyMajorAreaUuid}
+                                        name="educationLevelUuid"
+                                        value={formData.educationLevelUuid}
                                         onChange={handleChange}
-                                        className={`form-control form-select radius-8 ${errors.studyMajorAreaUuid ? 'is-invalid' : ''}`}
+                                        className={`form-control form-select radius-8 ${errors.educationLevelUuid ? 'is-invalid' : ''}`}
                                     >
                                         <option value="">Select education level</option>
                                         {studyMajorArea.map((option) => (
@@ -236,9 +236,9 @@ const AddEditDegreeAwardedByModal = ({ show, handleClose, mode = 'add', rowData 
                                             </option>
                                         ))}
                                     </select>
-                                    {errors.studyMajorAreaUuid && (
+                                    {errors.educationLevelUuid && (
                                         <div className="text-danger text-sm mt-1">
-                                            {errors.studyMajorAreaUuid}
+                                            {errors.educationLevelUuid}
                                         </div>
                                     )}
                                 </div>
@@ -248,15 +248,15 @@ const AddEditDegreeAwardedByModal = ({ show, handleClose, mode = 'add', rowData 
                                     </label>
                                     <input
                                         type="text"
-                                        name="studySpecialisationName"
-                                        value={formData.studySpecialisationName}
+                                        name="degreeAwardedByName"
+                                        value={formData.degreeAwardedByName}
                                         onChange={handleChange}
-                                        className={`form-control radius-8 ${errors.studySpecialisationName ? 'is-invalid' : ''}`}
+                                        className={`form-control radius-8 ${errors.degreeAwardedByName ? 'is-invalid' : ''}`}
                                         placeholder="Enter degree awarded by"
                                     />
-                                    {errors.studySpecialisationName && (
+                                    {errors.degreeAwardedByName && (
                                         <div className="text-danger text-sm mt-1">
-                                            {errors.studySpecialisationName}
+                                            {errors.degreeAwardedByName}
                                         </div>
                                     )}
                                 </div>

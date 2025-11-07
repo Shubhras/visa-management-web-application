@@ -38,7 +38,7 @@ const AcademicResultTypeList = () => {
   const [rowSelectData, setRowSelectData] = useState({});
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this department?");
+  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this academic result type?");
   const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [selectAllOrNot, setSelectAllOrNot] = useState('');
@@ -534,7 +534,7 @@ const AcademicResultTypeList = () => {
                           lineHeight: 1
                         }}
                         onClick={() => {
-                          console.log("Close clicked");
+                          // console.log("Close clicked");
                           handleSearchChange('');
                         }}
                       >

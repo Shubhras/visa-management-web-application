@@ -53,10 +53,14 @@ const LicenceNameList = () => {
     { id: 'country_name', label: 'Country', field: 'country_name', visible: true, required: false },
     { id: 'full_name', label: 'License Full Name', field: 'full_name', visible: true, required: false },
     { id: 'short_name', label: 'License Short Name', field: 'short_name', visible: true, required: false },
-    { id: 'issuing_authority', label: 'License Issuing Authority Name', field: 'issuing_authority', visible: false, required: false },
-    { id: 'valid_upto', label: 'License Valid Upto', field: 'valid_upto', visible: false, required: false },
-    { id: 'description', label: 'Description', field: 'description', visible: false, required: false },
-    { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: false, required: false },
+    { id: 'issuing_authority', label: 'License Issuing Authority Name', field: 'issuing_authority', visible: true, required: false },
+    { id: 'valid_type', label: 'License Valid Upto', field: 'valid_type', visible: true, required: false },
+    { id: 'valid_date', label: 'License Valid Date', field: 'valid_date', visible: true, required: false },
+    { id: 'valid_duration_value', label: 'License Valid Duration Value', field: 'valid_duration_value', visible: true, required: false },
+    { id: 'valid_duration_unit', label: 'License Valid Duration Unit', field: 'valid_duration_unit', visible: true, required: false },
+
+    { id: 'description', label: 'Description', field: 'description', visible: true, required: false },
+    { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false },
   ]);
 
   const [visibleColumns, setVisibleColumns] = useState(
@@ -501,29 +505,6 @@ const LicenceNameList = () => {
                   >
                     Export
                   </button>
-                  {/* {selectedRows.length == 0 && (
-                    <button
-                      onClick={handleSelectAllButton}
-                      className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
-                    >
-                      Delete
-                    </button>
-                  )}
-                  {selectedRows.length > 0 && (
-                    <button
-                      onClick={() => handleBulkDelete("")}
-                      className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
-                    >{`Delete Selected (${selectedRows.length})`}
-                    </button>
-                  )}
-                  {selectedRows.length > 0 && (
-                    <button
-                      onClick={() => handleBulkDelete("all")}
-                      className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
-                    >{`Delete All (${tableState.total})`}
-                    </button>
-                  )} */}
-
                   <button
                     onClick={handleBulkDelete}
                     className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
@@ -588,7 +569,7 @@ const LicenceNameList = () => {
                           lineHeight: 1
                         }}
                         onClick={() => {
-                         
+
                           handleSearchChange('');
                         }}
                       >
@@ -860,9 +841,21 @@ const LicenceNameList = () => {
                         {isColumnVisible('issuing_authority') && (
                           <td><span>{rowItem.issuing_authority}</span></td>
                         )}
-                        {isColumnVisible('valid_upto') && (
-                          <td><span>{rowItem.valid_upto}</span></td>
+                        {isColumnVisible('valid_type') && (
+                          <td><span>{rowItem.valid_type}</span></td>
                         )}
+                        {isColumnVisible('valid_date') && (
+                          <td><span>{rowItem.valid_date}</span></td>
+                        )}
+
+                        {isColumnVisible('valid_duration_value') && (
+                          <td><span>{rowItem.valid_duration_value}</span></td>
+                        )}
+                        {isColumnVisible('valid_duration_unit') && (
+                          <td><span>{rowItem.valid_duration_unit}</span></td>
+                        )}
+
+
                         {isColumnVisible('description') && (
                           <td><span>{rowItem.description}</span></td>
                         )}

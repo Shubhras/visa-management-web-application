@@ -1,11 +1,11 @@
 import React, { useState } from 'react'
 import { useDispatch } from "react-redux";
-import { degreeAwardedByImportData } from '../../../../store/master/educationMaster/action';
+import { ecaAwardingBodyImportData } from '../../../../store/master/educationMaster/action';
 import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
 import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
-const AddImportDegreeAwardedByModal = ({ show, handleClose }) => {
+const AddImportECAAwardingBodyModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
     const [file, setFile] = useState(null);
@@ -34,7 +34,7 @@ const AddImportDegreeAwardedByModal = ({ show, handleClose }) => {
                         const sheets = workbook.SheetNames;
                         setSheetNames(sheets);
                         if (sheets.length > 0) {
-                            setSelectedSheet(sheets[0]); 
+                            setSelectedSheet(sheets[0]); // Auto-select first sheet
                         }
                     };
                     reader.readAsArrayBuffer(selectedFile);
@@ -65,7 +65,7 @@ const AddImportDegreeAwardedByModal = ({ show, handleClose }) => {
             formData.append('sheet_name', selectedSheet);
         }
         setLoading(true);
-        dispatch(degreeAwardedByImportData(formData, (response, error) => {
+        dispatch(ecaAwardingBodyImportData(formData, (response, error) => {
             setLoading(false);
             if (error) {
                 toast.error(error?.response?.data?.message || "Server error");
@@ -77,7 +77,7 @@ const AddImportDegreeAwardedByModal = ({ show, handleClose }) => {
                             <div>{response?.message}</div>
                             {response?.duplicates?.length > 0 && (
                                 <div style={{ marginTop: '6px' }}>
-                                    <strong>Duplicate degree awarded by skipped — the duplicate data from your uploaded file has been exported into an .xlsx file.</strong>
+                                    <strong>Duplicate eca awarding bodys skipped — the duplicate data from your uploaded file has been exported into an .xlsx file.</strong>
                                 </div>
                             )}
                         </div>,
@@ -100,12 +100,12 @@ const AddImportDegreeAwardedByModal = ({ show, handleClose }) => {
     };
 
     const handleExportToExcel = (duplicatesData) => {
-        const header = ["Degree Awarded By"];
+        const header = ["ECA Awarding Body"];
         const duplicates = duplicatesData //["test1", "test3", "test3"];
         const worksheetData = [header, ...duplicates.map((item) => [item])];
         const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "DegreeAwardedBy");
+        XLSX.utils.book_append_sheet(workbook, worksheet, "ECAAwardingBody");
 
         const excelBuffer = XLSX.write(workbook, {
             bookType: "xlsx",
@@ -116,7 +116,7 @@ const AddImportDegreeAwardedByModal = ({ show, handleClose }) => {
             type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         });
 
-        saveAs(blob, `DegreeAwardedBy-Duplicate-Data.xlsx`);
+        saveAs(blob, `ECAAwardingBody-Duplicate-Data.xlsx`);
     };
     // Handle modal close
     const onClose = () => {
@@ -148,7 +148,7 @@ const AddImportDegreeAwardedByModal = ({ show, handleClose }) => {
                     <div className="modal-content radius-16 bg-base">
                         <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
                             <h1 className="modal-title fs-5" id="departmentModalLabel">
-                                Upload Degree Awarded By
+                                Upload Department
                             </h1>
                             <button
                                 type="button"
@@ -241,10 +241,12 @@ const AddImportDegreeAwardedByModal = ({ show, handleClose }) => {
             </div>
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
-                    downloadFileName:"DegreeAwardedBy",
-                    items: ["Country", "Education Level", "Degree Awarded By", "Description"],
-                    selectedItems: ["Country","Education Level","Degree Awarded By"],
-                    ItemsRequired:["Country","Education Level","Degree Awarded By"]
+                    downloadFileName:"ECAAwardingBody",
+                    items: ["Country", "ECA For", "ECA Body Full Name", "ECA Body Short Name", "ECA Valid Period", "Description", "Modified On"],
+                    selectedItems: ["Country", "ECA For", "ECA Body Full Name", "ECA Body Short Name"],
+                    ItemsRequired:["Country", "ECA For", "ECA Body Full Name", "ECA Body Short Name"]
+
+                    
                 }
                 } />
             )}
@@ -252,4 +254,4 @@ const AddImportDegreeAwardedByModal = ({ show, handleClose }) => {
     );
 };
 
-export default AddImportDegreeAwardedByModal;
+export default AddImportECAAwardingBodyModal;
