@@ -7431,7 +7431,10 @@ class AccreditationNameExportAPIView(APIView):
             'full_name': 'Accrediation Full Name',
             'short_name': 'Accrediation Short Name',
             'issuing_authority': 'Accrediation Issuing Authority Name',
-            'valid_upto': 'Accrediation Valid Upto',
+            'valid_type': 'Accrediation Valid Type',
+            'valid_duration_value': 'Accrediation Valid Duration Value',
+            'valid_duration_unit': 'Accrediation Valid Duration Unit',
+            'valid_date': 'Accrediation Valid Date',
             'description': 'Description',
             'created_at': 'Created On',
             'updated_at': 'Modified On'
@@ -7502,7 +7505,10 @@ class AccreditationNameImportAPIView(APIView):
         duplicate_names = []
 
         required_headers = {'accrediation full name', 'country', 'accrediation category'}
-        optional_headers = {'accrediation short name', 'accrediation issuing authority name', 'accrediation valid upto', 'description'}
+        optional_headers = {'accrediation short name', 'accrediation issuing authority name', 'accrediation valid type',
+            'accrediation valid duration value',
+            'accrediation valid duration unit',
+            'accrediation valid date','description'}
 
         try:
             data = []
@@ -7576,8 +7582,11 @@ class AccreditationNameImportAPIView(APIView):
                 category_name = str(row.get('accrediation category')).strip() if row.get('accrediation category') else None
                 short_name = str(row.get('accrediation short name')).strip() if row.get('accrediation short name') else ''
                 issuing_authority = str(row.get('accrediation issuing authority name')).strip() if row.get('accrediation issuing authority name') else ''
-                valid_upto = str(row.get('accrediation valid upto')).strip() if row.get('accrediation valid upto') else ''
                 description = str(row.get('description')).strip() if row.get('description') else ''
+                valid_type = str(row.get('accrediation valid type')).strip().upper() if row.get('accrediation valid type') else None
+                valid_duration_value = row.get('accrediation valid duration value')
+                valid_duration_unit = str(row.get('accrediation valid duration unit')).strip().upper() if row.get('accrediation valid duration unit') else None
+                valid_date = row.get('accrediation valid date')
 
                 if not full_name or not country_name or not category_name:
                     skipped_rows.append({
@@ -7589,7 +7598,7 @@ class AccreditationNameImportAPIView(APIView):
                 # Map by name instead of ID
                 country = Country.objects.filter(name__iexact=country_name).first()
                 category = AccreditationCategory.objects.filter(name__iexact=category_name).first()
-
+                 
                 if not country or not category:
                     skipped_rows.append({
                         'full_name': full_name,
@@ -7613,7 +7622,10 @@ class AccreditationNameImportAPIView(APIView):
                     country=country,
                     category=category,
                     issuing_authority=issuing_authority,
-                    valid_upto=valid_upto,
+                    valid_type=valid_type,
+                    valid_duration_value=valid_duration_value,
+                    valid_duration_unit=valid_duration_unit,
+                    valid_date=valid_date,
                     description=description
                 )
                 imported_count += 1

@@ -349,7 +349,11 @@ class AccreditationNameSerializer(serializers.ModelSerializer):
         model = AccreditationName
         fields = [
             'uuid', 'country', 'country_name', 'category', 'category_name',
-            'full_name', 'short_name', 'issuing_authority', 'valid_upto',
+            'valid_type',
+            'valid_date',
+            'valid_duration_value',
+            'valid_duration_unit',
+            'full_name', 'short_name', 'issuing_authority',
             'description', 'created_at', 'updated_at'
         ]
 
