@@ -438,7 +438,7 @@ class EducationLevel(models.Model):
         blank=True,
         null=True
     )
-    educationlevel= models.TextField(max_length=255,blank=True)
+    educationlevel= models.TextField(max_length=255,blank=True,unique=True)
     description = models.TextField(max_length=255,blank=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -458,7 +458,7 @@ class  EducationDuration(models.Model):
         blank=True,
         null=True
     )
-    durations=models.IntegerField(null=True,blank=True)
+    durations=models.IntegerField(null=True,blank=True,unique=True)
     description = models.TextField(max_length=255,blank=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -473,7 +473,7 @@ class  EducationDuration(models.Model):
 class Studymainarea(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    name=models.TextField(max_length=255,null=True,blank=True)
+    name=models.TextField(max_length=255,unique=True)
     description = models.TextField(max_length=255,blank=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -491,7 +491,7 @@ class Studymajorarea(models.Model):
         related_name="Studymajor_area",
         blank=True,
         null=True)
-    majorarea=models.TextField(null=True,blank=True)
+    majorarea=models.TextField(null=True,blank=True, unique=True)
     description = models.TextField(max_length=255,blank=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -512,7 +512,7 @@ class StudySpecialisation(models.Model):
         related_name="StudySpecialisation",
         blank=True,
         null=True)
-    studyspecialisation=models.TextField(max_length=255,blank=True,null=True)
+    studyspecialisation=models.TextField(max_length=255, unique=True)
     description = models.TextField(max_length=255,blank=True,null=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -525,7 +525,7 @@ class StudySpecialisation(models.Model):
 class AcademicResultType(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    name=models.TextField(max_length=255,blank=True,null=True)
+    name=models.TextField(max_length=255,blank=True,null=True, unique=True)
     description = models.TextField(max_length=255,blank=True,null=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -542,7 +542,7 @@ class AcademicResult(models.Model):
         related_name="Academic_result",
         blank=True,
         null=True)
-    Academicresult=models.TextField(max_length=255,blank=True,null=True)
+    Academicresult=models.TextField(max_length=255,blank=True,null=True, unique=True)
     description = models.TextField(max_length=255,blank=True,null=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -555,7 +555,7 @@ class AcademicResult(models.Model):
 class EducationType(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    educationType= models.TextField(max_length=255,blank=True,null=True)
+    educationType= models.TextField(max_length=255,blank=True,null=True, unique=True)
     Perticulars = models.TextField(max_length=255,blank=True,null=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -567,7 +567,7 @@ class EducationType(models.Model):
 class MediumofEducation(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    name= models.TextField(max_length=255,blank=True,null=True)
+    name= models.TextField(max_length=255,blank=True,null=True,unique=True),
     Perticulars = models.TextField(max_length=255,blank=True,null=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -656,7 +656,7 @@ class LanguageTestResult(models.Model):
 class StudyLanguageBanchmark(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    name=models.TextField(max_length=255,blank=True,null=True)
+    name=models.TextField(max_length=255,blank=True,unique=True)
     description = models.TextField(max_length=255,blank=True,null=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -668,7 +668,7 @@ class StudyLanguageBanchmark(models.Model):
 class EntranceTestName(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    fullname=models.TextField(max_length=255,blank=True,null=True)
+    fullname=models.TextField(max_length=255,blank=True,null=True,unique=True)
     shortname=models.TextField(max_length=255,blank=True,null=True)
     description = models.TextField(max_length=255,blank=True,null=True)
     is_deleted = models.BooleanField(default=False)

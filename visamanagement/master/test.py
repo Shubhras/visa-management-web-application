@@ -19,7 +19,11 @@ import openpyxl
 from django.http import HttpResponse
 from uuid import UUID
 import datetime
+import pytz
+from django.utils import timezone
+import io
 
+india_tz = pytz.timezone('Asia/Kolkata')
 
 
 
@@ -130,8 +134,7 @@ class LanguageDeleteAPIView(APIView):
         if uuid:
             try:
                 lang = Language.objects.get(uuid=uuid, is_deleted=False)
-                lang.is_deleted = True
-                lang.save()
+                lang.delete()
                 return Response({
                     "statusCode": 204,
                     "status": True,
@@ -244,50 +247,74 @@ class LanguageListAPIView(APIView):
 
 
 
+
 class LanguageExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
-        format_type = request.GET.get('format', 'csv').lower()
-        fields = request.GET.get('fields')  
-        uuids_param = request.GET.get('uuids', '')
+        # --- Get query params ---
+        format_type = request.GET.get('format', 'xlsx').lower()
+        fields = request.GET.get('fields')  # comma-separated fields
+        uuids_param = request.GET.get('uuids', '')  # comma-separated UUIDs
 
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
+        # --- Field to header mapping ---
+        field_header_map = {
+            'uuid': 'UUID',
+            'name': 'Language',
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'created_at': 'Created On',
+            'updated_at': 'Modified On',
+        }
+
+        # --- Determine fields to export ---
         if fields:
             field_list = [f.strip() for f in fields.split(',')]
         else:
-            field_list = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+            field_list = list(field_header_map.keys())
 
+        # --- Fetch queryset ---
+        queryset = Language.objects.all()
         if uuids:
-            queryset = Language.objects.filter(uuid__in=uuids)
-        else:
-            queryset = Language.objects.all()
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-updated_at')
 
+        # --- Prepare dataset ---
         dataset = Dataset()
-        dataset.headers = field_list
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'Language'
 
-        for obj in queryset:
+        for lang in queryset:
             row = []
             for field in field_list:
-                value = getattr(obj, field, '')
-                if isinstance(value, datetime.datetime):
-                    value = value.strftime("%Y-%m-%d %H:%M:%S")
-                if isinstance(value, bool):
+                value = getattr(lang, field, '')
+
+                # Convert datetime to IST
+                if field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
                     value = int(value)
+
                 row.append(value if value is not None else '')
             dataset.append(row)
 
-        if format_type == 'xlsx':
-            data = XLSX().export_data(dataset)
+        # --- Export logic ---
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'languages.csv'
+        else:
+            file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'languages.xlsx'
-        else:
-            data = CSV().export_data(dataset)
-            content_type = 'text/csv; charset=utf-8'
-            file_name = 'languages.csv'
 
-        response = HttpResponse(data, content_type=content_type)
+        # --- Return response ---
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
@@ -305,7 +332,15 @@ class LanguageImportAPIView(APIView):
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
 
+        # Required & optional headers
+        required_headers = {'language'}
+        optional_headers = {'description', 'is_deleted'}
+
         try:
+            data = []
+            headers = []
+
+            # ---------- XLSX Handling ----------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
@@ -323,48 +358,95 @@ class LanguageImportAPIView(APIView):
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 ws = wb[sheet_name]
-                data = []
-                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if ws.max_row <= 1:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'Sheet "{sheet_name}" is empty.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+
+                # Validate required headers
+                if not required_headers.issubset(set(headers)):
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
                 for row in ws.iter_rows(min_row=2, values_only=True):
-                    data.append(dict(zip(headers, row)))
-
-                for row in data:
-                    name = str(row.get('name')).strip() if row.get('name') else None
-                    if not name:
+                    if not any(row):
                         continue
-                    if Language.objects.filter(name__iexact=name).exists():
-                        duplicate_names.append(name)
-                        continue
-                    Language.objects.create(
-                        name=name,
-                        description=row.get('description', ''),
-                        is_deleted=row.get('is_deleted', False)
-                    )
+                    row_dict = dict(zip(headers, row))
+                    data.append(row_dict)
 
-            else:  # CSV
-                dataset = Dataset().load(file.read().decode('utf-8'), format='csv')
+            # ---------- CSV Handling ----------
+            elif format_type == 'csv':
+                decoded_file = file.read().decode('utf-8')
+                dataset = Dataset()
+                dataset.load(decoded_file, format='csv')
+
                 for row in dataset.dict:
-                    name = str(row.get('name')).strip() if row.get('name') else None
-                    if not name:
-                        continue
-                    if Language.objects.filter(name__iexact=name).exists():
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({
+                            "statusCode": 400,
+                            "status": False,
+                            "message": f'Missing required headers. Required: {required_headers}, Found: {set(row_lower.keys())}'
+                        }, status=status.HTTP_400_BAD_REQUEST)
+                    data.append(row_lower)
+            else:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "error": 'Unsupported file format. Use .xlsx or .csv'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            imported_count = 0
+
+            # ---------- Import Rows ----------
+            for row in data:
+                name = str(row.get('language')).strip() if row.get('language') else None
+                description = str(row.get('description')).strip() if row.get('description') else ''
+                is_deleted = row.get('is_deleted', False)
+
+                if not name:
+                    continue
+
+                existing = Language.objects.filter(name__iexact=name).first()
+
+                if existing:
+                    if not existing.is_deleted:
                         duplicate_names.append(name)
                         continue
+                    else:
+                        existing.description = description
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
+                else:
                     Language.objects.create(
                         name=name,
-                        description=row.get('description', ''),
-                        is_deleted=row.get('is_deleted', False)
+                        description=description,
+                        is_deleted=is_deleted or False
                     )
+                    imported_count += 1
 
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({
             "statusCode": 200,
             "status": True,
             "duplicates": list(set(duplicate_names)),
-            'message': f'Sheet "{sheet_name}" imported successfully' if sheet_name else 'Import successful'
-        })
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count
+        }, status=status.HTTP_200_OK)
 
 
 
@@ -378,10 +460,10 @@ class LanguageTestListAPIView(APIView):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['name', 'fullname', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'fullname', 'description', 'updated_at']
 
         if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
+            sort_by = 'updated_at'
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
@@ -404,20 +486,41 @@ class LanguageTestCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
-        name = request.data.get("name", "").strip()
-        existing = LanguageTest.objects.filter(name__iexact=name, is_deleted=False).first()
-        if existing:
-            return Response({"statusCode": 400, "status": False, "message": "LanguageTest with this name already exists."}, status=400)
+        language_uuid = request.data.get('language')
+        if not language_uuid:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Language UUID is required."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            language = Language.objects.get(uuid=language_uuid, is_deleted=False)
+        except Language.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "Language not found."
+            }, status=status.HTTP_404_NOT_FOUND)
 
         serializer = LanguageTestSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            return Response({"statusCode": 200, "status": True, "message": "LanguageTest created successfully", "data": serializer.data})
-        else:
-            errors = " ".join([msg for msgs in serializer.errors.values() for msg in msgs])
-            return Response({"statusCode": 400, "status": False, "message": errors}, status=400)
+            serializer.save(language=language)
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "LanguageTest created successfully",
+                "data": serializer.data
+            })
+
+        return Response({
+            "statusCode": 400,
+            "status": False,
+            "message": " ".join([m for msgs in serializer.errors.values() for m in msgs])
+        }, status=status.HTTP_400_BAD_REQUEST)
 
 
+# -------------------- RETRIEVE -------------------- #
 class LanguageTestRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -425,11 +528,22 @@ class LanguageTestRetrieveAPIView(APIView):
         try:
             obj = LanguageTest.objects.get(uuid=uuid, is_deleted=False)
         except LanguageTest.DoesNotExist:
-            return Response({"statusCode": 404, "status": False, "message": "Not found", "data": None}, status=404)
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "LanguageTest not found"
+            }, status=status.HTTP_404_NOT_FOUND)
+
         serializer = LanguageTestSerializer(obj)
-        return Response({"statusCode": 200, "status": True, "message": "Retrieved successfully", "data": serializer.data})
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": "LanguageTest retrieved successfully",
+            "data": serializer.data
+        })
 
 
+# -------------------- UPDATE -------------------- #
 class LanguageTestUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -437,35 +551,93 @@ class LanguageTestUpdateAPIView(APIView):
         try:
             obj = LanguageTest.objects.get(uuid=uuid, is_deleted=False)
         except LanguageTest.DoesNotExist:
-            return Response({"statusCode": 404, "status": False, "message": "Not found", "data": None}, status=404)
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "LanguageTest not found"
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        language_uuid = request.data.get('language')
+        if language_uuid:
+            try:
+                language = Language.objects.get(uuid=language_uuid, is_deleted=False)
+                request.data['language'] = language.id  # assign FK
+            except Language.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "Language not found."
+                }, status=status.HTTP_404_NOT_FOUND)
 
         serializer = LanguageTestSerializer(obj, data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response({"statusCode": 200, "status": True, "message": "Updated successfully", "data": serializer.data})
-        errors = " ".join([msg for msgs in serializer.errors.values() for msg in msgs])
-        return Response({"statusCode": 400, "status": False, "message": errors}, status=400)
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "LanguageTest updated successfully",
+                "data": serializer.data
+            })
 
+        return Response({
+            "statusCode": 400,
+            "status": False,
+            "message": " ".join([m for msgs in serializer.errors.values() for m in msgs])
+        }, status=status.HTTP_400_BAD_REQUEST)
 
 class LanguageTestDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
-    def delete(self, request):
-        ids = request.data.get('id', None)
-        if not ids:
-            return Response({"statusCode": 400, "status": False, "message": "Provide 'id' field", "data": None}, status=400)
+    def delete(self, request, uuid=None):
+        uuids = request.data.get('id', None)
 
-        if ids == "all":
+        if uuid:
+            try:
+                obj = LanguageTest.objects.get(uuid=uuid, is_deleted=False)
+                obj.delete()
+                return Response({
+                    "statusCode": 204,
+                    "status": True,
+                    "message": "LanguageTest deleted successfully",
+                    "data": None
+                }, status=status.HTTP_204_NO_CONTENT)
+            except LanguageTest.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "LanguageTest not found",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+
+        if uuids == "all":
             objs = LanguageTest.objects.filter(is_deleted=False)
             count = objs.count()
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No LanguageTest records found to delete.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
             objs.delete()
-            return Response({"statusCode": 200, "status": True, "message": f"All {count} LanguageTest(s) deleted", "data": None})
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"All {count} LanguageTest record(s) deleted successfully.",
+                "data": None
+            }, status=status.HTTP_200_OK)
 
-        if not isinstance(ids, list):
-            return Response({"statusCode": 400, "status": False, "message": "Provide list of UUIDs", "data": None}, status=400)
+        if not uuids or not isinstance(uuids, list):
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
 
-        valid_uuids, invalid_uuids = [], []
-        for u in ids:
+        valid_uuids = []
+        invalid_uuids = []
+        for u in uuids:
             try:
                 valid_uuids.append(UUID(u))
             except ValueError:
@@ -473,49 +645,104 @@ class LanguageTestDeleteAPIView(APIView):
 
         objs = LanguageTest.objects.filter(uuid__in=valid_uuids, is_deleted=False)
         count = objs.count()
+
         if count == 0:
-            return Response({"statusCode": 404, "status": False, "message": "No matching LanguageTest found", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None}, status=404)
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "No matching LanguageTest records found.",
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+            }, status=status.HTTP_404_NOT_FOUND)
 
         objs.delete()
-        return Response({"statusCode": 200, "status": True, "message": f"{count} LanguageTest(s) deleted", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None})
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": f"{count} LanguageTest record(s) deleted successfully.",
+            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+        }, status=status.HTTP_200_OK)
+
 
 
 class LanguageTestExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
-        format_type = request.GET.get('format', 'csv').lower()
-        fields = request.GET.get('fields')
-        uuids_param = request.GET.get('uuids', '')
-        uuids = [u.strip() for u in uuids_param.split(',') if u]
-        field_list = [f.strip() for f in fields.split(',')] if fields else ['uuid', 'name', 'fullname', 'description', 'is_deleted', 'created_at', 'updated_at']
-        queryset = LanguageTest.objects.filter(uuid__in=uuids) if uuids else LanguageTest.objects.all()
+        # --- Get query params ---
+        format_type = request.GET.get('format', 'xlsx').lower()
+        fields = request.GET.get('fields')  # comma-separated fields
+        uuids_param = request.GET.get('uuids', '')  # comma-separated UUIDs
 
+        uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+        # --- Field to header mapping ---
+        field_header_map = {
+            'uuid': 'UUID',
+            'language': 'Language',
+            'name': 'Name',
+            'fullname': 'Full Name',
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'created_at': 'Created On',
+            'updated_at': 'Modified On',
+        }
+
+        # --- Determine fields to export ---
+        if fields:
+            field_list = [f.strip() for f in fields.split(',')]
+        else:
+            field_list = list(field_header_map.keys())
+
+        # --- Fetch queryset ---
+        queryset = LanguageTest.objects.all()
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-updated_at')
+
+        # --- Prepare dataset ---
         dataset = Dataset()
-        dataset.headers = field_list
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'LanguageTest'
+
         for obj in queryset:
             row = []
             for field in field_list:
                 value = getattr(obj, field, '')
-                if isinstance(value, datetime.datetime):
-                    value = value.strftime("%Y-%m-%d %H:%M:%S")
-                if isinstance(value, bool):
+
+                # Special handling for language FK
+                if field == 'language' and obj.language:
+                    value = obj.language.name
+
+                # Convert datetime to IST
+                elif field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+
+                # Boolean to int
+                elif isinstance(value, bool):
                     value = int(value)
+
                 row.append(value if value is not None else '')
+
             dataset.append(row)
 
-        if format_type == 'xlsx':
-            data = XLSX().export_data(dataset)
-            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'languagetest.xlsx'
+        # --- Export logic ---
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'language_tests.csv'
         else:
-            data = CSV().export_data(dataset)
-            content_type = 'text/csv; charset=utf-8'
-            file_name = 'languagetest.csv'
+            file_data = io.BytesIO(dataset.export('xlsx'))
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'language_tests.xlsx'
 
-        response = HttpResponse(data, content_type=content_type)
+        # --- Return response ---
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
+
 
 
 class LanguageTestImportAPIView(APIView):
@@ -524,57 +751,121 @@ class LanguageTestImportAPIView(APIView):
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')
+
         if not file:
-            return Response({'error': 'No file uploaded'}, status=400)
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
-        dataset = Dataset()
         duplicate_names = []
 
+        required_headers = {'language', 'name'}
+        optional_headers = {'fullname', 'description', 'is_deleted'}
+
         try:
+            data = []
+            headers = []
+
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
+
                 if not sheet_name:
-                    return Response({'error': 'Provide sheet_name', 'available_sheets': available_sheets}, status=400)
+                    return Response({
+                        'error': 'Please provide sheet_name',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
                 if sheet_name not in available_sheets:
-                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
+                    return Response({
+                        'error': f'Sheet "{sheet_name}" not found',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
                 ws = wb[sheet_name]
-                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                data = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True)]
+                if ws.max_row <= 1:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'Sheet "{sheet_name}" is empty.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    if not any(row):
+                        continue
+                    row_dict = dict(zip(headers, row))
+                    data.append(row_dict)
 
             elif format_type == 'csv':
-                dataset.load(file.read().decode('utf-8'), format='csv')
-                data = dataset.dict
+                decoded_file = file.read().decode('utf-8')
+                dataset = Dataset()
+                dataset.load(decoded_file, format='csv')
+
+                for row in dataset.dict:
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({
+                            "statusCode": 400,
+                            "status": False,
+                            "message": f'Missing required headers. Required: {required_headers}, Found: {set(row_lower.keys())}'
+                        }, status=status.HTTP_400_BAD_REQUEST)
+                    data.append(row_lower)
             else:
-                return Response({'error': 'Unsupported format'}, status=400)
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": 'Unsupported file format. Use .xlsx or .csv'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            imported_count = 0
 
             for row in data:
-                name = str(row.get('name')).strip() if row.get('name') else None
+                lang_name = str(row.get('language')).strip()
+                name = str(row.get('name')).strip()
                 fullname = str(row.get('fullname')).strip() if row.get('fullname') else ''
                 description = str(row.get('description')).strip() if row.get('description') else ''
+                is_deleted = row.get('is_deleted', False)
 
-                if not name:
+                language = Language.objects.filter(name__iexact=lang_name, is_deleted=False).first()
+                if not language:
+                    duplicate_names.append(lang_name)
                     continue
 
-                existing = LanguageTest.objects.filter(name__iexact=name).first()
+                existing = LanguageTest.objects.filter(name__iexact=name, language=language).first()
                 if existing:
-                    if existing.is_deleted:
-                        LanguageTest.objects.create(name=name, fullname=fullname, description=description, is_deleted=False)
-                    else:
-                        duplicate_names.append(name)
-                        continue
-                else:
-                    LanguageTest.objects.create(name=name, fullname=fullname, description=description, is_deleted=False)
+                    duplicate_names.append(name)
+                    continue
+
+                LanguageTest.objects.create(
+                    language=language,
+                    name=name,
+                    fullname=fullname,
+                    description=description,
+                    is_deleted=is_deleted or False
+                )
+                imported_count += 1
 
         except Exception as e:
-            return Response({'error': str(e)}, status=400)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response({"statusCode": 200, "status": True, "duplicates": list(set(duplicate_names)), "message": f'Import successful'}, status=200)
-
-
-
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "duplicates": list(set(duplicate_names)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count
+        }, status=status.HTTP_200_OK)
 
 
 
@@ -648,35 +939,82 @@ class LanguagetestmoduleNameUpdateAPIView(APIView):
         try:
             obj = LanguagetestmoduleName.objects.get(uuid=uuid, is_deleted=False)
         except LanguagetestmoduleName.DoesNotExist:
-            return Response({"statusCode": 404, "status": False, "message": "Not found", "data": None}, status=404)
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "Module not found"
+            }, status=status.HTTP_404_NOT_FOUND)
 
         serializer = LanguagetestmoduleNameSerializer(obj, data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response({"statusCode": 200, "status": True, "message": "Updated successfully", "data": serializer.data})
-        errors = " ".join([msg for msgs in serializer.errors.values() for msg in msgs])
-        return Response({"statusCode": 400, "status": False, "message": errors}, status=400)
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "Module updated successfully",
+                "data": serializer.data
+            })
+        return Response({
+            "statusCode": 400,
+            "status": False,
+            "message": " ".join([m for msgs in serializer.errors.values() for m in msgs])
+        }, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 class LanguagetestmoduleNameDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
-    def delete(self, request):
-        ids = request.data.get('id', None)
-        if not ids:
-            return Response({"statusCode": 400, "status": False, "message": "Provide 'id' field", "data": None}, status=400)
+    def delete(self, request, uuid=None):
+        uuids = request.data.get('id', None)
 
-        if ids == "all":
+        if uuid:
+            try:
+                obj = LanguagetestmoduleName.objects.get(uuid=uuid, is_deleted=False)
+                obj.delete()
+                return Response({
+                    "statusCode": 204,
+                    "status": True,
+                    "message": "Module deleted successfully",
+                    "data": None
+                }, status=status.HTTP_204_NO_CONTENT)
+            except LanguagetestmoduleName.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "Module not found",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+
+        if uuids == "all":
             objs = LanguagetestmoduleName.objects.filter(is_deleted=False)
             count = objs.count()
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No records found to delete.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
             objs.delete()
-            return Response({"statusCode": 200, "status": True, "message": f"All {count} module(s) deleted", "data": None})
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"All {count} records deleted successfully.",
+                "data": None
+            }, status=status.HTTP_200_OK)
 
-        if not isinstance(ids, list):
-            return Response({"statusCode": 400, "status": False, "message": "Provide list of UUIDs", "data": None}, status=400)
+        if not uuids or not isinstance(uuids, list):
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Provide a list of UUIDs in 'id' field or 'all'.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
 
-        valid_uuids, invalid_uuids = [], []
-        for u in ids:
+        valid_uuids = []
+        invalid_uuids = []
+        for u in uuids:
             try:
                 valid_uuids.append(UUID(u))
             except ValueError:
@@ -685,46 +1023,77 @@ class LanguagetestmoduleNameDeleteAPIView(APIView):
         objs = LanguagetestmoduleName.objects.filter(uuid__in=valid_uuids, is_deleted=False)
         count = objs.count()
         if count == 0:
-            return Response({"statusCode": 404, "status": False, "message": "No matching module found", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None}, status=404)
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "No matching records found.",
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+            }, status=status.HTTP_404_NOT_FOUND)
 
         objs.delete()
-        return Response({"statusCode": 200, "status": True, "message": f"{count} module(s) deleted", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None})
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": f"{count} record(s) deleted successfully.",
+            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+        }, status=status.HTTP_200_OK)
 
 
+        
 class LanguagetestmoduleNameExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
-        format_type = request.GET.get('format', 'csv').lower()
+        format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')
         uuids_param = request.GET.get('uuids', '')
+
         uuids = [u.strip() for u in uuids_param.split(',') if u]
-        field_list = [f.strip() for f in fields.split(',')] if fields else ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
-        queryset = LanguagetestmoduleName.objects.filter(uuid__in=uuids) if uuids else LanguagetestmoduleName.objects.all()
+
+        field_header_map = {
+            'uuid': 'UUID',
+            'name': 'Language Test Module Name',
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'created_at': 'Created On',
+            'updated_at': 'Modified On',
+        }
+
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+        queryset = LanguagetestmoduleName.objects.all()
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-updated_at')
 
         dataset = Dataset()
-        dataset.headers = field_list
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'LanguagetestmoduleName'
+
         for obj in queryset:
             row = []
             for field in field_list:
                 value = getattr(obj, field, '')
-                if isinstance(value, datetime.datetime):
-                    value = value.strftime("%Y-%m-%d %H:%M:%S")
-                if isinstance(value, bool):
+                if field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
                     value = int(value)
                 row.append(value if value is not None else '')
             dataset.append(row)
 
-        if format_type == 'xlsx':
-            data = XLSX().export_data(dataset)
-            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'languagetestmodule.xlsx'
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'modules.csv'
         else:
-            data = CSV().export_data(dataset)
-            content_type = 'text/csv; charset=utf-8'
-            file_name = 'languagetestmodule.csv'
+            file_data = io.BytesIO(dataset.export('xlsx'))
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'modules.xlsx'
 
-        response = HttpResponse(data, content_type=content_type)
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
@@ -735,54 +1104,121 @@ class LanguagetestmoduleNameImportAPIView(APIView):
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')
+
         if not file:
-            return Response({'error': 'No file uploaded'}, status=400)
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
-        dataset = Dataset()
         duplicate_names = []
 
+        # Required & optional headers
+        required_headers = {'language test module'}
+        optional_headers = {'description', 'is_deleted'}
+
         try:
+            data = []
+            headers = []
+
+            # ---------- XLSX Handling ----------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
+
                 if not sheet_name:
-                    return Response({'error': 'Provide sheet_name', 'available_sheets': available_sheets}, status=400)
+                    return Response({
+                        'error': 'Please provide sheet_name',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
                 if sheet_name not in available_sheets:
-                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
+                    return Response({
+                        'error': f'Sheet "{sheet_name}" not found in uploaded file',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
                 ws = wb[sheet_name]
-                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                data = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True)]
+                if ws.max_row <= 1:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'Sheet "{sheet_name}" is empty.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+
+                if not required_headers.issubset(set(headers)):
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    if not any(row):
+                        continue
+                    row_dict = dict(zip(headers, row))
+                    data.append(row_dict)
+
+            # ---------- CSV Handling ----------
             elif format_type == 'csv':
-                dataset.load(file.read().decode('utf-8'), format='csv')
-                data = dataset.dict
-            else:
-                return Response({'error': 'Unsupported format'}, status=400)
+                decoded_file = file.read().decode('utf-8')
+                dataset = Dataset()
+                dataset.load(decoded_file, format='csv')
 
+                for row in dataset.dict:
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({
+                            "statusCode": 400,
+                            "status": False,
+                            "message": f'Missing required headers. Required: {required_headers}, Found: {set(row_lower.keys())}'
+                        }, status=status.HTTP_400_BAD_REQUEST)
+                    data.append(row_lower)
+            else:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": 'Unsupported file format. Use .xlsx or .csv'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            imported_count = 0
+
+            # ---------- Import Rows ----------
             for row in data:
                 name = str(row.get('name')).strip() if row.get('name') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
+                is_deleted = row.get('is_deleted', False)
 
                 if not name:
                     continue
 
                 existing = LanguagetestmoduleName.objects.filter(name__iexact=name).first()
+
                 if existing:
-                    if existing.is_deleted:
-                        LanguagetestmoduleName.objects.create(name=name, description=description, is_deleted=False)
-                    else:
-                        duplicate_names.append(name)
-                        continue
+                    duplicate_names.append(name)
+                    continue
                 else:
-                    LanguagetestmoduleName.objects.create(name=name, description=description, is_deleted=False)
+                    LanguagetestmoduleName.objects.create(
+                        name=name,
+                        description=description,
+                        is_deleted=is_deleted or False
+                    )
+                    imported_count += 1
 
         except Exception as e:
-            return Response({'error': str(e)}, status=400)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response({"statusCode": 200, "status": True, "duplicates": list(set(duplicate_names)), "message": f'Import successful'}, status=200)
-
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "duplicates": list(set(duplicate_names)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count
+        }, status=status.HTTP_200_OK)
 
 class CLBLevelListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -895,45 +1331,72 @@ class CLBLevelExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
-        format_type = request.GET.get('format', 'csv').lower()
-        fields = request.GET.get('fields')
-        uuids_param = request.GET.get('uuids', '')
+        format_type = request.GET.get('format', 'xlsx').lower()
+        fields = request.GET.get('fields')  # comma-separated fields
+        uuids_param = request.GET.get('uuids', '')  # comma-separated UUIDs
+
         uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+        # --- Field to header mapping ---
+        field_header_map = {
+            'uuid': 'UUID',
+            'name': 'CLB Level',  # Custom header
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'created_at': 'Created On',
+            'updated_at': 'Modified On',
+        }
+
+        # --- Determine which fields to export ---
         if fields:
             field_list = [f.strip() for f in fields.split(',')]
         else:
-            field_list = ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+            field_list = list(field_header_map.keys())
 
+        # --- Fetch queryset ---
         queryset = CLBLevel.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-updated_at')
 
-
+        # --- Prepare dataset ---
         dataset = Dataset()
-        dataset.headers = field_list
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'CLB Level'
+
         for obj in queryset:
             row = []
             for field in field_list:
                 value = getattr(obj, field, '')
-                if isinstance(value, datetime.datetime):
-                    value = value.strftime("%Y-%m-%d %H:%M:%S")
-                if isinstance(value, bool):
+
+                if field in ['created_at', 'updated_at'] and value:
+                    # Convert UTC to IST and format
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
                     value = int(value)
+
                 row.append(value if value is not None else '')
             dataset.append(row)
 
-        if format_type == 'xlsx':
-            data = XLSX().export_data(dataset)
-            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'clblevel.xlsx'
-        else:
-            data = CSV().export_data(dataset)
+        # --- Export data ---
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
             content_type = 'text/csv; charset=utf-8'
             file_name = 'clblevel.csv'
+        else:
+            # XLSX export using BytesIO
+            file_data = io.BytesIO(dataset.export('xlsx'))
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'clblevel.xlsx'
 
-        response = HttpResponse(data, content_type=content_type)
+        # --- Return response ---
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
+
 
 
 class CLBLevelImportAPIView(APIView):
@@ -942,53 +1405,148 @@ class CLBLevelImportAPIView(APIView):
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')
+
         if not file:
-            return Response({'error': 'No file uploaded'}, status=400)
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
-        dataset = Dataset()
         duplicate_names = []
 
+        # Define required and optional headers
+        required_headers = {'CLBLevel'}           # must be present
+        optional_headers = {'description'}    # optional
+
         try:
+            data = []
+            headers = []
+
+            # ---------- XLSX Handling ----------
             if format_type == 'xlsx':
+                import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
+
                 if not sheet_name:
-                    return Response({'error': 'Provide sheet_name', 'available_sheets': available_sheets}, status=400)
+                    return Response({
+                        'error': 'Please provide sheet_name',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
                 if sheet_name not in available_sheets:
-                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
+                    return Response({
+                        'error': f'Sheet "{sheet_name}" not found in uploaded file',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
                 ws = wb[sheet_name]
-                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                data = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True)]
+                if ws.max_row <= 1:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Provide at least one data row.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+
+                if not required_headers.issubset(set(headers)):
+                    return Response({
+                        "statusCode": 400,
+                        "status": True,
+                        'message': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    if not any(row):
+                        continue
+                    row_dict = dict(zip(headers, row))
+                    data.append(row_dict)
+
+                if not data:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Provide at least one data row.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+            # ---------- CSV Handling ----------
             elif format_type == 'csv':
-                dataset.load(file.read().decode('utf-8'), format='csv')
-                data = dataset.dict
-            else:
-                return Response({'error': 'Unsupported format'}, status=400)
+                decoded_file = file.read().decode('utf-8')
+                dataset = Dataset()
+                dataset.load(decoded_file, format='csv')
 
+                for row in dataset.dict:
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({
+                            "statusCode": 400,
+                            "status": True,
+                            "message": (
+                                f'Missing required headers. Required: {", ".join(required_headers)}. '
+                                f'Found headers in the file: {", ".join(row_lower.keys())}.'
+                            )
+                        }, status=status.HTTP_400_BAD_REQUEST)
+
+                    data.append(row_lower)
+
+                if not data:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "The uploaded CSV file is empty. Provide at least one data row."
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+            else:
+                return Response({
+                    "statusCode": 400,
+                    "status": True,
+                    'error': 'Unsupported file format. Use .xlsx or .csv'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            imported_count = 0
+
+            # ---------- Import Rows ----------
             for row in data:
                 name = str(row.get('name')).strip() if row.get('name') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not name:
-                    continue
+                    continue  # skip rows without name
 
                 existing = CLBLevel.objects.filter(name__iexact=name).first()
+
                 if existing:
-                    if existing.is_deleted:
-                        CLBLevel.objects.create(name=name, description=description, is_deleted=False)
-                    else:
+                    if not existing.is_deleted:
                         duplicate_names.append(name)
                         continue
+                    else:
+                        existing.description = description
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
                 else:
-                    CLBLevel.objects.create(name=name, description=description, is_deleted=False)
+                    CLBLevel.objects.create(
+                        name=name,
+                        description=description,
+                        is_deleted=False
+                    )
+                    imported_count += 1
 
         except Exception as e:
-            return Response({'error': str(e)}, status=400)
+            return Response({
+                "statusCode": 400,
+                "status": True,
+                'message': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response({"statusCode": 200, "status": True, "duplicates": list(set(duplicate_names)), "message": f'Import successful'}, status=200)
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "duplicates": list(set(duplicate_names)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count
+        }, status=status.HTTP_200_OK)
+
 
 
 
@@ -1099,97 +1657,205 @@ class StudyLanguageBanchmarkDeleteAPIView(APIView):
         return Response({"statusCode": 200, "status": True, "message": f"{count} benchmark(s) deleted", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None})
 
 
-class StudyLanguageBanchmarkExportAPIView(APIView):
+class StudyLanguageBenchmarkExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
-        format_type = request.GET.get('format', 'csv').lower()
-        fields = request.GET.get('fields')
-        uuids_param = request.GET.get('uuids', '')
-        uuids = [u.strip() for u in uuids_param.split(',') if u]
-        field_list = [f.strip() for f in fields.split(',')] if fields else ['uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
-        queryset = StudyLanguageBanchmark.objects.filter(uuid__in=uuids) if uuids else StudyLanguageBanchmark.objects.all()
+        format_type = request.GET.get('format', 'xlsx').lower()
+        fields = request.GET.get('fields')  # comma-separated fields
+        uuids_param = request.GET.get('uuids', '')  # comma-separated UUIDs
 
+        uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+        # Field to header mapping
+        field_header_map = {
+            'uuid': 'UUID',
+            'name': 'Study Language Banchmark (SLB)',
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'created_at': 'Created On',
+            'updated_at': 'Modified On',
+        }
+
+        # Determine which fields to export
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+        # Fetch queryset
+        queryset = StudyLanguageBanchmark.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-updated_at')
+
+        # Prepare dataset
         dataset = Dataset()
-        dataset.headers = field_list
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'Study Language Benchmark'
+
         for obj in queryset:
             row = []
             for field in field_list:
                 value = getattr(obj, field, '')
-                if isinstance(value, datetime.datetime):
-                    value = value.strftime("%Y-%m-%d %H:%M:%S")
-                if isinstance(value, bool):
+
+                if field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
                     value = int(value)
+
                 row.append(value if value is not None else '')
             dataset.append(row)
 
-        if format_type == 'xlsx':
-            data = XLSX().export_data(dataset)
-            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'study_language_banchmark.xlsx'
+        # Export data
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'study_language_benchmark.csv'
         else:
-            data = CSV().export_data(dataset)
-            content_type = 'text/csv; charset=utf-8'
-            file_name = 'study_language_banchmark.csv'
+            file_data = io.BytesIO(dataset.export('xlsx'))
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'study_language_benchmark.xlsx'
 
-        response = HttpResponse(data, content_type=content_type)
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
 
-class StudyLanguageBanchmarkImportAPIView(APIView):
+class StudyLanguageBenchmarkImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')
+
         if not file:
-            return Response({'error': 'No file uploaded'}, status=400)
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
-        dataset = Dataset()
         duplicate_names = []
 
+        required_headers = {'study language banchmark (SLB)'}  # must be present
+        optional_headers = {'description'}         # optional
+
         try:
+            data = []
+            headers = []
+
+            # ---------- XLSX Handling ----------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
+
                 if not sheet_name:
-                    return Response({'error': 'Provide sheet_name', 'available_sheets': available_sheets}, status=400)
+                    return Response({
+                        'error': 'Please provide sheet_name',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
                 if sheet_name not in available_sheets:
-                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
+                    return Response({
+                        'error': f'Sheet "{sheet_name}" not found in uploaded file',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
                 ws = wb[sheet_name]
-                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                data = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True)]
+                if ws.max_row <= 1:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+
+                if not required_headers.issubset(set(headers)):
+                    return Response({
+                        "statusCode": 400,
+                        "status": True,
+                        'message': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    if not any(row):
+                        continue
+                    row_dict = dict(zip(headers, row))
+                    data.append(row_dict)
+
+            # ---------- CSV Handling ----------
             elif format_type == 'csv':
-                dataset.load(file.read().decode('utf-8'), format='csv')
-                data = dataset.dict
-            else:
-                return Response({'error': 'Unsupported format'}, status=400)
+                decoded_file = file.read().decode('utf-8')
+                dataset = Dataset()
+                dataset.load(decoded_file, format='csv')
 
+                for row in dataset.dict:
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({
+                            "statusCode": 400,
+                            "status": True,
+                            "message": (
+                                f'Missing required headers. Required: {", ".join(required_headers)}. '
+                                f'Found headers in the file: {", ".join(row_lower.keys())}.'
+                            )
+                        }, status=status.HTTP_400_BAD_REQUEST)
+                    data.append(row_lower)
+
+            else:
+                return Response({
+                    "statusCode": 400,
+                    "status": True,
+                    'error': 'Unsupported file format. Use .xlsx or .csv'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            imported_count = 0
+
+            # ---------- Import Rows ----------
             for row in data:
-                name = str(row.get('name')).strip() if row.get('name') else None
+                name = str(row.get('study language banchmark (SLB)')).strip() if row.get('study language banchmark (SLB)') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not name:
                     continue
 
                 existing = StudyLanguageBanchmark.objects.filter(name__iexact=name).first()
+
                 if existing:
-                    if existing.is_deleted:
-                        StudyLanguageBanchmark.objects.create(name=name, description=description, is_deleted=False)
-                    else:
+                    if not existing.is_deleted:
                         duplicate_names.append(name)
                         continue
+                    else:
+                        existing.description = description
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
                 else:
-                    StudyLanguageBanchmark.objects.create(name=name, description=description, is_deleted=False)
+                    StudyLanguageBanchmark.objects.create(
+                        name=name,
+                        description=description,
+                        is_deleted=False
+                    )
+                    imported_count += 1
 
         except Exception as e:
-            return Response({'error': str(e)}, status=400)
+            return Response({
+                "statusCode": 400,
+                "status": True,
+                'message': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response({"statusCode": 200, "status": True, "duplicates": list(set(duplicate_names)), "message": f'Import successful'}, status=200)
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "duplicates": list(set(duplicate_names)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count
+        }, status=status.HTTP_200_OK)
+
+
+
+
+
 
 
 class EntranceTestNameListAPIView(APIView):
@@ -1199,10 +1865,10 @@ class EntranceTestNameListAPIView(APIView):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['fullname', 'shortname', 'description', 'created_at']
+        allowed_sort_fields = ['fullname', 'shortname', 'description', 'updated_at']
 
         if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
+            sort_by = 'updated_at'
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
@@ -1307,79 +1973,155 @@ class EntranceTestNameDeleteAPIView(APIView):
 
 
 # -------------------- Export -------------------- #
+
 class EntranceTestNameExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
-        format_type = request.GET.get('format', 'csv').lower()
+        format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')
         uuids_param = request.GET.get('uuids', '')
         uuids = [u.strip() for u in uuids_param.split(',') if u]
-        field_list = [f.strip() for f in fields.split(',')] if fields else ['uuid', 'fullname', 'shortname', 'description', 'is_deleted', 'created_at', 'updated_at']
-        queryset = EntranceTestName.objects.filter(uuid__in=uuids) if uuids else EntranceTestName.objects.all()
 
+        # Field to header mapping
+        field_header_map = {
+            'uuid': 'UUID',
+            'fullname': 'Entrance Test Full Name',
+            'shortname': 'Entrance Test Short Name',
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'created_at': 'Created On',
+            'updated_at': 'Modified On',
+        }
+
+        # Determine fields to export
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+        # Fetch queryset
+        queryset = EntranceTestName.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-updated_at')
+
+        # Prepare dataset
         dataset = Dataset()
-        dataset.headers = field_list
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'Entrance Test Name'
+
         for obj in queryset:
             row = []
             for field in field_list:
                 value = getattr(obj, field, '')
-                if isinstance(value, datetime.datetime):
-                    value = value.strftime("%Y-%m-%d %H:%M:%S")
-                if isinstance(value, bool):
+                if field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
                     value = int(value)
                 row.append(value if value is not None else '')
             dataset.append(row)
 
-        if format_type == 'xlsx':
-            data = XLSX().export_data(dataset)
+        # Export data
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'entrance_test_name.csv'
+        else:
+            file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'entrance_test_name.xlsx'
-        else:
-            data = CSV().export_data(dataset)
-            content_type = 'text/csv; charset=utf-8'
-            file_name = 'entrance_test_name.csv'
 
-        response = HttpResponse(data, content_type=content_type)
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
 
-
-
-# -------------------- Import -------------------- #
 class EntranceTestNameImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')
+
         if not file:
-            return Response({'error': 'No file uploaded'}, status=400)
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
-        dataset = Dataset()
         duplicate_names = []
 
+        required_headers = {'Entrance Test Full Name'}  # Must exist
+        optional_headers = {'Entrance Test Short Name', 'description'}
+
         try:
+            data = []
+
+            # ---------- XLSX Handling ----------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
+
                 if not sheet_name:
-                    return Response({'error': 'Provide sheet_name', 'available_sheets': available_sheets}, status=400)
+                    return Response({
+                        'error': 'Please provide sheet_name',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
                 if sheet_name not in available_sheets:
-                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
+                    return Response({
+                        'error': f'Sheet "{sheet_name}" not found',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
                 ws = wb[sheet_name]
-                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                data = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True)]
+                if ws.max_row <= 1:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response({
+                        "statusCode": 400,
+                        "status": True,
+                        'message': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    if not any(row):
+                        continue
+                    row_dict = dict(zip(headers, row))
+                    data.append(row_dict)
+
+            # ---------- CSV Handling ----------
             elif format_type == 'csv':
+                dataset = Dataset()
                 dataset.load(file.read().decode('utf-8'), format='csv')
-                data = dataset.dict
-            else:
-                return Response({'error': 'Unsupported format'}, status=400)
+                for row in dataset.dict:
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({
+                            "statusCode": 400,
+                            "status": True,
+                            "message": (
+                                f'Missing required headers. Required: {", ".join(required_headers)}. '
+                                f'Found headers in the file: {", ".join(row_lower.keys())}.'
+                            )
+                        }, status=status.HTTP_400_BAD_REQUEST)
+                    data.append(row_lower)
 
+            else:
+                return Response({
+                    "statusCode": 400,
+                    "status": True,
+                    'error': 'Unsupported file format. Use .xlsx or .csv'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            imported_count = 0
+
+            # ---------- Import Rows ----------
             for row in data:
                 fullname = str(row.get('fullname')).strip() if row.get('fullname') else None
                 shortname = str(row.get('shortname')).strip() if row.get('shortname') else ''
@@ -1389,21 +2131,44 @@ class EntranceTestNameImportAPIView(APIView):
                     continue
 
                 existing = EntranceTestName.objects.filter(fullname__iexact=fullname, shortname__iexact=shortname).first()
+
                 if existing:
-                    if existing.is_deleted:
-                        EntranceTestName.objects.create(fullname=fullname, shortname=shortname, description=description, is_deleted=False)
-                    else:
+                    if not existing.is_deleted:
                         duplicate_names.append(fullname)
                         continue
+                    else:
+                        existing.description = description
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
                 else:
-                    EntranceTestName.objects.create(fullname=fullname, shortname=shortname, description=description, is_deleted=False)
+                    EntranceTestName.objects.create(
+                        fullname=fullname,
+                        shortname=shortname,
+                        description=description,
+                        is_deleted=False
+                    )
+                    imported_count += 1
 
         except Exception as e:
-            return Response({'error': str(e)}, status=400)
+            return Response({
+                "statusCode": 400,
+                "status": True,
+                'message': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response({"statusCode": 200, "status": True, "duplicates": list(set(duplicate_names)), "message": f'Import successful'}, status=200)
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "duplicates": list(set(duplicate_names)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count
+        }, status=status.HTTP_200_OK)
 
 
+
+
+        
 
 class EntranceTestModuleNameListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]

@@ -163,13 +163,15 @@ class CitySerializer(serializers.ModelSerializer):
         queryset=State.objects.all(),
         slug_field='uuid',
         source='stateName',
-        write_only=True
+        write_only=True,
+        required=False
     )
     district_id = serializers.SlugRelatedField(
         queryset=District.objects.all(),
         slug_field='uuid',
         source='districtName',
-        write_only=True
+        write_only=True,
+        required=False
     )
 
     class Meta:

@@ -374,8 +374,8 @@ urlpatterns = [
     path('study-language-banchmarks/<uuid:uuid>/', StudyLanguageBanchmarkRetrieveAPIView.as_view(), name='study-language-banchmark-retrieve'),
     path('study-language-banchmarks/<uuid:uuid>/update/', StudyLanguageBanchmarkUpdateAPIView.as_view(), name='study-language-banchmark-update'),
     path('study-language-banchmarks/delete/', StudyLanguageBanchmarkDeleteAPIView.as_view(), name='study-language-banchmark-delete'),
-    path('study-language-banchmarks/export/', StudyLanguageBanchmarkExportAPIView.as_view(), name='study-language-banchmark-export'),
-    path('study-language-banchmarks/import/', StudyLanguageBanchmarkImportAPIView.as_view(), name='study-language-banchmark-import'),
+    path('study-language-banchmarks/export/', StudyLanguageBenchmarkExportAPIView.as_view(), name='study-language-banchmark-export'),
+    path('study-language-banchmarks/import/', StudyLanguageBenchmarkImportAPIView.as_view(), name='study-language-banchmark-import'),
 
     # --------- EntranceTestName --------- #
     path('entrance-tests/', EntranceTestNameListAPIView.as_view(), name='entrance-test-list'),
