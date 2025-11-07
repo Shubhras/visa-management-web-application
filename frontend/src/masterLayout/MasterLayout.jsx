@@ -59,12 +59,13 @@ const MasterLayout = ({ children }) => {
             { name: 'Gender', path: '/gender-list' },
             { name: 'Marital Status', path: '/marital-status' },
             { name: 'Continents ', path: '/continent-list' },
+            { name: "Country ", path: "/country-list" },
             // { name: 'State', path: '/' },
             // { name: 'District', path: '/' },
             // { name: 'City', path: '/' },
-            // { name: 'Timezone', path: '/' },
-            // { name: 'Relation', path: '/' },
-            // { name: 'Civil ID Name', path: '/' },
+            { name: 'Time Zone', path: '/timezone-list' },
+            { name: 'Relation', path: '/relation-list' },
+            { name: 'Civil ID Name', path: '/civil-name-list' },
           ]
         },
         {
@@ -104,6 +105,12 @@ const MasterLayout = ({ children }) => {
             { name: 'Education Level Code', path: '/education-level-code' },
             { name: 'Education Level', path: '/education-level' },
             { name: 'Study Main Area', path: '/study-main-area' },
+            { name: 'Education Duration', path: '/education-duration' },
+            { name: 'Study Major Area', path: '/study-major-area' },
+            { name: 'Academic Result Type', path: '/academic-result-type' },
+            { name: 'Education Type', path: '/education-type' },
+            { name: 'Study Specialisation', path: '/study-specialisation' }
+ 
           ]
         },
 

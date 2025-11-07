@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react'
 import { useDispatch } from "react-redux";
 import MasterLayout from "../../../../masterLayout/MasterLayout";
+// import Breadcrumb from "../../../components/Breadcrumb";
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { Link } from 'react-router-dom';
 import { toast } from "react-toastify";
-import AddImportLicenceNameModal from './AddImportLicenceNameModal';
-import AddEditLicenceNameModal from './AddEditLicenceNameModal';
-import { licenceNameExportData, licenceNameList, licenceNameDelete } from '../../../../store/master/companyMasters/actions';
+import { relationList, relationDelete, relationExportData  } from '../../../../store/master/generalMasters/actions';
+import AddImportRelationModal from './AddImportRelationModal';
+import AddEditRelationModal from './AddEditRelationModal';
 
-const LicenceNameList = () => {
+const RelationList = () => {
   const dispatch = useDispatch();
   const [modalState, setModalState] = useState({
     show: false,
@@ -29,7 +30,7 @@ const LicenceNameList = () => {
       mode: 'add',
       rowData: null
     });
-    fetchLicenceNameList();
+    fetchRelationList();
   }
 
   // const [showEdit, setShowEdit] = useState(false);
@@ -37,50 +38,16 @@ const LicenceNameList = () => {
   const [rowSelectData, setRowSelectData] = useState({});
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this licence name?");
+  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this relation?");
   const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [selectAllOrNot, setSelectAllOrNot] = useState('');
-  const [licenceNameData, setLicenceNameData] = useState([]);
+  const [relationDataList, setRelationDataList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [items] = useState(["Country", "License Full Name", "License Short Name", "License Issuing Authority Name", "License Valid Upto", "Description", "Modified On"]);
-  const [selectedItems, setSelectedItems] = useState(["Country", "License Full Name", "License Short Name", "License Issuing Authority Name", "License Valid Upto"]);
-  const [ItemsRequired] = useState(["Country", "License Full Name", "License Short Name", "License Issuing Authority Name", "License Valid Upto"]);
-
-  // Table columns configuration
-  const [tableColumns] = useState([
-    { id: 'country_name', label: 'Country', field: 'country_name', visible: true, required: true },
-    { id: 'full_name', label: 'License Full Name', field: 'full_name', visible: true, required: true },
-    { id: 'short_name', label: 'License Short Name', field: 'short_name', visible: true, required: true },
-    { id: 'issuing_authority', label: 'License Issuing Authority Name', field: 'issuing_authority', visible: false, required: false },
-    { id: 'valid_upto', label: 'License Valid Upto', field: 'valid_upto', visible: false, required: false },
-    { id: 'description', label: 'Description', field: 'description', visible: false, required: false },
-    { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: false, required: false },
-  ]);
-
-  const [visibleColumns, setVisibleColumns] = useState(
-    tableColumns.filter(col => col.visible).map(col => col.id)
-  );
-  const [showColumnDropdown, setShowColumnDropdown] = useState(false);
-  // Column visibility toggle handler
-  const toggleColumnVisibility = (columnId) => {
-    const column = tableColumns.find(col => col.id === columnId);
-    if (column?.required) return; // Don't allow hiding required columns
-
-    setVisibleColumns(prev => {
-      if (prev.includes(columnId)) {
-        return prev.filter(id => id !== columnId);
-      } else {
-        return [...prev, columnId];
-      }
-    });
-  };
-
-  // Check if column is visible
-  const isColumnVisible = (columnId) => {
-    return visibleColumns.includes(columnId);
-  };
+  const [items] = useState(["Relation", "Description", "Modified On"]);
+  const [selectedItems, setSelectedItems] = useState(["Relation"]);
+  const [ItemsRequired] = useState(["Relation"]);
 
   // Updated state with sorting
   const [tableState, setTableState] = useState({
@@ -100,7 +67,7 @@ const LicenceNameList = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (tableState.search !== undefined) {
-        fetchLicenceNameList();
+        fetchRelationList();
       }
     }, 500);
 
@@ -108,10 +75,10 @@ const LicenceNameList = () => {
   }, [tableState.search]);
 
   useEffect(() => {
-    fetchLicenceNameList();
+    fetchRelationList();
   }, [tableState.page, tableState.limit, tableState.status, tableState.sortBy, tableState.sortOrder]);
 
-  const fetchLicenceNameList = () => {
+  const fetchRelationList = () => {
     setLoading(true);
     const params = {
       page: tableState.page,
@@ -122,12 +89,12 @@ const LicenceNameList = () => {
       sortOrder: tableState.sortOrder || ''
     };
 
-    dispatch(licenceNameList(params, (response, error) => {
+    dispatch(relationList(params, (response, error) => {
       setLoading(false);
       if (response?.statusCode === 200 && response?.status === true) {
         const paginationData = response?.pagination || {};
 
-        setLicenceNameData(response?.data || []);
+        setRelationDataList(response?.data || []);
         setTableState(prev => ({
           ...prev,
           total: paginationData.totalItems || 0,
@@ -144,7 +111,7 @@ const LicenceNameList = () => {
           return filtered;
         });
       } else {
-        setLicenceNameData([]);
+        setRelationDataList([]);
         setTableState(prev => ({
           ...prev,
           total: 0,
@@ -213,14 +180,14 @@ const LicenceNameList = () => {
     if (isAllSelected) {
       setSelectedRows([]);
     } else {
-      setSelectedRows(licenceNameData.map(Item => Item.uuid));
+      setSelectedRows(relationDataList.map(Item => Item.uuid));
     }
   };
   // For checkbox in table header
   const handleSelectAll = (e) => {
     const checked = e.target.checked;
     if (checked) {
-      setSelectedRows(licenceNameData.map(Item => Item.uuid));
+      setSelectedRows(relationDataList.map(Item => Item.uuid));
     } else {
       setSelectedRows([]);
       setSelectAllOrNot('');
@@ -237,8 +204,8 @@ const LicenceNameList = () => {
     });
   };
 
-  const isAllSelected = licenceNameData.length > 0 &&
-    licenceNameData.every(Item => selectedRows.includes(Item.uuid));
+  const isAllSelected = relationDataList.length > 0 &&
+    relationDataList.every(Item => selectedRows.includes(Item.uuid));
 
   const goToPage = (page) => {
     if (page >= 1 && page <= tableState.totalPages) {
@@ -293,7 +260,7 @@ const LicenceNameList = () => {
   const handleDelete = (uuid) => {
     setDeleteId(uuid);
     setShowDeleteConfirm(true);
-    setDeleteConfirmMessage(`Are you sure you want to delete this licence name?`);
+    setDeleteConfirmMessage(`Are you sure you want to delete this relation?`);
   };
 
   const handleBulkDelete = () => {
@@ -302,8 +269,8 @@ const LicenceNameList = () => {
       return;
     }
     // Choose message based on delete type
-    const message = selectAllOrNot === "all" ? `${tableState.total} all licence name` : `${selectedRows.length} selected licence name`;
-    setDeleteConfirmMessage(`Are you sure you want to delete this licence name (${message})?`);
+    const message = selectAllOrNot === "all" ? `${tableState.total} all relation` : `${selectedRows.length} selected relation`;
+    setDeleteConfirmMessage(`Are you sure you want to delete this relation (${message})?`);
     setShowDeleteConfirm(true);
   };
 
@@ -311,22 +278,22 @@ const LicenceNameList = () => {
     // const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
     const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
     if (!sendPayload || sendPayload.length === 0) {
-      toast.error("No licence name selected for deletion.");
+      toast.error("No relation selected for deletion.");
       return;
     }
-    dispatch(licenceNameDelete(sendPayload, (response, error) => {
+    dispatch(relationDelete(sendPayload, (response, error) => {
       if (error) {
         toast.error(error?.response?.data?.message || "server error");
       } else {
         if (response?.statusCode === 200 && response?.status === true) {
           toast.success(response?.message);
-          setLicenceNameData(prevRowItems => prevRowItems.filter(Item => Item.uuid !== deleteId));
+          setRelationDataList(prevRowItems => prevRowItems.filter(Item => Item.uuid !== deleteId));
           setSelectedRows(prevSelected => prevSelected.filter(rowId => rowId !== deleteId));
           setShowDeleteConfirm(false);
           setSelectedRows([]);
           setSelectAllOrNot('');
           setDeleteId(null);
-          fetchLicenceNameList();
+          fetchRelationList();
         } else {
           toast.error("Something went wrong.");
         }
@@ -344,7 +311,7 @@ const LicenceNameList = () => {
 
   const handleCloseImport = () => {
     setShowImport(false);
-    fetchLicenceNameList();
+    fetchRelationList();
   };
 
   const handleShowImport = () => {
@@ -394,11 +361,7 @@ const LicenceNameList = () => {
     }
     // Map frontend labels to backend field names
     const fieldMapping = {
-      "Country": "country",
-      "License Full Name": "full_name",
-      "License Short Name": "short_name",
-      "License Issuing Authority Name": "issuing_authority",
-      "License Valid Upto": "valid_upto",
+      "Relation": "name",
       "Modified On": "updated_at",
       "Description": "description",
     };
@@ -412,7 +375,7 @@ const LicenceNameList = () => {
       uuids: selectAllOrNot === "all" ? [] : selectedRows,
     };
     setLoadingExport(true);
-    dispatch(licenceNameExportData(sendPayload, (response, error) => {
+    dispatch(relationExportData(sendPayload, (response, error) => {
       if (error) {
         setLoadingExport(false);
         toast.error(error?.response?.message || "server error");
@@ -426,7 +389,7 @@ const LicenceNameList = () => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `LicenceName.xlsx`;
+          link.download = `Relation.xlsx`;
           document.body.appendChild(link);
           link.click();
           link.remove();
@@ -464,7 +427,7 @@ const LicenceNameList = () => {
   return (
     <>
       <MasterLayout>
-        {/* <Breadcrumb title="Licence Name" subTitle="List" /> */}
+        {/* <Breadcrumb title="Relation" subTitle="List" /> */}
         <div className="card basic-data-table main-container-data">
           <div className="card-body container-data">
             <div className="row align-items-center gy-3 gx-2 flex-wrap filter-action-btn">
@@ -513,7 +476,7 @@ const LicenceNameList = () => {
                   >
                     Delete
                   </button>
-                  {(selectedRows?.length > 0 && selectedRows?.length === licenceNameData?.length) && (
+                  {(selectedRows?.length > 0 && selectedRows?.length === relationDataList?.length) && (
                     <>
                       <button
                         onClick={() => handleSelectAllOrNot("onlySelected")}
@@ -583,36 +546,6 @@ const LicenceNameList = () => {
                     className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
                     onClick={handleShow}
                   >+ New</button>
-                  <div className="position-relative table-header-hide-show">
-                    <button
-                      className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
-                      onClick={() => setShowColumnDropdown(!showColumnDropdown)}
-                    >
-                      Columns
-                    </button>
-                    {showColumnDropdown && (
-                      <div className="position-absolute bg-white border rounded shadow-sm p-2 show-dropdowns-header">
-                        {tableColumns.map((column) => (
-                          <div
-                            key={column.id}
-                            className="bg-white p-2 mb-2 d-flex align-items-center gap-2"
-                          >
-                            <input
-                              type="checkbox"
-                              id={`column-${column.id}`}
-                              checked={isColumnVisible(column.id)}
-                              onChange={() => toggleColumnVisibility(column.id)}
-                              disabled={column.required}
-                              className="form-check-input"
-                            />
-                            <label htmlFor={`column-${column.id}`} className="mb-0 flex-grow-1 form-label">
-                              {column.label}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
                 </div>
               </div>
             </div>
@@ -620,7 +553,7 @@ const LicenceNameList = () => {
           <div className="card-body pt-0 container-table" >
             <div className='container-table-div'>
               <table className="table mb-0"  >
-                {/* <thead >
+                <thead >
                   <tr>
                     <th scope="col" className='sl-numbar-th'>
                       <div className="d-flex align-items-center gap-2">
@@ -629,39 +562,15 @@ const LicenceNameList = () => {
                           type="checkbox"
                           checked={isAllSelected}
                           onChange={handleSelectAll}
-                          disabled={licenceNameData.length === 0}
+                          disabled={relationDataList.length === 0}
                         />
                         <span>No.</span>
                       </div>
                     </th>
-                    <th scope="col" className='sorting-th' onClick={() => handleSort('country_name')}>
+                    <th scope="col" className='sorting-th' onClick={() => handleSort('name')}>
                       <div className="d-flex align-items-center">
-                        Country
-                        {getSortIcon('country_name')}
-                      </div>
-                    </th>
-                    <th scope="col" className='sorting-th' onClick={() => handleSort('full_name')}>
-                      <div className="d-flex align-items-center">
-                        License Full Name
-                        {getSortIcon('full_name')}
-                      </div>
-                    </th>
-                    <th scope="col" className='sorting-th' onClick={() => handleSort('short_name')}>
-                      <div className="d-flex align-items-center">
-                        License Short Name
-                        {getSortIcon('short_name')}
-                      </div>
-                    </th>
-                    <th scope="col" className='sorting-th' onClick={() => handleSort('issuing_authority')}>
-                      <div className="d-flex align-items-center">
-                        License Issuing Authority Name
-                        {getSortIcon('issuing_authority')}
-                      </div>
-                    </th>
-                    <th scope="col" className='sorting-th' onClick={() => handleSort('valid_upto')}>
-                      <div className="d-flex align-items-center">
-                        License Valid Upto
-                        {getSortIcon('valid_upto')}
+                        Relation
+                        {getSortIcon('name')}
                       </div>
                     </th>
                     <th scope="col" className='sorting-th' onClick={() => handleSort('description')}>
@@ -693,8 +602,8 @@ const LicenceNameList = () => {
                         </div>
                       </td>
                     </tr>
-                  ) : licenceNameData.length > 0 ? (
-                    licenceNameData.map((rowItem, index) => (
+                  ) : relationDataList.length > 0 ? (
+                    relationDataList.map((rowItem, index) => (
                       <tr key={rowItem.uuid} >
                         <td >
                           <div className="d-flex align-items-center gap-2">
@@ -711,27 +620,7 @@ const LicenceNameList = () => {
                         </td>
                         <td >
                           <span >
-                            {rowItem.country_name}
-                          </span>
-                        </td>
-                        <td >
-                          <span >
-                            {rowItem.full_name}
-                          </span>
-                        </td>
-                        <td >
-                          <span >
-                            {rowItem.short_name}
-                          </span>
-                        </td>
-                        <td >
-                          <span >
-                            {rowItem.issuing_authority}
-                          </span>
-                        </td>
-                        <td >
-                          <span >
-                            {rowItem.valid_upto}
+                            {rowItem.name}
                           </span>
                         </td>
                         <td >
@@ -767,106 +656,6 @@ const LicenceNameList = () => {
                   ) : (
                     <tr>
                       <td colSpan="5" className='no-records-found'>
-                        No records found
-                      </td>
-                    </tr>
-                  )}
-                </tbody> */}
-                <thead>
-                  <tr>
-                    <th scope="col" className='sl-numbar-th'>
-                      <div className="d-flex align-items-center gap-2">
-                        <input
-                          className="form-check-input"
-                          type="checkbox"
-                          checked={isAllSelected}
-                          onChange={handleSelectAll}
-                          disabled={licenceNameData.length === 0}
-                        />
-                        <span>No.</span>
-                      </div>
-                    </th>
-                    {tableColumns.map((column) => (
-                      isColumnVisible(column.id) && (
-                        <th
-                          key={column.id}
-                          scope="col"
-                          className='sorting-th'
-                          onClick={() => handleSort(column.field)}
-                        >
-                          <div className="d-flex align-items-center">
-                            {column.label}
-                            {getSortIcon(column.field)}
-                          </div>
-                        </th>
-                      )
-                    ))}
-                    <th scope="col" className='action-th'>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    <tr>
-                      <td colSpan={visibleColumns.length + 2} className='loding-data'>
-                        <div className="d-flex justify-content-center align-items-center gap-2">
-                          <div className="spinner-border spinner-border-sm" role="status">
-                            <span className="visually-hidden">Loading...</span>
-                          </div>
-                          Loading...
-                        </div>
-                      </td>
-                    </tr>
-                  ) : licenceNameData.length > 0 ? (
-                    licenceNameData.map((rowItem, index) => (
-                      <tr key={rowItem.uuid}>
-                        <td>
-                          <div className="d-flex align-items-center gap-2">
-                            <input
-                              className="form-check-input"
-                              type="checkbox"
-                              checked={selectedRows.includes(rowItem.uuid)}
-                              onChange={() => handleRowSelect(rowItem.uuid)}
-                            />
-                            <span>{String(startIndex + index + 1).padStart(2, '0')}</span>
-                          </div>
-                        </td>
-                        {isColumnVisible('country_name') && (
-                          <td><span>{rowItem.full_name}</span></td>
-                        )}
-                        {isColumnVisible('full_name') && (
-                          <td><span>{rowItem.full_name}</span></td>
-                        )}
-                        {isColumnVisible('short_name') && (
-                          <td><span>{rowItem.short_name}</span></td>
-                        )}
-                        {isColumnVisible('issuing_authority') && (
-                          <td><span>{rowItem.issuing_authority}</span></td>
-                        )}
-                        {isColumnVisible('valid_upto') && (
-                          <td><span>{rowItem.valid_upto}</span></td>
-                        )}
-                        {isColumnVisible('description') && (
-                          <td><span>{rowItem.description}</span></td>
-                        )}
-                        {isColumnVisible('updated_at') && (
-                          <td><span>{formatDateTime(rowItem.updated_at)}</span></td>
-                        )}
-
-                        <td>
-                          <div className="d-flex align-items-center gap-2">
-                            <Link to="#" className='edit-btn-icone' onClick={(e) => { e.preventDefault(); handleShowEdit(rowItem); }}>
-                              <Icon icon="lucide:edit" width="18" className='icone' />
-                            </Link>
-                            <button onClick={() => handleDelete(rowItem.uuid)} className='delete-btn-icone'>
-                              <Icon icon="mingcute:delete-2-line" width="18" className='icone' />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={visibleColumns.length + 2} className='no-records-found'>
                         No records found
                       </td>
                     </tr>
@@ -981,14 +770,14 @@ const LicenceNameList = () => {
             </div>
           </div>
         </div>
-        <AddEditLicenceNameModal
+        <AddEditRelationModal
           show={modalState.show}
           handleClose={handleClose}
           mode={modalState.mode}
           rowData={modalState.rowData}
         />
         {showImport && (
-          <AddImportLicenceNameModal show={showImport} handleClose={handleCloseImport} />)}
+          <AddImportRelationModal show={showImport} handleClose={handleCloseImport} />)}
         {showDeleteConfirm && (
           <div className="modal fade show common-ctl-popup">
             <div className="modal-dialog modal-dialog-centered">
@@ -1029,7 +818,7 @@ const LicenceNameList = () => {
             <div className="modal-dialog modal-xl modal-dialog-centered" role="document">
               <div className="modal-content radius-16 bg-base">
                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                  <h1 className="modal-title fs-5">Export Licence Name</h1>
+                  <h1 className="modal-title fs-5">Export Relation</h1>
                   <button
                     type="button"
                     className="btn-close"
@@ -1127,4 +916,4 @@ const LicenceNameList = () => {
   );
 };
 
-export default LicenceNameList;
+export default RelationList;

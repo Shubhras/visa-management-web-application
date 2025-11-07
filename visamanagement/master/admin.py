@@ -471,3 +471,29 @@ class CivilIdNameAdmin(admin.ModelAdmin):
         "valid_duration_unit",
         # "is_deleted",
     )
+
+
+
+
+@admin.register(AcademicResultType)
+class AcademicResultTypeAdmin(admin.ModelAdmin):
+    list_display = (
+        'name',
+        'description',
+        'is_deleted',
+        'created_at',
+        'updated_at',
+    )
+    list_filter = ('is_deleted', 'created_at', 'updated_at')
+    search_fields = ('name', 'description')
+    ordering = ('-created_at',)
+    readonly_fields = ('uuid', 'created_at', 'updated_at')
+
+    fieldsets = (
+        (None, {
+            'fields': ('name', 'description', 'is_deleted')
+        }),
+        ('Timestamps', {
+            'fields': ('uuid', 'created_at', 'updated_at')
+        }),
+    )

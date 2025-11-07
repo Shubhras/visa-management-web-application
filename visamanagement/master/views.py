@@ -10687,33 +10687,8 @@ class LostReasonB2BImportAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 # -------------------- EducationLevelCode -------------------- #
-class EducationLevelCodeListAPIView(APIView):
-    def get(self, request):
-        search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['Levelcode', 'created_at']
 
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
-
-        queryset = EducationLevelCode.objects.all()
-        if search:
-            queryset = queryset.filter(
-                Q(Levelcode__icontains=search) |
-                Q(description__icontains=search)
-            )
-
-        queryset = queryset.order_by(sort_by)
-        paginator = CustomPagination()
-        result_page = paginator.paginate_queryset(queryset, request)
-        serializer = EducationLevelCodeSerializer(result_page, many=True)
-        return paginator.get_paginated_response(serializer.data)
-
-
-# ------------------ CREATE ------------------
+# ------------------ List API ------------------
 class EducationLevelCodeListAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -11076,7 +11051,7 @@ class EducationLevelListAPIView(APIView):
             queryset = queryset.filter(
                 Q(educationlevel__icontains=search) |
                 Q(description__icontains=search) |
-                Q(level_code__Levelcode__icontains=search)  # optional: search by level_code detail
+                Q(level_code__name__icontains=search)  # optional: search by level_code detail
             )
 
         queryset = queryset.order_by(sort_by)
@@ -11290,7 +11265,6 @@ class EducationLevelExportAPIView(APIView):
         return response
 
 
-# ------------------ Import API ------------------
 class EducationLevelImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -11983,7 +11957,7 @@ class StudymainareaExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Study Main',
+            'name': 'Study Main Area',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'created_at': 'Created On',
@@ -11999,7 +11973,7 @@ class StudymainareaExportAPIView(APIView):
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'Studymainarea'
+        dataset.title = 'Study Main Area'
 
         for area in queryset:
             row = []
@@ -12034,6 +12008,7 @@ class StudymainareaImportAPIView(APIView):
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')
+        print("Sheet Name",sheet_name)
         if not file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -12489,6 +12464,7 @@ class StudyMajorAreaImportAPIView(APIView):
             "imported_count": imported_count
         }, status=200)
 
+
 # -------------------- Studyspecialisation -------------------- #
 
 
@@ -12866,32 +12842,7 @@ class StudySpecialisationImportAPIView(APIView):
         }, status=200)
 
 
-# -------------------- AcademicResultType -------------------- 
-class AcademicResultTypeListAPIView(APIView):
-    def get(self, request):
-        search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
 
-        allowed_sort_fields = ['name', 'description', 'created_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
-
-        queryset = AcademicResultType.objects.filter(is_deleted=False)
-        if search:
-            queryset = queryset.filter(
-                Q(name__icontains=search) |
-                Q(description__icontains=search)
-            )
-
-        queryset = queryset.order_by(sort_by)
-
-        paginator = CustomPagination()
-        result_page = paginator.paginate_queryset(queryset, request)
-        serializer = AcademicResultTypeSerializer(result_page, many=True)
-        return paginator.get_paginated_response(serializer.data)
 
 
 # --------------------- Create API ---------------------
@@ -12923,6 +12874,34 @@ class AcademicResultTypeCreateAPIView(APIView):
             "status": False,
             "message": message_text
         }, status=status.HTTP_400_BAD_REQUEST)
+
+
+# -------------------- AcademicResultType -------------------- 
+class AcademicResultTypeListAPIView(APIView):
+    def get(self, request):
+        search = request.GET.get('search', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_order = request.GET.get('sortOrder', 'desc')
+
+        allowed_sort_fields = ['name', 'description', 'created_at']
+        if sort_by not in allowed_sort_fields:
+            sort_by = 'created_at'
+        if sort_order == 'desc':
+            sort_by = f'-{sort_by}'
+
+        queryset = AcademicResultType.objects.filter(is_deleted=False)
+        if search:
+            queryset = queryset.filter(
+                Q(name__icontains=search) |
+                Q(description__icontains=search)
+            )
+
+        queryset = queryset.order_by(sort_by)
+
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = AcademicResultTypeSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
 
 # --------------------- Retrieve API ---------------------
@@ -12984,6 +12963,7 @@ class AcademicResultTypeUpdateAPIView(APIView):
 
 
 # --------------------- Delete API ---------------------
+
 class AcademicResultTypeDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -12994,13 +12974,16 @@ class AcademicResultTypeDeleteAPIView(APIView):
         if uuid:
             try:
                 obj = AcademicResultType.objects.get(uuid=uuid)
+                deleted_item = AcademicResultTypeSerializer(obj).data
                 obj.delete()
                 return Response({
-                    "statusCode": 204,
+                    "statusCode": 200,
                     "status": True,
                     "message": "Academic Result Type permanently deleted.",
-                    "data": None
-                }, status=status.HTTP_204_NO_CONTENT)
+                    "data": {
+                        "deleted_items": [deleted_item]
+                    }
+                })
             except AcademicResultType.DoesNotExist:
                 return Response({
                     "statusCode": 404,
@@ -13011,21 +12994,26 @@ class AcademicResultTypeDeleteAPIView(APIView):
 
         # Delete all
         if ids == "all":
-            queryset = AcademicResultType.objects.all()
-            count = queryset.count()
-            if count == 0:
+            queryset = list(AcademicResultType.objects.all())  # force evaluation into list
+            if not queryset:
                 return Response({
                     "statusCode": 404,
                     "status": False,
                     "message": "No Academic Result Types found to delete.",
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
-            queryset.delete()
+
+            deleted_items = AcademicResultTypeSerializer(queryset, many=True).data
+            for obj in queryset:
+                obj.delete()
+
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} Academic Result Type(s) permanently deleted.",
-                "data": None
+                "message": f"All {len(deleted_items)} Academic Result Type(s) permanently deleted.",
+                "data": {
+                    "deleted_items": deleted_items
+                }
             })
 
         # Bulk delete via list of UUIDs
@@ -13045,22 +13033,27 @@ class AcademicResultTypeDeleteAPIView(APIView):
             except ValueError:
                 invalid_uuids.append(u)
 
-        queryset = AcademicResultType.objects.filter(uuid__in=valid_uuids)
-        count = queryset.count()
-        if count == 0:
+        queryset = list(AcademicResultType.objects.filter(uuid__in=valid_uuids))
+        if not queryset:
             return Response({
                 "statusCode": 404,
                 "status": False,
                 "message": "No matching Academic Result Types found.",
-                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                "data": {"invalid_uuids": invalid_uuids if invalid_uuids else None}
             }, status=status.HTTP_404_NOT_FOUND)
 
-        queryset.delete()
+        deleted_items = AcademicResultTypeSerializer(queryset, many=True).data
+        for obj in queryset:
+            obj.delete()
+
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f"{count} Academic Result Type(s) permanently deleted.",
-            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+            "message": f"{len(deleted_items)} Academic Result Type(s) permanently deleted.",
+            "data": {
+                "deleted_items": deleted_items,
+                "invalid_uuids": invalid_uuids if invalid_uuids else None
+            }
         })
 
 
@@ -13076,7 +13069,7 @@ class AcademicResultTypeExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Name',
+            'name': 'Academic Result Type',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',
@@ -13136,7 +13129,7 @@ class AcademicResultTypeImportAPIView(APIView):
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
 
-        required_headers = {'name'}
+        required_headers = {'academic result type'}
         optional_headers = {'description'}
 
         try:
@@ -13245,16 +13238,31 @@ class AcademicResultTypeImportAPIView(APIView):
 
 
 # -------------------- AcademicResult -------------------- #
+
+
 class AcademicResultCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
-        academic_type = request.data.get('AcademicResulttype_id')
+
+        academic_type_uuid = request.data.get('AcademicResulttype_uuid')
         academic_result = request.data.get('Academicresult', '').strip()
 
-        # Duplicate prevention: same type + result
+        # convert UUID -> pk
+        academic_type_id = None
+        if academic_type_uuid:
+            academic_type = AcademicResultType.objects.filter(uuid=academic_type_uuid, is_deleted=False).first()
+            if not academic_type:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Invalid AcademicResulttype UUID"
+                }, status=status.HTTP_400_BAD_REQUEST)
+            academic_type_id = academic_type.id
+
+        # Duplicate prevention
         if AcademicResult.objects.filter(
-            AcademicResulttype_id=academic_type,
+            AcademicResulttype_id=academic_type_id,
             Academicresult__iexact=academic_result,
             is_deleted=False
         ).exists():
@@ -13265,6 +13273,7 @@ class AcademicResultCreateAPIView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = AcademicResultSerializer(data=request.data)
+
         if serializer.is_valid():
             serializer.save()
             return Response({
@@ -13274,15 +13283,44 @@ class AcademicResultCreateAPIView(APIView):
                 "data": serializer.data
             })
 
-        errors = serializer.errors
-        messages = []
-        for field, msgs in errors.items():
-            messages.extend(msgs)
         return Response({
             "statusCode": 400,
             "status": False,
-            "message": " ".join(messages)
+            "message": " ".join([str(x) for vals in serializer.errors.values() for x in vals])
         }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AcademicResultListAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        search = request.GET.get('search', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_order = request.GET.get('sortOrder', 'desc')
+
+        allowed_sort_fields = ['Academicresult', 'AcademicResulttype', 'created_at']
+        if sort_by not in allowed_sort_fields:
+            sort_by = 'created_at'
+
+        if sort_order == 'desc':
+            sort_by = f'-{sort_by}'
+
+        queryset = AcademicResult.objects.filter(is_deleted=False)
+
+        if search:
+            queryset = queryset.filter(
+                Q(Academicresult__icontains=search) |
+                Q(AcademicResulttype__name__icontains=search)
+
+            )
+
+        queryset = queryset.order_by(sort_by)
+
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+
+        serializer = AcademicResultSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
 
 class AcademicResultRetrieveAPIView(APIView):
@@ -13308,10 +13346,13 @@ class AcademicResultRetrieveAPIView(APIView):
         })
 
 
+
+
 class AcademicResultUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def put(self, request, uuid):
+
         try:
             obj = AcademicResult.objects.get(uuid=uuid, is_deleted=False)
         except AcademicResult.DoesNotExist:
@@ -13322,11 +13363,17 @@ class AcademicResultUpdateAPIView(APIView):
                 "data": None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        academic_type = request.data.get('AcademicResulttype_id')
+        academic_type_uuid = request.data.get('AcademicResulttype_uuid')
         academic_result = request.data.get('Academicresult', '').strip()
 
+        academic_type_id = None
+        if academic_type_uuid:
+            academic_type = AcademicResultType.objects.filter(uuid=academic_type_uuid, is_deleted=False).first()
+            if academic_type:
+                academic_type_id = academic_type.id
+
         if AcademicResult.objects.filter(
-            AcademicResulttype_id=academic_type,
+            AcademicResulttype_id=academic_type_id,
             Academicresult__iexact=academic_result
         ).exclude(uuid=uuid).exists():
             return Response({
@@ -13336,6 +13383,7 @@ class AcademicResultUpdateAPIView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = AcademicResultSerializer(obj, data=request.data)
+
         if serializer.is_valid():
             serializer.save()
             return Response({
@@ -13345,14 +13393,10 @@ class AcademicResultUpdateAPIView(APIView):
                 "data": serializer.data
             })
 
-        errors = serializer.errors
-        messages = []
-        for field, msgs in errors.items():
-            messages.extend(msgs)
         return Response({
             "statusCode": 400,
             "status": False,
-            "message": " ".join(messages)
+            "message": " ".join([str(x) for vals in serializer.errors.values() for x in vals])
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -13425,7 +13469,7 @@ class AcademicResultExportAPIView(APIView):
             for field in field_list:
                 value = getattr(obj, field, '')
                 if field == 'AcademicResulttype' and obj.AcademicResulttype:
-                    value = obj.AcademicResulttype.Academicresulttype
+                    value = obj.AcademicResulttype.name
                 if isinstance(value, datetime.datetime):
                     value = value.strftime("%Y-%m-%d %H:%M:%S")
                 if isinstance(value, bool):
@@ -13447,6 +13491,7 @@ class AcademicResultExportAPIView(APIView):
         return response
 
 
+
 class AcademicResultImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -13457,10 +13502,12 @@ class AcademicResultImportAPIView(APIView):
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
-        dataset = Dataset()
         duplicate_entries = []
 
         try:
+            rows = []
+
+            # ✅ READ XLSX
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
@@ -13470,38 +13517,58 @@ class AcademicResultImportAPIView(APIView):
                                     status=status.HTTP_400_BAD_REQUEST)
 
                 if sheet_name not in available_sheets:
-                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets},
+                    return Response({'error': f'Sheet \"{sheet_name}\" not found', 'available_sheets': available_sheets},
                                     status=status.HTTP_400_BAD_REQUEST)
 
                 ws = wb[sheet_name]
-                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                headers = [str(cell.value).strip() for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+
                 for row in ws.iter_rows(min_row=2, values_only=True):
-                    data = dict(zip(headers, row))
-                    academic_type = data.get('AcademicResulttype_id')
-                    academic_result = data.get('Academicresult')
-                    if AcademicResult.objects.filter(AcademicResulttype_id=academic_type, Academicresult__iexact=academic_result).exists():
-                        duplicate_entries.append(academic_result)
-                        continue
-                    AcademicResult.objects.create(
-                        AcademicResulttype_id=academic_type,
-                        Academicresult=academic_result,
-                        description=data.get('description', ''),
-                        is_deleted=data.get('is_deleted', False)
-                    )
+                    rows.append(dict(zip(headers, row)))
+
+            # ✅ READ CSV
             else:
-                dataset.load(file.read().decode('utf-8'), format='csv')
+                dataset = Dataset()
+                dataset.load(file.read().decode("utf-8"), format="csv")
                 for row in dataset.dict:
-                    academic_type = row.get('AcademicResulttype_id')
-                    academic_result = row.get('Academicresult')
-                    if AcademicResult.objects.filter(AcademicResulttype_id=academic_type, Academicresult__iexact=academic_result).exists():
-                        duplicate_entries.append(academic_result)
-                        continue
-                    AcademicResult.objects.create(
-                        AcademicResulttype_id=academic_type,
-                        Academicresult=academic_result,
-                        description=row.get('description', ''),
-                        is_deleted=row.get('is_deleted', False)
-                    )
+                    rows.append({k.strip(): v for k, v in row.items()})
+
+            # ✅ PROCESS ROWS
+            for row in rows:
+                academic_type_uuid = row.get('AcademicResulttype_id')
+                academic_result = row.get('Academicresult')
+
+                if not academic_result:
+                    continue
+
+                # ✅ convert UUID → AcademicResultType object
+                academic_type = None
+                if academic_type_uuid:
+                    try:
+                        academic_type = AcademicResultType.objects.get(uuid=academic_type_uuid)
+                    except AcademicResultType.DoesNotExist:
+                        return Response({
+                            "statusCode": 400,
+                            "status": False,
+                            "message": f"Invalid AcademicResulttype UUID: {academic_type_uuid}"
+                        }, status=status.HTTP_400_BAD_REQUEST)
+
+                # ✅ Check duplicates
+                if AcademicResult.objects.filter(
+                    AcademicResulttype=academic_type,
+                    Academicresult__iexact=academic_result,
+                    is_deleted=False
+                ).exists():
+                    duplicate_entries.append(academic_result)
+                    continue
+
+                # ✅ Create row
+                AcademicResult.objects.create(
+                    AcademicResulttype=academic_type,
+                    Academicresult=academic_result,
+                    description=row.get('description', ''),
+                    is_deleted=row.get('is_deleted', False)
+                )
 
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -13510,12 +13577,8 @@ class AcademicResultImportAPIView(APIView):
             "statusCode": 200,
             "status": True,
             "duplicates": list(set(duplicate_entries)),
-            'message': f'Sheet "{sheet_name}" imported successfully' if sheet_name else 'Import successful'
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
         })
-
-
-
-
 
 
 # -------------------- EducationType CRUD -------------------- #
@@ -13683,8 +13746,8 @@ class EducationTypeExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'educationType': 'Education Type',
-            'Perticulars': 'Particulars',
+            'name': 'Education Type',
+            'description': 'Description',
             'is_deleted': 'Deleted',
             'created_at': 'Created On',
             'updated_at': 'Updated On',
@@ -13748,8 +13811,8 @@ class EducationTypeImportAPIView(APIView):
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
 
-        required_headers = {'educationtype'}
-        optional_headers = {'perticulars'}
+        required_headers = {'education type'}
+        optional_headers = {'perticular'}
 
         try:
             data = []
@@ -13857,6 +13920,7 @@ class EducationTypeImportAPIView(APIView):
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=status.HTTP_200_OK)
+
 
 # -------------------- MediumofEducation CRUD -------------------- #
 

@@ -121,6 +121,38 @@ class Relation(models.Model):
     def __str__(self):
         return self.name
 
+
+class CivilIdName(models.Model):
+    VALID_TYPE_CHOICES = (
+        ("PERMANENT", "Permanent"),
+        ("VALID_UP_TO", "Valid Up To"),
+    )
+ 
+    VALID_UNIT_CHOICES = (
+        ("MONTHS", "Months"),
+        ("YEARS", "Years"),
+    )
+ 
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+ 
+    civil_id_name = models.CharField(max_length=255)
+    authority_full_name = models.CharField(max_length=255)
+    authority_short_name = models.CharField(max_length=255, blank=True, null=True)
+ 
+    valid_type = models.CharField(max_length=20, choices=VALID_TYPE_CHOICES)
+    valid_duration_value = models.IntegerField(blank=True, null=True)
+    valid_duration_unit = models.CharField(max_length=20, choices=VALID_UNIT_CHOICES, blank=True, null=True)
+    description = models.CharField(max_length=500, blank=True, null=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)  
+    updated_at = models.DateTimeField(auto_now=True)
+ 
+    def __str__(self):
+        return self.civil_id_name
+    
+    
+
 class Timezone(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     countryName=models.ForeignKey(Country,on_delete=models.SET_NULL,related_name="timezone", blank=True, null=True)
@@ -261,7 +293,7 @@ class LicenseName(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)  
     country = models.ForeignKey("Country", on_delete=models.SET_NULL, related_name="license_name", blank=True, null=True)
     full_name = models.CharField(max_length=255,blank=True,unique=True)
-    short_name = models.CharField(max_length=255,blank=True)
+    short_name = models.CharField(max_length=255,unique=True)
     issuing_authority= models.CharField(max_length=255,blank=True)
     description = models.TextField(max_length=255,blank=True)
     valid_upto = models.CharField(max_length=255,blank=True)
@@ -432,7 +464,6 @@ class Studymainarea(models.Model):
         return self.name
 
 
-
 class Studymajorarea(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
@@ -461,7 +492,7 @@ class StudySpecialisation(models.Model):
         related_name="StudySpecialisation",
         blank=True,
         null=True)
-    studyspecialisation=models.TextField(max_length=255,blank=True,null=True)
+    studyspecialisation=models.TextField(max_length=255,blank=True,null=True,unique=True)
     description = models.TextField(max_length=255,blank=True,null=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)

@@ -662,10 +662,10 @@ export const importAccreditationNameDataAPI = (payload) => {
     return post(apiUrl, payload);
 };
 
-export const getCountryListDataAPI = (data) => {
-    const apiUrl = `${url.GET_COUNTRY_LIST_DEMO}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
-    return get(apiUrl);
-};
+// export const getCountryListDataAPI = (data) => {
+//     const apiUrl = `${url.GET_COUNTRY_LIST_DEMO}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+//     return get(apiUrl);
+// };
 
 //education level code
 export const getEducationLevelCodeListDataAPI = (data) => {
@@ -803,6 +803,40 @@ export const importContinentDataAPI = (payload) => {
   return post(apiUrl, payload);
 };
 
+//COUNTRY
+export const getCountryListDataAPI = (data) => {
+  const apiUrl = `${url.GET_COUNTRY_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
+
+export const addCountryDataAPI = (payload) => {
+  const apiUrl = `${url.ADD_COUNTRY_LIST_API}`;
+  return post(apiUrl, payload);
+};
+
+export const editCountryDataAPI = (payload) => {
+  const apiUrl = `${url.EDIT_COUNTRY_LIST_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+
+export const deleteCountryDataAPI = (payload) => {
+  const prepareDATA = {
+    id: payload,
+  };
+  const apiUrl = `${url.DELETE_COUNTRY_LIST_API}delete/`;
+  return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportCountryDataAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_COUNTRY_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+
+export const importCountryDataAPI = (payload) => {
+  const apiUrl = `${url.IMPORT_COUNTRY_LIST_API}`;
+  return post(apiUrl, payload);
+};
+
 // CIVIL_ID_NAME
 export const getCivilIdNameListDataAPI = (data) => {
   const apiUrl = `${url.GET_CIVIL_ID_NAME_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
@@ -836,3 +870,238 @@ export const importCivilIdNameDataAPI = (payload) => {
   const apiUrl = `${url.IMPORT_CIVIL_ID_NAME_LIST_API}`;
   return post(apiUrl, payload);
 };
+
+// RELATION
+export const getRelationListDataAPI = (data) => {
+  const apiUrl = `${url.GET_RELATION_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
+
+export const addRelationDataAPI = (payload) => {
+  const apiUrl = `${url.ADD_RELATION_LIST_API}`;
+  return post(apiUrl, payload);
+};
+
+export const editRelationDataAPI = (payload) => {
+  const apiUrl = `${url.EDIT_RELATION_LIST_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+
+export const deleteRelationDataAPI = (payload) => {
+  const prepareDATA = {
+    id: payload,
+  };
+  const apiUrl = `${url.DELETE_RELATION_LIST_API}delete/`;
+  return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportRelationDataAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_RELATION_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+
+export const importRelationDataAPI = (payload) => {
+  const apiUrl = `${url.IMPORT_RELATION_LIST_API}`;
+  return post(apiUrl, payload);
+};
+
+// TIME_ZONE
+export const getTimeZoneListDataAPI = (data) => {
+  const apiUrl = `${url.GET_TIME_ZONE_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
+
+export const addTimeZoneDataAPI = (payload) => {
+  const apiUrl = `${url.ADD_TIME_ZONE_LIST_API}`;
+  return post(apiUrl, payload);
+};
+
+export const editTimeZoneDataAPI = (payload) => {
+  const apiUrl = `${url.EDIT_TIME_ZONE_LIST_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+
+export const deleteTimeZoneDataAPI = (payload) => {
+  const prepareDATA = {
+    id: payload,
+  };
+  const apiUrl = `${url.DELETE_TIME_ZONE_LIST_API}delete/`;
+  return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportTimeZoneDataAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_TIME_ZONE_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+
+export const importTimeZoneDataAPI = (payload) => {
+  const apiUrl = `${url.IMPORT_TIME_ZONE_LIST_API}`;
+  return post(apiUrl, payload);
+};
+//Education Duration
+export const getEducationDurationListDataAPI = (data) => {
+    const apiUrl = `${url.GET_EDUCATION_DURATION_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+ 
+export const addEducationDurationDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_EDUCATION_DURATION_API}`;
+    return post(apiUrl, payload);
+};
+ 
+export const editEducationDurationDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_EDUCATION_DURATION_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+ 
+export const deleteEducationDurationDataAPI = (payload) => {
+    const prepareDATA = {
+        id: payload,
+    };
+    const apiUrl = `${url.DELETE_EDUCATION_DURATION_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+ 
+export const exportEducationDurationDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_EDUCATION_DURATION_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+ 
+export const importEducationDurationDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_EDUCATION_DURATION_API}`;
+    return post(apiUrl, payload);
+};
+ 
+// Study Major Area
+export const getStudyMajorAreaListDataAPI = (data) => {
+    const apiUrl = `${url.GET_STUDY_MAJOR_AREA_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+ 
+export const addStudyMajorAreaDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_STUDY_MAJOR_AREA_API}`;
+    return post(apiUrl, payload);
+};
+ 
+export const editStudyMajorAreaDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_STUDY_MAJOR_AREA_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+ 
+export const deleteStudyMajorAreaDataAPI = (payload) => {
+    const prepareDATA = {
+        id: payload,
+    };
+    const apiUrl = `${url.DELETE_STUDY_MAJOR_AREA_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+ 
+export const exportStudyMajorAreaDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_STUDY_MAJOR_AREA_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+ 
+export const importStudyMajorAreaDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_STUDY_MAJOR_AREA_API}`;
+    return post(apiUrl, payload);
+};
+ 
+// Academic Result Type
+export const getAcademicResultTypeListDataAPI = (data) => {
+    const apiUrl = `${url.GET_ACADEMIC_RESULT_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+ 
+export const addAcademicResultTypeDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_ACADEMIC_RESULT_TYPE_API}`;
+    return post(apiUrl, payload);
+};
+ 
+export const editAcademicResultTypeDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_ACADEMIC_RESULT_TYPE_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+ 
+export const deleteAcademicResultTypeDataAPI = (payload) => {
+    const prepareDATA = {
+        id: payload,
+    };
+    const apiUrl = `${url.DELETE_ACADEMIC_RESULT_TYPE_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+ 
+export const exportAcademicResultTypeDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_ACADEMIC_RESULT_TYPE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+ 
+export const importAcademicResultTypeDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_ACADEMIC_RESULT_TYPE_API}`;
+    return post(apiUrl, payload);
+};
+ 
+// Education Type
+export const getEducationTypeListDataAPI = (data) => {
+    const apiUrl = `${url.GET_EDUCATION_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+ 
+export const addEducationTypeDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_EDUCATION_TYPE_API}`;
+    return post(apiUrl, payload);
+};
+ 
+export const editEducationTypeDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_EDUCATION_TYPE_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+ 
+export const deleteEducationTypeDataAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_EDUCATION_TYPE_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+ 
+export const exportEducationTypeDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_EDUCATION_TYPE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+ 
+export const importEducationTypeDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_EDUCATION_TYPE_API}`;
+    return post(apiUrl, payload);
+};
+ 
+// Study Specialisation
+ 
+export const getStudySpecialisationListDataAPI = (data) => {
+  const apiUrl = `${url.GET_STUDY_SPECIALISATION_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
+ 
+export const addStudySpecialisationDataAPI = (payload) => {
+  const apiUrl = `${url.ADD_STUDY_SPECIALISATION_API}`;
+  return post(apiUrl, payload);
+};
+ 
+export const editStudySpecialisationDataAPI = (payload) => {
+  const apiUrl = `${url.EDIT_STUDY_SPECIALISATION_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+ 
+export const deleteStudySpecialisationDataAPI = (payload) => {
+  const prepareDATA = { id: payload };
+  const apiUrl = `${url.DELETE_STUDY_SPECIALISATION_API}delete/`;
+  return delWithPayload(apiUrl, prepareDATA);
+};
+ 
+export const exportStudySpecialisationDataAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_STUDY_SPECIALISATION_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+ 
+export const importStudySpecialisationDataAPI = (payload) => {
+  const apiUrl = `${url.IMPORT_STUDY_SPECIALISATION_API}`;
+  return post(apiUrl, payload);
+};
+

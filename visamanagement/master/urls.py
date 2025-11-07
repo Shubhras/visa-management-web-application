@@ -38,8 +38,8 @@ urlpatterns = [
     path('country/<uuid:uuid>/', StateRetrieveAPIView.as_view(), name='state-detail'),
     path('country/<uuid:uuid>/update/', CountryUpdateAPIView.as_view(),name='country-update'),
     path('country/delete/', CountryDeleteAPIView.as_view(),name='country-delete'),
-    path('countries/export/', CountryExportAPIView.as_view(), name='country-export'),
-    path('countries/import/', CountryImportAPIView.as_view(), name='country-import'),
+    path('country/export/', CountryExportAPIView.as_view(), name='country-export'),
+    path('country/import/', CountryImportAPIView.as_view(), name='country-import'),
     path('countries/by-continent/', CountriesByContinentAPIView.as_view(), name='countries-by-continent'),
 
     path('state/create/', StateCreateAPIView.as_view(),name='state-create'),
@@ -81,6 +81,17 @@ urlpatterns = [
     path('relations/export/', RelationExportAPIView.as_view(), name='relation-export'),
     path('relations/import/', RelationImportAPIView.as_view(), name='relation-import'),
 
+   
+    path("civil-id-name/create/", CivilIdNameCreateAPIView.as_view(), name="civil_id_name_create"),
+    path("civil-id-name/", CivilIdNameListAPIView.as_view(), name="civil_id_name_list"),
+    path("civil-id-name/<uuid:uuid>/", CivilIdNameRetrieveAPIView.as_view(), name="civil_id_name_retrieve"),
+    path("civil-id-name/<uuid:uuid>/update/", CivilIdNameUpdateAPIView.as_view(), name="civil_id_name_update"),
+    path("civil-id-name/<uuid:uuid>/delete/",CivilIdNameDeleteAPIView.as_view(),name="civil_id_name_delete_single"),
+    path("civil-id-name/export/", CivilIdNameExportAPIView.as_view(), name="civil_id_name_export"),
+    path("civil-id-name/import/", CivilIdNameImportAPIView.as_view(), name="civil_id_name_import"),
+ 
+   
+   
     path('timezones/create/', TimezoneCreateAPIView.as_view(), name='timezone-create'),
     path('timezones/list/', TimezoneListAPIView.as_view(), name='timezone-list'),
     path('timezones/update/<uuid:uuid>/', TimezoneUpdateAPIView.as_view(), name='timezone-update'),
@@ -284,6 +295,7 @@ urlpatterns = [
     path('studyspecialisation/export/', StudySpecialisationExportAPIView.as_view(), name='studyspecialisation-export'),
     path('studyspecialisation/import/', StudySpecialisationImportAPIView.as_view(), name='studyspecialisation-import'),
 
+    path('academicresulttype/', AcademicResultTypeListAPIView.as_view(), name='academicresulttype-list'),
     path('academicresulttype/create/', AcademicResultTypeCreateAPIView.as_view(), name='academicresulttype-create'),
     path('academicresulttype/<uuid:uuid>/', AcademicResultTypeRetrieveAPIView.as_view(), name='academicresulttype-retrieve'),
     path('academicresulttype/update/<uuid:uuid>/', AcademicResultTypeUpdateAPIView.as_view(), name='academicresulttype-update'),
@@ -293,7 +305,6 @@ urlpatterns = [
 
 
     #Education Type
-
     path('education-type/', EducationTypeListAPIView.as_view(), name='education-type-list'),
     path('education-type/create/', EducationTypeCreateAPIView.as_view(), name='education-type-create'),
     path('education-type/<uuid:uuid>/', EducationTypeRetrieveAPIView.as_view(), name='education-type-detail'),
@@ -303,7 +314,7 @@ urlpatterns = [
     path('education-type/import/', EducationTypeImportAPIView.as_view(), name='education-type-import'),
 
 
-
+    path('academicresult/', AcademicResultListAPIView.as_view(), name='academicresult-list'),
     path('academicresult/create/', AcademicResultCreateAPIView.as_view(), name='academicresult-create'),
     path('academicresult/<uuid:uuid>/', AcademicResultRetrieveAPIView.as_view(), name='academicresult-retrieve'),
     path('academicresult/<uuid:uuid>/update/', AcademicResultUpdateAPIView.as_view(), name='academicresult-update'),

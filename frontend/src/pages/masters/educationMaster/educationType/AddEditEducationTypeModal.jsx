@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from "react-redux";
-import {educationLevelCodeAdd,educationLevelCodeEdit} from "../../../../store/master/educationMaster/action";
+import { educationTypeAdd, educationTypeEdit } from '../../../../store/master/educationMaster/action';
 import { toast } from "react-toastify";
 
-const AddEditEducationLevelCodeModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
+const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
 
@@ -62,7 +62,7 @@ const AddEditEducationLevelCodeModal = ({ show, handleClose, mode = 'add', rowDa
 
     // Department Name validation
     if (!formData.departmentName.trim()) {
-      newErrors.departmentName = 'Name is required';
+      newErrors.departmentName = 'Education type is required';
       isValid = false;
     }
     
@@ -88,7 +88,7 @@ const AddEditEducationLevelCodeModal = ({ show, handleClose, mode = 'add', rowDa
 
       setLoading(true);
       
-      const action = mode === 'edit' ? educationLevelCodeEdit : educationLevelCodeAdd;
+      const action = mode === 'edit' ? educationTypeEdit : educationTypeAdd;
       
       dispatch(action(sendPayload, (response, error) => {
         setLoading(false);
@@ -139,7 +139,7 @@ const AddEditEducationLevelCodeModal = ({ show, handleClose, mode = 'add', rowDa
         <div className="modal-content radius-16 bg-base">
           <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
             <h1 className="modal-title fs-5" id="departmentModalLabel">
-              {mode === 'edit' ? 'Edit Education Level Code' : 'Add Education Level Code'}
+              {mode === 'edit' ? 'Edit Education Type' : 'Add Education Type'}
             </h1>
             <button
               type="button"
@@ -155,15 +155,15 @@ const AddEditEducationLevelCodeModal = ({ show, handleClose, mode = 'add', rowDa
                 {/* Department Name */}
                 <div className="col-12 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Education Level Code <span className="text-danger">*</span>
+                    Education Type <span className="text-danger">*</span>
                   </label>
                   <input
-                    type="number"
+                    type="text"
                     name="departmentName"
                     value={formData.departmentName}
                     onChange={handleChange}
                     className={`form-control radius-8 ${errors.departmentName ? 'is-invalid' : ''}`}
-                    placeholder="Enter education level code"
+                    placeholder="Enter education type"
                   />
                   {errors.departmentName && (
                     <div className="text-danger text-sm mt-1">
@@ -178,7 +178,7 @@ const AddEditEducationLevelCodeModal = ({ show, handleClose, mode = 'add', rowDa
                     htmlFor="desc"
                     className="form-label fw-semibold text-primary-light text-sm mb-8"
                   >
-                    Description
+                    Perticulars
                   </label>
                   <textarea
                     className={`form-control ${errors.description ? 'is-invalid' : ''}`}
@@ -188,7 +188,7 @@ const AddEditEducationLevelCodeModal = ({ show, handleClose, mode = 'add', rowDa
                     onChange={handleChange}
                     rows={4}
                     cols={50}
-                    placeholder="Description"
+                    placeholder="Perticular"
                   />
                 </div>
 
@@ -218,4 +218,4 @@ const AddEditEducationLevelCodeModal = ({ show, handleClose, mode = 'add', rowDa
   );
 };
 
-export default AddEditEducationLevelCodeModal;
+export default AddEditAcademicResultTypeModal;
