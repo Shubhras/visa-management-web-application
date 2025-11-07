@@ -163,13 +163,17 @@ class CitySerializer(serializers.ModelSerializer):
         queryset=State.objects.all(),
         slug_field='uuid',
         source='stateName',
-        write_only=True
+        write_only=True,
+        required=False,
+        allow_null=True 
     )
     district_id = serializers.SlugRelatedField(
         queryset=District.objects.all(),
         slug_field='uuid',
         source='districtName',
-        write_only=True
+        write_only=True,
+        allow_null=True ,
+        required=False
     )
 
     class Meta:
@@ -226,12 +230,28 @@ class TimezoneSerializer(serializers.ModelSerializer):
         country = Country.objects.filter(uuid=country_uuid).first() if country_uuid else None
         state = State.objects.filter(uuid=state_uuid).first() if state_uuid else None
 
-        timezone_instance = Timezone.objects.create(
+        return Timezone.objects.create(
             countryName=country,
             stateName=state,
             **validated_data
         )
-        return timezone_instance
+
+    def update(self, instance, validated_data):
+        # Handle country_id / state_id updates
+        country_uuid = validated_data.pop('country_id', None)
+        state_uuid = validated_data.pop('state_id', None)
+
+        if country_uuid is not None:
+            instance.countryName = Country.objects.filter(uuid=country_uuid).first()
+        if state_uuid is not None:
+            instance.stateName = State.objects.filter(uuid=state_uuid).first()
+
+        # Update other fields normally
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        instance.save()
+        return instance
 
 class CivilIdNameSerializer(serializers.ModelSerializer):
     # Show choice label for valid_type
@@ -743,7 +763,8 @@ class EntranceTestModuleNameSerializer(serializers.ModelSerializer):
                   'is_deleted', 'created_at', 'updated_at']
         read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
 
-# Main Result serializer
+
+
 class EntranceTestResultSerializer(serializers.ModelSerializer):
     entrancetest = EntranceTestNameSerializer(read_only=True)
     entrancetest_id = serializers.PrimaryKeyRelatedField(

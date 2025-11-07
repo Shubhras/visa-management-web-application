@@ -2664,7 +2664,7 @@ class DistrictByFilterAPIView(APIView):
                     "message": "Invalid UUID format for country_id"
                 }, status=status.HTTP_400_BAD_REQUEST)
             try:
-                country = Country.objects.get(id=country_uuid)
+                country = Country.objects.get(uuid=country_uuid)
             except Country.DoesNotExist:
                 return Response({
                     "statusCode": 404,
@@ -2684,7 +2684,7 @@ class DistrictByFilterAPIView(APIView):
                     "message": "Invalid UUID format for state_id"
                 }, status=status.HTTP_400_BAD_REQUEST)
             try:
-                state = State.objects.get(id=state_uuid)
+                state = State.objects.get(uuid=state_uuid)
             except State.DoesNotExist:
                 return Response({
                     "statusCode": 404,
@@ -2704,7 +2704,7 @@ class DistrictByFilterAPIView(APIView):
         data = []
         for district in districts:
             data.append({
-                "id": str(district.id),
+                "uuid": str(district.uuid),
                 "districtName": district.districtName,
                 "country": district.countryName.name if district.countryName else None,
                 "state": district.stateName.stateName if district.stateName else None,
@@ -2922,7 +2922,7 @@ class CityExportAPIView(APIView):
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'Cities'
+        dataset.title = 'City'
 
         for city in queryset:
             row = []
@@ -2938,7 +2938,7 @@ class CityExportAPIView(APIView):
                     value = city.districtName.districtName
 
                 # Format datetime
-                if isinstance(value, datetime.datetime):
+                if field in ['created_at', 'updated_at'] and value:
                     value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
                 # Convert bool to int
                 if isinstance(value, bool):
@@ -2954,7 +2954,7 @@ class CityExportAPIView(APIView):
         else:
             file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'cities.xlsx'
+            file_name = 'city.xlsx'
 
         response = HttpResponse(
             file_data if format_type == 'csv' else file_data.getvalue(),
@@ -2977,8 +2977,8 @@ class CityImportAPIView(APIView):
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
 
-        required_headers = {'city name', 'country name', 'state name', 'district name'}
-        optional_headers = {'description'}
+        required_headers = {'city name', 'country name'}
+        optional_headers = {'state name', 'district name','description'}
 
         try:
             data = []
@@ -3048,7 +3048,7 @@ class CityImportAPIView(APIView):
                 city_name = str(row.get('city name')).strip() if row.get('city name') else None
                 country_name = str(row.get('country name')).strip() if row.get('country name') else None
                 state_name = str(row.get('state name')).strip() if row.get('state name') else None
-                district_name = str(row.get('district name')).strip() if row.get('districtname') else None
+                district_name = str(row.get('district name')).strip() if row.get('district name') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not city_name or not country_name or not state_name or not district_name:
@@ -3059,7 +3059,7 @@ class CityImportAPIView(APIView):
                 district_obj = District.objects.filter(districtName__iexact=district_name, stateName=state_obj, countryName=country_obj).first() if state_obj else None
 
                 if not country_obj or not state_obj or not district_obj:
-                    continue  
+                     continue
                 existing = City.objects.filter(
                     cityName__iexact=city_name,
                     districtName=district_obj,
@@ -5184,6 +5184,8 @@ class EmployeeTypeImportAPIView(APIView):
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=status.HTTP_200_OK)
+
+
 #--------------------------companyType------------------------
 class CompanyTypeListAPIView(APIView):    
     def get(self, request):
@@ -11752,8 +11754,7 @@ class EducationLevelListAPIView(APIView):
         if search:
             queryset = queryset.filter(
                 Q(educationlevel__icontains=search) |
-                Q(description__icontains=search) |
-                Q(level_code__Levelcode__icontains=search)  # optional: search by level_code detail
+                Q(description__icontains=search)  # optional: search by level_code detail
             )
 
         queryset = queryset.order_by(sort_by)
@@ -12660,7 +12661,7 @@ class StudymainareaExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Study Main',
+            'name': 'Study Main Area',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'created_at': 'Created On',
@@ -12717,7 +12718,7 @@ class StudymainareaImportAPIView(APIView):
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
 
-        required_headers = {'study main'}
+        required_headers = {'study main area'}
         optional_headers = {'description'}
 
         try:
@@ -12765,7 +12766,7 @@ class StudymainareaImportAPIView(APIView):
             imported_count = 0
 
             for row in data:
-                name = str(row.get('study main')).strip() if row.get('study main') else None
+                name = str(row.get('study main area')).strip() if row.get('study main area') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not name:
