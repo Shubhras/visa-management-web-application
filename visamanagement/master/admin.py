@@ -254,3 +254,5 @@ class StudymajorareaAdmin(admin.ModelAdmin):
     search_fields = ('majorarea',)
     list_filter = ('is_deleted',)
     ordering = ('majorarea',)
+
+

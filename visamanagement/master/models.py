@@ -312,7 +312,7 @@ class LicenseName(models.Model):
     short_name = models.CharField(max_length=255,blank=True, null=True)
     issuing_authority= models.CharField(max_length=255,null=True,blank=True)
     description = models.TextField(max_length=255,null=True,blank=True)
-    valid_type = models.CharField(max_length=20, choices=VALID_TYPE_CHOICES)
+    valid_type = models.CharField(max_length=20, choices=VALID_TYPE_CHOICES,null=True,blank=True)
     valid_duration_value = models.IntegerField(blank=True, null=True)
     valid_date=models.DateField(blank=True, null=True)
     valid_duration_unit = models.CharField(max_length=20, choices=VALID_UNIT_CHOICES, blank=True, null=True)
@@ -567,8 +567,8 @@ class EducationType(models.Model):
 class MediumofEducation(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    name= models.TextField(max_length=255,blank=True,null=True,unique=True),
-    Perticulars = models.TextField(max_length=255,blank=True,null=True)
+    name= models.CharField(max_length=255,unique=True)
+    perticulars = models.TextField(max_length=255,blank=True,null=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
