@@ -8337,7 +8337,7 @@ class LicenseNameImportAPIView(APIView):
             'license short name',
             'license issuing authority name',
             'description',
-            'license valid type',
+            'license valid upto',
             'license valid duration value',
             'license valid duration unit',
             'license valid date',
@@ -8390,7 +8390,7 @@ class LicenseNameImportAPIView(APIView):
                 short_name = str(row.get('license short name')).strip() if row.get('license short name') else ''
                 issuing_authority = str(row.get('license issuing authority name')).strip() if row.get('license issuing authority name') else ''
                 description = str(row.get('description')).strip() if row.get('description') else ''
-                valid_type = str(row.get('license valid type')).strip() if row.get('license valid type') else None
+                valid_type = str(row.get('license valid upto')).strip() if row.get('license valid upto') else None
                 valid_duration_value = row.get('license valid duration value')
                 valid_duration_unit = str(row.get('license valid duration unit')).strip().upper() if row.get('license valid duration unit') else None
                 valid_date = row.get('license valid date')
