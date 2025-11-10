@@ -8433,14 +8433,7 @@ class LicenseNameImportAPIView(APIView):
                             "message": f"Row with License 'License Valid Upto' has 'Date' type. 'valid_date' is required."
                         }, status=400)
 
-                # Convert date safely
-                if valid_type:
-                    if valid_type.lower() == 'valid upto':
-                        if not valid_duration_value or not valid_duration_unit:
-                            continue 
-                    elif valid_type.lower() == 'date':
-                        if not valid_date:
-                            continue  # Skip this row or collect error
+             
 
                 existing = LicenseName.objects.filter(full_name__iexact=full_name, country=country_obj).first()
                 if existing:
