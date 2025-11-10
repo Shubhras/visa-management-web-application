@@ -220,10 +220,10 @@ class LanguageListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'updated_at')
+        sort_by = request.GET.get('sortBy', 'created_at')
         sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
 
-        allowed_sort_fields = ['name', 'description', 'updated_at']
+        allowed_sort_fields = ['name', 'description', 'created_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
 
@@ -279,7 +279,7 @@ class LanguageExportAPIView(APIView):
         queryset = Language.objects.all()
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
         # --- Prepare dataset ---
         dataset = Dataset()
@@ -458,12 +458,12 @@ class LanguageTestListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'updated_at')
+        sort_by = request.GET.get('sortBy', 'created_at')
         sort_order = request.GET.get('sortOrder', 'desc')
         allowed_sort_fields = ['name', 'fullname', 'description', 'updated_at']
 
         if sort_by not in allowed_sort_fields:
-            sort_by = 'updated_at'
+            sort_by = 'created_at'
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
@@ -697,7 +697,7 @@ class LanguageTestExportAPIView(APIView):
         queryset = LanguageTest.objects.all()
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
         # --- Prepare dataset ---
         dataset = Dataset()
@@ -879,9 +879,9 @@ class LanguagetestmoduleNameListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'updated_at')
+        sort_by = request.GET.get('sortBy', 'created_at')
         sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['name', 'description', 'updated_at']
+        allowed_sort_fields = ['name', 'description', 'created_at']
 
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
@@ -1064,7 +1064,7 @@ class LanguagetestmoduleNameExportAPIView(APIView):
         queryset = LanguagetestmoduleName.objects.all()
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
@@ -1229,9 +1229,9 @@ class CLBLevelListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'updated_at')
+        sort_by = request.GET.get('sortBy', 'created_at')
         sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['name', 'description', 'updated_at']
+        allowed_sort_fields = ['name', 'description', 'created_at']
 
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
@@ -1336,22 +1336,20 @@ class CLBLevelExportAPIView(APIView):
 
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
-        fields = request.GET.get('fields')  # comma-separated fields
-        uuids_param = request.GET.get('uuids', '')  # comma-separated UUIDs
-
+        fields = request.GET.get('fields')  
+        uuids_param = request.GET.get('uuids', '') 
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
-        # --- Field to header mapping ---
+     
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'CLB Level',  # Custom header
+            'name': 'CLB Level',  
             'description': 'Description',
             'is_deleted': 'Deleted',
             'created_at': 'Created On',
             'updated_at': 'Modified On',
         }
 
-        # --- Determine which fields to export ---
         if fields:
             field_list = [f.strip() for f in fields.split(',')]
         else:
@@ -1361,7 +1359,7 @@ class CLBLevelExportAPIView(APIView):
         queryset = CLBLevel.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
         # --- Prepare dataset ---
         dataset = Dataset()
@@ -1559,9 +1557,9 @@ class StudyLanguageBanchmarkListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'updated_at')
+        sort_by = request.GET.get('sortBy', 'created_at')
         sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['name', 'description', 'updated_at']
+        allowed_sort_fields = ['name', 'description', 'created_at']
 
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
@@ -1688,7 +1686,7 @@ class StudyLanguageBenchmarkExportAPIView(APIView):
         queryset = StudyLanguageBanchmark.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
         # Prepare dataset
         dataset = Dataset()
@@ -1867,12 +1865,12 @@ class EntranceTestNameListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'updated_at')
+        sort_by = request.GET.get('sortBy', 'created_at')
         sort_order = request.GET.get('sortOrder', 'desc')
         allowed_sort_fields = ['fullname', 'shortname', 'description', 'updated_at']
 
         if sort_by not in allowed_sort_fields:
-            sort_by = 'updated_at'
+            sort_by = 'created_at'
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
@@ -2005,7 +2003,7 @@ class EntranceTestNameExportAPIView(APIView):
         queryset = EntranceTestName.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
         # Prepare dataset
         dataset = Dataset()
@@ -2178,7 +2176,7 @@ class EntranceTestModuleNameListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'updated_at')
+        sort_by = request.GET.get('sortBy', 'created_at')
         sort_order = request.GET.get('sortOrder', 'desc')
         allowed_sort_fields = ['moduleName', 'description', 'created_at']
 
@@ -2308,7 +2306,7 @@ class EntranceTestModuleExportAPIView(APIView):
         queryset = EntranceTestModuleName.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
@@ -2462,7 +2460,7 @@ class EntranceTestResultListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'updated_at')
+        sort_by = request.GET.get('sortBy', 'created_at')
         sort_order = request.GET.get('sortOrder', 'desc')
         allowed_sort_fields = ['testresult', 'description', 'created_at']
 
@@ -2605,7 +2603,7 @@ class EntranceTestResultExportAPIView(APIView):
         queryset = EntranceTestResult.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
         # Prepare dataset
         dataset = Dataset()

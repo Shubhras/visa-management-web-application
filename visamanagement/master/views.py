@@ -15818,7 +15818,7 @@ class DegreeAwardedInstituteListAPIView(APIView):
                 Q(name__icontains=search) |
                 Q(description__icontains=search) |
                 Q(country__name__icontains=search) |
-                Q(state__name__icontains=search) |
+                Q(state__stateName__icontains=search) |
                 Q(education_level__name__icontains=search) |
                 Q(degree_awarded_by__name__icontains=search)
             )
