@@ -311,12 +311,12 @@ export const EXPORT_CITY_LIST_API = "/api/v1/master/city/export/";
 export const IMPORT_CITY_LIST_API = "/api/v1/master/city/import/";
 
 // ECA Awarding Body
-export const GET_ECA_AWARDING_BODY_LIST = "/api/v1/master/eca-awarding-body/";
-export const ADD_ECA_AWARDING_BODY_API = "/api/v1/master/eca-awarding-body/create/";
-export const EDIT_ECA_AWARDING_BODY_API = "api/v1/master/eca-awarding-body/";
-export const DELETE_ECA_AWARDING_BODY_API = "api/v1/master/eca-awarding-body/";
-export const EXPORT_ECA_AWARDING_BODY_API = "api/v1/master/eca-awarding-body/";
-export const IMPORT_ECA_AWARDING_BODY_API = "api/v1/master/eca-awarding-body/";
+export const GET_ECA_AWARDING_BODY_LIST = "/api/v1/master/eca-awarding-bodies/";
+export const ADD_ECA_AWARDING_BODY_API = "/api/v1/master/eca-awarding-bodies/create/";
+export const EDIT_ECA_AWARDING_BODY_API = "api/v1/master/eca-awarding-bodies/";
+export const DELETE_ECA_AWARDING_BODY_API = "api/v1/master/eca-awarding-bodies/";
+export const EXPORT_ECA_AWARDING_BODY_API = "api/v1/master/eca-awarding-bodies/export/";
+export const IMPORT_ECA_AWARDING_BODY_API = "api/v1/master/eca-awarding-bodies/import/";
 // Medium of Education URLs
 export const GET_MEDIUM_OF_EDUCATION_LIST = "/api/v1/master/mediumeducation/";
 export const ADD_MEDIUM_OF_EDUCATION_API = "/api/v1/master/mediumeducation/create/";
@@ -324,6 +324,29 @@ export const EDIT_MEDIUM_OF_EDUCATION_API = "api/v1/master/mediumeducation/";
 export const DELETE_MEDIUM_OF_EDUCATION_API = "api/v1/master/mediumeducation/";
 export const EXPORT_MEDIUM_OF_EDUCATION_API = "api/v1/master/mediumeducation/export/";
 export const IMPORT_MEDIUM_OF_EDUCATION_API = "api/v1/master/mediumeducation/import/";
+
+// ECA For
+export const GET_ECA_FOR_LIST = "/api/v1/master/eca-for/";
+export const ADD_ECA_FOR_API = "/api/v1/master/eca-for/create/";
+export const EDIT_ECA_FOR_API = "api/v1/master/eca-for/";
+export const DELETE_ECA_FOR_API = "api/v1/master/eca-for/";
+export const EXPORT_ECA_FOR_API = "api/v1/master/eca-for/export/";
+export const IMPORT_ECA_FOR_API = "api/v1/master/eca-for/import/";
+
+// Language Name(Test)
+export const GET_LANGUAGE_NAME_TEST_LIST = "/api/v1/master/language-name-test/";
+export const ADD_LANGUAGE_NAME_TEST_API = "/api/v1/master/language-name-test/create/";
+export const EDIT_LANGUAGE_NAME_TEST_API = "/api/v1/master/language-name-test/";
+export const DELETE_LANGUAGE_NAME_TEST_API = "/api/v1/master/language-name-test/";
+export const EXPORT_LANGUAGE_NAME_TEST_API = "/api/v1/master/language-name-test/export/";
+export const IMPORT_LANGUAGE_NAME_TEST_API = "/api/v1/master/language-name-test/import/";
+// Language Test Name
+export const GET_LANGUAGE_TEST_NAME_LIST = "/api/v1/master/language-test-name/";
+export const ADD_LANGUAGE_TEST_NAME_API = "/api/v1/master/language-test-name/create/";
+export const EDIT_LANGUAGE_TEST_NAME_API = "/api/v1/master/language-test-name/";
+export const DELETE_LANGUAGE_TEST_NAME_API = "/api/v1/master/language-test-name/";
+export const EXPORT_LANGUAGE_TEST_NAME_API = "/api/v1/master/language-test-name/export/";
+export const IMPORT_LANGUAGE_TEST_NAME_API = "/api/v1/master/language-test-name/import/";
 
 
 export const GET_COUNTRY_LIST_DEMO = "/api/v1/master/country/";

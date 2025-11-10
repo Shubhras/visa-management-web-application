@@ -385,6 +385,10 @@ import DistrictList from "./pages/masters/generalMaster/district/DistrictList";
 import CityList from "./pages/masters/generalMaster/city/CitytList";
 import ECAAwardingBodyList from "./pages/masters/educationMaster/ecaAwardingBody/ECAAwardingBodyList";
 import MediumofEducationList from "./pages/masters/educationMaster/mediumOfEducation/MediumofEducationList";
+
+import ECAForList from "./pages/masters/educationMaster/ecaFor/ECAForList";
+import LanguageNameTestList from "./pages/masters/testMaster/languageName(Test)/LanguageName(Test)List";
+import LanguageTestNameList from "./pages/masters/testMaster/languageTestName/LanguageTestNameList";
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   // Check if user is authenticated
@@ -654,6 +658,12 @@ function App() {
         <Route path='/academic-result-to-result' element={<ProtectedRoute><AcademicResultToResultList /></ProtectedRoute>}></Route>
           <Route path='/eca-awarding-body' element={<ProtectedRoute><ECAAwardingBodyList/></ProtectedRoute>}></Route>
         <Route path='/medium-of-education' element={<ProtectedRoute><MediumofEducationList/></ProtectedRoute>}></Route>
+ <Route path='/eca-for' element={<ProtectedRoute><ECAForList/></ProtectedRoute>}></Route>
+ 
+  {/* test Masters */}
+       <Route path="/language-name-test" element={<ProtectedRoute><LanguageNameTestList/></ProtectedRoute>}></Route>
+       <Route path="/language-test-name" element={<ProtectedRoute><LanguageTestNameList/></ProtectedRoute>}></Route>
+
 
         {/* 404 Error Page */}
         <Route path='*' element={<ErrorPage />} />

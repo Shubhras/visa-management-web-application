@@ -426,13 +426,11 @@ const LicenceNameList = () => {
       "Modified On": "updated_at",
       "Description": "description",
     };
-console.log('ggggggggggggggggggggggggggg',fieldMapping)
-
     let mappedFields = selectedItems.map((item) => fieldMapping[item] || item);
 
 // 👉 If "License Valid Upto" is selected, add related fields too
 if (mappedFields.includes("valid_type")) {
-  mappedFields.push("valid_duration_value", "valid_duration_unit", "valid_date");
+  mappedFields.push("valid_date","valid_duration_value", "valid_duration_unit");
 }
 
 // Remove duplicates (optional)
@@ -844,7 +842,7 @@ console.log('Final mappedFields:', mappedFields);
                           </div>
                         </td>
                         {isColumnVisible('country_name') && (
-                          <td><span>{rowItem.full_name}</span></td>
+                          <td><span>{rowItem.country_name}</span></td>
                         )}
                         {isColumnVisible('full_name') && (
                           <td><span>{rowItem.full_name}</span></td>

@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useDispatch } from "react-redux";
 import MasterLayout from "../../../../masterLayout/MasterLayout";
 // import Breadcrumb from "../../../components/Breadcrumb";
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { Link } from 'react-router-dom';
 import { toast } from "react-toastify";
-import { degreeAwardedByList, degreeAwardedByDelete, degreeAwardedByExportData } from "../../../../store/master/educationMaster/action";
+import { degreeAwardedInstituteList, degreeAwardedInstituteDelete, degreeAwardedInstituteExportData } from "../../../../store/master/educationMaster/action";
 import AddImportDegreeAwardedInstituteModal from './AddImportDegreeAwardedInstituteModal';
 import AddEditDegreeAwardedInstituteModal from './AddEditDegreeAwardedInstituteModal';
 
@@ -45,9 +45,60 @@ const DegreeAwardedInstituteList = () => {
     const [departments, setDepartments] = useState([]);
     const [loading, setLoading] = useState(false);
     const [loadingExport, setLoadingExport] = useState(false);
-    const [items] = useState(["Country", "State", "Education Level", "Degree Awarded By", "Description", "Modified On"]);
+    const [items] = useState(["Country", "State", "Education Level", "Degree Awarded By", "Degree Awarded Institute", "Description", "Modified On"]);
     const [selectedItems, setSelectedItems] = useState(["Country", "State", "Education Level", "Degree Awarded By", "Degree Awarded Institute"]);
     const [ItemsRequired] = useState(["Country", "State", "Education Level", "Degree Awarded By", "Degree Awarded Institute"]);
+
+    // Table columns configuration
+    const [tableColumns] = useState([
+        { id: 'country_name', label: 'Country', field: 'country_name', visible: true, required: true },
+        { id: 'state_name', label: 'State', field: 'state_name', visible: true, required: true },
+        { id: 'education_level_name', label: 'Education Level', field: 'education_level_name', visible: true, required: true },
+        { id: 'degree_awarded_by_name', label: 'Degree Awarded By', field: 'degree_awarded_by_name', visible: true, required: true },
+        { id: 'name', label: 'Degree Awarded Institute', field: 'name', visible: true, required: true },
+        { id: 'description', label: 'Description', field: 'description', visible: true, required: false },
+        { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false },
+    ]);
+
+    const [visibleColumns, setVisibleColumns] = useState(
+        tableColumns.filter(col => col.visible).map(col => col.id)
+    );
+    const [showColumnDropdown, setShowColumnDropdown] = useState(false);
+    const columnDropdownRef = useRef(null);
+    // Column visibility toggle handler
+    const toggleColumnVisibility = (columnId) => {
+        const column = tableColumns.find(col => col.id === columnId);
+        if (column?.required) return; // Don't allow hiding required columns
+
+        setVisibleColumns(prev => {
+            if (prev.includes(columnId)) {
+                return prev.filter(id => id !== columnId);
+            } else {
+                return [...prev, columnId];
+            }
+        });
+    };
+
+    // Check if column is visible
+    const isColumnVisible = (columnId) => {
+        return visibleColumns.includes(columnId);
+    };
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (columnDropdownRef.current && !columnDropdownRef.current.contains(event.target)) {
+                setShowColumnDropdown(false);
+            }
+        };
+
+        if (showColumnDropdown) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [showColumnDropdown]);
 
     // Updated state with sorting
     const [tableState, setTableState] = useState({
@@ -55,7 +106,7 @@ const DegreeAwardedInstituteList = () => {
         limit: 25,
         search: '',
         status: '',
-        sortBy: 'updated_at', // Field to sort by
+        sortBy: 'created_at', // Field to sort by
         sortOrder: 'desc', // 'asc' or 'desc'
         total: 0,
         totalPages: 0,
@@ -89,7 +140,7 @@ const DegreeAwardedInstituteList = () => {
             sortOrder: tableState.sortOrder || ''
         };
 
-        dispatch(degreeAwardedByList(params, (response, error) => {
+        dispatch(degreeAwardedInstituteList(params, (response, error) => {
             setLoading(false);
             if (response?.statusCode === 200 && response?.status === true) {
                 const paginationData = response?.pagination || {};
@@ -281,7 +332,7 @@ const DegreeAwardedInstituteList = () => {
             toast.error("No degree awarded institute selected for deletion.");
             return;
         }
-        dispatch(degreeAwardedByDelete(sendPayload, (response, error) => {
+        dispatch(degreeAwardedInstituteDelete(sendPayload, (response, error) => {
             if (error) {
                 toast.error(error?.response?.data?.message || "server error");
             } else {
@@ -362,7 +413,7 @@ const DegreeAwardedInstituteList = () => {
         // Map frontend labels to backend field names
         const fieldMapping = {
             "Country": "name",
-            "State": "",
+            "State": "state_name",
             "Education Level": "",
             "Degree Awarded By": "",
             "Degree Awarded Institute": "",
@@ -379,7 +430,7 @@ const DegreeAwardedInstituteList = () => {
             uuids: selectAllOrNot === "all" ? [] : selectedRows,
         };
         setLoadingExport(true);
-        dispatch(degreeAwardedByExportData(sendPayload, (response, error) => {
+        dispatch(degreeAwardedInstituteExportData(sendPayload, (response, error) => {
             if (error) {
                 setLoadingExport(false);
                 toast.error(error?.response?.message || "server error");
@@ -556,8 +607,8 @@ const DegreeAwardedInstituteList = () => {
                     </div>
                     <div className="card-body pt-0 container-table" >
                         <div className='container-table-div'>
-                            <table className="table mb-0"  >
-                                <thead >
+                            <table className="table mb-0">
+                                <thead>
                                     <tr>
                                         <th scope="col" className='sl-numbar-th'>
                                             <div className="d-flex align-items-center gap-2">
@@ -571,57 +622,59 @@ const DegreeAwardedInstituteList = () => {
                                                 <span>No.</span>
                                             </div>
                                         </th>
-                                        <th scope="col" className='sorting-th' onClick={() => handleSort('name')}>
-                                            <div className="d-flex align-items-center">
-                                                Country
-                                                {getSortIcon('country')}
-                                            </div>
-                                        </th>
-                                        <th scope="col" className='sorting-th' onClick={() => handleSort('name')}>
-                                            <div className="d-flex align-items-center">
-                                                State
-                                                {getSortIcon('state')}
-                                            </div>
-                                        </th>
-                                        <th scope="col" className='sorting-th' onClick={() => handleSort('name')}>
-                                            <div className="d-flex align-items-center">
-                                                Education Level
-                                                {getSortIcon('majorarea')}
-                                            </div>
-                                        </th>
-                                        <th scope="col" className='sorting-th' onClick={() => handleSort('name')}>
-                                            <div className="d-flex align-items-center">
-                                                Degree Awarded By
-                                                {getSortIcon('studyspecialisation')}
-                                            </div>
-                                        </th>
-                                        <th scope="col" className='sorting-th' onClick={() => handleSort('name')}>
-                                            <div className="d-flex align-items-center">
-                                                Degree Awarded Institute
-                                                {getSortIcon('studyspecialisation')}
-                                            </div>
-                                        </th>
-                                        <th scope="col" className='sorting-th' onClick={() => handleSort('description')}>
-                                            <div className="d-flex align-items-center">
-                                                Description
-                                                {getSortIcon('description')}
-                                            </div>
-                                        </th>
-                                        <th scope="col" className='sorting-th' onClick={() => handleSort('updated_at')}>
-                                            <div className="d-flex align-items-center">
-                                                Modified On
-                                                {getSortIcon('updated_at')}
-                                            </div>
-                                        </th>
+                                        {tableColumns.map((column) => (
+                                            isColumnVisible(column.id) && (
+                                                <th
+                                                    key={column.id}
+                                                    scope="col"
+                                                    className='sorting-th'
+                                                    onClick={() => handleSort(column.field)}
+                                                >
+                                                    <div className="d-flex align-items-center">
+                                                        {column.label}
+                                                        {getSortIcon(column.field)}
+                                                    </div>
+                                                </th>
+                                            )
+                                        ))}
                                         <th scope="col" className='action-th'>
-                                            Action
+                                            <div className="position-relative table-header-hide-show" ref={columnDropdownRef}>
+                                                <button
+                                                    className="position-relative table-header-hide-show"
+                                                    onClick={() => setShowColumnDropdown(!showColumnDropdown)}
+                                                >
+                                                    Action <Icon icon="mdi:table-column" width="20" className='icone' />
+                                                </button>
+                                                {showColumnDropdown && (
+                                                    <div className="position-absolute bg-white border rounded shadow-sm p-2 show-dropdowns-header">
+                                                        {tableColumns.map((column) => (
+                                                            <div
+                                                                key={column.id}
+                                                                className="bg-white p-2 mb-2 d-flex align-items-center gap-2"
+                                                            >
+                                                                <input
+                                                                    type="checkbox"
+                                                                    id={`column-${column.id}`}
+                                                                    checked={isColumnVisible(column.id)}
+                                                                    onChange={() => toggleColumnVisibility(column.id)}
+                                                                    disabled={column.required}
+                                                                    className="form-check-input"
+                                                                />
+                                                                <label htmlFor={`column-${column.id}`} className="mb-0 flex-grow-1 form-label">
+                                                                    {column.label}
+                                                                </label>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {loading ? (
                                         <tr>
-                                            <td colSpan="5" className='loding-data'>
+                                            <td colSpan={visibleColumns.length + 2} className='loding-data'>
                                                 <div className="d-flex justify-content-center align-items-center gap-2">
                                                     <div className="spinner-border spinner-border-sm" role="status">
                                                         <span className="visually-hidden">Loading...</span>
@@ -632,8 +685,8 @@ const DegreeAwardedInstituteList = () => {
                                         </tr>
                                     ) : departments.length > 0 ? (
                                         departments.map((rowItem, index) => (
-                                            <tr key={rowItem.uuid} >
-                                                <td >
+                                            <tr key={rowItem.uuid}>
+                                                <td>
                                                     <div className="d-flex align-items-center gap-2">
                                                         <input
                                                             className="form-check-input"
@@ -641,60 +694,37 @@ const DegreeAwardedInstituteList = () => {
                                                             checked={selectedRows.includes(rowItem.uuid)}
                                                             onChange={() => handleRowSelect(rowItem.uuid)}
                                                         />
-                                                        <span>
-                                                            {String(startIndex + index + 1).padStart(2, '0')}
-                                                        </span>
+                                                        <span>{String(startIndex + index + 1).padStart(2, '0')}</span>
                                                     </div>
                                                 </td>
-                                                <td >
-                                                    <span >
-                                                        {rowItem.country}
-                                                    </span>
-                                                </td>
-                                                <td >
-                                                    <span >
-                                                        {rowItem.state}
-                                                    </span>
-                                                </td>
-                                                <td >
-                                                    <span >
-                                                        {rowItem.majorarea}
-                                                    </span>
-                                                </td>
-                                                <td >
-                                                    <span >
-                                                        {rowItem.studyspecialisation}
-                                                    </span>
-                                                </td>
-                                                <td >
-                                                    <span >
-                                                        {rowItem.studyspecialisation}
-                                                    </span>
-                                                </td>
-                                                <td >
-                                                    <span >
-                                                        {rowItem.description}
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    <span>{formatDateTime(rowItem.updated_at)}</span>
-                                                </td>
-                                                <td >
-                                                    <div className="d-flex align-items-center gap-2">
-                                                        <Link
-                                                            to="#"
-                                                            className='edit-btn-icone'
-                                                            onClick={(e) => {
-                                                                e.preventDefault();
-                                                                handleShowEdit(rowItem);
-                                                            }}
-                                                        >
+                                                {isColumnVisible('country_name') && (
+                                                    <td><span>{rowItem.country_name}</span></td>
+                                                )}
+
+                                                {isColumnVisible('state_name') && (
+                                                    <td><span>{rowItem.state_name}</span></td>
+                                                )}
+                                                {isColumnVisible('education_level_name') && (
+                                                    <td><span>{rowItem.education_level_name}</span></td>
+                                                )}
+                                                {isColumnVisible('degree_awarded_by_name') && (
+                                                    <td><span>{rowItem.degree_awarded_by_name}</span></td>
+                                                )}
+                                                {isColumnVisible('name') && (
+                                                    <td><span>{rowItem.name}</span></td>
+                                                )}
+                                                {isColumnVisible('description') && (
+                                                    <td><span>{rowItem.description}</span></td>
+                                                )}
+                                                {isColumnVisible('updated_at') && (
+                                                    <td><span>{formatDateTime(rowItem.updated_at)}</span></td>
+                                                )}
+                                                <td className='action-td'>
+                                                    <div className="d-flex align-items-end gap-2">
+                                                        <Link to="#" className='edit-btn-icone' onClick={(e) => { e.preventDefault(); handleShowEdit(rowItem); }}>
                                                             <Icon icon="lucide:edit" width="18" className='icone' />
                                                         </Link>
-                                                        <button
-                                                            onClick={() => handleDelete(rowItem.uuid)}
-                                                            className='delete-btn-icone'
-                                                        >
+                                                        <button onClick={() => handleDelete(rowItem.uuid)} className='delete-btn-icone'>
                                                             <Icon icon="mingcute:delete-2-line" width="18" className='icone' />
                                                         </button>
                                                     </div>
@@ -703,13 +733,14 @@ const DegreeAwardedInstituteList = () => {
                                         ))
                                     ) : (
                                         <tr>
-                                            <td colSpan="5" className='no-records-found'>
+                                            <td colSpan={visibleColumns.length + 2} className='no-records-found'>
                                                 No records found
                                             </td>
                                         </tr>
                                     )}
                                 </tbody>
                             </table>
+
 
                             {tableState.total > 0 && (
                                 <div className="d-flex justify-content-between align-items-center px-4 py-3" >

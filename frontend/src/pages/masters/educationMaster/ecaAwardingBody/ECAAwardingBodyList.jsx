@@ -49,15 +49,13 @@ const ECAAwardingBodyList = () => {
   const [selectedItems, setSelectedItems] = useState(["Country", "ECA For", "ECA Body Full Name", "ECA Body Short Name"]);
   const [ItemsRequired] = useState(["Country", "ECA For", "ECA Body Full Name", "ECA Body Short Name"]);
 
-
-
   // Table columns configuration
   const [tableColumns] = useState([
-    { id: 'country', label: 'Country', field: 'country', visible: true, required: false },
-    { id: 'ecafor', label: 'ECA For', field: 'ecafor', visible: true, required: false },
-    { id: 'ecabodyfullName', label: 'ECA Body Full Name', field: 'ecabodyfullName', visible: true, required: false },
-    { id: 'ecabodyShortName', label: 'ECA Body Short Name', field: 'ecabodyShortName', visible: true, required: false },
-    { id: 'ecavalidPeriod', label: 'ECA Valid Period', field: 'ecavalidPeriod', visible: true, required: false },
+    { id: 'country_name', label: 'Country', field: 'country_name', visible: true, required: true },
+    { id: 'selection_type_display', label: 'ECA For', field: 'selection_type_display', visible: true, required: true },
+    { id: 'eca_body_full_name', label: 'ECA Body Full Name', field: 'eca_body_full_name', visible: true, required: true },
+    { id: 'eca_body_short_name', label: 'ECA Body Short Name', field: 'eca_body_short_name', visible: true, required: true },
+    { id: 'eca_valid_period', label: 'ECA Valid Period', field: 'eca_valid_period', visible: true, required: false },
     { id: 'description', label: 'Description', field: 'description', visible: true, required: false },
     { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false },
   ]);
@@ -108,7 +106,7 @@ const ECAAwardingBodyList = () => {
     limit: 25,
     search: '',
     status: '',
-    sortBy: 'updated_at', // Field to sort by
+    sortBy: 'created_at', // Field to sort by
     sortOrder: 'desc', // 'asc' or 'desc'
     total: 0,
     totalPages: 0,
@@ -414,11 +412,11 @@ const ECAAwardingBodyList = () => {
     }
     // Map frontend labels to backend field names
     const fieldMapping = {
-      "Country": "countryUuid",
-      "ECA For": "ecaFor",
-      "ECA Body Full Name": "fullName",
-      "ECA Body Short Name": "shortName",
-      "ECA Valid Period": "validPeriod",
+      "Country": "country_name",
+      "ECA For": "selection_type_display",
+      "ECA Body Full Name": "eca_body_full_name",
+      "ECA Body Short Name": "eca_body_short_name",
+      "ECA Valid Period": "eca_valid_period",
       "Modified On": "updated_at",
       "Description": "description",
     };
@@ -446,7 +444,7 @@ const ECAAwardingBodyList = () => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = ` ECAAwardingBody.xlsx`;
+          link.download = `ECAAwardingBody.xlsx`;
           document.body.appendChild(link);
           link.click();
           link.remove();
@@ -699,20 +697,20 @@ const ECAAwardingBodyList = () => {
                             <span>{String(startIndex + index + 1).padStart(2, '0')}</span>
                           </div>
                         </td>
-                        {isColumnVisible('country') && (
-                          <td><span>{rowItem.country}</span></td>
+                        {isColumnVisible('country_name') && (
+                          <td><span>{rowItem.country_name}</span></td>
                         )}
-                        {isColumnVisible('ecafor') && (
-                          <td><span>{rowItem.ecafor}</span></td>
+                        {isColumnVisible('selection_type_display') && (
+                          <td><span>{rowItem.selection_type_display}</span></td>
                         )}
-                        {isColumnVisible('ecabodyfullName') && (
-                          <td><span>{rowItem.ecabodyfullName}</span></td>
+                        {isColumnVisible('eca_body_full_name') && (
+                          <td><span>{rowItem.eca_body_full_name}</span></td>
                         )}
-                        {isColumnVisible('ecabodyShortName') && (
-                          <td><span>{rowItem.ecabodyShortName}</span></td>
+                        {isColumnVisible('eca_body_short_name') && (
+                          <td><span>{rowItem.eca_body_short_name}</span></td>
                         )}
-                        {isColumnVisible('ecavalidPeriod') && (
-                          <td><span>{rowItem.ecavalidPeriod}</span></td>
+                        {isColumnVisible('eca_valid_period') && (
+                          <td><span>{rowItem.eca_valid_period}</span></td>
                         )}
                         {isColumnVisible('description') && (
                           <td><span>{rowItem.description}</span></td>

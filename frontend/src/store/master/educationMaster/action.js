@@ -82,7 +82,13 @@ import {
     EDIT_MEDIUM_OF_EDUCATION,
     DELETE_MEDIUM_OF_EDUCATION,
     EXPORT_MEDIUM_OF_EDUCATION,
-    IMPORT_MEDIUM_OF_EDUCATION
+    IMPORT_MEDIUM_OF_EDUCATION,
+    ECA_FOR_LIST,
+    ADD_ECA_FOR,
+    EDIT_ECA_FOR,
+    DELETE_ECA_FOR,
+    EXPORT_ECA_FOR,
+    IMPORT_ECA_FOR
 } from "./actionType";
 
 //Education level Code
@@ -595,6 +601,43 @@ export const mediumOfEducationImportData = (data, callback) => ({
     data,
     callback,
 });
+// ECA For
+export const ecaForList = (data, callback) => ({
+    type: ECA_FOR_LIST,
+    data,
+    callback,
+});
+
+export const ecaForAdd = (data, callback) => ({
+    type: ADD_ECA_FOR,
+    data,
+    callback,
+});
+
+export const ecaForEdit = (data, callback) => ({
+    type: EDIT_ECA_FOR,
+    data,
+    callback,
+});
+
+export const ecaForDelete = (data, callback) => ({
+    type: DELETE_ECA_FOR,
+    data,
+    callback,
+});
+
+export const ecaForExportData = (data, callback) => ({
+    type: EXPORT_ECA_FOR,
+    data,
+    callback,
+});
+
+export const ecaForImportData = (data, callback) => ({
+    type: IMPORT_ECA_FOR,
+    data,
+    callback,
+});
+
 
 
 

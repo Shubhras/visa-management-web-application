@@ -45,16 +45,16 @@ const AccrediationNameList = () => {
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
   const [items] = useState(["Country", "Accrediation Category", "Accrediation Full Name", "Accrediation Short Name", "Accrediation Issuing Authority Name", "Accrediation Valid Upto", "Description", "Modified On"]);
-  const [selectedItems, setSelectedItems] = useState(["Country", "Accrediation Full Name", "Accrediation Short Name", "Accrediation Issuing Authority Name", "Accrediation Valid Upto",]);
-  const [ItemsRequired] = useState(["Country", "Accrediation Category", "Accrediation Full Name", "Accrediation Short Name", "Accrediation Issuing Authority Name", "Accrediation Valid Upto",]);
+  const [selectedItems, setSelectedItems] = useState(["Country","Accrediation Category", "Accrediation Full Name"]);
+  const [ItemsRequired] = useState(["Country", "Accrediation Category", "Accrediation Full Name"]);
 
   // Table columns configuration
   const [tableColumns] = useState([
     { id: 'country_name', label: 'Country', field: 'country_name', visible: true, required: false },
     { id: 'category_name', label: 'Accrediation Category', field: 'category_name', visible: true, required: false },
     { id: 'full_name', label: 'Accrediation Full Name', field: 'full_name', visible: true, required: false },
-    { id: 'short_name', label: 'Accrediation Short Name', field: 'short_name', visible: false, required: false },
-    { id: 'issuing_authority', label: 'Accrediation Issuing Authority Name', field: 'issuing_authority', visible: false, required: false },
+    { id: 'short_name', label: 'Accrediation Short Name', field: 'short_name', visible: true, required: false },
+    { id: 'issuing_authority', label: 'Accrediation Issuing Authority Name', field: 'issuing_authority', visible: true, required: false },
     { id: 'valid_type', label: 'Accrediation Valid Upto', field: 'valid_type', visible: true, required: false },
     { id: 'valid_date', label: 'Accrediation Valid Date', field: 'valid_date', visible: true, required: false },
     { id: 'valid_duration_value', label: 'Accrediation Valid Duration Value', field: 'valid_duration_value', visible: true, required: false },
@@ -419,12 +419,21 @@ const AccrediationNameList = () => {
       "Accrediation Full Name": "full_name",
       "Accrediation Short Name": "short_name",
       "Accrediation Issuing Authority Name": "issuing_authority",
-      "Accrediation Valid Upto": "valid_upto",
+      "Accrediation Valid Upto": "valid_type",
+      "Accrediation Valid Duration Value": "valid_duration_value",
+      "Accrediation Valid Duration Unit": "valid_duration_unit",
+      "Accrediation Valid Date": "valid_date",
       "Modified On": "updated_at",
       "Description": "description",
     };
     // Convert selectedItems to backend field names
-    const mappedFields = selectedItems.map((item) => fieldMapping[item] || item);
+    let mappedFields = selectedItems.map((item) => fieldMapping[item] || item);
+
+    // 👉 If "License Valid Upto" is selected, add related fields too
+    if (mappedFields.includes("valid_type")) {
+      mappedFields.push("valid_date", "valid_duration_value", "valid_duration_unit");
+    }
+
     // Convert to comma-separated string
     const fieldsString = mappedFields.join(",");
     const sendPayload = {

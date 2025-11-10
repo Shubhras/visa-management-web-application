@@ -38,7 +38,37 @@ const CommanSampleExcelDownloadModal = ({ show, handleClose, prepareData }) => {
     }
   };
   const handleExcelDonload = () => {
-    const header = selectedItems;
+    // const header = selectedItems;
+    // const duplicates = []; // Add your duplicate data here
+
+    // // Prepare worksheet data (header + rows)
+    // const worksheetData = [header, ...duplicates.map((item) => [item])];
+
+    let header = selectedItems;
+    // 👉 If "License Valid Upto" is selected, add related fields right after it
+    if (header.includes("License Valid Upto")) {
+      const index = header.indexOf("License Valid Upto");
+      const fieldsToAdd = [
+        "License Valid Date",
+        "License Valid Duration Value",
+        "License Valid Duration Unit",
+      ];
+
+      // Insert after "License Valid Upto"
+      header.splice(index + 1, 0, ...fieldsToAdd);
+    }
+      // 👉 If "License Valid Upto" is selected, add related fields right after it
+    if (header.includes("Accrediation Valid Upto")) {
+      const index = header.indexOf("Accrediation Valid Upto");
+      const fieldsToAdd = [
+        "Accrediation Valid Date",
+        "Accrediation Valid Duration Value",
+        "Accrediation Valid Duration Unit",
+      ];
+
+      // Insert after "License Valid Upto"
+      header.splice(index + 1, 0, ...fieldsToAdd);
+    }
     const duplicates = []; // Add your duplicate data here
 
     // Prepare worksheet data (header + rows)
@@ -61,7 +91,7 @@ const CommanSampleExcelDownloadModal = ({ show, handleClose, prepareData }) => {
     //   blob,
     //   `${prepareData?.downloadFileName || "departments"}_${new Date().toISOString().split("T")[0]}.xlsx`
     // );
-     saveAs(
+    saveAs(
       blob,
       `${prepareData?.downloadFileName || "Sample"}-Sample.xlsx`
     );

@@ -5,11 +5,11 @@ import MasterLayout from "../../../../masterLayout/MasterLayout";
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { Link } from 'react-router-dom';
 import { toast } from "react-toastify";
-import { educationDurationList, educationDurationDelete, educationDurationExportData } from '../../../../store/master/educationMaster/action';
-import AddImportEducationDurationModal from './AddImportEducationDurationModal';
-import AddEditEducationDurationModal from './AddEditEducationDurationModal';
+import { ecaForList, ecaForDelete, ecaForExportData } from '../../../../store/master/educationMaster/action';
+import AddImportECAForModal from './AddImportECAForModal';
+import AddEditECAForModal from './AddEditECAForModal';
 
-const EducationDurationList = () => {
+const ECAForList = () => {
   const dispatch = useDispatch();
   const [modalState, setModalState] = useState({
     show: false,
@@ -38,21 +38,21 @@ const EducationDurationList = () => {
   const [rowSelectData, setRowSelectData] = useState({});
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this education durations");
+  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this eca for?");
   const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [selectAllOrNot, setSelectAllOrNot] = useState('');
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [items] = useState(["Education Level", "Education Duration (Months)", "Description", "Modified On"]);
-  const [selectedItems, setSelectedItems] = useState(["Education Level", "Education Duration (Months)"]);
-  const [ItemsRequired] = useState(["Education Level", "Education Duration (Months)"]);
+  const [items] = useState(["ECA For", "Description", "Modified On"]);
+  const [selectedItems, setSelectedItems] = useState(["ECA For"]);
+  const [ItemsRequired] = useState(["ECA For"]);
+
 
   // Table columns configuration
   const [tableColumns] = useState([
-    { id: 'educationlevel_detail', label: 'Education Level', field: 'educationlevel_detail', visible: true, required: true },
-    { id: 'durations', label: 'Education Duration (Months)', field: 'durations', visible: true, required: true },
+    { id: 'name', label: 'ECA For', field: 'name', visible: true, required: true },
     { id: 'description', label: 'Description', field: 'description', visible: true, required: false },
     { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false },
   ]);
@@ -97,7 +97,6 @@ const EducationDurationList = () => {
     };
   }, [showColumnDropdown]);
 
-
   // Updated state with sorting
   const [tableState, setTableState] = useState({
     page: 1,
@@ -138,7 +137,7 @@ const EducationDurationList = () => {
       sortOrder: tableState.sortOrder || ''
     };
 
-    dispatch(educationDurationList(params, (response, error) => {
+    dispatch(ecaForList(params, (response, error) => {
       setLoading(false);
       if (response?.statusCode === 200 && response?.status === true) {
         const paginationData = response?.pagination || {};
@@ -309,7 +308,7 @@ const EducationDurationList = () => {
   const handleDelete = (uuid) => {
     setDeleteId(uuid);
     setShowDeleteConfirm(true);
-    setDeleteConfirmMessage(`Are you sure you want to delete this education durations?`);
+    setDeleteConfirmMessage(`Are you sure you want to delete this eca for?`);
   };
 
   const handleBulkDelete = () => {
@@ -318,8 +317,8 @@ const EducationDurationList = () => {
       return;
     }
     // Choose message based on delete type
-    const message = selectAllOrNot === "all" ? `${tableState.total} all education durations` : `${selectedRows.length} selected education durations`;
-    setDeleteConfirmMessage(`Are you sure you want to delete this education duration (${message})?`);
+    const message = selectAllOrNot === "all" ? `${tableState.total} all eca for` : `${selectedRows.length} selected eca for`;
+    setDeleteConfirmMessage(`Are you sure you want to delete this eca for (${message})?`);
     setShowDeleteConfirm(true);
   };
 
@@ -327,10 +326,10 @@ const EducationDurationList = () => {
     // const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
     const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
     if (!sendPayload || sendPayload.length === 0) {
-      toast.error("No Education duration selected for deletion.");
+      toast.error("No eca for selected for deletion.");
       return;
     }
-    dispatch(educationDurationDelete(sendPayload, (response, error) => {
+    dispatch(ecaForDelete(sendPayload, (response, error) => {
       if (error) {
         toast.error(error?.response?.data?.message || "server error");
       } else {
@@ -373,6 +372,8 @@ const EducationDurationList = () => {
 
   const cancelExportTest = () => {
     setShowExportPopop(false);
+    setSelectedItems(["ECA For"]);
+    setSelectAllOrNot('');
   };
 
 
@@ -410,8 +411,7 @@ const EducationDurationList = () => {
     }
     // Map frontend labels to backend field names
     const fieldMapping = {
-      "Education Duration (Months)": "durations",
-      "Education Level": "educationlevel",
+      "ECA For": "name",
       "Modified On": "updated_at",
       "Description": "description",
     };
@@ -425,7 +425,7 @@ const EducationDurationList = () => {
       uuids: selectAllOrNot === "all" ? [] : selectedRows,
     };
     setLoadingExport(true);
-    dispatch(educationDurationExportData(sendPayload, (response, error) => {
+    dispatch(ecaForExportData(sendPayload, (response, error) => {
       if (error) {
         setLoadingExport(false);
         toast.error(error?.response?.message || "server error");
@@ -439,7 +439,7 @@ const EducationDurationList = () => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `EducationDuration.xlsx`;
+          link.download = `ECAFor.xlsx`;
           document.body.appendChild(link);
           link.click();
           link.remove();
@@ -584,7 +584,7 @@ const EducationDurationList = () => {
                           lineHeight: 1
                         }}
                         onClick={() => {
-                          // console.log("Close clicked");
+                          console.log("Close clicked");
                           handleSearchChange('');
                         }}
                       >
@@ -602,7 +602,7 @@ const EducationDurationList = () => {
           </div>
           <div className="card-body pt-0 container-table" >
             <div className='container-table-div'>
-              <table className="table mb-0">
+              <table className="table mb-0"  >
                 <thead>
                   <tr>
                     <th scope="col" className='sl-numbar-th'>
@@ -692,11 +692,8 @@ const EducationDurationList = () => {
                             <span>{String(startIndex + index + 1).padStart(2, '0')}</span>
                           </div>
                         </td>
-                        {isColumnVisible('educationlevel_detail') && (
-                          <td><span>{rowItem.educationlevel_detail}</span></td>
-                        )}
-                        {isColumnVisible('durations') && (
-                          <td><span>{rowItem.durations}</span></td>
+                        {isColumnVisible('name') && (
+                          <td><span>{rowItem.name}</span></td>
                         )}
                         {isColumnVisible('description') && (
                           <td><span>{rowItem.description}</span></td>
@@ -704,6 +701,7 @@ const EducationDurationList = () => {
                         {isColumnVisible('updated_at') && (
                           <td><span>{formatDateTime(rowItem.updated_at)}</span></td>
                         )}
+
                         <td className='action-td'>
                           <div className="d-flex align-items-end gap-2">
                             <Link to="#" className='edit-btn-icone' onClick={(e) => { e.preventDefault(); handleShowEdit(rowItem); }}>
@@ -833,14 +831,14 @@ const EducationDurationList = () => {
             </div>
           </div>
         </div>
-        <AddEditEducationDurationModal
+        <AddEditECAForModal
           show={modalState.show}
           handleClose={handleClose}
           mode={modalState.mode}
           rowData={modalState.rowData}
         />
         {showImport && (
-          <AddImportEducationDurationModal show={showImport} handleClose={handleCloseImport} />)}
+          <AddImportECAForModal show={showImport} handleClose={handleCloseImport} />)}
         {showDeleteConfirm && (
           <div className="modal fade show common-ctl-popup">
             <div className="modal-dialog modal-dialog-centered">
@@ -884,7 +882,7 @@ const EducationDurationList = () => {
             <div className="modal-dialog modal-xl modal-dialog-centered" role="document">
               <div className="modal-content radius-16 bg-base">
                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                  <h1 className="modal-title fs-5">Export Education Duration</h1>
+                  <h1 className="modal-title fs-5">Export ECA For</h1>
                   <button
                     type="button"
                     className="btn-close"
@@ -982,4 +980,4 @@ const EducationDurationList = () => {
   );
 };
 
-export default EducationDurationList;
+export default ECAForList;

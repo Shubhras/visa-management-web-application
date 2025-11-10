@@ -44,10 +44,10 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
         full_name: rowData.full_name || '',
         short_name: rowData.short_name || '',
         issuing_authority: rowData.issuing_authority || '',
-        valid_upto: rowData.valid_upto || '',
-        valid_upto_type: rowData.valid_upto_type || '',
-        valid_upto_numeric: rowData.valid_upto_numeric || '',
-        valid_upto_unit: rowData.valid_upto_unit || '',
+        valid_upto_type: rowData.valid_type || '',
+        valid_upto: rowData.valid_date || '',
+        valid_upto_numeric: rowData.valid_duration_value || '',
+        valid_upto_unit: rowData.valid_duration_unit || '',
         description: rowData.description || '',
       });
     } else {
@@ -76,7 +76,7 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
       limit: 2000,
       search: '',
       status: '',
-      sortBy: 'updated_at', // Field to sort by
+      sortBy: 'created_at', // Field to sort by
       sortOrder: 'desc', // 'asc' or 'desc'
     };
 
@@ -90,32 +90,22 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
     }));
   };
 
-  // // Handle input changes
-  // const handleChange = (e) => {
-  //   const { name, value } = e.target;
-  //   setFormData(prev => ({
-  //     ...prev,
-  //     [name]: value
-  //   }));
-
-  //   // Clear error when user starts typing
-  //   if (errors[name]) {
-  //     setErrors(prev => ({
-  //       ...prev,
-  //       [name]: ''
-  //     }));
-  //   }
-  // };
-
-   // Handle input changes
+  // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
-    
+
     // If valid_upto_type changes, reset related fields
     if (name === 'valid_upto_type') {
       setFormData(prev => ({
         ...prev,
         [name]: value,
+        valid_upto: '',
+        valid_upto_numeric: '',
+        valid_upto_unit: ''
+      }));
+      // Clear related errors when type changes
+      setErrors(prev => ({
+        ...prev,
         valid_upto: '',
         valid_upto_numeric: '',
         valid_upto_unit: ''
@@ -159,6 +149,25 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
       isValid = false;
     }
 
+    // Valid Upto Type specific validations
+    if (formData.valid_upto_type === 'Date') {
+      if (!formData.valid_upto) {
+        newErrors.valid_upto = 'Date is required';
+        isValid = false;
+      }
+    }
+
+    if (formData.valid_upto_type === 'Valid Upto') {
+      if (!formData.valid_upto_numeric) {
+        newErrors.valid_upto_numeric = 'Numeric value is required';
+        isValid = false;
+      }
+      if (!formData.valid_upto_unit) {
+        newErrors.valid_upto_unit = 'Period is required';
+        isValid = false;
+      }
+    }
+
     setErrors(newErrors);
     return isValid;
   };
@@ -177,16 +186,9 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
           issuing_authority: formData.issuing_authority,
 
           valid_date: formData.valid_upto || null,
-          valid_type:
-            formData.valid_upto_type === "permanent"
-              ? "PERMANENT"
-              : formData.valid_upto_type === "date"
-                ? "DATE"
-                : formData.valid_upto_type === "valid_upto"
-                  ? "VALID_UP_TO"
-                  : "",
-          valid_duration_value: formData.valid_upto_numeric,
-         valid_duration_unit: formData.valid_upto_unit ? formData.valid_upto_unit.toUpperCase() : null,
+          valid_type: formData.valid_upto_type || "",
+          valid_duration_value:formData.valid_upto_numeric || null,
+          valid_duration_unit: formData.valid_upto_unit ? formData.valid_upto_unit : null,
           description: formData.description,
         }
         : {
@@ -195,19 +197,12 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
           short_name: formData.short_name,
           issuing_authority: formData.issuing_authority,
           valid_date: formData.valid_upto || null,
-          valid_type:
-            formData.valid_upto_type === "permanent"
-              ? "PERMANENT"
-              : formData.valid_upto_type === "date"
-                ? "DATE"
-                : formData.valid_upto_type === "valid_upto"
-                  ? "VALID_UP_TO"
-                  : "",
-          valid_duration_value: formData.valid_upto_numeric  || null,
-          valid_duration_unit: formData.valid_upto_unit ? formData.valid_upto_unit.toUpperCase() : null,
+          valid_type: formData.valid_upto_type || "",
+          valid_duration_value: formData.valid_upto_numeric || null,
+          valid_duration_unit: formData.valid_upto_unit ? formData.valid_upto_unit : null,
           description: formData.description,
         };
-
+      
       setLoading(true);
 
       const action = mode === 'edit' ? licenceNameEdit : licenceNameAdd;
@@ -371,25 +366,30 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
                         className="form-control form-select radius-8"
                       >
                         <option value="">Select Type</option>
-                        <option value="permanent">Permanent</option>
-                        <option value="date">Date</option>
-                        <option value="valid_upto">Valid Upto</option>
+                        <option value="Permanent">Permanent</option>
+                        <option value="Date">Date</option>
+                        <option value="Valid Upto">Valid Upto</option>
                       </select>
                     </div>
                     {/* Show Date Picker if Date is selected */}
-                    {formData.valid_upto_type === 'date' && (
+                    {formData.valid_upto_type === 'Date' && (
                       <div className="col-md-8">
                         <input
                           type="date"
                           name="valid_upto"
                           value={formData.valid_upto}
                           onChange={handleChange}
-                          className="form-control radius-8"
+                          className={`form-control radius-8 ${errors.valid_upto ? 'is-invalid' : ''}`}
                         />
+                        {errors.valid_upto && (
+                          <div className="text-danger text-sm mt-1">
+                            {errors.valid_upto}
+                          </div>
+                        )}
                       </div>
                     )}
-                    {/* Show Numeric and Unit fields if Permanent or Valid Upto is selected */}
-                    {(formData.valid_upto_type === 'valid_upto') && (
+                    {/* Show Numeric and Unit fields if Valid Upto is selected */}
+                    {(formData.valid_upto_type === 'Valid Upto') && (
                       <>
                         <div className="col-md-4">
                           <input
@@ -397,22 +397,32 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
                             name="valid_upto_numeric"
                             value={formData.valid_upto_numeric}
                             onChange={handleChange}
-                            className="form-control radius-8"
+                            className={`form-control radius-8 ${errors.valid_upto_numeric ? 'is-invalid' : ''}`}
                             placeholder="Enter number"
                           />
+                          {errors.valid_upto_numeric && (
+                            <div className="text-danger text-sm mt-1">
+                              {errors.valid_upto_numeric}
+                            </div>
+                          )}
                         </div>
                         <div className="col-md-4">
                           <select
                             name="valid_upto_unit"
                             value={formData.valid_upto_unit}
                             onChange={handleChange}
-                            className="form-control form-select radius-8"
+                            className={`form-control form-select radius-8 ${errors.valid_upto_unit ? 'is-invalid' : ''}`}
                           >
                             <option value="">Select Period</option>
-                            <option value="weeks">Weeks</option>
-                            <option value="months">Months</option>
-                            <option value="years">Years</option>
+                            <option value="Weeks">Weeks</option>
+                            <option value="Months">Months</option>
+                            <option value="Years">Years</option>
                           </select>
+                          {errors.valid_upto_unit && (
+                            <div className="text-danger text-sm mt-1">
+                              {errors.valid_upto_unit}
+                            </div>
+                          )}
                         </div>
                       </>
                     )}
