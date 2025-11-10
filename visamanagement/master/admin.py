@@ -256,3 +256,10 @@ class StudymajorareaAdmin(admin.ModelAdmin):
     ordering = ('majorarea',)
 
 
+
+@admin.register(AcademicResult)
+class AcademicResultAdmin(admin.ModelAdmin):
+    list_display = ('id', 'AcademicResulttype', 'Academicresult', 'description', 'is_deleted', 'created_at', 'updated_at')
+    list_filter = ('AcademicResulttype', 'is_deleted', 'created_at')
+    search_fields = ('Academicresult', 'description')
+    readonly_fields = ('uuid', 'created_at', 'updated_at')

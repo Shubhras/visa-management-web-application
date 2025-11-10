@@ -331,6 +331,21 @@ urlpatterns = [
     path('mediumeducation/export/', MediumofEducationExportAPIView.as_view(), name='educationlevel-export'),
     path('mediumeducation/import/',MediumofEducationImportAPIView.as_view(), name='educationlevel-import'),
 
+    path('eca-awarding-bodies/', ECAAwardingBodyListAPIView.as_view(), name='eca-awarding-body-list'),
+    path('eca-awarding-bodies/create/', ECAAwardingBodyCreateAPIView.as_view(), name='eca-awarding-body-create'),
+    path('eca-awarding-bodies/<uuid:uuid>/', ECAAwardingBodyRetrieveAPIView.as_view(), name='eca-awarding-body-retrieve'),
+    path('eca-awarding-bodies/<uuid:uuid>/update/', ECAAwardingBodyUpdateAPIView.as_view(), name='eca-awarding-body-update'),
+    path('eca-awarding-bodies/delete/', ECAAwardingBodyDeleteAPIView.as_view(), name='eca-awarding-body-delete'),
+    path('eca-awarding-bodies/export/', ECAAwardingBodyExportAPIView.as_view(), name='eca-awarding-body-export'),
+    path('eca-awarding-bodies/import/', ECAAwardingBodyImportAPIView.as_view(), name='eca-awarding-body-import'),
+
+    path('degree-awarded-by/', DegreeAwardedByListAPIView.as_view(), name='degree-awarded-by-list'),
+    path('degree-awarded-by/create/', DegreeAwardedByCreateAPIView.as_view(), name='degree-awarded-by-create'),
+    path('degree-awarded-by/<uuid:uuid>/', DegreeAwardedByRetrieveAPIView.as_view(), name='degree-awarded-by-retrieve'),
+    path('degree-awarded-by/<uuid:uuid>/update/', DegreeAwardedByUpdateAPIView.as_view(), name='degree-awarded-by-update'),
+    path('degree-awarded-by/delete/', DegreeAwardedByDeleteAPIView.as_view(), name='degree-awarded-by-delete'),
+    path('degree-awarded-by/export/', DegreeAwardedByExportAPIView.as_view(), name='degree-awarded-by-export'),
+    path('degree-awarded-by/import/', DegreeAwardedByImportAPIView.as_view(), name='degree-awarded-by-import'),
 
     path('language/create/', LanguageCreateAPIView.as_view(), name='language-create'),
     path('language/<uuid:uuid>/', LanguageRetrieveAPIView.as_view(), name='language-retrieve'),
