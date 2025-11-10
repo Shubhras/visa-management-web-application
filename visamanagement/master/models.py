@@ -323,7 +323,7 @@ class LicenseName(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)  
     country = models.ForeignKey("Country", on_delete=models.SET_NULL, related_name="license_name", blank=True, null=True)
-    full_name = models.CharField(max_length=255,blank=True,unique=True)
+    full_name = models.CharField(max_length=255,blank=True)
     short_name = models.CharField(max_length=255,blank=True, null=True,unique=False)
     issuing_authority= models.CharField(max_length=255,null=True,blank=True)
     description = models.TextField(max_length=255,null=True,blank=True)
@@ -334,6 +334,11 @@ class LicenseName(models.Model):
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['full_name', 'country'], name='unique_fullname_per_country')
+        ]
 
     def __str__(self):
         return self.full_name
