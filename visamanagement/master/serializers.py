@@ -399,6 +399,15 @@ class LicenseNameSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at',
         ]
+    extra_kwargs = {
+            'valid_type': {'required': False, 'allow_null': True},
+            'valid_duration_unit': {'required': False, 'allow_null': True},
+            'valid_date': {'required': False, 'allow_null': True},
+            'valid_duration_value': {'required': False, 'allow_null': True},
+            'short_name': {'required': False, 'allow_blank': True, 'allow_null': True},
+            'issuing_authority': {'required': False, 'allow_blank': True, 'allow_null': True},
+            'description': {'required': False, 'allow_blank': True, 'allow_null': True},
+        }
 
 
 class LeadSourceSerializer(serializers.ModelSerializer):
