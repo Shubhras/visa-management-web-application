@@ -8382,6 +8382,8 @@ class LicenseNameImportAPIView(APIView):
                     data.append(row_lower)
             else:
                 return Response({"statusCode": 400, "status": True, 'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
+            
+            ALLOWED_VALID_TYPES = ['Permanent', 'Valid Upto', 'Date'] 
 
             imported_count = 0
             for row in  reversed(data):
@@ -8401,6 +8403,35 @@ class LicenseNameImportAPIView(APIView):
                 country_obj = Country.objects.filter(name__iexact=country_name).first()
                 if not country_obj:
                     continue
+                if not valid_type:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f"Row with License '{full_name}' has empty 'valid type'. Allowed values: {', '.join(ALLOWED_VALID_TYPES)}."
+                    }, status=400)
+
+                if valid_type.title() not in ALLOWED_VALID_TYPES:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f"Row with License '{full_name}' has invalid 'valid type'='{valid_type}'. Allowed values: {', '.join(ALLOWED_VALID_TYPES)}."
+                    }, status=400)
+
+                # ---- Conditional field validation based on valid_type ----
+                if valid_type.lower() == 'valid upto':
+                    if not valid_duration_value or not valid_duration_unit:
+                        return Response({
+                            "statusCode": 400,
+                            "status": False,
+                            "message": f"Row with License '{full_name}' has 'Valid Upto' type. 'valid_duration_value' and 'valid_duration_unit' are required."
+                        }, status=400)
+                elif valid_type.lower() == 'date':
+                    if not valid_date:
+                        return Response({
+                            "statusCode": 400,
+                            "status": False,
+                            "message": f"Row with License '{full_name}' has 'Date' type. 'valid_date' is required."
+                        }, status=400)
 
                 # Convert date safely
                 if valid_type:
