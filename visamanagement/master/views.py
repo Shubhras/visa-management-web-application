@@ -24,7 +24,7 @@ import csv
 import io
 import pytz
 from django.utils import timezone
-
+import unicodedata
 
 india_tz = pytz.timezone('Asia/Kolkata')
 
