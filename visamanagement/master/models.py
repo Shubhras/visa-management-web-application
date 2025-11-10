@@ -324,7 +324,7 @@ class LicenseName(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)  
     country = models.ForeignKey("Country", on_delete=models.SET_NULL, related_name="license_name", blank=True, null=True)
     full_name = models.CharField(max_length=255,blank=True,unique=True)
-    short_name = models.CharField(max_length=255,blank=True, null=True)
+    short_name = models.CharField(max_length=255,blank=True, null=True,unique=False)
     issuing_authority= models.CharField(max_length=255,null=True,blank=True)
     description = models.TextField(max_length=255,null=True,blank=True)
     valid_type = models.CharField(max_length=20, choices=VALID_TYPE_CHOICES,null=True,blank=True)
