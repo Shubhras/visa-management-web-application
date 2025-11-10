@@ -128,16 +128,16 @@ class Relation(models.Model):
 
 class CivilIdName(models.Model):
     VALID_TYPE_CHOICES = (
-        ("PERMANENT", "Permanent"),
-        ("VALID_UP_TO", "Valid Up To"),
+        ("Permanent", "Permanent"),
+        ("Valid Upto", "Valid Upto"),
+        ("Date","Date")
     )
  
     VALID_UNIT_CHOICES = (
-        ("MONTHS", "Months"),
-        ("WEEKS","Weeks"),
-        ("YEARS", "Years"),
+        ("Months", "Months"),
+        ("Weeks","Weeks"),
+        ("Years", "Years"),
     )
- 
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
  
@@ -261,15 +261,15 @@ class AccreditationCategory(models.Model):
 
 class AccreditationName(models.Model):
     VALID_TYPE_CHOICES = (
-        ("PERMANENT", "Permanent"),
-        ("VALID_UP_TO", "Valid Up To"),
-        ("DATE","Date")
+        ("Permanent", "Permanent"),
+        ("Valid Upto", "Valid Upto"),
+        ("Date","Date")
     )
  
     VALID_UNIT_CHOICES = (
-        ("MONTHS", "Months"),
-        ("WEEKS","Weeks"),
-        ("YEARS", "Years"),
+        ("Months", "Months"),
+        ("Weeks","Weeks"),
+        ("Years", "Years"),
     )
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     country = models.ForeignKey("Country", on_delete=models.SET_NULL, related_name="accreditation_names", blank=True, null=True)
