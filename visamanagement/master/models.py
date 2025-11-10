@@ -311,7 +311,7 @@ class LicenseName(models.Model):
 
     VALID_TYPE_CHOICES = (
         ("Permanent", "Permanent"),
-        ("Valid UpTo", "Valid UpTo"),
+        ("Valid Upto", "Valid Upto"),
         ("Date","Date")
     )
  
