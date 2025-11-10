@@ -822,7 +822,7 @@ class MaritalstatusExportAPIView(APIView):
         queryset = Maritalstatus.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
+        queryset = queryset.order_by('created_at')
 
 
         # Prepare dataset
