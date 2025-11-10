@@ -132,9 +132,9 @@ class GenderListAPIView(APIView):
         sort_by = request.GET.get('sortBy', 'updated_at')
         sort_order = request.GET.get('sortOrder', 'asc')
 
-        allowed_sort_fields = ['text', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
+            sort_by = 'updated_at'
 
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
@@ -361,7 +361,7 @@ class GenderExportAPIView(APIView):
             'description': 'Description',
             'is_active': 'Active',
             'is_deleted': 'Deleted',
-            'updated_at': 'Modified On',
+            'created_': 'Modified On',
         }
 
         # --- Determine export fields ---
@@ -8263,7 +8263,7 @@ class LicenseNameExportAPIView(APIView):
             'short_name': 'License Short Name',
             'issuing_authority': 'License Issuing Authority Name',
             'description': 'Description',
-            'valid_type': 'License Valid Type',
+            'valid_type': 'License Valid Upto',
             'valid_duration_value': 'License Valid Duration Value',
             'valid_duration_unit': 'License Valid Duration Unit',
             'valid_date': 'License Valid Date',
