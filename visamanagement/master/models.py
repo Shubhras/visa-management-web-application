@@ -592,7 +592,31 @@ class MediumofEducation(models.Model):
         return self.name
 
 
+class ECAAwardingBody(models.Model):
+    VALID_UNIT_CHOICES = (
+        ("MONTHS", "Months"),
+        ("WEEKS","Weeks"),
+        ("YEARS", "Years"),
+    )
 
+    selection_choices=[
+            ('Student', 'Student'), 
+            ('Immigration', 'Immigration')
+             ]
+    
+
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    country = models.ForeignKey("Country", on_delete=models.SET_NULL, related_name="ECAAwarding_body", blank=True, null=True)
+    selection_type = models.CharField(max_length=50,choices=selection_choices,blank=True, null=True)
+    valid_duration_value = models.IntegerField(blank=True, null=True)
+    eca_body_full_name = models.CharField(max_length=255,unique=True,blank=True, null=True)
+    eca_body_short_name = models.CharField(max_length=100,blank=True, null=True)
+    eca_valid_period = models.CharField(max_length=50,blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"{self.eca_body_full_name} ({self.eca_body_short_name}) - {self.country}"
 
 class  Language(models.Model):
     id = models.AutoField(primary_key=True)

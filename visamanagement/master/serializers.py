@@ -677,6 +677,28 @@ class MediumofEducationSerializer(serializers.ModelSerializer):
 
 
 
+class ECAAwardingBodySerializer(serializers.ModelSerializer):
+    country_name = serializers.CharField(source='country.name', read_only=True)  # Display country name
+    selection_type_display = serializers.CharField(source='get_selection_type_display', read_only=True)
+
+    class Meta:
+        model = ECAAwardingBody
+        fields = [
+            'uuid',
+            'id',
+            'country',
+            'country_name',
+            'selection_type',
+            'selection_type_display',
+            'valid_duration_value',
+            'eca_body_full_name',
+            'eca_body_short_name',
+            'eca_valid_period',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
 class LanguageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Language

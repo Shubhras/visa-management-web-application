@@ -7487,11 +7487,9 @@ class AccreditationNameExportAPIView(APIView):
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
-# -------------------- IMPORT API --------------------
 
 
-
-#-------------------------------------------bankAccount---------------------------------
+#-------------------------------------------import---------------------------------
 
 class AccreditationNameImportAPIView(APIView):
     def post(self, request):
@@ -7598,7 +7596,7 @@ class AccreditationNameImportAPIView(APIView):
                 # Map by name instead of ID
                 country = Country.objects.filter(name__iexact=country_name).first()
                 category = AccreditationCategory.objects.filter(name__iexact=category_name).first()
-                 
+
                 if not country or not category:
                     skipped_rows.append({
                         'full_name': full_name,
@@ -14938,6 +14936,7 @@ class MediumofEducationExportAPIView(APIView):
 
 class MediumofEducationImportAPIView(APIView):
 
+
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')
@@ -15077,3 +15076,367 @@ class MediumofEducationImportAPIView(APIView):
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=status.HTTP_200_OK)
+
+
+
+class ECAAwardingBodyListAPIView(APIView):
+    def get(self, request):
+        search = request.GET.get('search', '').strip()
+        sort_by = request.GET.get('sortBy', 'updated_at')
+        sort_order = request.GET.get('sortOrder', 'desc')
+
+        allowed_sort_fields = ['eca_body_full_name', 'eca_body_short_name', 'eca_valid_period', 'created_at']
+        if sort_by not in allowed_sort_fields:
+            sort_by = 'created_at'
+        if sort_order == 'desc':
+            sort_by = f'-{sort_by}'
+
+        queryset = ECAAwardingBody.objects.all()
+        if search:
+            queryset = queryset.filter(
+                Q(eca_body_full_name__icontains=search) |
+                Q(eca_body_short_name__icontains=search) |
+                Q(country__name__icontains=search)
+            )
+
+        queryset = queryset.order_by(sort_by)
+
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = ECAAwardingBodySerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+
+# -------------------- CREATE API --------------------
+class ECAAwardingBodyCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        serializer = ECAAwardingBodySerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "ECA Awarding Body created successfully",
+                "data": serializer.data
+            })
+        errors = serializer.errors
+        messages = []
+        for field, msgs in errors.items():
+            messages.extend(msgs)
+        return Response({
+            "statusCode": 400,
+            "status": False,
+            "message": " ".join(messages)
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+# -------------------- RETRIEVE API --------------------
+class ECAAwardingBodyRetrieveAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request, uuid):
+        try:
+            eca = ECAAwardingBody.objects.get(uuid=uuid)
+        except ECAAwardingBody.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "ECA Awarding Body not found",
+                "data": None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = ECAAwardingBodySerializer(eca)
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": "ECA Awarding Body retrieved successfully",
+            "data": serializer.data
+        })
+
+
+# -------------------- UPDATE API --------------------
+class ECAAwardingBodyUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def put(self, request, uuid):
+        try:
+            eca = ECAAwardingBody.objects.get(uuid=uuid)
+        except ECAAwardingBody.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "ECA Awarding Body not found",
+                "data": None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = ECAAwardingBodySerializer(eca, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "ECA Awarding Body updated successfully",
+                "data": serializer.data
+            })
+        errors = serializer.errors
+        messages = []
+        for field, msgs in errors.items():
+            messages.extend(msgs)
+        return Response({
+            "statusCode": 400,
+            "status": False,
+            "message": " ".join(messages),
+            "data": None
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+# -------------------- DELETE API --------------------
+class ECAAwardingBodyDeleteAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def delete(self, request, uuid=None):
+        ids = request.data.get('id', None)
+
+        if uuid:
+            try:
+                eca = ECAAwardingBody.objects.get(uuid=uuid)
+                eca.delete()
+                return Response({
+                    "statusCode": 204,
+                    "status": True,
+                    "message": "ECA Awarding Body permanently deleted",
+                    "data": None
+                }, status=status.HTTP_204_NO_CONTENT)
+            except ECAAwardingBody.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "ECA Awarding Body not found",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+
+        if ids == "all":
+            count = ECAAwardingBody.objects.count()
+            ECAAwardingBody.objects.all().delete()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"All {count} ECA Awarding Body(ies) permanently deleted",
+                "data": None
+            })
+
+        if not ids or not isinstance(ids, list):
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Provide a list of UUIDs in 'id' field or 'all'.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        valid_uuids = []
+        invalid_uuids = []
+        for u in ids:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(u)
+
+        queryset = ECAAwardingBody.objects.filter(uuid__in=valid_uuids)
+        count = queryset.count()
+        queryset.delete()
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": f"{count} ECA Awarding Body(ies) permanently deleted",
+            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+        })
+
+
+# -------------------- EXPORT API --------------------
+class ECAAwardingBodyExportAPIView(APIView):
+    def get(self, request):
+        format_type = request.GET.get('format', 'xlsx').lower()
+        fields = request.GET.get('fields')
+        uuids_param = request.GET.get('uuids', '')
+        uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+        field_header_map = {
+            'uuid': 'UUID',
+            'country': 'Country',
+            'selection_type': 'ECA For',
+            'valid_duration_value': 'Valid Duration',
+            'eca_body_full_name': 'ECA Body Full Name',
+            'eca_body_short_name': 'ECA Body Short Name',
+            'eca_valid_period': 'ECA Valid Period',
+            'created_at': 'Created On',
+            'updated_at': 'Modified On'
+        }
+
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+        queryset = ECAAwardingBody.objects.all()
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-updated_at')
+
+        dataset = Dataset()
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'ECAAwardingBody'
+
+        for eca in queryset:
+            row = []
+            for field in field_list:
+                value = getattr(eca, field, '')
+                if field == 'country' and eca.country:
+                    value = eca.country.name
+                elif isinstance(value, bool):
+                    value = int(value)
+                elif field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
+                row.append(value if value is not None else '')
+            dataset.append(row)
+
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'eca_awarding_body.csv'
+        else:
+            file_data = io.BytesIO(dataset.export('xlsx'))
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'eca_awarding_body.xlsx'
+
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        return response
+
+
+
+class ECAAwardingBodyImportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        file = request.FILES.get('file')
+        sheet_name = request.data.get('sheet_name', None)
+
+        if not file:
+            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+
+        format_type = file.name.split('.')[-1].lower()
+        imported_count = 0
+        skipped_rows = []
+        duplicate_names = []
+
+        # Define required and optional headers
+        required_headers = {'eca body full name', 'country'}
+        optional_headers = {'eca body short name', 'selection type', 'valid duration value', 'eca valid period'}
+
+        try:
+            data = []
+            headers = []
+
+            # ---------- XLSX ----------
+            if format_type == 'xlsx':
+                import openpyxl
+                wb = openpyxl.load_workbook(file, read_only=True)
+
+                if sheet_name:
+                    if sheet_name not in wb.sheetnames:
+                        return Response({
+                            'statusCode': 400,
+                            'status': False,
+                            'message': f'Sheet "{sheet_name}" not found',
+                            'available_sheets': wb.sheetnames
+                        }, status=status.HTTP_400_BAD_REQUEST)
+                    ws = wb[sheet_name]
+                else:
+                    ws = wb.active
+
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+
+                # Check required headers
+                if not required_headers.issubset(set(headers)):
+                    return Response({
+                        'statusCode': 400,
+                        'status': False,
+                        'message': f'Missing required headers: {required_headers - set(headers)}'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    if not any(row):
+                        continue
+                    row_dict = dict(zip(headers, row))
+                    data.append(row_dict)
+
+            # ---------- CSV ----------
+            elif format_type == 'csv':
+                import csv
+                decoded_file = file.read().decode('utf-8')
+                reader = csv.DictReader(io.StringIO(decoded_file))
+                headers = [h.strip().lower() for h in reader.fieldnames]
+
+                # Check required headers
+                if not required_headers.issubset(set(headers)):
+                    return Response({
+                        'statusCode': 400,
+                        'status': False,
+                        'message': f'Missing required headers: {required_headers - set(headers)}'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                for row in reader:
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    data.append(row_lower)
+
+            else:
+                return Response({'statusCode': 400, 'status': False, 'message': 'Unsupported file format'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # ---------- Import Data ----------
+            for row in data:
+                full_name = str(row.get('eca body full name')).strip() if row.get('eca body full name') else None
+                short_name = str(row.get('eca body short name')).strip() if row.get('eca body short name') else ''
+                country_name = str(row.get('country')).strip() if row.get('country') else None
+                selection_type = str(row.get('selection type')).strip() if row.get('selection type') else None
+                valid_duration_value = row.get('valid duration value')
+                eca_valid_period = str(row.get('eca valid period')).strip() if row.get('eca valid period') else None
+
+                if not full_name or not country_name:
+                    skipped_rows.append({'full_name': full_name or 'Unknown', 'reason': 'Missing required field(s)'})
+                    continue
+
+                # Map by country name
+                country = Country.objects.filter(name__iexact=country_name).first()
+                if not country:
+                    skipped_rows.append({'full_name': full_name, 'reason': f'Country "{country_name}" not found'})
+                    continue
+
+                existing = ECAAwardingBody.objects.filter(eca_body_full_name__iexact=full_name, country=country).first()
+                if existing:
+                    duplicate_names.append(full_name)
+                    continue
+
+                # Create record
+                ECAAwardingBody.objects.create(
+                    eca_body_full_name=full_name,
+                    eca_body_short_name=short_name,
+                    country=country,
+                    selection_type=selection_type,
+                    valid_duration_value=valid_duration_value,
+                    eca_valid_period=eca_valid_period
+                )
+                imported_count += 1
+
+        except Exception as e:
+            return Response({'statusCode': 400, 'status': False, 'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "duplicates": list(set(duplicate_names)),
+            "skipped_rows": skipped_rows,
+            "imported_count": imported_count,
+            "message": "Import successful"
+        })

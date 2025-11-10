@@ -678,7 +678,7 @@ class LanguageTestExportAPIView(APIView):
         # --- Field to header mapping ---
         field_header_map = {
             'uuid': 'UUID',
-            'language': 'Language Name (Test',
+            'language': 'Language Name (Test)',
             'name': 'Language Test Name',
             'fullname': 'Language Test Full Name',
             'description': 'Description',
@@ -758,7 +758,7 @@ class LanguageTestImportAPIView(APIView):
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
 
-        required_headers = {'language name (Test)', 'language test name'}
+        required_headers = {'language name (test)', 'language test name'}
         optional_headers = {'language test full name', 'description', 'is_deleted'}
 
         try:
@@ -827,9 +827,9 @@ class LanguageTestImportAPIView(APIView):
             imported_count = 0
 
             for row in data:
-                lang_name = str(row.get('language')).strip()
-                name = str(row.get('name')).strip()
-                fullname = str(row.get('fullname')).strip() if row.get('fullname') else ''
+                lang_name = str(row.get('language name (test)')).strip()
+                name = str(row.get('language test name')).strip()
+                fullname = str(row.get('language test full name')).strip() if row.get('language test full name') else ''
                 description = str(row.get('description')).strip() if row.get('description') else ''
                 is_deleted = row.get('is_deleted', False)
 
@@ -1185,7 +1185,7 @@ class LanguagetestmoduleNameImportAPIView(APIView):
 
             # ---------- Import Rows ----------
             for row in data:
-                name = str(row.get('name')).strip() if row.get('name') else None
+                name = str(row.get('language test module name')).strip() if row.get('language test module name') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
                 is_deleted = row.get('is_deleted', False)
 
@@ -1511,7 +1511,7 @@ class CLBLevelImportAPIView(APIView):
 
             # ---------- Import Rows ----------
             for row in data:
-                name = str(row.get('name')).strip() if row.get('name') else None
+                name = str(row.get('CLB Level')).strip() if row.get('CLB Level') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not name:
