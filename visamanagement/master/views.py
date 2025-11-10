@@ -8384,6 +8384,8 @@ class LicenseNameImportAPIView(APIView):
                 return Response({"statusCode": 400, "status": True, 'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
             
             ALLOWED_VALID_TYPES = ['Permanent', 'Valid Upto', 'Date'] 
+            ALLOWED_VALID_UNITS = ['Months', 'Weeks', 'Years']
+
 
             imported_count = 0
             for row in  reversed(data):
@@ -8393,7 +8395,9 @@ class LicenseNameImportAPIView(APIView):
                 issuing_authority = str(row.get('license issuing authority name')).strip() if row.get('license issuing authority name') else ''
                 description = str(row.get('description')).strip() if row.get('description') else ''
                 valid_duration_value = row.get('license valid duration value')
-                valid_duration_unit = str(row.get('license valid duration unit')).strip().upper() if row.get('license valid duration unit') else None
+                valid_duration_unit_raw = row.get('license valid duration unit')
+                valid_duration_unit = valid_duration_unit_raw.strip().title() if valid_duration_unit_raw else None
+
                 valid_date = row.get('license valid date')
 
                 if not full_name or not country_name:
@@ -8405,7 +8409,6 @@ class LicenseNameImportAPIView(APIView):
                 valid_type_raw = str(row.get('license valid upto')).strip() if row.get('license valid upto') else None
                 valid_type = unicodedata.normalize('NFKC', valid_type_raw).title() if valid_type_raw else None
 
-                # Only validate if there is a value
                 if valid_type and valid_type not in ALLOWED_VALID_TYPES:
                     return Response({
                         "statusCode": 400,
@@ -8413,7 +8416,6 @@ class LicenseNameImportAPIView(APIView):
                         "message": f"Row with License Valid Upto has invalid 'valid type'='{valid_type}'. Allowed values: {', '.join(ALLOWED_VALID_TYPES)}."
                     }, status=400)
 
-                # Conditional field validation based on valid_type
                 if valid_type == 'Valid Upto':
                     if not valid_duration_value or not valid_duration_unit:
                         return Response({
@@ -8427,6 +8429,12 @@ class LicenseNameImportAPIView(APIView):
                             "statusCode": 400,
                             "status": False,
                             "message": f"Row with License Valid Upto has 'Date' type. 'valid_date' is required."
+                        }, status=400)
+                if valid_duration_unit and valid_duration_unit not in ALLOWED_VALID_UNITS:
+                        return Response({
+                            "statusCode": 400,
+                            "status": False,
+                            "message": f"Invalid valid_duration_unit='{valid_duration_unit}' in row '{full_name}'. Allowed: {', '.join(ALLOWED_VALID_UNITS)}."
                         }, status=400)
 
              
