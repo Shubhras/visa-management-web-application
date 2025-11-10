@@ -274,7 +274,7 @@ class AccreditationName(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     country = models.ForeignKey("Country", on_delete=models.SET_NULL, related_name="accreditation_names", blank=True, null=True)
     category = models.ForeignKey(AccreditationCategory, on_delete=models.SET_NULL, related_name="accreditation_names", blank=True, null=True)
-    full_name = models.CharField(max_length=255, unique=True)
+    full_name = models.CharField(max_length=255)
     short_name = models.CharField(max_length=255, null=True,blank=True)
     issuing_authority = models.CharField(max_length=255,blank=True, null=True)
     valid_type = models.CharField(max_length=20, choices=VALID_TYPE_CHOICES,null=True,blank=True)
@@ -285,6 +285,11 @@ class AccreditationName(models.Model):
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['full_name', 'country', 'category'], name='unique_fullname_per_country_category')
+        ]
 
     def __str__(self):
         return self.full_name

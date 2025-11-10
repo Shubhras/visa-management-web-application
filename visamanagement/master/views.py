@@ -7643,8 +7643,14 @@ class AccreditationNameImportAPIView(APIView):
                 ).first()
 
                 if existing:
-                    duplicate_names.append(full_name)
-                    continue
+                    if not existing.is_deleted:
+                        
+                        duplicate_names.append({
+                            'Country': country.name,
+                            'Accreditation Full Name': full_name,
+                            'Accrediation Category':category.name
+
+                        })
 
                 AccreditationName.objects.create(
                     full_name=full_name,
@@ -7666,7 +7672,7 @@ class AccreditationNameImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_names)),
+            "duplicates": duplicate_names,
             "skipped_rows": skipped_rows,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
