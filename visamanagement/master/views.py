@@ -566,7 +566,7 @@ class MaritalstatusListAPIView(APIView):
     def get(self, request):
         try:
             search = request.GET.get('search', '').strip()
-            sort_by = request.GET.get('sortBy', 'updated_at')
+            sort_by = request.GET.get('sortBy', 'created_at')
             sort_order = request.GET.get('sortOrder', 'asc')
 
             # Allowed fields to sort
