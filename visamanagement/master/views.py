@@ -8407,12 +8407,6 @@ class LicenseNameImportAPIView(APIView):
 
                 full_name_display = full_name if full_name else 'Unknown License'
 
-                if not valid_type:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": f"Row with License '{full_name_display}' has empty 'valid type'. Allowed values: {', '.join(ALLOWED_VALID_TYPES)}."
-                    }, status=400)
 
                 if valid_type.title() not in ALLOWED_VALID_TYPES:
                     return Response({
