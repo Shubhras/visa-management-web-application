@@ -567,7 +567,7 @@ class MaritalstatusListAPIView(APIView):
         try:
             search = request.GET.get('search', '').strip()
             sort_by = request.GET.get('sortBy', 'created_at')
-            sort_order = request.GET.get('sortOrder', 'asc')
+            sort_order = request.GET.get('sortOrder', 'desc')
 
             # Allowed fields to sort
             allowed_sort_fields = ['text', 'description', 'created_at']
@@ -822,7 +822,7 @@ class MaritalstatusExportAPIView(APIView):
         queryset = Maritalstatus.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('created_at')
+        queryset = queryset.order_by('-created_at')
 
 
         # Prepare dataset
