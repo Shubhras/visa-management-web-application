@@ -7571,6 +7571,9 @@ class AccreditationNameImportAPIView(APIView):
                 )
 
             # ---------- Import Data ----------
+            ALLOWED_VALID_TYPES = ['Permanent', 'Valid Upto', 'Date']
+            ALLOWED_VALID_UNITS = ['Months', 'Weeks', 'Years']
+            
             imported_count = 0
             skipped_rows = []
 
@@ -7603,6 +7606,35 @@ class AccreditationNameImportAPIView(APIView):
                         'reason': f'Invalid country or category: {country_name}/{category_name}'
                     })
                     continue
+
+
+                if valid_type and valid_type not in ALLOWED_VALID_TYPES:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f"Row with Accreditation Valid Type has invalid 'valid type'='{valid_type}'. Allowed values: {', '.join(ALLOWED_VALID_TYPES)}."
+                    }, status=400)
+
+                if valid_type == 'Valid Upto' and (not valid_duration_value or not valid_duration_unit):
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f"Row with Valid Upto type requires 'valid_duration_value' and 'valid_duration_unit'."
+                    }, status=400)
+                elif valid_type == 'Date' and not valid_date:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f"Row with Date type requires 'valid_date'."
+                    }, status=400)
+
+                if valid_duration_unit and valid_duration_unit not in ALLOWED_VALID_UNITS:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f"Invalid valid_duration_unit='{valid_duration_unit}' in row '{full_name}'. Allowed: {', '.join(ALLOWED_VALID_UNITS)}."
+                    }, status=400)
+
 
                 existing = AccreditationName.objects.filter(
                     full_name__iexact=full_name,
@@ -8442,7 +8474,11 @@ class LicenseNameImportAPIView(APIView):
                 existing = LicenseName.objects.filter(full_name__iexact=full_name, country=country_obj).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicate_names.append(full_name)
+                        
+                        duplicate_names.append({
+                            'Country': country_obj.name
+                            'License Full Name': full_name
+                        })
                         continue
                     else:
                         existing.short_name = short_name
