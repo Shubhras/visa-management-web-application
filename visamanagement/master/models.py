@@ -610,6 +610,7 @@ class ECAAwardingBody(models.Model):
     selection_type = models.CharField(max_length=50,choices=selection_choices,blank=True, null=True)
     valid_duration_value = models.IntegerField(blank=True, null=True)
     eca_body_full_name = models.CharField(max_length=255,unique=True,blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
     eca_body_short_name = models.CharField(max_length=100,blank=True, null=True)
     eca_valid_period = models.CharField(max_length=50,blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
