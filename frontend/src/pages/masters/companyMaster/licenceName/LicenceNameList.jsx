@@ -45,8 +45,8 @@ const LicenceNameList = () => {
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
   const [items] = useState(["Country", "License Full Name", "License Short Name", "License Issuing Authority Name", "License Valid Upto", "Description", "Modified On"]);
-  const [selectedItems, setSelectedItems] = useState(["Country", "License Full Name", "License Short Name", "License Issuing Authority Name", "License Valid Upto"]);
-  const [ItemsRequired] = useState(["Country", "License Full Name", "License Short Name", "License Issuing Authority Name", "License Valid Upto"]);
+  const [selectedItems, setSelectedItems] = useState(["Country", "License Full Name", "License Short Name"]);
+  const [ItemsRequired] = useState(["Country", "License Full Name", "License Short Name"]);
 
   // Table columns configuration
   const [tableColumns] = useState([
@@ -419,12 +419,26 @@ const LicenceNameList = () => {
       "License Full Name": "full_name",
       "License Short Name": "short_name",
       "License Issuing Authority Name": "issuing_authority",
-      "License Valid Upto": "valid_upto",
+      "License Valid Upto": "valid_type",
+      "License Valid Duration Value": "valid_duration_value",
+      "License Valid Duration Unit": "valid_duration_unit",
+      "License Valid Date": "valid_date",
       "Modified On": "updated_at",
       "Description": "description",
     };
-    // Convert selectedItems to backend field names
-    const mappedFields = selectedItems.map((item) => fieldMapping[item] || item);
+console.log('ggggggggggggggggggggggggggg',fieldMapping)
+
+    let mappedFields = selectedItems.map((item) => fieldMapping[item] || item);
+
+// 👉 If "License Valid Upto" is selected, add related fields too
+if (mappedFields.includes("valid_type")) {
+  mappedFields.push("valid_duration_value", "valid_duration_unit", "valid_date");
+}
+
+// Remove duplicates (optional)
+mappedFields = [...new Set(mappedFields)];
+
+console.log('Final mappedFields:', mappedFields);
     // Convert to comma-separated string
     const fieldsString = mappedFields.join(",");
     const sendPayload = {
