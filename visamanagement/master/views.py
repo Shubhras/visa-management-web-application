@@ -8392,7 +8392,7 @@ class LicenseNameImportAPIView(APIView):
                 short_name = str(row.get('license short name')).strip() if row.get('license short name') else ''
                 issuing_authority = str(row.get('license issuing authority name')).strip() if row.get('license issuing authority name') else ''
                 description = str(row.get('description')).strip() if row.get('description') else ''
-                valid_type = str(row.get('license valid upto')).strip() if row.get('license valid upto') else None
+                valid_type_raw = str(row.get('license valid upto')).strip() if row.get('license valid upto') else None
                 valid_duration_value = row.get('license valid duration value')
                 valid_duration_unit = str(row.get('license valid duration unit')).strip().upper() if row.get('license valid duration unit') else None
                 valid_date = row.get('license valid date')
@@ -8403,18 +8403,22 @@ class LicenseNameImportAPIView(APIView):
                 country_obj = Country.objects.filter(name__iexact=country_name).first()
                 if not country_obj:
                     continue
+                valid_type = unicodedata.normalize('NFKC', str(valid_type_raw).strip()) if valid_type_raw else None
+
+                full_name_display = full_name if full_name else 'Unknown License'
+
                 if not valid_type:
                     return Response({
                         "statusCode": 400,
                         "status": False,
-                        "message": f"Row with License  'License Valid Upto' has empty 'valid type'. Allowed values: {', '.join(ALLOWED_VALID_TYPES)}."
+                        "message": f"Row with License '{full_name_display}' has empty 'valid type'. Allowed values: {', '.join(ALLOWED_VALID_TYPES)}."
                     }, status=400)
 
                 if valid_type.title() not in ALLOWED_VALID_TYPES:
                     return Response({
                         "statusCode": 400,
                         "status": False,
-                        "message": f"Row with License 'License Valid Upto' has invalid 'valid type'='{valid_type}'. Allowed values: {', '.join(ALLOWED_VALID_TYPES)}."
+                        "message": f"Row with License '{full_name_display}' has invalid 'valid type'='{valid_type}'. Allowed values: {', '.join(ALLOWED_VALID_TYPES)}."
                     }, status=400)
 
                 # ---- Conditional field validation based on valid_type ----
