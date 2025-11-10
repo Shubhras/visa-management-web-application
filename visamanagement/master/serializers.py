@@ -703,11 +703,9 @@ class ECAAwardingBodySerializer(serializers.ModelSerializer):
 
 class DegreeAwardedBySerializer(serializers.ModelSerializer):
     country = serializers.SlugRelatedField(queryset=Country.objects.all(), slug_field='uuid')
-    state = serializers.SlugRelatedField(queryset=State.objects.all(), slug_field='uuid')
     education_level = serializers.SlugRelatedField(queryset=EducationLevel.objects.all(), slug_field='uuid')
 
     country_name = serializers.CharField(source='country.name', read_only=True)
-    state_name = serializers.CharField(source='state.stateName', read_only=True)
     education_level_name = serializers.CharField(source='education_level.educationlevel', read_only=True)
 
     class Meta:
@@ -715,7 +713,6 @@ class DegreeAwardedBySerializer(serializers.ModelSerializer):
         fields = [
             'uuid', 'id',
             'country', 'country_name',
-            'state', 'state_name',
             'education_level', 'education_level_name',
             'degree_name', 'description',
             'created_at', 'updated_at'

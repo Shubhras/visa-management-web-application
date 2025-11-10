@@ -624,7 +624,6 @@ class ECAAwardingBody(models.Model):
 class DegreeAwardedBy(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)    
     country = models.ForeignKey("Country", on_delete=models.SET_NULL, blank=True, null=True, related_name="degree_awarded_by_country")
-    state = models.ForeignKey("State", on_delete=models.SET_NULL, blank=True, null=True, related_name="degree_awarded_by_state")
     education_level = models.ForeignKey("EducationLevel", on_delete=models.SET_NULL, blank=True, null=True, related_name="degree_awarded_by_education_level")
     degree_name = models.CharField(max_length=255, blank=True, null=True)
     description = models.TextField(blank=True, null=True)

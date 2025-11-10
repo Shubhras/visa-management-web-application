@@ -15658,7 +15658,6 @@ class DegreeAwardedByExportAPIView(APIView):
         field_header_map = {
             'uuid': 'UUID',
             'country': 'Country',
-            'state': 'State',
             'education_level': 'Education Level',
             'degree_name': 'Degree Name By',
             'description': 'Description',
@@ -15685,8 +15684,6 @@ class DegreeAwardedByExportAPIView(APIView):
                     value = value.strftime("%d-%m-%Y %I:%M:%S %p")
                 elif field == 'country' and degree.country:
                     value = degree.country.name
-                elif field == 'state' and degree.state:
-                    value = degree.state.stateName
                 elif field == 'education_level' and degree.education_level:
                     value = degree.education_level.educationlevel
                 elif isinstance(value, bool):
@@ -15728,7 +15725,7 @@ class DegreeAwardedByImportAPIView(APIView):
         skipped_rows = []
         duplicate_names = []
 
-        required_headers = {'degree awarded by', 'country', 'state', 'education level'}
+        required_headers = {'degree awarded by', 'country', 'education level'}
         optional_headers = {'description'}
 
         try:
@@ -15761,7 +15758,6 @@ class DegreeAwardedByImportAPIView(APIView):
             for row in data:
                 degree_name = str(row.get('degree name')).strip() if row.get('degree name') else None
                 country_name = str(row.get('country')).strip() if row.get('country') else None
-                state_name = str(row.get('state')).strip() if row.get('state') else None
                 education_level_name = str(row.get('education level')).strip() if row.get('education level') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
@@ -15770,14 +15766,13 @@ class DegreeAwardedByImportAPIView(APIView):
                     continue
 
                 country = Country.objects.filter(name__iexact=country_name).first()
-                state = State.objects.filter(name__iexact=state_name, country=country).first() if country else None
                 education_level = EducationLevel.objects.filter(name__iexact=education_level_name).first()
 
                 if not country or not state or not education_level:
                     skipped_rows.append({'degree_name': degree_name, 'reason': 'Invalid country/state/education level'})
                     continue
 
-                existing = DegreeAwardedBy.objects.filter(degree_name__iexact=degree_name, country=country, state=state, education_level=education_level).first()
+                existing = DegreeAwardedBy.objects.filter(degree_name__iexact=degree_name, country=country, education_level=education_level).first()
                 if existing:
                     duplicate_names.append(degree_name)
                     continue
@@ -15785,7 +15780,6 @@ class DegreeAwardedByImportAPIView(APIView):
                 DegreeAwardedBy.objects.create(
                     degree_name=degree_name,
                     country=country,
-                    state=state,
                     education_level=education_level,
                     description=description
                 )
