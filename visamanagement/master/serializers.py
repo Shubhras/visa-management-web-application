@@ -344,6 +344,10 @@ class AccreditationCategorySerializer(serializers.ModelSerializer):
 class AccreditationNameSerializer(serializers.ModelSerializer):
     country_name = serializers.CharField(source='country.name', read_only=True)
     category_name = serializers.CharField(source='category.name', read_only=True)
+    
+    validtype_display = serializers.CharField(source='get_valid_type_display', read_only=True)  # shows "State"/"Territory"
+
+    validunit_display = serializers.CharField(source='get_valid_duration_unit_display', read_only=True)  # shows "State"/"Territory"
 
     class Meta:
         model = AccreditationName
@@ -351,6 +355,8 @@ class AccreditationNameSerializer(serializers.ModelSerializer):
             'uuid', 'country', 'country_name', 'category', 'category_name',
             'valid_type',
             'valid_date',
+            'validtype_display',
+            'validunit_display',
             'valid_duration_value',
             'valid_duration_unit',
             'full_name', 'short_name', 'issuing_authority',
@@ -368,6 +374,10 @@ class BankAccountTypeSerializer(serializers.ModelSerializer):
 class LicenseNameSerializer(serializers.ModelSerializer):
     country_name = serializers.CharField(source='country.name', read_only=True)
 
+    validtype_display = serializers.CharField(source='get_valid_type_display', read_only=True)  # shows "State"/"Territory"
+
+    validunit_display = serializers.CharField(source='get_valid_duration_unit_display', read_only=True)  # shows "State"/"Territory"
+
     class Meta:
         model = LicenseName
         fields = [
@@ -377,8 +387,10 @@ class LicenseNameSerializer(serializers.ModelSerializer):
             'country_name',
             'full_name',
             'short_name',
+            'validtype_display',
             'issuing_authority',
             'description',
+            'validunit_display',
             'valid_type',
             'valid_date',
             'valid_duration_value',
