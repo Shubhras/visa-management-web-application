@@ -399,6 +399,15 @@ class LicenseNameSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at',
         ]
+    extra_kwargs = {
+            'valid_type': {'required': False, 'allow_null': True},
+            'valid_duration_unit': {'required': False, 'allow_null': True},
+            'valid_date': {'required': False, 'allow_null': True},
+            'valid_duration_value': {'required': False, 'allow_null': True},
+            'short_name': {'required': False, 'allow_blank': True, 'allow_null': True},
+            'issuing_authority': {'required': False, 'allow_blank': True, 'allow_null': True},
+            'description': {'required': False, 'allow_blank': True, 'allow_null': True},
+        }
 
 
 class LeadSourceSerializer(serializers.ModelSerializer):
@@ -688,6 +697,7 @@ class ECAAwardingBodySerializer(serializers.ModelSerializer):
             'id',
             'country',
             'country_name',
+            'description',
             'selection_type',
             'selection_type_display',
             'valid_duration_value',
@@ -702,11 +712,9 @@ class ECAAwardingBodySerializer(serializers.ModelSerializer):
 
 class DegreeAwardedBySerializer(serializers.ModelSerializer):
     country = serializers.SlugRelatedField(queryset=Country.objects.all(), slug_field='uuid')
-    state = serializers.SlugRelatedField(queryset=State.objects.all(), slug_field='uuid')
     education_level = serializers.SlugRelatedField(queryset=EducationLevel.objects.all(), slug_field='uuid')
 
     country_name = serializers.CharField(source='country.name', read_only=True)
-    state_name = serializers.CharField(source='state.stateName', read_only=True)
     education_level_name = serializers.CharField(source='education_level.educationlevel', read_only=True)
 
     class Meta:
@@ -714,7 +722,6 @@ class DegreeAwardedBySerializer(serializers.ModelSerializer):
         fields = [
             'uuid', 'id',
             'country', 'country_name',
-            'state', 'state_name',
             'education_level', 'education_level_name',
             'degree_name', 'description',
             'created_at', 'updated_at'
@@ -724,21 +731,58 @@ class DegreeAwardedBySerializer(serializers.ModelSerializer):
 
 
 class DegreeAwardedInstituteSerializer(serializers.ModelSerializer):
+    # Accept UUIDs for related fields
+    degree_awarded_by_id = serializers.SlugRelatedField(
+        queryset=DegreeAwardedBy.objects.all(),
+        source='degree_awarded_by',
+        slug_field='uuid',
+        write_only=True
+    )
+    country_id = serializers.SlugRelatedField(
+        queryset=Country.objects.all(),
+        source='country',
+        slug_field='uuid',
+        write_only=True,
+        required=False,
+        allow_null=True
+    )
+    state_id = serializers.SlugRelatedField(
+        queryset=State.objects.all(),
+        source='state',
+        slug_field='uuid',
+        write_only=True,
+        required=False,
+        allow_null=True
+    )
+    education_level_id = serializers.SlugRelatedField(
+        queryset=EducationLevel.objects.all(),
+        source='education_level',
+        slug_field='uuid',
+        write_only=True,
+        required=False,
+        allow_null=True
+    )
+
+    # For output: show readable names
+    degree_awarded_by_name = serializers.CharField(source='degree_awarded_by.degree_name', read_only=True)
     country_name = serializers.CharField(source='country.name', read_only=True)
-    state_name = serializers.CharField(source='state.name', read_only=True)
-    education_level_name = serializers.CharField(source='education_level.name', read_only=True)
-    degree_awarded_by_name = serializers.CharField(source='degree_awarded_by.name', read_only=True)
+    state_name = serializers.CharField(source='state.stateName', read_only=True)
+    education_level_name = serializers.CharField(source='education_level.educationlevel', read_only=True)
 
     class Meta:
         model = DegreeAwardedInstitute
         fields = [
             'id', 'uuid', 'name', 'description',
-            'country', 'country_name',
-            'state', 'state_name',
-            'education_level', 'education_level_name',
-            'degree_awarded_by', 'degree_awarded_by_name',
+            'degree_awarded_by_id', 'degree_awarded_by_name',
+            'country_id', 'country_name',
+            'state_id', 'state_name',
+            'education_level_id', 'education_level_name'
         ]
-        read_only_fields = ['id', 'uuid', 'country_name', 'state_name', 'education_level_name', 'degree_awarded_by_name']
+        read_only_fields = ['id', 'uuid', 'degree_awarded_by_name', 'country_name', 'state_name', 'education_level_name']
+
+
+
+
 
 class LanguageSerializer(serializers.ModelSerializer):
     class Meta:

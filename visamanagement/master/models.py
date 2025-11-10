@@ -17,7 +17,7 @@ class Gender(models.Model):
 class Maritalstatus(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255, unique=True)
-    description = models.TextField(max_length=255,null=True, blank=True),
+    description = models.TextField(max_length=255,null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
@@ -128,16 +128,16 @@ class Relation(models.Model):
 
 class CivilIdName(models.Model):
     VALID_TYPE_CHOICES = (
-        ("PERMANENT", "Permanent"),
-        ("VALID_UP_TO", "Valid Up To"),
+        ("Permanent", "Permanent"),
+        ("Valid Upto", "Valid Upto"),
+        ("Date","Date")
     )
  
     VALID_UNIT_CHOICES = (
-        ("MONTHS", "Months"),
-        ("WEEKS","Weeks"),
-        ("YEARS", "Years"),
+        ("Months", "Months"),
+        ("Weeks","Weeks"),
+        ("Years", "Years"),
     )
- 
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
  
@@ -261,30 +261,35 @@ class AccreditationCategory(models.Model):
 
 class AccreditationName(models.Model):
     VALID_TYPE_CHOICES = (
-        ("PERMANENT", "Permanent"),
-        ("VALID_UP_TO", "Valid Up To"),
-        ("DATE","Date")
+        ("Permanent", "Permanent"),
+        ("Valid Upto", "Valid Upto"),
+        ("Date","Date")
     )
  
     VALID_UNIT_CHOICES = (
-        ("MONTHS", "Months"),
-        ("WEEKS","Weeks"),
-        ("YEARS", "Years"),
+        ("Months", "Months"),
+        ("Weeks","Weeks"),
+        ("Years", "Years"),
     )
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     country = models.ForeignKey("Country", on_delete=models.SET_NULL, related_name="accreditation_names", blank=True, null=True)
     category = models.ForeignKey(AccreditationCategory, on_delete=models.SET_NULL, related_name="accreditation_names", blank=True, null=True)
-    full_name = models.CharField(max_length=255, unique=True)
+    full_name = models.CharField(max_length=255)
     short_name = models.CharField(max_length=255, null=True,blank=True)
-    issuing_authority = models.CharField(max_length=255)
+    issuing_authority = models.CharField(max_length=255,blank=True, null=True)
     valid_type = models.CharField(max_length=20, choices=VALID_TYPE_CHOICES,null=True,blank=True)
     valid_duration_value = models.IntegerField(blank=True, null=True)
     valid_date=models.DateField(blank=True, null=True)
     valid_duration_unit = models.CharField(max_length=20, choices=VALID_UNIT_CHOICES, blank=True, null=True)
-    description = models.TextField(max_length=255, blank=True)
+    description = models.TextField(max_length=255, null=True,blank=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['full_name', 'country', 'category'], name='unique_fullname_per_country_category')
+        ]
 
     def __str__(self):
         return self.full_name
@@ -310,21 +315,21 @@ class BankAccountType(models.Model):
 class LicenseName(models.Model):
 
     VALID_TYPE_CHOICES = (
-        ("PERMANENT", "Permanent"),
-        ("VALID_UP_TO", "Valid Up To"),
-        ("DATE","Date")
+        ("Permanent", "Permanent"),
+        ("Valid Upto", "Valid Upto"),
+        ("Date","Date")
     )
  
     VALID_UNIT_CHOICES = (
-        ("MONTHS", "Months"),
-        ("WEEKS","Weeks"),
-        ("YEARS", "Years"),
+        ("Months", "Months"),
+        ("Weeks","Weeks"),
+        ("Years", "Years"),
     )
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)  
     country = models.ForeignKey("Country", on_delete=models.SET_NULL, related_name="license_name", blank=True, null=True)
-    full_name = models.CharField(max_length=255,blank=True,unique=True)
-    short_name = models.CharField(max_length=255,blank=True, null=True)
+    full_name = models.CharField(max_length=255,blank=True)
+    short_name = models.CharField(max_length=255,blank=True, null=True,unique=False)
     issuing_authority= models.CharField(max_length=255,null=True,blank=True)
     description = models.TextField(max_length=255,null=True,blank=True)
     valid_type = models.CharField(max_length=20, choices=VALID_TYPE_CHOICES,null=True,blank=True)
@@ -334,6 +339,11 @@ class LicenseName(models.Model):
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['full_name', 'country'], name='unique_fullname_per_country')
+        ]
 
     def __str__(self):
         return self.full_name
@@ -610,6 +620,7 @@ class ECAAwardingBody(models.Model):
     selection_type = models.CharField(max_length=50,choices=selection_choices,blank=True, null=True)
     valid_duration_value = models.IntegerField(blank=True, null=True)
     eca_body_full_name = models.CharField(max_length=255,unique=True,blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
     eca_body_short_name = models.CharField(max_length=100,blank=True, null=True)
     eca_valid_period = models.CharField(max_length=50,blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -623,7 +634,6 @@ class ECAAwardingBody(models.Model):
 class DegreeAwardedBy(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)    
     country = models.ForeignKey("Country", on_delete=models.SET_NULL, blank=True, null=True, related_name="degree_awarded_by_country")
-    state = models.ForeignKey("State", on_delete=models.SET_NULL, blank=True, null=True, related_name="degree_awarded_by_state")
     education_level = models.ForeignKey("EducationLevel", on_delete=models.SET_NULL, blank=True, null=True, related_name="degree_awarded_by_education_level")
     degree_name = models.CharField(max_length=255, blank=True, null=True)
     description = models.TextField(blank=True, null=True)

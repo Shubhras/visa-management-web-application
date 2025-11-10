@@ -24,7 +24,7 @@ import csv
 import io
 import pytz
 from django.utils import timezone
-
+import unicodedata
 
 india_tz = pytz.timezone('Asia/Kolkata')
 
@@ -129,10 +129,10 @@ class AdminLogoutView(APIView):
 class GenderListAPIView(APIView):
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'updated_at')
+        sort_by = request.GET.get('sortBy', 'created_at')
         sort_order = request.GET.get('sortOrder', 'asc')
 
-        allowed_sort_fields = ['text', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'created_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
 
@@ -374,7 +374,7 @@ class GenderExportAPIView(APIView):
         queryset = Gender.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
         # --- Prepare dataset ---
         dataset = Dataset()
@@ -512,7 +512,7 @@ class GenderImportAPIView(APIView):
 
             # --- Process import data ---
             imported_count = 0
-            for row in data:
+            for row in  reversed(data):
                 name = str(row.get('gender')).strip() if row.get('gender') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
                 is_active = row.get('is_active')
@@ -566,7 +566,7 @@ class MaritalstatusListAPIView(APIView):
     def get(self, request):
         try:
             search = request.GET.get('search', '').strip()
-            sort_by = request.GET.get('sortBy', 'updated_at')
+            sort_by = request.GET.get('sortBy', 'created_at')
             sort_order = request.GET.get('sortOrder', 'asc')
 
             # Allowed fields to sort
@@ -822,7 +822,7 @@ class MaritalstatusExportAPIView(APIView):
         queryset = Maritalstatus.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
 
         # Prepare dataset
@@ -959,7 +959,7 @@ class MaritalstatusImportAPIView(APIView):
 
             # Process import data
             imported_count = 0
-            for row in data:
+            for row in  reversed(data):
                 name = str(row.get('marital status')).strip() if row.get('marital status') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
                 is_active = row.get('is_active')
@@ -1016,7 +1016,7 @@ class ContinentListAPIView(APIView):
         allowed_sort_fields = ['name', 'description', 'updated_at']
 
         if sort_by not in allowed_sort_fields:
-            sort_by = 'updated_at'
+            sort_by = 'created_at'
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
@@ -1205,7 +1205,7 @@ class ContinentExportAPIView(APIView):
         queryset = Continents.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
         # --- Prepare dataset ---
         dataset = Dataset()
@@ -1353,7 +1353,7 @@ class ContinentImportAPIView(APIView):
             imported_count = 0
 
             # ---------- Import Rows ----------
-            for row in data:
+            for row in  reversed(data):
                 name = str(row.get('continent')).strip() if row.get('continent') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
                 
@@ -1590,7 +1590,7 @@ class CountryExportAPIView(APIView):
         queryset = Country.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
@@ -1701,7 +1701,7 @@ class CountryImportAPIView(APIView):
                 }, status=400)
 
             imported_count = 0
-            for row in data:
+            for row in  reversed(data):
                 country_name = str(row.get('country name')).strip() if row.get('country name') else None
                 if not country_name:
                     continue
@@ -1842,7 +1842,7 @@ class StateListAPIView(APIView):
         allowed_sort_fields = ['stateName', 'stateshortName', 'updated_at']
 
         if sort_by not in allowed_sort_fields:
-            sort_by = 'updated_at'
+            sort_by = 'created_at'
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
@@ -2019,7 +2019,7 @@ class StateExportAPIView(APIView):
         queryset = State.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
         # Prepare dataset
         dataset = Dataset()
@@ -2146,7 +2146,7 @@ class StateImportAPIView(APIView):
 
             # ---------------- Data Processing ----------------
             imported_count = 0
-            for row in data:
+            for row in  reversed(data):
                 state_name = str(row.get('state name')).strip() if row.get('state name') else None
                 country_name = str(row.get('country name')).strip() if row.get('country name') else None
                 short_name = str(row.get('state short name')).strip() if row.get('state short name') else ''
@@ -2459,7 +2459,7 @@ class DistrictExportAPIView(APIView):
         queryset = District.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
         # Initialize dataset
         dataset = Dataset()
@@ -2585,7 +2585,7 @@ class DistrictImportAPIView(APIView):
 
             # ---------------- Data Processing ----------------
             imported_count = 0
-            for row in data:
+            for row in  reversed(data):
                 district_name = str(row.get('district name')).strip() if row.get('district name') else None
                 state_name = str(row.get('state name')).strip() if row.get('state name') else None
                 country_name = str(row.get('country name')).strip() if row.get('country name') else None
@@ -2918,7 +2918,7 @@ class CityExportAPIView(APIView):
         queryset = City.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
@@ -3044,7 +3044,7 @@ class CityImportAPIView(APIView):
 
             # ---------------- Data Processing ----------------
             imported_count = 0
-            for row in data:
+            for row in  reversed(data):
                 city_name = str(row.get('city name')).strip() if row.get('city name') else None
                 country_name = str(row.get('country name')).strip() if row.get('country name') else None
                 state_name = str(row.get('state name')).strip() if row.get('state name') else None
@@ -3119,7 +3119,7 @@ class RelationListAPIView(APIView):
         allowed_sort_fields = ['name', 'description', 'updated_at']
 
         if sort_by not in allowed_sort_fields:
-            sort_by = 'updated_at'
+            sort_by = 'created_at'
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
@@ -3296,7 +3296,7 @@ class RelationExportAPIView(APIView):
         queryset = Relation.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
         # --- Prepare dataset ---
         dataset = Dataset()
@@ -3447,7 +3447,7 @@ class RelationImportAPIView(APIView):
             imported_count = 0
 
             # ---------- Import Rows ----------
-            for row in data:
+            for row in  reversed(data):
                 name = str(row.get('relation')).strip() if row.get('relation') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
@@ -3502,7 +3502,7 @@ class TimezoneListAPIView(APIView):
 
         allowed_sort_fields = ['Timezone', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
-            sort_by = 'updated_at'
+            sort_by = 'created_at'
 
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
@@ -3720,7 +3720,7 @@ class TimezoneExportAPIView(APIView):
         queryset = Timezone.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
@@ -3817,7 +3817,7 @@ class TimezoneImportAPIView(APIView):
 
             imported_count = 0
 
-            for row in data:
+            for row in  reversed(data):
                 tz_name = str(row.get('time zone')).strip() if row.get('time zone') else None
                 if not tz_name:
                     continue
@@ -4251,7 +4251,7 @@ class CivilIdNameImportAPIView(APIView):
             imported_count = 0
             skipped_rows = []
  
-            for row in data:
+            for row in  reversed(data):
                 civil_id_name = str(row.get("civil id name")).strip() if row.get("civil id name") else None
                 authority_full_name = str(row.get("authority full name")).strip() if row.get("authority full name") else None
                 authority_short_name = str(row.get("authority short name")).strip() if row.get("authority short name") else ""
@@ -4559,7 +4559,7 @@ class DepartmentExportAPIView(APIView):
         queryset = Department.objects.filter(is_deleted=False) 
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
 
         # --- Prepare dataset ---
@@ -4708,7 +4708,7 @@ class DepartmentImportAPIView(APIView):
             imported_count = 0
 
             # ---------- Import Rows ----------
-            for row in data:
+            for row in  reversed(data):
                 name = str(row.get('department')).strip() if row.get('department') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
@@ -4994,7 +4994,7 @@ class EmployeeTypeExportAPIView(APIView):
         queryset = EmployeeType.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
@@ -5144,7 +5144,7 @@ class EmployeeTypeImportAPIView(APIView):
 
             imported_count = 0
             # ---------- Import Rows ----------
-            for row in data:
+            for row in  reversed(data):
                 name = str(row.get('employee type')).strip() if row.get('employee type') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''  # optional
 
@@ -5419,7 +5419,7 @@ class CompanyTypeExportAPIView(APIView):
         queryset = CompanyType.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
 
         dataset = Dataset()
@@ -5555,7 +5555,7 @@ class CompanyTypeImportAPIView(APIView):
                 return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
 
             # ---------- Process Each Row ----------
-            for row in data:
+            for row in  reversed(data):
                 name = str(row.get('company type')).strip() if row.get('company type') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''  
                 if not name:
@@ -5818,7 +5818,7 @@ class OwnershipTypeExportAPIView(APIView):
         queryset = OwnershipType.objects.all()
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
@@ -5917,7 +5917,7 @@ class OwnershipTypeExportAPIView(APIView):
                                     status=status.HTTP_400_BAD_REQUEST)
 
                 imported_count = 0
-                for row in data:
+                for row in  reversed(data):
                     name = str(row.get('ownership  type')).strip() if row.get('ownership type') else None
                     description = str(row.get('description')).strip() if row.get('description') else ''
                     company_type_name = str(row.get('company type')).strip() if row.get('company type') else None
@@ -6023,7 +6023,7 @@ class OwnershipTypeImportAPIView(APIView):
 
             # Import data
             imported_count = 0
-            for row in data:
+            for row in  reversed(data):
                 name = str(row.get('ownership type')).strip() if row.get('ownership type') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
                 company_type_name = str(row.get('company type')).strip() if row.get('company type') else None
@@ -6279,7 +6279,7 @@ class StakeholderCategoryExportAPIView(APIView):
         queryset = StakeholderCategory.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
 
         dataset = Dataset()
@@ -6425,7 +6425,7 @@ class StakeholderCategoryImportAPIView(APIView):
 
             # ---------- Process Each Row ----------
             imported_count = 0
-            for row in data:
+            for row in  reversed(data):
                 name = str(row.get('stakeholdercategory')).strip() if row.get('stakeholdercategory') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
@@ -6716,7 +6716,7 @@ class StakeholderTypeExportAPIView(APIView):
         queryset = StakeholderType.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
@@ -6846,7 +6846,7 @@ class StakeholderTypeImportAPIView(APIView):
 
             # ---- Import Logic ----
             imported_count = 0
-            for row in data:
+            for row in  reversed(data):
                 name = str(row.get('stakeholder type')).strip() if row.get('stakeholder type') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
                 category_name = str(row.get('stakeholder category')).strip() if row.get('stakeholder category') else None
@@ -7112,7 +7112,7 @@ class AccreditationCategoryExportAPIView(APIView):
         queryset = AccreditationCategory.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
@@ -7202,7 +7202,7 @@ class AccreditationCategoryImportAPIView(APIView):
                 return Response({"statusCode": 400, "status": True, 'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
 
             imported_count = 0
-            for row in data:
+            for row in  reversed(data):
                 name = str(row.get('accrediation category')).strip() if row.get('accrediation category') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
@@ -7445,7 +7445,7 @@ class AccreditationNameExportAPIView(APIView):
         queryset = AccreditationName.objects.all()
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
@@ -7571,10 +7571,13 @@ class AccreditationNameImportAPIView(APIView):
                 )
 
             # ---------- Import Data ----------
+            ALLOWED_VALID_TYPES = ['Permanent', 'Valid Upto', 'Date']
+            ALLOWED_VALID_UNITS = ['Months', 'Weeks', 'Years']
+            
             imported_count = 0
             skipped_rows = []
 
-            for row in data:
+            for row in  reversed(data):
                 full_name = str(row.get('accrediation full name')).strip() if row.get('accrediation full name') else None
                 country_name = str(row.get('country')).strip() if row.get('country') else None
                 category_name = str(row.get('accrediation category')).strip() if row.get('accrediation category') else None
@@ -7604,6 +7607,35 @@ class AccreditationNameImportAPIView(APIView):
                     })
                     continue
 
+
+                if valid_type and valid_type not in ALLOWED_VALID_TYPES:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f"Row with Accreditation Valid Type has invalid 'valid type'='{valid_type}'. Allowed values: {', '.join(ALLOWED_VALID_TYPES)}."
+                    }, status=400)
+
+                if valid_type == 'Valid Upto' and (not valid_duration_value or not valid_duration_unit):
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f"Row with Valid Upto type requires 'valid_duration_value' and 'valid_duration_unit'."
+                    }, status=400)
+                elif valid_type == 'Date' and not valid_date:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f"Row with Date type requires 'valid_date'."
+                    }, status=400)
+
+                if valid_duration_unit and valid_duration_unit not in ALLOWED_VALID_UNITS:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f"Invalid valid_duration_unit='{valid_duration_unit}' in row '{full_name}'. Allowed: {', '.join(ALLOWED_VALID_UNITS)}."
+                    }, status=400)
+
+
                 existing = AccreditationName.objects.filter(
                     full_name__iexact=full_name,
                     country=country,
@@ -7611,8 +7643,14 @@ class AccreditationNameImportAPIView(APIView):
                 ).first()
 
                 if existing:
-                    duplicate_names.append(full_name)
-                    continue
+                    if not existing.is_deleted:
+                        
+                        duplicate_names.append({
+                            'Country': country.name,
+                            'Accrediation Full Name': full_name,
+                            'Accrediation Category':category.name
+
+                        })
 
                 AccreditationName.objects.create(
                     full_name=full_name,
@@ -7634,7 +7672,7 @@ class AccreditationNameImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_names)),
+            "duplicates": duplicate_names,
             "skipped_rows": skipped_rows,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
@@ -7877,7 +7915,7 @@ class BankAccountTypeExportAPIView(APIView):
         queryset = BankAccountType.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
 
         dataset = Dataset()
@@ -8006,7 +8044,7 @@ class BankAccountTypeImportAPIView(APIView):
 
             # ---------- Process Each Row ----------
             imported_count = 0
-            for row in data:
+            for row in  reversed(data):
                 name = str(row.get('bank account type')).strip() if row.get('bank account type') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
@@ -8263,7 +8301,7 @@ class LicenseNameExportAPIView(APIView):
             'short_name': 'License Short Name',
             'issuing_authority': 'License Issuing Authority Name',
             'description': 'Description',
-            'valid_type': 'License Valid Type',
+            'valid_type': 'License Valid Upto',
             'valid_duration_value': 'License Valid Duration Value',
             'valid_duration_unit': 'License Valid Duration Unit',
             'valid_date': 'License Valid Date',
@@ -8277,7 +8315,7 @@ class LicenseNameExportAPIView(APIView):
         queryset = LicenseName.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
@@ -8337,7 +8375,7 @@ class LicenseNameImportAPIView(APIView):
             'license short name',
             'license issuing authority name',
             'description',
-            'license valid type',
+            'license valid upto',
             'license valid duration value',
             'license valid duration unit',
             'license valid date',
@@ -8382,17 +8420,22 @@ class LicenseNameImportAPIView(APIView):
                     data.append(row_lower)
             else:
                 return Response({"statusCode": 400, "status": True, 'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
+            
+            ALLOWED_VALID_TYPES = ['Permanent', 'Valid Upto', 'Date'] 
+            ALLOWED_VALID_UNITS = ['Months', 'Weeks', 'Years']
+
 
             imported_count = 0
-            for row in data:
+            for row in  reversed(data):
                 full_name = str(row.get('license full name')).strip() if row.get('license full name') else None
                 country_name = str(row.get('country')).strip() if row.get('country') else None
                 short_name = str(row.get('license short name')).strip() if row.get('license short name') else ''
                 issuing_authority = str(row.get('license issuing authority name')).strip() if row.get('license issuing authority name') else ''
                 description = str(row.get('description')).strip() if row.get('description') else ''
-                valid_type = str(row.get('license valid type')).strip().upper() if row.get('license valid type') else None
                 valid_duration_value = row.get('license valid duration value')
-                valid_duration_unit = str(row.get('license valid duration unit')).strip().upper() if row.get('license valid duration unit') else None
+                valid_duration_unit_raw = row.get('license valid duration unit')
+                valid_duration_unit = valid_duration_unit_raw.strip().title() if valid_duration_unit_raw else None
+
                 valid_date = row.get('license valid date')
 
                 if not full_name or not country_name:
@@ -8401,20 +8444,47 @@ class LicenseNameImportAPIView(APIView):
                 country_obj = Country.objects.filter(name__iexact=country_name).first()
                 if not country_obj:
                     continue
+                valid_type_raw = str(row.get('license valid upto')).strip() if row.get('license valid upto') else None
+                valid_type = unicodedata.normalize('NFKC', valid_type_raw).title() if valid_type_raw else None
 
-                # Convert date safely
-                if valid_date:
-                    try:
-                        from datetime import datetime
-                        if isinstance(valid_date, str):
-                            valid_date = datetime.strptime(valid_date, "%Y-%m-%d").date()
-                    except:
-                        valid_date = None
+                if valid_type and valid_type not in ALLOWED_VALID_TYPES:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f"Row with License Valid Upto has invalid 'valid type'='{valid_type}'. Allowed values: {', '.join(ALLOWED_VALID_TYPES)}."
+                    }, status=400)
+
+                if valid_type == 'Valid Upto':
+                    if not valid_duration_value or not valid_duration_unit:
+                        return Response({
+                            "statusCode": 400,
+                            "status": False,
+                            "message": f"Row with License Valid Upto  has 'Valid Upto' type. 'valid_duration_value' and 'valid_duration_unit' are required."
+                        }, status=400)
+                elif valid_type == 'Date':
+                    if not valid_date:
+                        return Response({
+                            "statusCode": 400,
+                            "status": False,
+                            "message": f"Row with License Valid Upto has 'Date' type. 'valid_date' is required."
+                        }, status=400)
+                if valid_duration_unit and valid_duration_unit not in ALLOWED_VALID_UNITS:
+                        return Response({
+                            "statusCode": 400,
+                            "status": False,
+                            "message": f"Invalid valid_duration_unit='{valid_duration_unit}' in row '{full_name}'. Allowed: {', '.join(ALLOWED_VALID_UNITS)}."
+                        }, status=400)
+
+             
 
                 existing = LicenseName.objects.filter(full_name__iexact=full_name, country=country_obj).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicate_names.append(full_name)
+                        
+                        duplicate_names.append({
+                            'Country': country_obj.name,
+                            'License Full Name': full_name
+                        })
                         continue
                     else:
                         existing.short_name = short_name
@@ -8448,7 +8518,7 @@ class LicenseNameImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_names)),
+            "duplicates": duplicate_names, 
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=200)
@@ -8689,7 +8759,7 @@ class LeadSourceExportAPIView(APIView):
         queryset = LeadSource.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
 
         # Prepare dataset
@@ -8834,7 +8904,7 @@ class LeadSourceImportAPIView(APIView):
 
             # ---------- Process Each Row ----------
             imported_count = 0
-            for row in data:
+            for row in  reversed(data):
                 name = str(row.get('lead source')).strip() if row.get('lead source') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
@@ -9236,7 +9306,7 @@ class InterestLevelImportAPIView(APIView):
 
             # ---------- Process Each Row ----------
             imported_count = 0
-            for row in data:
+            for row in  reversed(data):
                 name = str(row.get('interest level')).strip() if row.get('interest level') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
@@ -9542,7 +9612,7 @@ class PriorityExportAPIView(APIView):
         queryset = Priority.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
 
         # Prepare dataset
@@ -9686,7 +9756,7 @@ class PriorityImportAPIView(APIView):
 
             # ---------- Process Each Row ----------
             imported_count = 0
-            for row in data:
+            for row in  reversed(data):
                 name = str(row.get('priority')).strip() if row.get('priority') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
@@ -9988,7 +10058,7 @@ class TagsExportAPIView(APIView):
         queryset = Tags.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
@@ -10111,7 +10181,7 @@ class TagsImportAPIView(APIView):
 
             # ---------- Process Each Row ----------
             imported_count = 0
-            for row in data:
+            for row in  reversed(data):
                 name = str(row.get('tags')).strip() if row.get('tags') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
@@ -10411,7 +10481,7 @@ class ActivityTypeExportAPIView(APIView):
         queryset = ActivityType.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
 
         dataset = Dataset()
@@ -10523,7 +10593,7 @@ class ActivityTypeImportAPIView(APIView):
 
             # ---------- Process Each Row ----------
             imported_count = 0
-            for row in data:
+            for row in  reversed(data):
                 name = str(row.get('activity type')).strip() if row.get('activity type') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
@@ -10824,7 +10894,7 @@ class LostReasonExportAPIView(APIView):
         queryset = LostReason.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
@@ -10948,7 +11018,7 @@ class LostReasonImportAPIView(APIView):
 
             # ---------- Process Each Row ----------
             imported_count = 0
-            for row in data:
+            for row in  reversed(data):
                 name = str(row.get('lost reason (b2c)')).strip() if row.get('lost reason (b2c)') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
@@ -11233,7 +11303,7 @@ class LostReasonB2BExportAPIView(APIView):
         queryset = LostReasonB2B.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
 
         dataset = Dataset()
@@ -11342,7 +11412,7 @@ class LostReasonB2BImportAPIView(APIView):
                 return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
 
             # ---------- Process Each Row ----------
-            for row in data:
+            for row in  reversed(data):
                 name = str(row.get('lost reason b2b')).strip() if row.get('lost reason b2b') else None
                 if not name:
                     continue  # skip empty names
@@ -11616,7 +11686,7 @@ class EducationLevelCodeExportAPIView(APIView):
         queryset = EducationLevelCode.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
@@ -11706,7 +11776,7 @@ class EducationLevelCodeImportAPIView(APIView):
                 return Response({"statusCode": 400, "status": True, 'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
 
             imported_count = 0
-            for row in data:
+            for row in  reversed(data):
                 name = str(row.get('education level code')).strip() if row.get('education level code') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
@@ -11941,7 +12011,7 @@ class EducationLevelExportAPIView(APIView):
         queryset = EducationLevel.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
@@ -12037,7 +12107,7 @@ class EducationLevelImportAPIView(APIView):
                 return Response({"statusCode": 400, "status": True, 'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
 
             imported_count = 0
-            for row in data:
+            for row in  reversed(data):
                 level_code_id = row.get('education level code')
                 education_level_name = str(row.get('education level')).strip() if row.get('education level') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
@@ -12314,7 +12384,7 @@ class EducationDurationExportAPIView(APIView):
         queryset = EducationDuration.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
@@ -12408,7 +12478,7 @@ class EducationDurationImportAPIView(APIView):
                 return Response({"statusCode": 400, "status": True, 'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
 
             imported_count = 0
-            for row in data:
+            for row in  reversed(data):
                 educationlevel_name = str(row.get('education level')).strip() if row.get('education level') else None
                 durations = str(row.get('education durations')).strip() if row.get('education durations') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
@@ -12464,7 +12534,7 @@ class StudymainareaListAPIView(APIView):
 
         allowed_sort_fields = ['name', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
-            sort_by = 'updated_at'
+            sort_by = 'created_at'
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
@@ -12683,7 +12753,7 @@ class StudymainareaExportAPIView(APIView):
         queryset = Studymainarea.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
@@ -12775,7 +12845,7 @@ class StudymainareaImportAPIView(APIView):
 
             imported_count = 0
 
-            for row in data:
+            for row in  reversed(data):
                 name = str(row.get('study main area')).strip() if row.get('study main area') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
@@ -12821,7 +12891,7 @@ class StudyMajorAreaListAPIView(APIView):
 
         allowed_sort_fields = ['majorarea', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
-            sort_by = 'updated_at'
+            sort_by = 'created_at'
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
@@ -13043,7 +13113,7 @@ class StudyMajorAreaExportAPIView(APIView):
         queryset = Studymajorarea.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
@@ -13134,7 +13204,7 @@ class StudyMajorAreaImportAPIView(APIView):
                 return Response({"statusCode": 400, "status": True, 'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
 
             imported_count = 0
-            for row in data:
+            for row in  reversed(data):
                 majorarea_name = str(row.get('study major area')).strip() if row.get('study major area') else None
                 mainarea_name = str(row.get('study main area')).strip() if row.get('study main area') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
@@ -13190,7 +13260,7 @@ class StudySpecialisationListAPIView(APIView):
 
         allowed_sort_fields = ['studyspecialisation', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
-            sort_by = 'updated_at'
+            sort_by = 'created_at'
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
@@ -13412,7 +13482,7 @@ class StudySpecialisationExportAPIView(APIView):
         queryset = StudySpecialisation.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
@@ -13507,7 +13577,7 @@ class StudySpecialisationImportAPIView(APIView):
                 return Response({"statusCode": 400, "status": True, 'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
 
             imported_count = 0
-            for row in data:
+            for row in  reversed(data):
                 studyspecialisation = str(row.get('study specialisation')).strip() if row.get('study specialisation') else None
                 majorarea_name = str(row.get('study major area')).strip() if row.get('study  major area') else None
                 mainarea_name = str(row.get('study main area')).strip() if row.get('study main area') else None
@@ -13787,7 +13857,7 @@ class AcademicResultTypeExportAPIView(APIView):
         queryset = AcademicResultType.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
  
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
@@ -13901,7 +13971,7 @@ class AcademicResultTypeImportAPIView(APIView):
                 }, status=status.HTTP_400_BAD_REQUEST)
  
             imported_count = 0
-            for row in data:
+            for row in  reversed(data):
                 name = str(row.get('name')).strip() if row.get('name') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
  
@@ -14192,7 +14262,7 @@ class AcademicResultExportAPIView(APIView):
         queryset = AcademicResult.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
@@ -14284,7 +14354,7 @@ class AcademicResultImportAPIView(APIView):
             else:
                 return Response({"statusCode": 400, "status": True, 'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
 
-            for row in data:
+            for row in  reversed(data):
                 academic_result_name = str(row.get('academic result')).strip() if row.get('academicresult') else None
                 academic_type_name_or_uuid = row.get('academicresulttype')
 
@@ -14518,7 +14588,7 @@ class EducationTypeExportAPIView(APIView):
         queryset = EducationType.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
  
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
@@ -14636,7 +14706,7 @@ class EducationTypeImportAPIView(APIView):
  
             imported_count = 0
  
-            for row in data:
+            for row in  reversed(data):
                 name = str(row.get('education type')).strip() if row.get('education type') else None
                 perticulars = str(row.get('perticulars')).strip() if row.get('perticulars') else ""
  
@@ -14915,7 +14985,7 @@ class MediumofEducationExportAPIView(APIView):
         queryset = MediumofEducation.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
@@ -15053,7 +15123,7 @@ class MediumofEducationImportAPIView(APIView):
             imported_count = 0
 
             # Import rows
-            for row in data:
+            for row in  reversed(data):
                 name = str(row.get('medium of education')).strip() if row.get('medium of education') else None
                 perticulars = str(row.get('Perticulars')).strip() if row.get('Perticulars') else ''
 
@@ -15296,7 +15366,7 @@ class ECAAwardingBodyExportAPIView(APIView):
         queryset = ECAAwardingBody.objects.all()
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
@@ -15412,7 +15482,7 @@ class ECAAwardingBodyImportAPIView(APIView):
                 return Response({'statusCode': 400, 'status': False, 'message': 'Unsupported file format'}, status=status.HTTP_400_BAD_REQUEST)
 
             # ---------- Import Data ----------
-            for row in data:
+            for row in  reversed(data):
                 full_name = str(row.get('eca body full name')).strip() if row.get('eca body full name') else None
                 short_name = str(row.get('eca body short name')).strip() if row.get('eca body short name') else ''
                 country_name = str(row.get('country')).strip() if row.get('country') else None
@@ -15658,7 +15728,6 @@ class DegreeAwardedByExportAPIView(APIView):
         field_header_map = {
             'uuid': 'UUID',
             'country': 'Country',
-            'state': 'State',
             'education_level': 'Education Level',
             'degree_name': 'Degree Name By',
             'description': 'Description',
@@ -15671,7 +15740,7 @@ class DegreeAwardedByExportAPIView(APIView):
         queryset = DegreeAwardedBy.objects.all()
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
@@ -15685,8 +15754,6 @@ class DegreeAwardedByExportAPIView(APIView):
                     value = value.strftime("%d-%m-%Y %I:%M:%S %p")
                 elif field == 'country' and degree.country:
                     value = degree.country.name
-                elif field == 'state' and degree.state:
-                    value = degree.state.stateName
                 elif field == 'education_level' and degree.education_level:
                     value = degree.education_level.educationlevel
                 elif isinstance(value, bool):
@@ -15728,7 +15795,7 @@ class DegreeAwardedByImportAPIView(APIView):
         skipped_rows = []
         duplicate_names = []
 
-        required_headers = {'degree awarded by', 'country', 'state', 'education level'}
+        required_headers = {'degree awarded by', 'country', 'education level'}
         optional_headers = {'description'}
 
         try:
@@ -15758,26 +15825,24 @@ class DegreeAwardedByImportAPIView(APIView):
             else:
                 return Response({'statusCode': 400, 'status': False, 'message': 'Unsupported file format'}, status=status.HTTP_400_BAD_REQUEST)
 
-            for row in data:
+            for row in  reversed(data):
                 degree_name = str(row.get('degree name')).strip() if row.get('degree name') else None
                 country_name = str(row.get('country')).strip() if row.get('country') else None
-                state_name = str(row.get('state')).strip() if row.get('state') else None
                 education_level_name = str(row.get('education level')).strip() if row.get('education level') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
-                if not degree_name or not country_name or not state_name or not education_level_name:
+                if not degree_name or not country_name   or not education_level_name:
                     skipped_rows.append({'degree_name': degree_name or 'Unknown', 'reason': 'Missing required field(s)'})
                     continue
 
                 country = Country.objects.filter(name__iexact=country_name).first()
-                state = State.objects.filter(name__iexact=state_name, country=country).first() if country else None
                 education_level = EducationLevel.objects.filter(name__iexact=education_level_name).first()
 
-                if not country or not state or not education_level:
+                if not country  or not education_level:
                     skipped_rows.append({'degree_name': degree_name, 'reason': 'Invalid country/state/education level'})
                     continue
 
-                existing = DegreeAwardedBy.objects.filter(degree_name__iexact=degree_name, country=country, state=state, education_level=education_level).first()
+                existing = DegreeAwardedBy.objects.filter(degree_name__iexact=degree_name, country=country, education_level=education_level).first()
                 if existing:
                     duplicate_names.append(degree_name)
                     continue
@@ -15785,7 +15850,6 @@ class DegreeAwardedByImportAPIView(APIView):
                 DegreeAwardedBy.objects.create(
                     degree_name=degree_name,
                     country=country,
-                    state=state,
                     education_level=education_level,
                     description=description
                 )
@@ -15824,7 +15888,7 @@ class DegreeAwardedInstituteListAPIView(APIView):
                 Q(name__icontains=search) |
                 Q(description__icontains=search) |
                 Q(country__name__icontains=search) |
-                Q(state__name__icontains=search) |
+                Q(state__stateName__icontains=search) |
                 Q(education_level__name__icontains=search) |
                 Q(degree_awarded_by__name__icontains=search)
             )
@@ -16024,7 +16088,7 @@ class DegreeAwardedInstituteExportAPIView(APIView):
         queryset = DegreeAwardedInstitute.objects.all()
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
@@ -16145,7 +16209,7 @@ class DegreeAwardedInstituteImportAPIView(APIView):
                 return Response({'statusCode': 400, 'status': False, 'message': 'Unsupported file format'}, status=status.HTTP_400_BAD_REQUEST)
 
             # ---------- Import Data ----------
-            for row in data:
+            for row in  reversed(data):
                 name = str(row.get('degree awarded institute')).strip() if row.get('degree awarded institute') else None
                 degree_awarded_by_name = str(row.get('degree awarded by')).strip() if row.get('degree awarded by') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
