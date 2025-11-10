@@ -8390,7 +8390,7 @@ class LicenseNameImportAPIView(APIView):
                 short_name = str(row.get('license short name')).strip() if row.get('license short name') else ''
                 issuing_authority = str(row.get('license issuing authority name')).strip() if row.get('license issuing authority name') else ''
                 description = str(row.get('description')).strip() if row.get('description') else ''
-                valid_type = str(row.get('license valid type')).strip().upper() if row.get('license valid type') else None
+                valid_type = str(row.get('license valid type')).strip() if row.get('license valid type') else None
                 valid_duration_value = row.get('license valid duration value')
                 valid_duration_unit = str(row.get('license valid duration unit')).strip().upper() if row.get('license valid duration unit') else None
                 valid_date = row.get('license valid date')
@@ -8403,13 +8403,13 @@ class LicenseNameImportAPIView(APIView):
                     continue
 
                 # Convert date safely
-                if valid_date:
-                    try:
-                        from datetime import datetime
-                        if isinstance(valid_date, str):
-                            valid_date = datetime.strptime(valid_date, "%Y-%m-%d").date()
-                    except:
-                        valid_date = None
+                if valid_type:
+                    if valid_type.lower() == 'valid upto':
+                        if not valid_duration_value or not valid_duration_unit:
+                            continue 
+                    elif valid_type.lower() == 'date':
+                        if not valid_date:
+                            continue  # Skip this row or collect error
 
                 existing = LicenseName.objects.filter(full_name__iexact=full_name, country=country_obj).first()
                 if existing:
