@@ -962,7 +962,7 @@ const CountryList = () => {
                           <td><span>{rowItem.name}</span></td>
                         )}
                         {isColumnVisible('continent') && (
-                          <td><span>{rowItem.continent?.name}</span> DSFSDF</td>
+                          <td><span>{rowItem.continent?.name}</span></td>
                         )}
                         {isColumnVisible('officialName') && (
                           <td><span>{rowItem.officialName}</span></td>

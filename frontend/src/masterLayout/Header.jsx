@@ -366,7 +366,7 @@ const Header = ({ onMenuItemClick }) => {
                                                             e.currentTarget.style.paddingLeft = '14px';
                                                         }}
                                                     >
-                                                        {childItem.name} dsfsdf
+                                                        {childItem.name}
                                                     </Link>
                                                 ))}
                                             </div>
