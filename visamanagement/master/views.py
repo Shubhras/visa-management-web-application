@@ -361,7 +361,7 @@ class GenderExportAPIView(APIView):
             'description': 'Description',
             'is_active': 'Active',
             'is_deleted': 'Deleted',
-            'created_': 'Modified On',
+            'updated_at': 'Modified On',
         }
 
         # --- Determine export fields ---
@@ -374,7 +374,7 @@ class GenderExportAPIView(APIView):
         queryset = Gender.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-updated_at')
+        queryset = queryset.order_by('-created_at')
 
         # --- Prepare dataset ---
         dataset = Dataset()
