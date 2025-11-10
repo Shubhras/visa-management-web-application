@@ -15660,7 +15660,7 @@ class DegreeAwardedByExportAPIView(APIView):
             'country': 'Country',
             'state': 'State',
             'education_level': 'Education Level',
-            'degree_name': 'Degree Name',
+            'degree_name': 'Degree Name By',
             'description': 'Description',
             'created_at': 'Created On',
             'updated_at': 'Updated On'
@@ -15686,9 +15686,9 @@ class DegreeAwardedByExportAPIView(APIView):
                 elif field == 'country' and degree.country:
                     value = degree.country.name
                 elif field == 'state' and degree.state:
-                    value = degree.state.name
+                    value = degree.state.stateName
                 elif field == 'education_level' and degree.education_level:
-                    value = degree.education_level.name
+                    value = degree.education_level.educationlevel
                 elif isinstance(value, bool):
                     value = int(value)
                 row.append(value if value is not None else '')
@@ -15713,6 +15713,7 @@ class DegreeAwardedByExportAPIView(APIView):
 
 # -------------------- IMPORT API --------------------
 class DegreeAwardedByImportAPIView(APIView):
+
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
@@ -15727,7 +15728,7 @@ class DegreeAwardedByImportAPIView(APIView):
         skipped_rows = []
         duplicate_names = []
 
-        required_headers = {'degree name', 'country', 'state', 'education level'}
+        required_headers = {'degree awarded by', 'country', 'state', 'education level'}
         optional_headers = {'description'}
 
         try:
@@ -15787,6 +15788,400 @@ class DegreeAwardedByImportAPIView(APIView):
                     state=state,
                     education_level=education_level,
                     description=description
+                )
+                imported_count += 1
+
+        except Exception as e:
+            return Response({'statusCode': 400, 'status': False, 'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "duplicates": list(set(duplicate_names)),
+            "skipped_rows": skipped_rows,
+            "imported_count": imported_count,
+            "message": "Import successful"
+        })
+
+
+class DegreeAwardedInstituteListAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        search = request.GET.get('search', '').strip()
+        sort_by = request.GET.get('sortBy', 'updated_at')
+        sort_order = request.GET.get('sortOrder', 'desc')
+
+        allowed_sort_fields = ['name', 'created_at', 'updated_at']
+        if sort_by not in allowed_sort_fields:
+            sort_by = 'created_at'
+        if sort_order == 'desc':
+            sort_by = f'-{sort_by}'
+
+        queryset = DegreeAwardedInstitute.objects.all()
+        if search:
+            queryset = queryset.filter(
+                Q(name__icontains=search) |
+                Q(description__icontains=search) |
+                Q(country__name__icontains=search) |
+                Q(state__name__icontains=search) |
+                Q(education_level__name__icontains=search) |
+                Q(degree_awarded_by__name__icontains=search)
+            )
+
+        queryset = queryset.order_by(sort_by)
+        serializer = DegreeAwardedInstituteSerializer(queryset, many=True)
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "data": serializer.data
+        })
+
+
+# -------------------- CREATE API --------------------
+class DegreeAwardedInstituteCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        uuid_value = request.data.get('uuid')
+        if uuid_value:
+            try:
+                request.data['uuid'] = UUID(uuid_value)
+            except ValueError:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Invalid UUID format"
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = DegreeAwardedInstituteSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "Degree Awarded Institute created successfully",
+                "data": serializer.data
+            })
+        errors = serializer.errors
+        messages = []
+        for field, msgs in errors.items():
+            messages.extend(msgs)
+        return Response({
+            "statusCode": 400,
+            "status": False,
+            "message": " ".join(messages)
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+# -------------------- RETRIEVE API --------------------
+class DegreeAwardedInstituteRetrieveAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request, uuid):
+        try:
+            obj = DegreeAwardedInstitute.objects.get(uuid=uuid)
+        except DegreeAwardedInstitute.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "Degree Awarded Institute not found",
+                "data": None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = DegreeAwardedInstituteSerializer(obj)
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": "Degree Awarded Institute retrieved successfully",
+            "data": serializer.data
+        })
+
+
+# -------------------- UPDATE API --------------------
+class DegreeAwardedInstituteUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def put(self, request, uuid):
+        try:
+            obj = DegreeAwardedInstitute.objects.get(uuid=uuid)
+        except DegreeAwardedInstitute.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "Degree Awarded Institute not found",
+                "data": None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = DegreeAwardedInstituteSerializer(obj, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "Degree Awarded Institute updated successfully",
+                "data": serializer.data
+            })
+        errors = serializer.errors
+        messages = []
+        for field, msgs in errors.items():
+            messages.extend(msgs)
+        return Response({
+            "statusCode": 400,
+            "status": False,
+            "message": " ".join(messages),
+            "data": None
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+# -------------------- DELETE API --------------------
+class DegreeAwardedInstituteDeleteAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def delete(self, request, uuid=None):
+        ids = request.data.get('id', None)
+
+        if uuid:
+            try:
+                obj = DegreeAwardedInstitute.objects.get(uuid=uuid)
+                obj.delete()
+                return Response({
+                    "statusCode": 204,
+                    "status": True,
+                    "message": "Degree Awarded Institute permanently deleted",
+                    "data": None
+                }, status=status.HTTP_204_NO_CONTENT)
+            except DegreeAwardedInstitute.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "Degree Awarded Institute not found",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+
+        if ids == "all":
+            count = DegreeAwardedInstitute.objects.count()
+            DegreeAwardedInstitute.objects.all().delete()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"All {count} institutes permanently deleted",
+                "data": None
+            })
+
+        if not ids or not isinstance(ids, list):
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Provide a list of UUIDs in 'id' field or 'all'.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        valid_uuids = []
+        invalid_uuids = []
+        for u in ids:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(u)
+
+        queryset = DegreeAwardedInstitute.objects.filter(uuid__in=valid_uuids)
+        count = queryset.count()
+        queryset.delete()
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": f"{count} institute(s) permanently deleted",
+            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+        })
+
+
+# -------------------- EXPORT API --------------------
+class DegreeAwardedInstituteExportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        format_type = request.GET.get('format', 'xlsx').lower()
+        fields = request.GET.get('fields')
+        uuids_param = request.GET.get('uuids', '')
+        uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+        field_header_map = {
+            'uuid': 'UUID',
+            'country': 'Country',
+            'state': 'State',
+            'education_level': 'Education Level',
+            'degree_awarded_by': 'Degree Awarded By',
+            'name': 'Degree Awarded Institute',
+            'description': 'Description',
+            'created_at': 'Created On',
+            'updated_at': 'Updated On'
+        }
+
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+        queryset = DegreeAwardedInstitute.objects.all()
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-updated_at')
+
+        dataset = Dataset()
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'DegreeAwardedInstitute'
+
+        for obj in queryset:
+            row = []
+            for field in field_list:
+                value = getattr(obj, field, '')
+                if field in ['created_at', 'updated_at'] and value:
+                    value = value.strftime("%d-%m-%Y %I:%M:%S %p")
+                elif field == 'country' and obj.country:
+                    value = obj.country.name
+                elif field == 'state' and obj.state:
+                    value = obj.state.storeName
+                elif field == 'education_level' and obj.education_level:
+                    value = obj.education_level.educationlevel
+                elif field == 'degree_awarded_by' and obj.degree_awarded_by:
+                    value = obj.degree_awarded_by.degree_name
+                elif isinstance(value, bool):
+                    value = int(value)
+                row.append(value if value is not None else '')
+            dataset.append(row)
+
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'degree_awarded_institutes.csv'
+        else:
+            file_data = io.BytesIO(dataset.export('xlsx'))
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'degree_awarded_institutes.xlsx'
+
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        return response
+
+
+class DegreeAwardedInstituteImportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        file = request.FILES.get('file')
+        sheet_name = request.data.get('sheet_name', None)
+
+        if not file:
+            return Response({'statusCode': 400, 'status': False, 'message': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+
+        format_type = file.name.split('.')[-1].lower()
+        imported_count = 0
+        skipped_rows = []
+        duplicate_names = []
+
+        # Define required and optional headers
+        required_headers = {'degree awarded institute', 'degree awarded by'}
+        optional_headers = {'description', 'country', 'state', 'education level'}
+
+        try:
+            data = []
+            headers = []
+
+            # ---------- XLSX ----------
+            if format_type == 'xlsx':
+                import openpyxl
+                wb = openpyxl.load_workbook(file, read_only=True)
+
+                if sheet_name:
+                    if sheet_name not in wb.sheetnames:
+                        return Response({
+                            'statusCode': 400,
+                            'status': False,
+                            'message': f'Sheet "{sheet_name}" not found',
+                            'available_sheets': wb.sheetnames
+                        }, status=status.HTTP_400_BAD_REQUEST)
+                    ws = wb[sheet_name]
+                else:
+                    ws = wb.active
+
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+
+                # Check required headers
+                if not required_headers.issubset(set(headers)):
+                    return Response({
+                        'statusCode': 400,
+                        'status': False,
+                        'message': f'Missing required headers: {required_headers - set(headers)}'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    if not any(row):
+                        continue
+                    row_dict = dict(zip(headers, row))
+                    data.append(row_dict)
+
+            # ---------- CSV ----------
+            elif format_type == 'csv':
+                import csv
+                decoded_file = file.read().decode('utf-8')
+                reader = csv.DictReader(io.StringIO(decoded_file))
+                headers = [h.strip().lower() for h in reader.fieldnames]
+
+                # Check required headers
+                if not required_headers.issubset(set(headers)):
+                    return Response({
+                        'statusCode': 400,
+                        'status': False,
+                        'message': f'Missing required headers: {required_headers - set(headers)}'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                for row in reader:
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    data.append(row_lower)
+
+            else:
+                return Response({'statusCode': 400, 'status': False, 'message': 'Unsupported file format'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # ---------- Import Data ----------
+            for row in data:
+                name = str(row.get('degree awarded institute')).strip() if row.get('degree awarded institute') else None
+                degree_awarded_by_name = str(row.get('degree awarded by')).strip() if row.get('degree awarded by') else None
+                description = str(row.get('description')).strip() if row.get('description') else ''
+                country_name = str(row.get('country')).strip() if row.get('country') else None
+                state_name = str(row.get('state')).strip() if row.get('state') else None
+                education_level_name = str(row.get('education level')).strip() if row.get('education level') else None
+
+                if not name or not degree_awarded_by_name:
+                    skipped_rows.append({'name': name or 'Unknown', 'reason': 'Missing required field(s)'})
+                    continue
+
+                # Map DegreeAwardedBy
+                degree_awarded_by = DegreeAwardedBy.objects.filter(degree_name__iexact=degree_awarded_by_name).first()
+                if not degree_awarded_by:
+                    skipped_rows.append({'name': name, 'reason': f'Degree Awarded By "{degree_awarded_by_name}" not found'})
+                    continue
+
+                # Map Country, State, Education Level
+                country = Country.objects.filter(name__iexact=country_name).first() if country_name else None
+                state = State.objects.filter(name__iexact=state_name).first() if state_name else None
+                education_level = EducationLevel.objects.filter(name__iexact=education_level_name).first() if education_level_name else None
+
+                # Check duplicate
+                existing = DegreeAwardedInstitute.objects.filter(name__iexact=name, degree_awarded_by=degree_awarded_by).first()
+                if existing:
+                    duplicate_names.append(name)
+                    continue
+
+                # Create record
+                DegreeAwardedInstitute.objects.create(
+                    name=name,
+                    description=description,
+                    degree_awarded_by=degree_awarded_by,
+                    country=country,
+                    state=state,
+                    education_level=education_level
                 )
                 imported_count += 1
 

@@ -621,8 +621,7 @@ class ECAAwardingBody(models.Model):
 
 
 class DegreeAwardedBy(models.Model):
-    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)    
     country = models.ForeignKey("Country", on_delete=models.SET_NULL, blank=True, null=True, related_name="degree_awarded_by_country")
     state = models.ForeignKey("State", on_delete=models.SET_NULL, blank=True, null=True, related_name="degree_awarded_by_state")
     education_level = models.ForeignKey("EducationLevel", on_delete=models.SET_NULL, blank=True, null=True, related_name="degree_awarded_by_education_level")
@@ -635,6 +634,23 @@ class DegreeAwardedBy(models.Model):
         return f"{self.degree_name} ({self.country} - {self.state})"
 
 
+class DegreeAwardedInstitute(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    country = models.ForeignKey("Country", on_delete=models.SET_NULL, blank=True, null=True, related_name="degree_by_instuite")
+    state = models.ForeignKey("State", on_delete=models.SET_NULL, blank=True, null=True, related_name="degree_by_state_instituite")
+    education_level = models.ForeignKey("EducationLevel", on_delete=models.SET_NULL, blank=True, null=True, related_name="degree_by_education_level")
+    degree_awarded_by = models.ForeignKey(DegreeAwardedBy, on_delete=models.CASCADE, related_name='institutes')
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('degree_awarded_by', 'name')
+
+    def __str__(self):
+        return f"{self.name}"
 
 class  Language(models.Model):
     id = models.AutoField(primary_key=True)

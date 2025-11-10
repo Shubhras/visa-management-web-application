@@ -721,6 +721,25 @@ class DegreeAwardedBySerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
 
+
+
+class DegreeAwardedInstituteSerializer(serializers.ModelSerializer):
+    country_name = serializers.CharField(source='country.name', read_only=True)
+    state_name = serializers.CharField(source='state.name', read_only=True)
+    education_level_name = serializers.CharField(source='education_level.name', read_only=True)
+    degree_awarded_by_name = serializers.CharField(source='degree_awarded_by.name', read_only=True)
+
+    class Meta:
+        model = DegreeAwardedInstitute
+        fields = [
+            'id', 'uuid', 'name', 'description',
+            'country', 'country_name',
+            'state', 'state_name',
+            'education_level', 'education_level_name',
+            'degree_awarded_by', 'degree_awarded_by_name',
+        ]
+        read_only_fields = ['id', 'uuid', 'country_name', 'state_name', 'education_level_name', 'degree_awarded_by_name']
+
 class LanguageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Language
