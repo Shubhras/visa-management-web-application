@@ -7647,7 +7647,7 @@ class AccreditationNameImportAPIView(APIView):
                         
                         duplicate_names.append({
                             'Country': country.name,
-                            'Accreditation Full Name': full_name,
+                            'Accrediation Full Name': full_name,
                             'Accrediation Category':category.name
 
                         })
