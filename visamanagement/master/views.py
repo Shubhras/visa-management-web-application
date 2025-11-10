@@ -567,7 +567,7 @@ class MaritalstatusListAPIView(APIView):
         try:
             search = request.GET.get('search', '').strip()
             sort_by = request.GET.get('sortBy', 'created_at')
-            sort_order = request.GET.get('sortOrder', 'desc')
+            sort_order = request.GET.get('sortOrder', 'asc')
 
             # Allowed fields to sort
             allowed_sort_fields = ['text', 'description', 'created_at']
@@ -959,7 +959,7 @@ class MaritalstatusImportAPIView(APIView):
 
             # Process import data
             imported_count = 0
-            for row in data:
+            for row in  reversed(data):
                 name = str(row.get('marital status')).strip() if row.get('marital status') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
                 is_active = row.get('is_active')
