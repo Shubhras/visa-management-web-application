@@ -310,15 +310,15 @@ class BankAccountType(models.Model):
 class LicenseName(models.Model):
 
     VALID_TYPE_CHOICES = (
-        ("PERMANENT", "Permanent"),
-        ("VALID_UP_TO", "Valid Up To"),
-        ("DATE","Date")
+        ("Permanent", "Permanent"),
+        ("Valid Up To", "Valid Up To"),
+        ("Dste","Date")
     )
  
     VALID_UNIT_CHOICES = (
-        ("MONTHS", "Months"),
-        ("WEEKS","Weeks"),
-        ("YEARS", "Years"),
+        ("Months", "Months"),
+        ("Weeks","Weeks"),
+        ("Years", "Years"),
     )
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)  
