@@ -8407,14 +8407,14 @@ class LicenseNameImportAPIView(APIView):
                     return Response({
                         "statusCode": 400,
                         "status": False,
-                        "message": f"Row with License '{full_name}' has empty 'valid type'. Allowed values: {', '.join(ALLOWED_VALID_TYPES)}."
+                        "message": f"Row with License  'License Valid Upto' has empty 'valid type'. Allowed values: {', '.join(ALLOWED_VALID_TYPES)}."
                     }, status=400)
 
                 if valid_type.title() not in ALLOWED_VALID_TYPES:
                     return Response({
                         "statusCode": 400,
                         "status": False,
-                        "message": f"Row with License '{full_name}' has invalid 'valid type'='{valid_type}'. Allowed values: {', '.join(ALLOWED_VALID_TYPES)}."
+                        "message": f"Row with License 'License Valid Upto' has invalid 'valid type'='{valid_type}'. Allowed values: {', '.join(ALLOWED_VALID_TYPES)}."
                     }, status=400)
 
                 # ---- Conditional field validation based on valid_type ----
@@ -8423,14 +8423,14 @@ class LicenseNameImportAPIView(APIView):
                         return Response({
                             "statusCode": 400,
                             "status": False,
-                            "message": f"Row with License '{full_name}' has 'Valid Upto' type. 'valid_duration_value' and 'valid_duration_unit' are required."
+                            "message": f"Row with License 'License Valid Upto' has 'Valid Upto' type. 'valid_duration_value' and 'valid_duration_unit' are required."
                         }, status=400)
                 elif valid_type.lower() == 'date':
                     if not valid_date:
                         return Response({
                             "statusCode": 400,
                             "status": False,
-                            "message": f"Row with License '{full_name}' has 'Date' type. 'valid_date' is required."
+                            "message": f"Row with License 'License Valid Upto' has 'Date' type. 'valid_date' is required."
                         }, status=400)
 
                 # Convert date safely
