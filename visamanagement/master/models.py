@@ -618,6 +618,24 @@ class ECAAwardingBody(models.Model):
     def __str__(self):
         return f"{self.eca_body_full_name} ({self.eca_body_short_name}) - {self.country}"
 
+
+
+class DegreeAwardedBy(models.Model):
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    
+    country = models.ForeignKey("Country", on_delete=models.SET_NULL, blank=True, null=True, related_name="degree_awarded_by_country")
+    state = models.ForeignKey("State", on_delete=models.SET_NULL, blank=True, null=True, related_name="degree_awarded_by_state")
+    education_level = models.ForeignKey("EducationLevel", on_delete=models.SET_NULL, blank=True, null=True, related_name="degree_awarded_by_education_level")
+    degree_name = models.CharField(max_length=255, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.degree_name} ({self.country} - {self.state})"
+
+
+
 class  Language(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
