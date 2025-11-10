@@ -129,12 +129,12 @@ class AdminLogoutView(APIView):
 class GenderListAPIView(APIView):
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'updated_at')
+        sort_by = request.GET.get('sortBy', 'created_at')
         sort_order = request.GET.get('sortOrder', 'asc')
 
-        allowed_sort_fields = ['name', 'description', 'updated_at']
+        allowed_sort_fields = ['name', 'description', 'created_at']
         if sort_by not in allowed_sort_fields:
-            sort_by = 'updated_at'
+            sort_by = 'created_at'
 
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
@@ -1016,7 +1016,7 @@ class ContinentListAPIView(APIView):
         allowed_sort_fields = ['name', 'description', 'updated_at']
 
         if sort_by not in allowed_sort_fields:
-            sort_by = 'updated_at'
+            sort_by = 'created_at'
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
@@ -1842,7 +1842,7 @@ class StateListAPIView(APIView):
         allowed_sort_fields = ['stateName', 'stateshortName', 'updated_at']
 
         if sort_by not in allowed_sort_fields:
-            sort_by = 'updated_at'
+            sort_by = 'created_at'
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
@@ -3119,7 +3119,7 @@ class RelationListAPIView(APIView):
         allowed_sort_fields = ['name', 'description', 'updated_at']
 
         if sort_by not in allowed_sort_fields:
-            sort_by = 'updated_at'
+            sort_by = 'created_at'
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
@@ -3502,7 +3502,7 @@ class TimezoneListAPIView(APIView):
 
         allowed_sort_fields = ['Timezone', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
-            sort_by = 'updated_at'
+            sort_by = 'created_at'
 
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
@@ -12464,7 +12464,7 @@ class StudymainareaListAPIView(APIView):
 
         allowed_sort_fields = ['name', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
-            sort_by = 'updated_at'
+            sort_by = 'created_at'
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
@@ -12821,7 +12821,7 @@ class StudyMajorAreaListAPIView(APIView):
 
         allowed_sort_fields = ['majorarea', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
-            sort_by = 'updated_at'
+            sort_by = 'created_at'
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
@@ -13190,7 +13190,7 @@ class StudySpecialisationListAPIView(APIView):
 
         allowed_sort_fields = ['studyspecialisation', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
-            sort_by = 'updated_at'
+            sort_by = 'created_at'
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
