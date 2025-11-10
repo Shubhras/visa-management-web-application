@@ -8476,7 +8476,7 @@ class LicenseNameImportAPIView(APIView):
                     if not existing.is_deleted:
                         
                         duplicate_names.append({
-                            'Country': country_obj.name
+                            'Country': country_obj.name,
                             'License Full Name': full_name
                         })
                         continue
