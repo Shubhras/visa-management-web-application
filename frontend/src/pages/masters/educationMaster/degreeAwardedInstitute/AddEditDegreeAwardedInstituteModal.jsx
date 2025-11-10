@@ -90,7 +90,12 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
 
         dispatch(countryDemoList(params, (response, error) => {
             if (response?.statusCode === 200 && response?.status) {
-                setCountryListData(response?.data || []);
+                const formatted = response?.data?.map(item => ({
+                    uuid: item.uuid,
+                    name: item.name
+                })) || [];
+                setCountryListData(formatted);
+
             }
         }));
     };
@@ -110,12 +115,31 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
 
 
 
+    // const handleChange = (e) => {
+    //     const { name, value } = e.target;
+    //     setFormData(prev => ({
+    //         ...prev,
+    //         [name]: value
+    //     }));
+    //     if (errors[name]) {
+    //         setErrors(prev => ({
+    //             ...prev,
+    //             [name]: ''
+    //         }));
+    //     }
+    // };
     const handleChange = (e) => {
         const { name, value } = e.target;
+
         setFormData(prev => ({
             ...prev,
-            [name]: value
+            [name]: value,
+            ...(name === "countryUuid" ? { stateUuid: "" } : {}) 
         }));
+        if (name === "countryUuid") {
+            fetchStateList(value);
+        }
+
         if (errors[name]) {
             setErrors(prev => ({
                 ...prev,
@@ -123,6 +147,7 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
             }));
         }
     };
+
 
     const validateForm = () => {
         const newErrors = {};
@@ -232,7 +257,7 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
                 <div className="modal-content radius-16 bg-base">
                     <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
                         <h1 className="modal-title fs-5" id="departmentModalLabel">
-                            {mode === 'edit' ? 'Edit Degree Awarded By' : 'Add Degree Awarded By'}
+                            {mode === 'edit' ? 'Edit Degree Awarded Institute' : 'Add Degree Awarded Institute'}
                         </h1>
                         <button
                             type="button"

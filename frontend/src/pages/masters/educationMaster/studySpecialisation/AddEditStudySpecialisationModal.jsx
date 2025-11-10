@@ -31,8 +31,8 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
             setFormData({
                 uuid: rowData.uuid || '',
                 studySpecialisationName: rowData.studyspecialisation || '',
-                studyMainAreaUuid: rowData.mainarea || '',
-                studyMajorAreaUuid: rowData.majorarea || '',
+                studyMainAreaUuid: rowData.mainarea_uuid || '',
+                studyMajorAreaUuid: rowData.majorarea_uuid || '',
                 description: rowData.description || '',
             });
         } else {

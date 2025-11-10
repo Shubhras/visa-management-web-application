@@ -383,6 +383,8 @@ import DegreeAwardedInstituteList from "./pages/masters/educationMaster/degreeAw
 import AcademicResultToResultList from "./pages/masters/educationMaster/academicResultToResult/AcademicResultToResultList";
 import DistrictList from "./pages/masters/generalMaster/district/DistrictList";
 import CityList from "./pages/masters/generalMaster/city/CitytList";
+import ECAAwardingBodyList from "./pages/masters/educationMaster/ecaAwardingBody/ECAAwardingBodyList";
+import MediumofEducationList from "./pages/masters/educationMaster/mediumOfEducation/MediumofEducationList";
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   // Check if user is authenticated
@@ -650,6 +652,8 @@ function App() {
         <Route path='/academic-result' element={<ProtectedRoute><AcademicResultList /></ProtectedRoute>}></Route>
         <Route path='/degree-awarded-institute' element={<ProtectedRoute><DegreeAwardedInstituteList /></ProtectedRoute>}></Route>
         <Route path='/academic-result-to-result' element={<ProtectedRoute><AcademicResultToResultList /></ProtectedRoute>}></Route>
+          <Route path='/eca-awarding-body' element={<ProtectedRoute><ECAAwardingBodyList/></ProtectedRoute>}></Route>
+        <Route path='/medium-of-education' element={<ProtectedRoute><MediumofEducationList/></ProtectedRoute>}></Route>
 
         {/* 404 Error Page */}
         <Route path='*' element={<ErrorPage />} />

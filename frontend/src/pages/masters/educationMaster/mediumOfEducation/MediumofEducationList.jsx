@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useDispatch } from "react-redux";
 import MasterLayout from "../../../../masterLayout/MasterLayout";
 // import Breadcrumb from "../../../components/Breadcrumb";
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { Link } from 'react-router-dom';
 import { toast } from "react-toastify";
-import { degreeAwardedByList, degreeAwardedByDelete, degreeAwardedByExportData } from "../../../../store/master/educationMaster/action";
-import AddImportDegreeAwardedByModal from './AddImportDegreeAwardedByModal';
-import AddEditDegreeAwardedByModal from './AddEditDegreeAwardedByModal';
+import { mediumOfEducationList, mediumOfEducationDelete, mediumOfEducationExportData } from '../../../../store/master/educationMaster/action';
+import AddImportMediumofEducationModal from './AddImportMediumofEducationModal';
+import AddEditMediumofEducationModal from './AddEditMediumofEducationModal';
 
-const DegreeAwardedByList = () => {
+const MediumofEducationList = () => {
   const dispatch = useDispatch();
   const [modalState, setModalState] = useState({
     show: false,
@@ -38,16 +38,64 @@ const DegreeAwardedByList = () => {
   const [rowSelectData, setRowSelectData] = useState({});
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this study main area*?");
+  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this medium of education?");
   const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [selectAllOrNot, setSelectAllOrNot] = useState('');
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [items] = useState(["Country", "Education Level", "Degree Awarded By", "Description", "Modified On"]);
-  const [selectedItems, setSelectedItems] = useState(["Country", "Education Level", "Degree Awarded By"]);
-  const [ItemsRequired] = useState(["Country", "Education Level", "Degree Awarded By"]);
+  const [items] = useState(["Medium of Education", "Perticulars", "Modified On"]);
+  const [selectedItems, setSelectedItems] = useState(["Medium of Education"]);
+  const [ItemsRequired] = useState(["Medium of Education"]);
+
+
+  // Table columns configuration
+  const [tableColumns] = useState([
+    { id: 'name', label: 'Medium of Education', field: 'name', visible: true, required: false },
+    { id: 'perticulars', label: 'Perticulars', field: 'perticulars', visible: true, required: false },
+    { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false },
+  ]);
+
+  const [visibleColumns, setVisibleColumns] = useState(
+    tableColumns.filter(col => col.visible).map(col => col.id)
+  );
+  const [showColumnDropdown, setShowColumnDropdown] = useState(false);
+  const columnDropdownRef = useRef(null);
+  // Column visibility toggle handler
+  const toggleColumnVisibility = (columnId) => {
+    const column = tableColumns.find(col => col.id === columnId);
+    if (column?.required) return; // Don't allow hiding required columns
+
+    setVisibleColumns(prev => {
+      if (prev.includes(columnId)) {
+        return prev.filter(id => id !== columnId);
+      } else {
+        return [...prev, columnId];
+      }
+    });
+  };
+
+  // Check if column is visible
+  const isColumnVisible = (columnId) => {
+    return visibleColumns.includes(columnId);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (columnDropdownRef.current && !columnDropdownRef.current.contains(event.target)) {
+        setShowColumnDropdown(false);
+      }
+    };
+
+    if (showColumnDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showColumnDropdown]);
 
   // Updated state with sorting
   const [tableState, setTableState] = useState({
@@ -89,7 +137,7 @@ const DegreeAwardedByList = () => {
       sortOrder: tableState.sortOrder || ''
     };
 
-    dispatch(degreeAwardedByList(params, (response, error) => {
+    dispatch(mediumOfEducationList(params, (response, error) => {
       setLoading(false);
       if (response?.statusCode === 200 && response?.status === true) {
         const paginationData = response?.pagination || {};
@@ -260,7 +308,7 @@ const DegreeAwardedByList = () => {
   const handleDelete = (uuid) => {
     setDeleteId(uuid);
     setShowDeleteConfirm(true);
-    setDeleteConfirmMessage(`Are you sure you want to delete this degree awarded by?`);
+    setDeleteConfirmMessage(`Are you sure you want to delete this medium of education?`);
   };
 
   const handleBulkDelete = () => {
@@ -269,8 +317,8 @@ const DegreeAwardedByList = () => {
       return;
     }
     // Choose message based on delete type
-    const message = selectAllOrNot === "all" ? `${tableState.total} all degree awarded by` : `${selectedRows.length} selected degree awarded by`;
-    setDeleteConfirmMessage(`Are you sure you want to delete this degree awarded by (${message})?`);
+    const message = selectAllOrNot === "all" ? `${tableState.total} all medium of educations` : `${selectedRows.length} selected medium of educations`;
+    setDeleteConfirmMessage(`Are you sure you want to delete this medium of education (${message})?`);
     setShowDeleteConfirm(true);
   };
 
@@ -278,10 +326,10 @@ const DegreeAwardedByList = () => {
     // const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
     const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
     if (!sendPayload || sendPayload.length === 0) {
-      toast.error("No degree awarded by selected for deletion.");
+      toast.error("No medium of education selected for deletion.");
       return;
     }
-    dispatch(degreeAwardedByDelete(sendPayload, (response, error) => {
+    dispatch(mediumOfEducationDelete(sendPayload, (response, error) => {
       if (error) {
         toast.error(error?.response?.data?.message || "server error");
       } else {
@@ -324,6 +372,8 @@ const DegreeAwardedByList = () => {
 
   const cancelExportTest = () => {
     setShowExportPopop(false);
+    setSelectedItems(["Medium of Education"]);
+    setSelectAllOrNot('');
   };
 
 
@@ -361,11 +411,9 @@ const DegreeAwardedByList = () => {
     }
     // Map frontend labels to backend field names
     const fieldMapping = {
-      "Country": "name",
-      "Education Level":"",
-      "Degree Awarded By":"",
+      "Medium of Education": "name",
       "Modified On": "updated_at",
-      "Description": "description",
+      "Perticulars": "perticulars",
     };
     // Convert selectedItems to backend field names
     const mappedFields = selectedItems.map((item) => fieldMapping[item] || item);
@@ -377,7 +425,7 @@ const DegreeAwardedByList = () => {
       uuids: selectAllOrNot === "all" ? [] : selectedRows,
     };
     setLoadingExport(true);
-    dispatch(degreeAwardedByExportData(sendPayload, (response, error) => {
+    dispatch(mediumOfEducationExportData(sendPayload, (response, error) => {
       if (error) {
         setLoadingExport(false);
         toast.error(error?.response?.message || "server error");
@@ -391,7 +439,7 @@ const DegreeAwardedByList = () => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `DegreeAwardedBy.xlsx`;
+          link.download = `MediumofEducation.xlsx`;
           document.body.appendChild(link);
           link.click();
           link.remove();
@@ -536,7 +584,7 @@ const DegreeAwardedByList = () => {
                           lineHeight: 1
                         }}
                         onClick={() => {
-                          // console.log("Close clicked");
+                          console.log("Close clicked");
                           handleSearchChange('');
                         }}
                       >
@@ -555,7 +603,7 @@ const DegreeAwardedByList = () => {
           <div className="card-body pt-0 container-table" >
             <div className='container-table-div'>
               <table className="table mb-0"  >
-                <thead >
+                <thead>
                   <tr>
                     <th scope="col" className='sl-numbar-th'>
                       <div className="d-flex align-items-center gap-2">
@@ -569,45 +617,59 @@ const DegreeAwardedByList = () => {
                         <span>No.</span>
                       </div>
                     </th>
-                    <th scope="col" className='sorting-th' onClick={() => handleSort('name')}>
-                      <div className="d-flex align-items-center">
-                        Country
-                        {getSortIcon('mainarea')}
-                      </div>
-                    </th>
-                    <th scope="col" className='sorting-th' onClick={() => handleSort('name')}>
-                      <div className="d-flex align-items-center">
-                        Education Level
-                        {getSortIcon('majorarea')}
-                      </div>
-                    </th>
-                     <th scope="col" className='sorting-th' onClick={() => handleSort('name')}>
-                      <div className="d-flex align-items-center">
-                        Degree Awarded By
-                        {getSortIcon('studyspecialisation')}
-                      </div>
-                    </th>
-                    <th scope="col" className='sorting-th' onClick={() => handleSort('description')}>
-                      <div className="d-flex align-items-center">
-                        Description
-                        {getSortIcon('description')}
-                      </div>
-                    </th>
-                    <th scope="col" className='sorting-th' onClick={() => handleSort('updated_at')}>
-                      <div className="d-flex align-items-center">
-                        Modified On
-                        {getSortIcon('updated_at')}
-                      </div>
-                    </th>
+                    {tableColumns.map((column) => (
+                      isColumnVisible(column.id) && (
+                        <th
+                          key={column.id}
+                          scope="col"
+                          className='sorting-th'
+                          onClick={() => handleSort(column.field)}
+                        >
+                          <div className="d-flex align-items-center">
+                            {column.label}
+                            {getSortIcon(column.field)}
+                          </div>
+                        </th>
+                      )
+                    ))}
                     <th scope="col" className='action-th'>
-                      Action
+                      <div className="position-relative table-header-hide-show" ref={columnDropdownRef}>
+                        <button
+                          className="position-relative table-header-hide-show"
+                          onClick={() => setShowColumnDropdown(!showColumnDropdown)}
+                        >
+                          Action <Icon icon="mdi:table-column" width="20" className='icone' />
+                        </button>
+                        {showColumnDropdown && (
+                          <div className="position-absolute bg-white border rounded shadow-sm p-2 show-dropdowns-header">
+                            {tableColumns.map((column) => (
+                              <div
+                                key={column.id}
+                                className="bg-white p-2 mb-2 d-flex align-items-center gap-2"
+                              >
+                                <input
+                                  type="checkbox"
+                                  id={`column-${column.id}`}
+                                  checked={isColumnVisible(column.id)}
+                                  onChange={() => toggleColumnVisibility(column.id)}
+                                  disabled={column.required}
+                                  className="form-check-input"
+                                />
+                                <label htmlFor={`column-${column.id}`} className="mb-0 flex-grow-1 form-label">
+                                  {column.label}
+                                </label>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan="5" className='loding-data'>
+                      <td colSpan={visibleColumns.length + 2} className='loding-data'>
                         <div className="d-flex justify-content-center align-items-center gap-2">
                           <div className="spinner-border spinner-border-sm" role="status">
                             <span className="visually-hidden">Loading...</span>
@@ -618,8 +680,8 @@ const DegreeAwardedByList = () => {
                     </tr>
                   ) : departments.length > 0 ? (
                     departments.map((rowItem, index) => (
-                      <tr key={rowItem.uuid} >
-                        <td >
+                      <tr key={rowItem.uuid}>
+                        <td>
                           <div className="d-flex align-items-center gap-2">
                             <input
                               className="form-check-input"
@@ -627,50 +689,25 @@ const DegreeAwardedByList = () => {
                               checked={selectedRows.includes(rowItem.uuid)}
                               onChange={() => handleRowSelect(rowItem.uuid)}
                             />
-                            <span>
-                              {String(startIndex + index + 1).padStart(2, '0')}
-                            </span>
+                            <span>{String(startIndex + index + 1).padStart(2, '0')}</span>
                           </div>
                         </td>
-                        <td >
-                          <span >
-                            {rowItem.mainarea}
-                          </span>
-                        </td>
-                         <td >
-                          <span >
-                            {rowItem.majorarea}
-                          </span>
-                        </td>
-                         <td >
-                          <span >
-                            {rowItem.studyspecialisation}
-                          </span>
-                        </td>
-                        <td >
-                          <span >
-                            {rowItem.description}
-                          </span>
-                        </td>
-                        <td>
-                          <span>{formatDateTime(rowItem.updated_at)}</span>
-                        </td>
-                        <td >
-                          <div className="d-flex align-items-center gap-2">
-                            <Link
-                              to="#"
-                              className='edit-btn-icone'
-                              onClick={(e) => {
-                                e.preventDefault();
-                                handleShowEdit(rowItem);
-                              }}
-                            >
+                        {isColumnVisible('name') && (
+                          <td><span>{rowItem.name}</span></td>
+                        )}
+                        {isColumnVisible('perticulars') && (
+                          <td><span>{rowItem.perticulars}</span></td>
+                        )}
+                        {isColumnVisible('updated_at') && (
+                          <td><span>{formatDateTime(rowItem.updated_at)}</span></td>
+                        )}
+
+                        <td className='action-td'>
+                          <div className="d-flex align-items-end gap-2">
+                            <Link to="#" className='edit-btn-icone' onClick={(e) => { e.preventDefault(); handleShowEdit(rowItem); }}>
                               <Icon icon="lucide:edit" width="18" className='icone' />
                             </Link>
-                            <button
-                              onClick={() => handleDelete(rowItem.uuid)}
-                              className='delete-btn-icone'
-                            >
+                            <button onClick={() => handleDelete(rowItem.uuid)} className='delete-btn-icone'>
                               <Icon icon="mingcute:delete-2-line" width="18" className='icone' />
                             </button>
                           </div>
@@ -679,7 +716,7 @@ const DegreeAwardedByList = () => {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="5" className='no-records-found'>
+                      <td colSpan={visibleColumns.length + 2} className='no-records-found'>
                         No records found
                       </td>
                     </tr>
@@ -794,14 +831,14 @@ const DegreeAwardedByList = () => {
             </div>
           </div>
         </div>
-        <AddEditDegreeAwardedByModal
+        <AddEditMediumofEducationModal
           show={modalState.show}
           handleClose={handleClose}
           mode={modalState.mode}
           rowData={modalState.rowData}
         />
         {showImport && (
-          <AddImportDegreeAwardedByModal show={showImport} handleClose={handleCloseImport} />)}
+          <AddImportMediumofEducationModal show={showImport} handleClose={handleCloseImport} />)}
         {showDeleteConfirm && (
           <div className="modal fade show common-ctl-popup">
             <div className="modal-dialog modal-dialog-centered">
@@ -845,7 +882,7 @@ const DegreeAwardedByList = () => {
             <div className="modal-dialog modal-xl modal-dialog-centered" role="document">
               <div className="modal-content radius-16 bg-base">
                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                  <h1 className="modal-title fs-5">Export Degree Awarded By</h1>
+                  <h1 className="modal-title fs-5">Export Medium of Education</h1>
                   <button
                     type="button"
                     className="btn-close"
@@ -943,4 +980,4 @@ const DegreeAwardedByList = () => {
   );
 };
 
-export default DegreeAwardedByList;
+export default MediumofEducationList;

@@ -116,13 +116,42 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
       }
     }));
   };
-  // Handle input changes
+  // // Handle input changes
+  // const handleChange = (e) => {
+  //   const { name, value } = e.target;
+  //   setFormData(prev => ({
+  //     ...prev,
+  //     [name]: value
+  //   }));
+
+  //   // Clear error when user starts typing
+  //   if (errors[name]) {
+  //     setErrors(prev => ({
+  //       ...prev,
+  //       [name]: ''
+  //     }));
+  //   }
+  // };
+  
+    // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    
+    // If valid_upto_type changes, reset related fields
+    if (name === 'valid_upto_type') {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+        valid_upto: '',
+        valid_upto_numeric: '',
+        valid_upto_unit: ''
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
 
     // Clear error when user starts typing
     if (errors[name]) {
@@ -132,7 +161,6 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
       }));
     }
   };
-
   // Validate form
   const validateForm = () => {
     const newErrors = {};
@@ -170,10 +198,17 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
           full_name: formData.full_name,
           short_name: formData.short_name,
           issuing_authority: formData.issuing_authority,
-          valid_upto: formData.valid_upto,
-          valid_upto_type: formData.valid_upto_type,
-          valid_upto_numeric: formData.valid_upto_numeric,
-          valid_upto_unit: formData.valid_upto_unit,
+           valid_date: formData.valid_upto || null,
+          valid_type:
+            formData.valid_upto_type === "permanent"
+              ? "PERMANENT"
+              : formData.valid_upto_type === "date"
+                ? "DATE"
+                : formData.valid_upto_type === "valid_upto"
+                  ? "VALID_UP_TO"
+                  : "",
+          valid_duration_value: formData.valid_upto_numeric,
+         valid_duration_unit: formData.valid_upto_unit ? formData.valid_upto_unit.toUpperCase() : null,
           description: formData.description,
         }
         : {
@@ -182,10 +217,17 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
           full_name: formData.full_name,
           short_name: formData.short_name,
           issuing_authority: formData.issuing_authority,
-          valid_upto: formData.valid_upto,
-          valid_upto_type: formData.valid_upto_type,
-          valid_upto_numeric: formData.valid_upto_numeric,
-          valid_upto_unit: formData.valid_upto_unit,
+           valid_date: formData.valid_upto || null,
+          valid_type:
+            formData.valid_upto_type === "permanent"
+              ? "PERMANENT"
+              : formData.valid_upto_type === "date"
+                ? "DATE"
+                : formData.valid_upto_type === "valid_upto"
+                  ? "VALID_UP_TO"
+                  : "",
+          valid_duration_value: formData.valid_upto_numeric  || null,
+          valid_duration_unit: formData.valid_upto_unit ? formData.valid_upto_unit.toUpperCase() : null,
           description: formData.description,
         };
 

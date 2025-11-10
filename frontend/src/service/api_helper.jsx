@@ -1340,3 +1340,67 @@ export const importCityDataAPI = (payload) => {
   const apiUrl = `${url.IMPORT_CITY_LIST_API}`;
   return post(apiUrl, payload);
 };
+
+// ECA Awarding Body API Services
+ 
+export const getEcaAwardingBodyListAPI = (data) => {
+    const apiUrl = `${url.GET_ECA_AWARDING_BODY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+ 
+export const addEcaAwardingBodyAPI = (payload) => {
+    const apiUrl = `${url.ADD_ECA_AWARDING_BODY_API}`;
+    return post(apiUrl, payload);
+};
+ 
+export const editEcaAwardingBodyAPI = (payload) => {
+    const apiUrl = `${url.EDIT_ECA_AWARDING_BODY_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+ 
+export const deleteEcaAwardingBodyAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_ECA_AWARDING_BODY_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+ 
+export const exportEcaAwardingBodyAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_ECA_AWARDING_BODY_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+ 
+export const importEcaAwardingBodyAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_ECA_AWARDING_BODY_API}`;
+    return post(apiUrl, payload);
+};
+// Medium of Education API Services
+ 
+export const getMediumOfEducationListAPI = (data) => {
+    const apiUrl = `${url.GET_MEDIUM_OF_EDUCATION_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+ 
+export const addMediumOfEducationAPI = (payload) => {
+    const apiUrl = `${url.ADD_MEDIUM_OF_EDUCATION_API}`;
+    return post(apiUrl, payload);
+};
+export const editMediumOfEducationAPI = (payload) => {
+    const apiUrl = `${url.EDIT_MEDIUM_OF_EDUCATION_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+ 
+export const deleteMediumOfEducationAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_MEDIUM_OF_EDUCATION_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+ 
+export const exportMediumOfEducationAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_MEDIUM_OF_EDUCATION_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+ 
+export const importMediumOfEducationAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_MEDIUM_OF_EDUCATION_API}`;
+    return post(apiUrl, payload);
+};

@@ -535,7 +535,7 @@ const StudyMajorAreaList = () => {
                                                     lineHeight: 1
                                                 }}
                                                 onClick={() => {
-                                                    console.log("Close clicked");
+                                                    // console.log("Close clicked");
                                                     handleSearchChange('');
                                                 }}
                                             >
