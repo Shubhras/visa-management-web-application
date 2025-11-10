@@ -15761,14 +15761,14 @@ class DegreeAwardedByImportAPIView(APIView):
                 education_level_name = str(row.get('education level')).strip() if row.get('education level') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
-                if not degree_name or not country_name or not state_name or not education_level_name:
+                if not degree_name or not country_name   or not education_level_name:
                     skipped_rows.append({'degree_name': degree_name or 'Unknown', 'reason': 'Missing required field(s)'})
                     continue
 
                 country = Country.objects.filter(name__iexact=country_name).first()
                 education_level = EducationLevel.objects.filter(name__iexact=education_level_name).first()
 
-                if not country or not state or not education_level:
+                if not country  or not education_level:
                     skipped_rows.append({'degree_name': degree_name, 'reason': 'Invalid country/state/education level'})
                     continue
 
