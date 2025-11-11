@@ -7644,14 +7644,13 @@ class AccreditationNameImportAPIView(APIView):
 
                 if existing:
                     if not existing.is_deleted:
-                        
                         duplicate_names.append({
                             'Country': country_name,
                             'Accrediation Full Name': full_name,
-                            'Accrediation Category':category_name
-
+                            'Accrediation Category': category_name
                         })
-
+                        continue
+            try:
                 AccreditationName.objects.create(
                     full_name=full_name,
                     short_name=short_name,
@@ -7665,6 +7664,13 @@ class AccreditationNameImportAPIView(APIView):
                     description=description
                 )
                 imported_count += 1
+            except IntegrityError:
+                    duplicate_names.append({
+                        'Country': country_name,
+                        'Accrediation Full Name': full_name,
+                        'Accrediation Category': category_name
+                    })
+
 
         except Exception as e:
             return Response({'statusCode': 400, 'status': True, 'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
