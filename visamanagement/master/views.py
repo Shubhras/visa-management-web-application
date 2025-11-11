@@ -1743,18 +1743,15 @@ class CountryImportAPIView(APIView):
                         })
                         continue
 
-                # Check existing country
                 existing = Country.objects.filter(name__iexact=country_name).first()
                 if existing:
                     if not getattr(existing, "is_deleted", False):
-                        # Store duplicate as dict
                         duplicate_names.append({
                             "Country Name": existing.name,
-                            "Country Full Name": existing.fullName
+                            "Continent":existing.continent 
                         })
                         continue
                     else:
-                        # Restore soft-deleted record
                         existing.continent = continent_obj
                         existing.shortName = short_name
                         existing.fullName = full_name
@@ -1788,7 +1785,7 @@ class CountryImportAPIView(APIView):
                     except IntegrityError:
                         duplicate_names.append({
                             "Country Name": country_name,
-                            "Country Full Name": full_name
+                            "Continent":continent_obj.name
                         })
 
         except Exception as e:
