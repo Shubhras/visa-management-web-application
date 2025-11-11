@@ -8542,9 +8542,8 @@ class LicenseNameImportAPIView(APIView):
         duplicate_names = []
         skipped_rows = []
 
-        required_headers = {'license full name', 'country'}
+        required_headers = {'license full name', 'country','license short name'}
         optional_headers = {
-            'license short name',
             'license issuing authority name',
             'description',
             'license valid upto',
