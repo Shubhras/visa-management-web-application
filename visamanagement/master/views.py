@@ -8540,6 +8540,8 @@ class LicenseNameImportAPIView(APIView):
 
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
+        skipped_rows = []
+
         required_headers = {'license full name', 'country'}
         optional_headers = {
             'license short name',
@@ -8555,6 +8557,7 @@ class LicenseNameImportAPIView(APIView):
             data = []
             headers = []
 
+            # ---------- XLSX ----------
             if format_type == 'xlsx':
                 import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
@@ -8571,13 +8574,15 @@ class LicenseNameImportAPIView(APIView):
 
                 headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
                 if not required_headers.issubset(set(headers)):
-                    return Response({"statusCode": 400, "status": True, "message": f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'}, status=400)
+                    missing = required_headers - set(headers)
+                    return Response({"statusCode": 400, "status": False, "message": f'Missing required headers: {missing}'}, status=400)
 
                 for row in ws.iter_rows(min_row=2, values_only=True):
                     if not any(row):
                         continue
                     data.append(dict(zip(headers, row)))
 
+            # ---------- CSV ----------
             elif format_type == 'csv':
                 import csv
                 import io
@@ -8586,17 +8591,18 @@ class LicenseNameImportAPIView(APIView):
                 for row in reader:
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
                     if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({"statusCode": 400, "status": True, "message": f'Missing required headers. Required: {required_headers}. Found: {set(row_lower.keys())}'}, status=400)
+                        missing = required_headers - set(row_lower.keys())
+                        return Response({"statusCode": 400, "status": False, "message": f"Missing required headers: {missing}"}, status=400)
                     data.append(row_lower)
             else:
-                return Response({"statusCode": 400, "status": True, 'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
-            
-            ALLOWED_VALID_TYPES = ['Permanent', 'Valid Upto', 'Date'] 
+                return Response({"statusCode": 400, "status": False, 'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
+
+            # ---------- Import Logic ----------
+            ALLOWED_VALID_TYPES = ['Permanent', 'Valid Upto', 'Date']
             ALLOWED_VALID_UNITS = ['Months', 'Weeks', 'Years']
-
-
             imported_count = 0
-            for row in  reversed(data):
+
+            for row in reversed(data):
                 full_name = str(row.get('license full name')).strip() if row.get('license full name') else None
                 country_name = str(row.get('country')).strip() if row.get('country') else None
                 short_name = str(row.get('license short name')).strip() if row.get('license short name') else ''
@@ -8605,58 +8611,105 @@ class LicenseNameImportAPIView(APIView):
                 valid_duration_value = row.get('license valid duration value')
                 valid_duration_unit_raw = row.get('license valid duration unit')
                 valid_duration_unit = valid_duration_unit_raw.strip().title() if valid_duration_unit_raw else None
+                valid_date_raw = row.get('license valid date')
+                valid_date = None
 
-                valid_date = row.get('license valid date')
+                if valid_date_raw:
+                    if isinstance(valid_date_raw, datetime):
+                        valid_date = valid_date_raw.date()
+                    else:
+                        date_str = str(valid_date_raw).strip()
+                        for fmt in ("%d-%m-%Y", "%d/%m/%Y", "%Y-%m-%d"):
+                            try:
+                                valid_date = datetime.strptime(date_str, fmt).date()
+                                break
+                            except ValueError:
+                                continue
+                        if not valid_date:
+                            skipped_rows.append({
+                                'full_name': full_name,
+                                'country': country_name,
+                                'reason': f"Invalid date format '{valid_date_raw}'. Expected formats: dd-mm-yyyy, dd/mm/yyyy, or yyyy-mm-dd"
+                            })
+                            continue
 
                 if not full_name or not country_name:
+                    skipped_rows.append({
+                        'full_name': full_name or 'Unknown',
+                        'country': country_name or 'Unknown',
+                        'reason': 'Missing required fields'
+                    })
                     continue
 
                 country_obj = Country.objects.filter(name__iexact=country_name).first()
                 if not country_obj:
+                    skipped_rows.append({
+                        'full_name': full_name,
+                        'country': country_name,
+                        'reason': 'Invalid country'
+                    })
                     continue
+
                 valid_type_raw = str(row.get('license valid upto')).strip() if row.get('license valid upto') else None
                 valid_type = unicodedata.normalize('NFKC', valid_type_raw).title() if valid_type_raw else None
 
                 if valid_type and valid_type not in ALLOWED_VALID_TYPES:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": f"Row with License Valid Upto has invalid 'valid type'='{valid_type}'. Allowed values: {', '.join(ALLOWED_VALID_TYPES)}."
-                    }, status=400)
+                    skipped_rows.append({
+                        'full_name': full_name,
+                        'country': country_name,
+                        'reason': f"Invalid valid_type='{valid_type}'. Allowed: {', '.join(ALLOWED_VALID_TYPES)}"
+                    })
+                    continue
 
+                # Valid Upto checks
                 if valid_type == 'Valid Upto':
-                    if not valid_duration_value or not valid_duration_unit:
-                        return Response({
-                            "statusCode": 400,
-                            "status": False,
-                            "message": f"Row with License Valid Upto  has 'Valid Upto' type. 'valid_duration_value' and 'valid_duration_unit' are required."
-                        }, status=400)
-                elif valid_type == 'Date':
-                    if not valid_date:
-                        return Response({
-                            "statusCode": 400,
-                            "status": False,
-                            "message": f"Row with License Valid Upto has 'Date' type. 'valid_date' is required."
-                        }, status=400)
-                if valid_duration_unit and valid_duration_unit not in ALLOWED_VALID_UNITS:
-                        return Response({
-                            "statusCode": 400,
-                            "status": False,
-                            "message": f"Invalid valid_duration_unit='{valid_duration_unit}' in row '{full_name}'. Allowed: {', '.join(ALLOWED_VALID_UNITS)}."
-                        }, status=400)
+                    if valid_duration_value is None or not valid_duration_unit:
+                        skipped_rows.append({
+                            'full_name': full_name,
+                            'country': country_name,
+                            'reason': "'Valid Upto' type requires both valid_duration_value and valid_duration_unit"
+                        })
+                        continue
 
-             
+                    try:
+                        valid_duration_value = int(valid_duration_value)
+                        if valid_duration_value <= 0:
+                            raise ValueError
+                    except (ValueError, TypeError):
+                        skipped_rows.append({
+                            'full_name': full_name,
+                            'country': country_name,
+                            'reason': "Invalid 'valid_duration_value'. Must be a positive number."
+                        })
+                        continue
 
+                    if valid_duration_unit not in ALLOWED_VALID_UNITS:
+                        skipped_rows.append({
+                            'full_name': full_name,
+                            'country': country_name,
+                            'reason': f"Invalid 'valid_duration_unit'='{valid_duration_unit}'. Allowed: {', '.join(ALLOWED_VALID_UNITS)}"
+                        })
+                        continue
+
+                elif valid_type == 'Date' and not valid_date:
+                    skipped_rows.append({
+                        'full_name': full_name,
+                        'country': country_name,
+                        'reason': "Valid type 'Date' requires a valid 'license valid date'"
+                    })
+                    continue
+
+                # Check duplicates
                 existing = LicenseName.objects.filter(full_name__iexact=full_name, country=country_obj).first()
                 if existing:
                     if not existing.is_deleted:
-                        
                         duplicate_names.append({
                             'Country': country_obj.name,
                             'License Full Name': full_name
                         })
                         continue
                     else:
+                        # Restore soft-deleted record
                         existing.short_name = short_name
                         existing.issuing_authority = issuing_authority
                         existing.description = description
@@ -8667,7 +8720,10 @@ class LicenseNameImportAPIView(APIView):
                         existing.is_deleted = False
                         existing.save()
                         imported_count += 1
-                else:
+                        continue
+
+                # Create new entry
+                try:
                     LicenseName.objects.create(
                         full_name=full_name,
                         country=country_obj,
@@ -8681,20 +8737,23 @@ class LicenseNameImportAPIView(APIView):
                         is_deleted=False
                     )
                     imported_count += 1
+                except IntegrityError:
+                    duplicate_names.append({
+                        'Country': country_obj.name,
+                        'License Full Name': full_name
+                    })
 
         except Exception as e:
-            return Response({"statusCode": 400, "status": True, 'message': str(e)}, status=400)
+            return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
 
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": duplicate_names, 
+            "duplicates": duplicate_names,
+            "skipped_rows": skipped_rows,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
-        }, status=200)
-
-
-
+        })
         
 #-------------------------------------------LeadSource---------------------------------
 
