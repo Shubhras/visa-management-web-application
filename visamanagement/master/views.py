@@ -7626,55 +7626,55 @@ class AccreditationNameImportAPIView(APIView):
 
                 if not full_name or not country_name or not category_name:
                     skipped_rows.append({
-                        'full_name': full_name or 'Unknown',
-                        'country': country_name or 'Unknown',
-                        'category': category_name or 'Unknown',
-                        'reason': 'Missing required field(s)'
+                        'Accrediation Full Name': full_name or 'Unknown',
+                        'Country': country_name or 'Unknown',
+                        'Accrediation Category': category_name or 'Unknown',
+                        'Reason': 'Missing required field(s)'
                     })
                     continue
 
                 if not country or not category:
                     skipped_rows.append({
-                        'full_name': full_name,
-                        'country': country_name,
-                        'category': category_name,
-                        'reason': f'Invalid country or category: {country_name}/{category_name}'
+                        'Accrediation Full Name': full_name,
+                        'Country': country_name,
+                        'Accrediation Category': category_name,
+                        'Reason': f'Invalid country or category: {country_name}/{category_name}'
                     })
                     continue
 
                 if valid_type and valid_type not in ALLOWED_VALID_TYPES:
                     skipped_rows.append({
-                        'full_name': full_name,
-                        'country': country_name,
-                        'category': category_name,
-                        'reason': f"Invalid valid_type='{valid_type}'. Allowed: {', '.join(ALLOWED_VALID_TYPES)}"
+                        'Accrediation Full Name': full_name,
+                        'Country': country_name,
+                        'Accrediation Category': category_name,
+                        'Reason': f"Invalid valid_type='{valid_type}'. Allowed: {', '.join(ALLOWED_VALID_TYPES)}"
                     })
                     continue
 
                 if valid_type == 'Valid Upto' and (not valid_duration_value or not valid_duration_unit):
                     skipped_rows.append({
-                        'full_name': full_name,
-                        'country': country_name,
-                        'category': category_name,
-                        'reason': "Valid Upto type requires duration value and unit"
+                        'Accrediation Full Name': full_name,
+                        'Country': country_name,
+                        'Accrediation Category': category_name,
+                        'Reason': "Valid Upto type requires duration value and unit"
                     })
                     continue
 
                 elif valid_type == 'Date' and not valid_date:
                     skipped_rows.append({
-                        'full_name': full_name,
-                        'country': country_name,
-                        'category': category_name,
-                        'reason': "Date type requires valid_date"
+                        'Accrediation Full Name': full_name,
+                        'Country': country_name,
+                        'Accrediation Category': category_name,
+                        'Reason': "Date type requires valid_date"
                     })
                     continue
 
                 if valid_duration_unit and valid_duration_unit not in ALLOWED_VALID_UNITS:
                     skipped_rows.append({
-                        'full_name': full_name,
-                        'country': country_name,
-                        'category': category_name,
-                        'reason': f"Invalid valid_duration_unit='{valid_duration_unit}'"
+                        'Accrediation Full Name': full_name,
+                        'Country': country_name,
+                        'Accrediation Category': category_name,
+                        'Reason': f"Invalid valid_duration_unit='{valid_duration_unit}'"
                     })
                     continue
 
