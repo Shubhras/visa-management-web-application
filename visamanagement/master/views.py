@@ -4106,7 +4106,7 @@ class CivilIdNameExportAPIView(APIView):
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
  
-        queryset = queryset.order_by("-updated_at")
+        queryset = queryset.order_by("-created_at")
  
         # Handle empty queryset
         if not queryset.exists():
