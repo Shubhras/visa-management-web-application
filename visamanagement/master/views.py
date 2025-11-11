@@ -2643,22 +2643,34 @@ class DistrictImportAPIView(APIView):
                     skipped_rows.append({
                         "District Name": district_name or "Unknown",
                         "Country Name": country_name or "Unknown",
+                        "State Name":state_name or "Unknown",
                         "Reason": "Missing required field"
                     })
                     continue
 
                 country_obj = Country.objects.filter(name__iexact=country_name).first()
-                state_obj = None
-                if state_name and country_obj:
-                    state_obj = State.objects.filter(stateName__iexact=state_name, countryName=country_obj).first()
-
                 if not country_obj:
                     skipped_rows.append({
                         "District Name": district_name,
                         "Country Name": country_name,
+                        "State Name": state_name or "Unknown",
                         "Reason": "Country not found"
                     })
                     continue
+
+                # Fetch state if provided
+                state_obj = None
+                if state_name:
+                    state_obj = State.objects.filter(stateName__iexact=state_name, countryName=country_obj).first()
+                    if not state_obj:
+                        skipped_rows.append({
+                            "District Name": district_name,
+                            "State Name": state_name,
+                            "Country Name": country_name,
+                            "Reason": "State not found for this country"
+                        })
+                        continue
+                
 
                 existing = District.objects.filter(
                     districtName__iexact=district_name,
@@ -2669,9 +2681,9 @@ class DistrictImportAPIView(APIView):
                 if existing:
                     if not existing.is_deleted:
                         duplicate_names.append({
-                            "District": existing.districtName,
-                            "State": state_obj.stateName if state_obj else None,
-                            "Country": country_obj.name
+                            "District Name": existing.districtName,
+                            "State Name": state_obj.stateName if state_obj else None,
+                            "Country Name": country_obj.name
                         })
                         continue
                     else:
@@ -3114,7 +3126,7 @@ class CityImportAPIView(APIView):
                 district_name = str(row.get('district name')).strip() if row.get('district name') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
-                if not city_name or not country_name or not state_name or not district_name:
+                if not city_name or not state_name or not district_name or not country_name:
                     skipped_rows.append({
                         "City Name": city_name or "Unknown",
                         "State Name": state_name or "Unknown",
@@ -3126,29 +3138,32 @@ class CityImportAPIView(APIView):
 
                 # Fetch related objects
                 country_obj = Country.objects.filter(name__iexact=country_name).first()
-                state_obj = State.objects.filter(stateName__iexact=state_name, countryName=country_obj).first() if country_obj else None
-                district_obj = District.objects.filter(
-                    districtName__iexact=district_name,
-                    stateName=state_obj,
-                    countryName=country_obj
-                ).first() if state_obj else None
-
-                # Skip rows with invalid references
                 if not country_obj:
                     skipped_rows.append({
                         "City Name": city_name,
+                        "District Name": district_name,
+                        "State Name": state_name,
                         "Country Name": country_name,
                         "Reason": "Country not found"
                     })
                     continue
+
+                state_obj = State.objects.filter(stateName__iexact=state_name, countryName=country_obj).first()
                 if not state_obj:
                     skipped_rows.append({
                         "City Name": city_name,
+                        "District Name": district_name,
                         "State Name": state_name,
                         "Country Name": country_name,
                         "Reason": "State not found"
                     })
                     continue
+
+                district_obj = District.objects.filter(
+                    districtName__iexact=district_name,
+                    stateName=state_obj,
+                    countryName=country_obj
+                ).first()
                 if not district_obj:
                     skipped_rows.append({
                         "City Name": city_name,
@@ -3158,6 +3173,7 @@ class CityImportAPIView(APIView):
                         "Reason": "District not found"
                     })
                     continue
+
                 
                 existing = City.objects.filter(
                     cityName__iexact=city_name,
@@ -3168,10 +3184,10 @@ class CityImportAPIView(APIView):
                 if existing:
                     if not existing.is_deleted:
                         duplicate_names.append({
-                            "City": existing.cityName,
-                            "District": district_obj.districtName,
-                            "State": state_obj.stateName,
-                            "Country": country_obj.name
+                            "City Name": existing.cityName,
+                            "District Name": district_obj.districtName,
+                            "State Name": state_obj.stateName,
+                            "Country Name": country_obj.name
                         })
                         continue
                     else:
