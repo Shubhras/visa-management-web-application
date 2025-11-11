@@ -8627,26 +8627,26 @@ class LicenseNameImportAPIView(APIView):
                                 continue
                         if not valid_date:
                             skipped_rows.append({
-                                'full_name': full_name,
-                                'country': country_name,
-                                'reason': f"Invalid date format '{valid_date_raw}'. Expected formats: dd-mm-yyyy, dd/mm/yyyy, or yyyy-mm-dd"
+                                'License Full Name': full_name,
+                                'Country': country_name,
+                                'Reason': f"Invalid date format '{valid_date_raw}'. Expected formats: dd-mm-yyyy, dd/mm/yyyy, or yyyy-mm-dd"
                             })
                             continue
 
                 if not full_name or not country_name:
                     skipped_rows.append({
-                        'full_name': full_name or 'Unknown',
-                        'country': country_name or 'Unknown',
-                        'reason': 'Missing required fields'
+                        'License Full Name': full_name or 'Unknown',
+                        'Country': country_name or 'Unknown',
+                        'Reason': 'Missing required fields'
                     })
                     continue
 
                 country_obj = Country.objects.filter(name__iexact=country_name).first()
                 if not country_obj:
                     skipped_rows.append({
-                        'full_name': full_name,
-                        'country': country_name,
-                        'reason': 'Invalid country'
+                        'License Full Name': full_name,
+                        'Country': country_name,
+                        'Reason': 'Invalid country'
                     })
                     continue
 
@@ -8655,9 +8655,9 @@ class LicenseNameImportAPIView(APIView):
 
                 if valid_type and valid_type not in ALLOWED_VALID_TYPES:
                     skipped_rows.append({
-                        'full_name': full_name,
-                        'country': country_name,
-                        'reason': f"Invalid valid_type='{valid_type}'. Allowed: {', '.join(ALLOWED_VALID_TYPES)}"
+                        'License Full Name': full_name,
+                        'Country': country_name,
+                        'Reason': f"Invalid valid_type='{valid_type}'. Allowed: {', '.join(ALLOWED_VALID_TYPES)}"
                     })
                     continue
 
@@ -8665,9 +8665,9 @@ class LicenseNameImportAPIView(APIView):
                 if valid_type == 'Valid Upto':
                     if valid_duration_value is None or not valid_duration_unit:
                         skipped_rows.append({
-                            'full_name': full_name,
-                            'country': country_name,
-                            'reason': "'Valid Upto' type requires both valid_duration_value and valid_duration_unit"
+                            'License Full Name': full_name,
+                            'Country': country_name,
+                            'Reason': "'Valid Upto' type requires both valid_duration_value and valid_duration_unit"
                         })
                         continue
 
@@ -8677,25 +8677,25 @@ class LicenseNameImportAPIView(APIView):
                             raise ValueError
                     except (ValueError, TypeError):
                         skipped_rows.append({
-                            'full_name': full_name,
-                            'country': country_name,
-                            'reason': "Invalid 'valid_duration_value'. Must be a positive number."
+                            'License Full Name': full_name,
+                            'Country': country_name,
+                            'Reason': "Invalid 'valid_duration_value'. Must be a positive number."
                         })
                         continue
 
                     if valid_duration_unit not in ALLOWED_VALID_UNITS:
                         skipped_rows.append({
-                            'full_name': full_name,
-                            'country': country_name,
-                            'reason': f"Invalid 'valid_duration_unit'='{valid_duration_unit}'. Allowed: {', '.join(ALLOWED_VALID_UNITS)}"
+                            'License Full Name': full_name,
+                            'Country': country_name,
+                            'Reason': f"Invalid 'valid_duration_unit'='{valid_duration_unit}'. Allowed: {', '.join(ALLOWED_VALID_UNITS)}"
                         })
                         continue
 
                 elif valid_type == 'Date' and not valid_date:
                     skipped_rows.append({
-                        'full_name': full_name,
-                        'country': country_name,
-                        'reason': "Valid type 'Date' requires a valid 'license valid date'"
+                        'License Full Name': full_name,
+                        'Country': country_name,
+                        'Reason': "Valid type 'Date' requires a valid 'license valid date'"
                     })
                     continue
 
