@@ -891,7 +891,7 @@ class EntranceTestNameSerializer(serializers.ModelSerializer):
 
 class EntranceTestModuleNameSerializer(serializers.ModelSerializer):
     entrancetest = EntranceTestNameSerializer(read_only=True)
-    entrancetest_id = serializers.PrimaryKeyRelatedField(
+    entrancetest_id = serializers.SlugRelatedField(
         queryset=EntranceTestName.objects.all(), source='entrancetest', write_only=True
     )
 
