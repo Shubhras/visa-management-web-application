@@ -4090,10 +4090,10 @@ class CivilIdNameExportAPIView(APIView):
             "civil_id_name": "Civil ID Name",
             "authority_full_name": "Authority Full Name",
             "authority_short_name": "Authority Short Name",
-            "valid_type": "Valid Type",
-            "valid_date":"Valid Date",
-            "valid_duration_value": "Valid Duration Value",
-            "valid_duration_unit": "Valid Duration Unit",
+            "valid_type": "Civil ID Valid Upto",
+            "valid_date":"Civil ID Valid Date",
+            "valid_duration_value": "Civil ID Valid Duration Value",
+            "valid_duration_unit": "Civil ID Valid Duration Unit",
             "description": "Description",
             "created_at": "Created On",
             "updated_at": "Modified On",
@@ -4171,10 +4171,10 @@ class CivilIdNameImportAPIView(APIView):
         required_headers = {"civil id name", "authority full name"}
         optional_headers = {
             "authority short name",
-            "valid type",
-            "valid date",
-            "valid duration value",
-            "valid duration unit",
+            "civil id valid type",
+            "civil id valid date",
+            "civil id valid duration value",
+            "civil id valid duration unit",
             "description"
         }
 
@@ -4251,11 +4251,11 @@ class CivilIdNameImportAPIView(APIView):
                 civil_id_name = str(row.get("civil id name")).strip() if row.get("civil id name") else None
                 authority_full_name = str(row.get("authority full name")).strip() if row.get("authority full name") else None
                 authority_short_name = str(row.get("authority short name")).strip() if row.get("authority short name") else ""
-                valid_type = str(row.get("valid type")).strip() if row.get("valid type") else None
-                valid_duration_value = row.get("valid duration value") or None
-                valid_duration_unit = str(row.get("valid duration unit")).strip() if row.get("valid duration unit") else None
+                valid_type = str(row.get("civil id valid upto")).strip() if row.get("civil id valid upto") else None
+                valid_duration_value = row.get("civil id valid duration value") or None
+                valid_duration_unit = str(row.get("civil id valid duration unit")).strip() if row.get("civil id valid duration unit") else None
                 description = str(row.get("description")).strip() if row.get("description") else ""
-                valid_date_raw = row.get('valid date')
+                valid_date_raw = row.get('civil id valid date')
                 valid_date = None
                 if valid_date_raw:
                     if isinstance(valid_date_raw, datetime):
