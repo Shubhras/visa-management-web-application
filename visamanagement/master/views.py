@@ -7578,8 +7578,8 @@ class AccreditationNameImportAPIView(APIView):
                 )
 
             # ---------- Import Data ----------
-            ALLOWED_VALID_TYPES = ['PERMANENT', 'VALID UPTO', 'DATE']
-            ALLOWED_VALID_UNITS = ['MONTHS', 'WEEKS', 'YEARS']
+            ALLOWED_VALID_TYPES = ['Permanent', 'Valid Upto', 'Date'] 
+            ALLOWED_VALID_UNITS = ['Months', 'Weeks', 'Years']
             imported_count = 0
 
             for row in reversed(data):
@@ -7651,7 +7651,7 @@ class AccreditationNameImportAPIView(APIView):
                     })
                     continue
 
-                if valid_type == 'VALID UPTO' and (not valid_duration_value or not valid_duration_unit):
+                if valid_type == 'Valid Upto' and (not valid_duration_value or not valid_duration_unit):
                     skipped_rows.append({
                         'full_name': full_name,
                         'country': country_name,
@@ -7660,7 +7660,7 @@ class AccreditationNameImportAPIView(APIView):
                     })
                     continue
 
-                elif valid_type == 'DATE' and not valid_date:
+                elif valid_type == 'Date' and not valid_date:
                     skipped_rows.append({
                         'full_name': full_name,
                         'country': country_name,
