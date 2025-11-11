@@ -905,13 +905,13 @@ class EntranceTestModuleNameSerializer(serializers.ModelSerializer):
 
 class EntranceTestResultSerializer(serializers.ModelSerializer):
     entrancetest = EntranceTestNameSerializer(read_only=True)
-    entrancetest_id = serializers.PrimaryKeyRelatedField(
-        queryset=EntranceTestName.objects.all(), source='entrancetest', write_only=True
+    entrancetest_id = serializers.SlugRelatedField(
+        queryset=EntranceTestName.objects.all(),slug_field='uuid', source='entrancetest', write_only=True
     )
     
     moduleName = EntranceTestModuleNameSerializer(read_only=True)
-    moduleName_id = serializers.PrimaryKeyRelatedField(
-        queryset=EntranceTestModuleName.objects.all(), source='moduleName', write_only=True
+    moduleName_id = serializers.SlugRelatedField(
+        queryset=EntranceTestModuleName.objects.all(),slug_field='uuid', source='moduleName', write_only=True
     )
 
     class Meta:
