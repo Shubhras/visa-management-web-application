@@ -420,7 +420,7 @@ urlpatterns = [
     path('entrance-tests-module/export/', EntranceTestModuleExportAPIView.as_view(), name='entrance-test-export'),
     path('entrance-tests-module/import/', EntranceTestModuleImportAPIView.as_view(), name='entrance-test-import'),
 
-    path('entrancetestresult/list/', EntranceTestResultListAPIView.as_view(), name='entrancetestresult-list'),
+    path('entrancetestresult/', EntranceTestResultListAPIView.as_view(), name='entrancetestresult-list'),
     path('entrancetestresult/create/', EntranceTestResultCreateAPIView.as_view(), name='entrancetestresult-create'),
     path('entrancetestresult/<uuid:uuid>/', EntranceTestResultRetrieveAPIView.as_view(), name='entrancetestresult-retrieve'),
     path('entrancetestresult/<uuid:uuid>/update/', EntranceTestResultUpdateAPIView.as_view(), name='entrancetestresult-update'),
@@ -429,7 +429,7 @@ urlpatterns = [
     path('entrancetestresult/import/', EntranceTestResultImportAPIView.as_view(), name='entrancetestresult-import'),
 
 
-    path('representingcountry/list/', RepresentingCountryListAPIView.as_view(), name='representingcountry-list'),
+    path('representingcountry/', RepresentingCountryListAPIView.as_view(), name='representingcountry-list'),
     path('representingcountry/create/', RepresentingCountryCreateAPIView.as_view(), name='representingcountry-create'),
     path('representingcountry/<uuid:uuid>/', RepresentingCountryRetrieveAPIView.as_view(), name='representingcountry-retrieve'),
     path('representingcountry/<uuid:uuid>/update/', RepresentingCountryUpdateAPIView.as_view(), name='representingcountry-update'),
@@ -437,7 +437,7 @@ urlpatterns = [
     path('representingcountry/export/', RepresentingCountryExportAPIView.as_view(), name='representingcountry-export'),
     path('representingcountry/import/', RepresentingCountryImportAPIView.as_view(), name='representingcountry-import'),
 
-    path('visamain/list/', VisaMainListAPIView.as_view(), name='visamain-list'),
+    path('visamain/', VisaMainListAPIView.as_view(), name='visamain-list'),
     path('visamain/create/', VisaMainCreateAPIView.as_view(), name='visamain-create'),
     path('visamain/<uuid:uuid>/', VisaMainRetrieveAPIView.as_view(), name='visamain-retrieve'),
     path('visamain/<uuid:uuid>/update/', VisaMainUpdateAPIView.as_view(), name='visamain-update'),
