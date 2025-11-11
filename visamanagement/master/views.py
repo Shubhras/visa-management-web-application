@@ -1639,10 +1639,11 @@ class CountryImportAPIView(APIView):
 
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
+        skipped_rows = []
 
-        required_headers = {'country name'}
+        required_headers = {'country name','continent'}
         optional_headers = {
-            'continent', 'country short name', 'country full name', 'country official name', 'capital city',
+            'country short name', 'country full name', 'country official name', 'capital city',
             'country calling code', 'currency full name', 'currency short name', 'currency code', 'description',
         }
 
@@ -1702,11 +1703,14 @@ class CountryImportAPIView(APIView):
                 }, status=400)
 
             imported_count = 0
-            for row in  reversed(data):
+            for row in reversed(data):
                 country_name = str(row.get('country name')).strip() if row.get('country name') else None
                 if not country_name:
+                    skipped_rows.append({
+                        "Country Name": "Unknown",
+                        "reason": "Missing required field: country name"
+                    })
                     continue
-
                 continent_name = str(row.get('continent')).strip() if row.get('continent') else ''
                 short_name = str(row.get('country short name')).strip() if row.get('country short name') else ''
                 full_name = str(row.get('country full name')).strip() if row.get('country full name') else ''
@@ -1727,10 +1731,17 @@ class CountryImportAPIView(APIView):
                     except Exception:
                         dial_codes = [str(dial_codes)]
 
-                # Get continent object
+
                 continent_obj = None
                 if continent_name:
                     continent_obj = Continents.objects.filter(name__iexact=continent_name).first()
+                    if not continent_obj:
+                        skipped_rows.append({
+                            "Country Name": country_name,
+                            "continent": continent_name,
+                            "reason": "Invalid continent name"
+                        })
+                        continue
 
                 # Check existing country
                 existing = Country.objects.filter(name__iexact=country_name).first()
@@ -1780,9 +1791,13 @@ class CountryImportAPIView(APIView):
             "statusCode": 200,
             "status": True,
             "duplicates": list(set(duplicate_names)),
+            "skipped_rows": skipped_rows,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=200)
+
+
+
 
 class CountriesByContinentAPIView(APIView):
     def get(self, request):
