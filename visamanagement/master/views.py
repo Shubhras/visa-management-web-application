@@ -4282,7 +4282,7 @@ class CivilIdNameImportAPIView(APIView):
                                 'reason': f"Invalid date format '{valid_date_raw}'. Expected formats: dd-mm-yyyy, dd/mm/yyyy, or yyyy-mm-dd"
                             })
                             continue
-                if not civil_id_name or not authority_full_name:
+                if not civil_id_name:
                     skipped_rows.append({
                         "Civil ID Name": civil_id_name or "Unknown",
                         "Reason": f"Missing required fields. Required: {', '.join(required_headers)}"
