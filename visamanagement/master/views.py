@@ -4279,7 +4279,7 @@ class CivilIdNameImportAPIView(APIView):
                         if not valid_date:
                             skipped_rows.append({
                                 "Civil ID Name": civil_id_name or "Unknown",
-                                'reason': f"Invalid date format '{valid_date_raw}'. Expected formats: dd-mm-yyyy, dd/mm/yyyy, or yyyy-mm-dd"
+                                'Reason': f"Invalid date format '{valid_date_raw}'. Expected formats: dd-mm-yyyy, dd/mm/yyyy, or yyyy-mm-dd"
                             })
                             continue
                 if not civil_id_name:
@@ -4292,7 +4292,7 @@ class CivilIdNameImportAPIView(APIView):
                 if valid_type and valid_type not in ALLOWED_VALID_TYPES:
                     skipped_rows.append({
                         "Civil ID Name": civil_id_name,
-                        "reason": f"Invalid valid_type='{valid_type}'. Allowed: {ALLOWED_VALID_TYPES}"
+                        "Reason": f"Invalid valid_type='{valid_type}'. Allowed: {ALLOWED_VALID_TYPES}"
                     })
                     continue
 
@@ -4301,7 +4301,7 @@ class CivilIdNameImportAPIView(APIView):
                     if valid_duration_value is None:
                         skipped_rows.append({
                             "Civil ID Name": civil_id_name,
-                            "reason": "Valid Upto type requires numeric 'valid duration value' and 'valid duration unit'"
+                            "Reason": "Valid Upto type requires numeric 'valid duration value' and 'valid duration unit'"
                         })
                         continue
                     try:
@@ -4311,14 +4311,14 @@ class CivilIdNameImportAPIView(APIView):
                     except (ValueError, TypeError):
                         skipped_rows.append({
                             "Civil ID Name": civil_id_name,
-                            "reason": "Invalid 'valid duration value'. Use positive numeric value."
+                            "Reason": "Invalid 'valid duration value'. Use positive numeric value."
                         })
                         continue
                     # Unit check
                     if not valid_duration_unit or valid_duration_unit not in ALLOWED_VALID_UNITS:
                         skipped_rows.append({
                             "Civil ID Name": civil_id_name,
-                            "reason": f"Invalid 'valid duration unit'. Allowed: {ALLOWED_VALID_UNITS}"
+                            "Reason": f"Invalid 'valid duration unit'. Allowed: {ALLOWED_VALID_UNITS}"
                         })
                         continue
                 elif valid_type == 'Date' and not valid_date:
