@@ -20,6 +20,7 @@ import openpyxl
 from django.http import HttpResponse
 from uuid import UUID
 from datetime import datetime  
+from django.db import IntegrityError
 import csv
 import io
 import pytz
@@ -1566,11 +1567,11 @@ class CountryExportAPIView(APIView):
             'uuid': 'UUID',
             'name': 'Country Name',
             'continent': 'Continent',
-            'shortName': 'Short Name',
-            'fullName': 'Full Name',
-            'officialName': 'Official Name',
+            'shortName': 'Country Short Name',
+            'fullName': 'Country Official Name',
+            'officialName': 'Country Official Name',
             'capitalCity': 'Capital City',
-            'dialCodes': 'Dial Codes',
+            'dialCodes': 'Country Calling Code',
             'currencyfullname':'Currency Full Name',
             'currencyshortname':'Currency Short Name',
             'currencyCode': 'Currency Code',
@@ -1594,7 +1595,7 @@ class CountryExportAPIView(APIView):
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-
+        dataset.title = 'Country'
         for obj in queryset:
             row = []
             for field in field_list:
@@ -1638,10 +1639,11 @@ class CountryImportAPIView(APIView):
 
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
+        skipped_rows = []
 
-        required_headers = {'country name'}
+        required_headers = {'country name','continent'}
         optional_headers = {
-            'continent', 'country short name', 'country full name', 'country official name', 'capital city',
+            'country short name', 'country full name', 'country official name', 'capital city',
             'country calling code', 'currency full name', 'currency short name', 'currency code', 'description',
         }
 
@@ -1701,11 +1703,14 @@ class CountryImportAPIView(APIView):
                 }, status=400)
 
             imported_count = 0
-            for row in  reversed(data):
+            for row in reversed(data):
                 country_name = str(row.get('country name')).strip() if row.get('country name') else None
                 if not country_name:
+                    skipped_rows.append({
+                        "Country Name": "Unknown",
+                        "Reason": "Missing required field: country name"
+                    })
                     continue
-
                 continent_name = str(row.get('continent')).strip() if row.get('continent') else ''
                 short_name = str(row.get('country short name')).strip() if row.get('country short name') else ''
                 full_name = str(row.get('country full name')).strip() if row.get('country full name') else ''
@@ -1726,16 +1731,25 @@ class CountryImportAPIView(APIView):
                     except Exception:
                         dial_codes = [str(dial_codes)]
 
-                # Get continent object
+
                 continent_obj = None
                 if continent_name:
                     continent_obj = Continents.objects.filter(name__iexact=continent_name).first()
+                    if not continent_obj:
+                        skipped_rows.append({
+                            "Country Name": country_name,
+                            "Continent": continent_name,
+                            "Reason": "Invalid continent name"
+                        })
+                        continue
 
-                # Check existing country
                 existing = Country.objects.filter(name__iexact=country_name).first()
                 if existing:
-                    if not existing.is_deleted:
-                        duplicate_names.append(country_name)
+                    if not getattr(existing, "is_deleted", False):
+                        duplicate_names.append({
+                            "Country Name": existing.name,
+                            "Continent": existing.continent.name if existing.continent else None 
+                        })
                         continue
                     else:
                         existing.continent = continent_obj
@@ -1747,26 +1761,32 @@ class CountryImportAPIView(APIView):
                         existing.currencyfullname = currency_full_name
                         existing.currencyshortname = currency_short_name
                         existing.currencyCode = currency_code
-                        existing.description=description
+                        existing.description = description
                         existing.is_deleted = False
                         existing.save()
                         imported_count += 1
                 else:
-                    Country.objects.create(
-                        name=country_name,
-                        continent=continent_obj,
-                        shortName=short_name,
-                        fullName=full_name,
-                        officialName=official_name,
-                        capitalCity=capital_city,
-                        dialCodes=dial_codes,
-                        currencyfullname=currency_full_name,
-                        currencyshortname=currency_short_name,
-                        currencyCode=currency_code,
-                        description=description,
-                        is_deleted=False
-                    )
-                    imported_count += 1
+                    try:
+                        Country.objects.create(
+                            name=country_name,
+                            continent=continent_obj,
+                            shortName=short_name,
+                            fullName=full_name,
+                            officialName=official_name,
+                            capitalCity=capital_city,
+                            dialCodes=dial_codes,
+                            currencyfullname=currency_full_name,
+                            currencyshortname=currency_short_name,
+                            currencyCode=currency_code,
+                            description=description,
+                            is_deleted=False
+                        )
+                        imported_count += 1
+                    except IntegrityError:
+                        duplicate_names.append({
+                            "Country Name": country_name,
+                            "Continent": continent_obj.name if continent_obj else ""
+                        })
 
         except Exception as e:
             return Response({
@@ -1778,10 +1798,14 @@ class CountryImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_names)),
+            "duplicates": duplicate_names,
+            "skipped_rows": skipped_rows,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=200)
+
+
+
 
 class CountriesByContinentAPIView(APIView):
     def get(self, request):
@@ -2077,6 +2101,7 @@ class StateImportAPIView(APIView):
 
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
+        skipped_rows = []
 
         required_headers = {'state name', 'country name'}
         optional_headers = { 'state / territory','state short name', 'description'}
@@ -2151,25 +2176,46 @@ class StateImportAPIView(APIView):
                 country_name = str(row.get('country name')).strip() if row.get('country name') else None
                 short_name = str(row.get('state short name')).strip() if row.get('state short name') else ''
                 description = str(row.get('description')).strip() if row.get('description') else ''
-                
-                # Convert state/territory value to uppercase
-                state_type = str(row.get('state / territory')).strip().upper() if row.get('state / territory') else 'STATE'
-                if state_type and state_type not in ['STATE', 'TERRITORY']:
-                    state_type = None
+                state_type = str(row.get('state / territory')).strip().upper() if row.get('state / territory') else None
+          
 
-                if not state_name or not country_name:
+                if not state_name or not country_name or not state_type:
+                    skipped_rows.append({
+                        "State Name": state_name or "Unknown",
+                        "Country Name": country_name or "Unknown",
+                        "State / Territory":state_type or "Unknown",
+                        "Reason": "Missing required field or Invalid state type: Use (State, Territory)"
+                    })
+                    continue
+
+                if state_type not in ['STATE', 'TERRITORY']:
+                    skipped_rows.append({
+                        "State Name": state_name,
+                        "Country Name": country_name,
+                        "State / Territory":state_type or "Unknown",
+                        "Reason": f'Invalid state type: Use (State, Territory)'
+                    })
                     continue
 
                 # Get related Country object
                 country_obj = Country.objects.filter(name__iexact=country_name).first()
                 if not country_obj:
-                    continue  # skip row if country not found
+                    skipped_rows.append({
+                        "State Name": state_name,
+                        "Country Name": country_name,
+                        "State / Territory":state_type or "Unknown",
+                        "Reason": "Country not found"
+                    })
+                    continue
 
                 # Check for existing state
                 existing = State.objects.filter(stateName__iexact=state_name, countryName=country_obj).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicate_names.append(state_name)
+                        duplicate_names.append({
+                            "State Name": existing.stateName,
+                            "Country Name": country_obj.name
+                        })
                         continue
                     else:
                         # Restore deleted record
@@ -2201,7 +2247,8 @@ class StateImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_names)),
+            "duplicates": duplicate_names,
+            "skipped_rows": skipped_rows,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=200)
@@ -2517,6 +2564,7 @@ class DistrictImportAPIView(APIView):
 
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
+        skipped_rows = []
 
         required_headers = {'district name', 'country name'}
         optional_headers = {'description','state name'}
@@ -2592,33 +2640,58 @@ class DistrictImportAPIView(APIView):
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not district_name or not country_name:
-                    continue  # Only skip if district or country is missing
+                    skipped_rows.append({
+                        "District Name": district_name or "Unknown",
+                        "Country Name": country_name or "Unknown",
+                        "State Name":state_name or "Unknown",
+                        "Reason": "Missing required field"
+                    })
+                    continue
 
                 country_obj = Country.objects.filter(name__iexact=country_name).first()
-                state_obj = None
-                if state_name and country_obj:
-                    state_obj = State.objects.filter(stateName__iexact=state_name, countryName=country_obj).first()
-
-                # If country not found, skip the row
                 if not country_obj:
+                    skipped_rows.append({
+                        "District Name": district_name,
+                        "Country Name": country_name,
+                        "State Name": state_name or "Unknown",
+                        "Reason": "Country not found"
+                    })
                     continue
+
+                # Fetch state if provided
+                state_obj = None
+                if state_name:
+                    state_obj = State.objects.filter(stateName__iexact=state_name, countryName=country_obj).first()
+                    if not state_obj:
+                        skipped_rows.append({
+                            "District Name": district_name,
+                            "State Name": state_name,
+                            "Country Name": country_name,
+                            "Reason": "State not found for this country"
+                        })
+                        continue
+                
 
                 existing = District.objects.filter(
                     districtName__iexact=district_name,
-                    stateName=state_obj,  # can be None
+                    stateName=state_obj, 
                     countryName=country_obj
                 ).first()
 
                 if existing:
                     if not existing.is_deleted:
-                        duplicate_names.append(district_name)
+                        duplicate_names.append({
+                            "District Name": existing.districtName,
+                            "State Name": state_obj.stateName if state_obj else None,
+                            "Country Name": country_obj.name
+                        })
                         continue
                     else:
                         # Restore deleted record
                         existing.districtName = district_name
                         existing.stateName = state_obj
                         existing.countryName = country_obj
-                        existing.description = description  # fixed typo
+                        existing.description = description  
                         existing.is_deleted = False
                         existing.save()
                         imported_count += 1
@@ -2641,7 +2714,8 @@ class DistrictImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_names)),
+            "duplicates": duplicate_names,
+            "skipped_rows": skipped_rows,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=200)
@@ -2976,6 +3050,7 @@ class CityImportAPIView(APIView):
 
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
+        skipped_rows = []
 
         required_headers = {'city name', 'country name'}
         optional_headers = {'state name', 'district name','description'}
@@ -3044,22 +3119,66 @@ class CityImportAPIView(APIView):
 
             # ---------------- Data Processing ----------------
             imported_count = 0
+            existing_in_file = set()
             for row in  reversed(data):
                 city_name = str(row.get('city name')).strip() if row.get('city name') else None
                 country_name = str(row.get('country name')).strip() if row.get('country name') else None
                 state_name = str(row.get('state name')).strip() if row.get('state name') else None
                 district_name = str(row.get('district name')).strip() if row.get('district name') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
+                
+                key = (city_name.lower(), district_name.lower(), state_name.lower(), country_name.lower())
 
-                if not city_name or not country_name or not state_name or not district_name:
+
+                if not city_name or not state_name or not district_name or not country_name:
+                    skipped_rows.append({
+                        "City Name": city_name or "Unknown",
+                        "State Name": state_name or "Unknown",
+                        "District Name": district_name or "Unknown",
+                        "Country Name": country_name or "Unknown",
+                        "Reason": "Missing required field"
+                    })
                     continue
 
+                # Fetch related objects
                 country_obj = Country.objects.filter(name__iexact=country_name).first()
-                state_obj = State.objects.filter(stateName__iexact=state_name, countryName=country_obj).first() if country_obj else None
-                district_obj = District.objects.filter(districtName__iexact=district_name, stateName=state_obj, countryName=country_obj).first() if state_obj else None
+                if not country_obj:
+                    skipped_rows.append({
+                        "City Name": city_name,
+                        "District Name": district_name,
+                        "State Name": state_name,
+                        "Country Name": country_name,
+                        "Reason": "Country not found"
+                    })
+                    continue
 
-                if not country_obj or not state_obj or not district_obj:
-                     continue
+                state_obj = State.objects.filter(stateName__iexact=state_name, countryName=country_obj).first()
+                if not state_obj:
+                    skipped_rows.append({
+                        "City Name": city_name,
+                        "District Name": district_name,
+                        "State Name": state_name,
+                        "Country Name": country_name,
+                        "Reason": "State not found"
+                    })
+                    continue
+
+                district_obj = District.objects.filter(
+                    districtName__iexact=district_name,
+                    stateName=state_obj,
+                    countryName=country_obj
+                ).first()
+                if not district_obj:
+                    skipped_rows.append({
+                        "City Name": city_name,
+                        "District Name": district_name,
+                        "State Name": state_name,
+                        "Country Name": country_name,
+                        "Reason": "District not found"
+                    })
+                    continue
+
+                
                 existing = City.objects.filter(
                     cityName__iexact=city_name,
                     districtName=district_obj,
@@ -3067,30 +3186,33 @@ class CityImportAPIView(APIView):
                     countryName=country_obj
                 ).first()
 
-                if existing:
-                    if not existing.is_deleted:
-                        duplicate_names.append(city_name)
-                        continue
-                    else:
-                        # Restore deleted record
-                        existing.cityName = city_name
-                        existing.countryName = country_obj
-                        existing.stateName = state_obj
-                        existing.districtName = district_obj
-                        existing.description = description
-                        existing.is_deleted = False
-                        existing.save()
-                        imported_count += 1
-                else:
+                if existing or key in existing_in_file:
+                    duplicate_names.append({
+                        "City Name": city_name,
+                        "District Name": district_obj.districtName,
+                        "State Name": state_obj.stateName,
+                        "Country Name": country_obj.name
+                    })
+                    continue
+
+                try:
                     City.objects.create(
                         cityName=city_name,
-                        countryName=country_obj,
-                        stateName=state_obj,
                         districtName=district_obj,
+                        stateName=state_obj,
+                        countryName=country_obj,
                         description=description,
                         is_deleted=False
                     )
                     imported_count += 1
+                    existing_in_file.add(key)
+                except IntegrityError:
+                    duplicate_names.append({
+                        "City Name": city_name,
+                        "District Name": district_obj.districtName,
+                        "State Name": state_obj.stateName,
+                        "Country Name": country_obj.name
+                    })
 
         except Exception as e:
             return Response({
@@ -3102,7 +3224,8 @@ class CityImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_names)),
+            "duplicates": duplicate_names,
+            "skipped_rows": skipped_rows,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=200)
@@ -4089,9 +4212,10 @@ class CivilIdNameExportAPIView(APIView):
             "civil_id_name": "Civil ID Name",
             "authority_full_name": "Authority Full Name",
             "authority_short_name": "Authority Short Name",
-            "valid_type": "Valid Type",
-            "valid_duration_value": "Valid Duration Value",
-            "valid_duration_unit": "Valid Duration Unit",
+            "valid_type": "Civil ID Valid Upto",
+            "valid_date":"Civil ID Valid Date",
+            "valid_duration_value": "Civil ID Valid Duration Value",
+            "valid_duration_unit": "Civil ID Valid Duration Unit",
             "description": "Description",
             "created_at": "Created On",
             "updated_at": "Modified On",
@@ -4104,7 +4228,7 @@ class CivilIdNameExportAPIView(APIView):
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
  
-        queryset = queryset.order_by("-updated_at")
+        queryset = queryset.order_by("-created_at")
  
         # Handle empty queryset
         if not queryset.exists():
@@ -4126,6 +4250,7 @@ class CivilIdNameExportAPIView(APIView):
                 # display choice labels
                 if field == "valid_type" and obj.valid_type:
                     value = obj.get_valid_type_display()
+                
  
                 if field == "valid_duration_unit" and obj.valid_duration_unit:
                     value = obj.get_valid_duration_unit_display()
@@ -4133,6 +4258,9 @@ class CivilIdNameExportAPIView(APIView):
                 # Format date
                 if field in ["created_at", "updated_at"] and value:
                     value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
+                
+                if field == "valid_date" and value:
+                    value = value.strftime("%d-%m-%Y")
  
                 row.append(value if value is not None else "")
             dataset.append(row)
@@ -4160,135 +4288,216 @@ class CivilIdNameImportAPIView(APIView):
         sheet_name = request.data.get("sheet_name")
  
         if not file:
-            return Response({"error": "No file uploaded"}, status=400)
+            return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
  
         format_type = file.name.split(".")[-1].lower()
         duplicate_names = []
- 
-        required_headers = {
-            "civil id name",
-            "authority full name"
-        }
- 
+        skipped_rows = []
+
+        required_headers = {"civil id name"}
         optional_headers = {
+            "authority full name",
             "authority short name",
-            "valid type",
-            "valid duration value",
-            "valid duration unit",
+            "civil id valid type",
+            "civil id valid date",
+            "civil id valid duration value",
+            "civil id valid duration unit",
             "description"
         }
- 
+
         try:
             data = []
             headers = []
- 
+
             # ---------- XLSX ----------
             if format_type == "xlsx":
                 import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
- 
+
                 if not sheet_name:
                     return Response(
                         {"error": "Provide sheet_name", "available_sheets": wb.sheetnames},
-                        status=400,
+                        status=status.HTTP_400_BAD_REQUEST,
                     )
- 
+
                 if sheet_name not in wb.sheetnames:
                     return Response(
                         {"error": f'Sheet "{sheet_name}" not found', "available_sheets": wb.sheetnames},
-                        status=400,
+                        status=status.HTTP_400_BAD_REQUEST,
                     )
- 
+
                 ws = wb[sheet_name]
                 if ws.max_row <= 1:
                     return Response(
                         {"statusCode": 400, "status": False, "message": "Sheet is empty"},
-                        status=400,
+                        status=status.HTTP_400_BAD_REQUEST,
                     )
- 
-                headers = [str(cell.value).strip().lower() if cell.value else "" for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+
+                headers = []
+                for cell in next(ws.iter_rows(min_row=1, max_row=1)):
+                    header = str(cell.value).strip().lower().replace("_", " ").replace("-", " ") if cell.value else ""
+                    headers.append(header)
                 if not required_headers.issubset(set(headers)):
+                    missing = required_headers - set(headers)
                     return Response(
-                        {
-                            "statusCode": 400,
-                            "status": False,
-                            "message": f"Missing required headers: {required_headers}",
-                        },
-                        status=400,
+                        {"statusCode": 400, "status": False, "message": f"Missing required headers: {missing}"},
+                        status=status.HTTP_400_BAD_REQUEST,
                     )
- 
+
                 for row in ws.iter_rows(min_row=2, values_only=True):
                     if not any(row):
                         continue
                     row_dict = dict(zip(headers, row))
                     data.append(row_dict)
- 
+
             # ---------- CSV ----------
             elif format_type == "csv":
                 decoded_file = file.read().decode("utf-8")
                 dataset = Dataset()
                 dataset.load(decoded_file, format="csv")
- 
+
                 for row in dataset.dict:
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
                     if not required_headers.issubset(set(row_lower.keys())):
+                        missing = required_headers - set(row_lower.keys())
                         return Response(
-                            {
-                                "statusCode": 400,
-                                "status": False,
-                                "message": f"Missing required headers: {required_headers}",
-                            },
-                            status=400,
+                            {"statusCode": 400, "status": False, "message": f"Missing required headers: {missing}"},
+                            status=status.HTTP_400_BAD_REQUEST,
                         )
                     data.append(row_lower)
- 
+
             else:
                 return Response(
                     {"statusCode": 400, "status": False, "error": "Unsupported file format"},
-                    status=400,
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
- 
+
+            # ---------- Import Data ----------
+            ALLOWED_VALID_TYPES = ["Permanent", "Valid Upto", "Date"]
+            ALLOWED_VALID_UNITS = ["Months", "Weeks", "Years"]
             imported_count = 0
-            skipped_rows = []
- 
-            for row in  reversed(data):
+
+            for row in reversed(data):  # Import in reversed order
                 civil_id_name = str(row.get("civil id name")).strip() if row.get("civil id name") else None
                 authority_full_name = str(row.get("authority full name")).strip() if row.get("authority full name") else None
                 authority_short_name = str(row.get("authority short name")).strip() if row.get("authority short name") else ""
-                valid_type = str(row.get("valid type")).strip() if row.get("valid type") else None
-                valid_duration_value = row.get("valid duration value") or None
-                valid_duration_unit = str(row.get("valid duration unit")).strip() if row.get("valid duration unit") else None
+                valid_type = str(row.get("civil id valid upto")).strip() if row.get("civil id valid upto") else None
+                valid_duration_value = row.get("civil id valid duration value") or None
+                valid_duration_unit = str(row.get("civil id valid duration unit")).strip() if row.get("civil id valid duration unit") else None
                 description = str(row.get("description")).strip() if row.get("description") else ""
- 
-                if not civil_id_name or not authority_full_name:
+                valid_date_raw = row.get('civil id valid date')
+                valid_date = None
+                if valid_date_raw:
+                    if isinstance(valid_date_raw, datetime):
+                        valid_date = valid_date_raw.date()
+                    else:
+                        date_str = str(valid_date_raw).strip()
+                        for fmt in ("%d-%m-%Y", "%d/%m/%Y", "%Y-%m-%d"):
+                            try:
+                                valid_date = datetime.strptime(date_str, fmt).date()
+                                break
+                            except ValueError:
+                                continue
+                        if not valid_date:
+                            skipped_rows.append({
+                                "Civil ID Name": civil_id_name or " ",
+                                'Reason': f"Invalid date format '{valid_date_raw}'. Expected formats: dd-mm-yyyy, dd/mm/yyyy"
+                            })
+                            continue
+                if not civil_id_name:
                     skipped_rows.append({
-                        "civil_id_name": civil_id_name or "Unknown",
-                        "reason": "Missing required fields",
+                        "Civil ID Name": civil_id_name or "Unknown",
+                        "Reason": f"Missing required fields. Required: {', '.join(required_headers)}"
                     })
                     continue
- 
+
+                if valid_type and valid_type not in ALLOWED_VALID_TYPES:
+                    skipped_rows.append({
+                        "Civil ID Name": civil_id_name,
+                        "Reason": f"Invalid valid_type='{valid_type}'. Allowed: {ALLOWED_VALID_TYPES}"
+                    })
+                    continue
+
+                if valid_type == "Valid Upto":
+                    # Duration value check
+                    if valid_duration_value is None:
+                        skipped_rows.append({
+                            "Civil ID Name": civil_id_name,
+                            "Reason": "Valid Upto type requires numeric 'valid duration value' and 'valid duration unit'"
+                        })
+                        continue
+                    try:
+                        valid_duration_value = int(valid_duration_value)
+                        if valid_duration_value <= 0:
+                            raise ValueError
+                    except (ValueError, TypeError):
+                        skipped_rows.append({
+                            "Civil ID Name": civil_id_name,
+                            "Reason": "Invalid 'valid duration value'. Use positive numeric value."
+                        })
+                        continue
+                    # Unit check
+                    if not valid_duration_unit or valid_duration_unit not in ALLOWED_VALID_UNITS:
+                        skipped_rows.append({
+                            "Civil ID Name": civil_id_name,
+                            "Reason": f"Invalid 'valid duration unit'. Allowed: {ALLOWED_VALID_UNITS}"
+                        })
+                        continue
+                elif valid_type == 'Date' and not valid_date:
+                    skipped_rows.append({
+                        "Civil ID Name": civil_id_name,
+                        'Reason': "Civil ID Valid Date  requires valid_date formate DD-MM_YYY"
+                    })
+                    continue
+
+                if valid_duration_unit and valid_duration_unit not in ALLOWED_VALID_UNITS:
+                    skipped_rows.append({
+                        "Civil ID Name": civil_id_name,
+                        'Reason': f"Invalid 'Civil ID Valid Unit'='{valid_duration_unit}'. Please use one of: Months, Weeks, Years"
+                    })
+                    continue
+
+
                 existing = CivilIdName.objects.filter(
                     civil_id_name__iexact=civil_id_name
                 ).first()
- 
+
                 if existing:
+                    if not getattr(existing, "is_deleted", False):
+                        duplicate_names.append(civil_id_name)
+                        continue
+                    else:
+                        # Restore soft-deleted record
+                        existing.authority_full_name = authority_full_name
+                        existing.authority_short_name = authority_short_name
+                        existing.valid_type = valid_type
+                        existing.valid_duration_value = valid_duration_value
+                        existing.valid_duration_unit = valid_duration_unit
+                        existing.description = description
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
+                        continue
+
+                # Create new entry
+                try:
+                    CivilIdName.objects.create(
+                        civil_id_name=civil_id_name,
+                        authority_full_name=authority_full_name,
+                        authority_short_name=authority_short_name,
+                        valid_type=valid_type,
+                        valid_duration_value=valid_duration_value,
+                        valid_duration_unit=valid_duration_unit,
+                        description=description,
+                        is_deleted=False
+                    )
+                    imported_count += 1
+                except IntegrityError:
                     duplicate_names.append(civil_id_name)
-                    continue
- 
-                CivilIdName.objects.create(
-                    civil_id_name=civil_id_name,
-                    authority_full_name=authority_full_name,
-                    authority_short_name=authority_short_name,
-                    valid_type=valid_type,
-                    valid_duration_value=valid_duration_value,
-                    valid_duration_unit=valid_duration_unit,
-                    description=description
-                )
-                imported_count += 1
- 
+
         except Exception as e:
-            return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
- 
+            return Response({"statusCode": 400, "status": False, "message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
         return Response({
             "statusCode": 200,
             "status": True,
@@ -4296,10 +4505,7 @@ class CivilIdNameImportAPIView(APIView):
             "skipped_rows": skipped_rows,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
-        })
-
-
-
+        }, status=status.HTTP_200_OK)
 
 
 
@@ -7427,11 +7633,11 @@ class AccreditationNameExportAPIView(APIView):
         field_header_map = {
             'uuid': 'UUID',
             'country': 'Country',
-            'category': 'Category Name',
+            'category': 'Accrediation Category',
             'full_name': 'Accrediation Full Name',
             'short_name': 'Accrediation Short Name',
             'issuing_authority': 'Accrediation Issuing Authority Name',
-            'valid_type': 'Accrediation Valid Type',
+            'valid_type': 'Accrediation Valid Upto',
             'valid_duration_value': 'Accrediation Valid Duration Value',
             'valid_duration_unit': 'Accrediation Valid Duration Unit',
             'valid_date': 'Accrediation Valid Date',
@@ -7465,6 +7671,8 @@ class AccreditationNameExportAPIView(APIView):
                     value = accred.country.name
                 elif field == 'category' and accred.category:
                     value = accred.category.name
+                if field == "valid_date" and value:
+                    value = value.strftime("%d-%m-%Y")
 
                 elif isinstance(value, bool):
                     value = int(value)
@@ -7501,12 +7709,18 @@ class AccreditationNameImportAPIView(APIView):
 
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
+        skipped_rows = []
 
         required_headers = {'accrediation full name', 'country', 'accrediation category'}
-        optional_headers = {'accrediation short name', 'accrediation issuing authority name', 'accrediation valid type',
+        optional_headers = {
+            'accrediation short name',
+            'accrediation issuing authority name',
+            'accrediation valid upto',
             'accrediation valid duration value',
             'accrediation valid duration unit',
-            'accrediation valid date','description'}
+            'accrediation valid date',
+            'description'
+        }
 
         try:
             data = []
@@ -7531,15 +7745,14 @@ class AccreditationNameImportAPIView(APIView):
 
                 ws = wb[sheet_name]
                 if ws.max_row <= 1:
-                    return Response(
-                        {'statusCode': 400, 'status': False, 'message': 'Sheet is empty'},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
+                    return Response({'statusCode': 400, 'status': False, 'message': 'Sheet is empty'},
+                                    status=status.HTTP_400_BAD_REQUEST)
 
                 headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
                 if not required_headers.issubset(set(headers)):
+                    missing = required_headers - set(headers)
                     return Response(
-                        {'statusCode': 400, 'status': True, 'message': f'Missing required headers: {required_headers}'},
+                        {'statusCode': 400, 'status': False, 'message': f'Missing required headers: {missing}'},
                         status=status.HTTP_400_BAD_REQUEST
                     )
 
@@ -7558,83 +7771,146 @@ class AccreditationNameImportAPIView(APIView):
                 for row in dataset.dict:
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
                     if not required_headers.issubset(set(row_lower.keys())):
+                        missing = required_headers - set(row_lower.keys())
                         return Response(
-                            {'statusCode': 400, 'status': True, 'message': f'Missing required headers: {required_headers}'},
+                            {'statusCode': 400, 'status': False, 'message': f'Missing required headers: {missing}'},
                             status=status.HTTP_400_BAD_REQUEST
                         )
                     data.append(row_lower)
 
             else:
                 return Response(
-                    {'statusCode': 400, 'status': True, 'error': 'Unsupported file format'},
+                    {'statusCode': 400, 'status': False, 'error': 'Unsupported file format'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
             # ---------- Import Data ----------
-            ALLOWED_VALID_TYPES = ['Permanent', 'Valid Upto', 'Date']
+            ALLOWED_VALID_TYPES = ['Permanent', 'Valid Upto', 'Date'] 
             ALLOWED_VALID_UNITS = ['Months', 'Weeks', 'Years']
-            
             imported_count = 0
-            skipped_rows = []
 
-            for row in  reversed(data):
+            for row in reversed(data):
                 full_name = str(row.get('accrediation full name')).strip() if row.get('accrediation full name') else None
                 country_name = str(row.get('country')).strip() if row.get('country') else None
                 category_name = str(row.get('accrediation category')).strip() if row.get('accrediation category') else None
                 short_name = str(row.get('accrediation short name')).strip() if row.get('accrediation short name') else ''
                 issuing_authority = str(row.get('accrediation issuing authority name')).strip() if row.get('accrediation issuing authority name') else ''
                 description = str(row.get('description')).strip() if row.get('description') else ''
-                valid_type = str(row.get('accrediation valid type')).strip().upper() if row.get('accrediation valid type') else None
+                valid_type = str(row.get('accrediation valid upto')).strip() if row.get('accrediation valid upto') else None
                 valid_duration_value = row.get('accrediation valid duration value')
-                valid_duration_unit = str(row.get('accrediation valid duration unit')).strip().upper() if row.get('accrediation valid duration unit') else None
-                valid_date = row.get('accrediation valid date')
+                valid_duration_unit = str(row.get('accrediation valid duration unit')).strip() if row.get('accrediation valid duration unit') else None
+                valid_date_raw = row.get('accrediation valid date')
+                valid_date = None
+                if valid_date_raw:
+                    if isinstance(valid_date_raw, datetime):
+                        valid_date = valid_date_raw.date()
+                    else:
+                        date_str = str(valid_date_raw).strip()
+                        for fmt in ("%d-%m-%Y", "%d/%m/%Y", "%Y-%m-%d"):
+                            try:
+                                valid_date = datetime.strptime(date_str, fmt).date()
+                                break
+                            except ValueError:
+                                continue
+                        if not valid_date:
+                            skipped_rows.append({
+                                'full_name': full_name,
+                                'country': country_name,
+                                'category': category_name,
+                                'reason': f"Invalid date format '{valid_date_raw}'. Expected formats: dd-mm-yyyy, dd/mm/yyyy "
+                            })
+                            continue
 
                 if not full_name or not country_name or not category_name:
                     skipped_rows.append({
-                        'full_name': full_name or 'Unknown',
-                        'reason': 'Missing required field(s)'
+                        'full_name': full_name or ' ',
+                        'Reason': f"Missing required fields. Required: {', '.join(required_headers)}"
                     })
                     continue
 
-                # Map by name instead of ID
                 country = Country.objects.filter(name__iexact=country_name).first()
                 category = AccreditationCategory.objects.filter(name__iexact=category_name).first()
 
-                if not country or not category:
+                if not full_name or not country_name or not category_name:
                     skipped_rows.append({
-                        'full_name': full_name,
-                        'reason': f'Invalid country or category: {country_name}/{category_name}'
+                        'Accrediation Full Name': full_name or 'Unknown',
+                        'Country': country_name or 'Unknown',
+                        'Accrediation Category': category_name or 'Unknown',
+                        'Reason': 'Missing required field(s)'
                     })
                     continue
 
+                if not country or not category:
+                    skipped_rows.append({
+                        'Accrediation Full Name': full_name,
+                        'Country': country_name,
+                        'Accrediation Category': category_name,
+                        'Reason': f'Invalid country or category: {country_name}/{category_name}'
+                    })
+                    continue
 
                 if valid_type and valid_type not in ALLOWED_VALID_TYPES:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": f"Row with Accreditation Valid Type has invalid 'valid type'='{valid_type}'. Allowed values: {', '.join(ALLOWED_VALID_TYPES)}."
-                    }, status=400)
+                    skipped_rows.append({
+                        'Accrediation Full Name': full_name,
+                        'Country': country_name,
+                        'Accrediation Category': category_name,
+                        'Reason': f"Invalid valid_type='{valid_type}'. Allowed: Permanent, Valid Upto, Date"
+                    })
+                    continue
 
-                if valid_type == 'Valid Upto' and (not valid_duration_value or not valid_duration_unit):
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": f"Row with Valid Upto type requires 'valid_duration_value' and 'valid_duration_unit'."
-                    }, status=400)
+                # ---------- Valid Upto checks ----------
+                if valid_type == 'Valid Upto':
+                    # Check duration value
+                    if valid_duration_value is None:
+                        skipped_rows.append({
+                            'Accrediation Full Name': full_name,
+                            'Country': country_name,
+                            'Accrediation Category': category_name,
+                            'Reason': "Valid Upto type requires 'Accrediation Valid Duration' as numeric and 'Accrediation Valid Unit' as one of: Months, Weeks, Years"
+                        })
+                        continue
+
+                    # Numeric check
+                    try:
+                        valid_duration_value = int(valid_duration_value)
+                        if valid_duration_value <= 0:
+                            raise ValueError
+                    except (ValueError, TypeError):
+                        skipped_rows.append({
+                            'Accrediation Full Name': full_name,
+                            'Country': country_name,
+                            'Accrediation Category': category_name,
+                            'Reason': "Invalid 'Accrediation Valid Duration'. Please use a positive numeric value."
+                        })
+                        continue
+
+                    # Unit check
+                    if not valid_duration_unit or valid_duration_unit not in ALLOWED_VALID_UNITS:
+                        skipped_rows.append({
+                            'Accrediation Full Name': full_name,
+                            'Country': country_name,
+                            'Accrediation Category': category_name,
+                            'Reason': f"Invalid 'Accrediation Valid Unit'='{valid_duration_unit}'. Please use one of: Months, Weeks, Years"
+                        })
+                        continue
+
                 elif valid_type == 'Date' and not valid_date:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": f"Row with Date type requires 'valid_date'."
-                    }, status=400)
+                    skipped_rows.append({
+                        'Accrediation Full Name': full_name,
+                        'Country': country_name,
+                        'Accrediation Category': category_name,
+                        'Reason': "Accrediation Valid Date  requires valid_date formate DD-MM_YYY"
+                    })
+                    continue
 
                 if valid_duration_unit and valid_duration_unit not in ALLOWED_VALID_UNITS:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": f"Invalid valid_duration_unit='{valid_duration_unit}' in row '{full_name}'. Allowed: {', '.join(ALLOWED_VALID_UNITS)}."
-                    }, status=400)
-
+                    skipped_rows.append({
+                        'Accrediation Full Name': full_name,
+                        'Country': country_name,
+                        'Accrediation Category': category_name,
+                        'Reason': f"Invalid 'Accrediation Valid Unit'='{valid_duration_unit}'. Please use one of: Months, Weeks, Years"
+                    })
+                    continue
 
                 existing = AccreditationName.objects.filter(
                     full_name__iexact=full_name,
@@ -7644,30 +7920,51 @@ class AccreditationNameImportAPIView(APIView):
 
                 if existing:
                     if not existing.is_deleted:
-                        
                         duplicate_names.append({
-                            'Country': country.name,
+                            'Country': country_name,
                             'Accrediation Full Name': full_name,
-                            'Accrediation Category':category.name
-
+                            'Accrediation Category': category_name
                         })
+                        continue
+                    else:
+                        # Restore soft-deleted record
+                        existing.short_name = short_name
+                        existing.issuing_authority = issuing_authority
+                        existing.description = description
+                        existing.valid_type = valid_type
+                        existing.valid_duration_value = valid_duration_value
+                        existing.valid_duration_unit = valid_duration_unit
+                        existing.valid_date = valid_date
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
+                        continue
 
-                AccreditationName.objects.create(
-                    full_name=full_name,
-                    short_name=short_name,
-                    country=country,
-                    category=category,
-                    issuing_authority=issuing_authority,
-                    valid_type=valid_type,
-                    valid_duration_value=valid_duration_value,
-                    valid_duration_unit=valid_duration_unit,
-                    valid_date=valid_date,
-                    description=description
-                )
-                imported_count += 1
+                # Create new entry
+                try:
+                    AccreditationName.objects.create(
+                        full_name=full_name,
+                        short_name=short_name,
+                        country=country,
+                        category=category,
+                        issuing_authority=issuing_authority,
+                        valid_type=valid_type,
+                        valid_duration_value=valid_duration_value,
+                        valid_duration_unit=valid_duration_unit,
+                        valid_date=valid_date,
+                        description=description,
+                        is_deleted=False
+                    )
+                    imported_count += 1
+                except IntegrityError:
+                    duplicate_names.append({
+                        'Country': country_name,
+                        'Accrediation Full Name': full_name,
+                        'Accrediation Category': category_name
+                    })
 
         except Exception as e:
-            return Response({'statusCode': 400, 'status': True, 'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'statusCode': 400, 'status': False, 'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({
             "statusCode": 200,
@@ -7677,9 +7974,6 @@ class AccreditationNameImportAPIView(APIView):
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=status.HTTP_200_OK)
-
-
-
 
 
 #-----------------Bank Account-----------------------        
@@ -8332,9 +8626,10 @@ class LicenseNameExportAPIView(APIView):
                 if field in ['created_at', 'updated_at'] and value:
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif field == 'valid_date' and value:
-                    value = value.strftime("%Y-%m-%d")
+                    value = value.strftime("%d-%m-%Y")
                 elif isinstance(value, bool):
                     value = int(value)
+                
 
                 row.append(value if value is not None else '')
             dataset.append(row)
@@ -8370,9 +8665,10 @@ class LicenseNameImportAPIView(APIView):
 
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
-        required_headers = {'license full name', 'country'}
+        skipped_rows = []
+
+        required_headers = {'license full name', 'country','license short name'}
         optional_headers = {
-            'license short name',
             'license issuing authority name',
             'description',
             'license valid upto',
@@ -8385,6 +8681,7 @@ class LicenseNameImportAPIView(APIView):
             data = []
             headers = []
 
+            # ---------- XLSX ----------
             if format_type == 'xlsx':
                 import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
@@ -8401,13 +8698,15 @@ class LicenseNameImportAPIView(APIView):
 
                 headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
                 if not required_headers.issubset(set(headers)):
-                    return Response({"statusCode": 400, "status": True, "message": f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'}, status=400)
+                    missing = required_headers - set(headers)
+                    return Response({"statusCode": 400, "status": False, "message": f'Missing required headers: {missing}'}, status=400)
 
                 for row in ws.iter_rows(min_row=2, values_only=True):
                     if not any(row):
                         continue
                     data.append(dict(zip(headers, row)))
 
+            # ---------- CSV ----------
             elif format_type == 'csv':
                 import csv
                 import io
@@ -8416,17 +8715,18 @@ class LicenseNameImportAPIView(APIView):
                 for row in reader:
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
                     if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({"statusCode": 400, "status": True, "message": f'Missing required headers. Required: {required_headers}. Found: {set(row_lower.keys())}'}, status=400)
+                        missing = required_headers - set(row_lower.keys())
+                        return Response({"statusCode": 400, "status": False, "message": f"Missing required headers: {missing}"}, status=400)
                     data.append(row_lower)
             else:
-                return Response({"statusCode": 400, "status": True, 'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
-            
-            ALLOWED_VALID_TYPES = ['Permanent', 'Valid Upto', 'Date'] 
+                return Response({"statusCode": 400, "status": False, 'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
+
+            # ---------- Import Logic ----------
+            ALLOWED_VALID_TYPES = ['Permanent', 'Valid Upto', 'Date']
             ALLOWED_VALID_UNITS = ['Months', 'Weeks', 'Years']
-
-
             imported_count = 0
-            for row in  reversed(data):
+
+            for row in reversed(data):
                 full_name = str(row.get('license full name')).strip() if row.get('license full name') else None
                 country_name = str(row.get('country')).strip() if row.get('country') else None
                 short_name = str(row.get('license short name')).strip() if row.get('license short name') else ''
@@ -8435,58 +8735,105 @@ class LicenseNameImportAPIView(APIView):
                 valid_duration_value = row.get('license valid duration value')
                 valid_duration_unit_raw = row.get('license valid duration unit')
                 valid_duration_unit = valid_duration_unit_raw.strip().title() if valid_duration_unit_raw else None
+                valid_date_raw = row.get('license valid date')
+                valid_date = None
 
-                valid_date = row.get('license valid date')
+                if valid_date_raw:
+                    if isinstance(valid_date_raw, datetime):
+                        valid_date = valid_date_raw.date()
+                    else:
+                        date_str = str(valid_date_raw).strip()
+                        for fmt in ("%d-%m-%Y", "%d/%m/%Y", "%Y-%m-%d"):
+                            try:
+                                valid_date = datetime.strptime(date_str, fmt).date()
+                                break
+                            except ValueError:
+                                continue
+                        if not valid_date:
+                            skipped_rows.append({
+                                'License Full Name': full_name,
+                                'Country': country_name,
+                                'Reason': f"Invalid date format '{valid_date_raw}'. Expected formats: dd-mm-yyyy, dd/mm/yyyy "
+                            })
+                            continue
 
                 if not full_name or not country_name:
+                    skipped_rows.append({
+                        'License Full Name': full_name or 'Unknown',
+                        'Country': country_name or 'Unknown',
+                        'Reason': f"Missing required fields. Required: {', '.join(required_headers)}"
+                    })
                     continue
 
                 country_obj = Country.objects.filter(name__iexact=country_name).first()
                 if not country_obj:
+                    skipped_rows.append({
+                        'License Full Name': full_name,
+                        'Country': country_name,
+                        'Reason': 'Invalid country'
+                    })
                     continue
+
                 valid_type_raw = str(row.get('license valid upto')).strip() if row.get('license valid upto') else None
                 valid_type = unicodedata.normalize('NFKC', valid_type_raw).title() if valid_type_raw else None
 
                 if valid_type and valid_type not in ALLOWED_VALID_TYPES:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": f"Row with License Valid Upto has invalid 'valid type'='{valid_type}'. Allowed values: {', '.join(ALLOWED_VALID_TYPES)}."
-                    }, status=400)
+                    skipped_rows.append({
+                        'License Full Name': full_name,
+                        'Country': country_name,
+                        'Reason': f"Invalid valid_type='{valid_type}'. Allowed: {', '.join(ALLOWED_VALID_TYPES)}"
+                    })
+                    continue
 
+                # Valid Upto checks
                 if valid_type == 'Valid Upto':
-                    if not valid_duration_value or not valid_duration_unit:
-                        return Response({
-                            "statusCode": 400,
-                            "status": False,
-                            "message": f"Row with License Valid Upto  has 'Valid Upto' type. 'valid_duration_value' and 'valid_duration_unit' are required."
-                        }, status=400)
-                elif valid_type == 'Date':
-                    if not valid_date:
-                        return Response({
-                            "statusCode": 400,
-                            "status": False,
-                            "message": f"Row with License Valid Upto has 'Date' type. 'valid_date' is required."
-                        }, status=400)
-                if valid_duration_unit and valid_duration_unit not in ALLOWED_VALID_UNITS:
-                        return Response({
-                            "statusCode": 400,
-                            "status": False,
-                            "message": f"Invalid valid_duration_unit='{valid_duration_unit}' in row '{full_name}'. Allowed: {', '.join(ALLOWED_VALID_UNITS)}."
-                        }, status=400)
+                    if valid_duration_value is None or not valid_duration_unit:
+                        skipped_rows.append({
+                            'License Full Name': full_name,
+                            'Country': country_name,
+                            'Reason': "'Valid Upto' type requires both valid_duration_value and valid_duration_unit"
+                        })
+                        continue
 
-             
+                    try:
+                        valid_duration_value = int(valid_duration_value)
+                        if valid_duration_value <= 0:
+                            raise ValueError
+                    except (ValueError, TypeError):
+                        skipped_rows.append({
+                            'License Full Name': full_name,
+                            'Country': country_name,
+                            'Reason': "Invalid 'valid_duration_value'. Must be a positive number."
+                        })
+                        continue
 
+                    if valid_duration_unit not in ALLOWED_VALID_UNITS:
+                        skipped_rows.append({
+                            'License Full Name': full_name,
+                            'Country': country_name,
+                            'Reason': f"Invalid 'valid_duration_unit'='{valid_duration_unit}'. Allowed: {', '.join(ALLOWED_VALID_UNITS)}"
+                        })
+                        continue
+
+                elif valid_type == 'Date' and not valid_date:
+                    skipped_rows.append({
+                        'License Full Name': full_name,
+                        'Country': country_name,
+                        'Reason': "Valid type 'Date' requires a valid 'license valid date'"
+                    })
+                    continue
+
+                # Check duplicates
                 existing = LicenseName.objects.filter(full_name__iexact=full_name, country=country_obj).first()
                 if existing:
                     if not existing.is_deleted:
-                        
                         duplicate_names.append({
                             'Country': country_obj.name,
                             'License Full Name': full_name
                         })
                         continue
                     else:
+                        # Restore soft-deleted record
                         existing.short_name = short_name
                         existing.issuing_authority = issuing_authority
                         existing.description = description
@@ -8497,7 +8844,10 @@ class LicenseNameImportAPIView(APIView):
                         existing.is_deleted = False
                         existing.save()
                         imported_count += 1
-                else:
+                        continue
+
+                # Create new entry
+                try:
                     LicenseName.objects.create(
                         full_name=full_name,
                         country=country_obj,
@@ -8511,25 +8861,27 @@ class LicenseNameImportAPIView(APIView):
                         is_deleted=False
                     )
                     imported_count += 1
+                except IntegrityError:
+                    duplicate_names.append({
+                        'Country': country_obj.name,
+                        'License Full Name': full_name
+                    })
 
         except Exception as e:
-            return Response({"statusCode": 400, "status": True, 'message': str(e)}, status=400)
+            return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
 
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": duplicate_names, 
+            "duplicates": duplicate_names,
+            "skipped_rows": skipped_rows,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
-        }, status=200)
+        })
 
 
 
-        
 #-------------------------------------------LeadSource---------------------------------
-
-
-
 
 class LeadSourceCreateAPIView(APIView):
     def post(self, request):
