@@ -5,6 +5,7 @@ import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
 import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
 import { civilIdNameImportData } from '../../../../store/master/generalMasters/actions';
+import { exportToExcelWrongData } from '../../../../helper/utils/commanHelper';
 const AddImportCivilIDNameModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
@@ -88,6 +89,21 @@ const AddImportCivilIDNameModal = ({ show, handleClose }) => {
                     if (response?.duplicates?.length > 0) {
                         handleExportToExcel(response.duplicates)
                     }
+                    
+                    if (response?.skipped_rows?.length > 0) {
+                        const prepareData = {
+                            data: response.skipped_rows || [],
+                            headers: ["Civil ID Name", "Reason"],
+                            sheetName: "CivilIDName",
+                            fileName: "CivilIDName",
+                        };
+                        exportToExcelWrongData(
+                            prepareData.data,
+                            prepareData.headers,
+                            prepareData.sheetName,
+                            prepareData.fileName
+                        );
+                    }
                     setFile(null);
                     setSheetNames([]);
                     setSelectedSheet('');
@@ -100,7 +116,7 @@ const AddImportCivilIDNameModal = ({ show, handleClose }) => {
     };
 
     const handleExportToExcel = (duplicatesData) => {
-        const header = ["Licence Name"];
+        const header = ["Civil ID Name"];
         const duplicates = duplicatesData //["test1", "test3", "test3"];
         const worksheetData = [header, ...duplicates.map((item) => [item])];
         const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
@@ -118,6 +134,7 @@ const AddImportCivilIDNameModal = ({ show, handleClose }) => {
 
         saveAs(blob, `CivilIDName-Duplicate-Data.xlsx`);
     };
+
     // Handle modal close
     const onClose = () => {
         setFile(null);
@@ -241,10 +258,10 @@ const AddImportCivilIDNameModal = ({ show, handleClose }) => {
             </div>
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
-                    downloadFileName:"CivilIDName",
-                    items: ["Civil ID Name", "Authority Full Name", "Authority Short Name", "ID Valid Duration", "Description"],
+                    downloadFileName: "CivilIDName",
+                    items: ["Civil ID Name", "Authority Full Name", "Authority Short Name", "Civil ID Valid Upto", "Description"],
                     selectedItems: ["Civil ID Name"],
-                    ItemsRequired:["Civil ID Name"]
+                    ItemsRequired: ["Civil ID Name"]
                 }
                 } />
             )}

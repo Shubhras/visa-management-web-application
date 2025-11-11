@@ -64,8 +64,8 @@ const CountryList = () => {
     "Description",
     "Modified On",
   ];
-  const [selectedItems, setSelectedItems] = useState(["Country Name"]);
-  const [ItemsRequired] = useState(["Country Name"]);
+  const [selectedItems, setSelectedItems] = useState(["Country Name","Continent"]);
+  const [ItemsRequired] = useState(["Country Name","Continent"]);
 
   // Table columns configuration
   const [tableColumns] = useState([
@@ -456,7 +456,7 @@ const CountryList = () => {
     // Map frontend display names to backend field keys
     const fieldMapping = {
       "Country Name": "name",
-      Continent: "continent_id",
+      "Continent": "continent",
       "Country Official Name": "officialName",
       "Country Short Name": "shortName",
       "Capital City": "capitalCity",
@@ -464,7 +464,7 @@ const CountryList = () => {
       "Currency Short Name": "currencyshortname",
       "Currency Code": "currencyCode",
       "Country Calling Code": "dialCodes",
-      Description: "description",
+      "Description": "description",
       "Modified On": "updated_at",
     };
 

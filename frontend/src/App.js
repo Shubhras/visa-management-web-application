@@ -389,6 +389,13 @@ import MediumofEducationList from "./pages/masters/educationMaster/mediumOfEduca
 import ECAForList from "./pages/masters/educationMaster/ecaFor/ECAForList";
 import LanguageNameTestList from "./pages/masters/testMaster/languageName(Test)/LanguageName(Test)List";
 import LanguageTestNameList from "./pages/masters/testMaster/languageTestName/LanguageTestNameList";
+import LanguageTestModuleNameList from "./pages/masters/testMaster/languageTestModuleName/LanguageTestModuleNameList";
+import LanguageBanchmarkLevelList from "./pages/masters/testMaster/languageBanchmarkLevel/LanguageBanchmarkLevelList";
+import CLBLevelList from "./pages/masters/testMaster/cLBLevel/CLBLevelList";
+import EntranceTestNameList from "./pages/masters/testMaster/entranceTestName/EntranceTestNameList";
+import EntranceTestModuleNameList from "./pages/masters/testMaster/entranceTestModuleName/EntranceTestModuleNameList";
+import EntranceTestResultList from "./pages/masters/testMaster/entranceTestResult/EntranceTestResultList";
+import LanguageTestResultList from "./pages/masters/testMaster/languageTestResult/LanguageTestResultList";
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   // Check if user is authenticated
@@ -663,6 +670,13 @@ function App() {
   {/* test Masters */}
        <Route path="/language-name-test" element={<ProtectedRoute><LanguageNameTestList/></ProtectedRoute>}></Route>
        <Route path="/language-test-name" element={<ProtectedRoute><LanguageTestNameList/></ProtectedRoute>}></Route>
+             <Route path="/language-test-module-name" element={<ProtectedRoute><LanguageTestModuleNameList /></ProtectedRoute>}></Route>
+        <Route path="/language-banchmark-level" element={<ProtectedRoute><LanguageBanchmarkLevelList /></ProtectedRoute>}></Route>
+        <Route path="/cbl-level" element={<ProtectedRoute><CLBLevelList/></ProtectedRoute>}></Route>
+        <Route path="/entrance-test-name" element={<ProtectedRoute><EntranceTestNameList/></ProtectedRoute>}></Route>
+        <Route path="/entrance-test-module-name" element={<ProtectedRoute><EntranceTestModuleNameList/></ProtectedRoute>}></Route>
+        <Route path="/entrance-test-result" element={<ProtectedRoute><EntranceTestResultList/></ProtectedRoute>}></Route>
+        <Route path="/language-test-result" element={<ProtectedRoute><LanguageTestResultList/></ProtectedRoute>}></Route>
 
 
         {/* 404 Error Page */}

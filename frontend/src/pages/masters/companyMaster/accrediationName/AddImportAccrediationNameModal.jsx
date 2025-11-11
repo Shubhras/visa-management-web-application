@@ -3,8 +3,9 @@ import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
-import {accreditationNameImportData} from '../../../../store/master/companyMasters/actions';
+import { accreditationNameImportData } from '../../../../store/master/companyMasters/actions';
 import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
+import { exportToExcelWrongData } from '../../../../helper/utils/commanHelper';
 const AddImportAccrediationNameModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
@@ -88,6 +89,21 @@ const AddImportAccrediationNameModal = ({ show, handleClose }) => {
                     if (response?.duplicates?.length > 0) {
                         handleExportToExcel(response.duplicates)
                     }
+                    if (response?.skipped_rows?.length > 0) {
+                        const prepareData = {
+                            data: response.skipped_rows || [],
+                            headers: ["Country", "Accrediation Category", "Accrediation Full Name", "Reason"],
+                            sheetName: "AccrediationName",
+                            fileName: "AccrediationName",
+                        };
+                        exportToExcelWrongData(
+                            prepareData.data,
+                            prepareData.headers,
+                            prepareData.sheetName,
+                            prepareData.fileName
+                        );
+                    }
+
                     setFile(null);
                     setSheetNames([]);
                     setSelectedSheet('');
@@ -101,7 +117,7 @@ const AddImportAccrediationNameModal = ({ show, handleClose }) => {
 
     const handleExportToExcel = (duplicatesData) => {
         // Define headers
-      const header = ["Country","Accrediation Category","Accrediation Full Name"];
+        const header = ["Country", "Accrediation Category", "Accrediation Full Name"];
 
         // Map the data in the same order as header
         const worksheetData = [
@@ -131,8 +147,6 @@ const AddImportAccrediationNameModal = ({ show, handleClose }) => {
 
         saveAs(blob, "AccrediationName-Duplicate-Data.xlsx");
     };
-
-
 
     // Handle modal close
     const onClose = () => {
@@ -257,10 +271,10 @@ const AddImportAccrediationNameModal = ({ show, handleClose }) => {
             </div>
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
-                    downloadFileName:"AccrediationName",
-                    items: ["Country","Accrediation Category", "Accrediation Full Name", "Accrediation Short Name", "Accrediation Issuing Authority Name", "Accrediation Valid Upto", "Description"],
-                    selectedItems: ["Country", "Accrediation Category","Accrediation Full Name"],
-                    ItemsRequired:["Country", "Accrediation Category","Accrediation Full Name"],
+                    downloadFileName: "AccrediationName",
+                    items: ["Country", "Accrediation Category", "Accrediation Full Name", "Accrediation Short Name", "Accrediation Issuing Authority Name", "Accrediation Valid Upto", "Description"],
+                    selectedItems: ["Country", "Accrediation Category", "Accrediation Full Name"],
+                    ItemsRequired: ["Country", "Accrediation Category", "Accrediation Full Name"],
                 }
                 } />
             )}

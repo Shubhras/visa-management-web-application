@@ -5,6 +5,7 @@ import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
 import { licenceNameImportData } from '../../../../store/master/companyMasters/actions';
 import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
+import { exportToExcelWrongData } from '../../../../helper/utils/commanHelper';
 const AddImportLicenceNameModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
@@ -88,6 +89,20 @@ const AddImportLicenceNameModal = ({ show, handleClose }) => {
                     if (response?.duplicates?.length > 0) {
                         handleExportToExcel(response.duplicates)
                     }
+                    if (response?.skipped_rows?.length > 0) {
+                        const prepareData = {
+                            data: response.skipped_rows || [],
+                            headers: ["Country", "License Full Name", "Reason"],
+                            sheetName: "LicenseName",
+                            fileName: "LicenseName",
+                        };
+                        exportToExcelWrongData(
+                            prepareData.data,
+                            prepareData.headers,
+                            prepareData.sheetName,
+                            prepareData.fileName
+                        );
+                    }
                     setFile(null);
                     setSheetNames([]);
                     setSelectedSheet('');
@@ -130,6 +145,7 @@ const AddImportLicenceNameModal = ({ show, handleClose }) => {
 
         saveAs(blob, "LicenseName-Duplicate-Data.xlsx");
     };
+
     // Handle modal close
     const onClose = () => {
         setFile(null);

@@ -410,9 +410,9 @@ const LanguageTestNameList = () => {
         }
         // Map frontend labels to backend field names
         const fieldMapping = {
-            "Language Name (Test)": "languageNameTest",
-            "Language Test Name": "languageTestName",
-            "Language Test Full Name": "languageTestFullName",
+            "Language Name (Test)": "language",
+            "Language Test Name": "name",
+            "Language Test Full Name": "fullname",
             "Modified On": "updated_at",
             "Description": "description",
         };
@@ -671,13 +671,13 @@ const LanguageTestNameList = () => {
                                                     </div>
                                                 </td>
                                                 {isColumnVisible('languageNameTest') && (
-                                                    <td><span>{rowItem.languageNameTest}</span></td>
+                                                    <td><span>{rowItem.language.name}</span></td>
                                                 )}
                                                 {isColumnVisible('languageTestName') && (
-                                                    <td><span>{rowItem.languageTestName}</span></td>
+                                                    <td><span>{rowItem.name}</span></td>
                                                 )}
                                                 {isColumnVisible('languageTestFullName') && (
-                                                    <td><span>{rowItem.languageTestFullName}</span></td>
+                                                    <td><span>{rowItem.fullname}</span></td>
                                                 )}
                                                 {isColumnVisible('description') && (
                                                     <td><span>{rowItem.description}</span></td>

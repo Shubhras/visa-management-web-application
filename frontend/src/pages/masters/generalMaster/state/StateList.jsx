@@ -53,7 +53,7 @@ const StateList = () => {
     { id: 'countryName', label: 'Country Name', field: 'countryName', visible: true, required: false },
     { id: 'stateName', label: 'State Name', field: 'stateName', visible: true, required: false },
     { id: 'stateshortName', label: 'State Short Name', field: 'stateshortName', visible: true, required: false },
-    { id: 'state', label: 'State / Territory', field: 'state', visible: false, required: false },
+    { id: 'state_display', label: 'State / Territory', field: 'state_display', visible: false, required: false },
     { id: 'description', label: 'Description', field: 'description', visible: false, required: false },
     { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false },
   ]);

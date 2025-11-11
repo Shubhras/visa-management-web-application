@@ -462,8 +462,8 @@ function* companyMasterSaga() {
   yield takeEvery(DELETE_ACCREDITATION_NAME, accreditationNameDeleteSaga);
   yield takeEvery(EXPORT_ACCREDITATION_NAME, accreditationNameExportDataSaga);
   yield takeEvery(IMPORT_ACCREDITATION_NAME_API, accreditationNameImportDataSaga);
-  yield takeEvery(IMPORT_ACCREDITATION_NAME_API, accreditationNameImportDataSaga);
-yield takeEvery(COUNTRY_LIST_DEMO, countryDemoSaga);
+
+  yield takeEvery(COUNTRY_LIST_DEMO, countryDemoSaga);
 
 }
 
