@@ -1672,7 +1672,7 @@ class StudyLanguageBenchmarkExportAPIView(APIView):
         # Field to header mapping
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Study Language Banchmark (SLB)',
+            'name': 'Language Banchmark Level',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'created_at': 'Created On',
@@ -1737,7 +1737,7 @@ class StudyLanguageBenchmarkImportAPIView(APIView):
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
 
-        required_headers = {'study language banchmark (SLB)'}  # must be present
+        required_headers = {'language banchmark level'}  # must be present
         optional_headers = {'description'}         # optional
 
         try:
@@ -1814,7 +1814,7 @@ class StudyLanguageBenchmarkImportAPIView(APIView):
 
             # ---------- Import Rows ----------
             for row in data:
-                name = str(row.get('study language banchmark (SLB)')).strip() if row.get('study language banchmark (SLB)') else None
+                name = str(row.get('language banchmark level')).strip() if row.get('language banchmark level') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not name:
