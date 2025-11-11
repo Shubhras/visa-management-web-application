@@ -145,7 +145,7 @@ class CivilIdName(models.Model):
     authority_full_name = models.CharField(max_length=255)
     authority_short_name = models.CharField(max_length=255, blank=True, null=True)
  
-    valid_type = models.CharField(max_length=20, choices=VALID_TYPE_CHOICES)
+    valid_type = models.CharField(max_length=20, choices=VALID_TYPE_CHOICES, blank=True, null=True)
     valid_duration_value = models.IntegerField(blank=True, null=True)
     valid_date=models.DateField(blank=True, null=True)
     valid_duration_unit = models.CharField(max_length=20, choices=VALID_UNIT_CHOICES, blank=True, null=True)
