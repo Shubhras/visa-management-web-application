@@ -7501,12 +7501,18 @@ class AccreditationNameImportAPIView(APIView):
 
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
+        skipped_rows = []
 
         required_headers = {'accrediation full name', 'country', 'accrediation category'}
-        optional_headers = {'accrediation short name', 'accrediation issuing authority name', 'accrediation valid type',
+        optional_headers = {
+            'accrediation short name',
+            'accrediation issuing authority name',
+            'accrediation valid type',
             'accrediation valid duration value',
             'accrediation valid duration unit',
-            'accrediation valid date','description'}
+            'accrediation valid date',
+            'description'
+        }
 
         try:
             data = []
@@ -7531,15 +7537,14 @@ class AccreditationNameImportAPIView(APIView):
 
                 ws = wb[sheet_name]
                 if ws.max_row <= 1:
-                    return Response(
-                        {'statusCode': 400, 'status': False, 'message': 'Sheet is empty'},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
+                    return Response({'statusCode': 400, 'status': False, 'message': 'Sheet is empty'},
+                                    status=status.HTTP_400_BAD_REQUEST)
 
                 headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
                 if not required_headers.issubset(set(headers)):
+                    missing = required_headers - set(headers)
                     return Response(
-                        {'statusCode': 400, 'status': True, 'message': f'Missing required headers: {required_headers}'},
+                        {'statusCode': 400, 'status': False, 'message': f'Missing required headers: {missing}'},
                         status=status.HTTP_400_BAD_REQUEST
                     )
 
@@ -7558,26 +7563,25 @@ class AccreditationNameImportAPIView(APIView):
                 for row in dataset.dict:
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
                     if not required_headers.issubset(set(row_lower.keys())):
+                        missing = required_headers - set(row_lower.keys())
                         return Response(
-                            {'statusCode': 400, 'status': True, 'message': f'Missing required headers: {required_headers}'},
+                            {'statusCode': 400, 'status': False, 'message': f'Missing required headers: {missing}'},
                             status=status.HTTP_400_BAD_REQUEST
                         )
                     data.append(row_lower)
 
             else:
                 return Response(
-                    {'statusCode': 400, 'status': True, 'error': 'Unsupported file format'},
+                    {'statusCode': 400, 'status': False, 'error': 'Unsupported file format'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
             # ---------- Import Data ----------
-            ALLOWED_VALID_TYPES = ['Permanent', 'Valid Upto', 'Date']
-            ALLOWED_VALID_UNITS = ['Months', 'Weeks', 'Years']
-            
+            ALLOWED_VALID_TYPES = ['PERMANENT', 'VALID UPTO', 'DATE']
+            ALLOWED_VALID_UNITS = ['MONTHS', 'WEEKS', 'YEARS']
             imported_count = 0
-            skipped_rows = []
 
-            for row in  reversed(data):
+            for row in reversed(data):
                 full_name = str(row.get('accrediation full name')).strip() if row.get('accrediation full name') else None
                 country_name = str(row.get('country')).strip() if row.get('country') else None
                 category_name = str(row.get('accrediation category')).strip() if row.get('accrediation category') else None
@@ -7596,7 +7600,6 @@ class AccreditationNameImportAPIView(APIView):
                     })
                     continue
 
-                # Map by name instead of ID
                 country = Country.objects.filter(name__iexact=country_name).first()
                 category = AccreditationCategory.objects.filter(name__iexact=category_name).first()
 
@@ -7607,34 +7610,32 @@ class AccreditationNameImportAPIView(APIView):
                     })
                     continue
 
-
                 if valid_type and valid_type not in ALLOWED_VALID_TYPES:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": f"Row with Accreditation Valid Type has invalid 'valid type'='{valid_type}'. Allowed values: {', '.join(ALLOWED_VALID_TYPES)}."
-                    }, status=400)
+                    skipped_rows.append({
+                        'full_name': full_name,
+                        'reason': f"Invalid valid_type='{valid_type}'. Allowed: {', '.join(ALLOWED_VALID_TYPES)}"
+                    })
+                    continue
 
-                if valid_type == 'Valid Upto' and (not valid_duration_value or not valid_duration_unit):
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": f"Row with Valid Upto type requires 'valid_duration_value' and 'valid_duration_unit'."
-                    }, status=400)
-                elif valid_type == 'Date' and not valid_date:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": f"Row with Date type requires 'valid_date'."
-                    }, status=400)
+                if valid_type == 'VALID UPTO' and (not valid_duration_value or not valid_duration_unit):
+                    skipped_rows.append({
+                        'full_name': full_name,
+                        'reason': f"Valid Upto type requires duration value and unit"
+                    })
+                    continue
+                elif valid_type == 'DATE' and not valid_date:
+                    skipped_rows.append({
+                        'full_name': full_name,
+                        'reason': f"Date type requires valid_date"
+                    })
+                    continue
 
                 if valid_duration_unit and valid_duration_unit not in ALLOWED_VALID_UNITS:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": f"Invalid valid_duration_unit='{valid_duration_unit}' in row '{full_name}'. Allowed: {', '.join(ALLOWED_VALID_UNITS)}."
-                    }, status=400)
-
+                    skipped_rows.append({
+                        'full_name': full_name,
+                        'reason': f"Invalid valid_duration_unit='{valid_duration_unit}'"
+                    })
+                    continue
 
                 existing = AccreditationName.objects.filter(
                     full_name__iexact=full_name,
@@ -7650,30 +7651,45 @@ class AccreditationNameImportAPIView(APIView):
                             'Accrediation Category': category_name
                         })
                         continue
-            try:
-                AccreditationName.objects.create(
-                    full_name=full_name,
-                    short_name=short_name,
-                    country=country,
-                    category=category,
-                    issuing_authority=issuing_authority,
-                    valid_type=valid_type,
-                    valid_duration_value=valid_duration_value,
-                    valid_duration_unit=valid_duration_unit,
-                    valid_date=valid_date,
-                    description=description
-                )
-                imported_count += 1
-            except IntegrityError:
+                    else:
+                        # Restore soft-deleted record
+                        existing.short_name = short_name
+                        existing.issuing_authority = issuing_authority
+                        existing.description = description
+                        existing.valid_type = valid_type
+                        existing.valid_duration_value = valid_duration_value
+                        existing.valid_duration_unit = valid_duration_unit
+                        existing.valid_date = valid_date
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
+                        continue
+
+                # Create new entry
+                try:
+                    AccreditationName.objects.create(
+                        full_name=full_name,
+                        short_name=short_name,
+                        country=country,
+                        category=category,
+                        issuing_authority=issuing_authority,
+                        valid_type=valid_type,
+                        valid_duration_value=valid_duration_value,
+                        valid_duration_unit=valid_duration_unit,
+                        valid_date=valid_date,
+                        description=description,
+                        is_deleted=False
+                    )
+                    imported_count += 1
+                except IntegrityError:
                     duplicate_names.append({
                         'Country': country_name,
                         'Accrediation Full Name': full_name,
                         'Accrediation Category': category_name
                     })
 
-
         except Exception as e:
-            return Response({'statusCode': 400, 'status': True, 'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'statusCode': 400, 'status': False, 'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({
             "statusCode": 200,
@@ -7683,9 +7699,6 @@ class AccreditationNameImportAPIView(APIView):
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=status.HTTP_200_OK)
-
-
-
 
 
 #-----------------Bank Account-----------------------        
