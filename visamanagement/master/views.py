@@ -3034,6 +3034,7 @@ class CityImportAPIView(APIView):
 
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
+        skipped_rows = []
 
         required_headers = {'city name', 'country name'}
         optional_headers = {'state name', 'district name','description'}
@@ -3110,24 +3111,64 @@ class CityImportAPIView(APIView):
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not city_name or not country_name or not state_name or not district_name:
+                    skipped_rows.append({
+                        "City Name": city_name or "Unknown",
+                        "State Name": state_name or "Unknown",
+                        "District Name": district_name or "Unknown",
+                        "Country Name": country_name or "Unknown",
+                        "Reason": "Missing required field"
+                    })
                     continue
 
+                # Fetch related objects
                 country_obj = Country.objects.filter(name__iexact=country_name).first()
                 state_obj = State.objects.filter(stateName__iexact=state_name, countryName=country_obj).first() if country_obj else None
-                district_obj = District.objects.filter(districtName__iexact=district_name, stateName=state_obj, countryName=country_obj).first() if state_obj else None
+                district_obj = District.objects.filter(
+                    districtName__iexact=district_name,
+                    stateName=state_obj,
+                    countryName=country_obj
+                ).first() if state_obj else None
 
-                if not country_obj or not state_obj or not district_obj:
-                     continue
+                # Skip rows with invalid references
+                if not country_obj:
+                    skipped_rows.append({
+                        "City Name": city_name,
+                        "Country Name": country_name,
+                        "Reason": "Country not found"
+                    })
+                    continue
+                if not state_obj:
+                    skipped_rows.append({
+                        "City Name": city_name,
+                        "State Name": state_name,
+                        "Country Name": country_name,
+                        "Reason": "State not found"
+                    })
+                    continue
+                if not district_obj:
+                    skipped_rows.append({
+                        "City Name": city_name,
+                        "District Name": district_name,
+                        "State Name": state_name,
+                        "Country Name": country_name,
+                        "Reason": "District not found"
+                    })
+                    continue
+                
                 existing = City.objects.filter(
                     cityName__iexact=city_name,
                     districtName=district_obj,
                     stateName=state_obj,
                     countryName=country_obj
                 ).first()
-
                 if existing:
                     if not existing.is_deleted:
-                        duplicate_names.append(city_name)
+                        duplicate_names.append({
+                            "City": existing.cityName,
+                            "District": district_obj.districtName,
+                            "State": state_obj.stateName,
+                            "Country": country_obj.name
+                        })
                         continue
                     else:
                         # Restore deleted record
@@ -3160,7 +3201,8 @@ class CityImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_names)),
+            "duplicates": duplicate_names,
+            "skipped_rows": skipped_rows,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=200)
