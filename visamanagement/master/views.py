@@ -1707,8 +1707,8 @@ class CountryImportAPIView(APIView):
                 country_name = str(row.get('country name')).strip() if row.get('country name') else None
                 if not country_name:
                     skipped_rows.append({
-                        "Country Name": "Unknown",
-                        "reason": "Missing required field: country name"
+                        "Country": "Unknown",
+                        "Reason": "Missing required field: country name"
                     })
                     continue
                 continent_name = str(row.get('continent')).strip() if row.get('continent') else ''
@@ -1737,9 +1737,9 @@ class CountryImportAPIView(APIView):
                     continent_obj = Continents.objects.filter(name__iexact=continent_name).first()
                     if not continent_obj:
                         skipped_rows.append({
-                            "Country Name": country_name,
-                            "continent": continent_name,
-                            "reason": "Invalid continent name"
+                            "Country ": country_name,
+                            "Continent": continent_name,
+                            "Reason": "Invalid continent name"
                         })
                         continue
 
