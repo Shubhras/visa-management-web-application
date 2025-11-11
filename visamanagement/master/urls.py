@@ -412,6 +412,14 @@ urlpatterns = [
     path('entrance-tests/export/', EntranceTestNameExportAPIView.as_view(), name='entrance-test-export'),
     path('entrance-tests/import/', EntranceTestNameImportAPIView.as_view(), name='entrance-test-import'),
 
+    path('entrance-tests-module/', EntranceTestModuleNameListAPIView.as_view(), name='entrance-test-list'),
+    path('entrance-tests-module/create/', EntranceTestModuleNameCreateAPIView.as_view(), name='entrance-test-create'),
+    path('entrance-tests-module/<uuid:uuid>/', EntranceTestModuleNameRetrieveAPIView.as_view(), name='entrance-test-retrieve'),
+    path('entrance-tests-module/<uuid:uuid>/update/', EntranceTestModuleNameUpdateAPIView.as_view(), name='entrance-test-update'),
+    path('entrance-tests-module/delete/', EntranceTestModuleNameDeleteAPIView.as_view(), name='entrance-test-delete'),
+    path('entrance-tests-module/export/', EntranceTestModuleExportAPIView.as_view(), name='entrance-test-export'),
+    path('entrance-tests-module/import/', EntranceTestModuleImportAPIView.as_view(), name='entrance-test-import'),
+
     path('entrancetestresult/list/', EntranceTestResultListAPIView.as_view(), name='entrancetestresult-list'),
     path('entrancetestresult/create/', EntranceTestResultCreateAPIView.as_view(), name='entrancetestresult-create'),
     path('entrancetestresult/<uuid:uuid>/', EntranceTestResultRetrieveAPIView.as_view(), name='entrancetestresult-retrieve'),
