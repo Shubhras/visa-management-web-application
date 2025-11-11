@@ -7428,11 +7428,11 @@ class AccreditationNameExportAPIView(APIView):
         field_header_map = {
             'uuid': 'UUID',
             'country': 'Country',
-            'category': 'Category Name',
+            'category': 'Accrediation Category',
             'full_name': 'Accrediation Full Name',
             'short_name': 'Accrediation Short Name',
             'issuing_authority': 'Accrediation Issuing Authority Name',
-            'valid_type': 'Accrediation Valid Type',
+            'valid_type': 'Accrediation Valid Upto',
             'valid_duration_value': 'Accrediation Valid Duration Value',
             'valid_duration_unit': 'Accrediation Valid Duration Unit',
             'valid_date': 'Accrediation Valid Date',
