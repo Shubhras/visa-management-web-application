@@ -4211,7 +4211,10 @@ class CivilIdNameImportAPIView(APIView):
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 
-                headers = [str(cell.value).strip().lower() if cell.value else "" for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                headers = []
+                for cell in next(ws.iter_rows(min_row=1, max_row=1)):
+                    header = str(cell.value).strip().lower().replace("_", " ").replace("-", " ") if cell.value else ""
+                    headers.append(header)
                 if not required_headers.issubset(set(headers)):
                     missing = required_headers - set(headers)
                     return Response(
