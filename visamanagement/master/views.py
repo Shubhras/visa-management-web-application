@@ -4128,6 +4128,7 @@ class CivilIdNameExportAPIView(APIView):
                 # display choice labels
                 if field == "valid_type" and obj.valid_type:
                     value = obj.get_valid_type_display()
+                
  
                 if field == "valid_duration_unit" and obj.valid_duration_unit:
                     value = obj.get_valid_duration_unit_display()
@@ -4135,6 +4136,9 @@ class CivilIdNameExportAPIView(APIView):
                 # Format date
                 if field in ["created_at", "updated_at"] and value:
                     value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
+                
+                if field == "valid_date" and value:
+                    value = value.strftime("%d-%m-%Y")
  
                 row.append(value if value is not None else "")
             dataset.append(row)
@@ -4323,7 +4327,7 @@ class CivilIdNameImportAPIView(APIView):
                     skipped_rows.append({
                         "Civil ID Name": civil_id_name,
                         "Authority Full Name": authority_full_name,
-                        'Reason': "Accrediation Valid Date  requires valid_date formate DD-MM_YYY"
+                        'Reason': "Civil ID Valid Date  requires valid_date formate DD-MM_YYY"
                     })
                     continue
 
@@ -4331,7 +4335,7 @@ class CivilIdNameImportAPIView(APIView):
                     skipped_rows.append({
                         "Civil ID Name": civil_id_name,
                         "Authority Full Name": authority_full_name,
-                        'Reason': f"Invalid 'Accrediation Valid Unit'='{valid_duration_unit}'. Please use one of: Months, Weeks, Years"
+                        'Reason': f"Invalid 'Civil ID Valid Unit'='{valid_duration_unit}'. Please use one of: Months, Weeks, Years"
                     })
                     continue
 
@@ -7549,6 +7553,8 @@ class AccreditationNameExportAPIView(APIView):
                     value = accred.country.name
                 elif field == 'category' and accred.category:
                     value = accred.category.name
+                if field == "valid_date" and value:
+                    value = value.strftime("%d-%m-%Y")
 
                 elif isinstance(value, bool):
                     value = int(value)
@@ -8502,9 +8508,10 @@ class LicenseNameExportAPIView(APIView):
                 if field in ['created_at', 'updated_at'] and value:
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif field == 'valid_date' and value:
-                    value = value.strftime("%Y-%m-%d")
+                    value = value.strftime("%d-%m-%Y")
                 elif isinstance(value, bool):
                     value = int(value)
+                
 
                 row.append(value if value is not None else '')
             dataset.append(row)
