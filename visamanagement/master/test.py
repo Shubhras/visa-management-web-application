@@ -1415,7 +1415,7 @@ class CLBLevelImportAPIView(APIView):
         duplicate_names = []
 
         # Define required and optional headers
-        required_headers = {'CLB Level'}           # must be present
+        required_headers = {'clb level'}           # must be present
         optional_headers = {'description'}    # optional
 
         try:
@@ -1509,7 +1509,7 @@ class CLBLevelImportAPIView(APIView):
 
             # ---------- Import Rows ----------
             for row in data:
-                name = str(row.get('CLB Level')).strip() if row.get('CLB Level') else None
+                name = str(row.get('clb level')).strip() if row.get('clb level') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not name:
