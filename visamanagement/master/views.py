@@ -2183,6 +2183,7 @@ class StateImportAPIView(APIView):
                     skipped_rows.append({
                         "State Name": state_name or "Unknown",
                         "Country Name": country_name or "Unknown",
+                        "State / Territory":state_type or "Unknown",
                         "Reason": "Missing required field or Invalid state type: Use (State, Territory)"
                     })
                     continue
@@ -2191,6 +2192,7 @@ class StateImportAPIView(APIView):
                     skipped_rows.append({
                         "State Name": state_name,
                         "Country Name": country_name,
+                        "State / Territory":state_type or "Unknown",
                         "Reason": f'Invalid state type: Use (State, Territory)'
                     })
                     continue
@@ -2201,6 +2203,7 @@ class StateImportAPIView(APIView):
                     skipped_rows.append({
                         "State Name": state_name,
                         "Country Name": country_name,
+                        "State / Territory":state_type or "Unknown",
                         "Reason": "Country not found"
                     })
                     continue
