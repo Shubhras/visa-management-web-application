@@ -1595,7 +1595,7 @@ class CountryExportAPIView(APIView):
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-
+        dataset.title = 'Country'
         for obj in queryset:
             row = []
             for field in field_list:
@@ -2176,17 +2176,22 @@ class StateImportAPIView(APIView):
                 country_name = str(row.get('country name')).strip() if row.get('country name') else None
                 short_name = str(row.get('state short name')).strip() if row.get('state short name') else ''
                 description = str(row.get('description')).strip() if row.get('description') else ''
-                
-                # Convert state/territory value to uppercase
-                state_type = str(row.get('state / territory')).strip().upper() if row.get('state / territory') else 'STATE'
-                if state_type and state_type not in ['STATE', 'TERRITORY']:
-                    state_type = None
+                state_type = str(row.get('state / territory')).strip().upper() if row.get('state / territory') else None
+          
 
-                if not state_name or not country_name:
+                if not state_name or not country_name or not state_type:
                     skipped_rows.append({
                         "State": state_name or "Unknown",
                         "Country": country_name or "Unknown",
-                        "Reason": "Missing required field"
+                        "Reason": "Missing required field or state type"
+                    })
+                    continue
+
+                if state_type not in ['STATE', 'TERRITORY']:
+                    skipped_rows.append({
+                        "State": state_name,
+                        "Country": country_name,
+                        "Reason": f'Invalid state type: {state_type}'
                     })
                     continue
 
@@ -2556,6 +2561,7 @@ class DistrictImportAPIView(APIView):
 
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
+        skipped_rows = []
 
         required_headers = {'district name', 'country name'}
         optional_headers = {'description','state name'}
@@ -2631,20 +2637,29 @@ class DistrictImportAPIView(APIView):
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not district_name or not country_name:
-                    continue  # Only skip if district or country is missing
+                    skipped_rows.append({
+                        "District": district_name or "Unknown",
+                        "Country": country_name or "Unknown",
+                        "Reason": "Missing required field"
+                    })
+                    continue
 
                 country_obj = Country.objects.filter(name__iexact=country_name).first()
                 state_obj = None
                 if state_name and country_obj:
                     state_obj = State.objects.filter(stateName__iexact=state_name, countryName=country_obj).first()
 
-                # If country not found, skip the row
                 if not country_obj:
+                    skipped_rows.append({
+                        "District": district_name,
+                        "Country": country_name,
+                        "Reason": "Country not found"
+                    })
                     continue
 
                 existing = District.objects.filter(
                     districtName__iexact=district_name,
-                    stateName=state_obj,  # can be None
+                    stateName=state_obj, 
                     countryName=country_obj
                 ).first()
 
@@ -2657,7 +2672,7 @@ class DistrictImportAPIView(APIView):
                         existing.districtName = district_name
                         existing.stateName = state_obj
                         existing.countryName = country_obj
-                        existing.description = description  # fixed typo
+                        existing.description = description  
                         existing.is_deleted = False
                         existing.save()
                         imported_count += 1
@@ -2680,7 +2695,8 @@ class DistrictImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_names)),
+            "duplicates": duplicate_names,
+            "skipped_rows": skipped_rows,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=200)
