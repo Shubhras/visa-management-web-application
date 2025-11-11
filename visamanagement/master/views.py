@@ -4172,8 +4172,9 @@ class CivilIdNameImportAPIView(APIView):
         duplicate_names = []
         skipped_rows = []
 
-        required_headers = {"civil id name", "authority full name"}
+        required_headers = {"civil id name"}
         optional_headers = {
+            "authority full name",
             "authority short name",
             "civil id valid type",
             "civil id valid date",
@@ -4275,14 +4276,12 @@ class CivilIdNameImportAPIView(APIView):
                         if not valid_date:
                             skipped_rows.append({
                                 "Civil ID Name": civil_id_name or "Unknown",
-                                "Authority Full Name": authority_full_name or "Unknown",
                                 'reason': f"Invalid date format '{valid_date_raw}'. Expected formats: dd-mm-yyyy, dd/mm/yyyy, or yyyy-mm-dd"
                             })
                             continue
                 if not civil_id_name or not authority_full_name:
                     skipped_rows.append({
                         "Civil ID Name": civil_id_name or "Unknown",
-                        "Authority Full Name": authority_full_name or "Unknown",
                         "reason": "Missing required fields",
                     })
                     continue
@@ -4290,7 +4289,6 @@ class CivilIdNameImportAPIView(APIView):
                 if valid_type and valid_type not in ALLOWED_VALID_TYPES:
                     skipped_rows.append({
                         "Civil ID Name": civil_id_name,
-                        "Authority Full Name": authority_full_name,
                         "reason": f"Invalid valid_type='{valid_type}'. Allowed: {ALLOWED_VALID_TYPES}"
                     })
                     continue
@@ -4300,7 +4298,6 @@ class CivilIdNameImportAPIView(APIView):
                     if valid_duration_value is None:
                         skipped_rows.append({
                             "Civil ID Name": civil_id_name,
-                            "Authority Full Name": authority_full_name,
                             "reason": "Valid Upto type requires numeric 'valid duration value' and 'valid duration unit'"
                         })
                         continue
@@ -4311,7 +4308,6 @@ class CivilIdNameImportAPIView(APIView):
                     except (ValueError, TypeError):
                         skipped_rows.append({
                             "Civil ID Name": civil_id_name,
-                            "Authority Full Name": authority_full_name,
                             "reason": "Invalid 'valid duration value'. Use positive numeric value."
                         })
                         continue
@@ -4319,14 +4315,12 @@ class CivilIdNameImportAPIView(APIView):
                     if not valid_duration_unit or valid_duration_unit not in ALLOWED_VALID_UNITS:
                         skipped_rows.append({
                             "Civil ID Name": civil_id_name,
-                            "Authority Full Name": authority_full_name,
                             "reason": f"Invalid 'valid duration unit'. Allowed: {ALLOWED_VALID_UNITS}"
                         })
                         continue
                 elif valid_type == 'Date' and not valid_date:
                     skipped_rows.append({
                         "Civil ID Name": civil_id_name,
-                        "Authority Full Name": authority_full_name,
                         'Reason': "Civil ID Valid Date  requires valid_date formate DD-MM_YYY"
                     })
                     continue
@@ -4334,7 +4328,6 @@ class CivilIdNameImportAPIView(APIView):
                 if valid_duration_unit and valid_duration_unit not in ALLOWED_VALID_UNITS:
                     skipped_rows.append({
                         "Civil ID Name": civil_id_name,
-                        "Authority Full Name": authority_full_name,
                         'Reason': f"Invalid 'Civil ID Valid Unit'='{valid_duration_unit}'. Please use one of: Months, Weeks, Years"
                     })
                     continue
