@@ -1748,7 +1748,7 @@ class CountryImportAPIView(APIView):
                     if not getattr(existing, "is_deleted", False):
                         duplicate_names.append({
                             "Country": existing.name,
-                            "Continent":existing.continent 
+                            "Continent": existing.continent.name if existing.continent else None 
                         })
                         continue
                     else:
@@ -2101,6 +2101,7 @@ class StateImportAPIView(APIView):
 
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
+        skipped_rows = []
 
         required_headers = {'state name', 'country name'}
         optional_headers = { 'state / territory','state short name', 'description'}
@@ -2182,18 +2183,31 @@ class StateImportAPIView(APIView):
                     state_type = None
 
                 if not state_name or not country_name:
+                    skipped_rows.append({
+                        "State": state_name or "Unknown",
+                        "Country": country_name or "Unknown",
+                        "Reason": "Missing required field"
+                    })
                     continue
 
                 # Get related Country object
                 country_obj = Country.objects.filter(name__iexact=country_name).first()
                 if not country_obj:
-                    continue  # skip row if country not found
+                    skipped_rows.append({
+                        "State": state_name,
+                        "Country": country_name,
+                        "Reason": "Country not found"
+                    })
+                    continue
 
                 # Check for existing state
                 existing = State.objects.filter(stateName__iexact=state_name, countryName=country_obj).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicate_names.append(state_name)
+                        duplicate_names.append({
+                            "State": existing.stateName,
+                            "Country": country_obj.name
+                        })
                         continue
                     else:
                         # Restore deleted record
@@ -2225,7 +2239,8 @@ class StateImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_names)),
+            "duplicates": duplicate_names,
+            "skipped_rows": skipped_rows,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=200)
