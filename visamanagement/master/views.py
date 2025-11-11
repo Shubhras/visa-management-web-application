@@ -2191,7 +2191,7 @@ class StateImportAPIView(APIView):
                     skipped_rows.append({
                         "State Name": state_name,
                         "Country Name": country_name,
-                        "Reason": f'Invalid state type: {state_type}'
+                        "Reason": f'Invalid state type: Use (State, Territory)'
                     })
                     continue
 
