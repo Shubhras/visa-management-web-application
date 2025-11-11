@@ -7591,7 +7591,7 @@ class AccreditationNameImportAPIView(APIView):
                 description = str(row.get('description')).strip() if row.get('description') else ''
                 valid_type = str(row.get('accrediation valid upto')).strip() if row.get('accrediation valid upto') else None
                 valid_duration_value = row.get('accrediation valid duration value')
-                valid_duration_unit = str(row.get('accrediation valid duration unit')).strip().upper() if row.get('accrediation valid duration unit') else None
+                valid_duration_unit = str(row.get('accrediation valid duration unit')).strip() if row.get('accrediation valid duration unit') else None
                 valid_date_raw = row.get('accrediation valid date')
                 valid_date = None
                 if valid_date_raw:
