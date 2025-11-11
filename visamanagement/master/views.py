@@ -4278,8 +4278,8 @@ class CivilIdNameImportAPIView(APIView):
                                 continue
                         if not valid_date:
                             skipped_rows.append({
-                                "Civil ID Name": civil_id_name or "Unknown",
-                                'Reason': f"Invalid date format '{valid_date_raw}'. Expected formats: dd-mm-yyyy, dd/mm/yyyy, or yyyy-mm-dd"
+                                "Civil ID Name": civil_id_name or " ",
+                                'Reason': f"Invalid date format '{valid_date_raw}'. Expected formats: dd-mm-yyyy, dd/mm/yyyy"
                             })
                             continue
                 if not civil_id_name:
@@ -7695,13 +7695,13 @@ class AccreditationNameImportAPIView(APIView):
                                 'full_name': full_name,
                                 'country': country_name,
                                 'category': category_name,
-                                'reason': f"Invalid date format '{valid_date_raw}'. Expected formats: dd-mm-yyyy, dd/mm/yyyy, or yyyy-mm-dd"
+                                'reason': f"Invalid date format '{valid_date_raw}'. Expected formats: dd-mm-yyyy, dd/mm/yyyy "
                             })
                             continue
 
                 if not full_name or not country_name or not category_name:
                     skipped_rows.append({
-                        'full_name': full_name or 'Unknown',
+                        'full_name': full_name or ' ',
                         'Reason': f"Missing required fields. Required: {', '.join(required_headers)}"
                     })
                     continue
@@ -8631,7 +8631,7 @@ class LicenseNameImportAPIView(APIView):
                             skipped_rows.append({
                                 'License Full Name': full_name,
                                 'Country': country_name,
-                                'Reason': f"Invalid date format '{valid_date_raw}'. Expected formats: dd-mm-yyyy, dd/mm/yyyy, or yyyy-mm-dd"
+                                'Reason': f"Invalid date format '{valid_date_raw}'. Expected formats: dd-mm-yyyy, dd/mm/yyyy "
                             })
                             continue
 
