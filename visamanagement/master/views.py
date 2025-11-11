@@ -7656,7 +7656,8 @@ class AccreditationNameImportAPIView(APIView):
                         'Accrediation Full Name': full_name,
                         'Country': country_name,
                         'Accrediation Category': category_name,
-                        'Reason': "Valid Upto type requires duration value and unit"
+                        'Reason': "Valid Upto type requires 'Accrediation Valid Duration' as numeric and 'Accrediation Valid Unit' as one of: Months, Weeks, Years"
+
                     })
                     continue
 
@@ -7665,7 +7666,7 @@ class AccreditationNameImportAPIView(APIView):
                         'Accrediation Full Name': full_name,
                         'Country': country_name,
                         'Accrediation Category': category_name,
-                        'Reason': "Date type requires valid_date"
+                        'Reason': "Accrediation Valid Date  requires valid_date formate DD-MM_YYY"
                     })
                     continue
 
@@ -7674,7 +7675,7 @@ class AccreditationNameImportAPIView(APIView):
                         'Accrediation Full Name': full_name,
                         'Country': country_name,
                         'Accrediation Category': category_name,
-                        'Reason': f"Invalid valid_duration_unit='{valid_duration_unit}'"
+                        'Reason': f"Invalid 'Accrediation Valid Unit'='{valid_duration_unit}'. Please use one of: Months, Weeks, Years"
                     })
                     continue
 
