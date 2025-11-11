@@ -1747,7 +1747,7 @@ class CountryImportAPIView(APIView):
                 if existing:
                     if not getattr(existing, "is_deleted", False):
                         duplicate_names.append({
-                            "Country Name": existing.name,
+                            "Country": existing.name,
                             "Continent":existing.continent 
                         })
                         continue
@@ -1784,8 +1784,8 @@ class CountryImportAPIView(APIView):
                         imported_count += 1
                     except IntegrityError:
                         duplicate_names.append({
-                            "Country Name": country_name,
-                            "Continent":continent_obj.name
+                            "Country": country_name,
+                            "Continent": continent_obj.name if continent_obj else ""
                         })
 
         except Exception as e:
