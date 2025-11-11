@@ -52,7 +52,7 @@ const MediumofEducationList = () => {
 
   // Table columns configuration
   const [tableColumns] = useState([
-    { id: 'name', label: 'Medium of Education', field: 'name', visible: true, required: false },
+    { id: 'name', label: 'Medium of Education', field: 'name', visible: true, required: true },
     { id: 'perticulars', label: 'Perticulars', field: 'perticulars', visible: true, required: false },
     { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false },
   ]);
@@ -103,7 +103,7 @@ const MediumofEducationList = () => {
     limit: 25,
     search: '',
     status: '',
-    sortBy: 'updated_at', // Field to sort by
+    sortBy: 'created_at', // Field to sort by
     sortOrder: 'desc', // 'asc' or 'desc'
     total: 0,
     totalPages: 0,

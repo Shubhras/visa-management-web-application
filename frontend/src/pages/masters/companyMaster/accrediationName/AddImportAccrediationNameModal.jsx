@@ -100,24 +100,40 @@ const AddImportAccrediationNameModal = ({ show, handleClose }) => {
     };
 
     const handleExportToExcel = (duplicatesData) => {
-        const header = ["Accrediation Name"];
-        const duplicates = duplicatesData //["test1", "test3", "test3"];
-        const worksheetData = [header, ...duplicates.map((item) => [item])];
+        // Define headers
+      const header = ["Country","Accrediation Category","Accrediation Full Name"];
+
+        // Map the data in the same order as header
+        const worksheetData = [
+            header,
+            ...duplicatesData.map(item => [
+                item["Country"] || "",
+                item["Accrediation Category"] || "",
+                item["Accrediation Full Name"] || ""
+            ])
+        ];
+
+        // Create worksheet and workbook
         const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "AccrediationName");
 
+        // Write workbook to buffer
         const excelBuffer = XLSX.write(workbook, {
             bookType: "xlsx",
-            type: "array",
+            type: "array"
         });
 
+        // Create Blob and save file
         const blob = new Blob([excelBuffer], {
-            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         });
 
-        saveAs(blob, `Accrediation-Duplicate-Data.xlsx`);
+        saveAs(blob, "AccrediationName-Duplicate-Data.xlsx");
     };
+
+
+
     // Handle modal close
     const onClose = () => {
         setFile(null);
@@ -243,8 +259,8 @@ const AddImportAccrediationNameModal = ({ show, handleClose }) => {
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
                     downloadFileName:"AccrediationName",
                     items: ["Country","Accrediation Category", "Accrediation Full Name", "Accrediation Short Name", "Accrediation Issuing Authority Name", "Accrediation Valid Upto", "Description"],
-                    selectedItems: ["Country", "Accrediation Category","Accrediation Full Name", "Accrediation Short Name", "Accrediation Issuing Authority Name", "Accrediation Valid Upto",],
-                    ItemsRequired:["Country", "Accrediation Category","Accrediation Full Name", "Accrediation Short Name", "Accrediation Issuing Authority Name", "Accrediation Valid Upto"]
+                    selectedItems: ["Country", "Accrediation Category","Accrediation Full Name"],
+                    ItemsRequired:["Country", "Accrediation Category","Accrediation Full Name"],
                 }
                 } />
             )}

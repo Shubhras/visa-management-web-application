@@ -5,11 +5,11 @@ import MasterLayout from "../../../../masterLayout/MasterLayout";
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { Link } from 'react-router-dom';
 import { toast } from "react-toastify";
-import AddImportEducationLevelModal from './AddImportEducationLevelModal';
-import AddEditEducationLevelModal from './AddEditEducationLevelModal';
-import { educationLevelList, educationLevelDelete, educationLevelExportData } from "../../../../store/master/educationMaster/action";
+import { languageTestNameList, languageTestNameDelete, languageTestNameExportData } from '../../../../store/master/testMaster/action';
+import AddImportLanguageTestNameModal from './AddImportLanguageTestNameModal';
+import AddEditLanguageTestNameModal from './AddEditLanguageTestNameModal';
 
-const EducationLevelList = () => {
+const LanguageTestNameList = () => {
     const dispatch = useDispatch();
     const [modalState, setModalState] = useState({
         show: false,
@@ -30,7 +30,7 @@ const EducationLevelList = () => {
             mode: 'add',
             rowData: null
         });
-        fetchBankAccountTypeList();
+        fetchDepartmentList();
     }
 
     // const [showEdit, setShowEdit] = useState(false);
@@ -38,20 +38,22 @@ const EducationLevelList = () => {
     const [rowSelectData, setRowSelectData] = useState({});
     const [selectedRows, setSelectedRows] = useState([]);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-    const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this education level type?");
+    const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this language test name?");
     const [showExportPopop, setShowExportPopop] = useState(false);
     const [deleteId, setDeleteId] = useState(null);
     const [selectAllOrNot, setSelectAllOrNot] = useState('');
-    const [stakeholderTypeData, setStakeholderTypeData] = useState([]);
+    const [departments, setDepartments] = useState([]);
     const [loading, setLoading] = useState(false);
     const [loadingExport, setLoadingExport] = useState(false);
-    const [items] = useState(["Education Level", "Education Level Code", "Description", "Modified On"]);
-    const [selectedItems, setSelectedItems] = useState(["Education Level", "Education Level Code"]);
-    const [ItemsRequired] = useState(["Education Level", "Education Level Code"]);
+    const [items] = useState(["Language Name (Test)", "Language Test Name", "Language Test Full Name", "Description", "Modified On"]);
+    const [selectedItems, setSelectedItems] = useState(["Language Name (Test)", "Language Test Name"]);
+    const [ItemsRequired] = useState(["Language Name (Test)", "Language Test Name"]);
 
+    // Table columns configuration
     const [tableColumns] = useState([
-        { id: 'level_code_detail', label: 'Education Level Code', field: 'level_code_detail', visible: true, required: true },
-        { id: 'educationlevel', label: 'Education Level ', field: 'educationlevel', visible: true, required: true },
+        { id: 'languageNameTest', label: 'Language Name (Test)', field: 'languageNameTest', visible: true, required: true },
+        { id: 'languageTestName', label: 'Language Test Name', field: 'languageTestName', visible: true, required: true },
+        { id: 'languageTestFullName', label: 'Language Test Full Name', field: 'languageTestFullName', visible: true, required: false },
         { id: 'description', label: 'Description', field: 'description', visible: true, required: false },
         { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false },
     ]);
@@ -114,7 +116,7 @@ const EducationLevelList = () => {
     useEffect(() => {
         const timer = setTimeout(() => {
             if (tableState.search !== undefined) {
-                fetchBankAccountTypeList();
+                fetchDepartmentList();
             }
         }, 500);
 
@@ -122,10 +124,10 @@ const EducationLevelList = () => {
     }, [tableState.search]);
 
     useEffect(() => {
-        fetchBankAccountTypeList();
+        fetchDepartmentList();
     }, [tableState.page, tableState.limit, tableState.status, tableState.sortBy, tableState.sortOrder]);
 
-    const fetchBankAccountTypeList = () => {
+    const fetchDepartmentList = () => {
         setLoading(true);
         const params = {
             page: tableState.page,
@@ -136,12 +138,12 @@ const EducationLevelList = () => {
             sortOrder: tableState.sortOrder || ''
         };
 
-        dispatch(educationLevelList(params, (response, error) => {
+        dispatch(languageTestNameList(params, (response, error) => {
             setLoading(false);
             if (response?.statusCode === 200 && response?.status === true) {
                 const paginationData = response?.pagination || {};
 
-                setStakeholderTypeData(response?.data || []);
+                setDepartments(response?.data || []);
                 setTableState(prev => ({
                     ...prev,
                     total: paginationData.totalItems || 0,
@@ -150,6 +152,7 @@ const EducationLevelList = () => {
                     hasNext: paginationData.nextPage || false,
                     hasPrevious: paginationData.previousPage || false
                 }));
+
                 setSelectedRows(prev => {
                     const filtered = prev.filter(rowId =>
                         response?.data.some(rowItems => rowItems.uuid === rowId)
@@ -157,7 +160,7 @@ const EducationLevelList = () => {
                     return filtered;
                 });
             } else {
-                setStakeholderTypeData([]);
+                setDepartments([]);
                 setTableState(prev => ({
                     ...prev,
                     total: 0,
@@ -226,14 +229,14 @@ const EducationLevelList = () => {
         if (isAllSelected) {
             setSelectedRows([]);
         } else {
-            setSelectedRows(stakeholderTypeData.map(Item => Item.uuid));
+            setSelectedRows(departments.map(Item => Item.uuid));
         }
     };
     // For checkbox in table header
     const handleSelectAll = (e) => {
         const checked = e.target.checked;
         if (checked) {
-            setSelectedRows(stakeholderTypeData.map(Item => Item.uuid));
+            setSelectedRows(departments.map(Item => Item.uuid));
         } else {
             setSelectedRows([]);
             setSelectAllOrNot('');
@@ -250,8 +253,8 @@ const EducationLevelList = () => {
         });
     };
 
-    const isAllSelected = stakeholderTypeData.length > 0 &&
-        stakeholderTypeData.every(Item => selectedRows.includes(Item.uuid));
+    const isAllSelected = departments.length > 0 &&
+        departments.every(Item => selectedRows.includes(Item.uuid));
 
     const goToPage = (page) => {
         if (page >= 1 && page <= tableState.totalPages) {
@@ -292,11 +295,6 @@ const EducationLevelList = () => {
         return pages;
     };
 
-    // const handleCloseEdit = () => {
-    //   setShowEdit(false);
-    //   fetchBankAccountTypeList();
-    // };
-
     const handleShowEdit = (rowData) => {
         setModalState({
             show: true,
@@ -304,13 +302,14 @@ const EducationLevelList = () => {
             rowData: rowData
         });
     };
+
     const handleSelectAllOrNot = (a) => {
         setSelectAllOrNot(a);
     }
     const handleDelete = (uuid) => {
         setDeleteId(uuid);
         setShowDeleteConfirm(true);
-        setDeleteConfirmMessage(`Are you sure you want to delete this education level?`);
+        setDeleteConfirmMessage(`Are you sure you want to delete this language test name?`);
     };
 
     const handleBulkDelete = () => {
@@ -319,8 +318,8 @@ const EducationLevelList = () => {
             return;
         }
         // Choose message based on delete type
-        const message = selectAllOrNot === "all" ? `${tableState.total} all education level ` : `${selectedRows.length} selected education level`;
-        setDeleteConfirmMessage(`Are you sure you want to delete this education level (${message})?`);
+        const message = selectAllOrNot === "all" ? `${tableState.total} all language test names` : `${selectedRows.length} selected language test name`;
+        setDeleteConfirmMessage(`Are you sure you want to delete this language test name (${message})?`);
         setShowDeleteConfirm(true);
     };
 
@@ -328,22 +327,22 @@ const EducationLevelList = () => {
         // const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
         const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
         if (!sendPayload || sendPayload.length === 0) {
-            toast.error("No Education Level selected for deletion.");
+            toast.error("No language test name selected for deletion.");
             return;
         }
-        dispatch(educationLevelDelete(sendPayload, (response, error) => {
+        dispatch(languageTestNameDelete(sendPayload, (response, error) => {
             if (error) {
                 toast.error(error?.response?.data?.message || "server error");
             } else {
                 if (response?.statusCode === 200 && response?.status === true) {
                     toast.success(response?.message);
-                    setStakeholderTypeData(prevRowItems => prevRowItems.filter(Item => Item.uuid !== deleteId));
+                    setDepartments(prevRowItems => prevRowItems.filter(Item => Item.uuid !== deleteId));
                     setSelectedRows(prevSelected => prevSelected.filter(rowId => rowId !== deleteId));
                     setShowDeleteConfirm(false);
                     setSelectedRows([]);
                     setSelectAllOrNot('');
                     setDeleteId(null);
-                    fetchBankAccountTypeList();
+                    fetchDepartmentList();
                 } else {
                     toast.error("Something went wrong.");
                 }
@@ -361,7 +360,7 @@ const EducationLevelList = () => {
 
     const handleCloseImport = () => {
         setShowImport(false);
-        fetchBankAccountTypeList();
+        fetchDepartmentList();
     };
 
     const handleShowImport = () => {
@@ -405,34 +404,29 @@ const EducationLevelList = () => {
     };
 
     const handleExport = () => {
-
         if (selectedItems.length == 0) {
             toast.error("Please select at least one field");
             return
         }
         // Map frontend labels to backend field names
         const fieldMapping = {
-            "Education Level": "educationlevel",
-            "Education Level Code": "level_code",
+            "Language Name (Test)": "languageNameTest",
+            "Language Test Name": "languageTestName",
+            "Language Test Full Name": "languageTestFullName",
             "Modified On": "updated_at",
             "Description": "description",
         };
         // Convert selectedItems to backend field names
         const mappedFields = selectedItems.map((item) => fieldMapping[item] || item);
-        // console.log("mappedFields",mappedFields);
         // Convert to comma-separated string
         const fieldsString = mappedFields.join(",");
-        // console.log("User selected:", selectedItems);
-        // console.log("Mapped to backend:", mappedFields);
-        // console.log("Sending to API:", fieldsString);
         const sendPayload = {
             file: "xlsx",
             fields: fieldsString,
             uuids: selectAllOrNot === "all" ? [] : selectedRows,
         };
-
         setLoadingExport(true);
-        dispatch(educationLevelExportData(sendPayload, (response, error) => {
+        dispatch(languageTestNameExportData(sendPayload, (response, error) => {
             if (error) {
                 setLoadingExport(false);
                 toast.error(error?.response?.message || "server error");
@@ -442,10 +436,11 @@ const EducationLevelList = () => {
                     const blob = new Blob([response.data], {
                         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                     });
+
                     const url = window.URL.createObjectURL(blob);
                     const link = document.createElement('a');
                     link.href = url;
-                    link.download = `EducationLevel.xlsx`;
+                    link.download = `LanguageTestName.xlsx`;
                     document.body.appendChild(link);
                     link.click();
                     link.remove();
@@ -483,7 +478,7 @@ const EducationLevelList = () => {
     return (
         <>
             <MasterLayout>
-                {/* <Breadcrumb title="StakeholderType" subTitle="List" /> */}
+                {/* <Breadcrumb title="Department" subTitle="List" /> */}
                 <div className="card basic-data-table main-container-data">
                     <div className="card-body container-data">
                         <div className="row align-items-center gy-3 gx-2 flex-wrap filter-action-btn">
@@ -509,7 +504,7 @@ const EducationLevelList = () => {
                                     >
                                         Delete
                                     </button>
-                                    {(selectedRows?.length > 0 && selectedRows?.length === stakeholderTypeData?.length) && (
+                                    {(selectedRows?.length > 0 && selectedRows?.length === departments?.length) && (
                                         <>
                                             <button
                                                 onClick={() => handleSelectAllOrNot("onlySelected")}
@@ -567,7 +562,7 @@ const EducationLevelList = () => {
                                                     lineHeight: 1
                                                 }}
                                                 onClick={() => {
-                                                    // console.log("Close clicked");
+
                                                     handleSearchChange('');
                                                 }}
                                             >
@@ -595,7 +590,7 @@ const EducationLevelList = () => {
                                                     type="checkbox"
                                                     checked={isAllSelected}
                                                     onChange={handleSelectAll}
-                                                    disabled={stakeholderTypeData.length === 0}
+                                                    disabled={departments.length === 0}
                                                 />
                                                 <span>No.</span>
                                             </div>
@@ -661,8 +656,8 @@ const EducationLevelList = () => {
                                                 </div>
                                             </td>
                                         </tr>
-                                    ) : stakeholderTypeData.length > 0 ? (
-                                        stakeholderTypeData.map((rowItem, index) => (
+                                    ) : departments.length > 0 ? (
+                                        departments.map((rowItem, index) => (
                                             <tr key={rowItem.uuid}>
                                                 <td>
                                                     <div className="d-flex align-items-center gap-2">
@@ -675,11 +670,14 @@ const EducationLevelList = () => {
                                                         <span>{String(startIndex + index + 1).padStart(2, '0')}</span>
                                                     </div>
                                                 </td>
-                                                {isColumnVisible('educationlevel') && (
-                                                    <td><span>{rowItem.educationlevel}</span></td>
+                                                {isColumnVisible('languageNameTest') && (
+                                                    <td><span>{rowItem.languageNameTest}</span></td>
                                                 )}
-                                                {isColumnVisible('level_code_detail') && (
-                                                    <td><span>{rowItem.level_code_detail}</span></td>
+                                                {isColumnVisible('languageTestName') && (
+                                                    <td><span>{rowItem.languageTestName}</span></td>
+                                                )}
+                                                {isColumnVisible('languageTestFullName') && (
+                                                    <td><span>{rowItem.languageTestFullName}</span></td>
                                                 )}
                                                 {isColumnVisible('description') && (
                                                     <td><span>{rowItem.description}</span></td>
@@ -708,6 +706,7 @@ const EducationLevelList = () => {
                                     )}
                                 </tbody>
                             </table>
+
                             {tableState.total > 0 && (
                                 <div className="d-flex justify-content-between align-items-center px-4 py-3" >
                                     <div className='showing-total-page' >
@@ -815,14 +814,14 @@ const EducationLevelList = () => {
                         </div>
                     </div>
                 </div>
-                <AddEditEducationLevelModal
+                <AddEditLanguageTestNameModal
                     show={modalState.show}
                     handleClose={handleClose}
                     mode={modalState.mode}
                     rowData={modalState.rowData}
                 />
                 {showImport && (
-                    <AddImportEducationLevelModal show={showImport} handleClose={handleCloseImport} />)}
+                    <AddImportLanguageTestNameModal show={showImport} handleClose={handleCloseImport} />)}
                 {showDeleteConfirm && (
                     <div className="modal fade show common-ctl-popup">
                         <div className="modal-dialog modal-dialog-centered">
@@ -832,6 +831,8 @@ const EducationLevelList = () => {
                                     <button type="button" className="btn-close" onClick={cancelDelete}></button>
                                 </div>
                                 <div className="modal-body">
+                                    {/* <p className="mb-0">Are you sure you want to delete this department?</p> */}
+                                    {/* <p className="mb-0"> Are you sure you want to delete this department ({selectedRows.length})?</p> */}
                                     <p className="mb-0">{deleteConfirmMessage}</p>
 
                                 </div>
@@ -864,7 +865,7 @@ const EducationLevelList = () => {
                         <div className="modal-dialog modal-xl modal-dialog-centered" role="document">
                             <div className="modal-content radius-16 bg-base">
                                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                                    <h1 className="modal-title fs-5">Export Education Level</h1>
+                                    <h1 className="modal-title fs-5">Export Language Test Name</h1>
                                     <button
                                         type="button"
                                         className="btn-close"
@@ -962,4 +963,4 @@ const EducationLevelList = () => {
     );
 };
 
-export default EducationLevelList;
+export default LanguageTestNameList;

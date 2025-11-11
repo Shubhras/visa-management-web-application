@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from "react-redux";
-import { degreeAwardedByAdd, degreeAwardedByEdit } from '../../../../store/master/educationMaster/action';
+import { degreeAwardedInstituteAdd, degreeAwardedInstituteEdit } from '../../../../store/master/educationMaster/action';
 import { toast } from "react-toastify";
-import { educationLevelList } from "../../../../store/master/educationMaster/action";
+import { educationLevelList, degreeAwardedByList } from "../../../../store/master/educationMaster/action";
 import { countryDemoList } from '../../../../store/master/companyMasters/actions';
 import { stateListByCountry } from '../../../../store/master/generalMasters/actions';
 const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
-    const [studyMainArea, setStudyMainArea] = useState([]);
     const [studyMajorArea, setStudyMajorArea] = useState([]);
     const [countryListData, setCountryListData] = useState([]);
     const [stateListData, setStateListData] = useState([]);
+    const [degreeAwardedBy, setDegreeAwardedBy] = useState([]);
+
 
 
 
@@ -39,9 +40,9 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
         if (mode === 'edit' && rowData) {
             setFormData({
                 uuid: rowData.uuid || '',
-                countryUuid: rowData.countryUuid || "",
+                countryUuid: rowData.country || "",
                 stateUuid: rowData.stateUuid || "",
-                educationLevelUuid: rowData.educationLevelUuid || "",
+                educationLevelUuid: rowData.education_level || "",
                 degreeAwardedBy: rowData.degreeAwardedBy || "",
                 degreeAwardedInstitute: rowData.degreeAwardedInstitute || "",
                 description: rowData.description || "",
@@ -83,11 +84,17 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
 
             }
         }));
+        dispatch(degreeAwardedByList(params, (response, error) => {
+            setLoading(false);
+            if (response?.statusCode === 200 && response?.status === true) {
+                setDegreeAwardedBy(response?.data || []);
+
+            }
+        }));
     };
 
     const fetchCountryList = () => {
         const params = { page: 1, limit: 2000, search: '', sortBy: 'updated_at', sortOrder: 'desc' };
-
         dispatch(countryDemoList(params, (response, error) => {
             if (response?.statusCode === 200 && response?.status) {
                 const formatted = response?.data?.map(item => ({
@@ -134,7 +141,7 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
         setFormData(prev => ({
             ...prev,
             [name]: value,
-            ...(name === "countryUuid" ? { stateUuid: "" } : {}) 
+            ...(name === "countryUuid" ? { stateUuid: "" } : {})
         }));
         if (name === "countryUuid") {
             fetchStateList(value);
@@ -186,25 +193,25 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
             const sendPayload = mode === 'edit'
                 ? {
                     uuid: formData.uuid,
-                    countryUuid: formData.countryUuid,
-                    stateUuid: formData.stateUuid,
-                    educationLevelUuid: formData.educationLevelUuid,
-                    degreeAwardedBy: formData.degreeAwardedBy,
-                    degreeAwardedInstitute: formData.degreeAwardedInstitute,
+                    country_id: formData.countryUuid,
+                    state_id: formData.stateUuid,
+                    education_level_id: formData.educationLevelUuid,
+                    degree_awarded_by_id: formData.degreeAwardedBy,
+                    name: formData.degreeAwardedInstitute,
                     description: formData.description,
                 }
                 : {
-                    countryUuid: formData.countryUuid,
-                    stateUuid: formData.stateUuid,
-                    educationLevelUuid: formData.educationLevelUuid,
-                    degreeAwardedBy: formData.degreeAwardedBy,
-                    degreeAwardedInstitute: formData.degreeAwardedInstitute,
+                    country_id: formData.countryUuid,
+                    state_id: formData.stateUuid,
+                    education_level_id: formData.educationLevelUuid,
+                    degree_awarded_by_id: formData.degreeAwardedBy,
+                    name: formData.degreeAwardedInstitute,
                     description: formData.description,
                 };
 
             setLoading(true);
 
-            const action = mode === 'edit' ? degreeAwardedByEdit : degreeAwardedByAdd;
+            const action = mode === 'edit' ? degreeAwardedInstituteEdit : degreeAwardedInstituteAdd;
             dispatch(action(sendPayload, (response, error) => {
                 setLoading(false);
                 if (error) {
@@ -344,14 +351,19 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                                         Degree Awarded By <span className="text-danger">*</span>
                                     </label>
-                                    <input
-                                        type="text"
+                                    <select
                                         name="degreeAwardedBy"
                                         value={formData.degreeAwardedBy}
                                         onChange={handleChange}
-                                        className={`form-control radius-8 ${errors.degreeAwardedBy ? 'is-invalid' : ''}`}
-                                        placeholder="Enter degree awarded by"
-                                    />
+                                        className={`form-control form-select radius-8 ${errors.degreeAwardedBy ? 'is-invalid' : ''}`}
+                                    >
+                                        <option value="">Select degree awarded by</option>
+                                        {degreeAwardedBy.map((option) => (
+                                            <option key={option.uuid} value={option.uuid}>
+                                                {option.degree_name}
+                                            </option>
+                                        ))}
+                                    </select>
                                     {errors.degreeAwardedBy && (
                                         <div className="text-danger text-sm mt-1">
                                             {errors.degreeAwardedBy}

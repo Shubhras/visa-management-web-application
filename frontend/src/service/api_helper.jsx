@@ -1404,3 +1404,104 @@ export const importMediumOfEducationAPI = (payload) => {
     const apiUrl = `${url.IMPORT_MEDIUM_OF_EDUCATION_API}`;
     return post(apiUrl, payload);
 };
+
+// ECA For API Services
+export const getEcaForListAPI = (data) => {
+    const apiUrl = `${url.GET_ECA_FOR_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+ 
+export const addEcaForAPI = (payload) => {
+    const apiUrl = `${url.ADD_ECA_FOR_API}`;
+    return post(apiUrl, payload);
+};
+ 
+export const editEcaForAPI = (payload) => {
+    const apiUrl = `${url.EDIT_ECA_FOR_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+ 
+export const deleteEcaForAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_ECA_FOR_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+ 
+export const exportEcaForAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_ECA_FOR_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+ 
+export const importEcaForAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_ECA_FOR_API}`;
+    return post(apiUrl, payload);
+};
+ 
+ 
+// Language Name(Test)
+export const getLanguageNameTestListAPI = (data) => {
+    const apiUrl = `${url.GET_LANGUAGE_NAME_TEST_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+ 
+export const addLanguageNameTestAPI = (payload) => {
+    const apiUrl = `${url.ADD_LANGUAGE_NAME_TEST_API}`;
+    return post(apiUrl, payload);
+};
+ 
+export const editLanguageNameTestAPI = (payload) => {
+    const apiUrl = `${url.EDIT_LANGUAGE_NAME_TEST_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+ 
+export const deleteLanguageNameTestAPI = (payload) => {
+    const prepareDATA = {
+        id: payload
+    };
+    const apiUrl = `${url.DELETE_LANGUAGE_NAME_TEST_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+ 
+export const exportLanguageNameTestAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_LANGUAGE_NAME_TEST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+ 
+export const importLanguageNameTestAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_LANGUAGE_NAME_TEST_API}`;
+    return post(apiUrl, payload);
+};
+ 
+// Language Test Name
+export const getLanguageTestNameListAPI = (data) => {
+    const apiUrl = `${url.GET_LANGUAGE_TEST_NAME_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+ 
+export const addLanguageTestNameAPI = (payload) => {
+    const apiUrl = `${url.ADD_LANGUAGE_TEST_NAME_API}`;
+    return post(apiUrl, payload);
+};
+ 
+export const editLanguageTestNameAPI = (payload) => {
+    const apiUrl = `${url.EDIT_LANGUAGE_TEST_NAME_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+ 
+export const deleteLanguageTestNameAPI = (payload) => {
+    const prepareDATA = {
+        id: payload
+    };
+    const apiUrl = `${url.DELETE_LANGUAGE_TEST_NAME_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+ 
+export const exportLanguageTestNameAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_LANGUAGE_TEST_NAME_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+ 
+export const importLanguageTestNameAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_LANGUAGE_TEST_NAME_API}`;
+    return post(apiUrl, payload);
+};

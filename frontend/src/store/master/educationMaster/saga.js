@@ -83,7 +83,13 @@ import {
     EDIT_MEDIUM_OF_EDUCATION,
     DELETE_MEDIUM_OF_EDUCATION,
     EXPORT_MEDIUM_OF_EDUCATION,
-    IMPORT_MEDIUM_OF_EDUCATION
+    IMPORT_MEDIUM_OF_EDUCATION,
+    ECA_FOR_LIST,
+    ADD_ECA_FOR,
+    EDIT_ECA_FOR,
+    DELETE_ECA_FOR,
+    EXPORT_ECA_FOR,
+    IMPORT_ECA_FOR
 } from "./actionType";
 
 import {
@@ -170,8 +176,13 @@ import {
     editMediumOfEducationAPI,
     deleteMediumOfEducationAPI,
     exportMediumOfEducationAPI,
-    importMediumOfEducationAPI
-
+    importMediumOfEducationAPI,
+    getEcaForListAPI,
+    addEcaForAPI,
+    editEcaForAPI,
+    deleteEcaForAPI,
+    exportEcaForAPI,
+    importEcaForAPI,
 } from "../../../service/api_helper";
 
 // --- EDUCATION LEVEL CODE SAGAS ---
@@ -934,6 +945,60 @@ function* mediumOfEducationImportDataSaga(action) {
         if (action.callback) action.callback(null, error);
     }
 }
+// ECA For
+function* ecaForListSaga(action) {
+    try {
+        const response = yield call(getEcaForListAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
+
+function* ecaForAddSaga(action) {
+    try {
+        const response = yield call(addEcaForAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
+
+function* ecaForEditSaga(action) {
+    try {
+        const response = yield call(editEcaForAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
+
+function* ecaForDeleteSaga(action) {
+    try {
+        const response = yield call(deleteEcaForAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
+
+function* ecaForExportDataSaga(action) {
+    try {
+        const response = yield call(exportEcaForAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
+
+function* ecaForImportDataSaga(action) {
+    try {
+        const response = yield call(importEcaForAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
 
 
 
@@ -1024,6 +1089,12 @@ function* educationmasterSaga() {
     yield takeEvery(DELETE_MEDIUM_OF_EDUCATION, mediumOfEducationDeleteSaga);
     yield takeEvery(EXPORT_MEDIUM_OF_EDUCATION, mediumOfEducationExportDataSaga);
     yield takeEvery(IMPORT_MEDIUM_OF_EDUCATION, mediumOfEducationImportDataSaga);
+    yield takeEvery(ECA_FOR_LIST, ecaForListSaga);
+    yield takeEvery(ADD_ECA_FOR, ecaForAddSaga);
+    yield takeEvery(EDIT_ECA_FOR, ecaForEditSaga);
+    yield takeEvery(DELETE_ECA_FOR, ecaForDeleteSaga);
+    yield takeEvery(EXPORT_ECA_FOR, ecaForExportDataSaga);
+    yield takeEvery(IMPORT_ECA_FOR, ecaForImportDataSaga);
 
 
 

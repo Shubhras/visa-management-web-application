@@ -6,6 +6,8 @@ import SalesMastertReducer from "./master/salesMasters/reducer";
 import CompanyMastertReducer from "./master/companyMasters/reducer";
 import GeneralMastertReducer from "./master/generalMasters/reducer";
 import EducationMasterReducer from "./master/educationMaster/reducer";
+import TestMasterReducer from "./master/testMaster/reducer";
+ 
  
 const rootReducer = combineReducers({
 Login,
@@ -13,7 +15,8 @@ MastertReducer,
 SalesMastertReducer,
 CompanyMastertReducer,
 GeneralMastertReducer,
-EducationMasterReducer
+EducationMasterReducer,
+TestMasterReducer
 });
 
 export default rootReducer;

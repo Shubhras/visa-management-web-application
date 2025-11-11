@@ -103,7 +103,7 @@ const TimeZoneList = () => {
     limit: 25,
     search: '',
     status: '',
-    sortBy: 'updated_at', // Field to sort by
+    sortBy: 'created_at', // Field to sort by
     sortOrder: 'desc', // 'asc' or 'desc'
     total: 0,
     totalPages: 0,
@@ -561,7 +561,7 @@ const TimeZoneList = () => {
                           lineHeight: 1
                         }}
                         onClick={() => {
-                         
+
                           handleSearchChange('');
                         }}
                       >
@@ -579,132 +579,132 @@ const TimeZoneList = () => {
           </div>
           <div className="card-body pt-0 container-table" >
             <div className='container-table-div'>
-                <table className="table mb-0">
-                               <thead>
-                                <tr>
-                                  <th scope="col" className='sl-numbar-th'>
-                                    <div className="d-flex align-items-center gap-2">
-                                      <input
-                                        className="form-check-input"
-                                        type="checkbox"
-                                        checked={isAllSelected}
-                                        onChange={handleSelectAll}
-                                        disabled={timeZoneDataList.length === 0}
-                                      />
-                                      <span>No.</span>
-                                    </div>
-                                  </th>
-                                  {tableColumns.map((column) => (
-                                    isColumnVisible(column.id) && (
-                                      <th
-                                        key={column.id}
-                                        scope="col"
-                                        className='sorting-th'
-                                        onClick={() => handleSort(column.field)}
-                                      >
-                                        <div className="d-flex align-items-center">
-                                          {column.label}
-                                          {getSortIcon(column.field)}
-                                        </div>
-                                      </th>
-                                    )
-                                  ))}
-                                  <th scope="col" className='action-th'>
-                                    <div className="position-relative table-header-hide-show" ref={columnDropdownRef}>
-                                      <button
-                                        className="position-relative table-header-hide-show"
-                                        onClick={() => setShowColumnDropdown(!showColumnDropdown)}
-                                      >
-                                        Action <Icon icon="mdi:table-column" width="20" className='icone' />
-                                      </button>
-                                      {showColumnDropdown && (
-                                        <div className="position-absolute bg-white border rounded shadow-sm p-2 show-dropdowns-header">
-                                          {tableColumns.map((column) => (
-                                            <div
-                                              key={column.id}
-                                              className="bg-white p-2 mb-2 d-flex align-items-center gap-2"
-                                            >
-                                              <input
-                                                type="checkbox"
-                                                id={`column-${column.id}`}
-                                                checked={isColumnVisible(column.id)}
-                                                onChange={() => toggleColumnVisibility(column.id)}
-                                                disabled={column.required}
-                                                className="form-check-input"
-                                              />
-                                              <label htmlFor={`column-${column.id}`} className="mb-0 flex-grow-1 form-label">
-                                                {column.label}
-                                              </label>
-                                            </div>
-                                          ))}
-                                        </div>
-                                      )}
-                                    </div>
-                                  </th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {loading ? (
-                                  <tr>
-                                    <td colSpan={visibleColumns.length + 2} className='loding-data'>
-                                      <div className="d-flex justify-content-center align-items-center gap-2">
-                                        <div className="spinner-border spinner-border-sm" role="status">
-                                          <span className="visually-hidden">Loading...</span>
-                                        </div>
-                                        Loading...
-                                      </div>
-                                    </td>
-                                  </tr>
-                                ) : timeZoneDataList.length > 0 ? (
-                                  timeZoneDataList.map((rowItem, index) => (
-                                    <tr key={rowItem.uuid}>
-                                      <td>
-                                        <div className="d-flex align-items-center gap-2">
-                                          <input
-                                            className="form-check-input"
-                                            type="checkbox"
-                                            checked={selectedRows.includes(rowItem.uuid)}
-                                            onChange={() => handleRowSelect(rowItem.uuid)}
-                                          />
-                                          <span>{String(startIndex + index + 1).padStart(2, '0')}</span>
-                                        </div>
-                                      </td>
-                                      {isColumnVisible('countryName') && (
-                                        <td><span>{rowItem.countryName}</span></td>
-                                      )}
-                                      {isColumnVisible('stateName') && (
-                                        <td><span>{rowItem.stateName}</span></td>
-                                      )}
-                                      {isColumnVisible('timezone') && (
-                                        <td><span>{rowItem.timezone}</span></td>
-                                      )}
-                                      {isColumnVisible('description') && (
-                                        <td><span>{rowItem.description}</span></td>
-                                      )}
-                                      {isColumnVisible('updated_at') && (
-                                        <td><span>{formatDateTime(rowItem.updated_at)}</span></td>
-                                      )}
-                                      <td className='action-td'>
-                                        <div className="d-flex align-items-end gap-2">
-                                          <Link to="#" className='edit-btn-icone' onClick={(e) => { e.preventDefault(); handleShowEdit(rowItem); }}>
-                                            <Icon icon="lucide:edit" width="18" className='icone' />
-                                          </Link>
-                                          <button onClick={() => handleDelete(rowItem.uuid)} className='delete-btn-icone'>
-                                            <Icon icon="mingcute:delete-2-line" width="18" className='icone' />
-                                          </button>
-                                        </div>
-                                      </td>
-                                    </tr>
-                                  ))
-                                ) : (
-                                  <tr>
-                                    <td colSpan={visibleColumns.length + 2} className='no-records-found'>
-                                      No records found
-                                    </td>
-                                  </tr>
-                                )}
-                              </tbody>
-                            </table>
+              <table className="table mb-0">
+                <thead>
+                  <tr>
+                    <th scope="col" className='sl-numbar-th'>
+                      <div className="d-flex align-items-center gap-2">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          checked={isAllSelected}
+                          onChange={handleSelectAll}
+                          disabled={timeZoneDataList.length === 0}
+                        />
+                        <span>No.</span>
+                      </div>
+                    </th>
+                    {tableColumns.map((column) => (
+                      isColumnVisible(column.id) && (
+                        <th
+                          key={column.id}
+                          scope="col"
+                          className='sorting-th'
+                          onClick={() => handleSort(column.field)}
+                        >
+                          <div className="d-flex align-items-center">
+                            {column.label}
+                            {getSortIcon(column.field)}
+                          </div>
+                        </th>
+                      )
+                    ))}
+                    <th scope="col" className='action-th'>
+                      <div className="position-relative table-header-hide-show" ref={columnDropdownRef}>
+                        <button
+                          className="position-relative table-header-hide-show"
+                          onClick={() => setShowColumnDropdown(!showColumnDropdown)}
+                        >
+                          Action <Icon icon="mdi:table-column" width="20" className='icone' />
+                        </button>
+                        {showColumnDropdown && (
+                          <div className="position-absolute bg-white border rounded shadow-sm p-2 show-dropdowns-header">
+                            {tableColumns.map((column) => (
+                              <div
+                                key={column.id}
+                                className="bg-white p-2 mb-2 d-flex align-items-center gap-2"
+                              >
+                                <input
+                                  type="checkbox"
+                                  id={`column-${column.id}`}
+                                  checked={isColumnVisible(column.id)}
+                                  onChange={() => toggleColumnVisibility(column.id)}
+                                  disabled={column.required}
+                                  className="form-check-input"
+                                />
+                                <label htmlFor={`column-${column.id}`} className="mb-0 flex-grow-1 form-label">
+                                  {column.label}
+                                </label>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr>
+                      <td colSpan={visibleColumns.length + 2} className='loding-data'>
+                        <div className="d-flex justify-content-center align-items-center gap-2">
+                          <div className="spinner-border spinner-border-sm" role="status">
+                            <span className="visually-hidden">Loading...</span>
+                          </div>
+                          Loading...
+                        </div>
+                      </td>
+                    </tr>
+                  ) : timeZoneDataList.length > 0 ? (
+                    timeZoneDataList.map((rowItem, index) => (
+                      <tr key={rowItem.uuid}>
+                        <td>
+                          <div className="d-flex align-items-center gap-2">
+                            <input
+                              className="form-check-input"
+                              type="checkbox"
+                              checked={selectedRows.includes(rowItem.uuid)}
+                              onChange={() => handleRowSelect(rowItem.uuid)}
+                            />
+                            <span>{String(startIndex + index + 1).padStart(2, '0')}</span>
+                          </div>
+                        </td>
+                        {isColumnVisible('countryName') && (
+                          <td><span>{rowItem.countryName}</span></td>
+                        )}
+                        {isColumnVisible('stateName') && (
+                          <td><span>{rowItem.stateName}</span></td>
+                        )}
+                        {isColumnVisible('timezone') && (
+                          <td><span>{rowItem.timezone}</span></td>
+                        )}
+                        {isColumnVisible('description') && (
+                          <td><span>{rowItem.description}</span></td>
+                        )}
+                        {isColumnVisible('updated_at') && (
+                          <td><span>{formatDateTime(rowItem.updated_at)}</span></td>
+                        )}
+                        <td className='action-td'>
+                          <div className="d-flex align-items-end gap-2">
+                            <Link to="#" className='edit-btn-icone' onClick={(e) => { e.preventDefault(); handleShowEdit(rowItem); }}>
+                              <Icon icon="lucide:edit" width="18" className='icone' />
+                            </Link>
+                            <button onClick={() => handleDelete(rowItem.uuid)} className='delete-btn-icone'>
+                              <Icon icon="mingcute:delete-2-line" width="18" className='icone' />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={visibleColumns.length + 2} className='no-records-found'>
+                        No records found
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
 
               {tableState.total > 0 && (
                 <div className="d-flex justify-content-between align-items-center px-4 py-3" >

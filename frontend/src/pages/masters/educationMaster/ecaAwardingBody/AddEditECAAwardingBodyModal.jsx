@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from "react-redux";
-import { ecaAwardingBodyAdd, ecaAwardingBodyEdit } from '../../../../store/master/educationMaster/action';
+import { ecaAwardingBodyAdd, ecaAwardingBodyEdit ,ecaForList} from '../../../../store/master/educationMaster/action';
 import { toast } from "react-toastify";
 import { countryList } from "../../../../store/master/generalMasters/actions";
 const AddEditECAAwardingBodyModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
@@ -33,14 +33,22 @@ const AddEditECAAwardingBodyModal = ({ show, handleClose, mode = 'add', rowData 
   // Populate form data when in edit mode
   useEffect(() => {
     if (mode === 'edit' && rowData) {
+      let validNumber = "";
+      let validType = "";
+
+      if (rowData.eca_valid_period) {
+        const parts = rowData.eca_valid_period.split(" ");
+        validNumber = parts[0] || "";
+        validType = parts[1] || "";
+      }
       setFormData({
         uuid: rowData.uuid || '',
-        countryUuid: rowData.countryUuid || '',
-        ecaFor: rowData.ecaFor || '',
-        fullName: rowData.fullName || '',
-        shortName: rowData.shortName || '',
-        validPeriod: rowData.validPeriod || '',
-        validPeriodType: rowData.validPeriodType || '',
+        countryUuid: rowData.country || '',
+        ecaFor: rowData.selection_type_display || '',
+        fullName: rowData.eca_body_full_name || '',
+        shortName: rowData.eca_body_short_name || '',
+        validPeriod: validNumber,
+        validPeriodType: validType,
         description: rowData.description || '',
       });
     } else {
@@ -128,24 +136,28 @@ const AddEditECAAwardingBodyModal = ({ show, handleClose, mode = 'add', rowData 
     e.preventDefault();
 
     if (validateForm()) {
+      const formattedValidPeriod = formData.validPeriod && formData.validPeriodType
+        ? `${formData.validPeriod} ${formData.validPeriodType}`
+        : '';
+
       const sendPayload = mode === 'edit'
         ? {
           uuid: formData.uuid,
-          countryUuid: formData.countryUuid,
-          ecaFor: formData.ecaFor,
-          fullName: formData.fullName,
-          shortName: formData.shortName,
-          validPeriod: formData.validPeriod,
-          validPeriodType: formData.validPeriodType,
+          country: formData.countryUuid,
+          selection_type: formData.ecaFor,
+          eca_body_full_name: formData.fullName,
+          eca_body_short_name: formData.shortName,
+          eca_valid_period: formattedValidPeriod,
+          // validPeriodType: formData.validPeriodType,
           description: formData.description,
         }
         : {
-          countryUuid: formData.countryUuid,
-          ecaFor: formData.ecaFor,
-          fullName: formData.fullName,
-          shortName: formData.shortName,
-          validPeriod: formData.validPeriod,
-          validPeriodType: formData.validPeriodType,
+          country: formData.countryUuid,
+          selection_type: formData.ecaFor,
+          eca_body_full_name: formData.fullName,
+          eca_body_short_name: formData.shortName,
+          eca_valid_period: formattedValidPeriod,
+          // validPeriodType: formData.validPeriodType,
           description: formData.description,
 
         };
@@ -299,24 +311,6 @@ const AddEditECAAwardingBodyModal = ({ show, handleClose, mode = 'add', rowData 
                     </div>
                   )}
                 </div>
-                {/* <div className="col-12 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    ECA Valid Period
-                  </label>
-                  <input
-                    type="number"
-                    name="validPeriod"
-                    value={formData.validPeriod}
-                    onChange={handleChange}
-                    className={`form-control radius-8 ${errors.validPeriod ? 'is-invalid' : ''}`}
-                    placeholder="Enter valid period"
-                  />
-                  {errors.validPeriod && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.validPeriod}
-                    </div>
-                  )}
-                </div> */}
                 <div className="col-12 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                     ECA Valid Period

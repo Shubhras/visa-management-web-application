@@ -31,9 +31,9 @@ const AddEditDegreeAwardedByModal = ({ show, handleClose, mode = 'add', rowData 
         if (mode === 'edit' && rowData) {
             setFormData({
                 uuid: rowData.uuid || '',
-                degreeAwardedByName: rowData.degreeAwardedByName || '',
-                countryUuid: rowData.countryUuid || '',
-                educationLevelUuid: rowData.educationlevel_id || '',
+                degreeAwardedByName: rowData.degree_name || '',
+                countryUuid: rowData.country || '',
+                educationLevelUuid: rowData.education_level || '',
                 description: rowData.description || '',
             });
         } else {
@@ -117,16 +117,16 @@ const AddEditDegreeAwardedByModal = ({ show, handleClose, mode = 'add', rowData 
             const sendPayload = mode === 'edit'
                 ? {
                     uuid: formData.uuid,
-                    degree_awarded_by: formData.degreeAwardedByName,
-                    country_id: formData.countryUuid,
-                    educationlevel_id: formData.educationLevelUuid,
+                    degree_name: formData.degreeAwardedByName,
+                    country: formData.countryUuid,
+                    education_level: formData.educationLevelUuid,
                     description: formData.description,
                 }
                 : {
-                    degree_awarded_by: formData.degreeAwardedByName,
-                    country_id: formData.countryUuid,
-                    educationlevel_id: formData.educationLevelUuid,
-                    description: formData.description,
+                    degree_name: formData.degreeAwardedByName,
+                    country: formData.countryUuid,
+                    education_level: formData.educationLevelUuid,
+                    description: formData.description
                 };
 
             setLoading(true);

@@ -128,8 +128,8 @@ const CountryList = () => {
     limit: 25,
     search: "",
     status: "",
-    sortBy: "updated_at", // Field to sort by
-    sortOrder: "desc", // 'asc' or 'desc'
+    sortBy: 'created_at', // Field to sort by
+    sortOrder: 'desc', // 'asc' or 'desc'
     total: 0,
     totalPages: 0,
     currentPage: 1,

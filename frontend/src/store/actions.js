@@ -7,4 +7,5 @@ export * from "./master/salesMasters/actions";
 export * from "./master/companyMasters/actions";
 export * from "./master/generalMasters/actions";
 export * from "./master/educationMaster/action";
+export * from "./master/testMaster/action";
 

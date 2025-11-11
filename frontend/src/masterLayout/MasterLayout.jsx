@@ -116,6 +116,16 @@ const MasterLayout = ({ children }) => {
             { name: 'Compare : Academic Result To Result', path: '/academic-result-to-result' },
             { name: 'ECA Awarding Body', path: '/eca-awarding-body' },
             { name: 'Medium of Education', path: '/medium-of-education' },
+            { name: 'ECA For', path: '/eca-for' },
+
+          ]
+        },
+        {
+          name: 'Test',
+          // path: '/priority-type',
+          children: [
+            { name: 'Language Name(Test)', path: '/language-name-test' },
+            { name: 'Language Test Name', path: '/language-test-name' },
 
           ]
         },

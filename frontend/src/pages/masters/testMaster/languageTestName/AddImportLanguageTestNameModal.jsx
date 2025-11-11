@@ -1,11 +1,11 @@
 import React, { useState } from 'react'
 import { useDispatch } from "react-redux";
-import { degreeAwardedInstituteImportData } from '../../../../store/master/educationMaster/action';
+import { languageTestNameImportData } from '../../../../store/master/testMaster/action';
 import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
 import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
-const AddImportDegreeAwardedInstituteModal = ({ show, handleClose }) => {
+const AddImportLanguageTestNameModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
     const [file, setFile] = useState(null);
@@ -65,7 +65,7 @@ const AddImportDegreeAwardedInstituteModal = ({ show, handleClose }) => {
             formData.append('sheet_name', selectedSheet);
         }
         setLoading(true);
-        dispatch(degreeAwardedInstituteImportData(formData, (response, error) => {
+        dispatch(languageTestNameImportData(formData, (response, error) => {
             setLoading(false);
             if (error) {
                 toast.error(error?.response?.data?.message || "Server error");
@@ -77,7 +77,7 @@ const AddImportDegreeAwardedInstituteModal = ({ show, handleClose }) => {
                             <div>{response?.message}</div>
                             {response?.duplicates?.length > 0 && (
                                 <div style={{ marginTop: '6px' }}>
-                                    <strong>Duplicate degree awarded institute skipped — the duplicate data from your uploaded file has been exported into an .xlsx file.</strong>
+                                    <strong>Duplicate language test names skipped — the duplicate data from your uploaded file has been exported into an .xlsx file.</strong>
                                 </div>
                             )}
                         </div>,
@@ -100,12 +100,12 @@ const AddImportDegreeAwardedInstituteModal = ({ show, handleClose }) => {
     };
 
     const handleExportToExcel = (duplicatesData) => {
-        const header = ["Degree Awarded Institute"];
+        const header = ["Language Test Name"];
         const duplicates = duplicatesData //["test1", "test3", "test3"];
         const worksheetData = [header, ...duplicates.map((item) => [item])];
         const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "DegreeAwardedInstitute");
+        XLSX.utils.book_append_sheet(workbook, worksheet, "LanguageTestName");
 
         const excelBuffer = XLSX.write(workbook, {
             bookType: "xlsx",
@@ -116,7 +116,7 @@ const AddImportDegreeAwardedInstituteModal = ({ show, handleClose }) => {
             type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         });
 
-        saveAs(blob, `DegreeAwardedInstitute-Duplicate-Data.xlsx`);
+        saveAs(blob, `LanguageTestName-Duplicate-Data.xlsx`);
     };
     // Handle modal close
     const onClose = () => {
@@ -148,7 +148,7 @@ const AddImportDegreeAwardedInstituteModal = ({ show, handleClose }) => {
                     <div className="modal-content radius-16 bg-base">
                         <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
                             <h1 className="modal-title fs-5" id="departmentModalLabel">
-                                Upload Degree Awarded Institute
+                                Upload Language Test Name
                             </h1>
                             <button
                                 type="button"
@@ -241,10 +241,10 @@ const AddImportDegreeAwardedInstituteModal = ({ show, handleClose }) => {
             </div>
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
-                    downloadFileName: "DegreeAwardedBy",
-                    items: ["Country", "State", "Education Level", "Degree Awarded By", "Degree Awarded Institute", "Description"],
-                    selectedItems: ["Country", "State", "Education Level", "Degree Awarded By", "Degree Awarded Institute",],
-                    ItemsRequired: ["Country", "State", "Education Level", "Degree Awarded By", "Degree Awarded Institute",]
+                    downloadFileName: "LanguageTestName",
+                    items: ["Language Name (Test)", "Language Test Name", "Language Test Full Name", "Description"],
+                    selectedItems: ["Language Name (Test)", "Language Test Name"],
+                    ItemsRequired: ["Language Name (Test)", "Language Test Name"]
                 }
                 } />
             )}
@@ -252,4 +252,4 @@ const AddImportDegreeAwardedInstituteModal = ({ show, handleClose }) => {
     );
 };
 
-export default AddImportDegreeAwardedInstituteModal;
+export default AddImportLanguageTestNameModal;
