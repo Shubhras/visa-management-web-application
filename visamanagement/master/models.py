@@ -147,6 +147,7 @@ class CivilIdName(models.Model):
  
     valid_type = models.CharField(max_length=20, choices=VALID_TYPE_CHOICES)
     valid_duration_value = models.IntegerField(blank=True, null=True)
+    valid_date=models.DateField(blank=True, null=True)
     valid_duration_unit = models.CharField(max_length=20, choices=VALID_UNIT_CHOICES, blank=True, null=True)
     description = models.CharField(max_length=500, blank=True, null=True)
     is_deleted = models.BooleanField(default=False)

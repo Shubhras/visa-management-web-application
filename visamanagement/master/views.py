@@ -4091,6 +4091,7 @@ class CivilIdNameExportAPIView(APIView):
             "authority_full_name": "Authority Full Name",
             "authority_short_name": "Authority Short Name",
             "valid_type": "Valid Type",
+            "valid_date":"Valid Date"
             "valid_duration_value": "Valid Duration Value",
             "valid_duration_unit": "Valid Duration Unit",
             "description": "Description",
@@ -4161,98 +4162,92 @@ class CivilIdNameImportAPIView(APIView):
         sheet_name = request.data.get("sheet_name")
  
         if not file:
-            return Response({"error": "No file uploaded"}, status=400)
+            return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
  
         format_type = file.name.split(".")[-1].lower()
         duplicate_names = []
- 
-        required_headers = {
-            "civil id name",
-            "authority full name"
-        }
- 
+        skipped_rows = []
+
+        required_headers = {"civil id name", "authority full name"}
         optional_headers = {
             "authority short name",
             "valid type",
+            "valid date",
             "valid duration value",
             "valid duration unit",
             "description"
         }
- 
+
         try:
             data = []
             headers = []
- 
+
             # ---------- XLSX ----------
             if format_type == "xlsx":
                 import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
- 
+
                 if not sheet_name:
                     return Response(
                         {"error": "Provide sheet_name", "available_sheets": wb.sheetnames},
-                        status=400,
+                        status=status.HTTP_400_BAD_REQUEST,
                     )
- 
+
                 if sheet_name not in wb.sheetnames:
                     return Response(
                         {"error": f'Sheet "{sheet_name}" not found', "available_sheets": wb.sheetnames},
-                        status=400,
+                        status=status.HTTP_400_BAD_REQUEST,
                     )
- 
+
                 ws = wb[sheet_name]
                 if ws.max_row <= 1:
                     return Response(
                         {"statusCode": 400, "status": False, "message": "Sheet is empty"},
-                        status=400,
+                        status=status.HTTP_400_BAD_REQUEST,
                     )
- 
+
                 headers = [str(cell.value).strip().lower() if cell.value else "" for cell in next(ws.iter_rows(min_row=1, max_row=1))]
                 if not required_headers.issubset(set(headers)):
+                    missing = required_headers - set(headers)
                     return Response(
-                        {
-                            "statusCode": 400,
-                            "status": False,
-                            "message": f"Missing required headers: {required_headers}",
-                        },
-                        status=400,
+                        {"statusCode": 400, "status": False, "message": f"Missing required headers: {missing}"},
+                        status=status.HTTP_400_BAD_REQUEST,
                     )
- 
+
                 for row in ws.iter_rows(min_row=2, values_only=True):
                     if not any(row):
                         continue
                     row_dict = dict(zip(headers, row))
                     data.append(row_dict)
- 
+
             # ---------- CSV ----------
             elif format_type == "csv":
                 decoded_file = file.read().decode("utf-8")
                 dataset = Dataset()
                 dataset.load(decoded_file, format="csv")
- 
+
                 for row in dataset.dict:
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
                     if not required_headers.issubset(set(row_lower.keys())):
+                        missing = required_headers - set(row_lower.keys())
                         return Response(
-                            {
-                                "statusCode": 400,
-                                "status": False,
-                                "message": f"Missing required headers: {required_headers}",
-                            },
-                            status=400,
+                            {"statusCode": 400, "status": False, "message": f"Missing required headers: {missing}"},
+                            status=status.HTTP_400_BAD_REQUEST,
                         )
                     data.append(row_lower)
- 
+
             else:
                 return Response(
                     {"statusCode": 400, "status": False, "error": "Unsupported file format"},
-                    status=400,
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
- 
+
+            # ---------- Import Data ----------
+            ALLOWED_VALID_TYPES = ["Permanent", "Valid Upto", "Date"]
+            ALLOWED_VALID_UNITS = ["Months", "Weeks", "Years"]
             imported_count = 0
-            skipped_rows = []
- 
-            for row in  reversed(data):
+
+            for row in reversed(data):  # Import in reversed order
                 civil_id_name = str(row.get("civil id name")).strip() if row.get("civil id name") else None
                 authority_full_name = str(row.get("authority full name")).strip() if row.get("authority full name") else None
                 authority_short_name = str(row.get("authority short name")).strip() if row.get("authority short name") else ""
@@ -4260,36 +4255,127 @@ class CivilIdNameImportAPIView(APIView):
                 valid_duration_value = row.get("valid duration value") or None
                 valid_duration_unit = str(row.get("valid duration unit")).strip() if row.get("valid duration unit") else None
                 description = str(row.get("description")).strip() if row.get("description") else ""
- 
+                valid_date_raw = row.get('valid date')
+                valid_date = None
+                if valid_date_raw:
+                    if isinstance(valid_date_raw, datetime):
+                        valid_date = valid_date_raw.date()
+                    else:
+                        date_str = str(valid_date_raw).strip()
+                        for fmt in ("%d-%m-%Y", "%d/%m/%Y", "%Y-%m-%d"):
+                            try:
+                                valid_date = datetime.strptime(date_str, fmt).date()
+                                break
+                            except ValueError:
+                                continue
+                        if not valid_date:
+                            skipped_rows.append({
+                                "Civil ID Name": civil_id_name or "Unknown",
+                                "Authority Full Name": authority_full_name or "Unknown",
+                                'reason': f"Invalid date format '{valid_date_raw}'. Expected formats: dd-mm-yyyy, dd/mm/yyyy, or yyyy-mm-dd"
+                            })
+                            continue
                 if not civil_id_name or not authority_full_name:
                     skipped_rows.append({
-                        "civil_id_name": civil_id_name or "Unknown",
+                        "Civil ID Name": civil_id_name or "Unknown",
+                        "Authority Full Name": authority_full_name or "Unknown",
                         "reason": "Missing required fields",
                     })
                     continue
- 
+
+                if valid_type and valid_type not in ALLOWED_VALID_TYPES:
+                    skipped_rows.append({
+                        "Civil ID Name": civil_id_name,
+                        "Authority Full Name": authority_full_name,
+                        "reason": f"Invalid valid_type='{valid_type}'. Allowed: {ALLOWED_VALID_TYPES}"
+                    })
+                    continue
+
+                if valid_type == "Valid Upto":
+                    # Duration value check
+                    if valid_duration_value is None:
+                        skipped_rows.append({
+                            "Civil ID Name": civil_id_name,
+                            "Authority Full Name": authority_full_name,
+                            "reason": "Valid Upto type requires numeric 'valid duration value' and 'valid duration unit'"
+                        })
+                        continue
+                    try:
+                        valid_duration_value = int(valid_duration_value)
+                        if valid_duration_value <= 0:
+                            raise ValueError
+                    except (ValueError, TypeError):
+                        skipped_rows.append({
+                            "Civil ID Name": civil_id_name,
+                            "Authority Full Name": authority_full_name,
+                            "reason": "Invalid 'valid duration value'. Use positive numeric value."
+                        })
+                        continue
+                    # Unit check
+                    if not valid_duration_unit or valid_duration_unit not in ALLOWED_VALID_UNITS:
+                        skipped_rows.append({
+                            "Civil ID Name": civil_id_name,
+                            "Authority Full Name": authority_full_name,
+                            "reason": f"Invalid 'valid duration unit'. Allowed: {ALLOWED_VALID_UNITS}"
+                        })
+                        continue
+                elif valid_type == 'Date' and not valid_date:
+                    skipped_rows.append({
+                        "Civil ID Name": civil_id_name,
+                        "Authority Full Name": authority_full_name,
+                        'Reason': "Accrediation Valid Date  requires valid_date formate DD-MM_YYY"
+                    })
+                    continue
+
+                if valid_duration_unit and valid_duration_unit not in ALLOWED_VALID_UNITS:
+                    skipped_rows.append({
+                        "Civil ID Name": civil_id_name,
+                        "Authority Full Name": authority_full_name,
+                        'Reason': f"Invalid 'Accrediation Valid Unit'='{valid_duration_unit}'. Please use one of: Months, Weeks, Years"
+                    })
+                    continue
+
+
                 existing = CivilIdName.objects.filter(
                     civil_id_name__iexact=civil_id_name
                 ).first()
- 
+
                 if existing:
+                    if not getattr(existing, "is_deleted", False):
+                        duplicate_names.append(civil_id_name)
+                        continue
+                    else:
+                        # Restore soft-deleted record
+                        existing.authority_full_name = authority_full_name
+                        existing.authority_short_name = authority_short_name
+                        existing.valid_type = valid_type
+                        existing.valid_duration_value = valid_duration_value
+                        existing.valid_duration_unit = valid_duration_unit
+                        existing.description = description
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
+                        continue
+
+                # Create new entry
+                try:
+                    CivilIdName.objects.create(
+                        civil_id_name=civil_id_name,
+                        authority_full_name=authority_full_name,
+                        authority_short_name=authority_short_name,
+                        valid_type=valid_type,
+                        valid_duration_value=valid_duration_value,
+                        valid_duration_unit=valid_duration_unit,
+                        description=description,
+                        is_deleted=False
+                    )
+                    imported_count += 1
+                except IntegrityError:
                     duplicate_names.append(civil_id_name)
-                    continue
- 
-                CivilIdName.objects.create(
-                    civil_id_name=civil_id_name,
-                    authority_full_name=authority_full_name,
-                    authority_short_name=authority_short_name,
-                    valid_type=valid_type,
-                    valid_duration_value=valid_duration_value,
-                    valid_duration_unit=valid_duration_unit,
-                    description=description
-                )
-                imported_count += 1
- 
+
         except Exception as e:
-            return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
- 
+            return Response({"statusCode": 400, "status": False, "message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
         return Response({
             "statusCode": 200,
             "status": True,
@@ -4297,10 +4383,7 @@ class CivilIdNameImportAPIView(APIView):
             "skipped_rows": skipped_rows,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
-        })
-
-
-
+        }, status=status.HTTP_200_OK)
 
 
 
@@ -7647,19 +7730,45 @@ class AccreditationNameImportAPIView(APIView):
                         'Accrediation Full Name': full_name,
                         'Country': country_name,
                         'Accrediation Category': category_name,
-                        'Reason': f"Invalid valid_type='{valid_type}'. Allowed: {', '.join(ALLOWED_VALID_TYPES)}"
+                        'Reason': f"Invalid valid_type='{valid_type}'. Allowed: Permanent, Valid Upto, Date"
                     })
                     continue
 
-                if valid_type == 'Valid Upto' and (not valid_duration_value or not valid_duration_unit):
-                    skipped_rows.append({
-                        'Accrediation Full Name': full_name,
-                        'Country': country_name,
-                        'Accrediation Category': category_name,
-                        'Reason': "Valid Upto type requires 'Accrediation Valid Duration' as numeric and 'Accrediation Valid Unit' as one of: Months, Weeks, Years"
+                # ---------- Valid Upto checks ----------
+                if valid_type == 'Valid Upto':
+                    # Check duration value
+                    if valid_duration_value is None:
+                        skipped_rows.append({
+                            'Accrediation Full Name': full_name,
+                            'Country': country_name,
+                            'Accrediation Category': category_name,
+                            'Reason': "Valid Upto type requires 'Accrediation Valid Duration' as numeric and 'Accrediation Valid Unit' as one of: Months, Weeks, Years"
+                        })
+                        continue
 
-                    })
-                    continue
+                    # Numeric check
+                    try:
+                        valid_duration_value = int(valid_duration_value)
+                        if valid_duration_value <= 0:
+                            raise ValueError
+                    except (ValueError, TypeError):
+                        skipped_rows.append({
+                            'Accrediation Full Name': full_name,
+                            'Country': country_name,
+                            'Accrediation Category': category_name,
+                            'Reason': "Invalid 'Accrediation Valid Duration'. Please use a positive numeric value."
+                        })
+                        continue
+
+                    # Unit check
+                    if not valid_duration_unit or valid_duration_unit not in ALLOWED_VALID_UNITS:
+                        skipped_rows.append({
+                            'Accrediation Full Name': full_name,
+                            'Country': country_name,
+                            'Accrediation Category': category_name,
+                            'Reason': f"Invalid 'Accrediation Valid Unit'='{valid_duration_unit}'. Please use one of: Months, Weeks, Years"
+                        })
+                        continue
 
                 elif valid_type == 'Date' and not valid_date:
                     skipped_rows.append({

@@ -274,7 +274,7 @@ class CivilIdNameSerializer(serializers.ModelSerializer):
             'valid_duration_value',
             'valid_duration_unit',
             'valid_duration_unit_detail',
- 
+            'valid_date',
             'description',
             'is_deleted',
             'created_at',
