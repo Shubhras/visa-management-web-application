@@ -1602,7 +1602,7 @@ class CountryExportAPIView(APIView):
                 value = getattr(obj, field, '')
 
                 if field == 'continent' and obj.continent:
-                    value = obj.continent.name
+                    value = obj.continents.name
                 elif field in ['created_at', 'updated_at'] and value:
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
