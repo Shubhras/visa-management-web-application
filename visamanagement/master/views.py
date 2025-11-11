@@ -4091,7 +4091,7 @@ class CivilIdNameExportAPIView(APIView):
             "authority_full_name": "Authority Full Name",
             "authority_short_name": "Authority Short Name",
             "valid_type": "Valid Type",
-            "valid_date":"Valid Date"
+            "valid_date":"Valid Date",
             "valid_duration_value": "Valid Duration Value",
             "valid_duration_unit": "Valid Duration Unit",
             "description": "Description",
