@@ -2668,7 +2668,11 @@ class DistrictImportAPIView(APIView):
 
                 if existing:
                     if not existing.is_deleted:
-                        duplicate_names.append(district_name)
+                        duplicate_names.append({
+                            "District": existing.districtName,
+                            "State": state_obj.stateName if state_obj else None,
+                            "Country": country_obj.name
+                        })
                         continue
                     else:
                         # Restore deleted record
