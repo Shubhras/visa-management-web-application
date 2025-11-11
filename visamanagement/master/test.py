@@ -2509,6 +2509,8 @@ class EntranceTestResultCreateAPIView(APIView):
         return Response({"statusCode": 400, "status": False, "message": errors}, status=400)
 
 
+
+
 # -------------------- Retrieve -------------------- #
 class EntranceTestResultRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
