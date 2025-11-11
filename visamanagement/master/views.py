@@ -3119,12 +3119,16 @@ class CityImportAPIView(APIView):
 
             # ---------------- Data Processing ----------------
             imported_count = 0
+            existing_in_file = set()
             for row in  reversed(data):
                 city_name = str(row.get('city name')).strip() if row.get('city name') else None
                 country_name = str(row.get('country name')).strip() if row.get('country name') else None
                 state_name = str(row.get('state name')).strip() if row.get('state name') else None
                 district_name = str(row.get('district name')).strip() if row.get('district name') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
+                
+                key = (city_name.lower(), district_name.lower(), state_name.lower(), country_name.lower())
+
 
                 if not city_name or not state_name or not district_name or not country_name:
                     skipped_rows.append({
@@ -3181,35 +3185,34 @@ class CityImportAPIView(APIView):
                     stateName=state_obj,
                     countryName=country_obj
                 ).first()
-                if existing:
-                    if not existing.is_deleted:
-                        duplicate_names.append({
-                            "City Name": existing.cityName,
-                            "District Name": district_obj.districtName,
-                            "State Name": state_obj.stateName,
-                            "Country Name": country_obj.name
-                        })
-                        continue
-                    else:
-                        # Restore deleted record
-                        existing.cityName = city_name
-                        existing.countryName = country_obj
-                        existing.stateName = state_obj
-                        existing.districtName = district_obj
-                        existing.description = description
-                        existing.is_deleted = False
-                        existing.save()
-                        imported_count += 1
-                else:
+
+                if existing or key in existing_in_file:
+                    duplicate_names.append({
+                        "City Name": city_name,
+                        "District Name": district_obj.districtName,
+                        "State Name": state_obj.stateName,
+                        "Country Name": country_obj.name
+                    })
+                    continue
+
+                try:
                     City.objects.create(
                         cityName=city_name,
-                        countryName=country_obj,
-                        stateName=state_obj,
                         districtName=district_obj,
+                        stateName=state_obj,
+                        countryName=country_obj,
                         description=description,
                         is_deleted=False
                     )
                     imported_count += 1
+                    existing_in_file.add(key)
+                except IntegrityError:
+                    duplicate_names.append({
+                        "City Name": city_name,
+                        "District Name": district_obj.districtName,
+                        "State Name": state_obj.stateName,
+                        "Country Name": country_obj.name
+                    })
 
         except Exception as e:
             return Response({
