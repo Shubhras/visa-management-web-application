@@ -1569,7 +1569,7 @@ class CountryExportAPIView(APIView):
             'continent': 'Continent',
             'shortName': 'Country Short Name',
             'fullName': 'Country Official Name',
-            'officialName': 'Official Name',
+            'officialName': 'Country Official Name',
             'capitalCity': 'Capital City',
             'dialCodes': 'Country Calling Code',
             'currencyfullname':'Currency Full Name',
