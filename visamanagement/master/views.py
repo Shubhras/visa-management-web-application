@@ -1707,7 +1707,7 @@ class CountryImportAPIView(APIView):
                 country_name = str(row.get('country name')).strip() if row.get('country name') else None
                 if not country_name:
                     skipped_rows.append({
-                        "Country": "Unknown",
+                        "Country Name": "Unknown",
                         "Reason": "Missing required field: country name"
                     })
                     continue
@@ -1737,7 +1737,7 @@ class CountryImportAPIView(APIView):
                     continent_obj = Continents.objects.filter(name__iexact=continent_name).first()
                     if not continent_obj:
                         skipped_rows.append({
-                            "Country ": country_name,
+                            "Country Name": country_name,
                             "Continent": continent_name,
                             "Reason": "Invalid continent name"
                         })
@@ -1747,7 +1747,7 @@ class CountryImportAPIView(APIView):
                 if existing:
                     if not getattr(existing, "is_deleted", False):
                         duplicate_names.append({
-                            "Country": existing.name,
+                            "Country Name": existing.name,
                             "Continent": existing.continent.name if existing.continent else None 
                         })
                         continue
@@ -1784,7 +1784,7 @@ class CountryImportAPIView(APIView):
                         imported_count += 1
                     except IntegrityError:
                         duplicate_names.append({
-                            "Country": country_name,
+                            "Country Name": country_name,
                             "Continent": continent_obj.name if continent_obj else ""
                         })
 
@@ -2181,16 +2181,16 @@ class StateImportAPIView(APIView):
 
                 if not state_name or not country_name or not state_type:
                     skipped_rows.append({
-                        "State": state_name or "Unknown",
-                        "Country": country_name or "Unknown",
+                        "State Name": state_name or "Unknown",
+                        "Country Name": country_name or "Unknown",
                         "Reason": "Missing required field or state type"
                     })
                     continue
 
                 if state_type not in ['STATE', 'TERRITORY']:
                     skipped_rows.append({
-                        "State": state_name,
-                        "Country": country_name,
+                        "State Name": state_name,
+                        "Country Name": country_name,
                         "Reason": f'Invalid state type: {state_type}'
                     })
                     continue
@@ -2199,8 +2199,8 @@ class StateImportAPIView(APIView):
                 country_obj = Country.objects.filter(name__iexact=country_name).first()
                 if not country_obj:
                     skipped_rows.append({
-                        "State": state_name,
-                        "Country": country_name,
+                        "State Name": state_name,
+                        "Country Name": country_name,
                         "Reason": "Country not found"
                     })
                     continue
@@ -2638,8 +2638,8 @@ class DistrictImportAPIView(APIView):
 
                 if not district_name or not country_name:
                     skipped_rows.append({
-                        "District": district_name or "Unknown",
-                        "Country": country_name or "Unknown",
+                        "District Name": district_name or "Unknown",
+                        "Country Name": country_name or "Unknown",
                         "Reason": "Missing required field"
                     })
                     continue
@@ -2651,8 +2651,8 @@ class DistrictImportAPIView(APIView):
 
                 if not country_obj:
                     skipped_rows.append({
-                        "District": district_name,
-                        "Country": country_name,
+                        "District Name": district_name,
+                        "Country Name": country_name,
                         "Reason": "Country not found"
                     })
                     continue
