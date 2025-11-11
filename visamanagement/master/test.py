@@ -2489,26 +2489,64 @@ class EntranceTestResultCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
-        entrancetest_id = request.data.get("entrancetest_id")
-        moduleName_id = request.data.get("moduleName_id")
+        # Get UUIDs from request
+        entrancetest_uuid = request.data.get("entrancetest_id")
+        module_uuid = request.data.get("moduleName_id")
+
+        # Fetch the actual foreign key objects
+        try:
+            entrancetest_obj = EntranceTestName.objects.get(uuid=entrancetest_uuid, is_deleted=False)
+        except EntranceTestName.DoesNotExist:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Invalid Entrance Test UUID."
+            }, status=400)
+
+        try:
+            module_obj = EntranceTestModuleName.objects.get(uuid=module_uuid, is_deleted=False)
+        except EntranceTestModuleName.DoesNotExist:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Invalid Module UUID."
+            }, status=400)
 
         # Check duplicates for same entrance test + module
         existing = EntranceTestResult.objects.filter(
-            entrancetest_id=entrancetest_id,
-            moduleName_id=moduleName_id,
+            entrancetest=entrancetest_obj,
+            moduleName=module_obj,
             is_deleted=False
         ).first()
         if existing:
-            return Response({"statusCode": 400, "status": False, "message": "Result for this test and module already exists."}, status=400)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Result for this test and module already exists."
+            }, status=400)
 
-        serializer = EntranceTestResultSerializer(data=request.data)
+        # Replace UUIDs with actual objects for serializer
+        data = request.data.copy()
+        data['entrancetest_id'] = entrancetest_obj.uuid
+        data['moduleName_id'] = module_obj.uuid
+
+        serializer = EntranceTestResultSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
-            return Response({"statusCode": 200, "status": True, "message": "Result created successfully", "data": serializer.data})
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "Result created successfully",
+                "data": serializer.data
+            })
+
+        # Collect errors
         errors = " ".join([msg for msgs in serializer.errors.values() for msg in msgs])
-        return Response({"statusCode": 400, "status": False, "message": errors}, status=400)
-
-
+        return Response({
+            "statusCode": 400,
+            "status": False,
+            "message": errors
+        }, status=400)
 
 
 # -------------------- Retrieve -------------------- #
