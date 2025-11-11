@@ -2183,7 +2183,7 @@ class StateImportAPIView(APIView):
                     skipped_rows.append({
                         "State Name": state_name or "Unknown",
                         "Country Name": country_name or "Unknown",
-                        "Reason": "Missing required field or state type"
+                        "Reason": "Missing required field or Invalid state type: Use (State, Territory)"
                     })
                     continue
 
@@ -2210,8 +2210,8 @@ class StateImportAPIView(APIView):
                 if existing:
                     if not existing.is_deleted:
                         duplicate_names.append({
-                            "State": existing.stateName,
-                            "Country": country_obj.name
+                            "State Name": existing.stateName,
+                            "Country Name": country_obj.name
                         })
                         continue
                     else:
