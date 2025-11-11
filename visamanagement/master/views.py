@@ -7592,7 +7592,27 @@ class AccreditationNameImportAPIView(APIView):
                 valid_type = str(row.get('accrediation valid type')).strip().upper() if row.get('accrediation valid type') else None
                 valid_duration_value = row.get('accrediation valid duration value')
                 valid_duration_unit = str(row.get('accrediation valid duration unit')).strip().upper() if row.get('accrediation valid duration unit') else None
-                valid_date = row.get('accrediation valid date')
+                valid_date_raw = row.get('accrediation valid date')
+                valid_date = None
+                if valid_date_raw:
+                    if isinstance(valid_date_raw, datetime):
+                        valid_date = valid_date_raw.date()
+                    else:
+                        date_str = str(valid_date_raw).strip()
+                        for fmt in ("%d-%m-%Y", "%d/%m/%Y", "%Y-%m-%d"):
+                            try:
+                                valid_date = datetime.strptime(date_str, fmt).date()
+                                break
+                            except ValueError:
+                                continue
+                        if not valid_date:
+                            skipped_rows.append({
+                                'full_name': full_name,
+                                'country': country_name,
+                                'category': category_name,
+                                'reason': f"Invalid date format '{valid_date_raw}'. Expected formats: dd-mm-yyyy, dd/mm/yyyy, or yyyy-mm-dd"
+                            })
+                            continue
 
                 if not full_name or not country_name or not category_name:
                     skipped_rows.append({
@@ -7604,9 +7624,20 @@ class AccreditationNameImportAPIView(APIView):
                 country = Country.objects.filter(name__iexact=country_name).first()
                 category = AccreditationCategory.objects.filter(name__iexact=category_name).first()
 
+                if not full_name or not country_name or not category_name:
+                    skipped_rows.append({
+                        'full_name': full_name or 'Unknown',
+                        'country': country_name or 'Unknown',
+                        'category': category_name or 'Unknown',
+                        'reason': 'Missing required field(s)'
+                    })
+                    continue
+
                 if not country or not category:
                     skipped_rows.append({
                         'full_name': full_name,
+                        'country': country_name,
+                        'category': category_name,
                         'reason': f'Invalid country or category: {country_name}/{category_name}'
                     })
                     continue
@@ -7614,6 +7645,8 @@ class AccreditationNameImportAPIView(APIView):
                 if valid_type and valid_type not in ALLOWED_VALID_TYPES:
                     skipped_rows.append({
                         'full_name': full_name,
+                        'country': country_name,
+                        'category': category_name,
                         'reason': f"Invalid valid_type='{valid_type}'. Allowed: {', '.join(ALLOWED_VALID_TYPES)}"
                     })
                     continue
@@ -7621,19 +7654,26 @@ class AccreditationNameImportAPIView(APIView):
                 if valid_type == 'VALID UPTO' and (not valid_duration_value or not valid_duration_unit):
                     skipped_rows.append({
                         'full_name': full_name,
-                        'reason': f"Valid Upto type requires duration value and unit"
+                        'country': country_name,
+                        'category': category_name,
+                        'reason': "Valid Upto type requires duration value and unit"
                     })
                     continue
+
                 elif valid_type == 'DATE' and not valid_date:
                     skipped_rows.append({
                         'full_name': full_name,
-                        'reason': f"Date type requires valid_date"
+                        'country': country_name,
+                        'category': category_name,
+                        'reason': "Date type requires valid_date"
                     })
                     continue
 
                 if valid_duration_unit and valid_duration_unit not in ALLOWED_VALID_UNITS:
                     skipped_rows.append({
                         'full_name': full_name,
+                        'country': country_name,
+                        'category': category_name,
                         'reason': f"Invalid valid_duration_unit='{valid_duration_unit}'"
                     })
                     continue
