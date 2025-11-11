@@ -1746,10 +1746,15 @@ class CountryImportAPIView(APIView):
                 # Check existing country
                 existing = Country.objects.filter(name__iexact=country_name).first()
                 if existing:
-                    if not existing.is_deleted:
-                        duplicate_names.append(country_name)
+                    if not getattr(existing, "is_deleted", False):
+                        # Store duplicate as dict
+                        duplicate_names.append({
+                            "Country Name": existing.name,
+                            "Country Full Name": existing.fullName
+                        })
                         continue
                     else:
+                        # Restore soft-deleted record
                         existing.continent = continent_obj
                         existing.shortName = short_name
                         existing.fullName = full_name
@@ -1759,26 +1764,32 @@ class CountryImportAPIView(APIView):
                         existing.currencyfullname = currency_full_name
                         existing.currencyshortname = currency_short_name
                         existing.currencyCode = currency_code
-                        existing.description=description
+                        existing.description = description
                         existing.is_deleted = False
                         existing.save()
                         imported_count += 1
                 else:
-                    Country.objects.create(
-                        name=country_name,
-                        continent=continent_obj,
-                        shortName=short_name,
-                        fullName=full_name,
-                        officialName=official_name,
-                        capitalCity=capital_city,
-                        dialCodes=dial_codes,
-                        currencyfullname=currency_full_name,
-                        currencyshortname=currency_short_name,
-                        currencyCode=currency_code,
-                        description=description,
-                        is_deleted=False
-                    )
-                    imported_count += 1
+                    try:
+                        Country.objects.create(
+                            name=country_name,
+                            continent=continent_obj,
+                            shortName=short_name,
+                            fullName=full_name,
+                            officialName=official_name,
+                            capitalCity=capital_city,
+                            dialCodes=dial_codes,
+                            currencyfullname=currency_full_name,
+                            currencyshortname=currency_short_name,
+                            currencyCode=currency_code,
+                            description=description,
+                            is_deleted=False
+                        )
+                        imported_count += 1
+                    except IntegrityError:
+                        duplicate_names.append({
+                            "Country Name": country_name,
+                            "Country Full Name": full_name
+                        })
 
         except Exception as e:
             return Response({
@@ -1790,7 +1801,7 @@ class CountryImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_names)),
+            "duplicates": duplicate_names,
             "skipped_rows": skipped_rows,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
