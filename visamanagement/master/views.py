@@ -4282,7 +4282,7 @@ class CivilIdNameImportAPIView(APIView):
                 if not civil_id_name or not authority_full_name:
                     skipped_rows.append({
                         "Civil ID Name": civil_id_name or "Unknown",
-                        "reason": "Missing required fields",
+                        "Reason": f"Missing required fields. Required: {', '.join(required_headers)}"
                     })
                     continue
 
@@ -7699,7 +7699,7 @@ class AccreditationNameImportAPIView(APIView):
                 if not full_name or not country_name or not category_name:
                     skipped_rows.append({
                         'full_name': full_name or 'Unknown',
-                        'reason': 'Missing required field(s)'
+                        'Reason': f"Missing required fields. Required: {', '.join(required_headers)}"
                     })
                     continue
 
@@ -8636,7 +8636,7 @@ class LicenseNameImportAPIView(APIView):
                     skipped_rows.append({
                         'License Full Name': full_name or 'Unknown',
                         'Country': country_name or 'Unknown',
-                        'Reason': 'Missing required fields'
+                        'Reason': f"Missing required fields. Required: {', '.join(required_headers)}"
                     })
                     continue
 
