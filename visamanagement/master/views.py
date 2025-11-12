@@ -6250,17 +6250,23 @@ class OwnershipTypeImportAPIView(APIView):
                     })
                     continue
 
-                # Find company type (if provided)
-                company_type = None
-                if company_type_name:
-                    company_type = CompanyType.objects.filter(name__iexact=company_type_name).first()
-                    if not company_type:
-                        skipped_rows.append({
-                            "Row": row_number,
-                            "Ownership Type": ownership_name,
-                            "Reason": f'Company Type "{company_type_name}" not found'
-                        })
-                        continue
+                if not company_type_name:
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Ownership Type": ownership_name,
+                        "Reason": "Missing company type"
+                    })
+                    continue
+
+                # Find company type
+                company_type = CompanyType.objects.filter(name__iexact=company_type_name).first()
+                if not company_type:
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Ownership Type": ownership_name,
+                        "Reason": f'Company Type "{company_type_name}" not found'
+                    })
+                    continue
 
                 # Check uniqueness on (ownership_name, company_type)
                 existing = OwnershipType.objects.filter(
@@ -7068,10 +7074,15 @@ class StakeholderTypeImportAPIView(APIView):
                     continue
 
                 # Resolve category object
-                category_obj = None
-                if category_name:
-                    category_obj = StakeholderCategory.objects.filter(name__iexact=category_name, is_deleted=False).first()
+                if not category_name:
+                    skipped_rows.append({"Row": row_number, "StakeholderType": name, "Reason": "Missing stakeholder category"})
+                    continue
 
+                # Resolve category object
+                category_obj = StakeholderCategory.objects.filter(name__iexact=category_name, is_deleted=False).first()
+                if not category_obj:
+                    skipped_rows.append({"Row": row_number, "StakeholderType": name, "Reason": f'Category "{category_name}" not found'})
+                    continue
                 # Check duplicate by name + category
                 existing = StakeholderType.objects.filter(
                     name__iexact=name,
@@ -7363,10 +7374,7 @@ class AccreditationCategoryExportAPIView(APIView):
 
 # ------------------ Import API ------------------
 class AccreditationCategoryImportAPIView(APIView):
-    """
-    API to import Accreditation Categories from CSV or XLSX.
-    Handles duplicates, deleted records, and skips empty rows.
-    """
+   
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
@@ -11815,7 +11823,7 @@ class LostReasonB2BImportAPIView(APIView):
 
 
 
-        
+
 
 # -------------------- EducationLevelCode -------------------- #
 class EducationLevelCodeListAPIView(APIView):
