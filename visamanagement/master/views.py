@@ -144,8 +144,7 @@ class GenderListAPIView(APIView):
 
         if search:
             queryset = queryset.filter(
-                Q(name__icontains=search) |
-                Q(description__icontains=search)
+                Q(name__iexact=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -970,7 +969,7 @@ class MaritalstatusImportAPIView(APIView):
 
 
 
-        
+
 #-------------------------------continents--------------------------------
 class ContinentListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
