@@ -7448,7 +7448,7 @@ class AccreditationCategoryImportAPIView(APIView):
             imported_count = 0
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get('accrediation category')).strip() if row.get('accrediation category') else None
+                name = str(row.get('accrediationcategory')).strip() if row.get('accrediationcategory') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not name:
