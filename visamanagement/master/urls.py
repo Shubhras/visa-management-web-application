@@ -469,7 +469,14 @@ urlpatterns = [
     path('applicanttype/export/', ApplicantTypeExportAPIView.as_view(), name='applicanttype-export'),
     path('applicanttype/import/', ApplicantTypeImportAPIView.as_view(), name='applicanttype-import'),
 
-
+    path('workrights/', WorkRightsListAPIView.as_view(), name='workrights-list'),
+    path('workrights/create/', WorkRightsCreateAPIView.as_view(), name='workrights-create'),
+    path('workrights/<uuid:uuid>/', WorkRightsRetrieveAPIView.as_view(), name='workrights-retrieve'),
+    path('workrights/<uuid:uuid>/update/', WorkRightsUpdateAPIView.as_view(), name='workrights-update'),
+    path('workrights/<uuid:uuid>/delete/', WorkRightsDeleteAPIView.as_view(), name='workrights-delete'),
+    path('workrights/delete/', WorkRightsDeleteAPIView.as_view(), name='workrights-bulk-delete'),
+    path('workrights/export/', WorkRightsExportAPIView.as_view(), name='workrights-export'),
+    path('workrights/import/', WorkRightsImportAPIView.as_view(), name='workrights-import'),
 ]
 
 
