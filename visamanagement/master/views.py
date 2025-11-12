@@ -2702,11 +2702,11 @@ class DistrictImportAPIView(APIView):
                     existing_in_file.add(key)
                 except IntegrityError:
                     duplicate_names.append({
-                        "District Name": existing.districtName,
+                        "District Name": district_name,
                         "State Name": state_obj.stateName if state_obj else None,
                         "Country Name": country_obj.name
                     })   
-                    
+
         except Exception as e:
             return Response({
                 "statusCode": 400,
