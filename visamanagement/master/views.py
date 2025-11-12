@@ -8224,7 +8224,7 @@ class BankAccountTypeDeleteAPIView(APIView):
 
 
 class BankAccountTypeExportAPIView(APIView):
-    # permission_classes = [IsAuthenticated]  # Uncomment if needed
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
@@ -8292,10 +8292,7 @@ class BankAccountTypeExportAPIView(APIView):
 
 
 class BankAccountTypeImportAPIView(APIView):
-    """
-    API to import Bank Account Types from CSV or XLSX.
-    Handles duplicates, deleted records, and skips empty rows.
-    """
+    
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
@@ -8408,7 +8405,7 @@ class BankAccountTypeImportAPIView(APIView):
 
 #-------------------------------------------LicenseName---------------------------------
 class LicenseNameListAPIView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
@@ -8603,7 +8600,7 @@ class LicenseNameDeleteAPIView(APIView):
 
 # ------------------ Export API ------------------
 class LicenseNameExportAPIView(APIView):
-
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')
@@ -8676,6 +8673,7 @@ class LicenseNameExportAPIView(APIView):
 
 # ------------------ Import API ------------------
 class LicenseNameImportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
         file = request.FILES.get('file')
@@ -8905,6 +8903,7 @@ class LicenseNameImportAPIView(APIView):
 #-------------------------------------------LeadSource---------------------------------
 
 class LeadSourceCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def post(self, request):
         serializer = LeadSourceSerializer(data=request.data)
         if serializer.is_valid():
@@ -8930,6 +8929,8 @@ class LeadSourceCreateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 class LeadSourceListAPIView(APIView):    
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
     def get(self, request):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'created_at')
@@ -8960,6 +8961,7 @@ class LeadSourceListAPIView(APIView):
 
 
 class LeadSourceRetrieveAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def get(self, request, uuid):
         try:
             leadsource = LeadSource.objects.get(uuid=uuid, is_deleted=False)
@@ -8980,6 +8982,7 @@ class LeadSourceRetrieveAPIView(APIView):
 
 
 class LeadSourceUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def put(self, request, uuid):
         try:
             category = LeadSource.objects.get(uuid=uuid, is_deleted=False)
@@ -9098,7 +9101,7 @@ class LeadSourceDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 class LeadSourceExportAPIView(APIView):
-    # permission_classes = [IsAuthenticated]  # Uncomment if needed
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
@@ -9171,9 +9174,7 @@ class LeadSourceExportAPIView(APIView):
 
 
 class LeadSourceImportAPIView(APIView):
-    """
-    Import LeadSource data from CSV or XLSX with skip and duplicate tracking.
-    """
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')
@@ -9304,6 +9305,7 @@ class LeadSourceImportAPIView(APIView):
 
 
 class InterestLevelCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def post(self, request):
         serializer = InterestLevelSerializer(data=request.data)
         if serializer.is_valid():
@@ -9329,7 +9331,8 @@ class InterestLevelCreateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
-class InterestLevelListAPIView(APIView):    
+class InterestLevelListAPIView(APIView):   
+    permission_classes = [IsAuthenticated, IsAdminUser] 
     def get(self, request):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'created_at')
@@ -9359,6 +9362,7 @@ class InterestLevelListAPIView(APIView):
         return paginator.get_paginated_response(serializer.data)
 
 class InterestLevelRetrieveAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def get(self, request, uuid):
         try:
             interestlevel = InterestLevel.objects.get(uuid=uuid, is_deleted=False)
@@ -9379,6 +9383,7 @@ class InterestLevelRetrieveAPIView(APIView):
 
 
 class InterestLevelUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def put(self, request, uuid):
         try:
             category = InterestLevel.objects.get(uuid=uuid, is_deleted=False)
@@ -9497,8 +9502,7 @@ class InterestLevelDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 class InterestLevelExportAPIView(APIView):
-    # permission_classes = [IsAuthenticated]  # Uncomment and adjust as needed
-
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')  
@@ -9560,9 +9564,7 @@ class InterestLevelExportAPIView(APIView):
 
 
 class InterestLevelImportAPIView(APIView):
-    """
-    Import InterestLevel data from CSV or XLSX with skip and duplicate tracking.
-    """
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')
@@ -9739,7 +9741,8 @@ class PriorityCreateAPIView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
 
-class PriorityListAPIView(APIView):    
+class PriorityListAPIView(APIView):   
+    permission_classes = [IsAuthenticated, IsAdminUser] 
     def get(self, request):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'created_at')
@@ -9770,6 +9773,7 @@ class PriorityListAPIView(APIView):
 
 
 class PriorityRetrieveAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def get(self, request, uuid):
         try:
             priority = Priority.objects.get(uuid=uuid, is_deleted=False)
@@ -9789,6 +9793,7 @@ class PriorityRetrieveAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 class PriorityUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def put(self, request, uuid):
         try:
             category = Priority.objects.get(uuid=uuid, is_deleted=False)
@@ -9917,7 +9922,7 @@ class PriorityDeleteAPIView(APIView):
 
 
 class PriorityExportAPIView(APIView):
-    # permission_classes = [IsAuthenticated]  # Uncomment if needed
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
@@ -9989,9 +9994,7 @@ class PriorityExportAPIView(APIView):
 
 
 class PriorityImportAPIView(APIView):
-    """
-    Import Priority data from CSV or XLSX with skip and duplicate tracking.
-    """
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')
@@ -10170,7 +10173,8 @@ class TagsCreateAPIView(APIView):
                 "message": message_text,
             }, status=status.HTTP_400_BAD_REQUEST)
 
-class TagsListAPIView(APIView):    
+class TagsListAPIView(APIView):  
+    permission_classes = [IsAuthenticated, IsAdminUser]  
     def get(self, request):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'created_at')
@@ -10350,8 +10354,7 @@ class TagsDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK) 
 
 class TagsExportAPIView(APIView):
-    # permission_classes = [IsAuthenticated]  # Uncomment and adjust as needed
-
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')  
@@ -10416,9 +10419,7 @@ class TagsExportAPIView(APIView):
 
 
 class TagsImportAPIView(APIView):
-    """
-    Import Tags data from CSV or XLSX with skip and duplicate tracking.
-    """
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')  # optional, for XLSX
@@ -10595,7 +10596,8 @@ class ActivityTypeCreateAPIView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ActivityTypeListAPIView(APIView):    
+class ActivityTypeListAPIView(APIView):  
+    permission_classes = [IsAuthenticated, IsAdminUser]  
     def get(self, request):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'created_at')
@@ -10775,8 +10777,7 @@ class ActivityTypeDeleteAPIView(APIView):
 
 
 class ActivityTypeExportAPIView(APIView):
-    # permission_classes = [IsAuthenticated]  # Uncomment and adjust as needed
-
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')  
@@ -10845,6 +10846,7 @@ class ActivityTypeExportAPIView(APIView):
 
 
 class ActivityTypeImportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
     
     def normalize_header(self, header):
         if not header:
@@ -11032,7 +11034,8 @@ class LostReasonCreateAPIView(APIView):
             "message": serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
 
-class LostReasonListAPIView(APIView):    
+class LostReasonListAPIView(APIView):  
+    permission_classes = [IsAuthenticated, IsAdminUser]  
     def get(self, request):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'created_at')
@@ -11212,8 +11215,7 @@ class LostReasonDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 class LostReasonExportAPIView(APIView):
-    # permission_classes = [IsAuthenticated]  # Uncomment and adjust as needed
-
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')  
@@ -11278,9 +11280,7 @@ class LostReasonExportAPIView(APIView):
 
 
 class LostReasonImportAPIView(APIView):
-    """
-    Import LostReason data from CSV or XLSX with skip and duplicate tracking.
-    """
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')  # optional for XLSX
@@ -11435,7 +11435,8 @@ class LostReasonB2BCreateAPIView(APIView):
             "message": serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
 
-class LostReasonB2BListAPIView(APIView):    
+class LostReasonB2BListAPIView(APIView): 
+    permission_classes = [IsAuthenticated, IsAdminUser]   
     def get(self, request):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'created_at')
@@ -11617,8 +11618,7 @@ class LostReasonB2BDeleteAPIView(APIView):
 
 
 class LostReasonB2BExportAPIView(APIView):
-    # permission_classes = [IsAuthenticated]  # Uncomment and adjust as needed
-
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')  
@@ -11687,9 +11687,7 @@ class LostReasonB2BExportAPIView(APIView):
         return response
 
 class LostReasonB2BImportAPIView(APIView):
-    """
-    Import LostReasonB2B data from CSV or XLSX with skip and duplicate tracking.
-    """
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def normalize_header(self, header):
         """Normalize headers: lowercase, strip spaces, remove parentheses."""
         if not header:
