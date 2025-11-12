@@ -2674,21 +2674,35 @@ class DistrictImportAPIView(APIView):
                             "Reason": "State not found for this country"
                         })
                         continue
-                
+                key = (district_name.lower(), state_obj.stateName.lower() if state_obj else None, country_obj.name.lower())
 
+                if key in existing_in_file:
+                    duplicate_names.append({
+                        "District Name": district_name,
+                        "State Name": state_obj.stateName if state_obj else None,
+                        "Country Name": country_obj.name,
+                        "Reason": "Duplicate found in file"
+                    })
+                    continue
                 existing = District.objects.filter(
                     districtName__iexact=district_name,
-                    stateName=state_obj, 
                     countryName=country_obj
-                ).first()
+                )
 
-                if existing or key in existing_in_file:
-                        duplicate_names.append({
-                            "District Name": existing.districtName,
-                            "State Name": state_obj.stateName if state_obj else None,
-                            "Country Name": country_obj.name
-                        })
-                        continue
+                # Filter further by state (if applicable)
+                if state_obj:
+                    existing = existing.filter(stateName=state_obj)
+                else:
+                    existing = existing.filter(stateName__isnull=True)
+
+                if existing.exists():
+                    duplicate_names.append({
+                        "District Name": district_name,
+                        "State Name": state_obj.stateName if state_obj else None,
+                        "Country Name": country_obj.name,
+                        "Reason": "Already exists in database"
+                    })
+                    continue
                     
                 try:
                     District.objects.create(
@@ -3427,6 +3441,7 @@ class RelationExportAPIView(APIView):
         # --- Prepare dataset ---
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title="Relation"
 
         for obj in queryset:
             row = []
