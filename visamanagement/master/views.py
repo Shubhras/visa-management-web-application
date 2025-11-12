@@ -3808,6 +3808,7 @@ class TimezoneExportAPIView(APIView):
         return response
 
 
+
 class TimezoneImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -3819,18 +3820,17 @@ class TimezoneImportAPIView(APIView):
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
-        duplicate_names = []
+        duplicates = []
+        skipped_rows = []
 
         required_headers = {'time zone'}
         optional_headers = {'country', 'state', 'description'}
 
         try:
             data = []
-            headers = []
 
-            # XLSX Handling
+            # ---------------- XLSX ----------------
             if format_type == 'xlsx':
-                import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
 
@@ -3844,65 +3844,69 @@ class TimezoneImportAPIView(APIView):
                     return Response({'error': f'Sheet "{sheet_name}" is empty'}, status=400)
 
                 headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                if not required_headers.issubset(set(headers)):
-                    return Response({'error': f'Missing required headers: {required_headers}'}, status=400)
-
-                for row in ws.iter_rows(min_row=2, values_only=True):
+                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     if not any(row):
                         continue
                     row_dict = dict(zip(headers, row))
+                    row_dict["_row_number"] = idx
                     data.append(row_dict)
 
-            # CSV Handling
+            # ---------------- CSV ----------------
             elif format_type == 'csv':
-                from tablib import Dataset
                 decoded_file = file.read().decode('utf-8')
-                dataset = Dataset()
-                dataset.load(decoded_file, format='csv')
-
-                for row in dataset.dict:
+                reader = csv.DictReader(io.StringIO(decoded_file))
+                for idx, row in enumerate(reader, start=2):
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
-                    if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({'error': f'Missing required headers: {required_headers}'}, status=400)
+                    row_lower["_row_number"] = idx
                     data.append(row_lower)
-
             else:
                 return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
 
+            # ---------------- Process Data ----------------
             imported_count = 0
-
-            for row in  reversed(data):
+            for row in reversed(data):
+                row_number = row.get("_row_number", "Unknown")
                 tz_name = str(row.get('time zone')).strip() if row.get('time zone') else None
                 if not tz_name:
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Reason": "Missing time zone"
+                    })
                     continue
-
-                # Fetch or create related Country and State
-                country_obj = None
-                state_obj = None
 
                 country_name = str(row.get('country')).strip() if row.get('country') else None
                 state_name = str(row.get('state')).strip() if row.get('state') else None
+                description = str(row.get('description')).strip() if row.get('description') else ''
 
+                country_obj = None
+                state_obj = None
+
+                # Handle country
                 if country_name:
                     country_obj = Country.objects.filter(name__iexact=country_name, is_deleted=False).first()
                     if not country_obj:
                         country_obj = Country.objects.create(name=country_name, description='', is_deleted=False)
 
+                # Handle state
                 if state_name:
                     state_obj = State.objects.filter(stateName__iexact=state_name, is_deleted=False).first()
                     if not state_obj:
                         state_obj = State.objects.create(stateName=state_name, countryName=country_obj, description='', is_deleted=False)
 
-                description = str(row.get('description')).strip() if row.get('description') else ''
-
+                # Check duplicates
                 existing = Timezone.objects.filter(
                     Timezone__iexact=tz_name,
                     countryName=country_obj,
                     stateName=state_obj
                 ).first()
+
                 if existing:
                     if not existing.is_deleted:
-                        duplicate_names.append(tz_name)
+                        duplicates.append({
+                            "Row": row_number,
+                            "Timezone": tz_name,
+                            "Reason": "Already exists in database"
+                        })
                         continue
                     else:
                         existing.description = description
@@ -3931,9 +3935,10 @@ class TimezoneImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_names)),
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
-            "imported_count": imported_count
+            "imported_count": imported_count,
+            "duplicates": duplicates,
+            "skipped_rows": skipped_rows
         }, status=status.HTTP_200_OK)
 
 
