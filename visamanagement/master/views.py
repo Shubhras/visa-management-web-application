@@ -6661,7 +6661,7 @@ class StakeholderCategoryImportAPIView(APIView):
                 existing = StakeholderCategory.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "StakeholderCategory": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "Stakeholder Category": name, "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -7075,13 +7075,13 @@ class StakeholderTypeImportAPIView(APIView):
 
                 # Resolve category object
                 if not category_name:
-                    skipped_rows.append({"Row": row_number, "StakeholderType": name, "Reason": "Missing stakeholder category"})
+                    skipped_rows.append({"Row": row_number, "Stakeholder Type": name, "Reason": "Missing stakeholder category"})
                     continue
 
                 # Resolve category object
                 category_obj = StakeholderCategory.objects.filter(name__iexact=category_name, is_deleted=False).first()
                 if not category_obj:
-                    skipped_rows.append({"Row": row_number, "StakeholderType": name, "Reason": f'Category "{category_name}" not found'})
+                    skipped_rows.append({"Row": row_number, "Stakeholder Type": name, "Reason": f'Category "{category_name}" not found'})
                     continue
                 # Check duplicate by name + category
                 existing = StakeholderType.objects.filter(
@@ -7458,7 +7458,7 @@ class AccreditationCategoryImportAPIView(APIView):
                 existing = AccreditationCategory.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "AccreditationCategory": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "Accreditation Category": name, "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -8374,7 +8374,7 @@ class BankAccountTypeImportAPIView(APIView):
                 existing = BankAccountType.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "BankAccount Type": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "Bank Account Type": name, "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
