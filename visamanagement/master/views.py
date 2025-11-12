@@ -8290,7 +8290,6 @@ class BankAccountTypeExportAPIView(APIView):
 
 
 class BankAccountTypeImportAPIView(APIView):
-    
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
@@ -8304,13 +8303,14 @@ class BankAccountTypeImportAPIView(APIView):
         duplicates = []
         skipped_rows = []
 
-        required_headers = {'bank account type'}
-        optional_headers = {'description'}
-
         def normalize_header(h):
             if not h:
                 return ''
             return ''.join(c for c in str(h).lower() if c.isalnum())
+
+        # Normalize required and optional headers
+        required_headers = {normalize_header('bank account type')}
+        optional_headers = {normalize_header('description')}
 
         try:
             data = []
@@ -8362,7 +8362,7 @@ class BankAccountTypeImportAPIView(APIView):
             imported_count = 0
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get('bank aaaaccount type')).strip() if row.get('bank account type') else None
+                name = str(row.get('bankaccounttype')).strip() if row.get('bankaccounttype') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not name:
@@ -8394,7 +8394,6 @@ class BankAccountTypeImportAPIView(APIView):
             "duplicates": duplicates,
             "skipped_rows": skipped_rows
         }, status=200)
-
 
 
 
