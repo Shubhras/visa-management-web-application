@@ -1209,6 +1209,8 @@ class ContinentExportAPIView(APIView):
 
 
 
+
+
 class ContinentImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -1220,17 +1222,16 @@ class ContinentImportAPIView(APIView):
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
-        duplicate_names = []
+        duplicates = []
+        skipped_rows = []
 
-        # Required and optional headers
         required_headers = {'continent'}
         optional_headers = {'description'}
 
         try:
             data = []
-            headers = []
 
-            # ---------- XLSX Handling ----------
+            # ---------------- XLSX ----------------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
@@ -1252,60 +1253,26 @@ class ContinentImportAPIView(APIView):
                     return Response({
                         "statusCode": 400,
                         "status": False,
-                        "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Please provide at least one data row.'
+                        "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty.'
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
 
-                # Validate required headers
-                if not required_headers.issubset(set(headers)):
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        'message': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
-                    }, status=status.HTTP_400_BAD_REQUEST)
-
-                for row in ws.iter_rows(min_row=2, values_only=True):
+                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     if not any(row):
                         continue
                     row_dict = dict(zip(headers, row))
+                    row_dict["_row_number"] = idx
                     data.append(row_dict)
 
-                if not data:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Please provide at least one data row.'
-                    }, status=status.HTTP_400_BAD_REQUEST)
-
-            # ---------- CSV Handling ----------
+            # ---------------- CSV ----------------
             elif format_type == 'csv':
                 decoded_file = file.read().decode('utf-8')
-                dataset = Dataset()
-                dataset.load(decoded_file, format='csv')
-
-                for row in dataset.dict:
+                reader = csv.DictReader(io.StringIO(decoded_file))
+                for idx, row in enumerate(reader, start=2):
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
-
-                    # Validate required headers
-                    if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({
-                            "statusCode": 400,
-                            "status": False,
-                            "message": (
-                                f'Missing required headers. Required: {", ".join(required_headers)}. '
-                                f'Found headers in the file: {", ".join(row_lower.keys())}.'
-                            )
-                        }, status=status.HTTP_400_BAD_REQUEST)
-
+                    row_lower["_row_number"] = idx
                     data.append(row_lower)
-
-                if not data:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": "The uploaded CSV file is empty. Please provide at least one data row."
-                    }, status=status.HTTP_400_BAD_REQUEST)
             else:
                 return Response({
                     "statusCode": 400,
@@ -1313,32 +1280,38 @@ class ContinentImportAPIView(APIView):
                     'error': 'Unsupported file format. Use .xlsx or .csv'
                 }, status=status.HTTP_400_BAD_REQUEST)
 
+            # ---------------- Process Data ----------------
             imported_count = 0
-
-            # ---------- Import Rows ----------
-            for row in  reversed(data):
+            for row in reversed(data):
+                row_number = row.get("_row_number", "Unknown")
                 name = str(row.get('continent')).strip() if row.get('continent') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
-                
+
                 if not name:
-                    continue  # skip rows without name
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Reason": "Missing continent name"
+                    })
+                    continue
 
                 existing = Continents.objects.filter(name__iexact=name).first()
                 if existing:
                     if existing.is_deleted:
                         existing.is_deleted = False
                         existing.description = description
-                       
                         existing.save()
                         imported_count += 1
                     else:
-                        duplicate_names.append(name)
+                        duplicates.append({
+                            "Row": row_number,
+                            "Continent": name,
+                            "Reason": "Already exists in database"
+                        })
                         continue
                 else:
                     Continents.objects.create(
                         name=name,
                         description=description,
-                       
                         is_deleted=False
                     )
                     imported_count += 1
@@ -1347,15 +1320,16 @@ class ContinentImportAPIView(APIView):
             return Response({
                 "statusCode": 400,
                 "status": False,
-                'message': str(e)
+                "message": str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_names)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
+            "duplicates": duplicates,
+            "skipped_rows": skipped_rows
         }, status=status.HTTP_200_OK)
 
 #-------------------------------------------country---------------------------------
@@ -3188,7 +3162,7 @@ class CityImportAPIView(APIView):
             }, status=400)
 
         
-#--------------------------- Realtion -----------------------
+#---------------------------Realtion-----------------------
 class RelationListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -3206,8 +3180,7 @@ class RelationListAPIView(APIView):
         queryset = Relation.objects.filter(is_deleted=False)
         if search:
             queryset = queryset.filter(
-                Q(name__icontains=search) |
-                Q(description__icontains=search)
+                Q(name__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -4488,8 +4461,7 @@ class DepartmentListAPIView(APIView):
 
         if search:
             queryset = queryset.filter(
-                Q(name__icontains=search) |
-                Q(description__icontains=search)
+                Q(name__istartswith=search)
             )
 
         # Apply dynamic ordering
@@ -4940,8 +4912,7 @@ class EmployeeTypeListAPIView(APIView):
 
         if search:
             queryset = queryset.filter(
-                Q(name__icontains=search) |
-                Q(description__icontains=search)
+                Q(name__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -5369,8 +5340,7 @@ class CompanyTypeListAPIView(APIView):
 
         if search:
             queryset = queryset.filter(
-                Q(name__icontains=search) |
-                Q(description__icontains=search)
+                Q(name__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -5771,8 +5741,7 @@ class OwnershipTypeListAPIView(APIView):
 
         if search:
             queryset = queryset.filter(
-                Q(name__icontains=search) |
-                Q(description__icontains=search)
+                Q(name__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -6280,8 +6249,7 @@ class StakeholderCategoryListAPIView(APIView):
 
         if search:
             queryset = queryset.filter(
-                Q(name__icontains=search) |
-                Q(description__icontains=search)
+                Q(name__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -6678,8 +6646,7 @@ class StakeholderTypeListAPIView(APIView):
 
         if search:
             queryset = queryset.filter(
-                Q(name__icontains=search) |
-                Q(description__icontains=search)
+                Q(name__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -7083,8 +7050,7 @@ class AccreditationCategoryListAPIView(APIView):
 
         if search:
             queryset = queryset.filter(
-                Q(name__icontains=search) |
-                Q(description__icontains=search)
+                Q(name__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -7980,8 +7946,7 @@ class BankAccountTypeListAPIView(APIView):
 
         if search:
             queryset = queryset.filter(
-                Q(name__icontains=search) |
-                Q(description__icontains=search)
+                Q(name__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -8887,8 +8852,7 @@ class LeadSourceListAPIView(APIView):
 
         if search:
             queryset = queryset.filter(
-                Q(name__icontains=search) |
-                Q(description__icontains=search)
+                Q(name__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -9302,8 +9266,7 @@ class InterestLevelListAPIView(APIView):
 
         if search:
             queryset = queryset.filter(
-                Q(name__icontains=search) |
-                Q(description__icontains=search)
+                Q(name__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -9732,8 +9695,7 @@ class PriorityListAPIView(APIView):
 
         if search:
             queryset = queryset.filter(
-                Q(name__icontains=search) |
-                Q(description__icontains=search)
+                Q(name__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -10179,8 +10141,7 @@ class TagsListAPIView(APIView):
 
         if search:
             queryset = queryset.filter(
-                Q(name__icontains=search) |
-                Q(description__icontains=search)
+                Q(name__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -10602,8 +10563,7 @@ class ActivityTypeListAPIView(APIView):
 
         if search:
             queryset = queryset.filter(
-                Q(name__icontains=search) |
-                Q(description__icontains=search)
+                Q(name__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -11016,8 +10976,7 @@ class LostReasonListAPIView(APIView):
 
         if search:
             queryset = queryset.filter(
-                Q(name__icontains=search) |
-                Q(description__icontains=search)
+                Q(name__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -11421,8 +11380,7 @@ class LostReasonB2BListAPIView(APIView):
 
         if search:
             queryset = queryset.filter(
-                Q(name__icontains=search) |
-                Q(description__icontains=search)
+                Q(name__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -11803,8 +11761,7 @@ class EducationLevelCodeListAPIView(APIView):
 
         if search:
             queryset = queryset.filter(
-                Q(name__icontains=search) |
-                Q(description__icontains=search)
+                Q(name__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -13962,8 +13919,7 @@ class AcademicResultTypeListAPIView(APIView):
         queryset = AcademicResultType.objects.filter(is_deleted=False)
         if search:
             queryset = queryset.filter(
-                Q(name__icontains=search) |
-                Q(description__icontains=search)
+                Q(name__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
