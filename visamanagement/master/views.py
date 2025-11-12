@@ -2692,7 +2692,7 @@ class DistrictImportAPIView(APIView):
                     countryName=country_obj
                 )
                 if state_obj:
-                    existing = existing.filter(stateName__stateName__iexact=state_obj.stateName)
+                    existing = existing.filter(stateName=state_obj)
                 else:
                     existing = existing.filter(stateName__isnull=True)
 
@@ -2739,7 +2739,6 @@ class DistrictImportAPIView(APIView):
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=200)
-
 
         
 
