@@ -27,7 +27,6 @@ import pytz
 from django.utils import timezone
 import unicodedata
 
-
 india_tz = pytz.timezone('Asia/Kolkata')
 
 class IsAdminUser(BasePermission):
@@ -37,8 +36,7 @@ class IsAdminUser(BasePermission):
 
 
 
-
-class WorkRightsListAPIView(APIView):
+class InstituteTypeListAPIView(APIView):
     def get(self, request):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'created_at')
@@ -51,40 +49,38 @@ class WorkRightsListAPIView(APIView):
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
-        queryset = WorkRights.objects.filter(is_deleted=False)
-
+        queryset = InstituteType.objects.filter(is_deleted=False)
         if search:
             queryset = queryset.filter(Q(name__istartswith=search))
 
         queryset = queryset.order_by(sort_by)
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
-        serializer = WorkRightsSerializer(result_page, many=True)
-
+        serializer = InstituteTypeSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
 
-
-class WorkRightsCreateAPIView(APIView):
+# -------------------- CREATE API --------------------
+class InstituteTypeCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
         name = request.data.get("name", "").strip()
-        existing = WorkRights.objects.filter(name__iexact=name, is_deleted=False).first()
+        existing = InstituteType.objects.filter(name__iexact=name, is_deleted=False).first()
 
         if existing:
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "WorkRight with this name already exists."
+                "message": "InstituteType with this name already exists."
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = WorkRightsSerializer(data=request.data)
+        serializer = InstituteTypeSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "WorkRight created successfully",
+                "message": "InstituteType created successfully",
                 "data": serializer.data
             })
         else:
@@ -97,51 +93,51 @@ class WorkRightsCreateAPIView(APIView):
                 "message": " ".join(messages)
             }, status=status.HTTP_400_BAD_REQUEST)
 
-
-class WorkRightsRetrieveAPIView(APIView):
+# -------------------- RETRIEVE API --------------------
+class InstituteTypeRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request, uuid):
         try:
-            workright = WorkRights.objects.get(uuid=uuid, is_deleted=False)
-        except WorkRights.DoesNotExist:
+            inst_type = InstituteType.objects.get(uuid=uuid, is_deleted=False)
+        except InstituteType.DoesNotExist:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "WorkRight not found",
+                "message": "InstituteType not found",
                 "data": None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = WorkRightsSerializer(workright)
+        serializer = InstituteTypeSerializer(inst_type)
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": "WorkRight retrieved successfully",
+            "message": "InstituteType retrieved successfully",
             "data": serializer.data
         })
 
-
-class WorkRightsUpdateAPIView(APIView):
+# -------------------- UPDATE API --------------------
+class InstituteTypeUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def put(self, request, uuid):
         try:
-            workright = WorkRights.objects.get(uuid=uuid, is_deleted=False)
-        except WorkRights.DoesNotExist:
+            inst_type = InstituteType.objects.get(uuid=uuid, is_deleted=False)
+        except InstituteType.DoesNotExist:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "WorkRight not found",
+                "message": "InstituteType not found",
                 "data": None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = WorkRightsSerializer(workright, data=request.data)
+        serializer = InstituteTypeSerializer(inst_type, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "WorkRight updated successfully",
+                "message": "InstituteType updated successfully",
                 "data": serializer.data
             })
         else:
@@ -155,8 +151,8 @@ class WorkRightsUpdateAPIView(APIView):
                 "data": None
             }, status=status.HTTP_400_BAD_REQUEST)
 
-
-class WorkRightsDeleteAPIView(APIView):
+# -------------------- DELETE API --------------------
+class InstituteTypeDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
@@ -164,37 +160,37 @@ class WorkRightsDeleteAPIView(APIView):
 
         if uuid:
             try:
-                workright = WorkRights.objects.get(uuid=uuid)
-                workright.delete()
+                inst_type = InstituteType.objects.get(uuid=uuid)
+                inst_type.delete()
                 return Response({
                     "statusCode": 204,
                     "status": True,
-                    "message": "WorkRight permanently deleted.",
+                    "message": "InstituteType permanently deleted.",
                     "data": None
                 }, status=status.HTTP_204_NO_CONTENT)
-            except WorkRights.DoesNotExist:
+            except InstituteType.DoesNotExist:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "WorkRight not found.",
+                    "message": "InstituteType not found.",
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
         if ids == "all":
-            workrights = WorkRights.objects.all()
-            count = workrights.count()
+            inst_types = InstituteType.objects.all()
+            count = inst_types.count()
             if count == 0:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "No WorkRights found to delete.",
+                    "message": "No InstituteTypes found to delete.",
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
-            workrights.delete()
+            inst_types.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} WorkRights permanently deleted.",
+                "message": f"All {count} InstituteTypes permanently deleted.",
                 "data": None
             })
 
@@ -222,28 +218,27 @@ class WorkRightsDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids}
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        workrights = WorkRights.objects.filter(uuid__in=valid_uuids)
-        count = workrights.count()
+        inst_types = InstituteType.objects.filter(uuid__in=valid_uuids)
+        count = inst_types.count()
 
         if count == 0:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "No matching WorkRights found.",
+                "message": "No matching InstituteTypes found.",
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        workrights.delete()
-
+        inst_types.delete()
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f"{count} WorkRight(s) permanently deleted.",
+            "message": f"{count} InstituteType(s) permanently deleted.",
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         })
 
-
-class WorkRightsExportAPIView(APIView):
+# -------------------- EXPORT API --------------------
+class InstituteTypeExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
@@ -254,7 +249,7 @@ class WorkRightsExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Work Rights',
+            'name': 'Institute Type',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',
@@ -265,19 +260,19 @@ class WorkRightsExportAPIView(APIView):
         else:
             field_list = list(field_header_map.keys())
 
-        queryset = WorkRights.objects.filter(is_deleted=False)
+        queryset = InstituteType.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
         queryset = queryset.order_by('-created_at')
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'WorkRights'
+        dataset.title = 'InstituteType'
 
-        for wr in queryset:
+        for inst_type in queryset:
             row = []
             for field in field_list:
-                value = getattr(wr, field, '')
+                value = getattr(inst_type, field, '')
                 if field in ['created_at', 'updated_at'] and value:
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
@@ -288,11 +283,11 @@ class WorkRightsExportAPIView(APIView):
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
-            file_name = 'workrights.csv'
+            file_name = 'institutetypes.csv'
         else:
             file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'workrights.xlsx'
+            file_name = 'institutetypes.xlsx'
 
         response = HttpResponse(
             file_data if format_type == 'csv' else file_data.getvalue(),
@@ -301,8 +296,8 @@ class WorkRightsExportAPIView(APIView):
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
-
-class WorkRightsImportAPIView(APIView):
+# -------------------- IMPORT API --------------------
+class InstituteTypeImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
@@ -315,7 +310,7 @@ class WorkRightsImportAPIView(APIView):
         format_type = file.name.split(".")[-1].lower()
         duplicates = []
         skipped_rows = []
-        required_headers = {"work rights"}  # adjust as needed
+        required_headers = {"institute type"}  # adjust header name exactly as in file
         optional_headers = {"description"}
 
         try:
@@ -386,17 +381,17 @@ class WorkRightsImportAPIView(APIView):
             imported_count = 0
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("work rights")) if row.get("work rights") else None
+                name = str(row.get("institute type")) if row.get("institute type") else None
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing WorkRight name"})
+                    skipped_rows.append({"Row": row_number, "Reason": "Missing InstituteType name"})
                     continue
 
-                existing = WorkRights.objects.filter(name__iexact=name).first()
+                existing = InstituteType.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Work Rights": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "Institute Type": name, "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -404,7 +399,7 @@ class WorkRightsImportAPIView(APIView):
                         existing.save()
                         imported_count += 1
                 else:
-                    WorkRights.objects.create(name=name, description=description, is_deleted=False)
+                    InstituteType.objects.create(name=name, description=description, is_deleted=False)
                     imported_count += 1
 
         except Exception as e:
@@ -422,7 +417,7 @@ class WorkRightsImportAPIView(APIView):
 
 
 
-class WorkRightsDuringStudyListAPIView(APIView):
+class InstituteGroupNameListAPIView(APIView):
     def get(self, request):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'created_at')
@@ -435,42 +430,38 @@ class WorkRightsDuringStudyListAPIView(APIView):
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
-        queryset = WorkRightsDuringStudy.objects.filter(is_deleted=False)
-
+        queryset = InstituteGroupName.objects.filter(is_deleted=False)
         if search:
             queryset = queryset.filter(Q(name__istartswith=search))
 
         queryset = queryset.order_by(sort_by)
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
-        serializer = WorkRightsDuringStudySerializer(result_page, many=True)
+        serializer = InstituteGroupNameSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
 
-
-# -------------------------------------------------------------------
-# CREATE API
-# -------------------------------------------------------------------
-class WorkRightsDuringStudyCreateAPIView(APIView):
+# -------------------- CREATE API --------------------
+class InstituteGroupNameCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
         name = request.data.get("name", "").strip()
-        existing = WorkRightsDuringStudy.objects.filter(name__iexact=name, is_deleted=False).first()
+        existing = InstituteGroupName.objects.filter(name__iexact=name, is_deleted=False).first()
 
         if existing:
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "WorkRightDuringStudy with this name already exists."
+                "message": "InstituteGroupName with this name already exists."
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = WorkRightsDuringStudySerializer(data=request.data)
+        serializer = InstituteGroupNameSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "WorkRightDuringStudy created successfully",
+                "message": "InstituteGroupName created successfully",
                 "data": serializer.data
             })
         else:
@@ -483,57 +474,51 @@ class WorkRightsDuringStudyCreateAPIView(APIView):
                 "message": " ".join(messages)
             }, status=status.HTTP_400_BAD_REQUEST)
 
-
-# -------------------------------------------------------------------
-# RETRIEVE API
-# -------------------------------------------------------------------
-class WorkRightsDuringStudyRetrieveAPIView(APIView):
+# -------------------- RETRIEVE API --------------------
+class InstituteGroupNameRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request, uuid):
         try:
-            obj = WorkRightsDuringStudy.objects.get(uuid=uuid, is_deleted=False)
-        except WorkRightsDuringStudy.DoesNotExist:
+            inst_group = InstituteGroupName.objects.get(uuid=uuid, is_deleted=False)
+        except InstituteGroupName.DoesNotExist:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "WorkRightDuringStudy not found",
+                "message": "InstituteGroupName not found",
                 "data": None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = WorkRightsDuringStudySerializer(obj)
+        serializer = InstituteGroupNameSerializer(inst_group)
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": "WorkRightDuringStudy retrieved successfully",
+            "message": "InstituteGroupName retrieved successfully",
             "data": serializer.data
         })
 
-
-# -------------------------------------------------------------------
-# UPDATE API
-# -------------------------------------------------------------------
-class WorkRightsDuringStudyUpdateAPIView(APIView):
+# -------------------- UPDATE API --------------------
+class InstituteGroupNameUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def put(self, request, uuid):
         try:
-            obj = WorkRightsDuringStudy.objects.get(uuid=uuid, is_deleted=False)
-        except WorkRightsDuringStudy.DoesNotExist:
+            inst_group = InstituteGroupName.objects.get(uuid=uuid, is_deleted=False)
+        except InstituteGroupName.DoesNotExist:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "WorkRightDuringStudy not found",
+                "message": "InstituteGroupName not found",
                 "data": None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = WorkRightsDuringStudySerializer(obj, data=request.data)
+        serializer = InstituteGroupNameSerializer(inst_group, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "WorkRightDuringStudy updated successfully",
+                "message": "InstituteGroupName updated successfully",
                 "data": serializer.data
             })
         else:
@@ -547,11 +532,8 @@ class WorkRightsDuringStudyUpdateAPIView(APIView):
                 "data": None
             }, status=status.HTTP_400_BAD_REQUEST)
 
-
-# -------------------------------------------------------------------
-# DELETE API
-# -------------------------------------------------------------------
-class WorkRightsDuringStudyDeleteAPIView(APIView):
+# -------------------- DELETE API --------------------
+class InstituteGroupNameDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
@@ -559,37 +541,37 @@ class WorkRightsDuringStudyDeleteAPIView(APIView):
 
         if uuid:
             try:
-                obj = WorkRightsDuringStudy.objects.get(uuid=uuid)
-                obj.delete()
+                inst_group = InstituteGroupName.objects.get(uuid=uuid)
+                inst_group.delete()
                 return Response({
                     "statusCode": 204,
                     "status": True,
-                    "message": "WorkRightDuringStudy permanently deleted.",
+                    "message": "InstituteGroupName permanently deleted.",
                     "data": None
                 }, status=status.HTTP_204_NO_CONTENT)
-            except WorkRightsDuringStudy.DoesNotExist:
+            except InstituteGroupName.DoesNotExist:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "WorkRightDuringStudy not found.",
+                    "message": "InstituteGroupName not found.",
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
         if ids == "all":
-            objs = WorkRightsDuringStudy.objects.all()
-            count = objs.count()
+            inst_groups = InstituteGroupName.objects.all()
+            count = inst_groups.count()
             if count == 0:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "No WorkRightsDuringStudy found to delete.",
+                    "message": "No InstituteGroupNames found to delete.",
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
-            objs.delete()
+            inst_groups.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} WorkRightsDuringStudy permanently deleted.",
+                "message": f"All {count} InstituteGroupNames permanently deleted.",
                 "data": None
             })
 
@@ -617,31 +599,27 @@ class WorkRightsDuringStudyDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids}
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        objs = WorkRightsDuringStudy.objects.filter(uuid__in=valid_uuids)
-        count = objs.count()
+        inst_groups = InstituteGroupName.objects.filter(uuid__in=valid_uuids)
+        count = inst_groups.count()
 
         if count == 0:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "No matching WorkRightsDuringStudy found.",
+                "message": "No matching InstituteGroupNames found.",
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        objs.delete()
-
+        inst_groups.delete()
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f"{count} WorkRightDuringStudy(s) permanently deleted.",
+            "message": f"{count} InstituteGroupName(s) permanently deleted.",
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         })
 
-
-# -------------------------------------------------------------------
-# EXPORT API
-# -------------------------------------------------------------------
-class WorkRightsDuringStudyExportAPIView(APIView):
+# -------------------- EXPORT API --------------------
+class InstituteGroupNameExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
@@ -652,7 +630,7 @@ class WorkRightsDuringStudyExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Work Rights During Study',
+            'name': 'Group Name',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',
@@ -663,19 +641,19 @@ class WorkRightsDuringStudyExportAPIView(APIView):
         else:
             field_list = list(field_header_map.keys())
 
-        queryset = WorkRightsDuringStudy.objects.filter(is_deleted=False)
+        queryset = InstituteGroupName.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
         queryset = queryset.order_by('-created_at')
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'WorkRightsDuringStudy'
+        dataset.title = 'InstituteGroupName'
 
-        for obj in queryset:
+        for inst_group in queryset:
             row = []
             for field in field_list:
-                value = getattr(obj, field, '')
+                value = getattr(inst_group, field, '')
                 if field in ['created_at', 'updated_at'] and value:
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
@@ -686,11 +664,11 @@ class WorkRightsDuringStudyExportAPIView(APIView):
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
-            file_name = 'workrights_during_study.csv'
+            file_name = 'institutegroupnames.csv'
         else:
             file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'workrights_during_study.xlsx'
+            file_name = 'institutegroupnames.xlsx'
 
         response = HttpResponse(
             file_data if format_type == 'csv' else file_data.getvalue(),
@@ -699,11 +677,8 @@ class WorkRightsDuringStudyExportAPIView(APIView):
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
-
-# -------------------------------------------------------------------
-# IMPORT API
-# -------------------------------------------------------------------
-class WorkRightsDuringStudyImportAPIView(APIView):
+# -------------------- IMPORT API --------------------
+class InstituteGroupNameImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
@@ -716,7 +691,7 @@ class WorkRightsDuringStudyImportAPIView(APIView):
         format_type = file.name.split(".")[-1].lower()
         duplicates = []
         skipped_rows = []
-        required_headers = {"work rights during study"}
+        required_headers = {"group name"}  # adjust to exact header in file
         optional_headers = {"description"}
 
         try:
@@ -787,17 +762,17 @@ class WorkRightsDuringStudyImportAPIView(APIView):
             imported_count = 0
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("work rights during study")) if row.get("work rights during study") else None
+                name = str(row.get("group name")) if row.get("group name") else None
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing Work Right During Study name"})
+                    skipped_rows.append({"Row": row_number, "Reason": "Missing Group Name"})
                     continue
 
-                existing = WorkRightsDuringStudy.objects.filter(name__iexact=name).first()
+                existing = InstituteGroupName.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Work Rights During Study": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "Group Name": name, "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -805,7 +780,386 @@ class WorkRightsDuringStudyImportAPIView(APIView):
                         existing.save()
                         imported_count += 1
                 else:
-                    WorkRightsDuringStudy.objects.create(name=name, description=description, is_deleted=False)
+                    InstituteGroupName.objects.create(name=name, description=description, is_deleted=False)
+                    imported_count += 1
+
+        except Exception as e:
+            return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count,
+            "duplicates": duplicates,
+            "skipped_rows": skipped_rows
+        }, status=200)
+
+
+class InstituteStatusListAPIView(APIView):
+    def get(self, request):
+        search = request.GET.get('search', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_order = request.GET.get('sortOrder', 'desc')
+
+        allowed_sort_fields = ['name', 'description', 'updated_at']
+        if sort_by not in allowed_sort_fields:
+            sort_by = 'created_at'
+
+        if sort_order == 'desc':
+            sort_by = f'-{sort_by}'
+
+        queryset = InstituteStatus.objects.filter(is_deleted=False)
+        if search:
+            queryset = queryset.filter(Q(name__istartswith=search))
+
+        queryset = queryset.order_by(sort_by)
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = InstituteStatusSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+# -------------------- CREATE API --------------------
+class InstituteStatusCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        name = request.data.get("name", "").strip()
+        existing = InstituteStatus.objects.filter(name__iexact=name, is_deleted=False).first()
+
+        if existing:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "InstituteStatus with this name already exists."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = InstituteStatusSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "InstituteStatus created successfully",
+                "data": serializer.data
+            })
+        else:
+            messages = []
+            for field, msgs in serializer.errors.items():
+                messages.extend(msgs)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": " ".join(messages)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+# -------------------- RETRIEVE API --------------------
+class InstituteStatusRetrieveAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request, uuid):
+        try:
+            inst_status = InstituteStatus.objects.get(uuid=uuid, is_deleted=False)
+        except InstituteStatus.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "InstituteStatus not found",
+                "data": None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = InstituteStatusSerializer(inst_status)
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": "InstituteStatus retrieved successfully",
+            "data": serializer.data
+        })
+
+# -------------------- UPDATE API --------------------
+class InstituteStatusUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def put(self, request, uuid):
+        try:
+            inst_status = InstituteStatus.objects.get(uuid=uuid, is_deleted=False)
+        except InstituteStatus.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "InstituteStatus not found",
+                "data": None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = InstituteStatusSerializer(inst_status, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "InstituteStatus updated successfully",
+                "data": serializer.data
+            })
+        else:
+            messages = []
+            for field, msgs in serializer.errors.items():
+                messages.extend(msgs)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": " ".join(messages),
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+# -------------------- DELETE API --------------------
+class InstituteStatusDeleteAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def delete(self, request, uuid=None):
+        ids = request.data.get('id', None)
+
+        if uuid:
+            try:
+                inst_status = InstituteStatus.objects.get(uuid=uuid)
+                inst_status.delete()
+                return Response({
+                    "statusCode": 204,
+                    "status": True,
+                    "message": "InstituteStatus permanently deleted.",
+                    "data": None
+                }, status=status.HTTP_204_NO_CONTENT)
+            except InstituteStatus.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "InstituteStatus not found.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+
+        if ids == "all":
+            inst_statuses = InstituteStatus.objects.all()
+            count = inst_statuses.count()
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No InstituteStatus found to delete.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+            inst_statuses.delete()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"All {count} InstituteStatus permanently deleted.",
+                "data": None
+            })
+
+        if not ids or not isinstance(ids, list):
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        valid_uuids = []
+        invalid_uuids = []
+        for u in ids:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(u)
+
+        if not valid_uuids:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "No valid UUIDs provided.",
+                "data": {"invalid_uuids": invalid_uuids}
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        inst_statuses = InstituteStatus.objects.filter(uuid__in=valid_uuids)
+        count = inst_statuses.count()
+
+        if count == 0:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "No matching InstituteStatus found.",
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        inst_statuses.delete()
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": f"{count} InstituteStatus(es) permanently deleted.",
+            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+        })
+
+# -------------------- EXPORT API --------------------
+class InstituteStatusExportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        format_type = request.GET.get('format', 'xlsx').lower()
+        fields = request.GET.get('fields')
+        uuids_param = request.GET.get('uuids', '')
+        uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+        field_header_map = {
+            'uuid': 'UUID',
+            'name': 'Status Name',
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'updated_at': 'Modified On',
+        }
+
+        if fields:
+            field_list = [f.strip() for f in fields.split(',')]
+        else:
+            field_list = list(field_header_map.keys())
+
+        queryset = InstituteStatus.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-created_at')
+
+        dataset = Dataset()
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'InstituteStatus'
+
+        for inst_status in queryset:
+            row = []
+            for field in field_list:
+                value = getattr(inst_status, field, '')
+                if field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
+                    value = int(value)
+                row.append(value if value is not None else '')
+            dataset.append(row)
+
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'institutestatus.csv'
+        else:
+            file_data = io.BytesIO(dataset.export('xlsx'))
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'institutestatus.xlsx'
+
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        return response
+
+# -------------------- IMPORT API --------------------
+class InstituteStatusImportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        file = request.FILES.get("file")
+        sheet_name = request.data.get("sheet_name")
+
+        if not file:
+            return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
+
+        format_type = file.name.split(".")[-1].lower()
+        duplicates = []
+        skipped_rows = []
+        required_headers = {"status name"}  # adjust to exact header in file
+        optional_headers = {"description"}
+
+        try:
+            data = []
+
+            if format_type == "xlsx":
+                wb = openpyxl.load_workbook(file, read_only=True)
+                available_sheets = wb.sheetnames
+
+                if not sheet_name:
+                    return Response({
+                        "error": "Please provide sheet_name",
+                        "available_sheets": available_sheets,
+                    }, status=400)
+
+                if sheet_name not in available_sheets:
+                    return Response({
+                        "error": f'Sheet "{sheet_name}" not found',
+                        "available_sheets": available_sheets,
+                    }, status=400)
+
+                ws = wb[sheet_name]
+                if ws.max_row <= 1:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'Sheet "{sheet_name}" is empty.'
+                    }, status=400)
+
+                headers = [str(cell.value).strip().lower() if cell.value else "" for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+
+                if not required_headers.issubset(set(headers)):
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f"Missing required headers. Required: {required_headers}, Found: {set(headers)}"
+                    }, status=400)
+
+                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+                    if not any(row):
+                        continue
+                    row_dict = dict(zip(headers, row))
+                    row_dict["_row_number"] = idx
+                    data.append(row_dict)
+
+            elif format_type == "csv":
+                decoded_file = file.read().decode("utf-8")
+                dataset = Dataset()
+                dataset.load(decoded_file, format="csv")
+                for idx, row in enumerate(dataset.dict, start=2):
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    row_lower["_row_number"] = idx
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({
+                            "statusCode": 400,
+                            "status": False,
+                            "message": f"Missing required headers. Required: {', '.join(required_headers)}. Found: {', '.join(row_lower.keys())}."
+                        }, status=400)
+                    data.append(row_lower)
+
+            else:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Unsupported file format. Use .xlsx or .csv",
+                }, status=400)
+
+            imported_count = 0
+            for row in reversed(data):
+                row_number = row.get("_row_number", "Unknown")
+                name = str(row.get("status name")) if row.get("status name") else None
+                description = str(row.get("description")).strip() if row.get("description") else ""
+
+                if not name:
+                    skipped_rows.append({"Row": row_number, "Reason": "Missing Status Name"})
+                    continue
+
+                existing = InstituteStatus.objects.filter(name__iexact=name).first()
+                if existing:
+                    if not existing.is_deleted:
+                        duplicates.append({"Row": row_number, "Status Name": name, "Reason": "Already exists"})
+                        continue
+                    else:
+                        existing.description = description
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
+                else:
+                    InstituteStatus.objects.create(name=name, description=description, is_deleted=False)
                     imported_count += 1
 
         except Exception as e:
@@ -822,7 +1176,7 @@ class WorkRightsDuringStudyImportAPIView(APIView):
 
 
 
-class WorkRightsDuringVacationListAPIView(APIView):
+class InstitutePriorityListAPIView(APIView):
     def get(self, request):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'created_at')
@@ -835,40 +1189,38 @@ class WorkRightsDuringVacationListAPIView(APIView):
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
-        queryset = WorkRightsDuringVacation.objects.filter(is_deleted=False)
-
+        queryset = InstitutePriority.objects.filter(is_deleted=False)
         if search:
             queryset = queryset.filter(Q(name__istartswith=search))
 
         queryset = queryset.order_by(sort_by)
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
-        serializer = WorkRightsDuringVacationSerializer(result_page, many=True)
+        serializer = InstitutePrioritySerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
 
-
-# ---------------- CREATE API ----------------
-class WorkRightsDuringVacationCreateAPIView(APIView):
+# -------------------- CREATE API --------------------
+class InstitutePriorityCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
         name = request.data.get("name", "").strip()
-        existing = WorkRightsDuringVacation.objects.filter(name__iexact=name, is_deleted=False).first()
+        existing = InstitutePriority.objects.filter(name__iexact=name, is_deleted=False).first()
 
         if existing:
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "WorkRightDuringVacation with this name already exists."
+                "message": "InstitutePriority with this name already exists."
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = WorkRightsDuringVacationSerializer(data=request.data)
+        serializer = InstitutePrioritySerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "WorkRightDuringVacation created successfully",
+                "message": "InstitutePriority created successfully",
                 "data": serializer.data
             })
         else:
@@ -881,53 +1233,51 @@ class WorkRightsDuringVacationCreateAPIView(APIView):
                 "message": " ".join(messages)
             }, status=status.HTTP_400_BAD_REQUEST)
 
-
-# ---------------- RETRIEVE API ----------------
-class WorkRightsDuringVacationRetrieveAPIView(APIView):
+# -------------------- RETRIEVE API --------------------
+class InstitutePriorityRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request, uuid):
         try:
-            obj = WorkRightsDuringVacation.objects.get(uuid=uuid, is_deleted=False)
-        except WorkRightsDuringVacation.DoesNotExist:
+            priority = InstitutePriority.objects.get(uuid=uuid, is_deleted=False)
+        except InstitutePriority.DoesNotExist:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "WorkRightDuringVacation not found",
+                "message": "InstitutePriority not found",
                 "data": None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = WorkRightsDuringVacationSerializer(obj)
+        serializer = InstitutePrioritySerializer(priority)
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": "WorkRightDuringVacation retrieved successfully",
+            "message": "InstitutePriority retrieved successfully",
             "data": serializer.data
         })
 
-
-# ---------------- UPDATE API ----------------
-class WorkRightsDuringVacationUpdateAPIView(APIView):
+# -------------------- UPDATE API --------------------
+class InstitutePriorityUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def put(self, request, uuid):
         try:
-            obj = WorkRightsDuringVacation.objects.get(uuid=uuid, is_deleted=False)
-        except WorkRightsDuringVacation.DoesNotExist:
+            priority = InstitutePriority.objects.get(uuid=uuid, is_deleted=False)
+        except InstitutePriority.DoesNotExist:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "WorkRightDuringVacation not found",
+                "message": "InstitutePriority not found",
                 "data": None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = WorkRightsDuringVacationSerializer(obj, data=request.data)
+        serializer = InstitutePrioritySerializer(priority, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "WorkRightDuringVacation updated successfully",
+                "message": "InstitutePriority updated successfully",
                 "data": serializer.data
             })
         else:
@@ -941,9 +1291,8 @@ class WorkRightsDuringVacationUpdateAPIView(APIView):
                 "data": None
             }, status=status.HTTP_400_BAD_REQUEST)
 
-
-# ---------------- DELETE API ----------------
-class WorkRightsDuringVacationDeleteAPIView(APIView):
+# -------------------- DELETE API --------------------
+class InstitutePriorityDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
@@ -951,37 +1300,37 @@ class WorkRightsDuringVacationDeleteAPIView(APIView):
 
         if uuid:
             try:
-                obj = WorkRightsDuringVacation.objects.get(uuid=uuid)
-                obj.delete()
+                priority = InstitutePriority.objects.get(uuid=uuid)
+                priority.delete()
                 return Response({
                     "statusCode": 204,
                     "status": True,
-                    "message": "WorkRightDuringVacation permanently deleted.",
+                    "message": "InstitutePriority permanently deleted.",
                     "data": None
                 }, status=status.HTTP_204_NO_CONTENT)
-            except WorkRightsDuringVacation.DoesNotExist:
+            except InstitutePriority.DoesNotExist:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "WorkRightDuringVacation not found.",
+                    "message": "InstitutePriority not found.",
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
         if ids == "all":
-            objs = WorkRightsDuringVacation.objects.all()
-            count = objs.count()
+            priorities = InstitutePriority.objects.all()
+            count = priorities.count()
             if count == 0:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "No WorkRightsDuringVacation found to delete.",
+                    "message": "No InstitutePriority found to delete.",
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
-            objs.delete()
+            priorities.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} WorkRightsDuringVacation permanently deleted.",
+                "message": f"All {count} InstitutePriority permanently deleted.",
                 "data": None
             })
 
@@ -1009,29 +1358,27 @@ class WorkRightsDuringVacationDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids}
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        objs = WorkRightsDuringVacation.objects.filter(uuid__in=valid_uuids)
-        count = objs.count()
+        priorities = InstitutePriority.objects.filter(uuid__in=valid_uuids)
+        count = priorities.count()
 
         if count == 0:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "No matching WorkRightsDuringVacation found.",
+                "message": "No matching InstitutePriority found.",
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        objs.delete()
-
+        priorities.delete()
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f"{count} WorkRightDuringVacation(s) permanently deleted.",
+            "message": f"{count} InstitutePriority(es) permanently deleted.",
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         })
 
-
-# ---------------- EXPORT API ----------------
-class WorkRightsDuringVacationExportAPIView(APIView):
+# -------------------- EXPORT API --------------------
+class InstitutePriorityExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
@@ -1042,7 +1389,7 @@ class WorkRightsDuringVacationExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Work Rights During Vacation',
+            'name': 'Priority Name',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',
@@ -1053,19 +1400,19 @@ class WorkRightsDuringVacationExportAPIView(APIView):
         else:
             field_list = list(field_header_map.keys())
 
-        queryset = WorkRightsDuringVacation.objects.filter(is_deleted=False)
+        queryset = InstitutePriority.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
         queryset = queryset.order_by('-created_at')
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'WorkRightsDuringVacation'
+        dataset.title = 'InstitutePriority'
 
-        for obj in queryset:
+        for priority in queryset:
             row = []
             for field in field_list:
-                value = getattr(obj, field, '')
+                value = getattr(priority, field, '')
                 if field in ['created_at', 'updated_at'] and value:
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
@@ -1076,11 +1423,11 @@ class WorkRightsDuringVacationExportAPIView(APIView):
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
-            file_name = 'workrights_during_vacation.csv'
+            file_name = 'institutepriority.csv'
         else:
             file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'workrights_during_vacation.xlsx'
+            file_name = 'institutepriority.xlsx'
 
         response = HttpResponse(
             file_data if format_type == 'csv' else file_data.getvalue(),
@@ -1089,9 +1436,8 @@ class WorkRightsDuringVacationExportAPIView(APIView):
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
-
-# ---------------- IMPORT API ----------------
-class WorkRightsDuringVacationImportAPIView(APIView):
+# -------------------- IMPORT API --------------------
+class InstitutePriorityImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
@@ -1104,7 +1450,7 @@ class WorkRightsDuringVacationImportAPIView(APIView):
         format_type = file.name.split(".")[-1].lower()
         duplicates = []
         skipped_rows = []
-        required_headers = {"work rights during vacation"}
+        required_headers = {"priority name"}  # adjust to match sheet
         optional_headers = {"description"}
 
         try:
@@ -1175,17 +1521,17 @@ class WorkRightsDuringVacationImportAPIView(APIView):
             imported_count = 0
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("work rights during vacation")) if row.get("work rights during vacation") else None
+                name = str(row.get("priority name")) if row.get("priority name") else None
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing WorkRightDuringVacation name"})
+                    skipped_rows.append({"Row": row_number, "Reason": "Missing Priority Name"})
                     continue
 
-                existing = WorkRightsDuringVacation.objects.filter(name__iexact=name).first()
+                existing = InstitutePriority.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "WorkRightsDuringVacation": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "Priority Name": name, "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -1193,7 +1539,7 @@ class WorkRightsDuringVacationImportAPIView(APIView):
                         existing.save()
                         imported_count += 1
                 else:
-                    WorkRightsDuringVacation.objects.create(name=name, description=description, is_deleted=False)
+                    InstitutePriority.objects.create(name=name, description=description, is_deleted=False)
                     imported_count += 1
 
         except Exception as e:
@@ -1209,7 +1555,7 @@ class WorkRightsDuringVacationImportAPIView(APIView):
         }, status=200)
 
 
-class WorkRightsAfterStudyListAPIView(APIView):
+class InstituteDepartmentListAPIView(APIView):
     def get(self, request):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'created_at')
@@ -1222,40 +1568,38 @@ class WorkRightsAfterStudyListAPIView(APIView):
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
-        queryset = WorkRightsAfterStudy.objects.filter(is_deleted=False)
-
+        queryset = InstituteDepartment.objects.filter(is_deleted=False)
         if search:
             queryset = queryset.filter(Q(name__istartswith=search))
 
         queryset = queryset.order_by(sort_by)
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
-        serializer = WorkRightsAfterStudySerializer(result_page, many=True)
+        serializer = InstituteDepartmentSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
 
-
-# ---------------- CREATE API ----------------
-class WorkRightsAfterStudyCreateAPIView(APIView):
+# -------------------- CREATE API --------------------
+class InstituteDepartmentCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
         name = request.data.get("name", "").strip()
-        existing = WorkRightsAfterStudy.objects.filter(name__iexact=name, is_deleted=False).first()
+        existing = InstituteDepartment.objects.filter(name__iexact=name, is_deleted=False).first()
 
         if existing:
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "WorkRightAfterStudy with this name already exists."
+                "message": "InstituteDepartment with this name already exists."
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = WorkRightsAfterStudySerializer(data=request.data)
+        serializer = InstituteDepartmentSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "WorkRightAfterStudy created successfully",
+                "message": "InstituteDepartment created successfully",
                 "data": serializer.data
             })
         else:
@@ -1268,53 +1612,51 @@ class WorkRightsAfterStudyCreateAPIView(APIView):
                 "message": " ".join(messages)
             }, status=status.HTTP_400_BAD_REQUEST)
 
-
-# ---------------- RETRIEVE API ----------------
-class WorkRightsAfterStudyRetrieveAPIView(APIView):
+# -------------------- RETRIEVE API --------------------
+class InstituteDepartmentRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request, uuid):
         try:
-            obj = WorkRightsAfterStudy.objects.get(uuid=uuid, is_deleted=False)
-        except WorkRightsAfterStudy.DoesNotExist:
+            department = InstituteDepartment.objects.get(uuid=uuid, is_deleted=False)
+        except InstituteDepartment.DoesNotExist:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "WorkRightAfterStudy not found",
+                "message": "InstituteDepartment not found",
                 "data": None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = WorkRightsAfterStudySerializer(obj)
+        serializer = InstituteDepartmentSerializer(department)
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": "WorkRightAfterStudy retrieved successfully",
+            "message": "InstituteDepartment retrieved successfully",
             "data": serializer.data
         })
 
-
-# ---------------- UPDATE API ----------------
-class WorkRightsAfterStudyUpdateAPIView(APIView):
+# -------------------- UPDATE API --------------------
+class InstituteDepartmentUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def put(self, request, uuid):
         try:
-            obj = WorkRightsAfterStudy.objects.get(uuid=uuid, is_deleted=False)
-        except WorkRightsAfterStudy.DoesNotExist:
+            department = InstituteDepartment.objects.get(uuid=uuid, is_deleted=False)
+        except InstituteDepartment.DoesNotExist:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "WorkRightAfterStudy not found",
+                "message": "InstituteDepartment not found",
                 "data": None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = WorkRightsAfterStudySerializer(obj, data=request.data)
+        serializer = InstituteDepartmentSerializer(department, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "WorkRightAfterStudy updated successfully",
+                "message": "InstituteDepartment updated successfully",
                 "data": serializer.data
             })
         else:
@@ -1328,9 +1670,8 @@ class WorkRightsAfterStudyUpdateAPIView(APIView):
                 "data": None
             }, status=status.HTTP_400_BAD_REQUEST)
 
-
-# ---------------- DELETE API ----------------
-class WorkRightsAfterStudyDeleteAPIView(APIView):
+# -------------------- DELETE API --------------------
+class InstituteDepartmentDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
@@ -1338,37 +1679,37 @@ class WorkRightsAfterStudyDeleteAPIView(APIView):
 
         if uuid:
             try:
-                obj = WorkRightsAfterStudy.objects.get(uuid=uuid)
-                obj.delete()
+                department = InstituteDepartment.objects.get(uuid=uuid)
+                department.delete()
                 return Response({
                     "statusCode": 204,
                     "status": True,
-                    "message": "WorkRightAfterStudy permanently deleted.",
+                    "message": "InstituteDepartment permanently deleted.",
                     "data": None
                 }, status=status.HTTP_204_NO_CONTENT)
-            except WorkRightsAfterStudy.DoesNotExist:
+            except InstituteDepartment.DoesNotExist:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "WorkRightAfterStudy not found.",
+                    "message": "InstituteDepartment not found.",
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
         if ids == "all":
-            objs = WorkRightsAfterStudy.objects.all()
-            count = objs.count()
+            departments = InstituteDepartment.objects.all()
+            count = departments.count()
             if count == 0:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "No WorkRightsAfterStudy found to delete.",
+                    "message": "No InstituteDepartment found to delete.",
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
-            objs.delete()
+            departments.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} WorkRightsAfterStudy permanently deleted.",
+                "message": f"All {count} InstituteDepartment permanently deleted.",
                 "data": None
             })
 
@@ -1396,29 +1737,27 @@ class WorkRightsAfterStudyDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids}
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        objs = WorkRightsAfterStudy.objects.filter(uuid__in=valid_uuids)
-        count = objs.count()
+        departments = InstituteDepartment.objects.filter(uuid__in=valid_uuids)
+        count = departments.count()
 
         if count == 0:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "No matching WorkRightsAfterStudy found.",
+                "message": "No matching InstituteDepartment found.",
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        objs.delete()
-
+        departments.delete()
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f"{count} WorkRightAfterStudy(s) permanently deleted.",
+            "message": f"{count} InstituteDepartment(s) permanently deleted.",
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         })
 
-
-# ---------------- EXPORT API ----------------
-class WorkRightsAfterStudyExportAPIView(APIView):
+# -------------------- EXPORT API --------------------
+class InstituteDepartmentExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
@@ -1429,7 +1768,7 @@ class WorkRightsAfterStudyExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Work Rights After Study',
+            'name': 'Department Name',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',
@@ -1440,19 +1779,19 @@ class WorkRightsAfterStudyExportAPIView(APIView):
         else:
             field_list = list(field_header_map.keys())
 
-        queryset = WorkRightsAfterStudy.objects.filter(is_deleted=False)
+        queryset = InstituteDepartment.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
         queryset = queryset.order_by('-created_at')
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'WorkRightsAfterStudy'
+        dataset.title = 'InstituteDepartment'
 
-        for obj in queryset:
+        for dept in queryset:
             row = []
             for field in field_list:
-                value = getattr(obj, field, '')
+                value = getattr(dept, field, '')
                 if field in ['created_at', 'updated_at'] and value:
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
@@ -1463,11 +1802,11 @@ class WorkRightsAfterStudyExportAPIView(APIView):
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
-            file_name = 'workrights_after_study.csv'
+            file_name = 'institutedepartment.csv'
         else:
             file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'workrights_after_study.xlsx'
+            file_name = 'institutedepartment.xlsx'
 
         response = HttpResponse(
             file_data if format_type == 'csv' else file_data.getvalue(),
@@ -1476,9 +1815,8 @@ class WorkRightsAfterStudyExportAPIView(APIView):
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
-
-# ---------------- IMPORT API ----------------
-class WorkRightsAfterStudyImportAPIView(APIView):
+# -------------------- IMPORT API --------------------
+class InstituteDepartmentImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
@@ -1491,7 +1829,7 @@ class WorkRightsAfterStudyImportAPIView(APIView):
         format_type = file.name.split(".")[-1].lower()
         duplicates = []
         skipped_rows = []
-        required_headers = {"work rights after study"}
+        required_headers = {"department name"}  # adjust to match sheet
         optional_headers = {"description"}
 
         try:
@@ -1562,17 +1900,17 @@ class WorkRightsAfterStudyImportAPIView(APIView):
             imported_count = 0
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("work rights after study")) if row.get("work rights after study") else None
+                name = str(row.get("department name")) if row.get("department name") else None
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing WorkRightAfterStudy name"})
+                    skipped_rows.append({"Row": row_number, "Reason": "Missing Department Name"})
                     continue
 
-                existing = WorkRightsAfterStudy.objects.filter(name__iexact=name).first()
+                existing = InstituteDepartment.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "WorkRightsAfterStudy": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "Department Name": name, "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -1580,7 +1918,7 @@ class WorkRightsAfterStudyImportAPIView(APIView):
                         existing.save()
                         imported_count += 1
                 else:
-                    WorkRightsAfterStudy.objects.create(name=name, description=description, is_deleted=False)
+                    InstituteDepartment.objects.create(name=name, description=description, is_deleted=False)
                     imported_count += 1
 
         except Exception as e:
@@ -1596,7 +1934,7 @@ class WorkRightsAfterStudyImportAPIView(APIView):
         }, status=200)
 
 
-class PRPossibilityListAPIView(APIView):
+class BankAccountForListAPIView(APIView):
     def get(self, request):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'created_at')
@@ -1609,40 +1947,38 @@ class PRPossibilityListAPIView(APIView):
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
-        queryset = PRPossibility.objects.filter(is_deleted=False)
-
+        queryset = BankAccountFor.objects.filter(is_deleted=False)
         if search:
             queryset = queryset.filter(Q(name__istartswith=search))
 
         queryset = queryset.order_by(sort_by)
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
-        serializer = PRPossibilitySerializer(result_page, many=True)
+        serializer = BankAccountForSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
 
-
-# ---------------- CREATE API ----------------
-class PRPossibilityCreateAPIView(APIView):
+# -------------------- CREATE API --------------------
+class BankAccountForCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
         name = request.data.get("name", "").strip()
-        existing = PRPossibility.objects.filter(name__iexact=name, is_deleted=False).first()
+        existing = BankAccountFor.objects.filter(name__iexact=name, is_deleted=False).first()
 
         if existing:
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "PRPossibility with this name already exists."
+                "message": "BankAccountFor with this name already exists."
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = PRPossibilitySerializer(data=request.data)
+        serializer = BankAccountForSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "PRPossibility created successfully",
+                "message": "BankAccountFor created successfully",
                 "data": serializer.data
             })
         else:
@@ -1655,53 +1991,51 @@ class PRPossibilityCreateAPIView(APIView):
                 "message": " ".join(messages)
             }, status=status.HTTP_400_BAD_REQUEST)
 
-
-# ---------------- RETRIEVE API ----------------
-class PRPossibilityRetrieveAPIView(APIView):
+# -------------------- RETRIEVE API --------------------
+class BankAccountForRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request, uuid):
         try:
-            obj = PRPossibility.objects.get(uuid=uuid, is_deleted=False)
-        except PRPossibility.DoesNotExist:
+            obj = BankAccountFor.objects.get(uuid=uuid, is_deleted=False)
+        except BankAccountFor.DoesNotExist:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "PRPossibility not found",
+                "message": "BankAccountFor not found",
                 "data": None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = PRPossibilitySerializer(obj)
+        serializer = BankAccountForSerializer(obj)
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": "PRPossibility retrieved successfully",
+            "message": "BankAccountFor retrieved successfully",
             "data": serializer.data
         })
 
-
-# ---------------- UPDATE API ----------------
-class PRPossibilityUpdateAPIView(APIView):
+# -------------------- UPDATE API --------------------
+class BankAccountForUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def put(self, request, uuid):
         try:
-            obj = PRPossibility.objects.get(uuid=uuid, is_deleted=False)
-        except PRPossibility.DoesNotExist:
+            obj = BankAccountFor.objects.get(uuid=uuid, is_deleted=False)
+        except BankAccountFor.DoesNotExist:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "PRPossibility not found",
+                "message": "BankAccountFor not found",
                 "data": None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = PRPossibilitySerializer(obj, data=request.data)
+        serializer = BankAccountForSerializer(obj, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "PRPossibility updated successfully",
+                "message": "BankAccountFor updated successfully",
                 "data": serializer.data
             })
         else:
@@ -1715,9 +2049,8 @@ class PRPossibilityUpdateAPIView(APIView):
                 "data": None
             }, status=status.HTTP_400_BAD_REQUEST)
 
-
-# ---------------- DELETE API ----------------
-class PRPossibilityDeleteAPIView(APIView):
+# -------------------- DELETE API --------------------
+class BankAccountForDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
@@ -1725,37 +2058,37 @@ class PRPossibilityDeleteAPIView(APIView):
 
         if uuid:
             try:
-                obj = PRPossibility.objects.get(uuid=uuid)
+                obj = BankAccountFor.objects.get(uuid=uuid)
                 obj.delete()
                 return Response({
                     "statusCode": 204,
                     "status": True,
-                    "message": "PRPossibility permanently deleted.",
+                    "message": "BankAccountFor permanently deleted.",
                     "data": None
                 }, status=status.HTTP_204_NO_CONTENT)
-            except PRPossibility.DoesNotExist:
+            except BankAccountFor.DoesNotExist:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "PRPossibility not found.",
+                    "message": "BankAccountFor not found.",
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
         if ids == "all":
-            objs = PRPossibility.objects.all()
+            objs = BankAccountFor.objects.all()
             count = objs.count()
             if count == 0:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "No PRPossibility found to delete.",
+                    "message": "No BankAccountFor found to delete.",
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
             objs.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} PRPossibility permanently deleted.",
+                "message": f"All {count} BankAccountFor permanently deleted.",
                 "data": None
             })
 
@@ -1783,29 +2116,27 @@ class PRPossibilityDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids}
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        objs = PRPossibility.objects.filter(uuid__in=valid_uuids)
+        objs = BankAccountFor.objects.filter(uuid__in=valid_uuids)
         count = objs.count()
 
         if count == 0:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "No matching PRPossibility found.",
+                "message": "No matching BankAccountFor found.",
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
             }, status=status.HTTP_404_NOT_FOUND)
 
         objs.delete()
-
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f"{count} PRPossibility(s) permanently deleted.",
+            "message": f"{count} BankAccountFor(s) permanently deleted.",
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         })
 
-
-# ---------------- EXPORT API ----------------
-class PRPossibilityExportAPIView(APIView):
+# -------------------- EXPORT API --------------------
+class BankAccountForExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
@@ -1816,7 +2147,7 @@ class PRPossibilityExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'PR Possibility',
+            'name': 'Name',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',
@@ -1827,14 +2158,14 @@ class PRPossibilityExportAPIView(APIView):
         else:
             field_list = list(field_header_map.keys())
 
-        queryset = PRPossibility.objects.filter(is_deleted=False)
+        queryset = BankAccountFor.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
         queryset = queryset.order_by('-created_at')
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'PRPossibility'
+        dataset.title = 'BankAccountFor'
 
         for obj in queryset:
             row = []
@@ -1850,11 +2181,11 @@ class PRPossibilityExportAPIView(APIView):
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
-            file_name = 'pr_possibility.csv'
+            file_name = 'bankaccountfor.csv'
         else:
             file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'pr_possibility.xlsx'
+            file_name = 'bankaccountfor.xlsx'
 
         response = HttpResponse(
             file_data if format_type == 'csv' else file_data.getvalue(),
@@ -1863,9 +2194,8 @@ class PRPossibilityExportAPIView(APIView):
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
-
-# ---------------- IMPORT API ----------------
-class PRPossibilityImportAPIView(APIView):
+# -------------------- IMPORT API --------------------
+class BankAccountForImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
@@ -1878,7 +2208,7 @@ class PRPossibilityImportAPIView(APIView):
         format_type = file.name.split(".")[-1].lower()
         duplicates = []
         skipped_rows = []
-        required_headers = {"pr possibility"}
+        required_headers = {"name"}  # adjust to match sheet
         optional_headers = {"description"}
 
         try:
@@ -1949,404 +2279,17 @@ class PRPossibilityImportAPIView(APIView):
             imported_count = 0
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("pr possibility")) if row.get("pr possibility") else None
-                description = str(row.get("description")).strip() if row.get("description") else ""
-
-                if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing PR Possibility name"})
-                    continue
-
-                existing = PRPossibility.objects.filter(name__iexact=name).first()
-                if existing:
-                    if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "PR Possibility": name, "Reason": "Already exists"})
-                        continue
-                    else:
-                        existing.description = description
-                        existing.is_deleted = False
-                        existing.save()
-                        imported_count += 1
-                else:
-                    PRPossibility.objects.create(name=name, description=description, is_deleted=False)
-                    imported_count += 1
-
-        except Exception as e:
-            return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
-
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
-            "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
-        }, status=200)
-
-
-
-class SpouseCanApplyListAPIView(APIView):
-    def get(self, request):
-        search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
-
-        allowed_sort_fields = ['name', 'description', 'updated_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
-
-        queryset = SpouseCanApplywithCandidate.objects.filter(is_deleted=False)
-
-        if search:
-            queryset = queryset.filter(Q(name__istartswith=search))
-
-        queryset = queryset.order_by(sort_by)
-        paginator = CustomPagination()
-        result_page = paginator.paginate_queryset(queryset, request)
-        serializer = SpouseCanApplywithCandidateSerializer(result_page, many=True)
-        return paginator.get_paginated_response(serializer.data)
-
-
-# ---------------- CREATE API ----------------
-class SpouseCanApplyCreateAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
-
-    def post(self, request):
-        name = request.data.get("name", "").strip()
-        existing = SpouseCanApplywithCandidate.objects.filter(name__iexact=name, is_deleted=False).first()
-
-        if existing:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "SpouseCanApplywithCandidate with this name already exists."
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer = SpouseCanApplywithCandidateSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": "SpouseCanApplywithCandidate created successfully",
-                "data": serializer.data
-            })
-        else:
-            messages = []
-            for field, msgs in serializer.errors.items():
-                messages.extend(msgs)
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": " ".join(messages)
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-
-# ---------------- RETRIEVE API ----------------
-class SpouseCanApplyRetrieveAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
-
-    def get(self, request, uuid):
-        try:
-            obj = SpouseCanApplywithCandidate.objects.get(uuid=uuid, is_deleted=False)
-        except SpouseCanApplywithCandidate.DoesNotExist:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "SpouseCanApplywithCandidate not found",
-                "data": None
-            }, status=status.HTTP_404_NOT_FOUND)
-
-        serializer = SpouseCanApplywithCandidateSerializer(obj)
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": "SpouseCanApplywithCandidate retrieved successfully",
-            "data": serializer.data
-        })
-
-
-# ---------------- UPDATE API ----------------
-class SpouseCanApplyUpdateAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
-
-    def put(self, request, uuid):
-        try:
-            obj = SpouseCanApplywithCandidate.objects.get(uuid=uuid, is_deleted=False)
-        except SpouseCanApplywithCandidate.DoesNotExist:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "SpouseCanApplywithCandidate not found",
-                "data": None
-            }, status=status.HTTP_404_NOT_FOUND)
-
-        serializer = SpouseCanApplywithCandidateSerializer(obj, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": "SpouseCanApplywithCandidate updated successfully",
-                "data": serializer.data
-            })
-        else:
-            messages = []
-            for field, msgs in serializer.errors.items():
-                messages.extend(msgs)
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": " ".join(messages),
-                "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-
-# ---------------- DELETE API ----------------
-class SpouseCanApplyDeleteAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
-
-    def delete(self, request, uuid=None):
-        ids = request.data.get('id', None)
-
-        if uuid:
-            try:
-                obj = SpouseCanApplywithCandidate.objects.get(uuid=uuid)
-                obj.delete()
-                return Response({
-                    "statusCode": 204,
-                    "status": True,
-                    "message": "SpouseCanApplywithCandidate permanently deleted.",
-                    "data": None
-                }, status=status.HTTP_204_NO_CONTENT)
-            except SpouseCanApplywithCandidate.DoesNotExist:
-                return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "SpouseCanApplywithCandidate not found.",
-                    "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
-
-        if ids == "all":
-            objs = SpouseCanApplywithCandidate.objects.all()
-            count = objs.count()
-            if count == 0:
-                return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "No records found to delete.",
-                    "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
-            objs.delete()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": f"All {count} records permanently deleted.",
-                "data": None
-            })
-
-        if not ids or not isinstance(ids, list):
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
-                "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        valid_uuids = []
-        invalid_uuids = []
-        for u in ids:
-            try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
-
-        if not valid_uuids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "No valid UUIDs provided.",
-                "data": {"invalid_uuids": invalid_uuids}
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        objs = SpouseCanApplywithCandidate.objects.filter(uuid__in=valid_uuids)
-        count = objs.count()
-
-        if count == 0:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "No matching records found.",
-                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=status.HTTP_404_NOT_FOUND)
-
-        objs.delete()
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"{count} record(s) permanently deleted.",
-            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        })
-
-
-# ---------------- EXPORT API ----------------
-class SpouseCanApplyExportAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
-
-    def get(self, request):
-        format_type = request.GET.get('format', 'xlsx').lower()
-        fields = request.GET.get('fields')
-        uuids_param = request.GET.get('uuids', '')
-        uuids = [u.strip() for u in uuids_param.split(',') if u]
-
-        field_header_map = {
-            'uuid': 'UUID',
-            'name': 'Spouse Can Apply',
-            'description': 'Description',
-            'is_deleted': 'Deleted',
-            'updated_at': 'Modified On',
-        }
-
-        if fields:
-            field_list = [f.strip() for f in fields.split(',')]
-        else:
-            field_list = list(field_header_map.keys())
-
-        queryset = SpouseCanApplywithCandidate.objects.filter(is_deleted=False)
-        if uuids:
-            queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
-
-        dataset = Dataset()
-        dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'SpouseCanApplywithCandidate'
-
-        for obj in queryset:
-            row = []
-            for field in field_list:
-                value = getattr(obj, field, '')
-                if field in ['created_at', 'updated_at'] and value:
-                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-                elif isinstance(value, bool):
-                    value = int(value)
-                row.append(value if value is not None else '')
-            dataset.append(row)
-
-        if format_type == 'csv':
-            file_data = dataset.export('csv')
-            content_type = 'text/csv'
-            file_name = 'spouse_can_apply.csv'
-        else:
-            file_data = io.BytesIO(dataset.export('xlsx'))
-            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'spouse_can_apply.xlsx'
-
-        response = HttpResponse(
-            file_data if format_type == 'csv' else file_data.getvalue(),
-            content_type=content_type
-        )
-        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
-        return response
-
-
-# ---------------- IMPORT API ----------------
-class SpouseCanApplyImportAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
-
-    def post(self, request):
-        file = request.FILES.get("file")
-        sheet_name = request.data.get("sheet_name")
-
-        if not file:
-            return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
-
-        format_type = file.name.split(".")[-1].lower()
-        duplicates = []
-        skipped_rows = []
-        required_headers = {"spouse can apply"}
-        optional_headers = {"description"}
-
-        try:
-            data = []
-
-            if format_type == "xlsx":
-                wb = openpyxl.load_workbook(file, read_only=True)
-                available_sheets = wb.sheetnames
-
-                if not sheet_name:
-                    return Response({
-                        "error": "Please provide sheet_name",
-                        "available_sheets": available_sheets,
-                    }, status=400)
-
-                if sheet_name not in available_sheets:
-                    return Response({
-                        "error": f'Sheet "{sheet_name}" not found',
-                        "available_sheets": available_sheets,
-                    }, status=400)
-
-                ws = wb[sheet_name]
-                if ws.max_row <= 1:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": f'Sheet "{sheet_name}" is empty.'
-                    }, status=400)
-
-                headers = [str(cell.value).strip().lower() if cell.value else "" for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-
-                if not required_headers.issubset(set(headers)):
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": f"Missing required headers. Required: {required_headers}, Found: {set(headers)}"
-                    }, status=400)
-
-                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
-                    if not any(row):
-                        continue
-                    row_dict = dict(zip(headers, row))
-                    row_dict["_row_number"] = idx
-                    data.append(row_dict)
-
-            elif format_type == "csv":
-                decoded_file = file.read().decode("utf-8")
-                dataset = Dataset()
-                dataset.load(decoded_file, format="csv")
-                for idx, row in enumerate(dataset.dict, start=2):
-                    row_lower = {k.strip().lower(): v for k, v in row.items()}
-                    row_lower["_row_number"] = idx
-                    if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({
-                            "statusCode": 400,
-                            "status": False,
-                            "message": f"Missing required headers. Required: {', '.join(required_headers)}. Found: {', '.join(row_lower.keys())}."
-                        }, status=400)
-                    data.append(row_lower)
-
-            else:
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "Unsupported file format. Use .xlsx or .csv",
-                }, status=400)
-
-            imported_count = 0
-            for row in reversed(data):
-                row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("spouse can apply")) if row.get("spouse can apply") else None
+                name = str(row.get("name")) if row.get("name") else None
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
                     skipped_rows.append({"Row": row_number, "Reason": "Missing Name"})
                     continue
 
-                existing = SpouseCanApplywithCandidate.objects.filter(name__iexact=name).first()
+                existing = BankAccountFor.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Spouse Can Apply": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "Name": name, "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -2354,7 +2297,7 @@ class SpouseCanApplyImportAPIView(APIView):
                         existing.save()
                         imported_count += 1
                 else:
-                    SpouseCanApplywithCandidate.objects.create(name=name, description=description, is_deleted=False)
+                    BankAccountFor.objects.create(name=name, description=description, is_deleted=False)
                     imported_count += 1
 
         except Exception as e:
@@ -2370,7 +2313,7 @@ class SpouseCanApplyImportAPIView(APIView):
         }, status=200)
 
 
-class SpouseVisaCategoryListAPIView(APIView):
+class WhenCommissionIssueListAPIView(APIView):
     def get(self, request):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'created_at')
@@ -2383,40 +2326,38 @@ class SpouseVisaCategoryListAPIView(APIView):
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
-        queryset = SpouseVisaCategory.objects.filter(is_deleted=False)
-
+        queryset = WhenCommissionIssue.objects.filter(is_deleted=False)
         if search:
             queryset = queryset.filter(Q(name__istartswith=search))
 
         queryset = queryset.order_by(sort_by)
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
-        serializer = SpouseVisaCategorySerializer(result_page, many=True)
+        serializer = WhenCommissionIssueSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
 
-
-# ---------------- CREATE API ----------------
-class SpouseVisaCategoryCreateAPIView(APIView):
+# -------------------- CREATE API --------------------
+class WhenCommissionIssueCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
         name = request.data.get("name", "").strip()
-        existing = SpouseVisaCategory.objects.filter(name__iexact=name, is_deleted=False).first()
+        existing = WhenCommissionIssue.objects.filter(name__iexact=name, is_deleted=False).first()
 
         if existing:
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "SpouseVisaCategory with this name already exists."
+                "message": "WhenCommissionIssue with this name already exists."
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = SpouseVisaCategorySerializer(data=request.data)
+        serializer = WhenCommissionIssueSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "SpouseVisaCategory created successfully",
+                "message": "WhenCommissionIssue created successfully",
                 "data": serializer.data
             })
         else:
@@ -2429,53 +2370,51 @@ class SpouseVisaCategoryCreateAPIView(APIView):
                 "message": " ".join(messages)
             }, status=status.HTTP_400_BAD_REQUEST)
 
-
-# ---------------- RETRIEVE API ----------------
-class SpouseVisaCategoryRetrieveAPIView(APIView):
+# -------------------- RETRIEVE API --------------------
+class WhenCommissionIssueRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request, uuid):
         try:
-            obj = SpouseVisaCategory.objects.get(uuid=uuid, is_deleted=False)
-        except SpouseVisaCategory.DoesNotExist:
+            obj = WhenCommissionIssue.objects.get(uuid=uuid, is_deleted=False)
+        except WhenCommissionIssue.DoesNotExist:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "SpouseVisaCategory not found",
+                "message": "WhenCommissionIssue not found",
                 "data": None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = SpouseVisaCategorySerializer(obj)
+        serializer = WhenCommissionIssueSerializer(obj)
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": "SpouseVisaCategory retrieved successfully",
+            "message": "WhenCommissionIssue retrieved successfully",
             "data": serializer.data
         })
 
-
-# ---------------- UPDATE API ----------------
-class SpouseVisaCategoryUpdateAPIView(APIView):
+# -------------------- UPDATE API --------------------
+class WhenCommissionIssueUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def put(self, request, uuid):
         try:
-            obj = SpouseVisaCategory.objects.get(uuid=uuid, is_deleted=False)
-        except SpouseVisaCategory.DoesNotExist:
+            obj = WhenCommissionIssue.objects.get(uuid=uuid, is_deleted=False)
+        except WhenCommissionIssue.DoesNotExist:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "SpouseVisaCategory not found",
+                "message": "WhenCommissionIssue not found",
                 "data": None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = SpouseVisaCategorySerializer(obj, data=request.data)
+        serializer = WhenCommissionIssueSerializer(obj, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "SpouseVisaCategory updated successfully",
+                "message": "WhenCommissionIssue updated successfully",
                 "data": serializer.data
             })
         else:
@@ -2489,9 +2428,8 @@ class SpouseVisaCategoryUpdateAPIView(APIView):
                 "data": None
             }, status=status.HTTP_400_BAD_REQUEST)
 
-
-# ---------------- DELETE API ----------------
-class SpouseVisaCategoryDeleteAPIView(APIView):
+# -------------------- DELETE API --------------------
+class WhenCommissionIssueDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
@@ -2499,37 +2437,37 @@ class SpouseVisaCategoryDeleteAPIView(APIView):
 
         if uuid:
             try:
-                obj = SpouseVisaCategory.objects.get(uuid=uuid)
+                obj = WhenCommissionIssue.objects.get(uuid=uuid)
                 obj.delete()
                 return Response({
                     "statusCode": 204,
                     "status": True,
-                    "message": "SpouseVisaCategory permanently deleted.",
+                    "message": "WhenCommissionIssue permanently deleted.",
                     "data": None
                 }, status=status.HTTP_204_NO_CONTENT)
-            except SpouseVisaCategory.DoesNotExist:
+            except WhenCommissionIssue.DoesNotExist:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "SpouseVisaCategory not found.",
+                    "message": "WhenCommissionIssue not found.",
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
         if ids == "all":
-            objs = SpouseVisaCategory.objects.all()
+            objs = WhenCommissionIssue.objects.all()
             count = objs.count()
             if count == 0:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "No records found to delete.",
+                    "message": "No WhenCommissionIssue found to delete.",
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
             objs.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} records permanently deleted.",
+                "message": f"All {count} WhenCommissionIssue permanently deleted.",
                 "data": None
             })
 
@@ -2557,14 +2495,14 @@ class SpouseVisaCategoryDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids}
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        objs = SpouseVisaCategory.objects.filter(uuid__in=valid_uuids)
+        objs = WhenCommissionIssue.objects.filter(uuid__in=valid_uuids)
         count = objs.count()
 
         if count == 0:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "No matching records found.",
+                "message": "No matching WhenCommissionIssue found.",
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
             }, status=status.HTTP_404_NOT_FOUND)
 
@@ -2572,12 +2510,12 @@ class SpouseVisaCategoryDeleteAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f"{count} record(s) permanently deleted.",
+            "message": f"{count} WhenCommissionIssue(s) permanently deleted.",
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         })
 
-
-class SpouseVisaCategoryExportAPIView(APIView):
+# -------------------- EXPORT API --------------------
+class WhenCommissionIssueExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
@@ -2588,7 +2526,7 @@ class SpouseVisaCategoryExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Spouse Visa Category',
+            'name': 'Name',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',
@@ -2599,14 +2537,14 @@ class SpouseVisaCategoryExportAPIView(APIView):
         else:
             field_list = list(field_header_map.keys())
 
-        queryset = SpouseVisaCategory.objects.filter(is_deleted=False)
+        queryset = WhenCommissionIssue.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
         queryset = queryset.order_by('-created_at')
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'SpouseVisaCategory'
+        dataset.title = 'WhenCommissionIssue'
 
         for obj in queryset:
             row = []
@@ -2622,11 +2560,11 @@ class SpouseVisaCategoryExportAPIView(APIView):
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
-            file_name = 'spouse_visa_category.csv'
+            file_name = 'whencommissionissue.csv'
         else:
             file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'spouse_visa_category.xlsx'
+            file_name = 'whencommissionissue.xlsx'
 
         response = HttpResponse(
             file_data if format_type == 'csv' else file_data.getvalue(),
@@ -2635,9 +2573,8 @@ class SpouseVisaCategoryExportAPIView(APIView):
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
-
-# ---------------- IMPORT API ----------------
-class SpouseVisaCategoryImportAPIView(APIView):
+# -------------------- IMPORT API --------------------
+class WhenCommissionIssueImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
@@ -2650,7 +2587,7 @@ class SpouseVisaCategoryImportAPIView(APIView):
         format_type = file.name.split(".")[-1].lower()
         duplicates = []
         skipped_rows = []
-        required_headers = {"spouse visa category"}
+        required_headers = {"name"}  # adjust to match your sheet
         optional_headers = {"description"}
 
         try:
@@ -2681,7 +2618,6 @@ class SpouseVisaCategoryImportAPIView(APIView):
                     }, status=400)
 
                 headers = [str(cell.value).strip().lower() if cell.value else "" for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-
                 if not required_headers.issubset(set(headers)):
                     return Response({
                         "statusCode": 400,
@@ -2721,17 +2657,17 @@ class SpouseVisaCategoryImportAPIView(APIView):
             imported_count = 0
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("spouse visa category")) if row.get("spouse visa category") else None
+                name = str(row.get("name")) if row.get("name") else None
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
                     skipped_rows.append({"Row": row_number, "Reason": "Missing Name"})
                     continue
 
-                existing = SpouseVisaCategory.objects.filter(name__iexact=name).first()
+                existing = WhenCommissionIssue.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Spouse Visa Category": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "Name": name, "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -2739,7 +2675,7 @@ class SpouseVisaCategoryImportAPIView(APIView):
                         existing.save()
                         imported_count += 1
                 else:
-                    SpouseVisaCategory.objects.create(name=name, description=description, is_deleted=False)
+                    WhenCommissionIssue.objects.create(name=name, description=description, is_deleted=False)
                     imported_count += 1
 
         except Exception as e:
@@ -2755,7 +2691,7 @@ class SpouseVisaCategoryImportAPIView(APIView):
         }, status=200)
 
 
-class SpouseWorkRightsListAPIView(APIView):
+class CourseLevelCodeListAPIView(APIView):
     def get(self, request):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'created_at')
@@ -2764,40 +2700,42 @@ class SpouseWorkRightsListAPIView(APIView):
         allowed_sort_fields = ['name', 'description', 'updated_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
+
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
-        queryset = SpouseWorkRights.objects.filter(is_deleted=False)
+        queryset = CourseLevelCode.objects.filter(is_deleted=False)
         if search:
             queryset = queryset.filter(Q(name__istartswith=search))
 
         queryset = queryset.order_by(sort_by)
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
-        serializer = SpouseWorkRightsSerializer(result_page, many=True)
+        serializer = CourseLevelCodeSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
 
-class SpouseWorkRightsCreateAPIView(APIView):
+# -------------------- CREATE API --------------------
+class CourseLevelCodeCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
         name = request.data.get("name", "").strip()
-        existing = SpouseWorkRights.objects.filter(name__iexact=name, is_deleted=False).first()
+        existing = CourseLevelCode.objects.filter(name__iexact=name, is_deleted=False).first()
 
         if existing:
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "SpouseWorkRight with this name already exists."
+                "message": "CourseLevelCode with this name already exists."
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = SpouseWorkRightsSerializer(data=request.data)
+        serializer = CourseLevelCodeSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "SpouseWorkRight created successfully",
+                "message": "CourseLevelCode created successfully",
                 "data": serializer.data
             })
         else:
@@ -2810,50 +2748,51 @@ class SpouseWorkRightsCreateAPIView(APIView):
                 "message": " ".join(messages)
             }, status=status.HTTP_400_BAD_REQUEST)
 
-class SpouseWorkRightsRetrieveAPIView(APIView):
+# -------------------- RETRIEVE API --------------------
+class CourseLevelCodeRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request, uuid):
         try:
-            obj = SpouseWorkRights.objects.get(uuid=uuid, is_deleted=False)
-        except SpouseWorkRights.DoesNotExist:
+            obj = CourseLevelCode.objects.get(uuid=uuid, is_deleted=False)
+        except CourseLevelCode.DoesNotExist:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "SpouseWorkRight not found",
+                "message": "CourseLevelCode not found",
                 "data": None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = SpouseWorkRightsSerializer(obj)
+        serializer = CourseLevelCodeSerializer(obj)
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": "SpouseWorkRight retrieved successfully",
+            "message": "CourseLevelCode retrieved successfully",
             "data": serializer.data
         })
 
-
-class SpouseWorkRightsUpdateAPIView(APIView):
+# -------------------- UPDATE API --------------------
+class CourseLevelCodeUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def put(self, request, uuid):
         try:
-            obj = SpouseWorkRights.objects.get(uuid=uuid, is_deleted=False)
-        except SpouseWorkRights.DoesNotExist:
+            obj = CourseLevelCode.objects.get(uuid=uuid, is_deleted=False)
+        except CourseLevelCode.DoesNotExist:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "SpouseWorkRight not found",
+                "message": "CourseLevelCode not found",
                 "data": None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = SpouseWorkRightsSerializer(obj, data=request.data)
+        serializer = CourseLevelCodeSerializer(obj, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "SpouseWorkRight updated successfully",
+                "message": "CourseLevelCode updated successfully",
                 "data": serializer.data
             })
         else:
@@ -2867,8 +2806,8 @@ class SpouseWorkRightsUpdateAPIView(APIView):
                 "data": None
             }, status=status.HTTP_400_BAD_REQUEST)
 
-
-class SpouseWorkRightsDeleteAPIView(APIView):
+# -------------------- DELETE API --------------------
+class CourseLevelCodeDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
@@ -2876,756 +2815,37 @@ class SpouseWorkRightsDeleteAPIView(APIView):
 
         if uuid:
             try:
-                obj = SpouseWorkRights.objects.get(uuid=uuid)
+                obj = CourseLevelCode.objects.get(uuid=uuid)
                 obj.delete()
                 return Response({
                     "statusCode": 204,
                     "status": True,
-                    "message": "SpouseWorkRight permanently deleted.",
+                    "message": "CourseLevelCode permanently deleted.",
                     "data": None
                 }, status=status.HTTP_204_NO_CONTENT)
-            except SpouseWorkRights.DoesNotExist:
+            except CourseLevelCode.DoesNotExist:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "SpouseWorkRight not found.",
-                    "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
-
-        # batch delete by IDs or "all"
-        if ids == "all":
-            objs = SpouseWorkRights.objects.all()
-            count = objs.count()
-            objs.delete()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": f"All {count} SpouseWorkRights permanently deleted.",
-                "data": None
-            })
-
-        if not ids or not isinstance(ids, list):
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
-                "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        valid_uuids = []
-        invalid_uuids = []
-        for u in ids:
-            try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
-
-        objs = SpouseWorkRights.objects.filter(uuid__in=valid_uuids)
-        count = objs.count()
-        objs.delete()
-
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"{count} SpouseWorkRight(s) permanently deleted.",
-            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        })
-
-
-
-class SpouseWorkRightsExportAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
-
-    def get(self, request):
-        format_type = request.GET.get('format', 'xlsx').lower()
-        fields = request.GET.get('fields')
-        uuids_param = request.GET.get('uuids', '')
-        uuids = [u.strip() for u in uuids_param.split(',') if u]
-
-        field_header_map = {
-            'uuid': 'UUID',
-            'name': 'Spouse Work Rights',
-            'description': 'Description',
-            'is_deleted': 'Deleted',
-            'updated_at': 'Modified On',
-        }
-
-        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
-
-        queryset = SpouseWorkRights.objects.filter(is_deleted=False)
-        if uuids:
-            queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
-
-        dataset = Dataset()
-        dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'SpouseWorkRights'
-
-        for obj in queryset:
-            row = []
-            for field in field_list:
-                value = getattr(obj, field, '')
-                if field in ['created_at', 'updated_at'] and value:
-                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-                elif isinstance(value, bool):
-                    value = int(value)
-                row.append(value if value is not None else '')
-            dataset.append(row)
-
-        if format_type == 'csv':
-            file_data = dataset.export('csv')
-            content_type = 'text/csv'
-            file_name = 'spouse_workrights.csv'
-        else:
-            file_data = io.BytesIO(dataset.export('xlsx'))
-            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'spouse_workrights.xlsx'
-
-        response = HttpResponse(
-            file_data if format_type == 'csv' else file_data.getvalue(),
-            content_type=content_type
-        )
-        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
-        return response
-
-
-
-
-class SpouseWorkRightsImportAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
-
-    def post(self, request):
-        file = request.FILES.get("file")
-        sheet_name = request.data.get("sheet_name")
-
-        if not file:
-            return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
-
-        format_type = file.name.split(".")[-1].lower()
-        duplicates = []
-        skipped_rows = []
-        required_headers = {"spouse work rights"}  # adjust column name in your sheet
-        optional_headers = {"description"}
-
-        try:
-            data = []
-
-            if format_type == "xlsx":
-                wb = openpyxl.load_workbook(file, read_only=True)
-                available_sheets = wb.sheetnames
-
-                if not sheet_name:
-                    return Response({
-                        "error": "Please provide sheet_name",
-                        "available_sheets": available_sheets,
-                    }, status=400)
-
-                if sheet_name not in available_sheets:
-                    return Response({
-                        "error": f'Sheet "{sheet_name}" not found',
-                        "available_sheets": available_sheets,
-                    }, status=400)
-
-                ws = wb[sheet_name]
-                if ws.max_row <= 1:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": f'Sheet "{sheet_name}" is empty.'
-                    }, status=400)
-
-                headers = [str(cell.value).strip().lower() if cell.value else "" for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                if not required_headers.issubset(set(headers)):
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": f"Missing required headers. Required: {required_headers}, Found: {set(headers)}"
-                    }, status=400)
-
-                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
-                    if not any(row):
-                        continue
-                    row_dict = dict(zip(headers, row))
-                    row_dict["_row_number"] = idx
-                    data.append(row_dict)
-
-            elif format_type == "csv":
-                decoded_file = file.read().decode("utf-8")
-                dataset = Dataset()
-                dataset.load(decoded_file, format="csv")
-                for idx, row in enumerate(dataset.dict, start=2):
-                    row_lower = {k.strip().lower(): v for k, v in row.items()}
-                    row_lower["_row_number"] = idx
-                    if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({
-                            "statusCode": 400,
-                            "status": False,
-                            "message": f"Missing required headers. Required: {', '.join(required_headers)}. Found: {', '.join(row_lower.keys())}."
-                        }, status=400)
-                    data.append(row_lower)
-
-            else:
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "Unsupported file format. Use .xlsx or .csv",
-                }, status=400)
-
-            imported_count = 0
-            for row in reversed(data):
-                row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("spouse work rights")) if row.get("spouse work rights") else None
-                description = str(row.get("description")).strip() if row.get("description") else ""
-
-                if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing SpouseWorkRight name"})
-                    continue
-
-                existing = SpouseWorkRights.objects.filter(name__iexact=name).first()
-                if existing:
-                    if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Spouse Work Rights": name, "Reason": "Already exists"})
-                        continue
-                    else:
-                        existing.description = description
-                        existing.is_deleted = False
-                        existing.save()
-                        imported_count += 1
-                else:
-                    SpouseWorkRights.objects.create(name=name, description=description, is_deleted=False)
-                    imported_count += 1
-
-        except Exception as e:
-            return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
-
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
-            "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
-        }, status=200)
-
-
-class ChildrenCanApplyListAPIView(APIView):
-    def get(self, request):
-        search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
-
-        allowed_sort_fields = ['name', 'description', 'updated_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
-
-        queryset = ChildrenCanApplywithCandidate.objects.filter(is_deleted=False)
-        if search:
-            queryset = queryset.filter(Q(name__istartswith=search))
-
-        queryset = queryset.order_by(sort_by)
-        paginator = CustomPagination()
-        result_page = paginator.paginate_queryset(queryset, request)
-        serializer = ChildrenCanApplywithCandidateSerializer(result_page, many=True)
-        return paginator.get_paginated_response(serializer.data)
-
-
-class ChildrenCanApplyCreateAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
-
-    def post(self, request):
-        name = request.data.get("name", "").strip()
-        existing = ChildrenCanApplywithCandidate.objects.filter(name__iexact=name, is_deleted=False).first()
-
-        if existing:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Record with this name already exists."
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer = ChildrenCanApplywithCandidateSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": "Record created successfully",
-                "data": serializer.data
-            })
-        else:
-            messages = []
-            for field, msgs in serializer.errors.items():
-                messages.extend(msgs)
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": " ".join(messages)
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-
-class ChildrenCanApplyCreateAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
-
-    def post(self, request):
-        name = request.data.get("name", "").strip()
-        existing = ChildrenCanApplywithCandidate.objects.filter(name__iexact=name, is_deleted=False).first()
-
-        if existing:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Record with this name already exists."
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer = ChildrenCanApplywithCandidateSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": "Record created successfully",
-                "data": serializer.data
-            })
-        else:
-            messages = []
-            for field, msgs in serializer.errors.items():
-                messages.extend(msgs)
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": " ".join(messages)
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-
-
-class ChildrenCanApplyRetrieveAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
-
-    def get(self, request, uuid):
-        try:
-            obj = ChildrenCanApplywithCandidate.objects.get(uuid=uuid, is_deleted=False)
-        except ChildrenCanApplywithCandidate.DoesNotExist:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "Record not found",
-                "data": None
-            }, status=status.HTTP_404_NOT_FOUND)
-
-        serializer = ChildrenCanApplywithCandidateSerializer(obj)
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": "Record retrieved successfully",
-            "data": serializer.data
-        })
-
-class ChildrenCanApplyUpdateAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
-
-    def put(self, request, uuid):
-        try:
-            obj = ChildrenCanApplywithCandidate.objects.get(uuid=uuid, is_deleted=False)
-        except ChildrenCanApplywithCandidate.DoesNotExist:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "Record not found",
-                "data": None
-            }, status=status.HTTP_404_NOT_FOUND)
-
-        serializer = ChildrenCanApplywithCandidateSerializer(obj, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": "Record updated successfully",
-                "data": serializer.data
-            })
-        else:
-            messages = []
-            for field, msgs in serializer.errors.items():
-                messages.extend(msgs)
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": " ".join(messages),
-                "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        
-class ChildrenCanApplyDeleteAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
-
-    def delete(self, request, uuid=None):
-        ids = request.data.get('id', None)
-
-        if uuid:
-            try:
-                obj = ChildrenCanApplywithCandidate.objects.get(uuid=uuid)
-                obj.delete()
-                return Response({
-                    "statusCode": 204,
-                    "status": True,
-                    "message": "Record permanently deleted.",
-                    "data": None
-                }, status=status.HTTP_204_NO_CONTENT)
-            except ChildrenCanApplywithCandidate.DoesNotExist:
-                return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "Record not found.",
+                    "message": "CourseLevelCode not found.",
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
         if ids == "all":
-            objs = ChildrenCanApplywithCandidate.objects.all()
-            count = objs.count()
-            objs.delete()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": f"All {count} records permanently deleted.",
-                "data": None
-            })
-
-        if not ids or not isinstance(ids, list):
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Provide a list of UUIDs in 'id' or 'all'.",
-                "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        valid_uuids = []
-        invalid_uuids = []
-        for u in ids:
-            try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
-
-        objs = ChildrenCanApplywithCandidate.objects.filter(uuid__in=valid_uuids)
-        count = objs.count()
-        objs.delete()
-
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"{count} record(s) permanently deleted.",
-            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        })
-
-
-
-class ChildrenCanApplyExportAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
-
-    def get(self, request):
-        format_type = request.GET.get('format', 'xlsx').lower()
-        fields = request.GET.get('fields')
-        uuids_param = request.GET.get('uuids', '')
-        uuids = [u.strip() for u in uuids_param.split(',') if u]
-
-        field_header_map = {
-            'uuid': 'UUID',
-            'name': 'Children Can Apply with Candidate',
-            'description': 'Description',
-            'is_deleted': 'Deleted',
-            'updated_at': 'Modified On',
-        }
-
-        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
-
-        queryset = ChildrenCanApplywithCandidate.objects.filter(is_deleted=False)
-        if uuids:
-            queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
-
-        dataset = Dataset()
-        dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'ChildrenCanApply'
-
-        for obj in queryset:
-            row = []
-            for field in field_list:
-                value = getattr(obj, field, '')
-                if field in ['created_at', 'updated_at'] and value:
-                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-                elif isinstance(value, bool):
-                    value = int(value)
-                row.append(value if value is not None else '')
-            dataset.append(row)
-
-        if format_type == 'csv':
-            file_data = dataset.export('csv')
-            content_type = 'text/csv'
-            file_name = 'children_can_apply.csv'
-        else:
-            file_data = io.BytesIO(dataset.export('xlsx'))
-            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'children_can_apply.xlsx'
-
-        response = HttpResponse(
-            file_data if format_type == 'csv' else file_data.getvalue(),
-            content_type=content_type
-        )
-        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
-        return response
-
-
-
-class ChildrenCanApplyImportAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
-
-    def post(self, request):
-        file = request.FILES.get("file")
-        sheet_name = request.data.get("sheet_name")
-
-        if not file:
-            return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
-
-        format_type = file.name.split(".")[-1].lower()
-        duplicates = []
-        skipped_rows = []
-        required_headers = {"children can apply with candidate"}  # column in your sheet
-        optional_headers = {"description"}
-
-        try:
-            data = []
-
-            if format_type == "xlsx":
-                wb = openpyxl.load_workbook(file, read_only=True)
-                available_sheets = wb.sheetnames
-                if not sheet_name:
-                    return Response({"error": "Provide sheet_name", "available_sheets": available_sheets}, status=400)
-                if sheet_name not in available_sheets:
-                    return Response({"error": f'Sheet "{sheet_name}" not found', "available_sheets": available_sheets}, status=400)
-                ws = wb[sheet_name]
-                if ws.max_row <= 1:
-                    return Response({"statusCode": 400, "status": False, "message": f'Sheet "{sheet_name}" is empty.'}, status=400)
-
-                headers = [str(cell.value).strip().lower() if cell.value else "" for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                if not required_headers.issubset(set(headers)):
-                    return Response({"statusCode": 400, "status": False, "message": f"Missing required headers. Required: {required_headers}, Found: {set(headers)}"}, status=400)
-
-                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
-                    if not any(row):
-                        continue
-                    row_dict = dict(zip(headers, row))
-                    row_dict["_row_number"] = idx
-                    data.append(row_dict)
-
-            elif format_type == "csv":
-                decoded_file = file.read().decode("utf-8")
-                dataset = Dataset()
-                dataset.load(decoded_file, format="csv")
-                for idx, row in enumerate(dataset.dict, start=2):
-                    row_lower = {k.strip().lower(): v for k, v in row.items()}
-                    row_lower["_row_number"] = idx
-                    if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({"statusCode": 400, "status": False, "message": f"Missing required headers. Required: {', '.join(required_headers)}. Found: {', '.join(row_lower.keys())}."}, status=400)
-                    data.append(row_lower)
-            else:
-                return Response({"statusCode": 400, "status": False, "message": "Unsupported file format. Use .xlsx or .csv"}, status=400)
-
-            imported_count = 0
-            for row in reversed(data):
-                row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("children can apply with candidate")) if row.get("children can apply with candidate") else None
-                description = str(row.get("description")).strip() if row.get("description") else ""
-
-                if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing name"})
-                    continue
-
-                existing = ChildrenCanApplywithCandidate.objects.filter(name__iexact=name).first()
-                if existing:
-                    if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Children Can Apply with Candidate": name, "Reason": "Already exists"})
-                        continue
-                    else:
-                        existing.description = description
-                        existing.is_deleted = False
-                        existing.save()
-                        imported_count += 1
-                else:
-                    ChildrenCanApplywithCandidate.objects.create(name=name, description=description, is_deleted=False)
-                    imported_count += 1
-
-        except Exception as e:
-            return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
-
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
-            "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
-        }, status=200)
-
-
-class ChildrenVisaCategoryListAPIView(APIView):
-    def get(self, request):
-        search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
-
-        allowed_sort_fields = ['name', 'description', 'updated_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
-
-        queryset = ChildrenVisaCategory.objects.filter(is_deleted=False)
-
-        if search:
-            queryset = queryset.filter(Q(name__istartswith=search))
-
-        queryset = queryset.order_by(sort_by)
-        paginator = CustomPagination()
-        result_page = paginator.paginate_queryset(queryset, request)
-        serializer = ChildrenVisaCategorySerializer(result_page, many=True)
-
-        return paginator.get_paginated_response(serializer.data)
-
-
-class ChildrenVisaCategoryCreateAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
-
-    def post(self, request):
-        name = request.data.get("name", "").strip()
-        existing = ChildrenVisaCategory.objects.filter(name__iexact=name, is_deleted=False).first()
-
-        if existing:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "ChildrenVisaCategory with this name already exists."
-            }, status=400)
-
-        serializer = ChildrenVisaCategorySerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": "ChildrenVisaCategory created successfully",
-                "data": serializer.data
-            })
-        else:
-            messages = []
-            for field, msgs in serializer.errors.items():
-                messages.extend(msgs)
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": " ".join(messages)
-            }, status=400)
-
-
-class ChildrenVisaCategoryRetrieveAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
-
-    def get(self, request, uuid):
-        try:
-            obj = ChildrenVisaCategory.objects.get(uuid=uuid, is_deleted=False)
-        except ChildrenVisaCategory.DoesNotExist:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "ChildrenVisaCategory not found",
-                "data": None
-            }, status=404)
-
-        serializer = ChildrenVisaCategorySerializer(obj)
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": "ChildrenVisaCategory retrieved successfully",
-            "data": serializer.data
-        })
-
-
-class ChildrenVisaCategoryUpdateAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
-
-    def put(self, request, uuid):
-        try:
-            obj = ChildrenVisaCategory.objects.get(uuid=uuid, is_deleted=False)
-        except ChildrenVisaCategory.DoesNotExist:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "ChildrenVisaCategory not found",
-                "data": None
-            }, status=404)
-
-        serializer = ChildrenVisaCategorySerializer(obj, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": "ChildrenVisaCategory updated successfully",
-                "data": serializer.data
-            })
-        else:
-            messages = []
-            for field, msgs in serializer.errors.items():
-                messages.extend(msgs)
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": " ".join(messages),
-                "data": None
-            }, status=400)
-
-
-class ChildrenVisaCategoryDeleteAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
-
-    def delete(self, request, uuid=None):
-        ids = request.data.get('id', None)
-
-        if uuid:
-            try:
-                obj = ChildrenVisaCategory.objects.get(uuid=uuid)
-                obj.delete()
-                return Response({
-                    "statusCode": 204,
-                    "status": True,
-                    "message": "ChildrenVisaCategory permanently deleted.",
-                    "data": None
-                }, status=204)
-            except ChildrenVisaCategory.DoesNotExist:
-                return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "ChildrenVisaCategory not found.",
-                    "data": None
-                }, status=404)
-
-        if ids == "all":
-            objs = ChildrenVisaCategory.objects.all()
+            objs = CourseLevelCode.objects.all()
             count = objs.count()
             if count == 0:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "No ChildrenVisaCategories found to delete.",
+                    "message": "No CourseLevelCode found to delete.",
                     "data": None
-                }, status=404)
+                }, status=status.HTTP_404_NOT_FOUND)
             objs.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} ChildrenVisaCategories permanently deleted.",
+                "message": f"All {count} CourseLevelCode permanently deleted.",
                 "data": None
             })
 
@@ -3635,7 +2855,7 @@ class ChildrenVisaCategoryDeleteAPIView(APIView):
                 "status": False,
                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
                 "data": None
-            }, status=400)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         valid_uuids = []
         invalid_uuids = []
@@ -3651,30 +2871,29 @@ class ChildrenVisaCategoryDeleteAPIView(APIView):
                 "status": False,
                 "message": "No valid UUIDs provided.",
                 "data": {"invalid_uuids": invalid_uuids}
-            }, status=400)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
-        objs = ChildrenVisaCategory.objects.filter(uuid__in=valid_uuids)
+        objs = CourseLevelCode.objects.filter(uuid__in=valid_uuids)
         count = objs.count()
 
         if count == 0:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "No matching ChildrenVisaCategories found.",
+                "message": "No matching CourseLevelCode found.",
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=404)
+            }, status=status.HTTP_404_NOT_FOUND)
 
         objs.delete()
-
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f"{count} ChildrenVisaCategory(s) permanently deleted.",
+            "message": f"{count} CourseLevelCode(s) permanently deleted.",
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         })
 
-
-class ChildrenVisaCategoryExportAPIView(APIView):
+# -------------------- EXPORT API --------------------
+class CourseLevelCodeExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
@@ -3685,22 +2904,25 @@ class ChildrenVisaCategoryExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Children Visa Category',
+            'name': 'Name',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',
         }
 
-        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+        if fields:
+            field_list = [f.strip() for f in fields.split(',')]
+        else:
+            field_list = list(field_header_map.keys())
 
-        queryset = ChildrenVisaCategory.objects.filter(is_deleted=False)
+        queryset = CourseLevelCode.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
         queryset = queryset.order_by('-created_at')
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'ChildrenVisaCategory'
+        dataset.title = 'CourseLevelCode'
 
         for obj in queryset:
             row = []
@@ -3716,11 +2938,11 @@ class ChildrenVisaCategoryExportAPIView(APIView):
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
-            file_name = 'children_visa_categories.csv'
+            file_name = 'courselevelcode.csv'
         else:
             file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'children_visa_categories.xlsx'
+            file_name = 'courselevelcode.xlsx'
 
         response = HttpResponse(
             file_data if format_type == 'csv' else file_data.getvalue(),
@@ -3729,8 +2951,8 @@ class ChildrenVisaCategoryExportAPIView(APIView):
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
-
-class ChildrenVisaCategoryImportAPIView(APIView):
+# -------------------- IMPORT API --------------------
+class CourseLevelCodeImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
@@ -3738,12 +2960,12 @@ class ChildrenVisaCategoryImportAPIView(APIView):
         sheet_name = request.data.get("sheet_name")
 
         if not file:
-            return Response({"error": "No file uploaded"}, status=400)
+            return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split(".")[-1].lower()
         duplicates = []
         skipped_rows = []
-        required_headers = {"children visa category"}  # Adjust column name as needed
+        required_headers = {"name"}
         optional_headers = {"description"}
 
         try:
@@ -3774,7 +2996,6 @@ class ChildrenVisaCategoryImportAPIView(APIView):
                     }, status=400)
 
                 headers = [str(cell.value).strip().lower() if cell.value else "" for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-
                 if not required_headers.issubset(set(headers)):
                     return Response({
                         "statusCode": 400,
@@ -3814,17 +3035,17 @@ class ChildrenVisaCategoryImportAPIView(APIView):
             imported_count = 0
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("children visa category")) if row.get("children visa category") else None
+                name = str(row.get("name")) if row.get("name") else None
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing Visa Category name"})
+                    skipped_rows.append({"Row": row_number, "Reason": "Missing Name"})
                     continue
 
-                existing = ChildrenVisaCategory.objects.filter(name__iexact=name).first()
+                existing = CourseLevelCode.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Children Visa Category": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "Name": name, "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -3832,7 +3053,7 @@ class ChildrenVisaCategoryImportAPIView(APIView):
                         existing.save()
                         imported_count += 1
                 else:
-                    ChildrenVisaCategory.objects.create(name=name, description=description, is_deleted=False)
+                    CourseLevelCode.objects.create(name=name, description=description, is_deleted=False)
                     imported_count += 1
 
         except Exception as e:
@@ -3848,7 +3069,8 @@ class ChildrenVisaCategoryImportAPIView(APIView):
         }, status=200)
 
 
-class ChildrenStudyWorkRightsListAPIView(APIView):
+
+class CourseDividedInListAPIView(APIView):
     def get(self, request):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'created_at')
@@ -3861,39 +3083,38 @@ class ChildrenStudyWorkRightsListAPIView(APIView):
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
-        queryset = ChildrenStudyWorkRights.objects.filter(is_deleted=False)
-
+        queryset = CourseDividedIn.objects.filter(is_deleted=False)
         if search:
             queryset = queryset.filter(Q(name__istartswith=search))
 
         queryset = queryset.order_by(sort_by)
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
-        serializer = ChildrenStudyWorkRightsSerializer(result_page, many=True)
+        serializer = CourseDividedInSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
 
-
-class ChildrenStudyWorkRightsCreateAPIView(APIView):
+# -------------------- CREATE API --------------------
+class CourseDividedInCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
         name = request.data.get("name", "").strip()
-        existing = ChildrenStudyWorkRights.objects.filter(name__iexact=name, is_deleted=False).first()
+        existing = CourseDividedIn.objects.filter(name__iexact=name, is_deleted=False).first()
 
         if existing:
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "ChildrenStudyWorkRights with this name already exists."
-            }, status=400)
+                "message": "CourseDividedIn with this name already exists."
+            }, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = ChildrenStudyWorkRightsSerializer(data=request.data)
+        serializer = CourseDividedInSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "ChildrenStudyWorkRights created successfully",
+                "message": "CourseDividedIn created successfully",
                 "data": serializer.data
             })
         else:
@@ -3904,53 +3125,53 @@ class ChildrenStudyWorkRightsCreateAPIView(APIView):
                 "statusCode": 400,
                 "status": False,
                 "message": " ".join(messages)
-            }, status=400)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
-
-class ChildrenStudyWorkRightsRetrieveAPIView(APIView):
+# -------------------- RETRIEVE API --------------------
+class CourseDividedInRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request, uuid):
         try:
-            obj = ChildrenStudyWorkRights.objects.get(uuid=uuid, is_deleted=False)
-        except ChildrenStudyWorkRights.DoesNotExist:
+            obj = CourseDividedIn.objects.get(uuid=uuid, is_deleted=False)
+        except CourseDividedIn.DoesNotExist:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "ChildrenStudyWorkRights not found",
+                "message": "CourseDividedIn not found",
                 "data": None
-            }, status=404)
+            }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = ChildrenStudyWorkRightsSerializer(obj)
+        serializer = CourseDividedInSerializer(obj)
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": "ChildrenStudyWorkRights retrieved successfully",
+            "message": "CourseDividedIn retrieved successfully",
             "data": serializer.data
         })
 
-
-class ChildrenStudyWorkRightsUpdateAPIView(APIView):
+# -------------------- UPDATE API --------------------
+class CourseDividedInUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def put(self, request, uuid):
         try:
-            obj = ChildrenStudyWorkRights.objects.get(uuid=uuid, is_deleted=False)
-        except ChildrenStudyWorkRights.DoesNotExist:
+            obj = CourseDividedIn.objects.get(uuid=uuid, is_deleted=False)
+        except CourseDividedIn.DoesNotExist:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "ChildrenStudyWorkRights not found",
+                "message": "CourseDividedIn not found",
                 "data": None
-            }, status=404)
+            }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = ChildrenStudyWorkRightsSerializer(obj, data=request.data)
+        serializer = CourseDividedInSerializer(obj, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "ChildrenStudyWorkRights updated successfully",
+                "message": "CourseDividedIn updated successfully",
                 "data": serializer.data
             })
         else:
@@ -3962,10 +3183,10 @@ class ChildrenStudyWorkRightsUpdateAPIView(APIView):
                 "status": False,
                 "message": " ".join(messages),
                 "data": None
-            }, status=400)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
-
-class ChildrenStudyWorkRightsDeleteAPIView(APIView):
+# -------------------- DELETE API --------------------
+class CourseDividedInDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
@@ -3973,37 +3194,37 @@ class ChildrenStudyWorkRightsDeleteAPIView(APIView):
 
         if uuid:
             try:
-                obj = ChildrenStudyWorkRights.objects.get(uuid=uuid)
+                obj = CourseDividedIn.objects.get(uuid=uuid)
                 obj.delete()
                 return Response({
                     "statusCode": 204,
                     "status": True,
-                    "message": "ChildrenStudyWorkRights permanently deleted.",
+                    "message": "CourseDividedIn permanently deleted.",
                     "data": None
-                }, status=204)
-            except ChildrenStudyWorkRights.DoesNotExist:
+                }, status=status.HTTP_204_NO_CONTENT)
+            except CourseDividedIn.DoesNotExist:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "ChildrenStudyWorkRights not found.",
+                    "message": "CourseDividedIn not found.",
                     "data": None
-                }, status=404)
+                }, status=status.HTTP_404_NOT_FOUND)
 
         if ids == "all":
-            objs = ChildrenStudyWorkRights.objects.all()
+            objs = CourseDividedIn.objects.all()
             count = objs.count()
             if count == 0:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "No ChildrenStudyWorkRights found to delete.",
+                    "message": "No CourseDividedIn found to delete.",
                     "data": None
-                }, status=404)
+                }, status=status.HTTP_404_NOT_FOUND)
             objs.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} ChildrenStudyWorkRights permanently deleted.",
+                "message": f"All {count} CourseDividedIn permanently deleted.",
                 "data": None
             })
 
@@ -4013,7 +3234,7 @@ class ChildrenStudyWorkRightsDeleteAPIView(APIView):
                 "status": False,
                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
                 "data": None
-            }, status=400)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         valid_uuids = []
         invalid_uuids = []
@@ -4029,30 +3250,29 @@ class ChildrenStudyWorkRightsDeleteAPIView(APIView):
                 "status": False,
                 "message": "No valid UUIDs provided.",
                 "data": {"invalid_uuids": invalid_uuids}
-            }, status=400)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
-        objs = ChildrenStudyWorkRights.objects.filter(uuid__in=valid_uuids)
+        objs = CourseDividedIn.objects.filter(uuid__in=valid_uuids)
         count = objs.count()
 
         if count == 0:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "No matching ChildrenStudyWorkRights found.",
+                "message": "No matching CourseDividedIn found.",
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=404)
+            }, status=status.HTTP_404_NOT_FOUND)
 
         objs.delete()
-
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f"{count} ChildrenStudyWorkRights permanently deleted.",
+            "message": f"{count} CourseDividedIn(s) permanently deleted.",
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         })
 
-
-class ChildrenStudyWorkRightsExportAPIView(APIView):
+# -------------------- EXPORT API --------------------
+class CourseDividedInExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
@@ -4063,22 +3283,25 @@ class ChildrenStudyWorkRightsExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Children Study Work Rights',
+            'name': 'Name',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',
         }
 
-        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+        if fields:
+            field_list = [f.strip() for f in fields.split(',')]
+        else:
+            field_list = list(field_header_map.keys())
 
-        queryset = ChildrenStudyWorkRights.objects.filter(is_deleted=False)
+        queryset = CourseDividedIn.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
         queryset = queryset.order_by('-created_at')
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'ChildrenStudyWorkRights'
+        dataset.title = 'CourseDividedIn'
 
         for obj in queryset:
             row = []
@@ -4094,11 +3317,11 @@ class ChildrenStudyWorkRightsExportAPIView(APIView):
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
-            file_name = 'children_study_work_rights.csv'
+            file_name = 'coursedividedin.csv'
         else:
             file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'children_study_work_rights.xlsx'
+            file_name = 'coursedividedin.xlsx'
 
         response = HttpResponse(
             file_data if format_type == 'csv' else file_data.getvalue(),
@@ -4107,8 +3330,8 @@ class ChildrenStudyWorkRightsExportAPIView(APIView):
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
-
-class ChildrenStudyWorkRightsImportAPIView(APIView):
+# -------------------- IMPORT API --------------------
+class CourseDividedInImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
@@ -4116,12 +3339,12 @@ class ChildrenStudyWorkRightsImportAPIView(APIView):
         sheet_name = request.data.get("sheet_name")
 
         if not file:
-            return Response({"error": "No file uploaded"}, status=400)
+            return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split(".")[-1].lower()
         duplicates = []
         skipped_rows = []
-        required_headers = {"children study work rights"}  # Adjust column name
+        required_headers = {"name"}
         optional_headers = {"description"}
 
         try:
@@ -4152,7 +3375,6 @@ class ChildrenStudyWorkRightsImportAPIView(APIView):
                     }, status=400)
 
                 headers = [str(cell.value).strip().lower() if cell.value else "" for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-
                 if not required_headers.issubset(set(headers)):
                     return Response({
                         "statusCode": 400,
@@ -4192,17 +3414,17 @@ class ChildrenStudyWorkRightsImportAPIView(APIView):
             imported_count = 0
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("children study work rights")) if row.get("children study work rights") else None
+                name = str(row.get("name")) if row.get("name") else None
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing Study/Work Right name"})
+                    skipped_rows.append({"Row": row_number, "Reason": "Missing Name"})
                     continue
 
-                existing = ChildrenStudyWorkRights.objects.filter(name__iexact=name).first()
+                existing = CourseDividedIn.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Children Study Work Rights": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "Name": name, "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -4210,7 +3432,7 @@ class ChildrenStudyWorkRightsImportAPIView(APIView):
                         existing.save()
                         imported_count += 1
                 else:
-                    ChildrenStudyWorkRights.objects.create(name=name, description=description, is_deleted=False)
+                    CourseDividedIn.objects.create(name=name, description=description, is_deleted=False)
                     imported_count += 1
 
         except Exception as e:
@@ -4224,3 +3446,1517 @@ class ChildrenStudyWorkRightsImportAPIView(APIView):
             "duplicates": duplicates,
             "skipped_rows": skipped_rows
         }, status=200)
+
+
+class CourseStatusListAPIView(APIView):
+    def get(self, request):
+        search = request.GET.get('search', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_order = request.GET.get('sortOrder', 'desc')
+
+        allowed_sort_fields = ['name', 'description', 'updated_at']
+        if sort_by not in allowed_sort_fields:
+            sort_by = 'created_at'
+
+        if sort_order == 'desc':
+            sort_by = f'-{sort_by}'
+
+        queryset = CourseStatus.objects.filter(is_deleted=False)
+        if search:
+            queryset = queryset.filter(Q(name__istartswith=search))
+
+        queryset = queryset.order_by(sort_by)
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = CourseStatusSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+# -------------------- CREATE API --------------------
+class CourseStatusCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        name = request.data.get("name", "").strip()
+        existing = CourseStatus.objects.filter(name__iexact=name, is_deleted=False).first()
+
+        if existing:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "CourseStatus with this name already exists."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = CourseStatusSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "CourseStatus created successfully",
+                "data": serializer.data
+            })
+        else:
+            messages = []
+            for field, msgs in serializer.errors.items():
+                messages.extend(msgs)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": " ".join(messages)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+# -------------------- RETRIEVE API --------------------
+class CourseStatusRetrieveAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request, uuid):
+        try:
+            obj = CourseStatus.objects.get(uuid=uuid, is_deleted=False)
+        except CourseStatus.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "CourseStatus not found",
+                "data": None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = CourseStatusSerializer(obj)
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": "CourseStatus retrieved successfully",
+            "data": serializer.data
+        })
+
+# -------------------- UPDATE API --------------------
+class CourseStatusUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def put(self, request, uuid):
+        try:
+            obj = CourseStatus.objects.get(uuid=uuid, is_deleted=False)
+        except CourseStatus.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "CourseStatus not found",
+                "data": None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = CourseStatusSerializer(obj, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "CourseStatus updated successfully",
+                "data": serializer.data
+            })
+        else:
+            messages = []
+            for field, msgs in serializer.errors.items():
+                messages.extend(msgs)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": " ".join(messages),
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+# -------------------- DELETE API --------------------
+class CourseStatusDeleteAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def delete(self, request, uuid=None):
+        ids = request.data.get('id', None)
+
+        if uuid:
+            try:
+                obj = CourseStatus.objects.get(uuid=uuid)
+                obj.delete()
+                return Response({
+                    "statusCode": 204,
+                    "status": True,
+                    "message": "CourseStatus permanently deleted.",
+                    "data": None
+                }, status=status.HTTP_204_NO_CONTENT)
+            except CourseStatus.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "CourseStatus not found.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+
+        if ids == "all":
+            objs = CourseStatus.objects.all()
+            count = objs.count()
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No CourseStatus found to delete.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+            objs.delete()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"All {count} CourseStatus permanently deleted.",
+                "data": None
+            })
+
+        if not ids or not isinstance(ids, list):
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        valid_uuids = []
+        invalid_uuids = []
+        for u in ids:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(u)
+
+        if not valid_uuids:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "No valid UUIDs provided.",
+                "data": {"invalid_uuids": invalid_uuids}
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        objs = CourseStatus.objects.filter(uuid__in=valid_uuids)
+        count = objs.count()
+
+        if count == 0:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "No matching CourseStatus found.",
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        objs.delete()
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": f"{count} CourseStatus(s) permanently deleted.",
+            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+        })
+
+# -------------------- EXPORT API --------------------
+class CourseStatusExportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        format_type = request.GET.get('format', 'xlsx').lower()
+        fields = request.GET.get('fields')
+        uuids_param = request.GET.get('uuids', '')
+        uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+        field_header_map = {
+            'uuid': 'UUID',
+            'name': 'Name',
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'updated_at': 'Modified On',
+        }
+
+        if fields:
+            field_list = [f.strip() for f in fields.split(',')]
+        else:
+            field_list = list(field_header_map.keys())
+
+        queryset = CourseStatus.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-created_at')
+
+        dataset = Dataset()
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'CourseStatus'
+
+        for obj in queryset:
+            row = []
+            for field in field_list:
+                value = getattr(obj, field, '')
+                if field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
+                    value = int(value)
+                row.append(value if value is not None else '')
+            dataset.append(row)
+
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'coursestatus.csv'
+        else:
+            file_data = io.BytesIO(dataset.export('xlsx'))
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'coursestatus.xlsx'
+
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        return response
+
+# -------------------- IMPORT API --------------------
+class CourseStatusImportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        file = request.FILES.get("file")
+        sheet_name = request.data.get("sheet_name")
+
+        if not file:
+            return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
+
+        format_type = file.name.split(".")[-1].lower()
+        duplicates = []
+        skipped_rows = []
+        required_headers = {"name"}
+        optional_headers = {"description"}
+
+        try:
+            data = []
+
+            if format_type == "xlsx":
+                wb = openpyxl.load_workbook(file, read_only=True)
+                available_sheets = wb.sheetnames
+
+                if not sheet_name:
+                    return Response({
+                        "error": "Please provide sheet_name",
+                        "available_sheets": available_sheets,
+                    }, status=400)
+
+                if sheet_name not in available_sheets:
+                    return Response({
+                        "error": f'Sheet "{sheet_name}" not found',
+                        "available_sheets": available_sheets,
+                    }, status=400)
+
+                ws = wb[sheet_name]
+                if ws.max_row <= 1:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'Sheet "{sheet_name}" is empty.'
+                    }, status=400)
+
+                headers = [str(cell.value).strip().lower() if cell.value else "" for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f"Missing required headers. Required: {required_headers}, Found: {set(headers)}"
+                    }, status=400)
+
+                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+                    if not any(row):
+                        continue
+                    row_dict = dict(zip(headers, row))
+                    row_dict["_row_number"] = idx
+                    data.append(row_dict)
+
+            elif format_type == "csv":
+                decoded_file = file.read().decode("utf-8")
+                dataset = Dataset()
+                dataset.load(decoded_file, format="csv")
+                for idx, row in enumerate(dataset.dict, start=2):
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    row_lower["_row_number"] = idx
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({
+                            "statusCode": 400,
+                            "status": False,
+                            "message": f"Missing required headers. Required: {', '.join(required_headers)}. Found: {', '.join(row_lower.keys())}."
+                        }, status=400)
+                    data.append(row_lower)
+
+            else:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Unsupported file format. Use .xlsx or .csv",
+                }, status=400)
+
+            imported_count = 0
+            for row in reversed(data):
+                row_number = row.get("_row_number", "Unknown")
+                name = str(row.get("name")) if row.get("name") else None
+                description = str(row.get("description")).strip() if row.get("description") else ""
+
+                if not name:
+                    skipped_rows.append({"Row": row_number, "Reason": "Missing Name"})
+                    continue
+
+                existing = CourseStatus.objects.filter(name__iexact=name).first()
+                if existing:
+                    if not existing.is_deleted:
+                        duplicates.append({"Row": row_number, "Name": name, "Reason": "Already exists"})
+                        continue
+                    else:
+                        existing.description = description
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
+                else:
+                    CourseStatus.objects.create(name=name, description=description, is_deleted=False)
+                    imported_count += 1
+
+        except Exception as e:
+            return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count,
+            "duplicates": duplicates,
+            "skipped_rows": skipped_rows
+        }, status=200)
+
+
+class IntakeNameListAPIView(APIView):
+    def get(self, request):
+        search = request.GET.get('search', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_order = request.GET.get('sortOrder', 'desc')
+
+        allowed_sort_fields = ['name', 'description', 'updated_at']
+        if sort_by not in allowed_sort_fields:
+            sort_by = 'created_at'
+
+        if sort_order == 'desc':
+            sort_by = f'-{sort_by}'
+
+        queryset = IntakeName.objects.filter(is_deleted=False)
+        if search:
+            queryset = queryset.filter(Q(name__istartswith=search))
+
+        queryset = queryset.order_by(sort_by)
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = IntakeNameSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+# -------------------- CREATE API --------------------
+class IntakeNameCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        name = request.data.get("name", "").strip()
+        existing = IntakeName.objects.filter(name__iexact=name, is_deleted=False).first()
+
+        if existing:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "IntakeName with this name already exists."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = IntakeNameSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "IntakeName created successfully",
+                "data": serializer.data
+            })
+        else:
+            messages = []
+            for field, msgs in serializer.errors.items():
+                messages.extend(msgs)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": " ".join(messages)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+# -------------------- RETRIEVE API --------------------
+class IntakeNameRetrieveAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request, uuid):
+        try:
+            obj = IntakeName.objects.get(uuid=uuid, is_deleted=False)
+        except IntakeName.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "IntakeName not found",
+                "data": None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = IntakeNameSerializer(obj)
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": "IntakeName retrieved successfully",
+            "data": serializer.data
+        })
+
+# -------------------- UPDATE API --------------------
+class IntakeNameUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def put(self, request, uuid):
+        try:
+            obj = IntakeName.objects.get(uuid=uuid, is_deleted=False)
+        except IntakeName.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "IntakeName not found",
+                "data": None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = IntakeNameSerializer(obj, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "IntakeName updated successfully",
+                "data": serializer.data
+            })
+        else:
+            messages = []
+            for field, msgs in serializer.errors.items():
+                messages.extend(msgs)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": " ".join(messages),
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+# -------------------- DELETE API --------------------
+class IntakeNameDeleteAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def delete(self, request, uuid=None):
+        ids = request.data.get('id', None)
+
+        if uuid:
+            try:
+                obj = IntakeName.objects.get(uuid=uuid)
+                obj.delete()
+                return Response({
+                    "statusCode": 204,
+                    "status": True,
+                    "message": "IntakeName permanently deleted.",
+                    "data": None
+                }, status=status.HTTP_204_NO_CONTENT)
+            except IntakeName.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "IntakeName not found.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+
+        if ids == "all":
+            objs = IntakeName.objects.all()
+            count = objs.count()
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No IntakeName found to delete.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+            objs.delete()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"All {count} IntakeName permanently deleted.",
+                "data": None
+            })
+
+        if not ids or not isinstance(ids, list):
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        valid_uuids = []
+        invalid_uuids = []
+        for u in ids:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(u)
+
+        if not valid_uuids:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "No valid UUIDs provided.",
+                "data": {"invalid_uuids": invalid_uuids}
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        objs = IntakeName.objects.filter(uuid__in=valid_uuids)
+        count = objs.count()
+
+        if count == 0:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "No matching IntakeName found.",
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        objs.delete()
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": f"{count} IntakeName(s) permanently deleted.",
+            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+        })
+
+# -------------------- EXPORT API --------------------
+class IntakeNameExportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        format_type = request.GET.get('format', 'xlsx').lower()
+        fields = request.GET.get('fields')
+        uuids_param = request.GET.get('uuids', '')
+        uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+        field_header_map = {
+            'uuid': 'UUID',
+            'name': 'Name',
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'updated_at': 'Modified On',
+        }
+
+        if fields:
+            field_list = [f.strip() for f in fields.split(',')]
+        else:
+            field_list = list(field_header_map.keys())
+
+        queryset = IntakeName.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-created_at')
+
+        dataset = Dataset()
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'IntakeName'
+
+        for obj in queryset:
+            row = []
+            for field in field_list:
+                value = getattr(obj, field, '')
+                if field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
+                    value = int(value)
+                row.append(value if value is not None else '')
+            dataset.append(row)
+
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'intakename.csv'
+        else:
+            file_data = io.BytesIO(dataset.export('xlsx'))
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'intakename.xlsx'
+
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        return response
+
+# -------------------- IMPORT API --------------------
+class IntakeNameImportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        file = request.FILES.get("file")
+        sheet_name = request.data.get("sheet_name")
+
+        if not file:
+            return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
+
+        format_type = file.name.split(".")[-1].lower()
+        duplicates = []
+        skipped_rows = []
+        required_headers = {"name"}
+        optional_headers = {"description"}
+
+        try:
+            data = []
+
+            if format_type == "xlsx":
+                wb = openpyxl.load_workbook(file, read_only=True)
+                available_sheets = wb.sheetnames
+
+                if not sheet_name:
+                    return Response({
+                        "error": "Please provide sheet_name",
+                        "available_sheets": available_sheets,
+                    }, status=400)
+
+                if sheet_name not in available_sheets:
+                    return Response({
+                        "error": f'Sheet "{sheet_name}" not found',
+                        "available_sheets": available_sheets,
+                    }, status=400)
+
+                ws = wb[sheet_name]
+                if ws.max_row <= 1:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'Sheet "{sheet_name}" is empty.'
+                    }, status=400)
+
+                headers = [str(cell.value).strip().lower() if cell.value else "" for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f"Missing required headers. Required: {required_headers}, Found: {set(headers)}"
+                    }, status=400)
+
+                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+                    if not any(row):
+                        continue
+                    row_dict = dict(zip(headers, row))
+                    row_dict["_row_number"] = idx
+                    data.append(row_dict)
+
+            elif format_type == "csv":
+                decoded_file = file.read().decode("utf-8")
+                dataset = Dataset()
+                dataset.load(decoded_file, format="csv")
+                for idx, row in enumerate(dataset.dict, start=2):
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    row_lower["_row_number"] = idx
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({
+                            "statusCode": 400,
+                            "status": False,
+                            "message": f"Missing required headers. Required: {', '.join(required_headers)}. Found: {', '.join(row_lower.keys())}."
+                        }, status=400)
+                    data.append(row_lower)
+
+            else:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Unsupported file format. Use .xlsx or .csv",
+                }, status=400)
+
+            imported_count = 0
+            for row in reversed(data):
+                row_number = row.get("_row_number", "Unknown")
+                name = str(row.get("name")) if row.get("name") else None
+                description = str(row.get("description")).strip() if row.get("description") else ""
+
+                if not name:
+                    skipped_rows.append({"Row": row_number, "Reason": "Missing Name"})
+                    continue
+
+                existing = IntakeName.objects.filter(name__iexact=name).first()
+                if existing:
+                    if not existing.is_deleted:
+                        duplicates.append({"Row": row_number, "Name": name, "Reason": "Already exists"})
+                        continue
+                    else:
+                        existing.description = description
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
+                else:
+                    IntakeName.objects.create(name=name, description=description, is_deleted=False)
+                    imported_count += 1
+
+        except Exception as e:
+            return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count,
+            "duplicates": duplicates,
+            "skipped_rows": skipped_rows
+        }, status=200)
+
+class CourseStatusIntakeListAPIView(APIView):
+    def get(self, request):
+        search = request.GET.get('search', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_order = request.GET.get('sortOrder', 'desc')
+
+        allowed_sort_fields = ['name', 'description', 'updated_at']
+        if sort_by not in allowed_sort_fields:
+            sort_by = 'created_at'
+
+        if sort_order == 'desc':
+            sort_by = f'-{sort_by}'
+
+        queryset = CourseStatusIntake.objects.filter(is_deleted=False)
+        if search:
+            queryset = queryset.filter(Q(name__istartswith=search))
+
+        queryset = queryset.order_by(sort_by)
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = CourseStatusIntakeSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+# -------------------- CREATE API --------------------
+class CourseStatusIntakeCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        name = request.data.get("name", "").strip()
+        existing = CourseStatusIntake.objects.filter(name__iexact=name, is_deleted=False).first()
+
+        if existing:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "CourseStatusIntake with this name already exists."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = CourseStatusIntakeSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "CourseStatusIntake created successfully",
+                "data": serializer.data
+            })
+        else:
+            messages = []
+            for field, msgs in serializer.errors.items():
+                messages.extend(msgs)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": " ".join(messages)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+# -------------------- RETRIEVE API --------------------
+class CourseStatusIntakeRetrieveAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request, uuid):
+        try:
+            obj = CourseStatusIntake.objects.get(uuid=uuid, is_deleted=False)
+        except CourseStatusIntake.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "CourseStatusIntake not found",
+                "data": None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = CourseStatusIntakeSerializer(obj)
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": "CourseStatusIntake retrieved successfully",
+            "data": serializer.data
+        })
+
+# -------------------- UPDATE API --------------------
+class CourseStatusIntakeUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def put(self, request, uuid):
+        try:
+            obj = CourseStatusIntake.objects.get(uuid=uuid, is_deleted=False)
+        except CourseStatusIntake.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "CourseStatusIntake not found",
+                "data": None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = CourseStatusIntakeSerializer(obj, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "CourseStatusIntake updated successfully",
+                "data": serializer.data
+            })
+        else:
+            messages = []
+            for field, msgs in serializer.errors.items():
+                messages.extend(msgs)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": " ".join(messages),
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+# -------------------- DELETE API --------------------
+class CourseStatusIntakeDeleteAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def delete(self, request, uuid=None):
+        ids = request.data.get('id', None)
+
+        if uuid:
+            try:
+                obj = CourseStatusIntake.objects.get(uuid=uuid)
+                obj.delete()
+                return Response({
+                    "statusCode": 204,
+                    "status": True,
+                    "message": "CourseStatusIntake permanently deleted.",
+                    "data": None
+                }, status=status.HTTP_204_NO_CONTENT)
+            except CourseStatusIntake.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "CourseStatusIntake not found.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+
+        if ids == "all":
+            objs = CourseStatusIntake.objects.all()
+            count = objs.count()
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No CourseStatusIntake found to delete.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+            objs.delete()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"All {count} CourseStatusIntake permanently deleted.",
+                "data": None
+            })
+
+        if not ids or not isinstance(ids, list):
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        valid_uuids = []
+        invalid_uuids = []
+        for u in ids:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(u)
+
+        if not valid_uuids:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "No valid UUIDs provided.",
+                "data": {"invalid_uuids": invalid_uuids}
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        objs = CourseStatusIntake.objects.filter(uuid__in=valid_uuids)
+        count = objs.count()
+
+        if count == 0:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "No matching CourseStatusIntake found.",
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        objs.delete()
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": f"{count} CourseStatusIntake(s) permanently deleted.",
+            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+        })
+
+# -------------------- EXPORT API --------------------
+class CourseStatusIntakeExportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        format_type = request.GET.get('format', 'xlsx').lower()
+        fields = request.GET.get('fields')
+        uuids_param = request.GET.get('uuids', '')
+        uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+        field_header_map = {
+            'uuid': 'UUID',
+            'name': 'Name',
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'updated_at': 'Modified On',
+        }
+
+        if fields:
+            field_list = [f.strip() for f in fields.split(',')]
+        else:
+            field_list = list(field_header_map.keys())
+
+        queryset = CourseStatusIntake.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-created_at')
+
+        dataset = Dataset()
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'CourseStatusIntake'
+
+        for obj in queryset:
+            row = []
+            for field in field_list:
+                value = getattr(obj, field, '')
+                if field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
+                    value = int(value)
+                row.append(value if value is not None else '')
+            dataset.append(row)
+
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'coursestatusintake.csv'
+        else:
+            file_data = io.BytesIO(dataset.export('xlsx'))
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'coursestatusintake.xlsx'
+
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        return response
+
+# -------------------- IMPORT API --------------------
+class CourseStatusIntakeImportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        file = request.FILES.get("file")
+        sheet_name = request.data.get("sheet_name")
+
+        if not file:
+            return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
+
+        format_type = file.name.split(".")[-1].lower()
+        duplicates = []
+        skipped_rows = []
+        required_headers = {"name"}
+        optional_headers = {"description"}
+
+        try:
+            data = []
+
+            if format_type == "xlsx":
+                wb = openpyxl.load_workbook(file, read_only=True)
+                available_sheets = wb.sheetnames
+
+                if not sheet_name:
+                    return Response({
+                        "error": "Please provide sheet_name",
+                        "available_sheets": available_sheets,
+                    }, status=400)
+
+                if sheet_name not in available_sheets:
+                    return Response({
+                        "error": f'Sheet "{sheet_name}" not found',
+                        "available_sheets": available_sheets,
+                    }, status=400)
+
+                ws = wb[sheet_name]
+                if ws.max_row <= 1:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'Sheet "{sheet_name}" is empty.'
+                    }, status=400)
+
+                headers = [str(cell.value).strip().lower() if cell.value else "" for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f"Missing required headers. Required: {required_headers}, Found: {set(headers)}"
+                    }, status=400)
+
+                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+                    if not any(row):
+                        continue
+                    row_dict = dict(zip(headers, row))
+                    row_dict["_row_number"] = idx
+                    data.append(row_dict)
+
+            elif format_type == "csv":
+                decoded_file = file.read().decode("utf-8")
+                dataset = Dataset()
+                dataset.load(decoded_file, format="csv")
+                for idx, row in enumerate(dataset.dict, start=2):
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    row_lower["_row_number"] = idx
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({
+                            "statusCode": 400,
+                            "status": False,
+                            "message": f"Missing required headers. Required: {', '.join(required_headers)}. Found: {', '.join(row_lower.keys())}."
+                        }, status=400)
+                    data.append(row_lower)
+
+            else:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Unsupported file format. Use .xlsx or .csv",
+                }, status=400)
+
+            imported_count = 0
+            for row in reversed(data):
+                row_number = row.get("_row_number", "Unknown")
+                name = str(row.get("name")) if row.get("name") else None
+                description = str(row.get("description")).strip() if row.get("description") else ""
+
+                if not name:
+                    skipped_rows.append({"Row": row_number, "Reason": "Missing Name"})
+                    continue
+
+                existing = CourseStatusIntake.objects.filter(name__iexact=name).first()
+                if existing:
+                    if not existing.is_deleted:
+                        duplicates.append({"Row": row_number, "Name": name, "Reason": "Already exists"})
+                        continue
+                    else:
+                        existing.description = description
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
+                else:
+                    CourseStatusIntake.objects.create(name=name, description=description, is_deleted=False)
+                    imported_count += 1
+
+        except Exception as e:
+            return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count,
+            "duplicates": duplicates,
+        "skipped_rows": skipped_rows
+        }, status=200)
+
+
+class ScholorshipBasedOnListAPIView(APIView):
+    def get(self, request):
+        search = request.GET.get('search', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_order = request.GET.get('sortOrder', 'desc')
+
+        allowed_sort_fields = ['name', 'description', 'updated_at']
+        if sort_by not in allowed_sort_fields:
+            sort_by = 'created_at'
+
+        if sort_order == 'desc':
+            sort_by = f'-{sort_by}'
+
+        queryset = ScholorshipBasedOn.objects.filter(is_deleted=False)
+        if search:
+            queryset = queryset.filter(Q(name__istartswith=search))
+
+        queryset = queryset.order_by(sort_by)
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = ScholorshipBasedOnSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+# -------------------- CREATE API --------------------
+class ScholorshipBasedOnCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        name = request.data.get("name", "").strip()
+        existing = ScholorshipBasedOn.objects.filter(name__iexact=name, is_deleted=False).first()
+
+        if existing:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "ScholorshipBasedOn with this name already exists."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = ScholorshipBasedOnSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "ScholorshipBasedOn created successfully",
+                "data": serializer.data
+            })
+        else:
+            messages = []
+            for field, msgs in serializer.errors.items():
+                messages.extend(msgs)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": " ".join(messages)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+# -------------------- RETRIEVE API --------------------
+class ScholorshipBasedOnRetrieveAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request, uuid):
+        try:
+            obj = ScholorshipBasedOn.objects.get(uuid=uuid, is_deleted=False)
+        except ScholorshipBasedOn.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "ScholorshipBasedOn not found",
+                "data": None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = ScholorshipBasedOnSerializer(obj)
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": "ScholorshipBasedOn retrieved successfully",
+            "data": serializer.data
+        })
+
+# -------------------- UPDATE API --------------------
+class ScholorshipBasedOnUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def put(self, request, uuid):
+        try:
+            obj = ScholorshipBasedOn.objects.get(uuid=uuid, is_deleted=False)
+        except ScholorshipBasedOn.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "ScholorshipBasedOn not found",
+                "data": None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = ScholorshipBasedOnSerializer(obj, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "ScholorshipBasedOn updated successfully",
+                "data": serializer.data
+            })
+        else:
+            messages = []
+            for field, msgs in serializer.errors.items():
+                messages.extend(msgs)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": " ".join(messages),
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+# -------------------- DELETE API --------------------
+class ScholorshipBasedOnDeleteAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def delete(self, request, uuid=None):
+        ids = request.data.get('id', None)
+
+        if uuid:
+            try:
+                obj = ScholorshipBasedOn.objects.get(uuid=uuid)
+                obj.delete()
+                return Response({
+                    "statusCode": 204,
+                    "status": True,
+                    "message": "ScholorshipBasedOn permanently deleted.",
+                    "data": None
+                }, status=status.HTTP_204_NO_CONTENT)
+            except ScholorshipBasedOn.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "ScholorshipBasedOn not found.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+
+        if ids == "all":
+            objs = ScholorshipBasedOn.objects.all()
+            count = objs.count()
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No ScholorshipBasedOn found to delete.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+            objs.delete()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"All {count} ScholorshipBasedOn permanently deleted.",
+                "data": None
+            })
+
+        if not ids or not isinstance(ids, list):
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        valid_uuids = []
+        invalid_uuids = []
+        for u in ids:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(u)
+
+        if not valid_uuids:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "No valid UUIDs provided.",
+                "data": {"invalid_uuids": invalid_uuids}
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        objs = ScholorshipBasedOn.objects.filter(uuid__in=valid_uuids)
+        count = objs.count()
+
+        if count == 0:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "No matching ScholorshipBasedOn found.",
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        objs.delete()
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": f"{count} ScholorshipBasedOn(s) permanently deleted.",
+            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+        })
+
+# -------------------- EXPORT API --------------------
+class ScholorshipBasedOnExportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        format_type = request.GET.get('format', 'xlsx').lower()
+        fields = request.GET.get('fields')
+        uuids_param = request.GET.get('uuids', '')
+        uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+        field_header_map = {
+            'uuid': 'UUID',
+            'name': 'Name',
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'updated_at': 'Modified On',
+        }
+
+        if fields:
+            field_list = [f.strip() for f in fields.split(',')]
+        else:
+            field_list = list(field_header_map.keys())
+
+        queryset = ScholorshipBasedOn.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-created_at')
+
+        dataset = Dataset()
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'ScholorshipBasedOn'
+
+        for obj in queryset:
+            row = []
+            for field in field_list:
+                value = getattr(obj, field, '')
+                if field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
+                    value = int(value)
+                row.append(value if value is not None else '')
+            dataset.append(row)
+
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'scholorshipbasedon.csv'
+        else:
+            file_data = io.BytesIO(dataset.export('xlsx'))
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'scholorshipbasedon.xlsx'
+
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        return response
+
+# -------------------- IMPORT API --------------------
+class ScholorshipBasedOnImportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        file = request.FILES.get("file")
+        sheet_name = request.data.get("sheet_name")
+
+        if not file:
+            return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
+
+        format_type = file.name.split(".")[-1].lower()
+        duplicates = []
+        skipped_rows = []
+        required_headers = {"name"}
+        optional_headers = {"description"}
+
+        try:
+            data = []
+
+            if format_type == "xlsx":
+                wb = openpyxl.load_workbook(file, read_only=True)
+                available_sheets = wb.sheetnames
+
+                if not sheet_name:
+                    return Response({
+                        "error": "Please provide sheet_name",
+                        "available_sheets": available_sheets,
+                    }, status=400)
+
+                if sheet_name not in available_sheets:
+                    return Response({
+                        "error": f'Sheet "{sheet_name}" not found',
+                        "available_sheets": available_sheets,
+                    }, status=400)
+
+                ws = wb[sheet_name]
+                if ws.max_row <= 1:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'Sheet "{sheet_name}" is empty.'
+                    }, status=400)
+
+                headers = [str(cell.value).strip().lower() if cell.value else "" for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f"Missing required headers. Required: {required_headers}, Found: {set(headers)}"
+                    }, status=400)
+
+                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+                    if not any(row):
+                        continue
+                    row_dict = dict(zip(headers, row))
+                    row_dict["_row_number"] = idx
+                    data.append(row_dict)
+
+            elif format_type == "csv":
+                decoded_file = file.read().decode("utf-8")
+                dataset = Dataset()
+                dataset.load(decoded_file, format="csv")
+                for idx, row in enumerate(dataset.dict, start=2):
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    row_lower["_row_number"] = idx
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({
+                            "statusCode": 400,
+                            "status": False,
+                            "message": f"Missing required headers. Required: {', '.join(required_headers)}. Found: {', '.join(row_lower.keys())}."
+                        }, status=400)
+                    data.append(row_lower)
+
+            else:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Unsupported file format. Use .xlsx or .csv",
+                }, status=400)
+
+            imported_count = 0
+            for row in reversed(data):
+                row_number = row.get("_row_number", "Unknown")
+                name = str(row.get("name")) if row.get("name") else None
+                description = str(row.get("description")).strip() if row.get("description") else ""
+
+                if not name:
+                    skipped_rows.append({"Row": row_number, "Reason": "Missing Name"})
+                    continue
+
+                existing = ScholorshipBasedOn.objects.filter(name__iexact=name).first()
+                if existing:
+                    if not existing.is_deleted:
+                        duplicates.append({"Row": row_number, "Name": name, "Reason": "Already exists"})
+                        continue
+                    else:
+                        existing.description = description
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
+                else:
+                    ScholorshipBasedOn.objects.create(name=name, description=description, is_deleted=False)
+                    imported_count += 1
+
+        except Exception as e:
+            return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count,
+            "duplicates": duplicates,
+            "skipped_rows": skipped_rows
+        }, status=200)
+
+
+    

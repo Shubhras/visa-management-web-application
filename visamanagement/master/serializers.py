@@ -1127,3 +1127,82 @@ class ChildrenStudyWorkRightsSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChildrenStudyWorkRights
         fields = '__all__'
+
+
+
+class InstituteTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InstituteType
+        fields = '__all__'
+
+
+class InstituteGroupNameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InstituteGroupName
+        fields = '__all__'
+
+
+class InstituteStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InstituteStatus
+        fields = '__all__'
+
+
+class InstitutePrioritySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InstitutePriority
+        fields = '__all__'
+
+
+class InstituteDepartmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InstituteDepartment
+        fields = '__all__'
+
+
+class BankAccountForSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BankAccountFor
+        fields = '__all__'
+
+
+class WhenCommissionIssueSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WhenCommissionIssue
+        fields = '__all__'
+
+
+class CourseLevelCodeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CourseLevelCode
+        fields = '__all__'
+
+
+class CourseDividedInSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CourseDividedIn
+        fields = '__all__'
+
+
+class CourseStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CourseStatus
+        fields = '__all__'
+
+
+class IntakeNameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = IntakeName
+        fields = '__all__'
+
+
+class CourseStatusIntakeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CourseStatusIntake
+        fields = '__all__'
+
+
+class ScholorshipBasedOnSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ScholorshipBasedOn
+        fields = '__all__'
