@@ -413,7 +413,7 @@ class GenderExportAPIView(APIView):
 
 class GenderImportAPIView(APIView):
     """
-    Import Gender data from CSV or XLSX.
+    Import Gender data from CSV or XLSX with skip and duplicate tracking.
     """
     def post(self, request):
         file = request.FILES.get('file')
@@ -423,15 +423,16 @@ class GenderImportAPIView(APIView):
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
-        duplicate_names = []
+        duplicates = []
+        skipped_rows = []
 
-        required_headers = {'gender'}       # Required header name
-        optional_headers = {'description', 'is_active'}  # Optional
+        required_headers = {'gender'}
+        optional_headers = {'description', 'is_active'}
 
         try:
             data = []
 
-            # --- XLSX ---
+            # ---------------- XLSX ----------------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
@@ -458,52 +459,19 @@ class GenderImportAPIView(APIView):
 
                 headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
 
-                if not required_headers.issubset(set(headers)):
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
-                    }, status=status.HTTP_400_BAD_REQUEST)
-
                 for row in ws.iter_rows(min_row=2, values_only=True):
                     if not any(row):
                         continue
                     row_dict = dict(zip(headers, row))
                     data.append(row_dict)
 
-                if not data:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": f'Sheet "{sheet_name}" has no data rows.'
-                    }, status=status.HTTP_400_BAD_REQUEST)
-
-            # --- CSV ---
+            # ---------------- CSV ----------------
             elif format_type == 'csv':
                 decoded_file = file.read().decode('utf-8')
-                dataset = Dataset()
-                dataset.load(decoded_file, format='csv')
-
-                for row in dataset.dict:
+                reader = csv.DictReader(io.StringIO(decoded_file))
+                for row in reader:
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
-                    if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({
-                            "statusCode": 400,
-                            "status": False,
-                            "message": (
-                                f'Missing required headers. Required: {", ".join(required_headers)}. '
-                                f'Found: {", ".join(row_lower.keys())}'
-                            )
-                        }, status=status.HTTP_400_BAD_REQUEST)
                     data.append(row_lower)
-
-                if not data:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": "CSV file is empty."
-                    }, status=status.HTTP_400_BAD_REQUEST)
-
             else:
                 return Response({
                     "statusCode": 400,
@@ -511,24 +479,33 @@ class GenderImportAPIView(APIView):
                     "message": 'Unsupported file format. Use .xlsx or .csv'
                 }, status=status.HTTP_400_BAD_REQUEST)
 
-            # --- Process import data ---
+            # ---------------- Process Data ----------------
             imported_count = 0
-            for row in  reversed(data):
+            for idx, row in enumerate(data, start=2):
                 name = str(row.get('gender')).strip() if row.get('gender') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
-                is_active = row.get('is_active')
-                is_active = bool(int(is_active)) if str(is_active).isdigit() else True
+                is_active_val = row.get('is_active')
+                is_active = bool(int(is_active_val)) if str(is_active_val).isdigit() else True
 
                 if not name:
+                    skipped_rows.append({
+                        "Row": idx,
+                        "Reason": "Missing gender name"
+                    })
                     continue
 
                 existing = Gender.objects.filter(name__iexact=name).first()
 
                 if existing:
                     if not existing.is_deleted:
-                        duplicate_names.append(name)
+                        duplicates.append({
+                            "Row": idx,
+                            "Gender": name,
+                            "Reason": "Already exists in database"
+                        })
                         continue
                     else:
+                        # Reactivate deleted
                         existing.description = description
                         existing.is_active = is_active
                         existing.is_deleted = False
@@ -550,12 +527,14 @@ class GenderImportAPIView(APIView):
                 "message": str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
 
+        # ---------------- Response ----------------
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_names)),
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
-            "imported_count": imported_count
+            "imported_count": imported_count,
+            "duplicates": duplicates,
+            "skipped_rows": skipped_rows
         }, status=status.HTTP_200_OK)
 
 
