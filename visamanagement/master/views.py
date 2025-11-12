@@ -1378,8 +1378,10 @@ class CountryListAPIView(APIView):
         queryset = Country.objects.filter(is_deleted=False)
         if search:
             queryset = queryset.filter(
-                Q(name__istartswith=search)
-                
+                Q(name__istartswith=search) |
+                Q(shortName__istartswith=search) |
+                Q(fullName__istartswith=search) |
+                Q(capitalCity__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -2284,7 +2286,10 @@ class DistrictListAPIView(APIView):
         queryset = District.objects.filter(is_deleted=False)
         if search:
             queryset = queryset.filter(
-                Q(districtName__istartswith=search) 
+                Q(districtName__istartswith=search) |
+                Q(description__istartswith=search) |
+                Q(stateName__stateName__istartswith=search) |
+                Q(countryName__name__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -2793,7 +2798,11 @@ class CityListAPIView(APIView):
         queryset = City.objects.filter(is_deleted=False)
         if search:
             queryset = queryset.filter(
-                Q(cityName__istartswith=search) 
+                Q(cityName__istartswith=search) |
+                Q(description__istartswith=search) |
+                Q(districtName__districtName__istartswith=search) |
+                Q(stateName__stateName__istartswith=search) |
+                Q(countryName__name__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
