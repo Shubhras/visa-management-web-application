@@ -1208,7 +1208,7 @@ class CourseDuration(models.Model):
     )
     id = models.AutoField(primary_key=True) 
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True) 
-    courselevel=models.ForeignKey(CourseLevelCode,on_delete=models.SET_NULL,related_name="course_level", blank=True, null=True)
+    courselevel=models.ForeignKey(CourseLevelCode,on_delete=models.SET_NULL,related_name="course_duration", blank=True, null=True)
     valid_duration_value = models.IntegerField(blank=True, null=True)
     valid_duration_unit = models.CharField(max_length=20, choices=VALID_UNIT_CHOICES, blank=True, null=True)
     description = models.TextField(max_length=255,blank=True)
