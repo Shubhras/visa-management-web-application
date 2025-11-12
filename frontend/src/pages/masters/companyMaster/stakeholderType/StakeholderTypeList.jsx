@@ -52,6 +52,7 @@ const StakeholderTypeList = () => {
   // Table columns configuration
   const [tableColumns] = useState([
     { id: 'name', label: 'Stakeholder Type', field: 'name', visible: true, required: false },
+     { id: 'category_name', label: 'Stakeholder Category', field: 'category_name', visible: true, required: false },
     { id: 'description', label: 'Description', field: 'description', visible: true, required: false },
     { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false },
   ]);
@@ -673,6 +674,10 @@ const StakeholderTypeList = () => {
                                       {isColumnVisible('name') && (
                                         <td><span>{rowItem.name}</span></td>
                                       )}
+                                      {isColumnVisible('category_name') && (
+                                        <td><span>{rowItem.category_name}</span></td>
+                                      )}
+                                      
                                       {isColumnVisible('description') && (
                                         <td><span>{rowItem.description}</span></td>
                                       )}
