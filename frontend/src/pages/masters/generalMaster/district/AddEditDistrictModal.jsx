@@ -56,7 +56,7 @@ const AddEditDistrictModal = ({ show, handleClose, mode = 'add', rowData = null 
   }, [mode, rowData, show]);
 
   const fetchCountryList = () => {
-    setLoading(true);
+    //setLoading(true);
     const params = {
       page: 1,
       limit: 2000,
@@ -80,7 +80,7 @@ const AddEditDistrictModal = ({ show, handleClose, mode = 'add', rowData = null 
       return;
     }
 
-    setLoading(true);
+    //setLoading(true);
     const params = {
       countryId: countryId,
     };
@@ -321,7 +321,7 @@ const AddEditDistrictModal = ({ show, handleClose, mode = 'add', rowData = null 
                         : null
                     }
                     onChange={handleSelectChange}
-                     filterOption={customFilterOptionState}
+                    filterOption={customFilterOptionState}
                     placeholder="Select State"
                     isClearable
                     isSearchable
@@ -386,7 +386,14 @@ const AddEditDistrictModal = ({ show, handleClose, mode = 'add', rowData = null 
                     className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                     disabled={loading}
                   >
-                    {loading ? 'Saving...' : 'Save'}
+                    {loading ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        Saving...
+                      </>
+                    ) : (
+                      "Save"
+                    )}
                   </button>
                 </div>
               </div>

@@ -86,13 +86,18 @@ const AddEditStakeholderTypeModal = ({ show, handleClose, mode = 'add', rowData 
 
   // Handle Select dropdown change
   const handleSelectChange = (selectedOption) => {
-    setFormData(prev => ({ 
-      ...prev, 
-      category: selectedOption ? selectedOption.value : '' 
+    setFormData(prev => ({
+      ...prev,
+      category: selectedOption ? selectedOption.value : ''
     }));
     if (errors.category) {
       setErrors(prev => ({ ...prev, category: '' }));
     }
+  };
+  // Custom filter function for search from start
+  const customFilterOption = (option, inputValue) => {
+    if (!inputValue) return true;
+    return option.label.toLowerCase().startsWith(inputValue.toLowerCase());
   };
 
   // Validate form
@@ -214,20 +219,20 @@ const AddEditStakeholderTypeModal = ({ show, handleClose, mode = 'add', rowData 
                     value={
                       formData.category
                         ? stakeholderListData
-                            .map((option) => ({
-                              value: option.uuid,
-                              label: option.name,
-                            }))
-                            .find((opt) => opt.value === formData.category)
+                          .map((option) => ({
+                            value: option.uuid,
+                            label: option.name,
+                          }))
+                          .find((opt) => opt.value === formData.category)
                         : null
                     }
                     onChange={handleSelectChange}
+                    filterOption={customFilterOption}
                     placeholder="Select Stakeholder Category"
                     isClearable
                     isSearchable
-                    className={`custom-select-container ${
-                      errors.category ? "is-invalid" : ""
-                    }`}
+                    className={`custom-select-container ${errors.category ? "is-invalid" : ""
+                      }`}
                     classNamePrefix="custom-select"
                   />
                   {errors.category && (
@@ -291,7 +296,14 @@ const AddEditStakeholderTypeModal = ({ show, handleClose, mode = 'add', rowData 
                     className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                     disabled={loading}
                   >
-                    {loading ? 'Saving...' : 'Save'}
+                    {loading ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        Saving...
+                      </>
+                    ) : (
+                      "Save"
+                    )}
                   </button>
                 </div>
               </div>

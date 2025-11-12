@@ -8,7 +8,7 @@
 //   const [loading, setLoading] = useState(false);
 //   const [countryListData, setCountryListData] = useState([]);
 //   const [acccrediationCategoryListData, setAccrediationCategoryListData] = useState([]);
-  
+
 //   // Form state
 //   const [formData, setFormData] = useState({
 //     uuid: '',
@@ -539,7 +539,7 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
   const [loading, setLoading] = useState(false);
   const [countryListData, setCountryListData] = useState([]);
   const [acccrediationCategoryListData, setAccrediationCategoryListData] = useState([]);
-  
+
   // Form state
   const [formData, setFormData] = useState({
     uuid: '',
@@ -612,9 +612,10 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
       limit: 2000,
       search: '',
       status: '',
-      sortBy: 'created_at',
-      sortOrder: 'desc',
+      sortBy: 'name',
+      sortOrder: 'asc',
     };
+
 
     dispatch(countryDemoList(params, (response, error) => {
       setLoading(false);
@@ -633,8 +634,8 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
       limit: 2000,
       search: '',
       status: '',
-      sortBy: 'created_at',
-      sortOrder: 'desc',
+      sortBy: 'name',
+      sortOrder: 'asc',
     };
 
     dispatch(accreditationCategoryList(params, (response, error) => {
@@ -685,25 +686,34 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
 
   // Handle Select dropdown change for Country
   const handleCountrySelectChange = (selectedOption) => {
-    setFormData(prev => ({ 
-      ...prev, 
-      country: selectedOption ? selectedOption.value : '' 
+    setFormData(prev => ({
+      ...prev,
+      country: selectedOption ? selectedOption.value : ''
     }));
     if (errors.country) {
       setErrors(prev => ({ ...prev, country: '' }));
     }
   };
+  const customFilterOption = (option, inputValue) => {
+    if (!inputValue) return true;
+    return option.label.toLowerCase().startsWith(inputValue.toLowerCase());
+  };
 
   // Handle Select dropdown change for Category
   const handleCategorySelectChange = (selectedOption) => {
-    setFormData(prev => ({ 
-      ...prev, 
-      category: selectedOption ? selectedOption.value : '' 
+    setFormData(prev => ({
+      ...prev,
+      category: selectedOption ? selectedOption.value : ''
     }));
     if (errors.category) {
       setErrors(prev => ({ ...prev, category: '' }));
     }
   };
+  const customFilterOptionCategory = (option, inputValue) => {
+    if (!inputValue) return true;
+    return option.label.toLowerCase().startsWith(inputValue.toLowerCase());
+  };
+
 
   // Validate form
   const validateForm = () => {
@@ -870,20 +880,20 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
                     value={
                       formData.country
                         ? countryListData
-                            .map((option) => ({
-                              value: option.uuid,
-                              label: option.name,
-                            }))
-                            .find((opt) => opt.value === formData.country)
+                          .map((option) => ({
+                            value: option.uuid,
+                            label: option.name,
+                          }))
+                          .find((opt) => opt.value === formData.country)
                         : null
                     }
                     onChange={handleCountrySelectChange}
+                    filterOption={customFilterOption}
                     placeholder="Select Country"
                     isClearable
                     isSearchable
-                    className={`custom-select-container ${
-                      errors.country ? "is-invalid" : ""
-                    }`}
+                    className={`custom-select-container ${errors.country ? "is-invalid" : ""
+                      }`}
                     classNamePrefix="custom-select"
                   />
                   {errors.country && (
@@ -906,20 +916,20 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
                     value={
                       formData.category
                         ? acccrediationCategoryListData
-                            .map((option) => ({
-                              value: option.uuid,
-                              label: option.name,
-                            }))
-                            .find((opt) => opt.value === formData.category)
+                          .map((option) => ({
+                            value: option.uuid,
+                            label: option.name,
+                          }))
+                          .find((opt) => opt.value === formData.category)
                         : null
                     }
                     onChange={handleCategorySelectChange}
+                    filterOption={customFilterOptionCategory}
                     placeholder="Select Accrediation Category"
                     isClearable
                     isSearchable
-                    className={`custom-select-container ${
-                      errors.category ? "is-invalid" : ""
-                    }`}
+                    className={`custom-select-container ${errors.category ? "is-invalid" : ""
+                      }`}
                     classNamePrefix="custom-select"
                   />
                   {errors.category && (
@@ -1093,7 +1103,14 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
                     className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                     disabled={loading}
                   >
-                    {loading ? 'Saving...' : 'Save'}
+                    {loading ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        Saving...
+                      </>
+                    ) : (
+                      "Save"
+                    )}
                   </button>
                 </div>
               </div>

@@ -9,7 +9,7 @@ const AddEditTimeZoneModal = ({ show, handleClose, mode = 'add', rowData = null 
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const [countryListData, setCountryListData] = useState([]);
-  
+
   // Form state
   const [formData, setFormData] = useState({
     uuid: '',
@@ -68,7 +68,7 @@ const AddEditTimeZoneModal = ({ show, handleClose, mode = 'add', rowData = null 
   // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
-    
+
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -85,16 +85,16 @@ const AddEditTimeZoneModal = ({ show, handleClose, mode = 'add', rowData = null 
 
   // Handle Select changes for Country
   const handleSelectChange = (selectedOption) => {
-    setFormData((prev) => ({ 
-      ...prev, 
-      country: selectedOption ? selectedOption.value : "" 
+    setFormData((prev) => ({
+      ...prev,
+      country: selectedOption ? selectedOption.value : ""
     }));
     if (errors.country) {
       setErrors((prev) => ({ ...prev, country: "" }));
     }
   };
 
-    // Custom filter function for search from start
+  // Custom filter function for search from start
   const customFilterOption = (option, inputValue) => {
     if (!inputValue) return true;
     return option.label.toLowerCase().startsWith(inputValue.toLowerCase());
@@ -220,11 +220,11 @@ const AddEditTimeZoneModal = ({ show, handleClose, mode = 'add', rowData = null 
                     value={
                       formData.country
                         ? countryListData
-                            .map((option) => ({
-                              value: option.uuid,
-                              label: option.name,
-                            }))
-                            .find((opt) => opt.value === formData.country)
+                          .map((option) => ({
+                            value: option.uuid,
+                            label: option.name,
+                          }))
+                          .find((opt) => opt.value === formData.country)
                         : null
                     }
                     onChange={handleSelectChange}
@@ -232,9 +232,8 @@ const AddEditTimeZoneModal = ({ show, handleClose, mode = 'add', rowData = null 
                     placeholder="Select Country"
                     isClearable
                     isSearchable
-                    className={`custom-select-container ${
-                      errors.country ? "is-invalid" : ""
-                    }`}
+                    className={`custom-select-container ${errors.country ? "is-invalid" : ""
+                      }`}
                     classNamePrefix="custom-select"
                   />
                   {errors.country && (
@@ -299,7 +298,14 @@ const AddEditTimeZoneModal = ({ show, handleClose, mode = 'add', rowData = null 
                     className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                     disabled={loading}
                   >
-                    {loading ? 'Saving...' : 'Save'}
+                    {loading ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        Saving...
+                      </>
+                    ) : (
+                      "Save"
+                    )}
                   </button>
                 </div>
               </div>

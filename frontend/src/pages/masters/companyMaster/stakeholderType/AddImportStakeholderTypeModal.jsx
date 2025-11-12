@@ -5,6 +5,7 @@ import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
 import { stakeholderTypeImportData } from '../../../../store/master/companyMasters/actions';
 import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
+import { exportToExcelDuplicate, exportToExcelWrongData } from '../../../../helper/utils/commanHelper';
 const AddImportStakeholderTypeModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
@@ -86,7 +87,33 @@ const AddImportStakeholderTypeModal = ({ show, handleClose }) => {
                         }
                     );
                     if (response?.duplicates?.length > 0) {
-                        handleExportToExcel(response.duplicates)
+                        const prepareData = {
+                            data: response.duplicates || [],
+                            headers: ["Stakeholder Category","Stakeholder Type"],
+                            sheetName: "StakeholderType",
+                            fileName: "StakeholderType",
+                        };
+                        exportToExcelDuplicate(
+                            prepareData.data,
+                            prepareData.headers,
+                            prepareData.sheetName,
+                            prepareData.fileName
+                        );
+                    }
+
+                     if (response?.skipped_rows?.length > 0) {
+                        const prepareData = {
+                            data: response.skipped_rows || [],
+                            headers: ["Stakeholder Category","Stakeholder Type","Reason"],
+                            sheetName: "StakeholderType",
+                            fileName: "StakeholderType",
+                        };
+                        exportToExcelWrongData(
+                            prepareData.data,
+                            prepareData.headers,
+                            prepareData.sheetName,
+                            prepareData.fileName
+                        );
                     }
                     setFile(null);
                     setSheetNames([]);
@@ -97,26 +124,6 @@ const AddImportStakeholderTypeModal = ({ show, handleClose }) => {
                 }
             }
         }));
-    };
-
-    const handleExportToExcel = (duplicatesData) => {
-        const header = ["Stakeholder Type"];
-        const duplicates = duplicatesData //["test1", "test3", "test3"];
-        const worksheetData = [header, ...duplicates.map((item) => [item])];
-        const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "StakeholderType");
-
-        const excelBuffer = XLSX.write(workbook, {
-            bookType: "xlsx",
-            type: "array",
-        });
-
-        const blob = new Blob([excelBuffer], {
-            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        });
-
-        saveAs(blob, `StakeholderType-Duplicate-Data.xlsx`);
     };
     // Handle modal close
     const onClose = () => {
@@ -230,7 +237,14 @@ const AddImportStakeholderTypeModal = ({ show, handleClose }) => {
                                             disabled={loading}
                                             className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                                         >
-                                            {loading ? "Upload" : "Upload"}
+                                            {loading ? (
+                                                <>
+                                                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                    Uploading...
+                                                </>
+                                            ) : (
+                                                "Upload"
+                                            )}
                                         </button>
                                     </div>
                                 </div>
@@ -241,10 +255,10 @@ const AddImportStakeholderTypeModal = ({ show, handleClose }) => {
             </div>
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
-                    downloadFileName:"StakeholderType",
-                    items: ["Stakeholder Type","Stakeholder Category", "Description"],
-                    selectedItems: ["Stakeholder Type","Stakeholder Category"],
-                    ItemsRequired:["Stakeholder Type","Stakeholder Category"]
+                    downloadFileName: "StakeholderType",
+                    items: ["Stakeholder Type", "Stakeholder Category", "Description"],
+                    selectedItems: ["Stakeholder Type", "Stakeholder Category"],
+                    ItemsRequired: ["Stakeholder Type", "Stakeholder Category"]
                 }
                 } />
             )}

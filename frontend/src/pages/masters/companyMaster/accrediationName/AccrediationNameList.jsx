@@ -974,8 +974,15 @@ const AccrediationNameList = () => {
                       onClick={handleExport}
                       type="button"
                       className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
-                    >
-                      Submit
+                      disabled={loadingExport}
+                    >{loadingExport ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        Submit...
+                      </>
+                    ) : (
+                      "Submit"
+                    )}
                     </button>
                   </div>
                 </div>
