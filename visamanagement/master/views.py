@@ -987,8 +987,7 @@ class ContinentListAPIView(APIView):
         queryset = Continents.objects.filter(is_deleted=False)
         if search:
             queryset = queryset.filter(
-                Q(name__icontains=search) |
-                Q(description__icontains=search)
+                Q(name__istartswith=search) 
             )
 
         queryset = queryset.order_by(sort_by)
@@ -1379,10 +1378,8 @@ class CountryListAPIView(APIView):
         queryset = Country.objects.filter(is_deleted=False)
         if search:
             queryset = queryset.filter(
-                Q(name__icontains=search) |
-                Q(shortName__icontains=search) |
-                Q(fullName__icontains=search) |
-                Q(capitalCity__icontains=search)
+                Q(name__istartswith=search)
+                
             )
 
         queryset = queryset.order_by(sort_by)
@@ -1836,10 +1833,10 @@ class StateListAPIView(APIView):
         queryset = State.objects.filter(is_deleted=False)
         if search:
             queryset = queryset.filter(
-                Q(stateName__icontains=search) |
-                Q(stateshortName__icontains=search) |
-                Q(description__icontains=search) |
-                Q(countryName__name__icontains=search)
+                Q(stateName__istartswith=search) |
+                Q(stateshortName__istartswith=search) |
+                Q(description__istartswith=search) |
+                Q(countryName__name__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -2287,10 +2284,7 @@ class DistrictListAPIView(APIView):
         queryset = District.objects.filter(is_deleted=False)
         if search:
             queryset = queryset.filter(
-                Q(districtName__icontains=search) |
-                Q(description__icontains=search) |
-                Q(stateName__stateName__icontains=search) |
-                Q(countryName__name__icontains=search)
+                Q(districtName__istartswith=search) 
             )
 
         queryset = queryset.order_by(sort_by)
@@ -2799,11 +2793,7 @@ class CityListAPIView(APIView):
         queryset = City.objects.filter(is_deleted=False)
         if search:
             queryset = queryset.filter(
-                Q(cityName__icontains=search) |
-                Q(description__icontains=search) |
-                Q(districtName__districtName__icontains=search) |
-                Q(stateName__stateName__icontains=search) |
-                Q(countryName__name__icontains=search)
+                Q(cityName__istartswith=search) 
             )
 
         queryset = queryset.order_by(sort_by)
