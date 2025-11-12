@@ -3116,7 +3116,7 @@ class CityImportAPIView(APIView):
             # ------------------ Prepare insert ------------------
             existing_city_keys = set(
                 City.objects.values_list(
-                    "cityName", "districtName_id", "stateName_id", "countryName_id"
+                    "cityName", "districtName", "stateName", "countryName"
                 )
             )
             to_create = []
