@@ -8614,7 +8614,7 @@ class LicenseNameExportAPIView(APIView):
             'valid_duration_value': 'License Valid Duration Value',
             'valid_duration_unit': 'License Valid Duration Unit',
             'valid_date': 'License Valid Date',
-            'country': 'Country Name',
+            'country': 'Country',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',
         }
