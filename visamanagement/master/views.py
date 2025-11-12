@@ -3895,7 +3895,11 @@ class TimezoneImportAPIView(APIView):
 
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
-                existing = Timezone.objects.filter(Timezone__iexact=tz_name).first()
+                existing = Timezone.objects.filter(
+                    Timezone__iexact=tz_name,
+                    countryName=country_obj,
+                    stateName=state_obj
+                ).first()
                 if existing:
                     if not existing.is_deleted:
                         duplicate_names.append(tz_name)
