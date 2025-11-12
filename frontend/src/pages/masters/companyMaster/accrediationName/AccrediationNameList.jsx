@@ -7,6 +7,7 @@ import { toast } from "react-toastify";
 import AddImportAccrediationNameModal from './AddImportAccrediationNameModal';
 import AddEditAccrediationNameModal from './AddEditAccrediationNameModal';
 import { accreditationNameExportData, accreditationNameList, accreditationNameDelete } from '../../../../store/master/companyMasters/actions';
+import { formatDateDDMMYYYY, formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 
 const AccrediationNameList = () => {
   const dispatch = useDispatch();
@@ -53,12 +54,12 @@ const AccrediationNameList = () => {
     { id: 'country_name', label: 'Country', field: 'country_name', visible: true, required: false },
     { id: 'category_name', label: 'Accrediation Category', field: 'category_name', visible: true, required: false },
     { id: 'full_name', label: 'Accrediation Full Name', field: 'full_name', visible: true, required: false },
-    { id: 'short_name', label: 'Accrediation Short Name', field: 'short_name', visible: true, required: false },
-    { id: 'issuing_authority', label: 'Accrediation Issuing Authority Name', field: 'issuing_authority', visible: true, required: false },
-    { id: 'valid_type', label: 'Accrediation Valid Upto', field: 'valid_type', visible: true, required: false },
-    { id: 'valid_date', label: 'Accrediation Valid Date', field: 'valid_date', visible: true, required: false },
-    { id: 'valid_duration_value', label: 'Accrediation Valid Duration Value', field: 'valid_duration_value', visible: true, required: false },
-    { id: 'valid_duration_unit', label: 'Accrediation Valid Duration Unit', field: 'valid_duration_unit', visible: true, required: false },
+    { id: 'short_name', label: 'Accrediation Short Name', field: 'short_name', visible: false, required: false },
+    { id: 'issuing_authority', label: 'Accrediation Issuing Authority Name', field: 'issuing_authority', visible: false, required: false },
+    { id: 'valid_type', label: 'Accrediation Valid Upto', field: 'valid_type', visible: false, required: false },
+    { id: 'valid_date', label: 'Accrediation Valid Date', field: 'valid_date', visible: false, required: false },
+    { id: 'valid_duration_value', label: 'Accrediation Valid Duration Value', field: 'valid_duration_value', visible: false, required: false },
+    { id: 'valid_duration_unit', label: 'Accrediation Valid Duration Unit', field: 'valid_duration_unit', visible: false, required: false },
     { id: 'description', label: 'Description', field: 'description', visible: true, required: false },
     { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false },
   ]);
@@ -108,7 +109,7 @@ const AccrediationNameList = () => {
     limit: 25,
     search: '',
     status: '',
-    sortBy: 'updated_at', // Field to sort by
+    sortBy: 'created_at', // Field to sort by
     sortOrder: 'desc', // 'asc' or 'desc'
     total: 0,
     totalPages: 0,
@@ -476,21 +477,6 @@ const AccrediationNameList = () => {
   const startIndex = (tableState.currentPage - 1) * tableState.limit;
   const statusOptions = ['All', 'Active', 'Inactive'];
 
-  const formatDateTime = (dateString) => {
-    const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    let hours = date.getHours();
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const seconds = String(date.getSeconds()).padStart(2, '0');
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12 || 12;
-    hours = String(hours).padStart(2, '0');
-    return `${day}-${month}-${year} ${hours}:${minutes}:${seconds} ${ampm}`
-  };
-
-
   return (
     <>
       <MasterLayout>
@@ -705,7 +691,13 @@ const AccrediationNameList = () => {
                           <td><span>{rowItem.valid_type}</span></td>
                         )}
                         {isColumnVisible('valid_date') && (
-                          <td><span>{rowItem.valid_date}</span></td>
+                          <td>
+                            <span>
+                              {rowItem?.valid_date != null && rowItem?.valid_date !== ""
+                                ? formatDateDDMMYYYY(rowItem.valid_date)
+                                : ""}
+                            </span>
+                          </td>
                         )}
 
                         {isColumnVisible('valid_duration_value') && (
@@ -719,7 +711,7 @@ const AccrediationNameList = () => {
                           <td><span>{rowItem.description}</span></td>
                         )}
                         {isColumnVisible('updated_at') && (
-                          <td><span>{formatDateTime(rowItem.updated_at)}</span></td>
+                          <td><span>{formatDateDDMMYYYYTime(rowItem.updated_at)}</span></td>
                         )}
                         <td className='action-td'>
                           <div className="d-flex align-items-end gap-2">

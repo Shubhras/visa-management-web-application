@@ -1437,8 +1437,7 @@ export const importEcaForAPI = (payload) => {
     return post(apiUrl, payload);
 };
  
- 
-// Language Name(Test)
+ // Language Name(Test)
 export const getLanguageNameTestListAPI = (data) => {
     const apiUrl = `${url.GET_LANGUAGE_NAME_TEST_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
     return get(apiUrl);
@@ -1450,7 +1449,7 @@ export const addLanguageNameTestAPI = (payload) => {
 };
  
 export const editLanguageNameTestAPI = (payload) => {
-    const apiUrl = `${url.EDIT_LANGUAGE_NAME_TEST_API}${payload?.uuid}/update/`;
+    const apiUrl = `${url.EDIT_LANGUAGE_NAME_TEST_API}${payload?.uuid}/update`;
     return put(apiUrl, payload);
 };
  
@@ -1503,5 +1502,228 @@ export const exportLanguageTestNameAPI = (payload) => {
  
 export const importLanguageTestNameAPI = (payload) => {
     const apiUrl = `${url.IMPORT_LANGUAGE_TEST_NAME_API}`;
+    return post(apiUrl, payload);
+};
+
+// Language Test Module Name
+export const getLanguageTestModuleNameListAPI = (data) => {
+    const apiUrl = `${url.GET_LANGUAGE_TEST_MODULE_NAME_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+ 
+export const addLanguageTestModuleNameAPI = (payload) => {
+    const apiUrl = `${url.ADD_LANGUAGE_TEST_MODULE_NAME_API}`;
+    return post(apiUrl, payload);
+};
+ 
+export const editLanguageTestModuleNameAPI = (payload) => {
+    const apiUrl = `${url.EDIT_LANGUAGE_TEST_MODULE_NAME_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+ 
+export const deleteLanguageTestModuleNameAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_LANGUAGE_TEST_MODULE_NAME_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+ 
+export const exportLanguageTestModuleNameAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_LANGUAGE_TEST_MODULE_NAME_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+ 
+export const importLanguageTestModuleNameAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_LANGUAGE_TEST_MODULE_NAME_API}`;
+    return post(apiUrl, payload);
+};
+ 
+// Language Benchmark Level
+export const getLanguageBenchmarkLevelListAPI = (data) => {
+    const apiUrl = `${url.GET_LANGUAGE_BENCHMARK_LEVEL_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+ 
+export const addLanguageBenchmarkLevelAPI = (payload) => {
+    const apiUrl = `${url.ADD_LANGUAGE_BENCHMARK_LEVEL_API}`;
+    return post(apiUrl, payload);
+};
+ 
+export const editLanguageBenchmarkLevelAPI = (payload) => {
+    const apiUrl = `${url.EDIT_LANGUAGE_BENCHMARK_LEVEL_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+ 
+export const deleteLanguageBenchmarkLevelAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_LANGUAGE_BENCHMARK_LEVEL_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+ 
+export const exportLanguageBenchmarkLevelAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_LANGUAGE_BENCHMARK_LEVEL_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+ 
+export const importLanguageBenchmarkLevelAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_LANGUAGE_BENCHMARK_LEVEL_API}`;
+    return post(apiUrl, payload);
+};
+ 
+// CLB Level
+export const getClbLevelListAPI = (data) => {
+    const apiUrl = `${url.GET_CLB_LEVEL_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+ 
+export const addClbLevelAPI = (payload) => {
+    const apiUrl = `${url.ADD_CLB_LEVEL_API}`;
+    return post(apiUrl, payload);
+};
+ 
+export const editClbLevelAPI = (payload) => {
+    const apiUrl = `${url.EDIT_CLB_LEVEL_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+ 
+export const deleteClbLevelAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_CLB_LEVEL_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+ 
+export const exportClbLevelAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_CLB_LEVEL_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+ 
+export const importClbLevelAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_CLB_LEVEL_API}`;
+    return post(apiUrl, payload);
+};
+// Entrance Test Name
+export const getEntranceTestNameListAPI = (data) => {
+    const apiUrl = `${url.GET_ENTRANCE_TEST_NAME_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+ 
+export const addEntranceTestNameAPI = (payload) => {
+    const apiUrl = `${url.ADD_ENTRANCE_TEST_NAME_API}`;
+    return post(apiUrl, payload);
+};
+ 
+export const editEntranceTestNameAPI = (payload) => {
+    const apiUrl = `${url.EDIT_ENTRANCE_TEST_NAME_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+ 
+export const deleteEntranceTestNameAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_ENTRANCE_TEST_NAME_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+ 
+export const exportEntranceTestNameAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_ENTRANCE_TEST_NAME_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+ 
+export const importEntranceTestNameAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_ENTRANCE_TEST_NAME_API}`;
+    return post(apiUrl, payload);
+};
+// Entrance Test Module Name
+export const getEntranceTestModuleNameListAPI = (data) => {
+    const apiUrl = `${url.GET_ENTRANCE_TEST_MODULE_NAME_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+ 
+export const addEntranceTestModuleNameAPI = (payload) => {
+    const apiUrl = `${url.ADD_ENTRANCE_TEST_MODULE_NAME_API}`;
+    return post(apiUrl, payload);
+};
+ 
+export const editEntranceTestModuleNameAPI = (payload) => {
+    const apiUrl = `${url.EDIT_ENTRANCE_TEST_MODULE_NAME_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+ 
+export const deleteEntranceTestModuleNameAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_ENTRANCE_TEST_MODULE_NAME_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+ 
+export const exportEntranceTestModuleNameAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_ENTRANCE_TEST_MODULE_NAME_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+ 
+export const importEntranceTestModuleNameAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_ENTRANCE_TEST_MODULE_NAME_API}`;
+    return post(apiUrl, payload);
+};
+ 
+ 
+// Entrance Test Result
+export const getEntranceTestResultListAPI = (data) => {
+    const apiUrl = `${url.GET_ENTRANCE_TEST_RESULT_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+ 
+export const addEntranceTestResultAPI = (payload) => {
+    const apiUrl = `${url.ADD_ENTRANCE_TEST_RESULT_API}`;
+    return post(apiUrl, payload);
+};
+ 
+export const editEntranceTestResultAPI = (payload) => {
+    const apiUrl = `${url.EDIT_ENTRANCE_TEST_RESULT_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+ 
+export const deleteEntranceTestResultAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_ENTRANCE_TEST_RESULT_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+ 
+export const exportEntranceTestResultAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_ENTRANCE_TEST_RESULT_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+ 
+export const importEntranceTestResultAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_ENTRANCE_TEST_RESULT_API}`;
+    return post(apiUrl, payload);
+};
+ 
+// Language Test Result
+export const getLanguageTestResultListAPI = (data) => {
+    const apiUrl = `${url.GET_LANGUAGE_TEST_RESULT_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+ 
+export const addLanguageTestResultAPI = (payload) => {
+    const apiUrl = `${url.ADD_LANGUAGE_TEST_RESULT_API}`;
+    return post(apiUrl, payload);
+};
+ 
+export const editLanguageTestResultAPI = (payload) => {
+    const apiUrl = `${url.EDIT_LANGUAGE_TEST_RESULT_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+ 
+export const deleteLanguageTestResultAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_LANGUAGE_TEST_RESULT_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+ 
+export const exportLanguageTestResultAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_LANGUAGE_TEST_RESULT_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+ 
+export const importLanguageTestResultAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_LANGUAGE_TEST_RESULT_API}`;
     return post(apiUrl, payload);
 };

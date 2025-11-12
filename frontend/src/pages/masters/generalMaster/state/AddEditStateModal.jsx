@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
+import Select from "react-select";
 import { stateAdd, stateEdit } from '../../../../store/master/generalMasters/actions';
 import { countryDemoList } from '../../../../store/master/companyMasters/actions';
 
@@ -79,6 +80,17 @@ const AddEditStateModal = ({ show, handleClose, mode = 'add', rowData = null }) 
         ...prev,
         [name]: ''
       }));
+    }
+  };
+
+  // Handle Select changes for Country
+  const handleSelectChange = (selectedOption) => {
+    setFormData((prev) => ({ 
+      ...prev, 
+      country: selectedOption ? selectedOption.value : "" 
+    }));
+    if (errors.country) {
+      setErrors((prev) => ({ ...prev, country: "" }));
     }
   };
 
@@ -196,21 +208,32 @@ const AddEditStateModal = ({ show, handleClose, mode = 'add', rowData = null }) 
                 {/* Country Dropdown */}
                 <div className="col-12 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Country <span className="text-danger">*</span>
+                    Country Name <span className="text-danger">*</span>
                   </label>
-                  <select
-                    name="country"
-                    value={formData.country}
-                    onChange={handleChange}
-                    className={`form-control form-select radius-8 ${errors.country ? 'is-invalid' : ''}`}
-                  >
-                    <option value="">Select Country</option>
-                    {countryListData.map((option) => (
-                      <option key={option.uuid} value={option.uuid}>
-                        {option.name}
-                      </option>
-                    ))}
-                  </select>
+                  <Select
+                    options={countryListData.map((option) => ({
+                      value: option.uuid,
+                      label: option.name,
+                    }))}
+                    value={
+                      formData.country
+                        ? countryListData
+                            .map((option) => ({
+                              value: option.uuid,
+                              label: option.name,
+                            }))
+                            .find((opt) => opt.value === formData.country)
+                        : null
+                    }
+                    onChange={handleSelectChange}
+                    placeholder="Select Country"
+                    isClearable
+                    isSearchable
+                    className={`custom-select-container ${
+                      errors.country ? "is-invalid" : ""
+                    }`}
+                    classNamePrefix="custom-select"
+                  />
                   {errors.country && (
                     <div className="text-danger text-sm mt-1">
                       {errors.country}

@@ -5,6 +5,7 @@ import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
 import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
 import { stateImportData } from '../../../../store/master/generalMasters/actions';
+import { exportToExcelWrongData } from '../../../../helper/utils/commanHelper';
 const AddImportStateModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
@@ -88,6 +89,20 @@ const AddImportStateModal = ({ show, handleClose }) => {
                     if (response?.duplicates?.length > 0) {
                         handleExportToExcel(response.duplicates)
                     }
+                     if (response?.skipped_rows?.length > 0) {
+                        const prepareData = {
+                            data: response.skipped_rows || [],
+                            headers: ["Country Name", "State Name","State / Territory","Reason"],
+                            sheetName: "State",
+                            fileName: "State",
+                        };
+                        exportToExcelWrongData(
+                            prepareData.data,
+                            prepareData.headers,
+                            prepareData.sheetName,
+                            prepareData.fileName
+                        );
+                    }
                     setFile(null);
                     setSheetNames([]);
                     setSelectedSheet('');
@@ -100,23 +115,36 @@ const AddImportStateModal = ({ show, handleClose }) => {
     };
 
     const handleExportToExcel = (duplicatesData) => {
-        const header = ["State"];
-        const duplicates = duplicatesData //["test1", "test3", "test3"];
-        const worksheetData = [header, ...duplicates.map((item) => [item])];
+        // Define headers
+        const header = ["Country Name", "State Name","State / Territory"];
+
+        // Map the data in the same order as header
+        const worksheetData = [
+            header,
+            ...duplicatesData.map(item => [
+                item["Country Name"] || "",
+                item["State Name"] || "",
+                 item["State / Territory"] || "",
+            ])
+        ];
+
+        // Create worksheet and workbook
         const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "State");
 
+        // Write workbook to buffer
         const excelBuffer = XLSX.write(workbook, {
             bookType: "xlsx",
-            type: "array",
+            type: "array"
         });
 
+        // Create Blob and save file
         const blob = new Blob([excelBuffer], {
-            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         });
 
-        saveAs(blob, `State-Duplicate-Data.xlsx`);
+        saveAs(blob, "State-Duplicate-Data.xlsx");
     };
     // Handle modal close
     const onClose = () => {
@@ -241,10 +269,10 @@ const AddImportStateModal = ({ show, handleClose }) => {
             </div>
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
-                    downloadFileName:"State",
-                    items: ["Country Name","State Name","State Short Name","State / Territory","Description"],
-                    selectedItems: ["Country Name","State Name","State / Territory"],
-                    ItemsRequired:["Country Name","State Name","State / Territory"]
+                    downloadFileName: "State",
+                    items: ["Country Name", "State Name", "State Short Name", "State / Territory", "Description"],
+                    selectedItems: ["Country Name", "State Name", "State / Territory"],
+                    ItemsRequired: ["Country Name", "State Name", "State / Territory"]
                 }
                 } />
             )}

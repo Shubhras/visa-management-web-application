@@ -126,7 +126,13 @@ const MasterLayout = ({ children }) => {
           children: [
             { name: 'Language Name(Test)', path: '/language-name-test' },
             { name: 'Language Test Name', path: '/language-test-name' },
-
+            { name: 'Language Test Module Name', path: '/language-test-module-name' },
+            { name: 'Language Banchmark Level', path: '/language-banchmark-level' },
+            { name: 'CLB Level', path: '/cbl-level' },
+            { name: 'Entrance Test Name', path: '/entrance-test-name' },
+            { name: 'Entrance Test Module Name', path: '/entrance-test-module-name' },
+            { name: 'Entrance Test Result', path: '/entrance-test-result' },
+            { name: 'Language Test Result', path: '/language-test-result' },
           ]
         },
 

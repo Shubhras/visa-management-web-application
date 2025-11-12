@@ -7,6 +7,7 @@ import { toast } from "react-toastify";
 import AddImportLicenceNameModal from './AddImportLicenceNameModal';
 import AddEditLicenceNameModal from './AddEditLicenceNameModal';
 import { licenceNameExportData, licenceNameList, licenceNameDelete } from '../../../../store/master/companyMasters/actions';
+import { formatDateDDMMYYYY, formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 
 const LicenceNameList = () => {
   const dispatch = useDispatch();
@@ -53,13 +54,13 @@ const LicenceNameList = () => {
     { id: 'country_name', label: 'Country', field: 'country_name', visible: true, required: false },
     { id: 'full_name', label: 'License Full Name', field: 'full_name', visible: true, required: false },
     { id: 'short_name', label: 'License Short Name', field: 'short_name', visible: true, required: false },
-    { id: 'issuing_authority', label: 'License Issuing Authority Name', field: 'issuing_authority', visible: true, required: false },
-    { id: 'valid_type', label: 'License Valid Upto', field: 'valid_type', visible: true, required: false },
-    { id: 'valid_date', label: 'License Valid Date', field: 'valid_date', visible: true, required: false },
-    { id: 'valid_duration_value', label: 'License Valid Duration Value', field: 'valid_duration_value', visible: true, required: false },
-    { id: 'valid_duration_unit', label: 'License Valid Duration Unit', field: 'valid_duration_unit', visible: true, required: false },
+    { id: 'issuing_authority', label: 'License Issuing Authority Name', field: 'issuing_authority', visible: false, required: false },
+    { id: 'valid_type', label: 'License Valid Upto', field: 'valid_type', visible: false, required: false },
+    { id: 'valid_date', label: 'License Valid Date', field: 'valid_date', visible: false, required: false },
+    { id: 'valid_duration_value', label: 'License Valid Duration Value', field: 'valid_duration_value', visible: false, required: false },
+    { id: 'valid_duration_unit', label: 'License Valid Duration Unit', field: 'valid_duration_unit', visible: false, required: false },
 
-    { id: 'description', label: 'Description', field: 'description', visible: true, required: false },
+    { id: 'description', label: 'Description', field: 'description', visible: false, required: false },
     { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false },
   ]);
 
@@ -109,7 +110,7 @@ const LicenceNameList = () => {
     limit: 25,
     search: '',
     status: '',
-    sortBy: 'updated_at', // Field to sort by
+    sortBy: 'created_at', // Field to sort by
     sortOrder: 'desc', // 'asc' or 'desc'
     total: 0,
     totalPages: 0,
@@ -428,15 +429,14 @@ const LicenceNameList = () => {
     };
     let mappedFields = selectedItems.map((item) => fieldMapping[item] || item);
 
-// 👉 If "License Valid Upto" is selected, add related fields too
-if (mappedFields.includes("valid_type")) {
-  mappedFields.push("valid_date","valid_duration_value", "valid_duration_unit");
-}
+    // 👉 If "License Valid Upto" is selected, add related fields too
+    if (mappedFields.includes("valid_type")) {
+      mappedFields.push("valid_date", "valid_duration_value", "valid_duration_unit");
+    }
 
-// Remove duplicates (optional)
-mappedFields = [...new Set(mappedFields)];
+    // Remove duplicates (optional)
+    mappedFields = [...new Set(mappedFields)];
 
-console.log('Final mappedFields:', mappedFields);
     // Convert to comma-separated string
     const fieldsString = mappedFields.join(",");
     const sendPayload = {
@@ -478,21 +478,6 @@ console.log('Final mappedFields:', mappedFields);
 
   const startIndex = (tableState.currentPage - 1) * tableState.limit;
   const statusOptions = ['All', 'Active', 'Inactive'];
-
-  const formatDateTime = (dateString) => {
-    const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    let hours = date.getHours();
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const seconds = String(date.getSeconds()).padStart(2, '0');
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12 || 12;
-    hours = String(hours).padStart(2, '0');
-    return `${day}-${month}-${year} ${hours}:${minutes}:${seconds} ${ampm}`
-  };
-
 
   return (
     <>
@@ -856,8 +841,14 @@ console.log('Final mappedFields:', mappedFields);
                         {isColumnVisible('valid_type') && (
                           <td><span>{rowItem.valid_type}</span></td>
                         )}
-                        {isColumnVisible('valid_date') && (
-                          <td><span>{rowItem.valid_date}</span></td>
+                       {isColumnVisible('valid_date') && (
+                          <td>
+                            <span>
+                              {rowItem?.valid_date != null && rowItem?.valid_date !== ""
+                                ? formatDateDDMMYYYY(rowItem.valid_date)
+                                : ""}
+                            </span>
+                          </td>
                         )}
 
                         {isColumnVisible('valid_duration_value') && (
@@ -872,7 +863,7 @@ console.log('Final mappedFields:', mappedFields);
                           <td><span>{rowItem.description}</span></td>
                         )}
                         {isColumnVisible('updated_at') && (
-                          <td><span>{formatDateTime(rowItem.updated_at)}</span></td>
+                          <td><span>{formatDateDDMMYYYYTime(rowItem.updated_at)}</span></td>
                         )}
 
                         <td className='action-td'>

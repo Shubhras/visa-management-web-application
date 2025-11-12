@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from "react-redux";
-import { languageTestNameAdd, languageTestNameEdit } from '../../../../store/master/testMaster/action';
+import { languageTestNameAdd, languageTestNameEdit, languageNameTestList } from '../../../../store/master/testMaster/action';
 import { toast } from "react-toastify";
 
 const AddEditLanguageTestNameModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
+  const [languageNameTest, setLanguageNameTest] = useState([]);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -27,9 +28,9 @@ const AddEditLanguageTestNameModal = ({ show, handleClose, mode = 'add', rowData
     if (mode === 'edit' && rowData) {
       setFormData({
         uuid: rowData.uuid || '',
-        languageNameTest: rowData.languageNameTest || '',
-        shortName: rowData.shortName || '',
-        fullName: rowData.fullName || '',
+        languageNameTest: rowData.language.uuid || '',
+        shortName: rowData.name || '',
+        fullName: rowData.fullname || '',
         description: rowData.description || '',
       });
     } else {
@@ -42,7 +43,28 @@ const AddEditLanguageTestNameModal = ({ show, handleClose, mode = 'add', rowData
         description: '',
       });
     }
+    fetchLanguageTestNameList();
   }, [mode, rowData, show]);
+
+  const fetchLanguageTestNameList = () => {
+    setLoading(true);
+    const params = {
+      page: 1,
+      limit: 2000,
+      search: '',
+      status: '',
+      sortBy: 'updated_at', // Field to sort by
+      sortOrder: 'desc', // 'asc' or 'desc'
+    };
+
+    dispatch(languageNameTestList(params, (response, error) => {
+      setLoading(false);
+      if (response?.statusCode === 200 && response?.status === true) {
+        setLanguageNameTest(response?.data || []);
+
+      }
+    }));
+  };
 
   // Handle input changes
   const handleChange = (e) => {
@@ -88,15 +110,15 @@ const AddEditLanguageTestNameModal = ({ show, handleClose, mode = 'add', rowData
       const sendPayload = mode === 'edit'
         ? {
           uuid: formData.uuid,
-          languageNameTest: formData.languageNameTest,
-          shortName: formData.shortName,
-          fullName: formData.fullName,
+          language: formData.languageNameTest,
+          name: formData.shortName,
+          fullname: formData.fullName,
           description: formData.description,
         }
         : {
-          languageNameTest: formData.languageNameTest,
-          shortName: formData.shortName,
-          fullName: formData.fullName,
+          language: formData.languageNameTest,
+          name: formData.shortName,
+          fullname: formData.fullName,
           description: formData.description,
         };
 
@@ -173,14 +195,19 @@ const AddEditLanguageTestNameModal = ({ show, handleClose, mode = 'add', rowData
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                     Language Name (Test) <span className="text-danger">*</span>
                   </label>
-                  <input
-                    type="text"
+                  <select
                     name="languageNameTest"
                     value={formData.languageNameTest}
                     onChange={handleChange}
-                    className={`form-control radius-8 ${errors.languageNameTest ? 'is-invalid' : ''}`}
-                    placeholder="Enter language name(test)"
-                  />
+                    className={`form-control form-select radius-8 ${errors.languageNameTest ? 'is-invalid' : ''}`}
+                  >
+                    <option value="">Select language name(test)</option>
+                    {languageNameTest.map((option) => (
+                      <option key={option.uuid} value={option.uuid}>
+                        {option.name}
+                      </option>
+                    ))}
+                  </select>
                   {errors.languageNameTest && (
                     <div className="text-danger text-sm mt-1">
                       {errors.languageNameTest}
@@ -215,7 +242,7 @@ const AddEditLanguageTestNameModal = ({ show, handleClose, mode = 'add', rowData
                     value={formData.fullName}
                     onChange={handleChange}
                     className={`form-control radius-8 ${errors.fullName ? 'is-invalid' : ''}`}
-                    placeholder="Enter language name(test)"
+                    placeholder="Enter language test full name"
                   />
                   {errors.fullName && (
                     <div className="text-danger text-sm mt-1">

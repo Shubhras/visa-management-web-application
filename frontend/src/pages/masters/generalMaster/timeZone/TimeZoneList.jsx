@@ -45,14 +45,14 @@ const TimeZoneList = () => {
   const [timeZoneDataList, setTimeZoneDataList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [items] = useState(["Country", "State", "Time Zone", "Description", "Modified On"]);
+  const [items] = useState(["Country", "Time Zone", "Description", "Modified On"]);
   const [selectedItems, setSelectedItems] = useState(["Country", "Time Zone"]);
   const [ItemsRequired] = useState(["Country", "Time Zone"]);
 
   // Table columns configuration
   const [tableColumns] = useState([
     { id: 'countryName', label: 'Country', field: 'countryName', visible: true, required: false },
-    { id: 'stateName', label: 'State', field: 'stateName', visible: true, required: false },
+    // { id: 'stateName', label: 'State', field: 'stateName', visible: true, required: false },
     { id: 'timezone', label: 'Time Zone', field: 'timezone', visible: true, required: false },
     { id: 'description', label: 'Description', field: 'description', visible: true, required: false },
     { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false },
@@ -410,7 +410,7 @@ const TimeZoneList = () => {
     // Map frontend labels to backend field names
     const fieldMapping = {
       "Country": "countryName",
-      "State": "stateName",
+      // "State": "stateName",
       "Time Zone": "Timezone",
       "Modified On": "updated_at",
       "Description": "description",
@@ -672,9 +672,9 @@ const TimeZoneList = () => {
                         {isColumnVisible('countryName') && (
                           <td><span>{rowItem.countryName}</span></td>
                         )}
-                        {isColumnVisible('stateName') && (
+                        {/* {isColumnVisible('stateName') && (
                           <td><span>{rowItem.stateName}</span></td>
-                        )}
+                        )} */}
                         {isColumnVisible('timezone') && (
                           <td><span>{rowItem.timezone}</span></td>
                         )}

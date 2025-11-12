@@ -334,20 +334,75 @@ export const EXPORT_ECA_FOR_API = "api/v1/master/eca-for/export/";
 export const IMPORT_ECA_FOR_API = "api/v1/master/eca-for/import/";
 
 // Language Name(Test)
-export const GET_LANGUAGE_NAME_TEST_LIST = "/api/v1/master/language-name-test/";
-export const ADD_LANGUAGE_NAME_TEST_API = "/api/v1/master/language-name-test/create/";
-export const EDIT_LANGUAGE_NAME_TEST_API = "/api/v1/master/language-name-test/";
-export const DELETE_LANGUAGE_NAME_TEST_API = "/api/v1/master/language-name-test/";
-export const EXPORT_LANGUAGE_NAME_TEST_API = "/api/v1/master/language-name-test/export/";
-export const IMPORT_LANGUAGE_NAME_TEST_API = "/api/v1/master/language-name-test/import/";
+export const GET_LANGUAGE_NAME_TEST_LIST = "/api/v1/master/language/";
+export const ADD_LANGUAGE_NAME_TEST_API = "/api/v1/master/language/create/";
+export const EDIT_LANGUAGE_NAME_TEST_API = "/api/v1/master/language/";
+export const DELETE_LANGUAGE_NAME_TEST_API = "/api/v1/master/language/";
+export const EXPORT_LANGUAGE_NAME_TEST_API = "/api/v1/master/language/export/";
+export const IMPORT_LANGUAGE_NAME_TEST_API = "/api/v1/master/language/import/";
 // Language Test Name
-export const GET_LANGUAGE_TEST_NAME_LIST = "/api/v1/master/language-test-name/";
-export const ADD_LANGUAGE_TEST_NAME_API = "/api/v1/master/language-test-name/create/";
-export const EDIT_LANGUAGE_TEST_NAME_API = "/api/v1/master/language-test-name/";
-export const DELETE_LANGUAGE_TEST_NAME_API = "/api/v1/master/language-test-name/";
-export const EXPORT_LANGUAGE_TEST_NAME_API = "/api/v1/master/language-test-name/export/";
-export const IMPORT_LANGUAGE_TEST_NAME_API = "/api/v1/master/language-test-name/import/";
+export const GET_LANGUAGE_TEST_NAME_LIST = "/api/v1/master/language-tests/";
+export const ADD_LANGUAGE_TEST_NAME_API = "/api/v1/master/language-tests/create/";
+export const EDIT_LANGUAGE_TEST_NAME_API = "/api/v1/master/language-tests/";
+export const DELETE_LANGUAGE_TEST_NAME_API = "/api/v1/master/language-tests/";
+export const EXPORT_LANGUAGE_TEST_NAME_API = "/api/v1/master/language-tests/export/";
+export const IMPORT_LANGUAGE_TEST_NAME_API = "/api/v1/master/language-tests/import/";
 
+// Language Test Module Name
+export const GET_LANGUAGE_TEST_MODULE_NAME_LIST = "/api/v1/master/languagetest-modules/";
+export const ADD_LANGUAGE_TEST_MODULE_NAME_API = "/api/v1/master/languagetest-modules/create/";
+export const EDIT_LANGUAGE_TEST_MODULE_NAME_API = "/api/v1/master/languagetest-modules/";
+export const DELETE_LANGUAGE_TEST_MODULE_NAME_API = "/api/v1/master/languagetest-modules/";
+export const EXPORT_LANGUAGE_TEST_MODULE_NAME_API = "/api/v1/master/languagetest-modules/export/";
+export const IMPORT_LANGUAGE_TEST_MODULE_NAME_API = "/api/v1/master/languagetest-modules/import/";
+ 
+// Language Benchmark Level
+export const GET_LANGUAGE_BENCHMARK_LEVEL_LIST = "/api/v1/master/study-language-banchmarks/";
+export const ADD_LANGUAGE_BENCHMARK_LEVEL_API = "/api/v1/master/study-language-banchmarks/create/";
+export const EDIT_LANGUAGE_BENCHMARK_LEVEL_API = "/api/v1/master/study-language-banchmarks/";
+export const DELETE_LANGUAGE_BENCHMARK_LEVEL_API = "/api/v1/master/study-language-banchmarks/";
+export const EXPORT_LANGUAGE_BENCHMARK_LEVEL_API = "/api/v1/master/study-language-banchmarks/export/";
+export const IMPORT_LANGUAGE_BENCHMARK_LEVEL_API = "/api/v1/master/study-language-banchmarks/import/";
+ 
+// CLB Level
+export const GET_CLB_LEVEL_LIST = "/api/v1/master/clb-levels/";
+export const ADD_CLB_LEVEL_API = "/api/v1/master/clb-levels/create/";
+export const EDIT_CLB_LEVEL_API = "/api/v1/master/clb-levels/";
+export const DELETE_CLB_LEVEL_API = "/api/v1/master/clb-levels/";
+export const EXPORT_CLB_LEVEL_API = "/api/v1/master/clb-levels/export/";
+export const IMPORT_CLB_LEVEL_API = "/api/v1/master/clb-levels/import/";
+ 
+// Entrance Test Name
+export const GET_ENTRANCE_TEST_NAME_LIST = "/api/v1/master/entrance-tests/";
+export const ADD_ENTRANCE_TEST_NAME_API = "/api/v1/master/entrance-tests/create/";
+export const EDIT_ENTRANCE_TEST_NAME_API = "/api/v1/master/entrance-tests/";
+export const DELETE_ENTRANCE_TEST_NAME_API = "/api/v1/master/entrance-tests/";
+export const EXPORT_ENTRANCE_TEST_NAME_API = "/api/v1/master/entrance-tests/export/";
+export const IMPORT_ENTRANCE_TEST_NAME_API = "/api/v1/master/entrance-tests/import/";
+ 
+// Entrance Test Module Name
+export const GET_ENTRANCE_TEST_MODULE_NAME_LIST = "/api/v1/master/entrance-tests-module/";
+export const ADD_ENTRANCE_TEST_MODULE_NAME_API = "/api/v1/master/entrance-tests-module/create/";
+export const EDIT_ENTRANCE_TEST_MODULE_NAME_API = "/api/v1/master/entrance-tests-module/";
+export const DELETE_ENTRANCE_TEST_MODULE_NAME_API = "/api/v1/master/entrance-tests-module/";
+export const EXPORT_ENTRANCE_TEST_MODULE_NAME_API = "/api/v1/master/entrance-tests-module/export/";
+export const IMPORT_ENTRANCE_TEST_MODULE_NAME_API = "/api/v1/master/entrance-tests-module/import/";
+ 
+// Entrance Test Result
+export const GET_ENTRANCE_TEST_RESULT_LIST = "/api/v1/master/entrancetestresult/";
+export const ADD_ENTRANCE_TEST_RESULT_API = "/api/v1/master/entrancetestresult/create/";
+export const EDIT_ENTRANCE_TEST_RESULT_API = "/api/v1/master/entrancetestresult/";
+export const DELETE_ENTRANCE_TEST_RESULT_API = "/api/v1/master/entrancetestresult/";
+export const EXPORT_ENTRANCE_TEST_RESULT_API = "/api/v1/master/entrancetestresult/export/";
+export const IMPORT_ENTRANCE_TEST_RESULT_API = "/api/v1/master/entrancetestresult/import/";
+ 
+// Language Test Result
+export const GET_LANGUAGE_TEST_RESULT_LIST = "/api/v1/master/languagetestresult/";
+export const ADD_LANGUAGE_TEST_RESULT_API = "/api/v1/master/languagetestresult/create/";
+export const EDIT_LANGUAGE_TEST_RESULT_API = "/api/v1/master/languagetestresult/";
+export const DELETE_LANGUAGE_TEST_RESULT_API = "api/v1/master/languagetestresult/";
+export const EXPORT_LANGUAGE_TEST_RESULT_API = "api/v1/master/languagetestresult/export/";
+export const IMPORT_LANGUAGE_TEST_RESULT_API = "api/v1/master/languagetestresult/import/";
 
 export const GET_COUNTRY_LIST_DEMO = "/api/v1/master/country/";
 

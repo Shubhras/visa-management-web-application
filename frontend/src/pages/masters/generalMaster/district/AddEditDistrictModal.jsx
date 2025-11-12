@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from "react-redux";
+import Select from 'react-select';
 import { districtAdd, districtEdit, stateListByCountry } from '../../../../store/master/generalMasters/actions';
 import { toast } from "react-toastify";
 import { countryDemoList } from '../../../../store/master/companyMasters/actions';
@@ -29,7 +30,6 @@ const AddEditDistrictModal = ({ show, handleClose, mode = 'add', rowData = null 
   // Populate form data when in edit mode
   useEffect(() => {
     if (mode === 'edit' && rowData) {
-
       setFormData({
         uuid: rowData.uuid || '',
         country: rowData.country_uuid || '',
@@ -98,25 +98,11 @@ const AddEditDistrictModal = ({ show, handleClose, mode = 'add', rowData = null 
   // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
-  
-    // When country changes, fetch states and reset state selection
-    if (name === 'country') {
-      setFormData(prev => ({
-        ...prev,
-        country: value,
-        state: '' // Reset state when country changes
-      }));
-      fetchStateList(value);
-    } else {
-      // For all other fields including state
-      setFormData(prev => {
-        const newData = {
-          ...prev,
-          [name]: value
-        };
-        return newData;
-      });
-    }
+    
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
 
     // Clear error when user starts typing
     if (errors[name]) {
@@ -127,13 +113,42 @@ const AddEditDistrictModal = ({ show, handleClose, mode = 'add', rowData = null 
     }
   };
 
+  // Handle Select dropdown changes
+  const handleSelectChange = (selectedOption, actionMeta) => {
+    const fieldName = actionMeta.name;
+    const value = selectedOption ? selectedOption.value : '';
+
+    // When country changes, fetch states and reset state selection
+    if (fieldName === 'country') {
+      setFormData(prev => ({
+        ...prev,
+        country: value,
+        state: '' // Reset state when country changes
+      }));
+      fetchStateList(value);
+    } else if (fieldName === 'state') {
+      setFormData(prev => ({
+        ...prev,
+        state: value
+      }));
+    }
+
+    // Clear error when user selects
+    if (errors[fieldName]) {
+      setErrors(prev => ({
+        ...prev,
+        [fieldName]: ''
+      }));
+    }
+  };
+
   // Validate form
   const validateForm = () => {
     const newErrors = {};
     let isValid = true;
 
     // Country validation
-    if (!formData.country.trim()) {
+    if (!formData.country) {
       newErrors.country = 'Country is required';
       isValid = false;
     }
@@ -235,26 +250,38 @@ const AddEditDistrictModal = ({ show, handleClose, mode = 'add', rowData = null 
           </div>
 
           <div className="modal-body p-24">
-            <form onSubmit={handleSubmit}>
+            <div onSubmit={handleSubmit}>
               <div className="row">
                 {/* Country Dropdown */}
                 <div className="col-12 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                     Country Name <span className="text-danger">*</span>
                   </label>
-                  <select
+                  <Select
                     name="country"
-                    value={formData.country}
-                    onChange={handleChange}
-                    className={`form-control form-select radius-8 ${errors.country ? 'is-invalid' : ''}`}
-                  >
-                    <option value="">Select Country</option>
-                    {countryListData.map((option) => (
-                      <option key={option.uuid} value={option.uuid}>
-                        {option.name}
-                      </option>
-                    ))}
-                  </select>
+                    options={countryListData.map((option) => ({
+                      value: option.uuid,
+                      label: option.name,
+                    }))}
+                    value={
+                      formData.country
+                        ? countryListData
+                            .map((option) => ({
+                              value: option.uuid,
+                              label: option.name,
+                            }))
+                            .find((opt) => opt.value === formData.country)
+                        : null
+                    }
+                    onChange={handleSelectChange}
+                    placeholder="Select Country"
+                    isClearable
+                    isSearchable
+                    className={`custom-select-container ${
+                      errors.country ? "is-invalid" : ""
+                    }`}
+                    classNamePrefix="custom-select"
+                  />
                   {errors.country && (
                     <div className="text-danger text-sm mt-1">
                       {errors.country}
@@ -267,20 +294,30 @@ const AddEditDistrictModal = ({ show, handleClose, mode = 'add', rowData = null 
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                     State Name
                   </label>
-                  <select
+                  <Select
                     name="state"
-                    value={formData.state}
-                    onChange={handleChange}
-                    className="form-control form-select radius-8"
-                    disabled={!formData.country}
-                  >
-                    <option value="">Select State</option>
-                    {stateListData.map((option) => (
-                      <option key={option.uuid} value={option.uuid}>
-                        {option.name}
-                      </option>
-                    ))}
-                  </select>
+                    options={stateListData.map((option) => ({
+                      value: option.uuid,
+                      label: option.name,
+                    }))}
+                    value={
+                      formData.state
+                        ? stateListData
+                            .map((option) => ({
+                              value: option.uuid,
+                              label: option.name,
+                            }))
+                            .find((opt) => opt.value === formData.state)
+                        : null
+                    }
+                    onChange={handleSelectChange}
+                    placeholder="Select State"
+                    isClearable
+                    isSearchable
+                    isDisabled={!formData.country}
+                    className="custom-select-container"
+                    classNamePrefix="custom-select"
+                  />
                 </div>
 
                 {/* District Name  */}
@@ -333,7 +370,8 @@ const AddEditDistrictModal = ({ show, handleClose, mode = 'add', rowData = null 
                     Cancel
                   </button>
                   <button
-                    type="submit"
+                    type="button"
+                    onClick={handleSubmit}
                     className="btn comman-btn-color border border-primary-600 text-md px-40 py-6 radius-8"
                     disabled={loading}
                   >
@@ -341,7 +379,7 @@ const AddEditDistrictModal = ({ show, handleClose, mode = 'add', rowData = null 
                   </button>
                 </div>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       </div>

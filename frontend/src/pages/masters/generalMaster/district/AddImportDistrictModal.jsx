@@ -5,6 +5,7 @@ import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
 import { districtImportData } from '../../../../store/master/generalMasters/actions';
 import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
+import { exportToExcelWrongData } from '../../../../helper/utils/commanHelper';
 const AddImportDistrictModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
@@ -88,6 +89,20 @@ const AddImportDistrictModal = ({ show, handleClose }) => {
                     if (response?.duplicates?.length > 0) {
                         handleExportToExcel(response.duplicates)
                     }
+                    if (response?.skipped_rows?.length > 0) {
+                        const prepareData = {
+                            data: response.skipped_rows || [],
+                            headers: ["Country Name", "State Name", "District Name", "Reason"],
+                            sheetName: "District",
+                            fileName: "District",
+                        };
+                        exportToExcelWrongData(
+                            prepareData.data,
+                            prepareData.headers,
+                            prepareData.sheetName,
+                            prepareData.fileName
+                        );
+                    }
                     setFile(null);
                     setSheetNames([]);
                     setSelectedSheet('');
@@ -99,25 +114,40 @@ const AddImportDistrictModal = ({ show, handleClose }) => {
         }));
     };
 
+
     const handleExportToExcel = (duplicatesData) => {
-        const header = ["District Name"];
-        const duplicates = duplicatesData //["test1", "test3", "test3"];
-        const worksheetData = [header, ...duplicates.map((item) => [item])];
+        // Define headers
+        const header = ["Country Name", "State Name","District Name"];
+
+        // Map the data in the same order as header
+        const worksheetData = [
+            header,
+            ...duplicatesData.map(item => [
+                item["Country Name"] || "",
+                item["State Name"] || "",
+                item["District Name"] || "",
+            ])
+        ];
+
+        // Create worksheet and workbook
         const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "District");
 
+        // Write workbook to buffer
         const excelBuffer = XLSX.write(workbook, {
             bookType: "xlsx",
-            type: "array",
+            type: "array"
         });
 
+        // Create Blob and save file
         const blob = new Blob([excelBuffer], {
-            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         });
 
-        saveAs(blob, `District-Duplicate-Data.xlsx`);
+        saveAs(blob, "District-Duplicate-Data.xlsx");
     };
+
     // Handle modal close
     const onClose = () => {
         setFile(null);
@@ -241,10 +271,10 @@ const AddImportDistrictModal = ({ show, handleClose }) => {
             </div>
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
-                    downloadFileName:"District",
-                    items: ["Country Name","State Name", "District Name","Description"],
+                    downloadFileName: "District",
+                    items: ["Country Name", "State Name", "District Name", "Description"],
                     selectedItems: ["Country Name", "District Name"],
-                    ItemsRequired:["Country Name", "District Name"]
+                    ItemsRequired: ["Country Name", "District Name"]
                 }
                 } />
             )}
