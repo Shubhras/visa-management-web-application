@@ -2692,7 +2692,7 @@ class DistrictImportAPIView(APIView):
                     countryName=country_obj
                 )
                 if state_obj:
-                    existing = existing.filter(stateName__iexact=state_obj.stateName)
+                    existing = existing.filter(stateName__stateName__iexact=state_obj.stateName)
                 else:
                     existing = existing.filter(stateName__isnull=True)
 
