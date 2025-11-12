@@ -8362,7 +8362,7 @@ class BankAccountTypeImportAPIView(APIView):
             imported_count = 0
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get('bankaccounttype')).strip() if row.get('bankaccounttype') else None
+                name = str(row.get('bank aaaaccount type')).strip() if row.get('bank account type') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not name:
