@@ -7374,7 +7374,6 @@ class AccreditationCategoryExportAPIView(APIView):
 
 # ------------------ Import API ------------------
 class AccreditationCategoryImportAPIView(APIView):
-   
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
@@ -7388,13 +7387,14 @@ class AccreditationCategoryImportAPIView(APIView):
         duplicates = []
         skipped_rows = []
 
-        required_headers = {'accrediation category'}
-        optional_headers = {'description'}
-
         def normalize_header(h):
             if not h:
                 return ''
             return ''.join(c for c in str(h).lower() if c.isalnum())
+
+        # Normalize required and optional headers
+        required_headers = {normalize_header('accrediation category')}
+        optional_headers = {normalize_header('description')}
 
         try:
             data = []
@@ -7480,8 +7480,6 @@ class AccreditationCategoryImportAPIView(APIView):
             "duplicates": duplicates,
             "skipped_rows": skipped_rows
         }, status=200)
-
-
 
 
 #-------------------------------------------accrediation Name---------------------------------
