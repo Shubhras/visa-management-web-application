@@ -3064,7 +3064,7 @@ class CityImportAPIView(APIView):
 
             # ------------------ Preload existing cities ------------------
             existing_city_keys = set(
-                (c[0].lower(), c[1].uuid, c[2].uuid, c[3].uuid)
+                (c[0].lower(), c[1], c[2], c[3])
                 for c in City.objects.values_list(
                     "cityName", "districtName", "stateName", "countryName"
                 )
