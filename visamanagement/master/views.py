@@ -3073,6 +3073,7 @@ class CityImportAPIView(APIView):
         try:
             # ------------------ Load file ------------------
             data = []
+
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 if not sheet_name or sheet_name not in wb.sheetnames:
@@ -3087,7 +3088,7 @@ class CityImportAPIView(APIView):
                 ]
                 if not required_headers.issubset(set(headers)):
                     return Response({
-                        "error": f"Missing required headers: {required_headers}"
+                        "error": f"Missing required headers: {required_headers}. Found: {set(headers)}"
                     }, status=400)
 
                 for row in ws.iter_rows(min_row=2, values_only=True):
@@ -3099,26 +3100,35 @@ class CityImportAPIView(APIView):
                 decoded = file.read().decode('utf-8')
                 reader = csv.DictReader(io.StringIO(decoded))
                 for row in reader:
-                    data.append({k.strip().lower(): v for k, v in row.items()})
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({
+                            "error": f"Missing required headers in CSV. Required: {required_headers}. Found: {set(row_lower.keys())}"
+                        }, status=400)
+                    data.append(row_lower)
+
             else:
-                return Response({'error': 'Unsupported file type'}, status=400)
+                return Response({'error': 'Unsupported file type. Use .xlsx or .csv'}, status=400)
 
             # ------------------ Preload related data ------------------
             countries = {c.name.lower(): c for c in Country.objects.all()}
             states = {
-                (s.stateName.lower(), s.countryName_id): s for s in State.objects.all()
+                (s.stateName.lower(), s.countryName.uuid): s for s in State.objects.all()
             }
             districts = {
-                (d.districtName.lower(), d.stateName_id, d.countryName_id): d
+                (d.districtName.lower(), d.stateName.uuid, d.countryName.uuid): d
                 for d in District.objects.all()
             }
 
-            # ------------------ Prepare insert ------------------
+            # ------------------ Preload existing cities ------------------
             existing_city_keys = set(
-                City.objects.values_list(
+                (c[0].lower(), c[1].uuid, c[2].uuid, c[3].uuid)
+                for c in City.objects.values_list(
                     "cityName", "districtName", "stateName", "countryName"
                 )
             )
+
+            # ------------------ Process rows ------------------
             to_create = []
             duplicate_names = []
             skipped_rows = []
@@ -3149,7 +3159,7 @@ class CityImportAPIView(APIView):
                     })
                     continue
 
-                state_obj = states.get((state_name.lower(), country_obj.id))
+                state_obj = states.get((state_name.lower(), country_obj.uuid))
                 if not state_obj:
                     skipped_rows.append({
                         "City Name": city_name,
@@ -3157,7 +3167,7 @@ class CityImportAPIView(APIView):
                     })
                     continue
 
-                district_obj = districts.get((district_name.lower(), state_obj.id, country_obj.id))
+                district_obj = districts.get((district_name.lower(), state_obj.uuid, country_obj.uuid))
                 if not district_obj:
                     skipped_rows.append({
                         "City Name": city_name,
@@ -3165,7 +3175,8 @@ class CityImportAPIView(APIView):
                     })
                     continue
 
-                key = (city_name.lower(), district_obj.id, state_obj.id, country_obj.id)
+                # ------------------ Duplicate check ------------------
+                key = (city_name.lower(), district_obj.uuid, state_obj.uuid, country_obj.uuid)
                 if key in existing_city_keys or key in existing_in_file:
                     duplicate_names.append({
                         "City Name": city_name,
@@ -3176,6 +3187,7 @@ class CityImportAPIView(APIView):
                     continue
 
                 existing_in_file.add(key)
+
                 to_create.append(
                     City(
                         cityName=city_name,
@@ -3187,7 +3199,7 @@ class CityImportAPIView(APIView):
                     )
                 )
 
-            # ------------------ Bulk Create ------------------
+            # ------------------ Bulk insert ------------------
             with transaction.atomic():
                 City.objects.bulk_create(to_create, ignore_conflicts=True, batch_size=500)
 
