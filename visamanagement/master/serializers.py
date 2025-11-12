@@ -1057,3 +1057,73 @@ class ApplicantTypeSerializer(serializers.ModelSerializer):
             'is_deleted', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
+
+
+
+#---------------------visa conditions master---------------------------
+
+class WorkRightsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WorkRights
+        fields = '__all__'
+
+
+class WorkRightsDuringStudySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WorkRightsDuringStudy
+        fields = '__all__'
+
+
+class WorkRightsDuringVacationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WorkRightsDuringVacation
+        fields = '__all__'
+
+
+class WorkRightsAfterStudySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WorkRightsAfterStudy
+        fields = '__all__'
+
+
+class PRPossibilitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PRPossibility
+        fields = '__all__'
+
+
+class SpouseCanApplywithCandidateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SpouseCanApplywithCandidate
+        fields = '__all__'
+
+
+class SpouseVisaCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SpouseVisaCategory
+        fields = '__all__'
+
+
+class SpouseWorkRightsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SpouseWorkRights
+        fields = '__all__'
+
+
+class ChildrenCanApplywithCandidateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ChildrenCanApplywithCandidate
+        fields = '__all__'
+
+
+class ChildrenVisaCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ChildrenVisaCategory
+        fields = '__all__'
+
+
+class ChildrenStudyWorkRightsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ChildrenStudyWorkRights
+        fields = '__all__'
