@@ -376,6 +376,26 @@ import AcademicResultTypeList from "./pages/masters/educationMaster/academicResu
 import EducationTypeList from "./pages/masters/educationMaster/educationType/EducationTypeList";
 import StudySpecialisationList from "./pages/masters/educationMaster/studySpecialisation/StudySpecialisationList";
 import CountryList from "./pages/masters/generalMaster/country/CountryList";
+import StateList from "./pages/masters/generalMaster/state/StateList";
+import DegreeAwardedByList from "./pages/masters/educationMaster/degreeAwardedBy/DegreeAwardedByList";
+import AcademicResultList from "./pages/masters/educationMaster/academicResult/AcademicResultList";
+import DegreeAwardedInstituteList from "./pages/masters/educationMaster/degreeAwardedInstitute/DegreeAwardedInstituteList";
+import AcademicResultToResultList from "./pages/masters/educationMaster/academicResultToResult/AcademicResultToResultList";
+import DistrictList from "./pages/masters/generalMaster/district/DistrictList";
+import CityList from "./pages/masters/generalMaster/city/CitytList";
+import ECAAwardingBodyList from "./pages/masters/educationMaster/ecaAwardingBody/ECAAwardingBodyList";
+import MediumofEducationList from "./pages/masters/educationMaster/mediumOfEducation/MediumofEducationList";
+
+import ECAForList from "./pages/masters/educationMaster/ecaFor/ECAForList";
+import LanguageNameTestList from "./pages/masters/testMaster/languageName(Test)/LanguageName(Test)List";
+import LanguageTestNameList from "./pages/masters/testMaster/languageTestName/LanguageTestNameList";
+import LanguageTestModuleNameList from "./pages/masters/testMaster/languageTestModuleName/LanguageTestModuleNameList";
+import LanguageBanchmarkLevelList from "./pages/masters/testMaster/languageBanchmarkLevel/LanguageBanchmarkLevelList";
+import CLBLevelList from "./pages/masters/testMaster/cLBLevel/CLBLevelList";
+import EntranceTestNameList from "./pages/masters/testMaster/entranceTestName/EntranceTestNameList";
+import EntranceTestModuleNameList from "./pages/masters/testMaster/entranceTestModuleName/EntranceTestModuleNameList";
+import EntranceTestResultList from "./pages/masters/testMaster/entranceTestResult/EntranceTestResultList";
+import LanguageTestResultList from "./pages/masters/testMaster/languageTestResult/LanguageTestResultList";
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   // Check if user is authenticated
@@ -609,11 +629,15 @@ function App() {
         <Route path='/gender-list' element={<ProtectedRoute><GenderList /></ProtectedRoute>} />
         <Route path='/marital-status' element={<ProtectedRoute><MaritalStatusList /></ProtectedRoute>} />
         <Route path='/continent-list' element={<ProtectedRoute><ContinentsList /></ProtectedRoute>} />
-          <Route path='/country-list' element={<ProtectedRoute><CountryList/></ProtectedRoute>} />
+        <Route path='/country-list' element={<ProtectedRoute><CountryList /></ProtectedRoute>} />
+        <Route path='/state-list' element={<ProtectedRoute><StateList /></ProtectedRoute>} />
+        <Route path='/state-list' element={<ProtectedRoute><StateList /></ProtectedRoute>} />
         <Route path='/relation-list' element={<ProtectedRoute><RelationList /></ProtectedRoute>} />
         <Route path='/civil-name-list' element={<ProtectedRoute><CivilIDNameList /></ProtectedRoute>}></Route>
+        <Route path='/district-list' element={<ProtectedRoute><DistrictList /></ProtectedRoute>}></Route>
+        <Route path='/city-list' element={<ProtectedRoute><CityList /></ProtectedRoute>}></Route>
         <Route path='/timezone-list' element={<ProtectedRoute><TimeZoneList /></ProtectedRoute>}></Route>
-        
+
         {/* Company  Masters */}
         <Route path='/department' element={<ProtectedRoute><DepartmentList /></ProtectedRoute>} />
         <Route path='/employeetype' element={<ProtectedRoute><EmployeeTypeList /></ProtectedRoute>} />
@@ -635,6 +659,25 @@ function App() {
         <Route path='/academic-result-type' element={<ProtectedRoute><AcademicResultTypeList /></ProtectedRoute>}></Route>
         <Route path='/education-type' element={<ProtectedRoute><EducationTypeList /></ProtectedRoute>}></Route>
         <Route path='/study-specialisation' element={<ProtectedRoute><StudySpecialisationList /></ProtectedRoute>}></Route>
+        <Route path='/degree-awarded-by' element={<ProtectedRoute><DegreeAwardedByList /></ProtectedRoute>}></Route>
+        <Route path='/academic-result' element={<ProtectedRoute><AcademicResultList /></ProtectedRoute>}></Route>
+        <Route path='/degree-awarded-institute' element={<ProtectedRoute><DegreeAwardedInstituteList /></ProtectedRoute>}></Route>
+        <Route path='/academic-result-to-result' element={<ProtectedRoute><AcademicResultToResultList /></ProtectedRoute>}></Route>
+          <Route path='/eca-awarding-body' element={<ProtectedRoute><ECAAwardingBodyList/></ProtectedRoute>}></Route>
+        <Route path='/medium-of-education' element={<ProtectedRoute><MediumofEducationList/></ProtectedRoute>}></Route>
+ <Route path='/eca-for' element={<ProtectedRoute><ECAForList/></ProtectedRoute>}></Route>
+ 
+  {/* test Masters */}
+       <Route path="/language-name-test" element={<ProtectedRoute><LanguageNameTestList/></ProtectedRoute>}></Route>
+       <Route path="/language-test-name" element={<ProtectedRoute><LanguageTestNameList/></ProtectedRoute>}></Route>
+             <Route path="/language-test-module-name" element={<ProtectedRoute><LanguageTestModuleNameList /></ProtectedRoute>}></Route>
+        <Route path="/language-banchmark-level" element={<ProtectedRoute><LanguageBanchmarkLevelList /></ProtectedRoute>}></Route>
+        <Route path="/cbl-level" element={<ProtectedRoute><CLBLevelList/></ProtectedRoute>}></Route>
+        <Route path="/entrance-test-name" element={<ProtectedRoute><EntranceTestNameList/></ProtectedRoute>}></Route>
+        <Route path="/entrance-test-module-name" element={<ProtectedRoute><EntranceTestModuleNameList/></ProtectedRoute>}></Route>
+        <Route path="/entrance-test-result" element={<ProtectedRoute><EntranceTestResultList/></ProtectedRoute>}></Route>
+        <Route path="/language-test-result" element={<ProtectedRoute><LanguageTestResultList/></ProtectedRoute>}></Route>
+
 
         {/* 404 Error Page */}
         <Route path='*' element={<ErrorPage />} />

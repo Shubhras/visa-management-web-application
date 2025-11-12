@@ -47,6 +47,48 @@ import {
     DELETE_STUDY_SPECIALISATION,
     EXPORT_STUDY_SPECIALISATION,
     IMPORT_STUDY_SPECIALISATION,
+    DEGREE_AWARDED_BY_LIST,
+    ADD_DEGREE_AWARDED_BY,
+    EDIT_DEGREE_AWARDED_BY,
+    DELETE_DEGREE_AWARDED_BY,
+    EXPORT_DEGREE_AWARDED_BY,
+    IMPORT_DEGREE_AWARDED_BY,
+    ACADEMIC_RESULT_LIST,
+    ADD_ACADEMIC_RESULT,
+    EDIT_ACADEMIC_RESULT,
+    DELETE_ACADEMIC_RESULT,
+    EXPORT_ACADEMIC_RESULT,
+    IMPORT_ACADEMIC_RESULT,
+    DEGREE_AWARDED_INSTITUTE_LIST,
+    ADD_DEGREE_AWARDED_INSTITUTE,
+    EDIT_DEGREE_AWARDED_INSTITUTE,
+    DELETE_DEGREE_AWARDED_INSTITUTE,
+    EXPORT_DEGREE_AWARDED_INSTITUTE,
+    IMPORT_DEGREE_AWARDED_INSTITUTE,
+    ACADEMIC_RESULT_TO_RESULT_LIST,
+    ADD_ACADEMIC_RESULT_TO_RESULT,
+    EDIT_ACADEMIC_RESULT_TO_RESULT,
+    DELETE_ACADEMIC_RESULT_TO_RESULT,
+    EXPORT_ACADEMIC_RESULT_TO_RESULT,
+    IMPORT_ACADEMIC_RESULT_TO_RESULT,
+    ECA_AWARDING_BODY_LIST,
+    ADD_ECA_AWARDING_BODY,
+    EDIT_ECA_AWARDING_BODY,
+    DELETE_ECA_AWARDING_BODY,
+    EXPORT_ECA_AWARDING_BODY,
+    IMPORT_ECA_AWARDING_BODY,
+    MEDIUM_OF_EDUCATION_LIST,
+    ADD_MEDIUM_OF_EDUCATION,
+    EDIT_MEDIUM_OF_EDUCATION,
+    DELETE_MEDIUM_OF_EDUCATION,
+    EXPORT_MEDIUM_OF_EDUCATION,
+    IMPORT_MEDIUM_OF_EDUCATION,
+    ECA_FOR_LIST,
+    ADD_ECA_FOR,
+    EDIT_ECA_FOR,
+    DELETE_ECA_FOR,
+    EXPORT_ECA_FOR,
+    IMPORT_ECA_FOR
 } from "./actionType";
 
 //Education level Code
@@ -306,40 +348,301 @@ export const educationTypeImportData = (data, callback) => ({
 });
 // Study Specialisation
 export const studySpecialisationList = (data, callback) => ({
-  type: STUDY_SPECIALISATION_LIST,
-  data,
-  callback,
+    type: STUDY_SPECIALISATION_LIST,
+    data,
+    callback,
 });
 
 export const studySpecialisationAdd = (data, callback) => ({
-  type: ADD_STUDY_SPECIALISATION,
-  data,
-  callback,
+    type: ADD_STUDY_SPECIALISATION,
+    data,
+    callback,
 });
 
 export const studySpecialisationEdit = (data, callback) => ({
-  type: EDIT_STUDY_SPECIALISATION,
-  data,
-  callback,
+    type: EDIT_STUDY_SPECIALISATION,
+    data,
+    callback,
 });
 
 export const studySpecialisationDelete = (data, callback) => ({
-  type: DELETE_STUDY_SPECIALISATION,
-  data,
-  callback,
+    type: DELETE_STUDY_SPECIALISATION,
+    data,
+    callback,
 });
 
 export const studySpecialisationExportData = (data, callback) => ({
-  type: EXPORT_STUDY_SPECIALISATION,
-  data,
-  callback,
+    type: EXPORT_STUDY_SPECIALISATION,
+    data,
+    callback,
 });
 
 export const studySpecialisationImportData = (data, callback) => ({
-  type: IMPORT_STUDY_SPECIALISATION,
-  data,
-  callback,
+    type: IMPORT_STUDY_SPECIALISATION,
+    data,
+    callback,
 });
+// Degree Awarded By
+export const degreeAwardedByList = (data, callback) => ({
+    type: DEGREE_AWARDED_BY_LIST,
+    data,
+    callback,
+});
+
+export const degreeAwardedByAdd = (data, callback) => ({
+    type: ADD_DEGREE_AWARDED_BY,
+    data,
+    callback,
+});
+
+export const degreeAwardedByEdit = (data, callback) => ({
+    type: EDIT_DEGREE_AWARDED_BY,
+    data,
+    callback,
+});
+
+export const degreeAwardedByDelete = (data, callback) => ({
+    type: DELETE_DEGREE_AWARDED_BY,
+    data,
+    callback,
+});
+
+export const degreeAwardedByExportData = (data, callback) => ({
+    type: EXPORT_DEGREE_AWARDED_BY,
+    data,
+    callback,
+});
+
+export const degreeAwardedByImportData = (data, callback) => ({
+    type: IMPORT_DEGREE_AWARDED_BY,
+    data,
+    callback,
+});
+// Academic Result 
+export const academicResultList = (data, callback) => ({
+    type: ACADEMIC_RESULT_LIST,
+    data,
+    callback,
+});
+
+export const academicResultAdd = (data, callback) => ({
+    type: ADD_ACADEMIC_RESULT,
+    data,
+    callback,
+});
+
+export const academicResultEdit = (data, callback) => ({
+    type: EDIT_ACADEMIC_RESULT,
+    data,
+    callback,
+});
+
+export const academicResultDelete = (data, callback) => ({
+    type: DELETE_ACADEMIC_RESULT,
+    data,
+    callback,
+});
+
+export const academicResultExportData = (data, callback) => ({
+    type: EXPORT_ACADEMIC_RESULT,
+    data,
+    callback,
+});
+
+export const academicResultImportData = (data, callback) => ({
+    type: IMPORT_ACADEMIC_RESULT,
+    data,
+    callback,
+});
+
+// Degree Awarded
+export const degreeAwardedInstituteList = (data, callback) => ({
+    type: DEGREE_AWARDED_INSTITUTE_LIST,
+    data,
+    callback,
+});
+
+export const degreeAwardedInstituteAdd = (data, callback) => ({
+    type: ADD_DEGREE_AWARDED_INSTITUTE,
+    data,
+    callback,
+});
+
+export const degreeAwardedInstituteEdit = (data, callback) => ({
+    type: EDIT_DEGREE_AWARDED_INSTITUTE,
+    data,
+    callback,
+});
+
+export const degreeAwardedInstituteDelete = (data, callback) => ({
+    type: DELETE_DEGREE_AWARDED_INSTITUTE,
+    data,
+    callback,
+});
+
+export const degreeAwardedInstituteExportData = (data, callback) => ({
+    type: EXPORT_DEGREE_AWARDED_INSTITUTE,
+    data,
+    callback,
+});
+
+export const degreeAwardedInstituteImportData = (data, callback) => ({
+    type: IMPORT_DEGREE_AWARDED_INSTITUTE,
+    data,
+    callback,
+});
+
+// Academic Result To Result (Compare Mapping)
+
+export const academicResultToResultList = (data, callback) => ({
+    type: ACADEMIC_RESULT_TO_RESULT_LIST,
+    data,
+    callback,
+});
+
+export const academicResultToResultAdd = (data, callback) => ({
+    type: ADD_ACADEMIC_RESULT_TO_RESULT,
+    data,
+    callback,
+});
+
+export const academicResultToResultEdit = (data, callback) => ({
+    type: EDIT_ACADEMIC_RESULT_TO_RESULT,
+    data,
+    callback,
+});
+
+export const academicResultToResultDelete = (data, callback) => ({
+    type: DELETE_ACADEMIC_RESULT_TO_RESULT,
+    data,
+    callback,
+});
+
+export const academicResultToResultExportData = (data, callback) => ({
+    type: EXPORT_ACADEMIC_RESULT_TO_RESULT,
+    data,
+    callback,
+});
+
+export const academicResultToResultImportData = (data, callback) => ({
+    type: IMPORT_ACADEMIC_RESULT_TO_RESULT,
+    data,
+    callback,
+});
+// ECA Awarding Body
+export const ecaAwardingBodyList = (data, callback) => ({
+    type: ECA_AWARDING_BODY_LIST,
+    data,
+    callback,
+});
+
+export const ecaAwardingBodyAdd = (data, callback) => ({
+    type: ADD_ECA_AWARDING_BODY,
+    data,
+    callback,
+});
+
+export const ecaAwardingBodyEdit = (data, callback) => ({
+    type: EDIT_ECA_AWARDING_BODY,
+    data,
+    callback,
+});
+
+export const ecaAwardingBodyDelete = (data, callback) => ({
+    type: DELETE_ECA_AWARDING_BODY,
+    data,
+    callback,
+});
+
+export const ecaAwardingBodyExportData = (data, callback) => ({
+    type: EXPORT_ECA_AWARDING_BODY,
+    data,
+    callback,
+});
+
+export const ecaAwardingBodyImportData = (data, callback) => ({
+    type: IMPORT_ECA_AWARDING_BODY,
+    data,
+    callback,
+});
+// Medium of Education
+export const mediumOfEducationList = (data, callback) => ({
+    type: MEDIUM_OF_EDUCATION_LIST,
+    data,
+    callback,
+});
+
+export const mediumOfEducationAdd = (data, callback) => ({
+    type: ADD_MEDIUM_OF_EDUCATION,
+    data,
+    callback,
+});
+
+export const mediumOfEducationEdit = (data, callback) => ({
+    type: EDIT_MEDIUM_OF_EDUCATION,
+    data,
+    callback,
+});
+
+export const mediumOfEducationDelete = (data, callback) => ({
+    type: DELETE_MEDIUM_OF_EDUCATION,
+    data,
+    callback,
+});
+
+export const mediumOfEducationExportData = (data, callback) => ({
+    type: EXPORT_MEDIUM_OF_EDUCATION,
+    data,
+    callback,
+});
+
+export const mediumOfEducationImportData = (data, callback) => ({
+    type: IMPORT_MEDIUM_OF_EDUCATION,
+    data,
+    callback,
+});
+// ECA For
+export const ecaForList = (data, callback) => ({
+    type: ECA_FOR_LIST,
+    data,
+    callback,
+});
+
+export const ecaForAdd = (data, callback) => ({
+    type: ADD_ECA_FOR,
+    data,
+    callback,
+});
+
+export const ecaForEdit = (data, callback) => ({
+    type: EDIT_ECA_FOR,
+    data,
+    callback,
+});
+
+export const ecaForDelete = (data, callback) => ({
+    type: DELETE_ECA_FOR,
+    data,
+    callback,
+});
+
+export const ecaForExportData = (data, callback) => ({
+    type: EXPORT_ECA_FOR,
+    data,
+    callback,
+});
+
+export const ecaForImportData = (data, callback) => ({
+    type: IMPORT_ECA_FOR,
+    data,
+    callback,
+});
+
+
+
+
+
+
 
 
 

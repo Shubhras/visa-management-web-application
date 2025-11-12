@@ -47,7 +47,6 @@ const SignInLayer = () => {
       setLoading(true);
       dispatch(
         loginUser(sendPayload, navigate, (response, error) => {
-          console.log("11111111111111111111:", response);
           if (response?.statusCode === 200) {
             setLoading(false);
             localStorage.setItem("authUser", JSON.stringify(response?.data));

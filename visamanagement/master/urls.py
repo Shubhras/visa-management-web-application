@@ -65,7 +65,7 @@ urlpatterns = [
     path('city/', CityListAPIView.as_view(), name='city-list'),
     path('city/create/', CityCreateAPIView.as_view(), name='city-create'),
     path('city/<uuid:uuid>/', CityRetrieveAPIView.as_view(), name='city-detail'),
-    path('city/update/<uuid:uuid>/', CityUpdateAPIView.as_view(), name='city-update'),
+    path('city/<uuid:uuid>/update/', CityUpdateAPIView.as_view(), name='city-update'),
     path('city/delete/', CityDeleteAPIView.as_view(), name='city-delete'),
     path('city/export/', CityExportAPIView.as_view(), name='city-export'),
     path('city/import/', CityImportAPIView.as_view(), name='city-import'),
@@ -73,10 +73,10 @@ urlpatterns = [
 
 
 
-    path('relations/list/', RelationListAPIView.as_view(), name='relation-list'),
+    path('relations/', RelationListAPIView.as_view(), name='relation-list'),
     path('relations/create/', RelationCreateAPIView.as_view(), name='relation-create'),
     path('relations/<uuid:uuid>/', RelationRetrieveAPIView.as_view(), name='relation-detail'),
-    path('relations/update/<uuid:uuid>/', RelationUpdateAPIView.as_view(), name='relation-update'),
+    path('relations/<uuid:uuid>/update/', RelationUpdateAPIView.as_view(), name='relation-update'),
     path('relations/delete/', RelationDeleteAPIView.as_view(), name='relation-delete'),
     path('relations/export/', RelationExportAPIView.as_view(), name='relation-export'),
     path('relations/import/', RelationImportAPIView.as_view(), name='relation-import'),
@@ -86,16 +86,19 @@ urlpatterns = [
     path("civil-id-name/", CivilIdNameListAPIView.as_view(), name="civil_id_name_list"),
     path("civil-id-name/<uuid:uuid>/", CivilIdNameRetrieveAPIView.as_view(), name="civil_id_name_retrieve"),
     path("civil-id-name/<uuid:uuid>/update/", CivilIdNameUpdateAPIView.as_view(), name="civil_id_name_update"),
-    path("civil-id-name/<uuid:uuid>/delete/",CivilIdNameDeleteAPIView.as_view(),name="civil_id_name_delete_single"),
+    path("civil-id-name/delete/",CivilIdNameDeleteAPIView.as_view(),name="civil_id_name_delete_single"),
     path("civil-id-name/export/", CivilIdNameExportAPIView.as_view(), name="civil_id_name_export"),
     path("civil-id-name/import/", CivilIdNameImportAPIView.as_view(), name="civil_id_name_import"),
  
    
    
     path('timezones/create/', TimezoneCreateAPIView.as_view(), name='timezone-create'),
-    path('timezones/list/', TimezoneListAPIView.as_view(), name='timezone-list'),
-    path('timezones/update/<uuid:uuid>/', TimezoneUpdateAPIView.as_view(), name='timezone-update'),
-    path('timezones/<uuid:uuid>/delete/', TimezoneDeleteAPIView.as_view(), name='timezone-delete'),
+    path('timezones/', TimezoneListAPIView.as_view(), name='timezone-list'),
+    path('timezones/<uuid:uuid>/', TimezoneRetrieveAPIView.as_view(), name='timezone-details'),
+    path('timezones/<uuid:uuid>/update/', TimezoneUpdateAPIView.as_view(), name='timezone-update'),
+    path('timezones/delete/', TimezoneDeleteAPIView.as_view(), name='timezone-delete'),
+    path('timezones/export/', TimezoneExportAPIView.as_view(), name='timezone-export'),
+    path('timezones/import/', TimezoneImportAPIView.as_view(), name='timezone-import'),
 
     path('departments/', DepartmentListAPIView.as_view(), name='department-list'),
     path('departments/create/', DepartmentCreateAPIView.as_view(), name='department-create'),
@@ -185,7 +188,7 @@ urlpatterns = [
     path("license-name/delete/", LicenseNameDeleteAPIView.as_view(),name='licensename-delete'),
     path('license-name/export/',   LicenseNameExportAPIView.as_view(), name=' LicenseName-export'),
     path('license-name/import/',   LicenseNameImportAPIView.as_view(), name=' LicenseName-import'),
-
+    
 
     path("LeadSource/create/", LeadSourceCreateAPIView.as_view(), name='LeadSource-create'),
     path("LeadSource/", LeadSourceListAPIView.as_view(), name='LeadSource-list'),
@@ -270,7 +273,16 @@ urlpatterns = [
     path('education-duration/delete/', EducationDurationDeleteAPIView.as_view(), name='educationduration-delete'),
     path('education-duration/export/', EducationDurationExportAPIView.as_view(), name='educationduration-export'),
     path('education-duration/import/', EducationDurationImportAPIView.as_view(), name='educationduration-import'),
+    
 
+    path('education-type/', EducationTypeListAPIView.as_view(), name='education-type-list'),
+    path('education-type/create/', EducationTypeCreateAPIView.as_view(), name='education-type-create'),
+    path('education-type/<uuid:uuid>/', EducationTypeRetrieveAPIView.as_view(), name='education-type-detail'),
+    path('education-type/<uuid:uuid>/update/', EducationTypeUpdateAPIView.as_view(), name='education-type-update'),
+    path('education-type/delete/', EducationTypeDeleteAPIView.as_view(), name='education-type-delete'),
+    path('education-type/export/', EducationTypeExportAPIView.as_view(), name='education-type-export'),
+    path('education-type/import/', EducationTypeImportAPIView.as_view(), name='education-type-import'),
+ 
     path("studymainarea/", StudymainareaListAPIView.as_view(), name='studymainarea-list'),
     path('studymainarea/create/', StudymainareaCreateAPIView.as_view(), name='studymainarea-create'),
     path('studymainarea/<uuid:uuid>/', StudymainareaRetrieveAPIView.as_view(), name='studymainarea-retrieve'),
@@ -298,7 +310,7 @@ urlpatterns = [
     path('academicresulttype/', AcademicResultTypeListAPIView.as_view(), name='academicresulttype-list'),
     path('academicresulttype/create/', AcademicResultTypeCreateAPIView.as_view(), name='academicresulttype-create'),
     path('academicresulttype/<uuid:uuid>/', AcademicResultTypeRetrieveAPIView.as_view(), name='academicresulttype-retrieve'),
-    path('academicresulttype/update/<uuid:uuid>/', AcademicResultTypeUpdateAPIView.as_view(), name='academicresulttype-update'),
+    path('academicresulttype/<uuid:uuid>/update/', AcademicResultTypeUpdateAPIView.as_view(), name='academicresulttype-update'),
     path('academicresulttype/delete/', AcademicResultTypeDeleteAPIView.as_view(), name='academicresulttype-delete'),
     path('academicresulttype/export/', AcademicResultTypeExportAPIView.as_view(), name='academicresulttype-export'),
     path('academicresulttype/import/', AcademicResultTypeImportAPIView.as_view(), name='academicresulttype-import'),
@@ -325,10 +337,36 @@ urlpatterns = [
     path('mediumeducation/',MediumofEducationListAPIView.as_view(), name='educationlevel-list'),
     path('mediumeducation/create/', MediumofEducationCreateAPIView.as_view(), name='mediumeducation-create'),
     path('mediumeducation/<uuid:uuid>/', MediumofEducationRetrieveAPIView.as_view(), name='mediumeducation-retrieve'),
-    path('mediumeducation/update/<uuid:uuid>/', MediumofEducationUpdateAPIView.as_view(), name='mediumeducation-update'),
+    path('mediumeducation/<uuid:uuid>/update/', MediumofEducationUpdateAPIView.as_view(), name='mediumeducation-update'),
     path('mediumeducation/delete/', MediumofEducationDeleteAPIView.as_view(), name='mediumeducation-delete'),
     path('mediumeducation/export/', MediumofEducationExportAPIView.as_view(), name='educationlevel-export'),
     path('mediumeducation/import/',MediumofEducationImportAPIView.as_view(), name='educationlevel-import'),
+
+    path('eca-awarding-bodies/', ECAAwardingBodyListAPIView.as_view(), name='eca-awarding-body-list'),
+    path('eca-awarding-bodies/create/', ECAAwardingBodyCreateAPIView.as_view(), name='eca-awarding-body-create'),
+    path('eca-awarding-bodies/<uuid:uuid>/', ECAAwardingBodyRetrieveAPIView.as_view(), name='eca-awarding-body-retrieve'),
+    path('eca-awarding-bodies/<uuid:uuid>/update/', ECAAwardingBodyUpdateAPIView.as_view(), name='eca-awarding-body-update'),
+    path('eca-awarding-bodies/delete/', ECAAwardingBodyDeleteAPIView.as_view(), name='eca-awarding-body-delete'),
+    path('eca-awarding-bodies/export/', ECAAwardingBodyExportAPIView.as_view(), name='eca-awarding-body-export'),
+    path('eca-awarding-bodies/import/', ECAAwardingBodyImportAPIView.as_view(), name='eca-awarding-body-import'),
+
+    path('degree-awarded-by/', DegreeAwardedByListAPIView.as_view(), name='degree-awarded-by-list'),
+    path('degree-awarded-by/create/', DegreeAwardedByCreateAPIView.as_view(), name='degree-awarded-by-create'),
+    path('degree-awarded-by/<uuid:uuid>/', DegreeAwardedByRetrieveAPIView.as_view(), name='degree-awarded-by-retrieve'),
+    path('degree-awarded-by/<uuid:uuid>/update/', DegreeAwardedByUpdateAPIView.as_view(), name='degree-awarded-by-update'),
+    path('degree-awarded-by/delete/', DegreeAwardedByDeleteAPIView.as_view(), name='degree-awarded-by-delete'),
+    path('degree-awarded-by/export/', DegreeAwardedByExportAPIView.as_view(), name='degree-awarded-by-export'),
+    path('degree-awarded-by/import/', DegreeAwardedByImportAPIView.as_view(), name='degree-awarded-by-import'),
+
+
+    path('degree-awarded-institute/', DegreeAwardedInstituteListAPIView.as_view(), name='degree_awarded_institute_list'),
+    path('degree-awarded-institute/create/', DegreeAwardedInstituteCreateAPIView.as_view(), name='degree_awarded_institute_create'),
+    path('degree-awarded-institute/<uuid:uuid>/retrieve/', DegreeAwardedInstituteRetrieveAPIView.as_view(), name='degree_awarded_institute_retrieve'),
+    path('degree-awarded-institute/<uuid:uuid>/update/', DegreeAwardedInstituteUpdateAPIView.as_view(), name='degree_awarded_institute_update'),
+    path('degree-awarded-institute/<uuid:uuid>/delete/', DegreeAwardedInstituteDeleteAPIView.as_view(), name='degree_awarded_institute_delete'),
+    path('degree-awarded-institute/delete/', DegreeAwardedInstituteDeleteAPIView.as_view(), name='degree_awarded_institute_delete_bulk'),
+    path('degree-awarded-institute/export/', DegreeAwardedInstituteExportAPIView.as_view(), name='degree_awarded_institute_export'),
+    path('degree-awarded-institute/import/', DegreeAwardedInstituteImportAPIView.as_view(), name='degree_awarded_institute_import'),
 
 
     path('language/create/', LanguageCreateAPIView.as_view(), name='language-create'),
@@ -373,8 +411,8 @@ urlpatterns = [
     path('study-language-banchmarks/<uuid:uuid>/', StudyLanguageBanchmarkRetrieveAPIView.as_view(), name='study-language-banchmark-retrieve'),
     path('study-language-banchmarks/<uuid:uuid>/update/', StudyLanguageBanchmarkUpdateAPIView.as_view(), name='study-language-banchmark-update'),
     path('study-language-banchmarks/delete/', StudyLanguageBanchmarkDeleteAPIView.as_view(), name='study-language-banchmark-delete'),
-    path('study-language-banchmarks/export/', StudyLanguageBanchmarkExportAPIView.as_view(), name='study-language-banchmark-export'),
-    path('study-language-banchmarks/import/', StudyLanguageBanchmarkImportAPIView.as_view(), name='study-language-banchmark-import'),
+    path('study-language-banchmarks/export/', StudyLanguageBenchmarkExportAPIView.as_view(), name='study-language-banchmark-export'),
+    path('study-language-banchmarks/import/', StudyLanguageBenchmarkImportAPIView.as_view(), name='study-language-banchmark-import'),
 
     # --------- EntranceTestName --------- #
     path('entrance-tests/', EntranceTestNameListAPIView.as_view(), name='entrance-test-list'),
@@ -385,7 +423,15 @@ urlpatterns = [
     path('entrance-tests/export/', EntranceTestNameExportAPIView.as_view(), name='entrance-test-export'),
     path('entrance-tests/import/', EntranceTestNameImportAPIView.as_view(), name='entrance-test-import'),
 
-    path('entrancetestresult/list/', EntranceTestResultListAPIView.as_view(), name='entrancetestresult-list'),
+    path('entrance-tests-module/', EntranceTestModuleNameListAPIView.as_view(), name='entrance-test-list'),
+    path('entrance-tests-module/create/', EntranceTestModuleNameCreateAPIView.as_view(), name='entrance-test-create'),
+    path('entrance-tests-module/<uuid:uuid>/', EntranceTestModuleNameRetrieveAPIView.as_view(), name='entrance-test-retrieve'),
+    path('entrance-tests-module/<uuid:uuid>/update/', EntranceTestModuleNameUpdateAPIView.as_view(), name='entrance-test-update'),
+    path('entrance-tests-module/delete/', EntranceTestModuleNameDeleteAPIView.as_view(), name='entrance-test-delete'),
+    path('entrance-tests-module/export/', EntranceTestModuleExportAPIView.as_view(), name='entrance-test-export'),
+    path('entrance-tests-module/import/', EntranceTestModuleImportAPIView.as_view(), name='entrance-test-import'),
+
+    path('entrancetestresult/', EntranceTestResultListAPIView.as_view(), name='entrancetestresult-list'),
     path('entrancetestresult/create/', EntranceTestResultCreateAPIView.as_view(), name='entrancetestresult-create'),
     path('entrancetestresult/<uuid:uuid>/', EntranceTestResultRetrieveAPIView.as_view(), name='entrancetestresult-retrieve'),
     path('entrancetestresult/<uuid:uuid>/update/', EntranceTestResultUpdateAPIView.as_view(), name='entrancetestresult-update'),
@@ -394,7 +440,7 @@ urlpatterns = [
     path('entrancetestresult/import/', EntranceTestResultImportAPIView.as_view(), name='entrancetestresult-import'),
 
 
-    path('representingcountry/list/', RepresentingCountryListAPIView.as_view(), name='representingcountry-list'),
+    path('representingcountry/', RepresentingCountryListAPIView.as_view(), name='representingcountry-list'),
     path('representingcountry/create/', RepresentingCountryCreateAPIView.as_view(), name='representingcountry-create'),
     path('representingcountry/<uuid:uuid>/', RepresentingCountryRetrieveAPIView.as_view(), name='representingcountry-retrieve'),
     path('representingcountry/<uuid:uuid>/update/', RepresentingCountryUpdateAPIView.as_view(), name='representingcountry-update'),
@@ -402,7 +448,7 @@ urlpatterns = [
     path('representingcountry/export/', RepresentingCountryExportAPIView.as_view(), name='representingcountry-export'),
     path('representingcountry/import/', RepresentingCountryImportAPIView.as_view(), name='representingcountry-import'),
 
-    path('visamain/list/', VisaMainListAPIView.as_view(), name='visamain-list'),
+    path('visamain/', VisaMainListAPIView.as_view(), name='visamain-list'),
     path('visamain/create/', VisaMainCreateAPIView.as_view(), name='visamain-create'),
     path('visamain/<uuid:uuid>/', VisaMainRetrieveAPIView.as_view(), name='visamain-retrieve'),
     path('visamain/<uuid:uuid>/update/', VisaMainUpdateAPIView.as_view(), name='visamain-update'),

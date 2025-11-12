@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
-import {civilIdNameEdit, civilIdNameAdd } from '../../../../store/master/generalMasters/actions';
+import { civilIdNameEdit, civilIdNameAdd } from '../../../../store/master/generalMasters/actions';
 
 const AddEditCivilIDNameModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
   const dispatch = useDispatch();
@@ -37,13 +37,13 @@ const AddEditCivilIDNameModal = ({ show, handleClose, mode = 'add', rowData = nu
     if (mode === 'edit' && rowData) {
       setFormData({
         uuid: rowData.uuid || '',
-        name: rowData.name || '',
-        full_name: rowData.full_name || '',
-        short_name: rowData.short_name || '',
-        valid_upto: rowData.valid_upto || '',
-        valid_upto_type: rowData.valid_upto_type || '',
-        valid_upto_numeric: rowData.valid_upto_numeric || '',
-        valid_upto_unit: rowData.valid_upto_unit || '',
+        name: rowData.civil_id_name || '',
+        full_name: rowData.authority_full_name || '',
+        short_name: rowData.authority_short_name || '',
+        valid_upto_type: rowData.valid_type || '',
+        valid_upto: rowData.valid_date || '',
+        valid_upto_numeric: rowData.valid_duration_value || '',
+        valid_upto_unit: rowData.valid_duration_unit || '',
         description: rowData.description || '',
       });
     } else {
@@ -62,13 +62,33 @@ const AddEditCivilIDNameModal = ({ show, handleClose, mode = 'add', rowData = nu
     }
   }, [mode, rowData, show]);
 
+
   // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+
+    // If valid_upto_type changes, reset related fields
+    if (name === 'valid_upto_type') {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+        valid_upto: '',
+        valid_upto_numeric: '',
+        valid_upto_unit: ''
+      }));
+      // Clear related errors when type changes
+      setErrors(prev => ({
+        ...prev,
+        valid_upto: '',
+        valid_upto_numeric: '',
+        valid_upto_unit: ''
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
 
     // Clear error when user starts typing
     if (errors[name]) {
@@ -78,7 +98,6 @@ const AddEditCivilIDNameModal = ({ show, handleClose, mode = 'add', rowData = nu
       }));
     }
   };
-
   // Validate form
   const validateForm = () => {
     const newErrors = {};
@@ -88,6 +107,24 @@ const AddEditCivilIDNameModal = ({ show, handleClose, mode = 'add', rowData = nu
     if (!formData.name) {
       newErrors.name = 'Civil ID name is required';
       isValid = false;
+    }
+    // Valid Upto Type specific validations
+    if (formData.valid_upto_type === 'Date') {
+      if (!formData.valid_upto) {
+        newErrors.valid_upto = 'Date is required';
+        isValid = false;
+      }
+    }
+
+    if (formData.valid_upto_type === 'Valid Upto') {
+      if (!formData.valid_upto_numeric) {
+        newErrors.valid_upto_numeric = 'Numeric value is required';
+        isValid = false;
+      }
+      if (!formData.valid_upto_unit) {
+        newErrors.valid_upto_unit = 'Period is required';
+        isValid = false;
+      }
     }
 
     setErrors(newErrors);
@@ -102,24 +139,24 @@ const AddEditCivilIDNameModal = ({ show, handleClose, mode = 'add', rowData = nu
       const sendPayload = mode === 'edit'
         ? {
           uuid: formData.uuid,
-          name: formData.name,
-          full_name: formData.full_name,
-          short_name: formData.short_name,
-          valid_upto: formData.valid_upto,
-          valid_upto_type: formData.valid_upto_type,
-          valid_upto_numeric: formData.valid_upto_numeric,
-          valid_upto_unit: formData.valid_upto_unit,
-          description: formData.description,
+          civil_id_name: formData.name,
+          authority_full_name: formData.full_name || null,
+          authority_short_name: formData.short_name || null,
+          valid_date: formData.valid_upto || null,
+          valid_type: formData.valid_upto_type || null,
+          valid_duration_value: formData.valid_upto_numeric || null,
+          valid_duration_unit: formData.valid_upto_unit ? formData.valid_upto_unit : null,
+          description: formData.description || null,
         }
         : {
-          name: formData.name,
-          full_name: formData.full_name,
-          short_name: formData.short_name,
-          valid_upto: formData.valid_upto,
-          valid_upto_type: formData.valid_upto_type,
-          valid_upto_numeric: formData.valid_upto_numeric,
-          valid_upto_unit: formData.valid_upto_unit,
-          description: formData.description,
+          civil_id_name: formData.name,
+          authority_full_name: formData.full_name || null,
+          authority_short_name: formData.short_name || null,
+          valid_date: formData.valid_upto || null,
+          valid_type: formData.valid_upto_type || null,
+          valid_duration_value: formData.valid_upto_numeric || null,
+          valid_duration_unit: formData.valid_upto_unit ? formData.valid_upto_unit : null,
+          description: formData.description || null,
         };
 
       setLoading(true);
@@ -214,7 +251,7 @@ const AddEditCivilIDNameModal = ({ show, handleClose, mode = 'add', rowData = nu
                     </div>
                   )}
                 </div>
-            
+
                 <div className="col-12 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                     Authority Full Name
@@ -231,7 +268,7 @@ const AddEditCivilIDNameModal = ({ show, handleClose, mode = 'add', rowData = nu
 
                 <div className="col-12 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                   Authority Short Name
+                    Authority Short Name
                   </label>
                   <input
                     type="text"
@@ -242,9 +279,10 @@ const AddEditCivilIDNameModal = ({ show, handleClose, mode = 'add', rowData = nu
                     placeholder="Enter authority short name"
                   />
                 </div>
+                {/* Valid Upto */}
                 <div className="col-12 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                   ID Valid Duration
+                    Civil ID Valid Upto
                   </label>
                   <div className="row g-2">
                     {/* Type Dropdown */}
@@ -256,25 +294,32 @@ const AddEditCivilIDNameModal = ({ show, handleClose, mode = 'add', rowData = nu
                         className="form-control form-select radius-8"
                       >
                         <option value="">Select Type</option>
-                        <option value="permanent">Permanent</option>
-                        <option value="date">Date</option>
-                        <option value="valid_upto">Valid Upto</option>
+                        <option value="Permanent">Permanent</option>
+                        <option value="Date">Date</option>
+                        <option value="Valid Upto">Valid Upto</option>
                       </select>
                     </div>
+
                     {/* Show Date Picker if Date is selected */}
-                    {formData.valid_upto_type === 'date' && (
+                    {formData.valid_upto_type === 'Date' && (
                       <div className="col-md-8">
                         <input
                           type="date"
                           name="valid_upto"
                           value={formData.valid_upto}
                           onChange={handleChange}
-                          className="form-control radius-8"
+                          className={`form-control radius-8 ${errors.valid_upto ? 'is-invalid' : ''}`}
                         />
+                        {errors.valid_upto && (
+                          <div className="text-danger text-sm mt-1">
+                            {errors.valid_upto}
+                          </div>
+                        )}
                       </div>
                     )}
-                    {/* Show Numeric and Unit fields if Permanent or Valid Upto is selected */}
-                    {(formData.valid_upto_type === 'valid_upto') && (
+
+                    {/* Show Numeric and Unit fields if Valid Upto is selected */}
+                    {formData.valid_upto_type === 'Valid Upto' && (
                       <>
                         <div className="col-md-4">
                           <input
@@ -282,22 +327,32 @@ const AddEditCivilIDNameModal = ({ show, handleClose, mode = 'add', rowData = nu
                             name="valid_upto_numeric"
                             value={formData.valid_upto_numeric}
                             onChange={handleChange}
-                            className="form-control radius-8"
+                            className={`form-control radius-8 ${errors.valid_upto_numeric ? 'is-invalid' : ''}`}
                             placeholder="Enter number"
                           />
+                          {errors.valid_upto_numeric && (
+                            <div className="text-danger text-sm mt-1">
+                              {errors.valid_upto_numeric}
+                            </div>
+                          )}
                         </div>
                         <div className="col-md-4">
                           <select
                             name="valid_upto_unit"
                             value={formData.valid_upto_unit}
                             onChange={handleChange}
-                            className="form-control form-select radius-8"
+                            className={`form-control form-select radius-8 ${errors.valid_upto_unit ? 'is-invalid' : ''}`}
                           >
                             <option value="">Select Period</option>
-                            <option value="weeks">Weeks</option>
-                            <option value="months">Months</option>
-                            <option value="years">Years</option>
+                            <option value="Weeks">Weeks</option>
+                            <option value="Months">Months</option>
+                            <option value="Years">Years</option>
                           </select>
+                          {errors.valid_upto_unit && (
+                            <div className="text-danger text-sm mt-1">
+                              {errors.valid_upto_unit}
+                            </div>
+                          )}
                         </div>
                       </>
                     )}

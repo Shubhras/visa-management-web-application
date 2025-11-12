@@ -42,50 +42,91 @@ import {
   DELETE_COUNTRY,
   EXPORT_COUNTRY,
   IMPORT_COUNTRY,
+  STATE_LIST,
+  ADD_STATE,
+  EDIT_STATE,
+  DELETE_STATE,
+  EXPORT_STATE,
+  IMPORT_STATE,
+  STATE_LIST_BY_COUNTRY,
+  IMPORT_DISTRICT,
+  EXPORT_DISTRICT,
+  DELETE_DISTRICT,
+  EDIT_DISTRICT,
+  ADD_DISTRICT,
+  DISTRICT_LIST,
+  CITY_LIST,
+  ADD_CITY,
+  EDIT_CITY,
+  DELETE_CITY,
+  EXPORT_CITY,
+  IMPORT_CITY,
+  DISTRICT_LIST_BY_STATE,
 } from "./actionTypes";
 
 import {
+  addCityDataAPI,
   addCivilIdNameDataAPI,
   addContinentDataAPI,
   addCountryDataAPI,
+  addDistrictDataAPI,
   addGenderDataAPI,
   addMaritalStatusDataAPI,
   addRelationDataAPI,
+  addStateDataAPI,
   addTimeZoneDataAPI,
+  deleteCityDataAPI,
   deleteCivilIdNameDataAPI,
   deleteContinentDataAPI,
   deleteCountryDataAPI,
+  deleteDistrictDataAPI,
   deleteGenderDataAPI,
   deleteMaritalStatusDataAPI,
   deleteRelationDataAPI,
+  deleteStateDataAPI,
   deleteTimeZoneDataAPI,
+  editCityDataAPI,
   editCivilIdNameDataAPI,
   editContinentDataAPI,
   editCountryDataAPI,
+  editDistrictDataAPI,
   editGenderDataAPI,
   editMaritalStatusDataAPI,
   editRelationDataAPI,
+  editStateDataAPI,
   editTimeZoneDataAPI,
+  exportCityDataAPI,
   exportCivilIdNameDataAPI,
   exportContinentDataAPI,
   exportCountryDataAPI,
+  exportDistrictDataAPI,
   exportGenderDataAPI,
   exportMaritalStatusDataAPI,
   exportRelationDataAPI,
+  // exportStakeholderTypeDataAPI,
+  exportStateDataAPI,
   exportTimeZoneDataAPI,
+  getCityListDataAPI,
   getCivilIdNameListDataAPI,
   getContinentListDataAPI,
   getCountryListDataAPI,
+  getDistrictDataByStateAPI,
+  getDistrictListDataAPI,
   getGenderListDataAPI,
   getMaritalStatusListDataAPI,
   getRelationListDataAPI,
+  getStateDataByCountryAPI,
+  getStateListDataAPI,
   getTimeZoneListDataAPI,
+  importCityDataAPI,
   importCivilIdNameDataAPI,
   importContinentDataAPI,
   importCountryDataAPI,
+  importDistrictDataAPI,
   importGenderDataAPI,
   importMaritalStatusDataAPI,
   importRelationDataAPI,
+  importStateDataAPI,
   importTimeZoneDataAPI,
 } from "../../../service/api_helper";
 
@@ -474,6 +515,189 @@ function* countryImportDataSaga(action) {
   }
 }
 
+// State
+function* stateListSaga(action) {
+  try {
+    const response = yield call(getStateListDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* stateAddSaga(action) {
+  try {
+    const response = yield call(addStateDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* stateEditSaga(action) {
+  try {
+    const response = yield call(editStateDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* stateDeleteSaga(action) {
+  try {
+    const response = yield call(deleteStateDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* stateExportDataSaga(action) {
+  try {
+    const response = yield call(exportStateDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* stateImportDataSaga(action) {
+  try {
+    const response = yield call(importStateDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+function* stateListByCountrySaga(action) {
+  try {
+    const response = yield call(getStateDataByCountryAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+// DISTRICT
+function* districtListSaga(action) {
+  try {
+    const response = yield call(getDistrictListDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* districtAddSaga(action) {
+  try {
+    const response = yield call(addDistrictDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* districtEditSaga(action) {
+  try {
+    const response = yield call(editDistrictDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* districtDeleteSaga(action) {
+  try {
+    const response = yield call(deleteDistrictDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* districtExportDataSaga(action) {
+  try {
+    const response = yield call(exportDistrictDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* districtImportDataSaga(action) {
+  try {
+    const response = yield call(importDistrictDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* districtListByStateSaga(action) {
+  try {
+    const response = yield call(getDistrictDataByStateAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+
+// City
+function* cityListSaga(action) {
+  try {
+    const response = yield call(getCityListDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* cityAddSaga(action) {
+  try {
+    const response = yield call(addCityDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* cityEditSaga(action) {
+  try {
+    const response = yield call(editCityDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* cityDeleteSaga(action) {
+  try {
+    const response = yield call(deleteCityDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* cityExportDataSaga(action) {
+  try {
+    const response = yield call(exportCityDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* cityImportDataSaga(action) {
+  try {
+    const response = yield call(importCityDataAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
 function* generalMasterSaga() {
   // Gender
   yield takeEvery(GENDER_LIST, genderListSaga);
@@ -516,12 +740,12 @@ function* generalMasterSaga() {
   yield takeEvery(IMPORT_RELATION, relationImportDataSaga);
 
   // Time Zone
-yield takeEvery(TIME_ZONE_LIST, timeZoneListSaga);
-yield takeEvery(ADD_TIME_ZONE, timeZoneAddSaga);
-yield takeEvery(EDIT_TIME_ZONE, timeZoneEditSaga);
-yield takeEvery(DELETE_TIME_ZONE, timeZoneDeleteSaga);
-yield takeEvery(EXPORT_TIME_ZONE, timeZoneExportDataSaga);
-yield takeEvery(IMPORT_TIME_ZONE, timeZoneImportDataSaga);
+  yield takeEvery(TIME_ZONE_LIST, timeZoneListSaga);
+  yield takeEvery(ADD_TIME_ZONE, timeZoneAddSaga);
+  yield takeEvery(EDIT_TIME_ZONE, timeZoneEditSaga);
+  yield takeEvery(DELETE_TIME_ZONE, timeZoneDeleteSaga);
+  yield takeEvery(EXPORT_TIME_ZONE, timeZoneExportDataSaga);
+  yield takeEvery(IMPORT_TIME_ZONE, timeZoneImportDataSaga);
 
   yield takeEvery(COUNTRY_LIST, countryListSaga);
   yield takeEvery(ADD_COUNTRY, countryAddSaga);
@@ -529,6 +753,32 @@ yield takeEvery(IMPORT_TIME_ZONE, timeZoneImportDataSaga);
   yield takeEvery(DELETE_COUNTRY, countryDeleteSaga);
   yield takeEvery(EXPORT_COUNTRY, countryExportDataSaga);
   yield takeEvery(IMPORT_COUNTRY, countryImportDataSaga);
+
+  // State 
+  yield takeEvery(STATE_LIST, stateListSaga);
+  yield takeEvery(ADD_STATE, stateAddSaga);
+  yield takeEvery(EDIT_STATE, stateEditSaga);
+  yield takeEvery(DELETE_STATE, stateDeleteSaga);
+  yield takeEvery(EXPORT_STATE, stateExportDataSaga);
+  yield takeEvery(IMPORT_STATE, stateImportDataSaga);
+  yield takeEvery(STATE_LIST_BY_COUNTRY, stateListByCountrySaga);
+  
+  //District
+  yield takeEvery(DISTRICT_LIST, districtListSaga);
+  yield takeEvery(ADD_DISTRICT, districtAddSaga);
+  yield takeEvery(EDIT_DISTRICT, districtEditSaga);
+  yield takeEvery(DELETE_DISTRICT, districtDeleteSaga);
+  yield takeEvery(EXPORT_DISTRICT, districtExportDataSaga);
+  yield takeEvery(IMPORT_DISTRICT, districtImportDataSaga);
+  yield takeEvery(DISTRICT_LIST_BY_STATE, districtListByStateSaga);
+
+  // Saga Watchers
+  yield takeEvery(CITY_LIST, cityListSaga);
+  yield takeEvery(ADD_CITY, cityAddSaga);
+  yield takeEvery(EDIT_CITY, cityEditSaga);
+  yield takeEvery(DELETE_CITY, cityDeleteSaga);
+  yield takeEvery(EXPORT_CITY, cityExportDataSaga);
+  yield takeEvery(IMPORT_CITY, cityImportDataSaga);
 }
 
 export default generalMasterSaga;

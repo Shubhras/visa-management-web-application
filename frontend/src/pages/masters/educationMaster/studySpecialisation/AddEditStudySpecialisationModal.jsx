@@ -9,7 +9,8 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
     const [studyMainArea, setStudyMainArea] = useState([]);
     const [studyMajorArea, setStudyMajorArea] = useState([]);
 
-    // Form state
+
+    // console.log("rowData",rowData);
     const [formData, setFormData] = useState({
         uuid: '',
         studyMainAreaUuid: '',
@@ -18,7 +19,6 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
         description: '',
     });
 
-    // Validation errors state
     const [errors, setErrors] = useState({
         studyMainAreaUuid: '',
         studyMajorAreaUuid: '',
@@ -26,18 +26,16 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
         description: '',
     });
 
-    // Populate form data when in edit mode
     useEffect(() => {
         if (mode === 'edit' && rowData) {
             setFormData({
                 uuid: rowData.uuid || '',
-                studySpecialisationName: rowData.name || '',
-                studyMainAreaUuid: rowData.studyMainAreaUuid || '',
-                studyMajorAreaUuid: rowData.studyMajorAreaUuid || '',
+                studySpecialisationName: rowData.studyspecialisation || '',
+                studyMainAreaUuid: rowData.mainarea_uuid || '',
+                studyMajorAreaUuid: rowData.majorarea_uuid || '',
                 description: rowData.description || '',
             });
         } else {
-            // Reset form when switching to add mode
             setFormData({
                 uuid: '',
                 studyMainAreaUuid: '',
@@ -56,8 +54,8 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
             limit: 2000,
             search: '',
             status: '',
-            sortBy: 'updated_at', // Field to sort by
-            sortOrder: 'desc', // 'asc' or 'desc'
+            sortBy: 'updated_at',
+            sortOrder: 'desc',
         };
         dispatch(studyMainAreaList(params, (response, error) => {
             setLoading(false);
@@ -76,16 +74,12 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
     };
 
 
-
-    // Handle input changes
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({
             ...prev,
             [name]: value
         }));
-
-        // Clear error when user starts typing
         if (errors[name]) {
             setErrors(prev => ({
                 ...prev,
@@ -94,7 +88,6 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
         }
     };
 
-    // Validate form
     const validateForm = () => {
         const newErrors = {};
         let isValid = true;
@@ -107,7 +100,6 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
             isValid = false;
         }
 
-        // Department Name validation
         if (!formData.studySpecialisationName?.trim()) {
             newErrors.studySpecialisationName = 'Study specialisation is required';
             isValid = false;
@@ -117,7 +109,6 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
         return isValid;
     };
 
-    // Handle form submission
     const handleSubmit = (e) => {
         e.preventDefault();
 
@@ -125,22 +116,21 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
             const sendPayload = mode === 'edit'
                 ? {
                     uuid: formData.uuid,
-                    name: formData.studySpecialisationName,
-                    studyMainAreaUuid: formData.studyMainAreaUuid,
-                    studyMajorAreaUuid: formData.studyMajorAreaUuid,
+                    studyspecialisation: formData.studySpecialisationName,
+                    mainarea_id: formData.studyMainAreaUuid,
+                    majorarea_id: formData.studyMajorAreaUuid,
                     description: formData.description,
                 }
                 : {
-                    name: formData.studySpecialisationName,
-                    studyMainAreaUuid: formData.studyMainAreaUuid,
-                    studyMajorAreaUuid: formData.studyMajorAreaUuid,
+                    studyspecialisation: formData.studySpecialisationName,
+                    mainarea_id: formData.studyMainAreaUuid,
+                    majorarea_id: formData.studyMajorAreaUuid,
                     description: formData.description,
                 };
 
             setLoading(true);
 
             const action = mode === 'edit' ? studySpecialisationEdit : studySpecialisationAdd;
-
             dispatch(action(sendPayload, (response, error) => {
                 setLoading(false);
                 if (error) {
@@ -158,7 +148,6 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
         }
     };
 
-    // Reset form
     const resetForm = () => {
         setFormData({
             uuid: '',
@@ -242,7 +231,7 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
                                         <option value="">Select  Study Major Area</option>
                                         {studyMajorArea.map((option) => (
                                             <option key={option.uuid} value={option.uuid}>
-                                                {option.name}
+                                                {option.majorarea}
                                             </option>
                                         ))}
                                     </select>

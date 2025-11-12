@@ -69,7 +69,7 @@ const AddLeads = ({ show, handleClose }) => {
     
     if (validateForm()) {
       // Form is valid, proceed with submission
-      console.log('Form submitted:', formData);
+  
       
       // Add your API call or form submission logic here
       // Example: await api.AddLeads(formData);

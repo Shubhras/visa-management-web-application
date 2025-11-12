@@ -15,7 +15,7 @@ const AddEditEducationLevelModal = ({ show, handleClose, mode = 'add', rowData =
     description: '',
   });
 
-  console.log("rowData",rowData);
+  // console.log("rowData",rowData);
 
   // Validation errors state
   const [errors, setErrors] = useState({

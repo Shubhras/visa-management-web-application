@@ -140,13 +140,13 @@ class AccreditationCategoryAdmin(admin.ModelAdmin):
     ordering = ('name',)
 
 
-@admin.register(AccreditationName)
-class AccreditationNameAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'short_name', 'country', 'category', 'issuing_authority', 'valid_upto', 'is_deleted', 'created_at', 'updated_at')
-    search_fields = ('full_name', 'short_name', 'issuing_authority')
-    list_filter = ('is_deleted', 'country', 'category')
-    ordering = ('full_name',)
-    autocomplete_fields = ('country', 'category')
+# @admin.register(AccreditationName)
+# class AccreditationNameAdmin(admin.ModelAdmin):
+#     list_display = ('full_name', 'short_name', 'country', 'category', 'issuing_authority', 'valid_upto', 'is_deleted', 'created_at', 'updated_at')
+#     search_fields = ('full_name', 'short_name', 'issuing_authority')
+#     list_filter = ('is_deleted', 'country', 'category')
+#     ordering = ('full_name',)
+#     autocomplete_fields = ('country', 'category')
 
 
 # ---------- BANK & LICENSE ----------
@@ -160,7 +160,7 @@ class BankAccountTypeAdmin(admin.ModelAdmin):
 
 @admin.register(LicenseName)
 class LicenseNameAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'short_name', 'country', 'issuing_authority', 'valid_upto', 'is_deleted', 'created_at', 'updated_at')
+    list_display = ('full_name', 'short_name', 'country', 'issuing_authority', 'is_deleted', 'created_at', 'updated_at')
     search_fields = ('full_name', 'short_name', 'issuing_authority')
     list_filter = ('is_deleted', 'country')
     ordering = ('full_name',)
@@ -497,3 +497,25 @@ class AcademicResultTypeAdmin(admin.ModelAdmin):
             'fields': ('uuid', 'created_at', 'updated_at')
         }),
     )
+@admin.register(Studymainarea)
+class StudymainareaAdmin(admin.ModelAdmin):
+    list_display = ('uuid','name', 'description', 'is_deleted', 'created_at', 'updated_at')
+    search_fields = ('name',)
+    list_filter = ('is_deleted',)
+    ordering = ('name',)
+
+@admin.register(Studymajorarea)
+class StudymajorareaAdmin(admin.ModelAdmin):
+    list_display = ('uuid','mainarea', 'description', 'majorarea','is_deleted', 'created_at', 'updated_at')
+    search_fields = ('majorarea',)
+    list_filter = ('is_deleted',)
+    ordering = ('majorarea',)
+
+
+
+@admin.register(AcademicResult)
+class AcademicResultAdmin(admin.ModelAdmin):
+    list_display = ('id', 'AcademicResulttype', 'Academicresult', 'description', 'is_deleted', 'created_at', 'updated_at')
+    list_filter = ('AcademicResulttype', 'is_deleted', 'created_at')
+    search_fields = ('Academicresult', 'description')
+    readonly_fields = ('uuid', 'created_at', 'updated_at')

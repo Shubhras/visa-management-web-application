@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useDispatch } from "react-redux";
 import MasterLayout from "../../../../masterLayout/MasterLayout";
 import { Icon } from '@iconify/react/dist/iconify.js';
@@ -7,6 +7,7 @@ import { toast } from "react-toastify";
 import AddImportLicenceNameModal from './AddImportLicenceNameModal';
 import AddEditLicenceNameModal from './AddEditLicenceNameModal';
 import { licenceNameExportData, licenceNameList, licenceNameDelete } from '../../../../store/master/companyMasters/actions';
+import { formatDateDDMMYYYY, formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 
 const LicenceNameList = () => {
   const dispatch = useDispatch();
@@ -45,24 +46,29 @@ const LicenceNameList = () => {
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
   const [items] = useState(["Country", "License Full Name", "License Short Name", "License Issuing Authority Name", "License Valid Upto", "Description", "Modified On"]);
-  const [selectedItems, setSelectedItems] = useState(["Country", "License Full Name", "License Short Name", "License Issuing Authority Name", "License Valid Upto"]);
-  const [ItemsRequired] = useState(["Country", "License Full Name", "License Short Name", "License Issuing Authority Name", "License Valid Upto"]);
+  const [selectedItems, setSelectedItems] = useState(["Country", "License Full Name", "License Short Name"]);
+  const [ItemsRequired] = useState(["Country", "License Full Name", "License Short Name"]);
 
   // Table columns configuration
   const [tableColumns] = useState([
-    { id: 'country_name', label: 'Country', field: 'country_name', visible: true, required: true },
-    { id: 'full_name', label: 'License Full Name', field: 'full_name', visible: true, required: true },
-    { id: 'short_name', label: 'License Short Name', field: 'short_name', visible: true, required: true },
+    { id: 'country_name', label: 'Country', field: 'country_name', visible: true, required: false },
+    { id: 'full_name', label: 'License Full Name', field: 'full_name', visible: true, required: false },
+    { id: 'short_name', label: 'License Short Name', field: 'short_name', visible: true, required: false },
     { id: 'issuing_authority', label: 'License Issuing Authority Name', field: 'issuing_authority', visible: false, required: false },
-    { id: 'valid_upto', label: 'License Valid Upto', field: 'valid_upto', visible: false, required: false },
+    { id: 'valid_type', label: 'License Valid Upto', field: 'valid_type', visible: false, required: false },
+    { id: 'valid_date', label: 'License Valid Date', field: 'valid_date', visible: false, required: false },
+    { id: 'valid_duration_value', label: 'License Valid Duration Value', field: 'valid_duration_value', visible: false, required: false },
+    { id: 'valid_duration_unit', label: 'License Valid Duration Unit', field: 'valid_duration_unit', visible: false, required: false },
+
     { id: 'description', label: 'Description', field: 'description', visible: false, required: false },
-    { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: false, required: false },
+    { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false },
   ]);
 
   const [visibleColumns, setVisibleColumns] = useState(
     tableColumns.filter(col => col.visible).map(col => col.id)
   );
   const [showColumnDropdown, setShowColumnDropdown] = useState(false);
+  const columnDropdownRef = useRef(null);
   // Column visibility toggle handler
   const toggleColumnVisibility = (columnId) => {
     const column = tableColumns.find(col => col.id === columnId);
@@ -82,13 +88,29 @@ const LicenceNameList = () => {
     return visibleColumns.includes(columnId);
   };
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (columnDropdownRef.current && !columnDropdownRef.current.contains(event.target)) {
+        setShowColumnDropdown(false);
+      }
+    };
+
+    if (showColumnDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showColumnDropdown]);
+
   // Updated state with sorting
   const [tableState, setTableState] = useState({
     page: 1,
     limit: 25,
     search: '',
     status: '',
-    sortBy: 'updated_at', // Field to sort by
+    sortBy: 'created_at', // Field to sort by
     sortOrder: 'desc', // 'asc' or 'desc'
     total: 0,
     totalPages: 0,
@@ -398,12 +420,23 @@ const LicenceNameList = () => {
       "License Full Name": "full_name",
       "License Short Name": "short_name",
       "License Issuing Authority Name": "issuing_authority",
-      "License Valid Upto": "valid_upto",
+      "License Valid Upto": "valid_type",
+      "License Valid Duration Value": "valid_duration_value",
+      "License Valid Duration Unit": "valid_duration_unit",
+      "License Valid Date": "valid_date",
       "Modified On": "updated_at",
       "Description": "description",
     };
-    // Convert selectedItems to backend field names
-    const mappedFields = selectedItems.map((item) => fieldMapping[item] || item);
+    let mappedFields = selectedItems.map((item) => fieldMapping[item] || item);
+
+    // 👉 If "License Valid Upto" is selected, add related fields too
+    if (mappedFields.includes("valid_type")) {
+      mappedFields.push("valid_date", "valid_duration_value", "valid_duration_unit");
+    }
+
+    // Remove duplicates (optional)
+    mappedFields = [...new Set(mappedFields)];
+
     // Convert to comma-separated string
     const fieldsString = mappedFields.join(",");
     const sendPayload = {
@@ -446,21 +479,6 @@ const LicenceNameList = () => {
   const startIndex = (tableState.currentPage - 1) * tableState.limit;
   const statusOptions = ['All', 'Active', 'Inactive'];
 
-  const formatDateTime = (dateString) => {
-    const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    let hours = date.getHours();
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const seconds = String(date.getSeconds()).padStart(2, '0');
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12 || 12;
-    hours = String(hours).padStart(2, '0');
-    return `${day}-${month}-${year} ${hours}:${minutes}:${seconds} ${ampm}`
-  };
-
-
   return (
     <>
       <MasterLayout>
@@ -484,29 +502,6 @@ const LicenceNameList = () => {
                   >
                     Export
                   </button>
-                  {/* {selectedRows.length == 0 && (
-                    <button
-                      onClick={handleSelectAllButton}
-                      className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
-                    >
-                      Delete
-                    </button>
-                  )}
-                  {selectedRows.length > 0 && (
-                    <button
-                      onClick={() => handleBulkDelete("")}
-                      className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
-                    >{`Delete Selected (${selectedRows.length})`}
-                    </button>
-                  )}
-                  {selectedRows.length > 0 && (
-                    <button
-                      onClick={() => handleBulkDelete("all")}
-                      className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
-                    >{`Delete All (${tableState.total})`}
-                    </button>
-                  )} */}
-
                   <button
                     onClick={handleBulkDelete}
                     className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
@@ -571,7 +566,7 @@ const LicenceNameList = () => {
                           lineHeight: 1
                         }}
                         onClick={() => {
-                          console.log("Close clicked");
+
                           handleSearchChange('');
                         }}
                       >
@@ -583,36 +578,6 @@ const LicenceNameList = () => {
                     className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
                     onClick={handleShow}
                   >+ New</button>
-                  <div className="position-relative table-header-hide-show">
-                    <button
-                      className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
-                      onClick={() => setShowColumnDropdown(!showColumnDropdown)}
-                    >
-                      Columns
-                    </button>
-                    {showColumnDropdown && (
-                      <div className="position-absolute bg-white border rounded shadow-sm p-2 show-dropdowns-header">
-                        {tableColumns.map((column) => (
-                          <div
-                            key={column.id}
-                            className="bg-white p-2 mb-2 d-flex align-items-center gap-2"
-                          >
-                            <input
-                              type="checkbox"
-                              id={`column-${column.id}`}
-                              checked={isColumnVisible(column.id)}
-                              onChange={() => toggleColumnVisibility(column.id)}
-                              disabled={column.required}
-                              className="form-check-input"
-                            />
-                            <label htmlFor={`column-${column.id}`} className="mb-0 flex-grow-1 form-label">
-                              {column.label}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
                 </div>
               </div>
             </div>
@@ -801,7 +766,38 @@ const LicenceNameList = () => {
                         </th>
                       )
                     ))}
-                    <th scope="col" className='action-th'>Action</th>
+                    <th scope="col" className='action-th'>
+                      <div className="position-relative table-header-hide-show" ref={columnDropdownRef}>
+                        <button
+                          className="position-relative table-header-hide-show"
+                          onClick={() => setShowColumnDropdown(!showColumnDropdown)}
+                        >
+                          Action <Icon icon="mdi:table-column" width="20" className='icone' />
+                        </button>
+                        {showColumnDropdown && (
+                          <div className="position-absolute bg-white border rounded shadow-sm p-2 show-dropdowns-header">
+                            {tableColumns.map((column) => (
+                              <div
+                                key={column.id}
+                                className="bg-white p-2 mb-2 d-flex align-items-center gap-2"
+                              >
+                                <input
+                                  type="checkbox"
+                                  id={`column-${column.id}`}
+                                  checked={isColumnVisible(column.id)}
+                                  onChange={() => toggleColumnVisibility(column.id)}
+                                  disabled={column.required}
+                                  className="form-check-input"
+                                />
+                                <label htmlFor={`column-${column.id}`} className="mb-0 flex-grow-1 form-label">
+                                  {column.label}
+                                </label>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -831,7 +827,7 @@ const LicenceNameList = () => {
                           </div>
                         </td>
                         {isColumnVisible('country_name') && (
-                          <td><span>{rowItem.full_name}</span></td>
+                          <td><span>{rowItem.country_name}</span></td>
                         )}
                         {isColumnVisible('full_name') && (
                           <td><span>{rowItem.full_name}</span></td>
@@ -842,18 +838,36 @@ const LicenceNameList = () => {
                         {isColumnVisible('issuing_authority') && (
                           <td><span>{rowItem.issuing_authority}</span></td>
                         )}
-                        {isColumnVisible('valid_upto') && (
-                          <td><span>{rowItem.valid_upto}</span></td>
+                        {isColumnVisible('valid_type') && (
+                          <td><span>{rowItem.valid_type}</span></td>
                         )}
+                       {isColumnVisible('valid_date') && (
+                          <td>
+                            <span>
+                              {rowItem?.valid_date != null && rowItem?.valid_date !== ""
+                                ? formatDateDDMMYYYY(rowItem.valid_date)
+                                : ""}
+                            </span>
+                          </td>
+                        )}
+
+                        {isColumnVisible('valid_duration_value') && (
+                          <td><span>{rowItem.valid_duration_value}</span></td>
+                        )}
+                        {isColumnVisible('valid_duration_unit') && (
+                          <td><span>{rowItem.valid_duration_unit}</span></td>
+                        )}
+
+
                         {isColumnVisible('description') && (
                           <td><span>{rowItem.description}</span></td>
                         )}
                         {isColumnVisible('updated_at') && (
-                          <td><span>{formatDateTime(rowItem.updated_at)}</span></td>
+                          <td><span>{formatDateDDMMYYYYTime(rowItem.updated_at)}</span></td>
                         )}
 
-                        <td>
-                          <div className="d-flex align-items-center gap-2">
+                        <td className='action-td'>
+                          <div className="d-flex align-items-end gap-2">
                             <Link to="#" className='edit-btn-icone' onClick={(e) => { e.preventDefault(); handleShowEdit(rowItem); }}>
                               <Icon icon="lucide:edit" width="18" className='icone' />
                             </Link>

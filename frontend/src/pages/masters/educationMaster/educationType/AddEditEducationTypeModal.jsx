@@ -25,8 +25,8 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
     if (mode === 'edit' && rowData) {
       setFormData({
         uuid: rowData.uuid || '',
-        departmentName: rowData.name || '',
-        description: rowData.description || '',
+        departmentName: rowData.educationType || '',
+        description: rowData.Perticulars || '',
       });
     } else {
       // Reset form when switching to add mode
@@ -78,12 +78,12 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
       const sendPayload = mode === 'edit' 
         ? {
             uuid: formData.uuid,
-            name: formData.departmentName,
-            description: formData.description,
+            educationType: formData.departmentName,
+            Perticulars: formData.description,
           }
         : {
-            name: formData.departmentName,
-            description: formData.description,
+            educationType: formData.departmentName,
+            Perticulars: formData.description,
           };
 
       setLoading(true);

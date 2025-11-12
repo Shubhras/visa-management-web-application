@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useDispatch } from "react-redux";
 import MasterLayout from "../../../../masterLayout/MasterLayout";
 import { Icon } from '@iconify/react/dist/iconify.js';
@@ -7,6 +7,7 @@ import { toast } from "react-toastify";
 import AddImportCivilIDNameModal from './AddImportCivilIDNameModal';
 import AddEditCivilIDNameModal from './AddEditCivilIDNameModal';
 import { civilIdNameList, civilIdNameDelete, civilIdNameExportData } from '../../../../store/master/generalMasters/actions';
+import { formatDateDDMMYYYY, formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 const CivilIDNameList = () => {
   const dispatch = useDispatch();
   const [modalState, setModalState] = useState({
@@ -43,24 +44,28 @@ const CivilIDNameList = () => {
   const [civilIDNameData, setCivilIDNameData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [items] = useState(["Civil ID Name", "Authority Full Name", "Authority Short Name", "ID Valid Duration", "Description", "Modified On"]);
+  const [items] = useState(["Civil ID Name", "Authority Full Name", "Authority Short Name", "Civil ID Valid Upto", "Description", "Modified On"]);
   const [selectedItems, setSelectedItems] = useState(["Civil ID Name"]);
   const [ItemsRequired] = useState(["Civil ID Name"]);
 
   // Table columns configuration
   const [tableColumns] = useState([
-    { id: 'civil_id_name', label: 'Civil ID Name', field: 'full_name', visible: true, required: true },
-    { id: 'authority_full_name', label: 'Authority Full Name', field: 'full_name', visible: true, required: false },
-    { id: 'authority_short_name', label: 'Authority Short Name', field: 'short_name', visible: true, required: false },
-    { id: 'id_valid_duration', label: 'ID Valid Duration', field: 'valid_upto', visible: true, required: false },
+    { id: 'civil_id_name', label: 'Civil ID Name', field: 'civil_id_name', visible: true, required: false },
+    { id: 'authority_full_name', label: 'Authority Full Name', field: 'authority_full_name', visible: true, required: false },
+    { id: 'authority_short_name', label: 'Authority Short Name', field: 'authority_short_name', visible: false, required: false },
+    { id: 'valid_type', label: 'Civil ID Valid Upto', field: 'valid_type', visible: false, required: false },
+    { id: 'valid_date', label: 'Civil ID Valid Date', field: 'valid_date', visible: false, required: false },
+    { id: 'valid_duration_value', label: 'Civil ID Valid Duration Value', field: 'valid_duration_value', visible: false, required: false },
+    { id: 'valid_duration_unit', label: 'Civil ID Valid Duration Unit', field: 'valid_duration_unit', visible: false, required: false },
     { id: 'description', label: 'Description', field: 'description', visible: true, required: false },
-    { id: 'modified_on', label: 'Modified On', field: 'updated_at', visible: true, required: false },
+    { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false },
   ]);
 
   const [visibleColumns, setVisibleColumns] = useState(
     tableColumns.filter(col => col.visible).map(col => col.id)
   );
   const [showColumnDropdown, setShowColumnDropdown] = useState(false);
+  const columnDropdownRef = useRef(null);
   // Column visibility toggle handler
   const toggleColumnVisibility = (columnId) => {
     const column = tableColumns.find(col => col.id === columnId);
@@ -80,13 +85,29 @@ const CivilIDNameList = () => {
     return visibleColumns.includes(columnId);
   };
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (columnDropdownRef.current && !columnDropdownRef.current.contains(event.target)) {
+        setShowColumnDropdown(false);
+      }
+    };
+
+    if (showColumnDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showColumnDropdown]);
+
   // Updated state with sorting
   const [tableState, setTableState] = useState({
     page: 1,
     limit: 25,
     search: '',
     status: '',
-    sortBy: 'updated_at', // Field to sort by
+    sortBy: 'created_at', // Field to sort by
     sortOrder: 'desc', // 'asc' or 'desc'
     total: 0,
     totalPages: 0,
@@ -392,15 +413,25 @@ const CivilIDNameList = () => {
     }
     // Map frontend labels to backend field names
     const fieldMapping = {
-      "Civil ID Name": "name",
-      "Authority Full Name": "full_name",
-      "Authority Short Name": "short_name",
-      "ID Valid Duration": "valid_upto",
+      "Civil ID Name": "civil_id_name",
+      "Authority Full Name": "authority_full_name",
+      "Authority Short Name": "authority_short_name",
+      "Civil ID Valid Upto": "valid_type",
+      "Civil ID Valid Duration Value": "valid_duration_value",
+      "Civil ID Valid Duration Unit": "valid_duration_unit",
+      "Civil ID Valid Date": "valid_date",
       "Modified On": "updated_at",
       "Description": "description",
     };
-    // Convert selectedItems to backend field names
-    const mappedFields = selectedItems.map((item) => fieldMapping[item] || item);
+   let mappedFields = selectedItems.map((item) => fieldMapping[item] || item);
+
+    // 👉 If "License Valid Upto" is selected, add related fields too
+    if (mappedFields.includes("valid_type")) {
+      mappedFields.push("valid_date", "valid_duration_value", "valid_duration_unit");
+    }
+
+    // Remove duplicates (optional)
+    mappedFields = [...new Set(mappedFields)];
     // Convert to comma-separated string
     const fieldsString = mappedFields.join(",");
     const sendPayload = {
@@ -442,20 +473,6 @@ const CivilIDNameList = () => {
 
   const startIndex = (tableState.currentPage - 1) * tableState.limit;
   const statusOptions = ['All', 'Active', 'Inactive'];
-
-  const formatDateTime = (dateString) => {
-    const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    let hours = date.getHours();
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const seconds = String(date.getSeconds()).padStart(2, '0');
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12 || 12;
-    hours = String(hours).padStart(2, '0');
-    return `${day}-${month}-${year} ${hours}:${minutes}:${seconds} ${ampm}`
-  };
 
 
   return (
@@ -568,7 +585,7 @@ const CivilIDNameList = () => {
                           lineHeight: 1
                         }}
                         onClick={() => {
-                          console.log("Close clicked");
+
                           handleSearchChange('');
                         }}
                       >
@@ -580,49 +597,6 @@ const CivilIDNameList = () => {
                     className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
                     onClick={handleShow}
                   >+ New</button>
-
-                   <div className="position-relative table-header-hide-show">
-                    <button
-                      className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
-                      onClick={() => setShowColumnDropdown(!showColumnDropdown)}
-                    >
-                      Columns
-                    </button>
-                    {showColumnDropdown && (
-                      <div
-                        className="position-absolute bg-white border rounded shadow-sm p-2"
-                        style={{
-                          right: "0px",
-                          top: 'calc(100% + 4px)',  // Button ke turant neeche
-                          minWidth: '200px',
-                          zIndex: 1000,
-                          maxHeight: '300px',
-                          overflowY: 'auto'
-                        }}
-                      >
-                        {tableColumns.map((column) => (
-                          <>
-                            <div
-                              key={column}
-                              className="bg-white p-2 mb-2 d-flex align-items-center gap-2"
-                            >
-                              <input
-                                type="checkbox"
-                                id={`column-${column.id}`}
-                                checked={isColumnVisible(column.id)}
-                                onChange={() => toggleColumnVisibility(column.id)}
-                                disabled={column.required}
-                                className="form-check-input"
-                              />
-                              <label htmlFor={`item-${column.id}`} className="mb-0 flex-grow-1 form-label">
-                                {column.label}
-                              </label>
-                            </div>
-                          </>
-                        ))}
-                      </div>
-                    )}
-                  </div>
                 </div>
               </div>
             </div>
@@ -631,6 +605,7 @@ const CivilIDNameList = () => {
           <div className="card-body pt-0 container-table" >
             <div className='container-table-div'>
               <table className="table mb-0"  >
+
                 <thead>
                   <tr>
                     <th scope="col" className='sl-numbar-th'>
@@ -660,7 +635,38 @@ const CivilIDNameList = () => {
                         </th>
                       )
                     ))}
-                    <th scope="col" className='action-th'>Action</th>
+                    <th scope="col" className='action-th'>
+                      <div className="position-relative table-header-hide-show" ref={columnDropdownRef}>
+                        <button
+                          className="position-relative table-header-hide-show"
+                          onClick={() => setShowColumnDropdown(!showColumnDropdown)}
+                        >
+                          Action <Icon icon="mdi:table-column" width="20" className='icone' />
+                        </button>
+                        {showColumnDropdown && (
+                          <div className="position-absolute bg-white border rounded shadow-sm p-2 show-dropdowns-header">
+                            {tableColumns.map((column) => (
+                              <div
+                                key={column.id}
+                                className="bg-white p-2 mb-2 d-flex align-items-center gap-2"
+                              >
+                                <input
+                                  type="checkbox"
+                                  id={`column-${column.id}`}
+                                  checked={isColumnVisible(column.id)}
+                                  onChange={() => toggleColumnVisibility(column.id)}
+                                  disabled={column.required}
+                                  className="form-check-input"
+                                />
+                                <label htmlFor={`column-${column.id}`} className="mb-0 flex-grow-1 form-label">
+                                  {column.label}
+                                </label>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -690,25 +696,45 @@ const CivilIDNameList = () => {
                           </div>
                         </td>
                         {isColumnVisible('civil_id_name') && (
-                          <td><span>{rowItem.full_name}</span></td>
+                          <td><span>{rowItem.civil_id_name}</span></td>
                         )}
                         {isColumnVisible('authority_full_name') && (
-                          <td><span>{rowItem.full_name}</span></td>
+                          <td><span>{rowItem.authority_full_name}</span></td>
                         )}
                         {isColumnVisible('authority_short_name') && (
-                          <td><span>{rowItem.short_name}</span></td>
+                          <td><span>{rowItem.authority_short_name}</span></td>
                         )}
-                        {isColumnVisible('id_valid_duration') && (
-                          <td><span>{rowItem.valid_upto}</span></td>
+
+                        {isColumnVisible('valid_type') && (
+                          <td><span>{rowItem.valid_type}</span></td>
                         )}
+                        {isColumnVisible('valid_date') && (
+                          <td>
+                            <span>
+                              {rowItem?.valid_date != null && rowItem?.valid_date !== ""
+                                ? formatDateDDMMYYYY(rowItem.valid_date)
+                                : ""}
+                            </span>
+                          </td>
+                        )}
+
+                        {isColumnVisible('valid_duration_value') && (
+                          <td><span>{rowItem.valid_duration_value}</span></td>
+                        )}
+                        {isColumnVisible('valid_duration_unit') && (
+                          <td><span>{rowItem.valid_duration_unit}</span></td>
+                        )}
+
+
                         {isColumnVisible('description') && (
                           <td><span>{rowItem.description}</span></td>
                         )}
-                        {isColumnVisible('modified_on') && (
-                          <td><span>{formatDateTime(rowItem.updated_at)}</span></td>
+                        {isColumnVisible('updated_at') && (
+                          <td><span>{formatDateDDMMYYYYTime(rowItem.updated_at)}</span></td>
                         )}
-                        <td>
-                          <div className="d-flex align-items-center gap-2">
+
+                        <td className='action-td'>
+                          <div className="d-flex align-items-end gap-2">
                             <Link to="#" className='edit-btn-icone' onClick={(e) => { e.preventDefault(); handleShowEdit(rowItem); }}>
                               <Icon icon="lucide:edit" width="18" className='icone' />
                             </Link>

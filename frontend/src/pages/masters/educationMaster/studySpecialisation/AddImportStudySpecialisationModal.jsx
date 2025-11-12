@@ -77,7 +77,7 @@ const AddImportStudySpecialisationModal = ({ show, handleClose }) => {
                             <div>{response?.message}</div>
                             {response?.duplicates?.length > 0 && (
                                 <div style={{ marginTop: '6px' }}>
-                                    <strong>Duplicate study main areas skipped — the duplicate data from your uploaded file has been exported into an .xlsx file.</strong>
+                                    <strong>Duplicate study specialisations skipped — the duplicate data from your uploaded file has been exported into an .xlsx file.</strong>
                                 </div>
                             )}
                         </div>,
@@ -100,12 +100,12 @@ const AddImportStudySpecialisationModal = ({ show, handleClose }) => {
     };
 
     const handleExportToExcel = (duplicatesData) => {
-        const header = ["Study Main Area"];
+        const header = ["Study Specialisation"];
         const duplicates = duplicatesData //["test1", "test3", "test3"];
         const worksheetData = [header, ...duplicates.map((item) => [item])];
         const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "StudyMainArea");
+        XLSX.utils.book_append_sheet(workbook, worksheet, "StudySpecialisation");
 
         const excelBuffer = XLSX.write(workbook, {
             bookType: "xlsx",
@@ -116,7 +116,7 @@ const AddImportStudySpecialisationModal = ({ show, handleClose }) => {
             type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         });
 
-        saveAs(blob, `StudyMainArea-Duplicate-Data.xlsx`);
+        saveAs(blob, `StudySpecialisation-Duplicate-Data.xlsx`);
     };
     // Handle modal close
     const onClose = () => {
@@ -148,7 +148,7 @@ const AddImportStudySpecialisationModal = ({ show, handleClose }) => {
                     <div className="modal-content radius-16 bg-base">
                         <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
                             <h1 className="modal-title fs-5" id="departmentModalLabel">
-                                Upload Study Main Area
+                                Upload Study Specialisation
                             </h1>
                             <button
                                 type="button"
@@ -241,10 +241,10 @@ const AddImportStudySpecialisationModal = ({ show, handleClose }) => {
             </div>
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
-                    downloadFileName:"StudyMainArea",
-                    items: ["Study Main Area", "Description"],
-                    selectedItems: ["Study Main Area"],
-                    ItemsRequired:["Study Main Area"]
+                    downloadFileName:"StudySpecialisation",
+                    items: ["Study Main Area","Study Major Area","Study Specialisation","Description"],
+                    selectedItems: ["Study Main Area","Study Major Area","Study Specialisation"],
+                    ItemsRequired:["Study Main Area","Study Major Area","Study Specialisation" ]
                 }
                 } />
             )}

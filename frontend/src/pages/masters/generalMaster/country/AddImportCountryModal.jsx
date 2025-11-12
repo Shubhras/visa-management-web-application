@@ -5,6 +5,7 @@ import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import { countryImportData } from "../../../../store/master/generalMasters/actions";
 import CommanSampleExcelDownloadModal from "../../../../components/comman/CommanSampleExcelDownloadModal";
+import { exportToExcelWrongData } from "../../../../helper/utils/commanHelper";
 const AddImportCountryModal = ({ show, handleClose }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
@@ -92,6 +93,21 @@ const AddImportCountryModal = ({ show, handleClose }) => {
             if (response?.duplicates?.length > 0) {
               handleExportToExcel(response.duplicates);
             }
+            if (response?.skipped_rows?.length > 0) {
+              const prepareData = {
+                data: response.skipped_rows || [],
+                headers: ["Country Name", "Continent", "Reason"],
+                sheetName: "Country",
+                fileName: "Country",
+              };
+              exportToExcelWrongData(
+                prepareData.data,
+                prepareData.headers,
+                prepareData.sheetName,
+                prepareData.fileName
+              );
+            }
+
             setFile(null);
             setSheetNames([]);
             setSelectedSheet("");
@@ -105,23 +121,35 @@ const AddImportCountryModal = ({ show, handleClose }) => {
   };
 
   const handleExportToExcel = (duplicatesData) => {
-    const header = ["Country"];
-    const duplicates = duplicatesData; //["test1", "test3", "test3"];
-    const worksheetData = [header, ...duplicates.map((item) => [item])];
+    // Define headers
+    const header = ["Country Name", "Continent"];
+
+    // Map the data in the same order as header
+    const worksheetData = [
+      header,
+      ...duplicatesData.map(item => [
+        item["Country Name"] || "",
+        item["Continent"] || "",
+      ])
+    ];
+
+    // Create worksheet and workbook
     const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Country");
 
+    // Write workbook to buffer
     const excelBuffer = XLSX.write(workbook, {
       bookType: "xlsx",
-      type: "array",
+      type: "array"
     });
 
+    // Create Blob and save file
     const blob = new Blob([excelBuffer], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     });
 
-    saveAs(blob, `Country-Duplicate-Data.xlsx`);
+    saveAs(blob, "Country-Duplicate-Data.xlsx");
   };
   // Handle modal close
   const onClose = () => {
@@ -184,9 +212,8 @@ const AddImportCountryModal = ({ show, handleClose }) => {
                     </label>
                     <input
                       type="file"
-                      className={`form-control radius-8 ${
-                        error && !selectedSheet ? "is-invalid" : ""
-                      }`}
+                      className={`form-control radius-8 ${error && !selectedSheet ? "is-invalid" : ""
+                        }`}
                       onChange={handleFileChange}
                       accept=".csv,.xlsx,.xls,.pdf,.docx"
                       style={{ height: "auto" }}
@@ -276,8 +303,8 @@ const AddImportCountryModal = ({ show, handleClose }) => {
               "Description",
               "Modified On",
             ],
-            selectedItems: ["Country Name"], 
-            ItemsRequired: ["Country Name"], 
+            selectedItems: ["Country Name", "Continent"],
+            ItemsRequired: ["Country Name", "Continent"],
           }}
         />
       )}

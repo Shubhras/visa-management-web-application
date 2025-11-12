@@ -60,9 +60,9 @@ const MasterLayout = ({ children }) => {
             { name: 'Marital Status', path: '/marital-status' },
             { name: 'Continents ', path: '/continent-list' },
             { name: "Country ", path: "/country-list" },
-            // { name: 'State', path: '/' },
-            // { name: 'District', path: '/' },
-            // { name: 'City', path: '/' },
+            { name: 'State', path: '/state-list' },
+            { name: 'District', path: '/district-list' },
+            { name: 'City', path: '/city-list' },
             { name: 'Time Zone', path: '/timezone-list' },
             { name: 'Relation', path: '/relation-list' },
             { name: 'Civil ID Name', path: '/civil-name-list' },
@@ -109,8 +109,30 @@ const MasterLayout = ({ children }) => {
             { name: 'Study Major Area', path: '/study-major-area' },
             { name: 'Academic Result Type', path: '/academic-result-type' },
             { name: 'Education Type', path: '/education-type' },
-            { name: 'Study Specialisation', path: '/study-specialisation' }
- 
+            { name: 'Study Specialisation', path: '/study-specialisation' },
+            { name: 'Degree Awarded By', path: '/degree-awarded-by' },
+            { name: 'Academic Result', path: '/academic-result' },
+            { name: 'Degree Awarded Institute', path: '/degree-awarded-institute' },
+            { name: 'Compare : Academic Result To Result', path: '/academic-result-to-result' },
+            { name: 'ECA Awarding Body', path: '/eca-awarding-body' },
+            { name: 'Medium of Education', path: '/medium-of-education' },
+            { name: 'ECA For', path: '/eca-for' },
+
+          ]
+        },
+        {
+          name: 'Test',
+          // path: '/priority-type',
+          children: [
+            { name: 'Language Name(Test)', path: '/language-name-test' },
+            { name: 'Language Test Name', path: '/language-test-name' },
+            { name: 'Language Test Module Name', path: '/language-test-module-name' },
+            { name: 'Language Banchmark Level', path: '/language-banchmark-level' },
+            { name: 'CLB Level', path: '/cbl-level' },
+            { name: 'Entrance Test Name', path: '/entrance-test-name' },
+            { name: 'Entrance Test Module Name', path: '/entrance-test-module-name' },
+            { name: 'Entrance Test Result', path: '/entrance-test-result' },
+            { name: 'Language Test Result', path: '/language-test-result' },
           ]
         },
 

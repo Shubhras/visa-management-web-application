@@ -242,9 +242,9 @@ const AddImportTimeZoneModal = ({ show, handleClose }) => {
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
                     downloadFileName:"TimeZone",
-                    items: ["Country","State", "Time Zone","Description"],
-                    selectedItems: ["Country","State", "Time Zone"],
-                    ItemsRequired:["Country","State", "Time Zone"]
+                    items: ["Country", "Time Zone","Description"],
+                    selectedItems: ["Country", "Time Zone"],
+                    ItemsRequired:["Country", "Time Zone"]
                 }
                 } />
             )}

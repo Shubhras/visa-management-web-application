@@ -3,8 +3,9 @@ import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
-import {accreditationNameImportData} from '../../../../store/master/companyMasters/actions';
+import { accreditationNameImportData } from '../../../../store/master/companyMasters/actions';
 import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
+import { exportToExcelWrongData } from '../../../../helper/utils/commanHelper';
 const AddImportAccrediationNameModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
@@ -77,7 +78,7 @@ const AddImportAccrediationNameModal = ({ show, handleClose }) => {
                             <div>{response?.message}</div>
                             {response?.duplicates?.length > 0 && (
                                 <div style={{ marginTop: '6px' }}>
-                                    <strong>Duplicate licence name skipped — the duplicate data from your uploaded file has been exported into an .xlsx file.</strong>
+                                    <strong>Duplicate accrediation name skipped — the duplicate data from your uploaded file has been exported into an .xlsx file.</strong>
                                 </div>
                             )}
                         </div>,
@@ -88,6 +89,21 @@ const AddImportAccrediationNameModal = ({ show, handleClose }) => {
                     if (response?.duplicates?.length > 0) {
                         handleExportToExcel(response.duplicates)
                     }
+                    if (response?.skipped_rows?.length > 0) {
+                        const prepareData = {
+                            data: response.skipped_rows || [],
+                            headers: ["Country", "Accrediation Category", "Accrediation Full Name", "Reason"],
+                            sheetName: "AccrediationName",
+                            fileName: "AccrediationName",
+                        };
+                        exportToExcelWrongData(
+                            prepareData.data,
+                            prepareData.headers,
+                            prepareData.sheetName,
+                            prepareData.fileName
+                        );
+                    }
+
                     setFile(null);
                     setSheetNames([]);
                     setSelectedSheet('');
@@ -100,24 +116,38 @@ const AddImportAccrediationNameModal = ({ show, handleClose }) => {
     };
 
     const handleExportToExcel = (duplicatesData) => {
-        const header = ["Licence Name"];
-        const duplicates = duplicatesData //["test1", "test3", "test3"];
-        const worksheetData = [header, ...duplicates.map((item) => [item])];
+        // Define headers
+        const header = ["Country", "Accrediation Category", "Accrediation Full Name"];
+
+        // Map the data in the same order as header
+        const worksheetData = [
+            header,
+            ...duplicatesData.map(item => [
+                item["Country"] || "",
+                item["Accrediation Category"] || "",
+                item["Accrediation Full Name"] || ""
+            ])
+        ];
+
+        // Create worksheet and workbook
         const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "LicenceName");
+        XLSX.utils.book_append_sheet(workbook, worksheet, "AccrediationName");
 
+        // Write workbook to buffer
         const excelBuffer = XLSX.write(workbook, {
             bookType: "xlsx",
-            type: "array",
+            type: "array"
         });
 
+        // Create Blob and save file
         const blob = new Blob([excelBuffer], {
-            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         });
 
-        saveAs(blob, `LicenceName-Duplicate-Data.xlsx`);
+        saveAs(blob, "AccrediationName-Duplicate-Data.xlsx");
     };
+
     // Handle modal close
     const onClose = () => {
         setFile(null);
@@ -148,7 +178,7 @@ const AddImportAccrediationNameModal = ({ show, handleClose }) => {
                     <div className="modal-content radius-16 bg-base">
                         <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
                             <h1 className="modal-title fs-5" id="license-nameModalLabel">
-                                Upload Licence Name
+                                Upload Accrediation Name
                             </h1>
                             <button
                                 type="button"
@@ -241,10 +271,10 @@ const AddImportAccrediationNameModal = ({ show, handleClose }) => {
             </div>
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
-                    downloadFileName:"AccrediationName",
-                    items: ["Country","Accrediation Category", "Accrediation Full Name", "Accrediation Short Name", "Accrediation Issuing Authority Name", "Accrediation Valid Upto", "Description"],
-                    selectedItems: ["Country", "Accrediation Category","Accrediation Full Name", "Accrediation Short Name", "Accrediation Issuing Authority Name", "Accrediation Valid Upto",],
-                    ItemsRequired:["Country", "Accrediation Category","Accrediation Full Name", "Accrediation Short Name", "Accrediation Issuing Authority Name", "Accrediation Valid Upto"]
+                    downloadFileName: "AccrediationName",
+                    items: ["Country", "Accrediation Category", "Accrediation Full Name", "Accrediation Short Name", "Accrediation Issuing Authority Name", "Accrediation Valid Upto", "Description"],
+                    selectedItems: ["Country", "Accrediation Category", "Accrediation Full Name"],
+                    ItemsRequired: ["Country", "Accrediation Category", "Accrediation Full Name"],
                 }
                 } />
             )}
