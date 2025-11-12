@@ -386,8 +386,8 @@ class WorkRightsImportAPIView(APIView):
             imported_count = 0
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("work rights") or row.get("work rights")).strip()
-                description = str(row.get("description", "")).strip()
+                name = str(row.get("work rights")) if row.get("work rights") else None
+                description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
                     skipped_rows.append({"Row": row_number, "Reason": "Missing WorkRight name"})
@@ -396,7 +396,7 @@ class WorkRightsImportAPIView(APIView):
                 existing = WorkRights.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "WorkRight": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "WorkRights": name, "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
