@@ -10,7 +10,7 @@ const AddEditDistrictModal = ({ show, handleClose, mode = 'add', rowData = null 
   const [loading, setLoading] = useState(false);
   const [countryListData, setCountryListData] = useState([]);
   const [stateListData, setStateListData] = useState([]);
-  
+
   // Form state
   const [formData, setFormData] = useState({
     uuid: '',
@@ -62,8 +62,8 @@ const AddEditDistrictModal = ({ show, handleClose, mode = 'add', rowData = null 
       limit: 2000,
       search: '',
       status: '',
-      sortBy: 'updated_at',
-      sortOrder: 'desc',
+      sortBy: 'name',
+      sortOrder: 'asc',
     };
 
     dispatch(countryDemoList(params, (response, error) => {
@@ -79,7 +79,7 @@ const AddEditDistrictModal = ({ show, handleClose, mode = 'add', rowData = null 
       setStateListData([]);
       return;
     }
-    
+
     setLoading(true);
     const params = {
       countryId: countryId,
@@ -98,7 +98,7 @@ const AddEditDistrictModal = ({ show, handleClose, mode = 'add', rowData = null 
   // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
-    
+
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -141,6 +141,16 @@ const AddEditDistrictModal = ({ show, handleClose, mode = 'add', rowData = null 
       }));
     }
   };
+  // Custom filter function for search from start
+  const customFilterOptionCountry = (option, inputValue) => {
+    if (!inputValue) return true;
+    return option.label.toLowerCase().startsWith(inputValue.toLowerCase());
+  };
+  const customFilterOptionState = (option, inputValue) => {
+    if (!inputValue) return true;
+    return option.label.toLowerCase().startsWith(inputValue.toLowerCase());
+  };
+
 
   // Validate form
   const validateForm = () => {
@@ -266,20 +276,20 @@ const AddEditDistrictModal = ({ show, handleClose, mode = 'add', rowData = null 
                     value={
                       formData.country
                         ? countryListData
-                            .map((option) => ({
-                              value: option.uuid,
-                              label: option.name,
-                            }))
-                            .find((opt) => opt.value === formData.country)
+                          .map((option) => ({
+                            value: option.uuid,
+                            label: option.name,
+                          }))
+                          .find((opt) => opt.value === formData.country)
                         : null
                     }
                     onChange={handleSelectChange}
+                    filterOption={customFilterOptionCountry}
                     placeholder="Select Country"
                     isClearable
                     isSearchable
-                    className={`custom-select-container ${
-                      errors.country ? "is-invalid" : ""
-                    }`}
+                    className={`custom-select-container ${errors.country ? "is-invalid" : ""
+                      }`}
                     classNamePrefix="custom-select"
                   />
                   {errors.country && (
@@ -303,14 +313,15 @@ const AddEditDistrictModal = ({ show, handleClose, mode = 'add', rowData = null 
                     value={
                       formData.state
                         ? stateListData
-                            .map((option) => ({
-                              value: option.uuid,
-                              label: option.name,
-                            }))
-                            .find((opt) => opt.value === formData.state)
+                          .map((option) => ({
+                            value: option.uuid,
+                            label: option.name,
+                          }))
+                          .find((opt) => opt.value === formData.state)
                         : null
                     }
                     onChange={handleSelectChange}
+                     filterOption={customFilterOptionState}
                     placeholder="Select State"
                     isClearable
                     isSearchable

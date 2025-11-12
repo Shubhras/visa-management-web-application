@@ -54,8 +54,8 @@ const AddEditStateModal = ({ show, handleClose, mode = 'add', rowData = null }) 
       limit: 2000,
       search: '',
       status: '',
-      sortBy: 'updated_at',
-      sortOrder: 'desc',
+      sortBy: 'name',
+      sortOrder: 'asc',
     };
 
     dispatch(countryDemoList(params, (response, error) => {
@@ -85,15 +85,19 @@ const AddEditStateModal = ({ show, handleClose, mode = 'add', rowData = null }) 
 
   // Handle Select changes for Country
   const handleSelectChange = (selectedOption) => {
-    setFormData((prev) => ({ 
-      ...prev, 
-      country: selectedOption ? selectedOption.value : "" 
+    setFormData((prev) => ({
+      ...prev,
+      country: selectedOption ? selectedOption.value : ""
     }));
     if (errors.country) {
       setErrors((prev) => ({ ...prev, country: "" }));
     }
   };
-
+  // Custom filter function for search from start
+  const customFilterOption = (option, inputValue) => {
+    if (!inputValue) return true;
+    return option.label.toLowerCase().startsWith(inputValue.toLowerCase());
+  };
   // Validate form
   const validateForm = () => {
     const newErrors = {};
@@ -218,20 +222,20 @@ const AddEditStateModal = ({ show, handleClose, mode = 'add', rowData = null }) 
                     value={
                       formData.country
                         ? countryListData
-                            .map((option) => ({
-                              value: option.uuid,
-                              label: option.name,
-                            }))
-                            .find((opt) => opt.value === formData.country)
+                          .map((option) => ({
+                            value: option.uuid,
+                            label: option.name,
+                          }))
+                          .find((opt) => opt.value === formData.country)
                         : null
                     }
                     onChange={handleSelectChange}
+                    filterOption={customFilterOption}
                     placeholder="Select Country"
                     isClearable
                     isSearchable
-                    className={`custom-select-container ${
-                      errors.country ? "is-invalid" : ""
-                    }`}
+                    className={`custom-select-container ${errors.country ? "is-invalid" : ""
+                      }`}
                     classNamePrefix="custom-select"
                   />
                   {errors.country && (
