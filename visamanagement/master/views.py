@@ -20,7 +20,7 @@ import openpyxl
 from django.http import HttpResponse
 from uuid import UUID
 from datetime import datetime  
-from django.db import IntegrityError
+from django.db import IntegrityError,transaction
 import csv
 import io
 import pytz
@@ -3116,7 +3116,7 @@ class CityImportAPIView(APIView):
             # ------------------ Prepare insert ------------------
             existing_city_keys = set(
                 City.objects.values_list(
-                    "cityName__iexact", "districtName_id", "stateName_id", "countryName_id"
+                    "cityName", "districtName_id", "stateName_id", "countryName_id"
                 )
             )
             to_create = []
