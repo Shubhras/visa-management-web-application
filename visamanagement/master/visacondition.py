@@ -254,7 +254,7 @@ class WorkRightsExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'WorkRight',
+            'name': 'Work Rights',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',
@@ -315,7 +315,7 @@ class WorkRightsImportAPIView(APIView):
         format_type = file.name.split(".")[-1].lower()
         duplicates = []
         skipped_rows = []
-        required_headers = {"workright", "name"}  # adjust as needed
+        required_headers = {"work rights"}  # adjust as needed
         optional_headers = {"description"}
 
         try:
@@ -386,7 +386,7 @@ class WorkRightsImportAPIView(APIView):
             imported_count = 0
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("workright") or row.get("name", "")).strip()
+                name = str(row.get("work rights") or row.get("work rights")).strip()
                 description = str(row.get("description", "")).strip()
 
                 if not name:
