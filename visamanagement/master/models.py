@@ -87,13 +87,16 @@ class State(models.Model):
 
 class District(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    countryName=models.ForeignKey(Country,on_delete=models.SET_NULL,related_name="districts_by_country", blank=True, null=True)
-    stateName=models.ForeignKey(State,on_delete=models.SET_NULL,related_name="districts", blank=True, null=True)
-    districtName=models.CharField(max_length=255, unique=True)
+    countryName = models.ForeignKey(Country, on_delete=models.SET_NULL, blank=True, null=True)
+    stateName = models.ForeignKey(State, on_delete=models.SET_NULL, blank=True, null=True)
+    districtName = models.CharField(max_length=255)
     description = models.TextField(max_length=255,null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)  
     is_deleted = models.BooleanField(default=False,null=True, blank=True)  
     updated_at = models.DateTimeField(auto_now=True) 
+
+    class Meta:
+        unique_together = ('districtName', 'stateName', 'countryName')
 
     def __str__(self):
         return self.districtName
@@ -163,11 +166,14 @@ class Timezone(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     countryName=models.ForeignKey(Country,on_delete=models.SET_NULL,related_name="timezone", blank=True, null=True)
     stateName=models.ForeignKey(State,on_delete=models.SET_NULL,related_name="timezone", blank=True, null=True)
-    Timezone =models.CharField(max_length=255, unique=True)
+    Timezone =models.CharField(max_length=255)
     description = models.TextField(max_length=255,null=True,blank=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)  
     updated_at = models.DateTimeField(auto_now=True) 
+
+    class Meta:
+        unique_together = ('Timezone', 'countryName')
 
     def __str__(self):
         return self.Timezone
@@ -214,11 +220,14 @@ class CompanyType(models.Model):
 class OwnershipType(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     company_type = models.ForeignKey(CompanyType, on_delete=models.SET_NULL, related_name="ownership_types", blank=True, null=True)
-    name = models.CharField(max_length=255, unique=True)
+    name = models.CharField(max_length=255)
     description = models.TextField(max_length=255, blank=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('name', 'company_type')
 
     def __str__(self):
         return self.name
@@ -238,11 +247,15 @@ class StakeholderCategory(models.Model):
 class StakeholderType(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     category = models.ForeignKey(StakeholderCategory, on_delete=models.SET_NULL, related_name="types", blank=True, null=True)
-    name = models.CharField(max_length=255, unique=True)
+    name = models.CharField(max_length=255)
     description = models.TextField(max_length=255, blank=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('name', 'category')
+    
 
     def __str__(self):
         return self.name
