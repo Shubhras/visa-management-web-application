@@ -2567,7 +2567,7 @@ class DistrictImportAPIView(APIView):
         skipped_rows = []
 
         required_headers = {'district name', 'country name'}
-        optional_headers = {'description','state name'}
+        optional_headers = {'description', 'state name'}
 
         try:
             data = []
@@ -2634,35 +2634,34 @@ class DistrictImportAPIView(APIView):
             # ---------------- Data Processing ----------------
             imported_count = 0
             existing_in_file = set()
-            for row in  reversed(data):
+
+            for row in reversed(data):
                 district_name = str(row.get('district name')).strip() if row.get('district name') else None
                 state_name = str(row.get('state name')).strip() if row.get('state name') else None
                 country_name = str(row.get('country name')).strip() if row.get('country name') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
-                
-                key = (district_name.lower(), state_name.lower(), country_name.lower())
-
 
                 if not district_name or not country_name:
                     skipped_rows.append({
                         "District Name": district_name or "Unknown",
+                        "State Name": state_name or "Unknown",
                         "Country Name": country_name or "Unknown",
-                        "State Name":state_name or "Unknown",
                         "Reason": "Missing required field"
                     })
                     continue
 
+                # ---------------- Country Lookup ----------------
                 country_obj = Country.objects.filter(name__iexact=country_name).first()
                 if not country_obj:
                     skipped_rows.append({
                         "District Name": district_name,
-                        "Country Name": country_name,
                         "State Name": state_name or "Unknown",
+                        "Country Name": country_name,
                         "Reason": "Country not found"
                     })
                     continue
 
-                # Fetch state if provided
+                # ---------------- State Lookup ----------------
                 state_obj = None
                 if state_name:
                     state_obj = State.objects.filter(stateName__iexact=state_name, countryName=country_obj).first()
@@ -2674,8 +2673,10 @@ class DistrictImportAPIView(APIView):
                             "Reason": "State not found for this country"
                         })
                         continue
-                key = (district_name.lower(), state_obj.stateName.lower() if state_obj else None, country_obj.name.lower())
 
+                # ---------------- Duplicate Check in File ----------------
+                state_key = state_obj.stateName.lower() if state_obj else ""
+                key = (district_name.lower(), state_key, country_obj.name.lower())
                 if key in existing_in_file:
                     duplicate_names.append({
                         "District Name": district_name,
@@ -2684,14 +2685,14 @@ class DistrictImportAPIView(APIView):
                         "Reason": "Duplicate found in file"
                     })
                     continue
+
+                # ---------------- Duplicate Check in DB ----------------
                 existing = District.objects.filter(
                     districtName__iexact=district_name,
                     countryName=country_obj
                 )
-
-                # Filter further by state (if applicable)
                 if state_obj:
-                    existing = existing.filter(stateName=state_obj)
+                    existing = existing.filter(stateName__iexact=state_obj.stateName)
                 else:
                     existing = existing.filter(stateName__isnull=True)
 
@@ -2703,7 +2704,8 @@ class DistrictImportAPIView(APIView):
                         "Reason": "Already exists in database"
                     })
                     continue
-                    
+
+                # ---------------- Create District ----------------
                 try:
                     District.objects.create(
                         districtName=district_name,
@@ -2718,8 +2720,9 @@ class DistrictImportAPIView(APIView):
                     duplicate_names.append({
                         "District Name": district_name,
                         "State Name": state_obj.stateName if state_obj else None,
-                        "Country Name": country_obj.name
-                    })   
+                        "Country Name": country_obj.name,
+                        "Reason": "Integrity Error"
+                    })
 
         except Exception as e:
             return Response({
@@ -2738,6 +2741,7 @@ class DistrictImportAPIView(APIView):
         }, status=200)
 
 
+        
 
 class DistrictByFilterAPIView(APIView):
     def get(self, request):
