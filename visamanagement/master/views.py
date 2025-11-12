@@ -7073,17 +7073,14 @@ class StakeholderTypeImportAPIView(APIView):
                     skipped_rows.append({"Row": row_number, "Reason": "Missing stakeholder type name"})
                     continue
 
-                # Resolve category object
                 if not category_name:
                     skipped_rows.append({"Row": row_number, "Stakeholder Type": name, "Reason": "Missing stakeholder category"})
                     continue
 
-                # Resolve category object
                 category_obj = StakeholderCategory.objects.filter(name__iexact=category_name, is_deleted=False).first()
                 if not category_obj:
                     skipped_rows.append({"Row": row_number, "Stakeholder Type": name,"Reason": f'Category "{category_name}" not found'})
                     continue
-                # Check duplicate by name + category
                 existing = StakeholderType.objects.filter(
                     name__iexact=name,
                     category=category_obj
