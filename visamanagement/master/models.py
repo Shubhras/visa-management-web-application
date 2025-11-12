@@ -89,7 +89,7 @@ class District(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     countryName=models.ForeignKey(Country,on_delete=models.SET_NULL,related_name="districts_by_country", blank=True, null=True)
     stateName=models.ForeignKey(State,on_delete=models.SET_NULL,related_name="districts", blank=True, null=True)
-    districtName=models.CharField(max_length=255, unique=True)
+    districtName=models.CharField(max_length=255,unique=False)
     description = models.TextField(max_length=255,null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)  
     is_deleted = models.BooleanField(default=False,null=True, blank=True)  
