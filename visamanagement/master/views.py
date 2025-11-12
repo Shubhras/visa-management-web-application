@@ -9526,6 +9526,7 @@ class InterestLevelExportAPIView(APIView):
         queryset = InterestLevel.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-created_at')
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
