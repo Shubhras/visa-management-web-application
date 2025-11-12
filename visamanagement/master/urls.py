@@ -2,6 +2,7 @@ from django.urls import path
 from .views import *
 from .test import *
 from .visamaster import *
+from  .visacondition import *
 
 urlpatterns = [
 
