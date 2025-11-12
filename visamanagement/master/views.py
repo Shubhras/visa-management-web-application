@@ -144,7 +144,7 @@ class GenderListAPIView(APIView):
 
         if search:
             queryset = queryset.filter(
-                Q(name__iexact=search)
+                Q(name__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -560,8 +560,7 @@ class MaritalstatusListAPIView(APIView):
             # Apply search filter
             if search:
                 queryset = queryset.filter(
-                    Q(name__icontains=search) |
-                    Q(description__icontains=search)
+                    Q(name__istartswith=search)
                 )
 
             # Apply ordering
