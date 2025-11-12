@@ -2633,11 +2633,15 @@ class DistrictImportAPIView(APIView):
 
             # ---------------- Data Processing ----------------
             imported_count = 0
+            existing_in_file = set()
             for row in  reversed(data):
                 district_name = str(row.get('district name')).strip() if row.get('district name') else None
                 state_name = str(row.get('state name')).strip() if row.get('state name') else None
                 country_name = str(row.get('country name')).strip() if row.get('country name') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
+                
+                key = (district_name.lower(), state_name.lower(), country_name.lower())
+
 
                 if not district_name or not country_name:
                     skipped_rows.append({
@@ -2678,24 +2682,15 @@ class DistrictImportAPIView(APIView):
                     countryName=country_obj
                 ).first()
 
-                if existing:
-                    if not existing.is_deleted:
+                if existing or key in existing_in_file:
                         duplicate_names.append({
                             "District Name": existing.districtName,
                             "State Name": state_obj.stateName if state_obj else None,
                             "Country Name": country_obj.name
                         })
                         continue
-                    else:
-                        # Restore deleted record
-                        existing.districtName = district_name
-                        existing.stateName = state_obj
-                        existing.countryName = country_obj
-                        existing.description = description  
-                        existing.is_deleted = False
-                        existing.save()
-                        imported_count += 1
-                else:
+                    
+                try:
                     District.objects.create(
                         districtName=district_name,
                         stateName=state_obj,
@@ -2704,6 +2699,14 @@ class DistrictImportAPIView(APIView):
                         is_deleted=False
                     )
                     imported_count += 1
+                    existing_in_file.add(key)
+                except IntegrityError:
+                    duplicate_names.append({
+                        "District Name": existing.districtName,
+                        "State Name": state_obj.stateName if state_obj else None,
+                        "Country Name": country_obj.name
+                    })   
+                    
         except Exception as e:
             return Response({
                 "statusCode": 400,
