@@ -87,13 +87,16 @@ class State(models.Model):
 
 class District(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    countryName=models.ForeignKey(Country,on_delete=models.SET_NULL,related_name="districts_by_country", blank=True, null=True)
-    stateName=models.ForeignKey(State,on_delete=models.SET_NULL,related_name="districts", blank=True, null=True)
-    districtName=models.CharField(max_length=255,unique=False)
+    countryName = models.ForeignKey(Country, on_delete=models.SET_NULL, blank=True, null=True)
+    stateName = models.ForeignKey(State, on_delete=models.SET_NULL, blank=True, null=True)
+    districtName = models.CharField(max_length=255)
     description = models.TextField(max_length=255,null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)  
     is_deleted = models.BooleanField(default=False,null=True, blank=True)  
     updated_at = models.DateTimeField(auto_now=True) 
+
+    class Meta:
+        unique_together = ('districtName', 'stateName', 'countryName')
 
     def __str__(self):
         return self.districtName
