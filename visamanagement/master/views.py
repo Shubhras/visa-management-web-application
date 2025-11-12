@@ -2674,19 +2674,22 @@ class DistrictImportAPIView(APIView):
                         })
                         continue
 
-                # ---------------- Duplicate Check in File ----------------
-                state_key = state_obj.stateName.lower() if state_obj else ""
-                key = (district_name.lower(), state_key, country_obj.name.lower())
-                if key in existing_in_file:
+                # ---------------- File-level Duplicate Check ----------------
+                file_key = (
+                    district_name.lower(),
+                    state_name.lower() if state_name else "",
+                    country_name.lower()
+                )
+                if file_key in existing_in_file:
                     duplicate_names.append({
                         "District Name": district_name,
-                        "State Name": state_obj.stateName if state_obj else None,
-                        "Country Name": country_obj.name,
+                        "State Name": state_name,
+                        "Country Name": country_name,
                         "Reason": "Duplicate found in file"
                     })
                     continue
 
-                # ---------------- Duplicate Check in DB ----------------
+                # ---------------- DB-level Duplicate Check ----------------
                 existing = District.objects.filter(
                     districtName__iexact=district_name,
                     countryName=country_obj
@@ -2699,8 +2702,8 @@ class DistrictImportAPIView(APIView):
                 if existing.exists():
                     duplicate_names.append({
                         "District Name": district_name,
-                        "State Name": state_obj.stateName if state_obj else None,
-                        "Country Name": country_obj.name,
+                        "State Name": state_name,
+                        "Country Name": country_name,
                         "Reason": "Already exists in database"
                     })
                     continue
@@ -2715,12 +2718,12 @@ class DistrictImportAPIView(APIView):
                         is_deleted=False
                     )
                     imported_count += 1
-                    existing_in_file.add(key)
+                    existing_in_file.add(file_key)
                 except IntegrityError:
                     duplicate_names.append({
                         "District Name": district_name,
-                        "State Name": state_obj.stateName if state_obj else None,
-                        "Country Name": country_obj.name,
+                        "State Name": state_name,
+                        "Country Name": country_name,
                         "Reason": "Integrity Error"
                     })
 
