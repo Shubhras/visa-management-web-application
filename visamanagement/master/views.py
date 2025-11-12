@@ -7065,9 +7065,9 @@ class StakeholderTypeImportAPIView(APIView):
             imported_count = 0
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get('stakeholdertype')).strip() if row.get('stakeholdertype') else None
+                name = str(row.get('stakeholder type')).strip() if row.get('stakeholder type') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
-                category_name = str(row.get('stakeholdercategory')).strip() if row.get('stakeholdercategory') else None
+                category_name = str(row.get('stakeholder category')).strip() if row.get('stakeholder category') else None
 
                 if not name:
                     skipped_rows.append({"Row": row_number, "Reason": "Missing stakeholder type name"})
@@ -7081,7 +7081,7 @@ class StakeholderTypeImportAPIView(APIView):
                 # Resolve category object
                 category_obj = StakeholderCategory.objects.filter(name__iexact=category_name, is_deleted=False).first()
                 if not category_obj:
-                    skipped_rows.append({"Row": row_number, "Stakeholder Type": name, "Reason": f'Category "{category_name}" not found'})
+                    skipped_rows.append({"Row": row_number, "Stakeholder Type": name,"Reason": f'Category "{category_name}" not found'})
                     continue
                 # Check duplicate by name + category
                 existing = StakeholderType.objects.filter(
@@ -7091,7 +7091,7 @@ class StakeholderTypeImportAPIView(APIView):
 
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "StakeholderType": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "Stakeholder Type": name,"Stakeholder Category": category_name, "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description

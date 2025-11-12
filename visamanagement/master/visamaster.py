@@ -8,9 +8,10 @@ from tablib import Dataset
 from tablib.formats import registry
 import openpyxl, datetime
 from uuid import UUID
-
+import io, csv, datetime, uuid, openpyxl
 from .models import *
 from .serializers import *
+from django.utils import timezone
 from .pagination import *
 CSV = registry.get_format('csv')
 XLSX = registry.get_format('xlsx')
@@ -34,10 +35,10 @@ class RepresentingCountryListAPIView(APIView):
 
         if search:
             queryset = queryset.filter(
-                Q(country__name__icontains=search) |
-                Q(continent__icontains=search) |
-                Q(full_name__icontains=search) |
-                Q(short_name__icontains=search)
+                Q(country__name__istartswith=search) |
+                Q(continent__istartswith=search) |
+                Q(full_name__istartswith=search) |
+                Q(short_name__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -173,107 +174,197 @@ class RepresentingCountryDeleteAPIView(APIView):
 
 # ------------------ EXPORT ------------------
 class RepresentingCountryExportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
     def get(self, request):
-        format_type = request.GET.get('format', 'csv').lower()
-        fields = request.GET.get('fields')
-        uuids_param = request.GET.get('uuids', '')
-
+        format_type = request.GET.get('format', 'xlsx').lower()
+        fields = request.GET.get('fields')  # comma-separated fields
+        uuids_param = request.GET.get('uuids', '')  # comma-separated UUIDs
         uuids = [u.strip() for u in uuids_param.split(',') if u]
-        field_list = [f.strip() for f in fields.split(',')] if fields else [
-            'uuid', 'country', 'continent', 'short_name', 'full_name',
-            'official_name', 'capital_city', 'population', 'status',
-            'is_active', 'is_deleted', 'created_at', 'updated_at'
-        ]
 
-        queryset = RepresentingCountry.objects.filter(uuid__in=uuids) if uuids else RepresentingCountry.objects.all()
+        # --- Field to header mapping ---
+        field_header_map = {
+            'uuid': 'UUID',
+            'country': 'Country Name',
+            'continent': 'Continent',
+            'short_name': 'Short Name',
+            'full_name': 'Full Name',
+            'official_name': 'Official Name',
+            'capital_city': 'Capital City',
+            'population': 'Population',
+            'status': 'Status',
+            'is_active': 'Active',
+            'is_deleted': 'Deleted',
+            'created_at': 'Created On',
+            'updated_at': 'Modified On'
+        }
+
+        if fields:
+            field_list = [f.strip() for f in fields.split(',')]
+        else:
+            field_list = list(field_header_map.keys())
+
+        queryset = RepresentingCountry.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-created_at')
+
         dataset = Dataset()
-        dataset.headers = field_list
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'Representing Countries'
 
-        for c in queryset:
+        for obj in queryset:
             row = []
             for field in field_list:
-                value = getattr(c, field, '')
-                if isinstance(value, datetime.datetime):
-                    value = value.strftime("%Y-%m-%d %H:%M:%S")
-                if isinstance(value, bool):
+                value = getattr(obj, field, '')
+                if field == 'continent' and obj.continent:
+                    value = obj.continent
+                elif isinstance(value, datetime.datetime):
+                    value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
                     value = int(value)
                 row.append(value if value is not None else '')
             dataset.append(row)
 
-        if format_type == 'xlsx':
-            data = XLSX().export_data(dataset)
-            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            filename = 'representing_countries.xlsx'
-        else:
-            data = CSV().export_data(dataset)
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
             content_type = 'text/csv; charset=utf-8'
-            filename = 'representing_countries.csv'
+            file_name = 'representing_countries.csv'
+        else:
+            file_data = io.BytesIO(dataset.export('xlsx'))
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'representing_countries.xlsx'
 
-        response = HttpResponse(data, content_type=content_type)
-        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
 
 # ------------------ IMPORT ------------------
 class RepresentingCountryImportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')
-
         if not file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
-        dataset = Dataset()
         duplicate_names = []
+        skipped_rows = []
+
+        required_headers = {'full name', 'continent'}
+        optional_headers = {'short name', 'official name', 'capital city', 'population', 'status'}
 
         try:
+            data = []
+            headers = []
+
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
-                if not sheet_name or sheet_name not in available_sheets:
-                    return Response({
-                        'error': 'Invalid or missing sheet name',
-                        'available_sheets': available_sheets
-                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                if not sheet_name:
+                    return Response({'error': 'Please provide sheet_name', 'available_sheets': available_sheets}, status=400)
+                if sheet_name not in available_sheets:
+                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
+
                 ws = wb[sheet_name]
-                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                data = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True)]
+                if ws.max_row <= 1:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'The uploaded XLSX sheet "{sheet_name}" is empty.'
+                    }, status=400)
+
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response({
+                        "statusCode": 400,
+                        "status": True,
+                        "message": f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
+                    }, status=400)
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    if not any(row):
+                        continue
+                    data.append(dict(zip(headers, row)))
 
             elif format_type == 'csv':
-                dataset.load(file.read().decode('utf-8'), format='csv')
-                data = dataset.dict
+                decoded_file = file.read().decode('utf-8')
+                reader = csv.DictReader(io.StringIO(decoded_file))
+                for row in reader:
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({
+                            "statusCode": 400,
+                            "status": True,
+                            "message": f'Missing required headers. Required: {required_headers}. Found: {set(row_lower.keys())}'
+                        }, status=400)
+                    data.append(row_lower)
             else:
-                return Response({'error': 'Unsupported file format'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({
+                    "statusCode": 400,
+                    "status": True,
+                    'error': 'Unsupported file format. Use .xlsx or .csv'
+                }, status=400)
 
+            imported_count = 0
             for row in data:
-                full_name = str(row.get('full_name')).strip() if row.get('full_name') else None
-                continent = str(row.get('continent')).strip() if row.get('continent') else ''
+                full_name = str(row.get('full name')).strip() if row.get('full name') else None
                 if not full_name:
+                    skipped_rows.append({"Full Name": "Unknown", "Reason": "Missing required field: full name"})
                     continue
+
+                continent_name = str(row.get('continent')).strip() if row.get('continent') else ''
+                continent_obj = None
+                if continent_name:
+                    continent_obj = Continents.objects.filter(name__iexact=continent_name).first()
+                    if not continent_obj:
+                        skipped_rows.append({"Full Name": full_name, "Continent": continent_name, "Reason": "Invalid continent name"})
+                        continue
+
                 existing = RepresentingCountry.objects.filter(full_name__iexact=full_name).first()
                 if existing:
                     if not existing.is_deleted:
                         duplicate_names.append(full_name)
                         continue
                     existing.is_deleted = False
+                    existing.continent = continent_name
                     existing.save()
+                    imported_count += 1
                 else:
                     RepresentingCountry.objects.create(
                         full_name=full_name,
-                        continent=continent
+                        continent=continent_name,
+                        short_name=row.get('short name', ''),
+                        official_name=row.get('official name', ''),
+                        capital_city=row.get('capital city', ''),
+                        population=row.get('population', ''),
+                        status=row.get('status', ''),
+                        is_deleted=False
                     )
+                    imported_count += 1
 
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({
+                "statusCode": 400,
+                "status": True,
+                'message': str(e)
+            }, status=400)
 
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_names)),
-            "message": "File imported successfully"
-        }, status=status.HTTP_200_OK)
-
+            "duplicates": duplicate_names,
+            "skipped_rows": skipped_rows,
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count
+        }, status=200)
 
 
 
@@ -294,7 +385,7 @@ class VisaMainListAPIView(APIView):
 
         queryset = VisaMain.objects.filter(is_deleted=False)
         if search:
-            queryset = queryset.filter(Q(name__icontains=search) | Q(description__icontains=search))
+            queryset = queryset.filter(Q(name__istartswith=search))
 
         queryset = queryset.order_by(sort_by)
         paginator = CustomPagination()
@@ -498,7 +589,7 @@ class VisaMajorListAPIView(APIView):
 
         queryset = VisaMajor.objects.filter(is_deleted=False)
         if search:
-            queryset = queryset.filter(Q(name__icontains=search) | Q(description__icontains=search))
+            queryset = queryset.filter(Q(name__istartswith=search))
 
         queryset = queryset.order_by(sort_by)
         paginator = CustomPagination()
@@ -703,9 +794,9 @@ class VisaNameListAPIView(APIView):
         queryset = VisaName.objects.filter(is_deleted=False)
         if search:
             queryset = queryset.filter(
-                Q(full_name__icontains=search) |
-                Q(short_name__icontains=search) |
-                Q(description__icontains=search)
+                Q(full_name__istartswith=search) |
+                Q(short_name__istartswith=search) |
+                Q(description__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -951,8 +1042,7 @@ class ApplicantTypeListAPIView(APIView):
         queryset = ApplicantType.objects.filter(is_deleted=False)
         if search:
             queryset = queryset.filter(
-                Q(name__icontains=search) |
-                Q(description__icontains=search)
+                Q(name__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
