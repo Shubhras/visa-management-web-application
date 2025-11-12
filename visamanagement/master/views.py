@@ -3055,6 +3055,7 @@ class CityExportAPIView(APIView):
         return response
 
 
+
 class CityImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -3063,50 +3064,30 @@ class CityImportAPIView(APIView):
         sheet_name = request.data.get('sheet_name')
 
         if not file:
-            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'No file uploaded'}, status=400)
 
         format_type = file.name.split('.')[-1].lower()
-        duplicate_names = []
-        skipped_rows = []
-
         required_headers = {'city name', 'country name'}
-        optional_headers = {'state name', 'district name','description'}
+        optional_headers = {'state name', 'district name', 'description'}
 
         try:
+            # ------------------ Load file ------------------
             data = []
-            headers = []
-
-            # ---------------- XLSX Import ----------------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
-                available_sheets = wb.sheetnames
-
-                if not sheet_name:
+                if not sheet_name or sheet_name not in wb.sheetnames:
                     return Response({
-                        'error': 'Please provide sheet_name',
-                        'available_sheets': available_sheets
-                    }, status=400)
-
-                if sheet_name not in available_sheets:
-                    return Response({
-                        'error': f'Sheet "{sheet_name}" not found',
-                        'available_sheets': available_sheets
+                        "error": f"Invalid sheet_name. Available: {wb.sheetnames}"
                     }, status=400)
 
                 ws = wb[sheet_name]
-                if ws.max_row <= 1:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": f'The uploaded XLSX sheet "{sheet_name}" is empty.'
-                    }, status=400)
-
-                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                headers = [
+                    str(cell.value).strip().lower() if cell.value else ''
+                    for cell in next(ws.iter_rows(min_row=1, max_row=1))
+                ]
                 if not required_headers.issubset(set(headers)):
                     return Response({
-                        "statusCode": 400,
-                        "status": True,
-                        "message": f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
+                        "error": f"Missing required headers: {required_headers}"
                     }, status=400)
 
                 for row in ws.iter_rows(min_row=2, values_only=True):
@@ -3114,40 +3095,43 @@ class CityImportAPIView(APIView):
                         continue
                     data.append(dict(zip(headers, row)))
 
-            # ---------------- CSV Import ----------------
             elif format_type == 'csv':
-                decoded_file = file.read().decode('utf-8')
-                reader = csv.DictReader(io.StringIO(decoded_file))
+                decoded = file.read().decode('utf-8')
+                reader = csv.DictReader(io.StringIO(decoded))
                 for row in reader:
-                    row_lower = {k.strip().lower(): v for k, v in row.items()}
-                    if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({
-                            "statusCode": 400,
-                            "status": True,
-                            "message": f'Missing required headers. Required: {required_headers}. Found: {set(row_lower.keys())}'
-                        }, status=400)
-                    data.append(row_lower)
+                    data.append({k.strip().lower(): v for k, v in row.items()})
             else:
-                return Response({
-                    "statusCode": 400,
-                    "status": True,
-                    'error': 'Unsupported file format. Use .xlsx or .csv'
-                }, status=400)
+                return Response({'error': 'Unsupported file type'}, status=400)
 
-            # ---------------- Data Processing ----------------
-            imported_count = 0
+            # ------------------ Preload related data ------------------
+            countries = {c.name.lower(): c for c in Country.objects.all()}
+            states = {
+                (s.stateName.lower(), s.countryName_id): s for s in State.objects.all()
+            }
+            districts = {
+                (d.districtName.lower(), d.stateName_id, d.countryName_id): d
+                for d in District.objects.all()
+            }
+
+            # ------------------ Prepare insert ------------------
+            existing_city_keys = set(
+                City.objects.values_list(
+                    "cityName__iexact", "districtName_id", "stateName_id", "countryName_id"
+                )
+            )
+            to_create = []
+            duplicate_names = []
+            skipped_rows = []
             existing_in_file = set()
-            for row in  reversed(data):
-                city_name = str(row.get('city name')).strip() if row.get('city name') else None
-                country_name = str(row.get('country name')).strip() if row.get('country name') else None
-                state_name = str(row.get('state name')).strip() if row.get('state name') else None
-                district_name = str(row.get('district name')).strip() if row.get('district name') else None
-                description = str(row.get('description')).strip() if row.get('description') else ''
-                
-                key = (city_name.lower(), district_name.lower(), state_name.lower(), country_name.lower())
 
+            for row in data:
+                city_name = str(row.get("city name") or "").strip()
+                country_name = str(row.get("country name") or "").strip()
+                state_name = str(row.get("state name") or "").strip()
+                district_name = str(row.get("district name") or "").strip()
+                description = str(row.get("description") or "").strip()
 
-                if not city_name or not state_name or not district_name or not country_name:
+                if not (city_name and country_name and state_name and district_name):
                     skipped_rows.append({
                         "City Name": city_name or "Unknown",
                         "State Name": state_name or "Unknown",
@@ -3157,63 +3141,43 @@ class CityImportAPIView(APIView):
                     })
                     continue
 
-                # Fetch related objects
-                country_obj = Country.objects.filter(name__iexact=country_name).first()
+                country_obj = countries.get(country_name.lower())
                 if not country_obj:
                     skipped_rows.append({
                         "City Name": city_name,
-                        "District Name": district_name,
-                        "State Name": state_name,
-                        "Country Name": country_name,
-                        "Reason": "Country not found"
+                        "Reason": f"Country '{country_name}' not found"
                     })
                     continue
 
-                state_obj = State.objects.filter(stateName__iexact=state_name, countryName=country_obj).first()
+                state_obj = states.get((state_name.lower(), country_obj.id))
                 if not state_obj:
                     skipped_rows.append({
                         "City Name": city_name,
-                        "District Name": district_name,
-                        "State Name": state_name,
-                        "Country Name": country_name,
-                        "Reason": "State not found"
+                        "Reason": f"State '{state_name}' not found"
                     })
                     continue
 
-                district_obj = District.objects.filter(
-                    districtName__iexact=district_name,
-                    stateName=state_obj,
-                    countryName=country_obj
-                ).first()
+                district_obj = districts.get((district_name.lower(), state_obj.id, country_obj.id))
                 if not district_obj:
                     skipped_rows.append({
                         "City Name": city_name,
-                        "District Name": district_name,
-                        "State Name": state_name,
-                        "Country Name": country_name,
-                        "Reason": "District not found"
+                        "Reason": f"District '{district_name}' not found"
                     })
                     continue
 
-                
-                existing = City.objects.filter(
-                    cityName__iexact=city_name,
-                    districtName=district_obj,
-                    stateName=state_obj,
-                    countryName=country_obj
-                ).first()
-
-                if existing or key in existing_in_file:
+                key = (city_name.lower(), district_obj.id, state_obj.id, country_obj.id)
+                if key in existing_city_keys or key in existing_in_file:
                     duplicate_names.append({
                         "City Name": city_name,
-                        "District Name": district_obj.districtName,
-                        "State Name": state_obj.stateName,
-                        "Country Name": country_obj.name
+                        "District Name": district_name,
+                        "State Name": state_name,
+                        "Country Name": country_name
                     })
                     continue
 
-                try:
-                    City.objects.create(
+                existing_in_file.add(key)
+                to_create.append(
+                    City(
                         cityName=city_name,
                         districtName=district_obj,
                         stateName=state_obj,
@@ -3221,31 +3185,27 @@ class CityImportAPIView(APIView):
                         description=description,
                         is_deleted=False
                     )
-                    imported_count += 1
-                    existing_in_file.add(key)
-                except IntegrityError:
-                    duplicate_names.append({
-                        "City Name": city_name,
-                        "District Name": district_obj.districtName,
-                        "State Name": state_obj.stateName,
-                        "Country Name": country_obj.name
-                    })
+                )
+
+            # ------------------ Bulk Create ------------------
+            with transaction.atomic():
+                City.objects.bulk_create(to_create, ignore_conflicts=True, batch_size=500)
+
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "imported_count": len(to_create),
+                "duplicates": duplicate_names,
+                "skipped_rows": skipped_rows,
+                "message": f"Imported successfully ({len(to_create)} new cities)"
+            }, status=200)
 
         except Exception as e:
             return Response({
                 "statusCode": 400,
-                "status": True,
-                'message': str(e)
+                "status": False,
+                "message": str(e)
             }, status=400)
-
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "duplicates": duplicate_names,
-            "skipped_rows": skipped_rows,
-            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
-            "imported_count": imported_count
-        }, status=200)
 
         
 #--------------------------- Realtion -----------------------
