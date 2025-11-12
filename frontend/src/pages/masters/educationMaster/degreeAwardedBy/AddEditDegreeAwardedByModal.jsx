@@ -4,6 +4,7 @@ import { degreeAwardedByAdd, degreeAwardedByEdit } from '../../../../store/maste
 import { toast } from "react-toastify";
 import { educationLevelList } from "../../../../store/master/educationMaster/action";
 import { countryList } from "../../../../store/master/generalMasters/actions";
+import Select from "react-select";
 const AddEditDegreeAwardedByModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
@@ -200,19 +201,36 @@ const AddEditDegreeAwardedByModal = ({ show, handleClose, mode = 'add', rowData 
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                                         Country<span className="text-danger">*</span>
                                     </label>
-                                    <select
-                                        name="countryUuid"
-                                        value={formData.countryUuid}
-                                        onChange={handleChange}
-                                        className={`form-control form-select radius-8 ${errors.countryUuid ? 'is-invalid' : ''}`}
-                                    >
-                                        <option value="">Select country</option>
-                                        {studyMainArea.map((option) => (
-                                            <option key={option.uuid} value={option.uuid}>
-                                                {option.name}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <Select
+                                        options={studyMainArea.map((option) => ({
+                                            value: option.uuid,
+                                            label: option.name,
+                                        }))}
+                                        value={
+                                            formData.countryUuid
+                                                ? studyMainArea
+                                                    .map((option) => ({
+                                                        value: option.uuid,
+                                                        label: option.name,
+                                                    }))
+                                                    .find((opt) => opt.value === formData.countryUuid)
+                                                : null
+                                        }
+                                        onChange={(selectedOption) =>
+                                            handleChange({
+                                                target: {
+                                                    name: "countryUuid",
+                                                    value: selectedOption ? selectedOption.value : "",
+                                                },
+                                            })
+                                        }
+                                        placeholder="Select country"
+                                        isClearable
+                                        isSearchable
+                                        className={`custom-select-container ${errors.countryUuid ? "is-invalid" : ""
+                                            }`}
+                                        classNamePrefix="custom-select"
+                                    />
                                     {errors.countryUuid && (
                                         <div className="text-danger text-sm mt-1">
                                             {errors.countryUuid}
@@ -223,19 +241,36 @@ const AddEditDegreeAwardedByModal = ({ show, handleClose, mode = 'add', rowData 
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                                         Education Level <span className="text-danger">*</span>
                                     </label>
-                                    <select
-                                        name="educationLevelUuid"
-                                        value={formData.educationLevelUuid}
-                                        onChange={handleChange}
-                                        className={`form-control form-select radius-8 ${errors.educationLevelUuid ? 'is-invalid' : ''}`}
-                                    >
-                                        <option value="">Select education level</option>
-                                        {studyMajorArea.map((option) => (
-                                            <option key={option.uuid} value={option.uuid}>
-                                                {option.educationlevel}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <Select
+                                        options={studyMajorArea.map((option) => ({
+                                            value: option.uuid,
+                                            label: option.educationlevel,
+                                        }))}
+                                        value={
+                                            formData.educationLevelUuid
+                                                ? studyMajorArea
+                                                    .map((option) => ({
+                                                        value: option.uuid,
+                                                        label: option.educationlevel,
+                                                    }))
+                                                    .find((opt) => opt.value === formData.educationLevelUuid)
+                                                : null
+                                        }
+                                        onChange={(selectedOption) =>
+                                            handleChange({
+                                                target: {
+                                                    name: "educationLevelUuid",
+                                                    value: selectedOption ? selectedOption.value : "",
+                                                },
+                                            })
+                                        }
+                                        placeholder="Select education level"
+                                        isClearable
+                                        isSearchable
+                                        className={`custom-select-container ${errors.educationLevelUuid ? "is-invalid" : ""
+                                            }`}
+                                        classNamePrefix="custom-select"
+                                    />
                                     {errors.educationLevelUuid && (
                                         <div className="text-danger text-sm mt-1">
                                             {errors.educationLevelUuid}
@@ -287,13 +322,13 @@ const AddEditDegreeAwardedByModal = ({ show, handleClose, mode = 'add', rowData 
                                     <button
                                         type="button"
                                         onClick={onClose}
-                                        className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-40 py-6 radius-8"
+                                        className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-16 py-4 radius-6"
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         type="submit"
-                                        className="btn comman-btn-color border border-primary-600 text-md px-40 py-6 radius-8"
+                                        className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                                         disabled={loading}
                                     >
                                         {loading ? 'Saving...' : 'Save'}

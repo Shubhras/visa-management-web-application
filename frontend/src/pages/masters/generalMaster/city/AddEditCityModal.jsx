@@ -379,13 +379,13 @@
 //                   <button
 //                     type="button"
 //                     onClick={onClose}
-//                     className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-40 py-6 radius-8"
+//                     className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-16 py-4 radius-6"
 //                   >
 //                     Cancel
 //                   </button>
 //                   <button
 //                     type="submit"
-//                     className="btn comman-btn-color border border-primary-600 text-md px-40 py-6 radius-8"
+//                     className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
 //                     disabled={loading}
 //                   >
 //                     {loading ? 'Saving...' : 'Save'}
@@ -846,14 +846,14 @@ const AddEditCityModal = ({ show, handleClose, mode = 'add', rowData = null }) =
                   <button
                     type="button"
                     onClick={onClose}
-                    className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-40 py-6 radius-8"
+                    className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-16 py-4 radius-6"
                   >
                     Cancel
                   </button>
                   <button
                     type="button"
                     onClick={handleSubmit}
-                    className="btn comman-btn-color border border-primary-600 text-md px-40 py-6 radius-8"
+                    className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                     disabled={loading}
                   >
                     {loading ? 'Saving...' : 'Save'}

@@ -3,6 +3,7 @@ import { useDispatch } from "react-redux";
 import { educationDurationAdd, educationDurationEdit } from '../../../../store/master/educationMaster/action';
 import { toast } from "react-toastify";
 import { educationLevelList } from '../../../../store/master/educationMaster/action';
+import Select from "react-select";
 const AddEditEducationDurationModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
@@ -193,7 +194,7 @@ const AddEditEducationDurationModal = ({ show, handleClose, mode = 'add', rowDat
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                     Education Level <span className="text-danger">*</span>
                   </label>
-                  <select
+                  {/* <select
                     name="category"
                     value={formData.category}
                     onChange={handleChange}
@@ -205,7 +206,37 @@ const AddEditEducationDurationModal = ({ show, handleClose, mode = 'add', rowDat
                         {option.educationlevel}
                       </option>
                     ))}
-                  </select>
+                  </select> */}
+                  <Select
+                    options={educationLevelListData.map((option) => ({
+                      value: option.uuid,
+                      label: option.educationlevel,
+                    }))}
+                    value={
+                      formData.category
+                        ? educationLevelListData
+                          .map((option) => ({
+                            value: option.uuid,
+                            label: option.educationlevel,
+                          }))
+                          .find((opt) => opt.value === formData.category)
+                        : null
+                    }
+                    onChange={(selectedOption) =>
+                      handleChange({
+                        target: {
+                          name: "category",
+                          value: selectedOption ? selectedOption.value : "",
+                        },
+                      })
+                    }
+                    placeholder="Select Education Level"
+                    isClearable
+                    isSearchable
+                    className={`custom-select-container ${errors.category ? "is-invalid" : ""
+                      }`}
+                    classNamePrefix="custom-select"
+                  />
                   {errors.category && (
                     <div className="text-danger text-sm mt-1">
                       {errors.category}
@@ -256,13 +287,13 @@ const AddEditEducationDurationModal = ({ show, handleClose, mode = 'add', rowDat
                   <button
                     type="button"
                     onClick={onClose}
-                    className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-40 py-6 radius-8"
+                    className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-16 py-4 radius-6"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="btn comman-btn-color border border-primary-600 text-md px-40 py-6 radius-8"
+                    className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                     disabled={loading}
                   >
                     {loading ? 'Saving...' : 'Save'}

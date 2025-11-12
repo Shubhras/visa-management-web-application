@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch } from "react-redux";
 import { languageTestResultAdd, languageTestResultEdit, languageNameTestList, languageTestNameList, languageTestModuleNameList, languageBenchmarkLevelList } from '../../../../store/master/testMaster/action';
 import { toast } from "react-toastify";
-
+import Select from "react-select";
 const AddEditLanguageTestResultModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
@@ -242,19 +242,36 @@ const AddEditLanguageTestResultModal = ({ show, handleClose, mode = 'add', rowDa
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                                         Language Name (Test) <span className="text-danger">*</span>
                                     </label>
-                                    <select
-                                        name="languageNameTest"
-                                        value={formData.languageNameTest}
-                                        onChange={handleChange}
-                                        className={`form-control form-select radius-8 ${errors.languageNameTest ? 'is-invalid' : ''}`}
-                                    >
-                                        <option value="">Select language name(test)</option>
-                                        {languageNameTest.map((option) => (
-                                            <option key={option.uuid} value={option.uuid}>
-                                                {option.name}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <Select
+                                        options={languageNameTest.map((option) => ({
+                                            value: option.uuid,
+                                            label: option.name,
+                                        }))}
+                                        value={
+                                            formData.languageNameTest
+                                                ? languageNameTest
+                                                    .map((option) => ({
+                                                        value: option.uuid,
+                                                        label: option.name,
+                                                    }))
+                                                    .find((opt) => opt.value === formData.languageNameTest)
+                                                : null
+                                        }
+                                        onChange={(selectedOption) =>
+                                            handleChange({
+                                                target: {
+                                                    name: "languageNameTest",
+                                                    value: selectedOption ? selectedOption.value : "",
+                                                },
+                                            })
+                                        }
+                                        placeholder="Select language name(test)"
+                                        isClearable
+                                        isSearchable
+                                        className={`custom-select-container ${errors.languageNameTest ? "is-invalid" : ""
+                                            }`}
+                                        classNamePrefix="custom-select"
+                                    />
                                     {errors.languageNameTest && (
                                         <div className="text-danger text-sm mt-1">
                                             {errors.languageNameTest}
@@ -265,27 +282,36 @@ const AddEditLanguageTestResultModal = ({ show, handleClose, mode = 'add', rowDa
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                                         Language Test Name <span className="text-danger">*</span>
                                     </label>
-                                    {/* <input
-                                        type="text"
-                                        name="shortName"
-                                        value={formData.shortName}
-                                        onChange={handleChange}
-                                        className={`form-control radius-8 ${errors.shortName ? 'is-invalid' : ''}`}
-                                        placeholder="Enter language test name"
-                                    /> */}
-                                    <select
-                                        name="shortName"
-                                        value={formData.shortName}
-                                        onChange={handleChange}
-                                        className={`form-control form-select radius-8 ${errors.shortName ? 'is-invalid' : ''}`}
-                                    >
-                                        <option value="">Select language test name</option>
-                                        {languageTestName.map((option) => (
-                                            <option key={option.uuid} value={option.uuid}>
-                                                {option.name}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <Select
+                                        options={languageTestName.map((option) => ({
+                                            value: option.uuid,
+                                            label: option.name,
+                                        }))}
+                                        value={
+                                            formData.shortName
+                                                ? languageTestName
+                                                    .map((option) => ({
+                                                        value: option.uuid,
+                                                        label: option.name,
+                                                    }))
+                                                    .find((opt) => opt.value === formData.shortName)
+                                                : null
+                                        }
+                                        onChange={(selectedOption) =>
+                                            handleChange({
+                                                target: {
+                                                    name: "shortName",
+                                                    value: selectedOption ? selectedOption.value : "",
+                                                },
+                                            })
+                                        }
+                                        placeholder="Select language test name"
+                                        isClearable
+                                        isSearchable
+                                        className={`custom-select-container ${errors.shortName ? "is-invalid" : ""
+                                            }`}
+                                        classNamePrefix="custom-select"
+                                    />
                                     {errors.shortName && (
                                         <div className="text-danger text-sm mt-1">
                                             {errors.shortName}
@@ -296,27 +322,36 @@ const AddEditLanguageTestResultModal = ({ show, handleClose, mode = 'add', rowDa
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                                         Module Name <span className="text-danger">*</span>
                                     </label>
-                                    {/* <input
-                                        type="text"
-                                        name="moduleName"
-                                        value={formData.moduleName}
-                                        onChange={handleChange}
-                                        className={`form-control radius-8 ${errors.moduleName ? 'is-invalid' : ''}`}
-                                        placeholder="Enter language test module name"
-                                    /> */}
-                                    <select
-                                        name="moduleName"
-                                        value={formData.moduleName}
-                                        onChange={handleChange}
-                                        className={`form-control form-select radius-8 ${errors.moduleName ? 'is-invalid' : ''}`}
-                                    >
-                                        <option value="">Select module name</option>
-                                        {languageTestModuleName.map((option) => (
-                                            <option key={option.uuid} value={option.uuid}>
-                                                {option.name}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <Select
+                                        options={languageTestModuleName.map((option) => ({
+                                            value: option.uuid,
+                                            label: option.name,
+                                        }))}
+                                        value={
+                                            formData.moduleName
+                                                ? languageTestModuleName
+                                                    .map((option) => ({
+                                                        value: option.uuid,
+                                                        label: option.name,
+                                                    }))
+                                                    .find((opt) => opt.value === formData.moduleName)
+                                                : null
+                                        }
+                                        onChange={(selectedOption) =>
+                                            handleChange({
+                                                target: {
+                                                    name: "moduleName",
+                                                    value: selectedOption ? selectedOption.value : "",
+                                                },
+                                            })
+                                        }
+                                        placeholder="Select module name"
+                                        isClearable
+                                        isSearchable
+                                        className={`custom-select-container ${errors.moduleName ? "is-invalid" : ""
+                                            }`}
+                                        classNamePrefix="custom-select"
+                                    />
                                     {errors.moduleName && (
                                         <div className="text-danger text-sm mt-1">
                                             {errors.moduleName}
@@ -345,27 +380,36 @@ const AddEditLanguageTestResultModal = ({ show, handleClose, mode = 'add', rowDa
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                                         Language Banchmark Level
                                     </label>
-                                    {/* <input
-                                        type="text"
-                                        name="benchmarkLevel"
-                                        value={formData.benchmarkLevel}
-                                        onChange={handleChange}
-                                        className={`form-control radius-8 ${errors.benchmarkLevel ? 'is-invalid' : ''}`}
-                                        placeholder="Enter language test benchmark level"
-                                    /> */}
-                                    <select
-                                        name="benchmarkLevel"
-                                        value={formData.benchmarkLevel}
-                                        onChange={handleChange}
-                                        className={`form-control form-select radius-8 ${errors.benchmarkLevel ? 'is-invalid' : ''}`}
-                                    >
-                                        <option value="">Select language banchmark level</option>
-                                        {languageBenchmarkLevel.map((option) => (
-                                            <option key={option.uuid} value={option.uuid}>
-                                                {option.name}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <Select
+                                        options={languageBenchmarkLevel.map((option) => ({
+                                            value: option.uuid,
+                                            label: option.name,
+                                        }))}
+                                        value={
+                                            formData.benchmarkLevel
+                                                ? languageBenchmarkLevel
+                                                    .map((option) => ({
+                                                        value: option.uuid,
+                                                        label: option.name,
+                                                    }))
+                                                    .find((opt) => opt.value === formData.benchmarkLevel)
+                                                : null
+                                        }
+                                        onChange={(selectedOption) =>
+                                            handleChange({
+                                                target: {
+                                                    name: "benchmarkLevel",
+                                                    value: selectedOption ? selectedOption.value : "",
+                                                },
+                                            })
+                                        }
+                                        placeholder="Select language banchmark level"
+                                        isClearable
+                                        isSearchable
+                                        className={`custom-select-container ${errors.benchmarkLevel ? "is-invalid" : ""
+                                            }`}
+                                        classNamePrefix="custom-select"
+                                    />
                                     {errors.benchmarkLevel && (
                                         <div className="text-danger text-sm mt-1">
                                             {errors.benchmarkLevel}
@@ -398,13 +442,13 @@ const AddEditLanguageTestResultModal = ({ show, handleClose, mode = 'add', rowDa
                                     <button
                                         type="button"
                                         onClick={onClose}
-                                        className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-40 py-6 radius-8"
+                                        className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-16 py-4 radius-6"
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         type="submit"
-                                        className="btn comman-btn-color border border-primary-600 text-md px-40 py-6 radius-8"
+                                        className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                                         disabled={loading}
                                     >
                                         {loading ? 'Saving...' : 'Save'}

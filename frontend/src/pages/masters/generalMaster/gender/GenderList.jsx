@@ -1,4 +1,4 @@
-import React, { useState, useEffect ,useRef} from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useDispatch } from "react-redux";
 import MasterLayout from "../../../../masterLayout/MasterLayout";
 // import Breadcrumb from "../../../components/Breadcrumb";
@@ -8,6 +8,7 @@ import { toast } from "react-toastify";
 import AddImportGenderModal from './AddImportGenderModal';
 import AddEditGenderModal from './AddEditGenderModal';
 import { genderList, genderDelete, genderExportData } from '../../../../store/master/generalMasters/actions';
+import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 const GenderList = () => {
   const dispatch = useDispatch();
   const [modalState, setModalState] = useState({
@@ -290,11 +291,6 @@ const GenderList = () => {
     return pages;
   };
 
-  // const handleCloseEdit = () => {
-  //   setShowEdit(false);
-  //   fetchDepartmentList();
-  // };
-
   const handleShowEdit = (rowData) => {
     setModalState({
       show: true,
@@ -458,19 +454,6 @@ const GenderList = () => {
   const startIndex = (tableState.currentPage - 1) * tableState.limit;
   const statusOptions = ['All', 'Active', 'Inactive'];
 
-  const formatDateTime = (dateString) => {
-    const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    let hours = date.getHours();
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const seconds = String(date.getSeconds()).padStart(2, '0');
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12 || 12;
-    hours = String(hours).padStart(2, '0');
-    return `${day}-${month}-${year} ${hours}:${minutes}:${seconds} ${ampm}`
-  };
 
 
   return (
@@ -481,16 +464,16 @@ const GenderList = () => {
           <div className="card-body container-data">
             <div className="row align-items-center gy-3 gx-2 flex-wrap filter-action-btn">
               {/* Left Section: Import / Export / Delete */}
-              <div className="col-xl-4 col-lg-4 col-md-12">
+              <div className="col-xl-6 col-lg-4 col-md-12">
                 <div className="d-flex flex-wrap align-items-center gap-2">
                   <button
-                    className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
+                    className="btn btn-sm  py-1 text-white fw-medium comman-btn-color"
                     onClick={handleShowImport}
                   >
                     Import
                   </button>
                   <button
-                    className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
+                    className="btn btn-sm  py-1 text-white fw-medium comman-btn-color"
                     onClick={handleExportTest}
                     disabled={loadingExport}
                   >
@@ -498,7 +481,7 @@ const GenderList = () => {
                   </button>
                   <button
                     onClick={handleBulkDelete}
-                    className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
+                    className="btn btn-sm  py-1 text-white fw-medium comman-btn-color"
                   >
                     Delete
                   </button>
@@ -506,13 +489,13 @@ const GenderList = () => {
                     <>
                       <button
                         onClick={() => handleSelectAllOrNot("onlySelected")}
-                        className={`btn btn-sm px-3 py-1 fw-medium ${selectAllOrNot === "onlySelected" ? "comman-btn-color" : "comman-inactive-btn"}`}
+                        className={`btn btn-sm py-1 fw-medium ${selectAllOrNot === "onlySelected" ? "comman-btn-color" : "comman-inactive-btn"}`}
                       >
                         {`Select (${selectedRows.length})`}
                       </button>
                       <button
                         onClick={() => handleSelectAllOrNot("all")}
-                        className={`btn btn-sm px-3 py-1 fw-medium ${selectAllOrNot === "all" ? "comman-btn-color" : "comman-inactive-btn"}`}
+                        className={`btn btn-sm py-1 fw-medium ${selectAllOrNot === "all" ? "comman-btn-color" : "comman-inactive-btn"}`}
                       >
                         {`Select All (${tableState.total})`}
                       </button>
@@ -522,7 +505,7 @@ const GenderList = () => {
               </div>
 
               {/* Right Section: Select / Search / +Add New */}
-              <div className="col-xl-8 col-lg-8 col-md-12">
+              <div className="col-xl-6 col-lg-8 col-md-12">
                 <div className="d-flex flex-wrap align-items-center justify-content-end gap-2">
                   <select
                     className="form-select form-select-sm select-page-filter"
@@ -560,7 +543,7 @@ const GenderList = () => {
                           lineHeight: 1
                         }}
                         onClick={() => {
-                         
+
                           handleSearchChange('');
                         }}
                       >
@@ -571,133 +554,133 @@ const GenderList = () => {
                   <button
                     className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
                     onClick={handleShow}
-                  >+ New</button>
+                  >New</button>
                 </div>
               </div>
             </div>
           </div>
           <div className="card-body pt-0 container-table" >
             <div className='container-table-div'>
-             <table className="table mb-0">
-                             <thead>
-                              <tr>
-                                <th scope="col" className='sl-numbar-th'>
-                                  <div className="d-flex align-items-center gap-2">
-                                    <input
-                                      className="form-check-input"
-                                      type="checkbox"
-                                      checked={isAllSelected}
-                                      onChange={handleSelectAll}
-                                      disabled={departments.length === 0}
-                                    />
-                                    <span>No.</span>
-                                  </div>
-                                </th>
-                                {tableColumns.map((column) => (
-                                  isColumnVisible(column.id) && (
-                                    <th
-                                      key={column.id}
-                                      scope="col"
-                                      className='sorting-th'
-                                      onClick={() => handleSort(column.field)}
-                                    >
-                                      <div className="d-flex align-items-center">
-                                        {column.label}
-                                        {getSortIcon(column.field)}
-                                      </div>
-                                    </th>
-                                  )
-                                ))}
-                                <th scope="col" className='action-th'>
-                                  <div className="position-relative table-header-hide-show" ref={columnDropdownRef}>
-                                    <button
-                                      className="position-relative table-header-hide-show"
-                                      onClick={() => setShowColumnDropdown(!showColumnDropdown)}
-                                    >
-                                      Action <Icon icon="mdi:table-column" width="20" className='icone' />
-                                    </button>
-                                    {showColumnDropdown && (
-                                      <div className="position-absolute bg-white border rounded shadow-sm p-2 show-dropdowns-header">
-                                        {tableColumns.map((column) => (
-                                          <div
-                                            key={column.id}
-                                            className="bg-white p-2 mb-2 d-flex align-items-center gap-2"
-                                          >
-                                            <input
-                                              type="checkbox"
-                                              id={`column-${column.id}`}
-                                              checked={isColumnVisible(column.id)}
-                                              onChange={() => toggleColumnVisibility(column.id)}
-                                              disabled={column.required}
-                                              className="form-check-input"
-                                            />
-                                            <label htmlFor={`column-${column.id}`} className="mb-0 flex-grow-1 form-label">
-                                              {column.label}
-                                            </label>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    )}
-                                  </div>
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {loading ? (
-                                <tr>
-                                  <td colSpan={visibleColumns.length + 2} className='loding-data'>
-                                    <div className="d-flex justify-content-center align-items-center gap-2">
-                                      <div className="spinner-border spinner-border-sm" role="status">
-                                        <span className="visually-hidden">Loading...</span>
-                                      </div>
-                                      Loading...
-                                    </div>
-                                  </td>
-                                </tr>
-                              ) : departments.length > 0 ? (
-                                departments.map((rowItem, index) => (
-                                  <tr key={rowItem.uuid}>
-                                    <td>
-                                      <div className="d-flex align-items-center gap-2">
-                                        <input
-                                          className="form-check-input"
-                                          type="checkbox"
-                                          checked={selectedRows.includes(rowItem.uuid)}
-                                          onChange={() => handleRowSelect(rowItem.uuid)}
-                                        />
-                                        <span>{String(startIndex + index + 1).padStart(2, '0')}</span>
-                                      </div>
-                                    </td>
-                                    {isColumnVisible('name') && (
-                                      <td><span>{rowItem.name}</span></td>
-                                    )}
-                                    {isColumnVisible('description') && (
-                                      <td><span>{rowItem.description}</span></td>
-                                    )}
-                                    {isColumnVisible('updated_at') && (
-                                      <td><span>{formatDateTime(rowItem.updated_at)}</span></td>
-                                    )}
-                                    <td className='action-td'>
-                                      <div className="d-flex align-items-end gap-2">
-                                        <Link to="#" className='edit-btn-icone' onClick={(e) => { e.preventDefault(); handleShowEdit(rowItem); }}>
-                                          <Icon icon="lucide:edit" width="18" className='icone' />
-                                        </Link>
-                                        <button onClick={() => handleDelete(rowItem.uuid)} className='delete-btn-icone'>
-                                          <Icon icon="mingcute:delete-2-line" width="18" className='icone' />
-                                        </button>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                ))
-                              ) : (
-                                <tr>
-                                  <td colSpan={visibleColumns.length + 2} className='no-records-found'>
-                                    No records found
-                                  </td>
-                                </tr>
-                              )}
-                            </tbody>
-                          </table>
+              <table className="table mb-0">
+                <thead>
+                  <tr>
+                    <th scope="col" className='sl-numbar-th'>
+                      <div className="d-flex align-items-center gap-2">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          checked={isAllSelected}
+                          onChange={handleSelectAll}
+                          disabled={departments.length === 0}
+                        />
+                        <span>No.</span>
+                      </div>
+                    </th>
+                    {tableColumns.map((column) => (
+                      isColumnVisible(column.id) && (
+                        <th
+                          key={column.id}
+                          scope="col"
+                          className='sorting-th'
+                          onClick={() => handleSort(column.field)}
+                        >
+                          <div className="d-flex align-items-center">
+                            {column.label}
+                            {getSortIcon(column.field)}
+                          </div>
+                        </th>
+                      )
+                    ))}
+                    <th scope="col" className='action-th'>
+                      <div className="position-relative table-header-hide-show" ref={columnDropdownRef}>
+                        <button
+                          className="position-relative table-header-hide-show"
+                          onClick={() => setShowColumnDropdown(!showColumnDropdown)}
+                        >
+                          Action <Icon icon="mdi:table-column" width="20" className='icone' />
+                        </button>
+                        {showColumnDropdown && (
+                          <div className="position-absolute bg-white border rounded shadow-sm p-2 show-dropdowns-header">
+                            {tableColumns.map((column) => (
+                              <div
+                                key={column.id}
+                                className="bg-white p-2 mb-2 d-flex align-items-center gap-2"
+                              >
+                                <input
+                                  type="checkbox"
+                                  id={`column-${column.id}`}
+                                  checked={isColumnVisible(column.id)}
+                                  onChange={() => toggleColumnVisibility(column.id)}
+                                  disabled={column.required}
+                                  className="form-check-input"
+                                />
+                                <label htmlFor={`column-${column.id}`} className="mb-0 flex-grow-1 form-label">
+                                  {column.label}
+                                </label>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr>
+                      <td colSpan={visibleColumns.length + 2} className='loding-data'>
+                        <div className="d-flex justify-content-center align-items-center gap-2">
+                          <div className="spinner-border spinner-border-sm" role="status">
+                            <span className="visually-hidden">Loading...</span>
+                          </div>
+                          Loading...
+                        </div>
+                      </td>
+                    </tr>
+                  ) : departments.length > 0 ? (
+                    departments.map((rowItem, index) => (
+                      <tr key={rowItem.uuid}>
+                        <td>
+                          <div className="d-flex align-items-center gap-2">
+                            <input
+                              className="form-check-input"
+                              type="checkbox"
+                              checked={selectedRows.includes(rowItem.uuid)}
+                              onChange={() => handleRowSelect(rowItem.uuid)}
+                            />
+                            <span>{String(startIndex + index + 1).padStart(2, '0')}</span>
+                          </div>
+                        </td>
+                        {isColumnVisible('name') && (
+                          <td><span>{rowItem.name}</span></td>
+                        )}
+                        {isColumnVisible('description') && (
+                          <td><span>{rowItem.description}</span></td>
+                        )}
+                        {isColumnVisible('updated_at') && (
+                          <td><span>{formatDateDDMMYYYYTime(rowItem.updated_at)}</span></td>
+                        )}
+                        <td className='action-td'>
+                          <div className="d-flex align-items-end gap-2">
+                            <Link to="#" className='edit-btn-icone' onClick={(e) => { e.preventDefault(); handleShowEdit(rowItem); }}>
+                              <Icon icon="lucide:edit" width="18" className='icone' />
+                            </Link>
+                            <button onClick={() => handleDelete(rowItem.uuid)} className='delete-btn-icone'>
+                              <Icon icon="mingcute:delete-2-line" width="18" className='icone' />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={visibleColumns.length + 2} className='no-records-found'>
+                        No records found
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
 
               {tableState.total > 0 && (
                 <div className="d-flex justify-content-between align-items-center px-4 py-3" >
@@ -931,16 +914,23 @@ const GenderList = () => {
                     <button
                       type="button"
                       onClick={cancelExportTest}
-                      className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-40 py-6 radius-8"
+                      className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-16 py-4 radius-6"
                     >
                       Cancel
                     </button>
-                    <button
+                     <button
                       onClick={handleExport}
                       type="button"
-                      className="btn comman-btn-color border border-primary-600 text-md px-40 py-6 radius-8"
-                    >
-                      Submit
+                      className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
+                      disabled={loadingExport}
+                    >{loadingExport ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        Submit...
+                      </>
+                    ) : (
+                      "Submit"
+                    )}
                     </button>
                   </div>
                 </div>

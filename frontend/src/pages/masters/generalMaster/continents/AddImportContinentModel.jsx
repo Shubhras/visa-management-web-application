@@ -5,6 +5,7 @@ import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import { continentImportData } from "../../../../store/master/generalMasters/actions";
 import CommanSampleExcelDownloadModal from "../../../../components/comman/CommanSampleExcelDownloadModal";
+import { exportToExcelDuplicate } from "../../../../helper/utils/commanHelper";
 
 const AddImportContinentModal = ({ show, handleClose }) => {
   const dispatch = useDispatch();
@@ -91,7 +92,18 @@ const AddImportContinentModal = ({ show, handleClose }) => {
               }
             );
             if (response?.duplicates?.length > 0) {
-              handleExportToExcel(response.duplicates);
+              const prepareData = {
+                data: response.duplicates || [],
+                headers: ["Continent"],
+                sheetName: "Continent",
+                fileName: "Continent",
+              };
+              exportToExcelDuplicate(
+                prepareData.data,
+                prepareData.headers,
+                prepareData.sheetName,
+                prepareData.fileName
+              );
             }
             setFile(null);
             setSheetNames([]);
@@ -103,26 +115,6 @@ const AddImportContinentModal = ({ show, handleClose }) => {
         }
       })
     );
-  };
-
-  const handleExportToExcel = (duplicatesData) => {
-    const header = ["Continent"];
-    const duplicates = duplicatesData;
-    const worksheetData = [header, ...duplicates.map((item) => [item])];
-    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Continent");
-
-    const excelBuffer = XLSX.write(workbook, {
-      bookType: "xlsx",
-      type: "array",
-    });
-
-    const blob = new Blob([excelBuffer], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    });
-
-    saveAs(blob, `Continent-Duplicate-Data.xlsx`);
   };
 
   // Handle modal close
@@ -189,9 +181,8 @@ const AddImportContinentModal = ({ show, handleClose }) => {
                     </label>
                     <input
                       type="file"
-                      className={`form-control radius-8 ${
-                        error && !selectedSheet ? "is-invalid" : ""
-                      }`}
+                      className={`form-control radius-8 ${error && !selectedSheet ? "is-invalid" : ""
+                        }`}
                       onChange={handleFileChange}
                       accept=".csv,.xlsx,.xls,.pdf,.docx"
                       style={{ height: "auto" }}
@@ -244,16 +235,23 @@ const AddImportContinentModal = ({ show, handleClose }) => {
                     <button
                       type="button"
                       onClick={onClose}
-                      className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-40 py-6 radius-8"
+                      className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-16 py-4 radius-6"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={loading}
-                      className="btn comman-btn-color border border-primary-600 text-md px-40 py-6 radius-8"
+                      className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                     >
-                      {loading ? "Upload" : "Upload"}
+                      {loading ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                          Uploading...
+                        </>
+                      ) : (
+                        "Upload"
+                      )}
                     </button>
                   </div>
                 </div>

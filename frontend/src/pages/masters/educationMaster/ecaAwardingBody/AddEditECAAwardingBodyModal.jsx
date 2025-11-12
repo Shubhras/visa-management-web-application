@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from "react-redux";
-import { ecaAwardingBodyAdd, ecaAwardingBodyEdit ,ecaForList} from '../../../../store/master/educationMaster/action';
+import { ecaAwardingBodyAdd, ecaAwardingBodyEdit, ecaForList } from '../../../../store/master/educationMaster/action';
 import { toast } from "react-toastify";
 import { countryList } from "../../../../store/master/generalMasters/actions";
+import Select from "react-select";
 const AddEditECAAwardingBodyModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
@@ -238,19 +239,36 @@ const AddEditECAAwardingBodyModal = ({ show, handleClose, mode = 'add', rowData 
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                     Country<span className="text-danger">*</span>
                   </label>
-                  <select
-                    name="countryUuid"
-                    value={formData.countryUuid}
-                    onChange={handleChange}
-                    className={`form-control form-select radius-8 ${errors.countryUuid ? 'is-invalid' : ''}`}
-                  >
-                    <option value="">Select country</option>
-                    {countryListData.map((option) => (
-                      <option key={option.uuid} value={option.uuid}>
-                        {option.name}
-                      </option>
-                    ))}
-                  </select>
+                  <Select
+                    options={countryListData.map((option) => ({
+                      value: option.uuid,
+                      label: option.name,
+                    }))}
+                    value={
+                      formData.countryUuid
+                        ? countryListData
+                          .map((option) => ({
+                            value: option.uuid,
+                            label: option.name,
+                          }))
+                          .find((opt) => opt.value === formData.countryUuid)
+                        : null
+                    }
+                    onChange={(selectedOption) =>
+                      handleChange({
+                        target: {
+                          name: "countryUuid",
+                          value: selectedOption ? selectedOption.value : "",
+                        },
+                      })
+                    }
+                    placeholder="Select country"
+                    isClearable
+                    isSearchable
+                    className={`custom-select-container ${errors.countryUuid ? "is-invalid" : ""
+                      }`}
+                    classNamePrefix="custom-select"
+                  />
                   {errors.countryUuid && (
                     <div className="text-danger text-sm mt-1">
                       {errors.countryUuid}
@@ -373,13 +391,13 @@ const AddEditECAAwardingBodyModal = ({ show, handleClose, mode = 'add', rowData 
                   <button
                     type="button"
                     onClick={onClose}
-                    className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-40 py-6 radius-8"
+                    className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-16 py-4 radius-6"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="btn comman-btn-color border border-primary-600 text-md px-40 py-6 radius-8"
+                    className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                     disabled={loading}
                   >
                     {loading ? 'Saving...' : 'Save'}

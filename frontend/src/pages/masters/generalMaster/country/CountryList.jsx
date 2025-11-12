@@ -12,6 +12,7 @@ import {
 import AddEditCountryModal from "./AddEditCountryModal";
 import AddImportCountryModal from "./AddImportCountryModal";
 import MasterLayout from "../../../../masterLayout/MasterLayout";
+import { formatDateDDMMYYYYTime } from "../../../../helper/utils/commanHelper";
 
 const CountryList = () => {
   const dispatch = useDispatch();
@@ -73,13 +74,13 @@ const CountryList = () => {
     { id: 'continent', label: 'Continent', field: 'continent', visible: true, required: false },
     { id: 'officialName', label: 'Country Official Name', field: 'officialName', visible: true, required: false },
     { id: 'shortName', label: 'Country Short Name', field: 'shortName', visible: false, required: false },
-    { id: 'capitalCity', label: 'Capital City', field: 'capitalCity', visible: true, required: false },
+    { id: 'capitalCity', label: 'Capital City', field: 'capitalCity', visible: false, required: false },
     { id: 'currencyfullname', label: 'Currency Full Name', field: 'currencyfullname', visible: false, required: false },
     { id: 'currencyshortname', label: 'Currency Short Name', field: 'currencyshortname', visible: false, required: false },
     { id: 'currencyCode', label: 'Currency Code', field: 'currencyCode', visible: false, required: false },
     { id: 'dialCodes', label: 'Country Calling Code', field: 'dialCodes', visible: false, required: false },
     { id: 'description', label: 'Description', field: 'description', visible: false, required: false },
-    { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: false, required: false },
+    { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false },
   ]);
 
   const [visibleColumns, setVisibleColumns] = useState(
@@ -524,20 +525,6 @@ const CountryList = () => {
   const startIndex = (tableState.currentPage - 1) * tableState.limit;
   const statusOptions = ["All", "Active", "Inactive"];
 
-  const formatDateTime = (dateString) => {
-    const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const year = date.getFullYear();
-    let hours = date.getHours();
-    const minutes = String(date.getMinutes()).padStart(2, "0");
-    const seconds = String(date.getSeconds()).padStart(2, "0");
-    const ampm = hours >= 12 ? "PM" : "AM";
-    hours = hours % 12 || 12;
-    hours = String(hours).padStart(2, "0");
-    return `${day}-${month}-${year} ${hours}:${minutes}:${seconds} ${ampm}`;
-  };
-
   return (
     <>
       <MasterLayout>
@@ -546,16 +533,16 @@ const CountryList = () => {
           <div className="card-body container-data">
             <div className="row align-items-center gy-3 gx-2 flex-wrap filter-action-btn">
               {/* Left Section: Import / Export / Delete */}
-              <div className="col-xl-4 col-lg-4 col-md-12">
+              <div className="col-xl-6 col-lg-4 col-md-12">
                 <div className="d-flex flex-wrap align-items-center gap-2">
                   <button
-                    className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
+                    className="btn btn-sm  py-1 text-white fw-medium comman-btn-color"
                     onClick={handleShowImport}
                   >
                     Import
                   </button>
                   <button
-                    className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
+                    className="btn btn-sm  py-1 text-white fw-medium comman-btn-color"
                     onClick={handleExportTest}
                     disabled={loadingExport}
                   >
@@ -563,7 +550,7 @@ const CountryList = () => {
                   </button>
                   <button
                     onClick={handleBulkDelete}
-                    className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
+                    className="btn btn-sm  py-1 text-white fw-medium comman-btn-color"
                   >
                     Delete
                   </button>
@@ -594,7 +581,7 @@ const CountryList = () => {
               </div>
 
               {/* Right Section: Select / Search / +Add New */}
-              <div className="col-xl-8 col-lg-8 col-md-12">
+              <div className="col-xl-6 col-lg-8 col-md-12">
                 <div className="d-flex flex-wrap align-items-center justify-content-end gap-2">
                   <select
                     className="form-select form-select-sm select-page-filter"
@@ -643,8 +630,7 @@ const CountryList = () => {
                   <button
                     className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
                     onClick={handleShow}
-                  >
-                    + New
+                  >New
                   </button>
                 </div>
               </div>
@@ -652,240 +638,6 @@ const CountryList = () => {
           </div>
           <div className="card-body pt-0 container-table">
             <div className="container-table-div">
-              {/* <table className="table mb-0">
-                <thead>
-                  <tr>
-                    <th scope="col" className="sl-numbar-th">
-                      <div className="d-flex align-items-center gap-2">
-                        <input
-                          className="form-check-input"
-                          type="checkbox"
-                          checked={isAllSelected}
-                          onChange={handleSelectAll}
-                          disabled={countries.length === 0}
-                        />
-                        <span>No.</span>
-                      </div>
-                    </th>
-                    <th
-                      scope="col"
-                      className="sorting-th"
-                      onClick={() => handleSort("name")}
-                    >
-                      <div className="d-flex align-items-center">
-                        Country Name
-                        {getSortIcon("name")}
-                      </div>
-                    </th>{" "}
-                    <th
-                      scope="col"
-                      className="sorting-th"
-                      onClick={() => handleSort("name")}
-                    >
-                      <div className="d-flex align-items-center">
-                        Continent
-                        {getSortIcon("name")}
-                      </div>
-                    </th>
-                    <th
-                      scope="col"
-                      className="sorting-th"
-                      onClick={() => handleSort("name")}
-                    >
-                      <div className="d-flex align-items-center">
-                        Official Name
-                        {getSortIcon("name")}
-                      </div>
-                    </th>{" "}
-                    <th
-                      scope="col"
-                      className="sorting-th"
-                      onClick={() => handleSort("name")}
-                    >
-                      <div className="d-flex align-items-center">
-                        Capital City
-                        {getSortIcon("name")}
-                      </div>
-                    </th>
-                    <th
-                      scope="col"
-                      className="sorting-th"
-                      onClick={() => handleSort("name")}
-                    >
-                      <div className="d-flex align-items-center">
-                        Short Name
-                        {getSortIcon("name")}
-                      </div>
-                    </th>
-                    <th
-                      scope="col"
-                      className="sorting-th"
-                      onClick={() => handleSort("name")}
-                    >
-                      <div className="d-flex align-items-center">
-                        DialCodes
-                        {getSortIcon("name")}
-                      </div>
-                    </th>
-                    <th
-                      scope="col"
-                      className="sorting-th"
-                      onClick={() => handleSort("description")}
-                    >
-                      <div className="d-flex align-items-center">
-                        Currency Code
-                        {getSortIcon("description")}
-                      </div>
-                    </th>
-                    <th
-                      scope="col"
-                      className="sorting-th"
-                      onClick={() => handleSort("description")}
-                    >
-                      <div className="d-flex align-items-center">
-                        Currency Full Name
-                        {getSortIcon("description")}
-                      </div>
-                    </th>
-                    <th
-                      scope="col"
-                      className="sorting-th"
-                      onClick={() => handleSort("description")}
-                    >
-                      <div className="d-flex align-items-center">
-                        Currency Short Name
-                        {getSortIcon("description")}
-                      </div>
-                    </th>
-                    <th
-                      scope="col"
-                      className="sorting-th"
-                      onClick={() => handleSort("description")}
-                    >
-                      <div className="d-flex align-items-center">
-                        Description
-                        {getSortIcon("description")}
-                      </div>
-                    </th>
-                    <th
-                      scope="col"
-                      className="sorting-th"
-                      onClick={() => handleSort("updated_at")}
-                    >
-                      <div className="d-flex align-items-center">
-                        Modified On
-                        {getSortIcon("updated_at")}
-                      </div>
-                    </th>
-                    <th scope="col" className="action-th">
-                      Action
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    <tr>
-                      <td colSpan="13" className="loding-data">
-                        <div className="d-flex justify-content-center align-items-center gap-2">
-                          <div
-                            className="spinner-border spinner-border-sm"
-                            role="status"
-                          >
-                            <span className="visually-hidden">Loading...</span>
-                          </div>
-                          Loading...
-                        </div>
-                      </td>
-                    </tr>
-                  ) : countries.length > 0 ? (
-                    countries.map((rowItem, index) => (
-                      <tr key={rowItem.uuid}>
-                        <td>
-                          <div className="d-flex align-items-center gap-2">
-                            <input
-                              className="form-check-input"
-                              type="checkbox"
-                              checked={selectedRows.includes(rowItem.uuid)}
-                              onChange={() => handleRowSelect(rowItem.uuid)}
-                            />
-                            <span>
-                              {String(startIndex + index + 1).padStart(2, "0")}
-                            </span>
-                          </div>
-                        </td>
-                        <td>
-                          <span>{rowItem.name}</span>
-                        </td>
-                        <td>
-                          <span>{rowItem.continent?.name}</span>
-                        </td>
-                        <td>
-                          <span>{rowItem.officialName}</span>
-                        </td>
-                        <td>
-                          <span>{rowItem.capitalCity}</span>
-                        </td>
-
-                        <td>
-                          <span>{rowItem.shortName}</span>
-                        </td>
-                        <td>
-                          <span>{rowItem.dialCodes}</span>
-                        </td>
-                        <td>
-                          <span>{rowItem.currencyCode}</span>
-                        </td>
-                        <td>
-                          <span>{rowItem.currencyfullname}</span>
-                        </td>
-                        <td>
-                          <span>{rowItem.currencyshortname}</span>
-                        </td>
-                        <td>
-                          <span>{rowItem.description}</span>
-                        </td>
-                        <td>
-                          <span>{formatDateTime(rowItem.updated_at)}</span>
-                        </td>
-                        <td>
-                          <div className="d-flex align-items-center gap-2">
-                            <Link
-                              to="#"
-                              className="edit-btn-icone"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                handleShowEdit(rowItem);
-                              }}
-                            >
-                              <Icon
-                                icon="lucide:edit"
-                                width="18"
-                                className="icone"
-                              />
-                            </Link>
-                            <button
-                              onClick={() => handleDelete(rowItem.uuid)}
-                              className="delete-btn-icone"
-                            >
-                              <Icon
-                                icon="mingcute:delete-2-line"
-                                width="18"
-                                className="icone"
-                              />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="13" className="no-records-found">
-                        No records found
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table> */}
               <table className="table mb-0">
                 <thead>
                   <tr>
@@ -990,7 +742,7 @@ const CountryList = () => {
                           <td><span>{rowItem.description}</span></td>
                         )}
                         {isColumnVisible('updated_at') && (
-                          <td><span>{formatDateTime(rowItem.updated_at)}</span></td>
+                          <td><span>{formatDateDDMMYYYYTime(rowItem.updated_at)}</span></td>
                         )}
                         <td className='action-td'>
                           <div className="d-flex align-items-end gap-2">
@@ -1299,14 +1051,14 @@ const CountryList = () => {
                     <button
                       type="button"
                       onClick={cancelExportTest}
-                      className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-40 py-6 radius-8"
+                      className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-16 py-4 radius-6"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={handleExport}
                       type="button"
-                      className="btn comman-btn-color border border-primary-600 text-md px-40 py-6 radius-8"
+                      className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                     >
                       Submit
                     </button>

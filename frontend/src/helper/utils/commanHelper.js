@@ -84,53 +84,40 @@ export const exportToExcelWrongData = (data, headers, sheetName = 'Sheet1', file
 /**
  * Export simple array data to Excel (for duplicate data)
  * @param {Array} data - Array of simple values
- * @param {string} headerName - Header name for the column
+ * @param {Array} headerName - Header name for the column
  * @param {string} sheetName - Name of the Excel sheet
  * @param {string} fileName - Name of the Excel file (without extension)
  */
-export const exportSimpleArrayToExcel = (data, headerName, sheetName = 'Sheet1', fileName = 'ExportedData') => {
-    try {
+export const exportToExcelDuplicate = (data, headers, sheetName = 'Sheet1', fileName = 'ExportedData') => {
+     try {
+        // Map the data in the same order as headers
         const worksheetData = [
-            [headerName],
-            ...data.map(item => [item])
+            headers,
+            ...data.map(item => 
+                headers.map(header => item[header] || "")
+            )
         ];
 
+        // Create worksheet and workbook
         const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
 
+        // Write workbook to buffer
         const excelBuffer = XLSX.write(workbook, {
             bookType: 'xlsx',
             type: 'array'
         });
 
+        // Create Blob and save file
         const blob = new Blob([excelBuffer], {
             type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         });
 
-        saveAs(blob, `${fileName}.xlsx`);
+        saveAs(blob, `${fileName}-Duplicate-Data.xlsx`);
         return true;
     } catch (error) {
         console.error('Error exporting to Excel:', error);
         return false;
     }
 };
-
-// Updated Component Usage Example
-// import { exportToExcel, exportSimpleArrayToExcel } from '../utils/excelExportHelper';
-//
-// // For duplicate data:
-// exportSimpleArrayToExcel(
-//     response.duplicates,
-//     "Civil ID Name",
-//     "CivilIDName",
-//     "CivilIDName-Duplicate-Data"
-// );
-//
-// // For wrong data:
-// exportToExcel(
-//     response.skipped_rows,
-//     ["Civil ID Name", "Reason"],
-//     "CivilIDName",
-//     "CivilIDName-WrongData-Data"
-// );

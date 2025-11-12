@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from "react-redux";
+import Select from "react-select";
 import { stakeholderTypeEdit, stakeholderTypeAdd } from '../../../../store/master/companyMasters/actions';
 import { toast } from "react-toastify";
 import { stakeholderCategoryList } from '../../../../store/master/actions';
+
 const AddEditStakeholderTypeModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
- const [stakeholderListData, setStakeholderListData] = useState([]);
+  const [stakeholderListData, setStakeholderListData] = useState([]);
+
   // Form state
   const [formData, setFormData] = useState({
     uuid: '',
@@ -21,8 +24,6 @@ const AddEditStakeholderTypeModal = ({ show, handleClose, mode = 'add', rowData 
     category: '',
     description: '',
   });
-
-  
 
   // Populate form data when in edit mode
   useEffect(() => {
@@ -42,28 +43,26 @@ const AddEditStakeholderTypeModal = ({ show, handleClose, mode = 'add', rowData 
         description: '',
       });
     }
-     fetchStakeholderCategoriesList();
+    fetchStakeholderCategoriesList();
   }, [mode, rowData, show]);
 
- const fetchStakeholderCategoriesList = () => {
+  const fetchStakeholderCategoriesList = () => {
     setLoading(true);
     const params = {
       page: 1,
       limit: 2000,
       search: '',
       status: '',
-      sortBy: 'updated_at', // Field to sort by
-      sortOrder: 'desc', // 'asc' or 'desc'
+      sortBy: 'updated_at',
+      sortOrder: 'desc',
     };
 
     dispatch(stakeholderCategoryList(params, (response, error) => {
       setLoading(false);
       if (response?.statusCode === 200 && response?.status === true) {
-
         setStakeholderListData(response?.data || []);
-
       } else {
-
+        toast.error("Failed to load stakeholder categories");
       }
     }));
   };
@@ -82,6 +81,17 @@ const AddEditStakeholderTypeModal = ({ show, handleClose, mode = 'add', rowData 
         ...prev,
         [name]: ''
       }));
+    }
+  };
+
+  // Handle Select dropdown change
+  const handleSelectChange = (selectedOption) => {
+    setFormData(prev => ({ 
+      ...prev, 
+      category: selectedOption ? selectedOption.value : '' 
+    }));
+    if (errors.category) {
+      setErrors(prev => ({ ...prev, category: '' }));
     }
   };
 
@@ -196,25 +206,37 @@ const AddEditStakeholderTypeModal = ({ show, handleClose, mode = 'add', rowData 
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                     Stakeholder Category <span className="text-danger">*</span>
                   </label>
-                  <select
-                    name="category"
-                    value={formData.category}
-                    onChange={handleChange}
-                    className={`form-control form-select radius-8 ${errors.category ? 'is-invalid' : ''}`}
-                  >
-                     <option value="">Select  Stakeholder Category</option>
-                    {stakeholderListData.map((option) => (
-                      <option key={option.uuid} value={option.uuid}>
-                        {option.name}
-                      </option>
-                    ))}
-                  </select>
+                  <Select
+                    options={stakeholderListData.map((option) => ({
+                      value: option.uuid,
+                      label: option.name,
+                    }))}
+                    value={
+                      formData.category
+                        ? stakeholderListData
+                            .map((option) => ({
+                              value: option.uuid,
+                              label: option.name,
+                            }))
+                            .find((opt) => opt.value === formData.category)
+                        : null
+                    }
+                    onChange={handleSelectChange}
+                    placeholder="Select Stakeholder Category"
+                    isClearable
+                    isSearchable
+                    className={`custom-select-container ${
+                      errors.category ? "is-invalid" : ""
+                    }`}
+                    classNamePrefix="custom-select"
+                  />
                   {errors.category && (
                     <div className="text-danger text-sm mt-1">
                       {errors.category}
                     </div>
                   )}
                 </div>
+
                 {/* Stakeholder Type Name */}
                 <div className="col-12 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
@@ -260,13 +282,13 @@ const AddEditStakeholderTypeModal = ({ show, handleClose, mode = 'add', rowData 
                   <button
                     type="button"
                     onClick={onClose}
-                    className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-40 py-6 radius-8"
+                    className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-16 py-4 radius-6"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="btn comman-btn-color border border-primary-600 text-md px-40 py-6 radius-8"
+                    className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                     disabled={loading}
                   >
                     {loading ? 'Saving...' : 'Save'}
