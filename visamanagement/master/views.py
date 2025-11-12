@@ -6978,7 +6978,6 @@ class StakeholderTypeExportAPIView(APIView):
 
 # ----------------- IMPORT -----------------
 class StakeholderTypeImportAPIView(APIView):
-   
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
@@ -6992,13 +6991,14 @@ class StakeholderTypeImportAPIView(APIView):
         duplicates = []
         skipped_rows = []
 
-        required_headers = {'stakeholder type','stakeholder category'}
-        optional_headers = {'description'}
-
         def normalize_header(h):
             if not h:
                 return ''
             return ''.join(c for c in str(h).lower() if c.isalnum())
+
+        # Normalized required and optional headers
+        required_headers = {normalize_header('stakeholder type'), normalize_header('stakeholder category')}
+        optional_headers = {normalize_header('description')}
 
         try:
             data = []
@@ -7057,17 +7057,19 @@ class StakeholderTypeImportAPIView(APIView):
                     data.append(row_lower)
 
             else:
-                return Response({  "statusCode": 400,
-                            "status": False,'error': 'Unsupported file format. Use .xlsx or .csv'},
-                                status=status.HTTP_400_BAD_REQUEST)
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    'error': 'Unsupported file format. Use .xlsx or .csv'
+                }, status=status.HTTP_400_BAD_REQUEST)
 
             # ---------- Import Logic ----------
             imported_count = 0
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get('stakeholder type')).strip() if row.get('stakeholder type') else None
+                name = str(row.get('stakeholdertype')).strip() if row.get('stakeholdertype') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
-                category_name = str(row.get('stakeholder category')).strip() if row.get('stakeholder category') else None
+                category_name = str(row.get('stakeholdercategory')).strip() if row.get('stakeholdercategory') else None
 
                 if not name:
                     skipped_rows.append({"Row": row_number, "Reason": "Missing stakeholder type name"})
@@ -7079,8 +7081,9 @@ class StakeholderTypeImportAPIView(APIView):
 
                 category_obj = StakeholderCategory.objects.filter(name__iexact=category_name, is_deleted=False).first()
                 if not category_obj:
-                    skipped_rows.append({"Row": row_number, "Stakeholder Type": name,"Reason": f'Category "{category_name}" not found'})
+                    skipped_rows.append({"Row": row_number, "Stakeholder Type": name, "Reason": f'Category "{category_name}" not found'})
                     continue
+
                 existing = StakeholderType.objects.filter(
                     name__iexact=name,
                     category=category_obj
@@ -7088,7 +7091,8 @@ class StakeholderTypeImportAPIView(APIView):
 
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Stakeholder Type": name,"Stakeholder Category": category_name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "Stakeholder Type": name,
+                                           "Stakeholder Category": category_name, "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -7120,7 +7124,6 @@ class StakeholderTypeImportAPIView(APIView):
             "duplicates": duplicates,
             "skipped_rows": skipped_rows
         }, status=status.HTTP_200_OK)
-
 
 
 
