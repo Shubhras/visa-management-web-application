@@ -6013,7 +6013,7 @@ class OwnershipTypeExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'company_type_name': 'Company Type',
+            'company_type': 'Company Type',
             'name': 'Ownership Type',
             'description': 'Description',
             'is_deleted': 'Deleted',
