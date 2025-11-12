@@ -7458,7 +7458,7 @@ class AccreditationCategoryImportAPIView(APIView):
                 existing = AccreditationCategory.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Accreditation Category": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "Accrediation Category": name, "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -7479,7 +7479,7 @@ class AccreditationCategoryImportAPIView(APIView):
             "imported_count": imported_count,
             "duplicates": duplicates,
             "skipped_rows": skipped_rows
-        }, status=200)
+        }, status=200)  
 
 
 #-------------------------------------------accrediation Name---------------------------------
@@ -7853,7 +7853,7 @@ class AccreditationNameImportAPIView(APIView):
                                 continue
                         if not valid_date:
                             skipped_rows.append({
-                                'full_name': full_name,
+                                'Accrediation Full Name': full_name,
                                 'country': country_name,
                                 'category': category_name,
                                 'reason': f"Invalid date format '{valid_date_raw}'. Expected formats: dd-mm-yyyy, dd/mm/yyyy "
