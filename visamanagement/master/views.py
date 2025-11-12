@@ -6992,8 +6992,8 @@ class StakeholderTypeImportAPIView(APIView):
         duplicates = []
         skipped_rows = []
 
-        required_headers = {'stakeholder type'}
-        optional_headers = {'description', 'stakeholder category'}
+        required_headers = {'stakeholder type','stakeholder category'}
+        optional_headers = {'description'}
 
         def normalize_header(h):
             if not h:
