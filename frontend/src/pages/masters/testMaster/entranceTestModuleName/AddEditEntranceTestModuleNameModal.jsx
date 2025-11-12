@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch } from "react-redux";
 import { entranceTestModuleNameAdd, entranceTestModuleNameEdit, entranceTestNameList } from '../../../../store/master/testMaster/action';
 import { toast } from "react-toastify";
-
+import Select from "react-select";
 const AddEditEntranceTestModuleNameModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
@@ -172,7 +172,7 @@ const AddEditEntranceTestModuleNameModal = ({ show, handleClose, mode = 'add', r
                 <div className="modal-content radius-16 bg-base">
                     <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
                         <h1 className="modal-title fs-5" id="departmentModalLabel">
-                            {mode === 'edit' ? 'Edit Entrance Test Name' : 'Add Entrance Test Name'}
+                            {mode === 'edit' ? 'Edit Entrance Test Module Name' : 'Add Entrance Test Module Name'}
                         </h1>
                         <button
                             type="button"
@@ -190,27 +190,36 @@ const AddEditEntranceTestModuleNameModal = ({ show, handleClose, mode = 'add', r
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                                         Entrance Test Name <span className="text-danger">*</span>
                                     </label>
-                                    {/* <input
-                                        type="text"
-                                        name="name"
-                                        value={formData.name}
-                                        onChange={handleChange}
-                                        className={`form-control radius-8 ${errors.name ? 'is-invalid' : ''}`}
-                                        placeholder="Enter entrance test name"
-                                    /> */}
-                                    <select
-                                        name="name"
-                                        value={formData.name}
-                                        onChange={handleChange}
-                                        className={`form-control form-select radius-8 ${errors.name ? 'is-invalid' : ''}`}
-                                    >
-                                        <option value="">Select entrance test name</option>
-                                        {entranceTestName.map((option) => (
-                                            <option key={option.uuid} value={option.uuid}>
-                                                {option.shortname}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <Select
+                                        options={entranceTestName.map((option) => ({
+                                            value: option.uuid,
+                                            label: option.shortname,
+                                        }))}
+                                        value={
+                                            formData.name
+                                                ? entranceTestName
+                                                    .map((option) => ({
+                                                        value: option.uuid,
+                                                        label: option.shortname,
+                                                    }))
+                                                    .find((opt) => opt.value === formData.name)
+                                                : null
+                                        }
+                                        onChange={(selectedOption) =>
+                                            handleChange({
+                                                target: {
+                                                    name: "name",
+                                                    value: selectedOption ? selectedOption.value : "",
+                                                },
+                                            })
+                                        }
+                                        placeholder="Select entrance test name"
+                                        isClearable
+                                        isSearchable
+                                        className={`custom-select-container ${errors.name ? "is-invalid" : ""
+                                            }`}
+                                        classNamePrefix="custom-select"
+                                    />
                                     {errors.name && (
                                         <div className="text-danger text-sm mt-1">
                                             {errors.name}
@@ -261,13 +270,13 @@ const AddEditEntranceTestModuleNameModal = ({ show, handleClose, mode = 'add', r
                                     <button
                                         type="button"
                                         onClick={onClose}
-                                        className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-40 py-6 radius-8"
+                                        className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-16 py-4 radius-6"
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         type="submit"
-                                        className="btn comman-btn-color border border-primary-600 text-md px-40 py-6 radius-8"
+                                        className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                                         disabled={loading}
                                     >
                                         {loading ? 'Saving...' : 'Save'}

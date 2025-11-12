@@ -487,16 +487,16 @@ const LicenceNameList = () => {
           <div className="card-body container-data">
             <div className="row align-items-center gy-3 gx-2 flex-wrap filter-action-btn">
               {/* Left Section: Import / Export / Delete */}
-              <div className="col-xl-4 col-lg-4 col-md-12">
+              <div className="col-xl-6 col-lg-4 col-md-12">
                 <div className="d-flex flex-wrap align-items-center gap-2">
                   <button
-                    className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
+                    className="btn btn-sm  py-1 text-white fw-medium comman-btn-color"
                     onClick={handleShowImport}
                   >
                     Import
                   </button>
                   <button
-                    className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
+                    className="btn btn-sm  py-1 text-white fw-medium comman-btn-color"
                     onClick={handleExportTest}
                     disabled={loadingExport}
                   >
@@ -504,7 +504,7 @@ const LicenceNameList = () => {
                   </button>
                   <button
                     onClick={handleBulkDelete}
-                    className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
+                    className="btn btn-sm  py-1 text-white fw-medium comman-btn-color"
                   >
                     Delete
                   </button>
@@ -512,13 +512,13 @@ const LicenceNameList = () => {
                     <>
                       <button
                         onClick={() => handleSelectAllOrNot("onlySelected")}
-                        className={`btn btn-sm px-3 py-1 fw-medium ${selectAllOrNot === "onlySelected" ? "comman-btn-color" : "comman-inactive-btn"}`}
+                        className={`btn btn-sm py-1 fw-medium ${selectAllOrNot === "onlySelected" ? "comman-btn-color" : "comman-inactive-btn"}`}
                       >
                         {`Select (${selectedRows.length})`}
                       </button>
                       <button
                         onClick={() => handleSelectAllOrNot("all")}
-                        className={`btn btn-sm px-3 py-1 fw-medium ${selectAllOrNot === "all" ? "comman-btn-color" : "comman-inactive-btn"}`}
+                        className={`btn btn-sm py-1 fw-medium ${selectAllOrNot === "all" ? "comman-btn-color" : "comman-inactive-btn"}`}
                       >
                         {`Select All (${tableState.total})`}
                       </button>
@@ -528,7 +528,7 @@ const LicenceNameList = () => {
               </div>
 
               {/* Right Section: Select / Search / +Add New */}
-              <div className="col-xl-8 col-lg-8 col-md-12">
+              <div className="col-xl-6 col-lg-8 col-md-12">
                 <div className="d-flex flex-wrap align-items-center justify-content-end gap-2">
                   <select
                     className="form-select form-select-sm select-page-filter"
@@ -577,7 +577,7 @@ const LicenceNameList = () => {
                   <button
                     className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
                     onClick={handleShow}
-                  >+ New</button>
+                  >New</button>
                 </div>
               </div>
             </div>
@@ -585,158 +585,6 @@ const LicenceNameList = () => {
           <div className="card-body pt-0 container-table" >
             <div className='container-table-div'>
               <table className="table mb-0"  >
-                {/* <thead >
-                  <tr>
-                    <th scope="col" className='sl-numbar-th'>
-                      <div className="d-flex align-items-center gap-2">
-                        <input
-                          className="form-check-input"
-                          type="checkbox"
-                          checked={isAllSelected}
-                          onChange={handleSelectAll}
-                          disabled={licenceNameData.length === 0}
-                        />
-                        <span>No.</span>
-                      </div>
-                    </th>
-                    <th scope="col" className='sorting-th' onClick={() => handleSort('country_name')}>
-                      <div className="d-flex align-items-center">
-                        Country
-                        {getSortIcon('country_name')}
-                      </div>
-                    </th>
-                    <th scope="col" className='sorting-th' onClick={() => handleSort('full_name')}>
-                      <div className="d-flex align-items-center">
-                        License Full Name
-                        {getSortIcon('full_name')}
-                      </div>
-                    </th>
-                    <th scope="col" className='sorting-th' onClick={() => handleSort('short_name')}>
-                      <div className="d-flex align-items-center">
-                        License Short Name
-                        {getSortIcon('short_name')}
-                      </div>
-                    </th>
-                    <th scope="col" className='sorting-th' onClick={() => handleSort('issuing_authority')}>
-                      <div className="d-flex align-items-center">
-                        License Issuing Authority Name
-                        {getSortIcon('issuing_authority')}
-                      </div>
-                    </th>
-                    <th scope="col" className='sorting-th' onClick={() => handleSort('valid_upto')}>
-                      <div className="d-flex align-items-center">
-                        License Valid Upto
-                        {getSortIcon('valid_upto')}
-                      </div>
-                    </th>
-                    <th scope="col" className='sorting-th' onClick={() => handleSort('description')}>
-                      <div className="d-flex align-items-center">
-                        Description
-                        {getSortIcon('description')}
-                      </div>
-                    </th>
-                    <th scope="col" className='sorting-th' onClick={() => handleSort('updated_at')}>
-                      <div className="d-flex align-items-center">
-                        Modified On
-                        {getSortIcon('updated_at')}
-                      </div>
-                    </th>
-                    <th scope="col" className='action-th'>
-                      Action
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    <tr>
-                      <td colSpan="5" className='loding-data'>
-                        <div className="d-flex justify-content-center align-items-center gap-2">
-                          <div className="spinner-border spinner-border-sm" role="status">
-                            <span className="visually-hidden">Loading...</span>
-                          </div>
-                          Loading...
-                        </div>
-                      </td>
-                    </tr>
-                  ) : licenceNameData.length > 0 ? (
-                    licenceNameData.map((rowItem, index) => (
-                      <tr key={rowItem.uuid} >
-                        <td >
-                          <div className="d-flex align-items-center gap-2">
-                            <input
-                              className="form-check-input"
-                              type="checkbox"
-                              checked={selectedRows.includes(rowItem.uuid)}
-                              onChange={() => handleRowSelect(rowItem.uuid)}
-                            />
-                            <span>
-                              {String(startIndex + index + 1).padStart(2, '0')}
-                            </span>
-                          </div>
-                        </td>
-                        <td >
-                          <span >
-                            {rowItem.country_name}
-                          </span>
-                        </td>
-                        <td >
-                          <span >
-                            {rowItem.full_name}
-                          </span>
-                        </td>
-                        <td >
-                          <span >
-                            {rowItem.short_name}
-                          </span>
-                        </td>
-                        <td >
-                          <span >
-                            {rowItem.issuing_authority}
-                          </span>
-                        </td>
-                        <td >
-                          <span >
-                            {rowItem.valid_upto}
-                          </span>
-                        </td>
-                        <td >
-                          <span >
-                            {rowItem.description}
-                          </span>
-                        </td>
-                        <td>
-                          <span>{formatDateTime(rowItem.updated_at)}</span>
-                        </td>
-                        <td >
-                          <div className="d-flex align-items-center gap-2">
-                            <Link
-                              to="#"
-                              className='edit-btn-icone'
-                              onClick={(e) => {
-                                e.preventDefault();
-                                handleShowEdit(rowItem);
-                              }}
-                            >
-                              <Icon icon="lucide:edit" width="18" className='icone' />
-                            </Link>
-                            <button
-                              onClick={() => handleDelete(rowItem.uuid)}
-                              className='delete-btn-icone'
-                            >
-                              <Icon icon="mingcute:delete-2-line" width="18" className='icone' />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="5" className='no-records-found'>
-                        No records found
-                      </td>
-                    </tr>
-                  )}
-                </tbody> */}
                 <thead>
                   <tr>
                     <th scope="col" className='sl-numbar-th'>
@@ -1119,16 +967,23 @@ const LicenceNameList = () => {
                     <button
                       type="button"
                       onClick={cancelExportTest}
-                      className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-40 py-6 radius-8"
+                      className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-16 py-4 radius-6"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={handleExport}
                       type="button"
-                      className="btn comman-btn-color border border-primary-600 text-md px-40 py-6 radius-8"
-                    >
-                      Submit
+                      className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
+                      disabled={loadingExport}
+                    >{loadingExport ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        Submit...
+                      </>
+                    ) : (
+                      "Submit"
+                    )}
                     </button>
                   </div>
                 </div>

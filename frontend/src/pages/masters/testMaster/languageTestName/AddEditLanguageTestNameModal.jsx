@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch } from "react-redux";
 import { languageTestNameAdd, languageTestNameEdit, languageNameTestList } from '../../../../store/master/testMaster/action';
 import { toast } from "react-toastify";
-
+import Select from "react-select";
 const AddEditLanguageTestNameModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
@@ -195,19 +195,36 @@ const AddEditLanguageTestNameModal = ({ show, handleClose, mode = 'add', rowData
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                     Language Name (Test) <span className="text-danger">*</span>
                   </label>
-                  <select
-                    name="languageNameTest"
-                    value={formData.languageNameTest}
-                    onChange={handleChange}
-                    className={`form-control form-select radius-8 ${errors.languageNameTest ? 'is-invalid' : ''}`}
-                  >
-                    <option value="">Select language name(test)</option>
-                    {languageNameTest.map((option) => (
-                      <option key={option.uuid} value={option.uuid}>
-                        {option.name}
-                      </option>
-                    ))}
-                  </select>
+                  <Select
+                    options={languageNameTest.map((option) => ({
+                      value: option.uuid,
+                      label: option.name,
+                    }))}
+                    value={
+                      formData.languageNameTest
+                        ? languageNameTest
+                          .map((option) => ({
+                            value: option.uuid,
+                            label: option.name,
+                          }))
+                          .find((opt) => opt.value === formData.languageNameTest)
+                        : null
+                    }
+                    onChange={(selectedOption) =>
+                      handleChange({
+                        target: {
+                          name: "languageNameTest",
+                          value: selectedOption ? selectedOption.value : "",
+                        },
+                      })
+                    }
+                    placeholder="Select language name(test)"
+                    isClearable
+                    isSearchable
+                    className={`custom-select-container ${errors.languageNameTest ? "is-invalid" : ""
+                      }`}
+                    classNamePrefix="custom-select"
+                  />
                   {errors.languageNameTest && (
                     <div className="text-danger text-sm mt-1">
                       {errors.languageNameTest}
@@ -276,13 +293,13 @@ const AddEditLanguageTestNameModal = ({ show, handleClose, mode = 'add', rowData
                   <button
                     type="button"
                     onClick={onClose}
-                    className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-40 py-6 radius-8"
+                    className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-16 py-4 radius-6"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="btn comman-btn-color border border-primary-600 text-md px-40 py-6 radius-8"
+                    className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                     disabled={loading}
                   >
                     {loading ? 'Saving...' : 'Save'}

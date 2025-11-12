@@ -3,6 +3,7 @@ import { useDispatch } from "react-redux";
 import { studySpecialisationAdd, studySpecialisationEdit } from '../../../../store/master/educationMaster/action';
 import { toast } from "react-toastify";
 import { studyMainAreaList, studyMajorAreaList } from '../../../../store/master/educationMaster/action';
+import Select from "react-select";
 const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
@@ -199,7 +200,7 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                                         Study Main Area <span className="text-danger">*</span>
                                     </label>
-                                    <select
+                                    {/* <select
                                         name="studyMainAreaUuid"
                                         value={formData.studyMainAreaUuid}
                                         onChange={handleChange}
@@ -211,7 +212,37 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
                                                 {option.name}
                                             </option>
                                         ))}
-                                    </select>
+                                    </select> */}
+                                    <Select
+                                        options={studyMainArea.map((option) => ({
+                                            value: option.uuid,
+                                            label: option.name,
+                                        }))}
+                                        value={
+                                            formData.studyMainAreaUuid
+                                                ? studyMainArea
+                                                    .map((option) => ({
+                                                        value: option.uuid,
+                                                        label: option.name,
+                                                    }))
+                                                    .find((opt) => opt.value === formData.studyMainAreaUuid)
+                                                : null
+                                        }
+                                        onChange={(selectedOption) =>
+                                            handleChange({
+                                                target: {
+                                                    name: "studyMainAreaUuid",
+                                                    value: selectedOption ? selectedOption.value : "",
+                                                },
+                                            })
+                                        }
+                                        placeholder="Select  Study Main Area"
+                                        isClearable
+                                        isSearchable
+                                        className={`custom-select-container ${errors.studyMainAreaUuid ? "is-invalid" : ""
+                                            }`}
+                                        classNamePrefix="custom-select"
+                                    />
                                     {errors.studyMainAreaUuid && (
                                         <div className="text-danger text-sm mt-1">
                                             {errors.studyMainAreaUuid}
@@ -222,7 +253,7 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                                         Study Major Area <span className="text-danger">*</span>
                                     </label>
-                                    <select
+                                    {/* <select
                                         name="studyMajorAreaUuid"
                                         value={formData.studyMajorAreaUuid}
                                         onChange={handleChange}
@@ -234,7 +265,37 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
                                                 {option.majorarea}
                                             </option>
                                         ))}
-                                    </select>
+                                    </select> */}
+                                    <Select
+                                        options={studyMajorArea.map((option) => ({
+                                            value: option.uuid,
+                                            label: option.majorarea,
+                                        }))}
+                                        value={
+                                            formData.studyMajorAreaUuid
+                                                ? studyMajorArea
+                                                    .map((option) => ({
+                                                        value: option.uuid,
+                                                        label: option.majorarea,
+                                                    }))
+                                                    .find((opt) => opt.value === formData.studyMajorAreaUuid)
+                                                : null
+                                        }
+                                        onChange={(selectedOption) =>
+                                            handleChange({
+                                                target: {
+                                                    name: "studyMajorAreaUuid",
+                                                    value: selectedOption ? selectedOption.value : "",
+                                                },
+                                            })
+                                        }
+                                        placeholder="Select Study Major Area"
+                                        isClearable
+                                        isSearchable
+                                        className={`custom-select-container ${errors.studyMajorAreaUuid ? "is-invalid" : ""
+                                            }`}
+                                        classNamePrefix="custom-select"
+                                    />
                                     {errors.studyMajorAreaUuid && (
                                         <div className="text-danger text-sm mt-1">
                                             {errors.studyMajorAreaUuid}
@@ -286,13 +347,13 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
                                     <button
                                         type="button"
                                         onClick={onClose}
-                                        className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-40 py-6 radius-8"
+                                        className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-16 py-4 radius-6"
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         type="submit"
-                                        className="btn comman-btn-color border border-primary-600 text-md px-40 py-6 radius-8"
+                                        className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                                         disabled={loading}
                                     >
                                         {loading ? 'Saving...' : 'Save'}

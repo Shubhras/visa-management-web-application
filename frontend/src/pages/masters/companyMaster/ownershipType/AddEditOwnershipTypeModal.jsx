@@ -2,11 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch } from "react-redux";
 import { ownershipTypeEdit, ownershipTypeAdd } from '../../../../store/master/companyMasters/actions';
 import { toast } from "react-toastify";
+import Select from "react-select";
 import { companyList, stakeholderCategoryList } from '../../../../store/master/actions';
+
 const AddEditOwnershipTypeModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
- const [stakeholderListData, setStakeholderListData] = useState([]);
+  const [stakeholderListData, setStakeholderListData] = useState([]);
+
   // Form state
   const [formData, setFormData] = useState({
     uuid: '',
@@ -21,8 +24,6 @@ const AddEditOwnershipTypeModal = ({ show, handleClose, mode = 'add', rowData = 
     company_type: '',
     description: '',
   });
-
-  
 
   // Populate form data when in edit mode
   useEffect(() => {
@@ -42,28 +43,24 @@ const AddEditOwnershipTypeModal = ({ show, handleClose, mode = 'add', rowData = 
         description: '',
       });
     }
-     fetchStakeholderCategoriesList();
+    fetchStakeholderCategoriesList();
   }, [mode, rowData, show]);
 
- const fetchStakeholderCategoriesList = () => {
+  const fetchStakeholderCategoriesList = () => {
     setLoading(true);
     const params = {
       page: 1,
       limit: 2000,
       search: '',
       status: '',
-      sortBy: 'updated_at', // Field to sort by
-      sortOrder: 'desc', // 'asc' or 'desc'
+      sortBy: 'updated_at',
+      sortOrder: 'desc',
     };
 
     dispatch(companyList(params, (response, error) => {
       setLoading(false);
       if (response?.statusCode === 200 && response?.status === true) {
-
         setStakeholderListData(response?.data || []);
-
-      } else {
-
       }
     }));
   };
@@ -83,6 +80,23 @@ const AddEditOwnershipTypeModal = ({ show, handleClose, mode = 'add', rowData = 
         [name]: ''
       }));
     }
+  };
+
+  // Handle Select changes for Company Type
+  const handleSelectChange = (selectedOption) => {
+    setFormData((prev) => ({
+      ...prev,
+      company_type: selectedOption ? selectedOption.value : ""
+    }));
+    if (errors.company_type) {
+      setErrors((prev) => ({ ...prev, company_type: "" }));
+    }
+  };
+
+  // Custom filter function for search from start
+  const customFilterOption = (option, inputValue) => {
+    if (!inputValue) return true;
+    return option.label.toLowerCase().startsWith(inputValue.toLowerCase());
   };
 
   // Validate form
@@ -191,31 +205,42 @@ const AddEditOwnershipTypeModal = ({ show, handleClose, mode = 'add', rowData = 
           <div className="modal-body p-24">
             <form onSubmit={handleSubmit}>
               <div className="row">
-                {/* Company Type*/}
+                {/* Company Type with React-Select */}
                 <div className="col-12 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                     Company Type <span className="text-danger">*</span>
                   </label>
-                  <select
-                    name="company_type"
-                    value={formData.company_type}
-                    onChange={handleChange}
-                    className={`form-control form-select radius-8 ${errors.company_type ? 'is-invalid' : ''}`}
-                  >
-                     <option value="">Select  company type</option>
-                    {stakeholderListData.map((option) => (
-                      <option key={option.uuid} value={option.uuid}>
-                        {option.name}
-                      </option>
-                    ))}
-                  </select>
+                  <Select
+                    options={stakeholderListData.map((option) => ({
+                      value: option.uuid,
+                      label: option.name,
+                    }))}
+                    value={
+                      formData.company_type
+                        ? stakeholderListData
+                          .map((option) => ({
+                            value: option.uuid,
+                            label: option.name,
+                          }))
+                          .find((opt) => opt.value === formData.company_type)
+                        : null
+                    }
+                    onChange={handleSelectChange}
+                    filterOption={customFilterOption}
+                    placeholder="Select company type"
+                    isClearable
+                    isSearchable
+                    className={`custom-select-container ${errors.company_type ? "is-invalid" : ""}`}
+                    classNamePrefix="custom-select"
+                  />
                   {errors.company_type && (
                     <div className="text-danger text-sm mt-1">
                       {errors.company_type}
                     </div>
                   )}
                 </div>
-                {/* Stakeholder Type Name */}
+
+                {/* Ownership Type Name */}
                 <div className="col-12 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                     Ownership Type <span className="text-danger">*</span>
@@ -260,16 +285,23 @@ const AddEditOwnershipTypeModal = ({ show, handleClose, mode = 'add', rowData = 
                   <button
                     type="button"
                     onClick={onClose}
-                    className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-40 py-6 radius-8"
+                    className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-16 py-4 radius-6"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="btn comman-btn-color border border-primary-600 text-md px-40 py-6 radius-8"
+                    className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                     disabled={loading}
                   >
-                    {loading ? 'Saving...' : 'Save'}
+                    {loading ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        Saving...
+                      </>
+                    ) : (
+                      "Save"
+                    )}
                   </button>
                 </div>
               </div>

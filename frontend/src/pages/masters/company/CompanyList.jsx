@@ -1,4 +1,4 @@
-import React, { useState, useEffect,useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useDispatch } from "react-redux";
 import MasterLayout from "../../../masterLayout/MasterLayout";
 import Breadcrumb from "../../../components/Breadcrumb";
@@ -11,6 +11,7 @@ import AddCompany from './AddCompany';
 import EditCompany from './EditCompany';
 import { companyList, companyDelete, companyExportData } from '../../../store/master/actions';
 import AddImportCompanyModal from './AddImportCompanyModal';
+import { formatDateDDMMYYYYTime } from '../../../helper/utils/commanHelper';
 
 const CompanyList = () => {
     const dispatch = useDispatch();
@@ -38,52 +39,52 @@ const CompanyList = () => {
     const [selectedItems, setSelectedItems] = useState(["Company Type"]);
     const [ItemsRequired] = useState(["Company Type"]);
 
-  // Table columns configuration
-  const [tableColumns] = useState([
-    { id: 'name', label: 'Company Type', field: 'name', visible: true, required: false },
-    { id: 'description', label: 'Description', field: 'description', visible: true, required: false },
-    { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false },
-  ]);
+    // Table columns configuration
+    const [tableColumns] = useState([
+        { id: 'name', label: 'Company Type', field: 'name', visible: true, required: false },
+        { id: 'description', label: 'Description', field: 'description', visible: true, required: false },
+        { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false },
+    ]);
 
-  const [visibleColumns, setVisibleColumns] = useState(
-    tableColumns.filter(col => col.visible).map(col => col.id)
-  );
-  const [showColumnDropdown, setShowColumnDropdown] = useState(false);
-  const columnDropdownRef = useRef(null);
-  // Column visibility toggle handler
-  const toggleColumnVisibility = (columnId) => {
-    const column = tableColumns.find(col => col.id === columnId);
-    if (column?.required) return; // Don't allow hiding required columns
+    const [visibleColumns, setVisibleColumns] = useState(
+        tableColumns.filter(col => col.visible).map(col => col.id)
+    );
+    const [showColumnDropdown, setShowColumnDropdown] = useState(false);
+    const columnDropdownRef = useRef(null);
+    // Column visibility toggle handler
+    const toggleColumnVisibility = (columnId) => {
+        const column = tableColumns.find(col => col.id === columnId);
+        if (column?.required) return; // Don't allow hiding required columns
 
-    setVisibleColumns(prev => {
-      if (prev.includes(columnId)) {
-        return prev.filter(id => id !== columnId);
-      } else {
-        return [...prev, columnId];
-      }
-    });
-  };
-
-  // Check if column is visible
-  const isColumnVisible = (columnId) => {
-    return visibleColumns.includes(columnId);
-  };
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (columnDropdownRef.current && !columnDropdownRef.current.contains(event.target)) {
-        setShowColumnDropdown(false);
-      }
+        setVisibleColumns(prev => {
+            if (prev.includes(columnId)) {
+                return prev.filter(id => id !== columnId);
+            } else {
+                return [...prev, columnId];
+            }
+        });
     };
 
-    if (showColumnDropdown) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+    // Check if column is visible
+    const isColumnVisible = (columnId) => {
+        return visibleColumns.includes(columnId);
     };
-  }, [showColumnDropdown]);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (columnDropdownRef.current && !columnDropdownRef.current.contains(event.target)) {
+                setShowColumnDropdown(false);
+            }
+        };
+
+        if (showColumnDropdown) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [showColumnDropdown]);
     // Updated state with sorting
     const [tableState, setTableState] = useState({
         page: 1,
@@ -450,20 +451,6 @@ const CompanyList = () => {
     const startIndex = (tableState.currentPage - 1) * tableState.limit;
     const statusOptions = ['All', 'Active', 'Inactive'];
 
-    const formatDateTime = (dateString) => {
-        const date = new Date(dateString);
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const year = date.getFullYear();
-        let hours = date.getHours();
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        const seconds = String(date.getSeconds()).padStart(2, '0');
-        const ampm = hours >= 12 ? 'PM' : 'AM';
-        hours = hours % 12 || 12;
-        hours = String(hours).padStart(2, '0');
-        return `${day}-${month}-${year} ${hours}:${minutes}:${seconds} ${ampm}`
-    };
-
     return (
         <>
             <MasterLayout>
@@ -472,16 +459,16 @@ const CompanyList = () => {
                     <div className="card-body container-data">
                         <div className="row align-items-center gy-3 gx-2 flex-wrap filter-action-btn">
                             {/* Left Section: Import / Export / Delete */}
-                            <div className="col-xl-4 col-lg-4 col-md-12">
+                            <div className="col-xl-6 col-lg-4 col-md-12">
                                 <div className="d-flex flex-wrap align-items-center gap-2">
                                     <button
-                                        className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
+                                        className="btn btn-sm  py-1 text-white fw-medium comman-btn-color"
                                         onClick={handleShowImport}
                                     >
                                         Import
                                     </button>
                                     <button
-                                        className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
+                                        className="btn btn-sm  py-1 text-white fw-medium comman-btn-color"
                                         onClick={handleExportTest}
                                         disabled={loadingExport}
                                     >
@@ -489,7 +476,7 @@ const CompanyList = () => {
                                     </button>
                                     <button
                                         onClick={handleBulkDelete}
-                                        className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
+                                        className="btn btn-sm  py-1 text-white fw-medium comman-btn-color"
                                     >
                                         Delete
                                     </button>
@@ -497,13 +484,13 @@ const CompanyList = () => {
                                         <>
                                             <button
                                                 onClick={() => handleSelectAllOrNot("onlySelected")}
-                                                className={`btn btn-sm px-3 py-1 fw-medium ${selectAllOrNot === "onlySelected" ? "comman-btn-color" : "comman-inactive-btn"}`}
+                                                className={`btn btn-sm py-1 fw-medium ${selectAllOrNot === "onlySelected" ? "comman-btn-color" : "comman-inactive-btn"}`}
                                             >
                                                 {`Select (${selectedRows.length})`}
                                             </button>
                                             <button
                                                 onClick={() => handleSelectAllOrNot("all")}
-                                                className={`btn btn-sm px-3 py-1 fw-medium ${selectAllOrNot === "all" ? "comman-btn-color" : "comman-inactive-btn"}`}
+                                                className={`btn btn-sm py-1 fw-medium ${selectAllOrNot === "all" ? "comman-btn-color" : "comman-inactive-btn"}`}
                                             >
                                                 {`Select All (${tableState.total})`}
                                             </button>
@@ -513,7 +500,7 @@ const CompanyList = () => {
                             </div>
 
                             {/* Right Section: Select / Search / +Add New */}
-                            <div className="col-xl-8 col-lg-8 col-md-12">
+                            <div className="col-xl-6 col-lg-8 col-md-12">
                                 <div className="d-flex flex-wrap align-items-center justify-content-end gap-2">
                                     <select
                                         className="form-select form-select-sm select-page-filter"
@@ -551,7 +538,7 @@ const CompanyList = () => {
                                                     lineHeight: 1
                                                 }}
                                                 onClick={() => {
-                                                    
+
                                                     handleSearchChange('');
                                                 }}
                                             >
@@ -562,7 +549,7 @@ const CompanyList = () => {
                                     <button
                                         className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
                                         onClick={handleShow}
-                                    >+ New</button>
+                                    >New</button>
                                 </div>
                             </div>
                         </div>
@@ -570,125 +557,125 @@ const CompanyList = () => {
                     <div className="card-body pt-0 container-table" >
                         <div className='container-table-div'>
                             <table className="table mb-0">
-                                           <thead>
-                                            <tr>
-                                              <th scope="col" className='sl-numbar-th'>
-                                                <div className="d-flex align-items-center gap-2">
-                                                  <input
+                                <thead>
+                                    <tr>
+                                        <th scope="col" className='sl-numbar-th'>
+                                            <div className="d-flex align-items-center gap-2">
+                                                <input
                                                     className="form-check-input"
                                                     type="checkbox"
                                                     checked={isAllSelected}
                                                     onChange={handleSelectAll}
                                                     disabled={companyListData.length === 0}
-                                                  />
-                                                  <span>No.</span>
-                                                </div>
-                                              </th>
-                                              {tableColumns.map((column) => (
-                                                isColumnVisible(column.id) && (
-                                                  <th
+                                                />
+                                                <span>No.</span>
+                                            </div>
+                                        </th>
+                                        {tableColumns.map((column) => (
+                                            isColumnVisible(column.id) && (
+                                                <th
                                                     key={column.id}
                                                     scope="col"
                                                     className='sorting-th'
                                                     onClick={() => handleSort(column.field)}
-                                                  >
+                                                >
                                                     <div className="d-flex align-items-center">
-                                                      {column.label}
-                                                      {getSortIcon(column.field)}
+                                                        {column.label}
+                                                        {getSortIcon(column.field)}
                                                     </div>
-                                                  </th>
-                                                )
-                                              ))}
-                                              <th scope="col" className='action-th'>
-                                                <div className="position-relative table-header-hide-show" ref={columnDropdownRef}>
-                                                  <button
+                                                </th>
+                                            )
+                                        ))}
+                                        <th scope="col" className='action-th'>
+                                            <div className="position-relative table-header-hide-show" ref={columnDropdownRef}>
+                                                <button
                                                     className="position-relative table-header-hide-show"
                                                     onClick={() => setShowColumnDropdown(!showColumnDropdown)}
-                                                  >
+                                                >
                                                     Action <Icon icon="mdi:table-column" width="20" className='icone' />
-                                                  </button>
-                                                  {showColumnDropdown && (
+                                                </button>
+                                                {showColumnDropdown && (
                                                     <div className="position-absolute bg-white border rounded shadow-sm p-2 show-dropdowns-header">
-                                                      {tableColumns.map((column) => (
-                                                        <div
-                                                          key={column.id}
-                                                          className="bg-white p-2 mb-2 d-flex align-items-center gap-2"
-                                                        >
-                                                          <input
-                                                            type="checkbox"
-                                                            id={`column-${column.id}`}
-                                                            checked={isColumnVisible(column.id)}
-                                                            onChange={() => toggleColumnVisibility(column.id)}
-                                                            disabled={column.required}
-                                                            className="form-check-input"
-                                                          />
-                                                          <label htmlFor={`column-${column.id}`} className="mb-0 flex-grow-1 form-label">
-                                                            {column.label}
-                                                          </label>
-                                                        </div>
-                                                      ))}
+                                                        {tableColumns.map((column) => (
+                                                            <div
+                                                                key={column.id}
+                                                                className="bg-white p-2 mb-2 d-flex align-items-center gap-2"
+                                                            >
+                                                                <input
+                                                                    type="checkbox"
+                                                                    id={`column-${column.id}`}
+                                                                    checked={isColumnVisible(column.id)}
+                                                                    onChange={() => toggleColumnVisibility(column.id)}
+                                                                    disabled={column.required}
+                                                                    className="form-check-input"
+                                                                />
+                                                                <label htmlFor={`column-${column.id}`} className="mb-0 flex-grow-1 form-label">
+                                                                    {column.label}
+                                                                </label>
+                                                            </div>
+                                                        ))}
                                                     </div>
-                                                  )}
-                                                </div>
-                                              </th>
-                                            </tr>
-                                          </thead>
-                                          <tbody>
-                                            {loading ? (
-                                              <tr>
-                                                <td colSpan={visibleColumns.length + 2} className='loding-data'>
-                                                  <div className="d-flex justify-content-center align-items-center gap-2">
+                                                )}
+                                            </div>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {loading ? (
+                                        <tr>
+                                            <td colSpan={visibleColumns.length + 2} className='loding-data'>
+                                                <div className="d-flex justify-content-center align-items-center gap-2">
                                                     <div className="spinner-border spinner-border-sm" role="status">
-                                                      <span className="visually-hidden">Loading...</span>
+                                                        <span className="visually-hidden">Loading...</span>
                                                     </div>
                                                     Loading...
-                                                  </div>
-                                                </td>
-                                              </tr>
-                                            ) : companyListData.length > 0 ? (
-                                              companyListData.map((rowItem, index) => (
-                                                <tr key={rowItem.uuid}>
-                                                  <td>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ) : companyListData.length > 0 ? (
+                                        companyListData.map((rowItem, index) => (
+                                            <tr key={rowItem.uuid}>
+                                                <td>
                                                     <div className="d-flex align-items-center gap-2">
-                                                      <input
-                                                        className="form-check-input"
-                                                        type="checkbox"
-                                                        checked={selectedRows.includes(rowItem.uuid)}
-                                                        onChange={() => handleRowSelect(rowItem.uuid)}
-                                                      />
-                                                      <span>{String(startIndex + index + 1).padStart(2, '0')}</span>
+                                                        <input
+                                                            className="form-check-input"
+                                                            type="checkbox"
+                                                            checked={selectedRows.includes(rowItem.uuid)}
+                                                            onChange={() => handleRowSelect(rowItem.uuid)}
+                                                        />
+                                                        <span>{String(startIndex + index + 1).padStart(2, '0')}</span>
                                                     </div>
-                                                  </td>
-                                                  {isColumnVisible('name') && (
-                                                    <td><span>{rowItem.name}</span></td>
-                                                  )}
-                                                  {isColumnVisible('description') && (
-                                                    <td><span>{rowItem.description}</span></td>
-                                                  )}
-                                                  {isColumnVisible('updated_at') && (
-                                                    <td><span>{formatDateTime(rowItem.updated_at)}</span></td>
-                                                  )}
-                                                  <td className='action-td'>
-                                                    <div className="d-flex align-items-end gap-2">
-                                                      <Link to="#" className='edit-btn-icone' onClick={(e) => { e.preventDefault(); handleShowEdit(rowItem); }}>
-                                                        <Icon icon="lucide:edit" width="18" className='icone' />
-                                                      </Link>
-                                                      <button onClick={() => handleDelete(rowItem.uuid)} className='delete-btn-icone'>
-                                                        <Icon icon="mingcute:delete-2-line" width="18" className='icone' />
-                                                      </button>
-                                                    </div>
-                                                  </td>
-                                                </tr>
-                                              ))
-                                            ) : (
-                                              <tr>
-                                                <td colSpan={visibleColumns.length + 2} className='no-records-found'>
-                                                  No records found
                                                 </td>
-                                              </tr>
-                                            )}
-                                          </tbody>
-                                        </table>
+                                                {isColumnVisible('name') && (
+                                                    <td><span>{rowItem.name}</span></td>
+                                                )}
+                                                {isColumnVisible('description') && (
+                                                    <td><span>{rowItem.description}</span></td>
+                                                )}
+                                                {isColumnVisible('updated_at') && (
+                                                    <td><span>{formatDateDDMMYYYYTime(rowItem.updated_at)}</span></td>
+                                                )}
+                                                <td className='action-td'>
+                                                    <div className="d-flex align-items-end gap-2">
+                                                        <Link to="#" className='edit-btn-icone' onClick={(e) => { e.preventDefault(); handleShowEdit(rowItem); }}>
+                                                            <Icon icon="lucide:edit" width="18" className='icone' />
+                                                        </Link>
+                                                        <button onClick={() => handleDelete(rowItem.uuid)} className='delete-btn-icone'>
+                                                            <Icon icon="mingcute:delete-2-line" width="18" className='icone' />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan={visibleColumns.length + 2} className='no-records-found'>
+                                                No records found
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
 
                             {tableState.total > 0 && (
                                 <div className="d-flex justify-content-between align-items-center px-4 py-3" >
@@ -836,78 +823,6 @@ const CompanyList = () => {
                         </div>
                     </div>
                 )}
-                {/* {showExportPopop && (
-                    <div
-                        className="modal fade show common-ctl-popup"
-                        tabIndex={-1}
-                        role="dialog"
-                    >
-                        <div className="modal-dialog modal-lg modal-dialog-centered " role="document">
-                            <div className="modal-content radius-16 bg-base">
-                                <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                                    <h1 className="modal-title fs-5">Export company type</h1>
-                                    <button
-                                        type="button"
-                                        className="btn-close"
-                                        onClick={cancelExportTest}
-                                        aria-label="Close"
-                                    />
-                                </div>
-                                <div className="modal-body p-24">
-                                    <div className="row">
-                                        <div className="col-12 mb-20">
-                                            {items.map((item, index) => (
-                                                <div
-                                                    key={index}
-                                                    draggable
-                                                    onDragStart={(e) => handleDragStart(e, index)}
-                                                    onDrop={(e) => handleDrop(e, index)}
-                                                    onDragOver={handleDragOver}
-                                                    className="border p-2 mb-10 radius-8 d-flex align-items-center justify-content-start gap-2  cursor-pointer export-file"
-                                                    style={{
-                                                        cursor: "grab",
-                                                        margin: "10px !important",
-                                                        height: "40px"
-                                                    }}
-                                                >
-                                                    <input
-                                                        type="checkbox"
-                                                        id={`item-${index}`}
-                                                        checked={selectedItems.includes(item)}
-                                                        onChange={(e) =>
-                                                            handleCheckboxChange(item, e.target.checked)
-                                                        }
-                                                        className="form-check-input"
-                                                        style={{ marginLeft: "5px" }}
-                                                    />
-                                                    <label htmlFor={`item-${index}`} className="mb-0">
-                                                        {item}
-                                                    </label>
-                                                </div>
-                                            ))}
-                                        </div>
-
-                                        <div className="d-flex align-items-center justify-content-center gap-3 mt-24">
-                                            <button
-                                                type="button"
-                                                onClick={cancelExportTest}
-                                                className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-40 py-6 radius-8"
-                                            >
-                                                Cancel
-                                            </button>
-                                            <button onClick={handleExport}
-                                                type="button"
-                                                className="btn comman-btn-color border border-primary-600 text-md px-40 py-6 radius-8"
-                                            >
-                                                Submit
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )} */}
                 {showExportPopop && (
                     <div
                         className="modal fade show common-ctl-popup"
@@ -993,16 +908,23 @@ const CompanyList = () => {
                                         <button
                                             type="button"
                                             onClick={cancelExportTest}
-                                            className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-40 py-6 radius-8"
+                                            className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-16 py-4 radius-6"
                                         >
                                             Cancel
                                         </button>
                                         <button
                                             onClick={handleExport}
                                             type="button"
-                                            className="btn comman-btn-color border border-primary-600 text-md px-40 py-6 radius-8"
-                                        >
-                                            Submit
+                                            className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
+                                            disabled={loadingExport}
+                                        >{loadingExport ? (
+                                            <>
+                                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                Submit...
+                                            </>
+                                        ) : (
+                                            "Submit"
+                                        )}
                                         </button>
                                     </div>
                                 </div>
