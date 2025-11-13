@@ -1057,3 +1057,152 @@ class ApplicantTypeSerializer(serializers.ModelSerializer):
             'is_deleted', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
+
+
+
+#---------------------visa conditions master---------------------------
+
+class WorkRightsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WorkRights
+        fields = '__all__'
+
+
+class WorkRightsDuringStudySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WorkRightsDuringStudy
+        fields = '__all__'
+
+
+class WorkRightsDuringVacationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WorkRightsDuringVacation
+        fields = '__all__'
+
+
+class WorkRightsAfterStudySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WorkRightsAfterStudy
+        fields = '__all__'
+
+
+class PRPossibilitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PRPossibility
+        fields = '__all__'
+
+
+class SpouseCanApplywithCandidateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SpouseCanApplywithCandidate
+        fields = '__all__'
+
+
+class SpouseVisaCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SpouseVisaCategory
+        fields = '__all__'
+
+
+class SpouseWorkRightsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SpouseWorkRights
+        fields = '__all__'
+
+
+class ChildrenCanApplywithCandidateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ChildrenCanApplywithCandidate
+        fields = '__all__'
+
+
+class ChildrenVisaCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ChildrenVisaCategory
+        fields = '__all__'
+
+
+class ChildrenStudyWorkRightsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ChildrenStudyWorkRights
+        fields = '__all__'
+
+
+
+class InstituteTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InstituteType
+        fields = '__all__'
+
+
+class InstituteGroupNameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InstituteGroupName
+        fields = '__all__'
+
+
+class InstituteStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InstituteStatus
+        fields = '__all__'
+
+
+class InstitutePrioritySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InstitutePriority
+        fields = '__all__'
+
+
+class InstituteDepartmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InstituteDepartment
+        fields = '__all__'
+
+
+class BankAccountForSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BankAccountFor
+        fields = '__all__'
+
+
+class WhenCommissionIssueSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WhenCommissionIssue
+        fields = '__all__'
+
+
+class CourseLevelCodeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CourseLevelCode
+        fields = '__all__'
+
+
+class CourseDividedInSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CourseDividedIn
+        fields = '__all__'
+
+
+class CourseStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CourseStatus
+        fields = '__all__'
+
+
+class IntakeNameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = IntakeName
+        fields = '__all__'
+
+
+class CourseStatusIntakeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CourseStatusIntake
+        fields = '__all__'
+
+
+class ScholorshipBasedOnSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ScholorshipBasedOn
+        fields = '__all__'
