@@ -143,6 +143,7 @@ const MasterLayout = ({ children }) => {
             { name: 'IT Return Status', path: '/it-return-status' },
             { name: 'Occupation Type', path: '/occupation-type' },
             { name: 'Occupation Prospect', path: '/occupation-prospect' },
+            {name: 'Occupation Version',path: '/occupation-version'}
  
           ]
         },
