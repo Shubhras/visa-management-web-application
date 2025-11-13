@@ -13990,9 +13990,9 @@ class StudySpecialisationExportAPIView(APIView):
         for obj in queryset:
             row = []
             for field in field_list:
-                if field == 'mainarea':
+                if field == 'mainarea_name':
                     value = obj.mainarea.name if obj.mainarea else ''
-                elif field == 'majorarea':
+                elif field == 'majorarea_name':
                     value = obj.majorarea.majorarea if obj.majorarea else ''
                 else:
                     value = getattr(obj, field, '')
