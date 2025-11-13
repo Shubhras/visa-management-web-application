@@ -1307,8 +1307,10 @@ class OccupationVersionImportAPIView(APIView):
             for row_number, row in data:
                 country_name = str(row.get('country')).strip() if row.get('country') else None
                 occupation_version = str(row.get('occupation version')).strip() if row.get('occupation version') else None
-                effect_from = row.get('start date')
-                valid_upto = row.get('end date', None)
+                effect_from_str = row.get('start date')
+                valid_upto_str = row.get('end date', None)
+                effect_from = datetime.strptime(effect_from_str, '%d-%m-%Y').date()
+                valid_upto = datetime.strptime(valid_upto_str, '%d-%m-%Y').date() if valid_upto_str else None
                 description = row.get('description', '')
 
                 if not country_name or not occupation_version or not effect_from:
