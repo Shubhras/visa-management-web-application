@@ -11348,7 +11348,7 @@ class LostReasonImportAPIView(APIView):
                     if not existing.is_deleted:
                         duplicates.append({
                             "Row": row_number,
-                            "Lost Reason": name,
+                            "Lost Reason (B2C)": name,
                             "Reason": "Already exists in database"
                         })
                         continue
@@ -11760,7 +11760,7 @@ class LostReasonB2BImportAPIView(APIView):
                     if not existing.is_deleted:
                         duplicates.append({
                             "Row": row_number,
-                            "Lost Reason B2B": name,
+                            "Lost Reason (B2B)": name,
                             "Reason": "Already exists in database"
                         })
                         continue
