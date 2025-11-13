@@ -220,48 +220,101 @@ class LostReasonAdmin(admin.ModelAdmin):
 @admin.register(EducationLevelCode)
 class EducationLevelCodeAdmin(admin.ModelAdmin):
     list_display = ('name', 'description', 'is_deleted', 'created_at', 'updated_at')
-    search_fields = ('name',)
-    list_filter = ('is_deleted',)
-    ordering = ('name',)
+    search_fields = ('name', 'description')
+    list_filter = ('is_deleted', 'created_at')
 
 
+# -------------------- EducationLevel --------------------
 @admin.register(EducationLevel)
 class EducationLevelAdmin(admin.ModelAdmin):
-    list_display = ('level_code', 'description', 'is_deleted', 'created_at', 'updated_at')
-    search_fields = ('level_code_',)
-    list_filter = ('is_deleted',)
-    ordering = ('level_code__level_code',)
-    autocomplete_fields = ('level_code',)
+    list_display = ('educationlevel', 'level_code', 'description', 'is_deleted', 'created_at', 'updated_at')
+    search_fields = ('educationlevel', 'description', 'level_code__name')
+    list_filter = ('level_code', 'is_deleted')
 
 
+# -------------------- EducationDuration --------------------
 @admin.register(EducationDuration)
 class EducationDurationAdmin(admin.ModelAdmin):
-    list_display = ('durations', 'description', 'is_deleted', 'created_at', 'updated_at')
-    search_fields = ('durations',)
-    list_filter = ('is_deleted',)
-    ordering = ('durations',)
+    list_display = ('durations', 'educationlevel', 'description', 'is_deleted', 'created_at', 'updated_at')
+    search_fields = ('durations', 'description', 'educationlevel__educationlevel')
+    list_filter = ('educationlevel', 'is_deleted')
 
+
+# -------------------- Studymainarea --------------------
 @admin.register(Studymainarea)
 class StudymainareaAdmin(admin.ModelAdmin):
-    list_display = ('uuid','name', 'description', 'is_deleted', 'created_at', 'updated_at')
-    search_fields = ('name',)
+    list_display = ('name', 'description', 'is_deleted', 'created_at', 'updated_at')
+    search_fields = ('name', 'description')
     list_filter = ('is_deleted',)
-    ordering = ('name',)
 
+
+# -------------------- Studymajorarea --------------------
 @admin.register(Studymajorarea)
 class StudymajorareaAdmin(admin.ModelAdmin):
-    list_display = ('uuid','mainarea', 'description', 'majorarea','is_deleted', 'created_at', 'updated_at')
-    search_fields = ('majorarea',)
+    list_display = ('majorarea', 'mainarea', 'description', 'is_deleted', 'created_at', 'updated_at')
+    search_fields = ('majorarea', 'description', 'mainarea__name')
+    list_filter = ('mainarea', 'is_deleted')
+
+
+# -------------------- StudySpecialisation --------------------
+@admin.register(StudySpecialisation)
+class StudySpecialisationAdmin(admin.ModelAdmin):
+    list_display = ('studyspecialisation', 'mainarea', 'majorarea', 'description', 'is_deleted', 'created_at', 'updated_at')
+    search_fields = ('studyspecialisation', 'description', 'mainarea__name', 'majorarea__majorarea')
+    list_filter = ('mainarea', 'majorarea', 'is_deleted')
+
+
+# -------------------- AcademicResultType --------------------
+@admin.register(AcademicResultType)
+class AcademicResultTypeAdmin(admin.ModelAdmin):
+    list_display = ('name', 'description', 'is_deleted', 'created_at', 'updated_at')
+    search_fields = ('name', 'description')
     list_filter = ('is_deleted',)
-    ordering = ('majorarea',)
 
 
-
+# -------------------- AcademicResult --------------------
 @admin.register(AcademicResult)
 class AcademicResultAdmin(admin.ModelAdmin):
-    list_display = ('id', 'AcademicResulttype', 'Academicresult', 'description', 'is_deleted', 'created_at', 'updated_at')
-    list_filter = ('AcademicResulttype', 'is_deleted', 'created_at')
-    search_fields = ('Academicresult', 'description')
-    readonly_fields = ('uuid', 'created_at', 'updated_at')
+    list_display = ('Academicresult', 'AcademicResulttype', 'description', 'is_deleted', 'created_at', 'updated_at')
+    search_fields = ('Academicresult', 'description', 'AcademicResulttype__name')
+    list_filter = ('AcademicResulttype', 'is_deleted')
 
 
+# -------------------- EducationType --------------------
+@admin.register(EducationType)
+class EducationTypeAdmin(admin.ModelAdmin):
+    list_display = ('educationType', 'Perticulars', 'is_deleted', 'created_at', 'updated_at')
+    search_fields = ('educationType', 'Perticulars')
+    list_filter = ('is_deleted',)
+
+
+# -------------------- MediumofEducation --------------------
+@admin.register(MediumofEducation)
+class MediumofEducationAdmin(admin.ModelAdmin):
+    list_display = ('name', 'perticulars', 'is_deleted', 'created_at', 'updated_at')
+    search_fields = ('name', 'perticulars')
+    list_filter = ('is_deleted',)
+
+
+# -------------------- ECAAwardingBody --------------------
+@admin.register(ECAAwardingBody)
+class ECAAwardingBodyAdmin(admin.ModelAdmin):
+    list_display = ('eca_body_full_name', 'eca_body_short_name', 'country', 'selection_type', 'valid_duration_value', 'created_at', 'updated_at')
+    search_fields = ('eca_body_full_name', 'eca_body_short_name', 'country__country_name')
+    list_filter = ('country', 'selection_type')
+
+
+# -------------------- DegreeAwardedBy --------------------
+@admin.register(DegreeAwardedBy)
+class DegreeAwardedByAdmin(admin.ModelAdmin):
+    list_display = ('degree_name', 'country', 'education_level', 'description', 'created_at', 'updated_at')
+    search_fields = ('degree_name', 'country__country_name', 'education_level__educationlevel')
+    list_filter = ('country', 'education_level')
+
+
+# -------------------- DegreeAwardedInstitute --------------------
+@admin.register(DegreeAwardedInstitute)
+class DegreeAwardedInstituteAdmin(admin.ModelAdmin):
+    list_display = ('name', 'degree_awarded_by', 'education_level', 'country', 'state', 'description', 'created_at', 'updated_at')
+    search_fields = ('name', 'degree_awarded_by__degree_name', 'education_level__educationlevel', 'country__country_name', 'state__name')
+    list_filter = ('degree_awarded_by', 'education_level', 'country', 'state')

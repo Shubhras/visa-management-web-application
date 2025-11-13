@@ -12443,8 +12443,6 @@ class EducationLevelExportAPIView(APIView):
                     value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
                     value = int(value)
-
-                # Convert to string to prevent Excel from adding extra apostrophes
                 row.append(str(value) if value is not None else '')
             dataset.append(row)
 
