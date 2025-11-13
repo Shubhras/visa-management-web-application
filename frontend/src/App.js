@@ -402,6 +402,7 @@ import ModeofSalaryList from "./pages/masters/occupationMaster/modeofSalary/Mode
 import ITReturnStatusList from "./pages/masters/occupationMaster/iTReturnStatus/ITReturnStatusList";
 import OccupationTypeList from "./pages/masters/occupationMaster/occupationType/OccupationTypeList";
 import OccupationProspectList from "./pages/masters/occupationMaster/occupationProspect/OccupationProspectList";
+import OccupationCategoryList from "./pages/masters/occupationMaster/occupationCategory/OccupationCategoryList";
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   // Check if user is authenticated
@@ -690,6 +691,8 @@ function App() {
         <Route path="/it-return-status" element={<ProtectedRoute><ITReturnStatusList /></ProtectedRoute>}></Route>
         <Route path="/occupation-type" element={<ProtectedRoute><OccupationTypeList /></ProtectedRoute>}></Route>
         <Route path="/occupation-prospect" element={<ProtectedRoute><OccupationProspectList /></ProtectedRoute>}></Route>
+        <Route path="/occupation-category" element={<ProtectedRoute><OccupationCategoryList /></ProtectedRoute>}></Route>
+
         {/* 404 Error Page */}
         <Route path='*' element={<ErrorPage />} />
       </Routes>

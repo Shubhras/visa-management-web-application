@@ -29,6 +29,12 @@ import {
     DELETE_OCCUPATION_PROSPECT,
     EXPORT_OCCUPATION_PROSPECT,
     IMPORT_OCCUPATION_PROSPECT,
+    OCCUPATION_CATEGORY_LIST,
+    ADD_OCCUPATION_CATEGORY,
+    EDIT_OCCUPATION_CATEGORY,
+    DELETE_OCCUPATION_CATEGORY,
+    EXPORT_OCCUPATION_CATEGORY,
+    IMPORT_OCCUPATION_CATEGORY,
 } from "./actionType";
 
 // Job Type Actions
@@ -213,6 +219,42 @@ export const occupationProspectImportData = (data, callback) => ({
     callback,
 });
 
+// --- OCCUPATION CATEGORY ACTIONS ---
+export const occupationCategoryList = (data, callback) => ({
+    type: OCCUPATION_CATEGORY_LIST,
+    data,
+    callback,
+});
+
+export const occupationCategoryAdd = (data, callback) => ({
+    type: ADD_OCCUPATION_CATEGORY,
+    data,
+    callback,
+});
+
+export const occupationCategoryEdit = (data, callback) => ({
+    type: EDIT_OCCUPATION_CATEGORY,
+    data,
+    callback,
+});
+
+export const occupationCategoryDelete = (data, callback) => ({
+    type: DELETE_OCCUPATION_CATEGORY,
+    data,
+    callback,
+});
+
+export const occupationCategoryExportData = (data, callback) => ({
+    type: EXPORT_OCCUPATION_CATEGORY,
+    data,
+    callback,
+});
+
+export const occupationCategoryImportData = (data, callback) => ({
+    type: IMPORT_OCCUPATION_CATEGORY,
+    data,
+    callback,
+});
 
 
 

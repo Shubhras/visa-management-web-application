@@ -1885,3 +1885,35 @@ export const importOccupationProspectDataAPI = (payload) => {
     const apiUrl = `${url.IMPORT_OCCUPATION_PROSPECT_API}`;
     return post(apiUrl, payload);
 };
+
+// --- OCCUPATION CATEGORY API FUNCTIONS ---
+export const getOccupationCategoryListDataAPI = (data) => {
+    const apiUrl = `${url.GET_OCCUPATION_CATEGORY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addOccupationCategoryDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_OCCUPATION_CATEGORY_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editOccupationCategoryDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_OCCUPATION_CATEGORY_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteOccupationCategoryDataAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_OCCUPATION_CATEGORY_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportOccupationCategoryDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_OCCUPATION_CATEGORY_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importOccupationCategoryDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_OCCUPATION_CATEGORY_API}`;
+    return post(apiUrl, payload);
+};
