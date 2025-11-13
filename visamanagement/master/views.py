@@ -512,7 +512,7 @@ class GenderImportAPIView(APIView):
                     Gender.objects.create(
                         name=name,
                         description=description,
-                        is_active=is_active,
+                       
                         is_deleted=False
                     )
                     imported_count += 1
@@ -938,7 +938,7 @@ class MaritalstatusImportAPIView(APIView):
                     Maritalstatus.objects.create(
                         name=name,
                         description=description,
-                        is_active=is_active,
+                       
                         is_deleted=False
                     )
                     imported_count += 1
@@ -9656,7 +9656,7 @@ class InterestLevelImportAPIView(APIView):
                     InterestLevel.objects.create(
                         name=name,
                         description=description,
-                        is_active=is_active,
+                       
                         is_deleted=False
                     )
                     imported_count += 1
@@ -10084,7 +10084,7 @@ class PriorityImportAPIView(APIView):
                     Priority.objects.create(
                         name=name,
                         description=description,
-                        is_active=is_active,
+                       
                         is_deleted=False
                     )
                     imported_count += 1
@@ -10507,7 +10507,7 @@ class TagsImportAPIView(APIView):
                     Tags.objects.create(
                         name=name,
                         description=description,
-                        is_active=is_active,
+                       
                         is_deleted=False
                     )
                     imported_count += 1
@@ -10937,7 +10937,7 @@ class ActivityTypeImportAPIView(APIView):
                     ActivityType.objects.create(
                         name=name,
                         description=description,
-                        is_active=is_active,
+                       
                         is_deleted=False
                     )
                     imported_count += 1
@@ -11363,7 +11363,7 @@ class LostReasonImportAPIView(APIView):
                     LostReason.objects.create(
                         name=name,
                         description=description,
-                        is_active=is_active,
+                       
                         is_deleted=False
                     )
                     imported_count += 1
@@ -11775,7 +11775,7 @@ class LostReasonB2BImportAPIView(APIView):
                     LostReasonB2B.objects.create(
                         name=name,
                         description=description,
-                        is_active=is_active,
+                       
                         is_deleted=False
                     )
                     imported_count += 1
