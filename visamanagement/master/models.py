@@ -876,7 +876,7 @@ class OccupationCategory(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ('occupation_version', 'country','occupationcategory')
+        unique_together = ('occupationversion', 'country','occupationcategory')
     def __str__(self):
         return self.occupationcategory
     
@@ -892,7 +892,7 @@ class OccupationLevelCode(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ('occupation_version', 'country','occupationlevelcode')
+        unique_together = ('occupationversion', 'country','occupationlevelcode')
     def __str__(self):
         return self.occupationlevelcode
     
