@@ -918,8 +918,8 @@ class OccupationLevel(models.Model):
 class OccupationCode(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    country = models.ForeignKey('Country',on_delete=models.SET_NULL,null=True,blank=True,related_name='occupation_level')
-    occupationversion =models.ForeignKey('OccupationVersion',on_delete=models.SET_NULL,null=True,blank=True,related_name='occupation_level')
+    country = models.ForeignKey('Country',on_delete=models.SET_NULL,null=True,blank=True,related_name='occupation_code')
+    occupationversion =models.ForeignKey('OccupationVersion',on_delete=models.SET_NULL,null=True,blank=True,related_name='occupation_code')
     occupationcode = models.TextField(null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     is_deleted = models.BooleanField(default=False)
