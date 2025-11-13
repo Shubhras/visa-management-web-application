@@ -1117,7 +1117,28 @@ class OccupationCodeSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
 
 
+class OccupationTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OccupationType
+        fields = [
+            'id', 'uuid', 'name', 'description',
+            'is_deleted', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
 
+# ------------------- OccupationProspect Serializer ------------------- #
+class OccupationProspectSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OccupationProspect
+        fields = [
+            'id', 'uuid', 'name', 'description',
+            'is_deleted', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
+
+
+        
 
 class RepresentingCountrySerializer(serializers.ModelSerializer):
     country_name = serializers.CharField(source='country.name', read_only=True)

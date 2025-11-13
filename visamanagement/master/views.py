@@ -12078,6 +12078,7 @@ class EducationLevelCodeExportAPIView(APIView):
 
 # ------------------ Import API ------------------
 class EducationLevelCodeImportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
         file = request.FILES.get('file')
@@ -12087,14 +12088,16 @@ class EducationLevelCodeImportAPIView(APIView):
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
-        duplicate_names = []
+        duplicates = []
+        skipped_rows = []
+
         required_headers = {'education level code'}
         optional_headers = {'description'}
 
         try:
             data = []
-            headers = []
 
+            # ---------------- XLSX ----------------
             if format_type == 'xlsx':
                 import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
@@ -12107,42 +12110,50 @@ class EducationLevelCodeImportAPIView(APIView):
 
                 ws = wb[sheet_name]
                 if ws.max_row <= 1:
-                    return Response({"statusCode": 400, "status": False, "message": f'The uploaded XLSX sheet "{sheet_name}" is empty.'}, status=400)
+                    return Response({'error': f'Sheet "{sheet_name}" is empty'}, status=400)
 
                 headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                if not required_headers.issubset(set(headers)):
-                    return Response({"statusCode": 400, "status": True, "message": f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'}, status=400)
+                missing_headers = required_headers - set(headers)
+                if missing_headers:
+                    return Response({'error': f'Missing required headers: {missing_headers}'}, status=400)
 
-                for row in ws.iter_rows(min_row=2, values_only=True):
+                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     if not any(row):
                         continue
-                    data.append(dict(zip(headers, row)))
+                    row_dict = dict(zip(headers, row))
+                    row_dict["_row_number"] = idx
+                    data.append(row_dict)
 
+            # ---------------- CSV ----------------
             elif format_type == 'csv':
+                import csv
+                import io
                 decoded_file = file.read().decode('utf-8')
-                dataset = Dataset()
-                dataset.load(decoded_file, format='csv')
-
-                for row in dataset.dict:
+                reader = csv.DictReader(io.StringIO(decoded_file))
+                for idx, row in enumerate(reader, start=2):
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
                     if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({"statusCode": 400, "status": True, "message": f'Missing required headers. Required: {required_headers}. Found: {set(row_lower.keys())}'}, status=400)
+                        return Response({'error': f'Missing required headers. Required: {required_headers}, Found: {set(row_lower.keys())}'}, status=400)
+                    row_lower["_row_number"] = idx
                     data.append(row_lower)
             else:
-                return Response({"statusCode": 400, "status": True, 'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
+                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
 
+            # ---------------- Process Data ----------------
             imported_count = 0
-            for row in  reversed(data):
+            for row in reversed(data):
+                row_number = row.get("_row_number", "Unknown")
                 name = str(row.get('education level code')).strip() if row.get('education level code') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not name:
+                    skipped_rows.append({"Row": row_number, "Reason": "Missing education level code"})
                     continue
 
                 existing = EducationLevelCode.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicate_names.append(name)
+                        duplicates.append({"Row": row_number, "Education Level Code": name, "Reason": "Already exists in database"})
                         continue
                     else:
                         existing.description = description
@@ -12154,18 +12165,20 @@ class EducationLevelCodeImportAPIView(APIView):
                     imported_count += 1
 
         except Exception as e:
-            return Response({"statusCode": 400, "status": True, 'message': str(e)}, status=400)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                'message': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_names)),
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
-            "imported_count": imported_count
-        }, status=200)
-
-
-
+            "imported_count": imported_count,
+            "duplicates": duplicates,
+            "skipped_rows": skipped_rows
+        }, status=status.HTTP_200_OK)
 
 # -------------------- EducationLevel -------------------- #
 
@@ -12416,15 +12429,16 @@ class EducationLevelImportAPIView(APIView):
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
-        duplicate_levels = []
+        duplicates = []
+        skipped_rows = []
+
         required_headers = {'education level code', 'education level'}
         optional_headers = {'description', 'is_deleted'}
 
         try:
             data = []
-            headers = []
 
-            # ---------- XLSX Handling ----------
+            # ---------------- XLSX ----------------
             if format_type == 'xlsx':
                 import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
@@ -12437,49 +12451,59 @@ class EducationLevelImportAPIView(APIView):
 
                 ws = wb[sheet_name]
                 if ws.max_row <= 1:
-                    return Response({"statusCode": 400, "status": False, "message": f'The uploaded XLSX sheet "{sheet_name}" is empty.'}, status=400)
+                    return Response({'error': f'Sheet "{sheet_name}" is empty'}, status=400)
 
                 headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                if not required_headers.issubset(set(headers)):
-                    return Response({"statusCode": 400, "status": True, "message": f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'}, status=400)
+                missing_headers = required_headers - set(headers)
+                if missing_headers:
+                    return Response({'error': f'Missing required headers: {missing_headers}'}, status=400)
 
-                for row in ws.iter_rows(min_row=2, values_only=True):
+                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     if not any(row):
                         continue
-                    data.append(dict(zip(headers, row)))
+                    row_dict = dict(zip(headers, row))
+                    row_dict["_row_number"] = idx
+                    data.append(row_dict)
 
-            # ---------- CSV Handling ----------
+            # ---------------- CSV ----------------
             elif format_type == 'csv':
                 import csv
                 import io
                 decoded_file = file.read().decode('utf-8')
                 reader = csv.DictReader(io.StringIO(decoded_file))
-                for row in reader:
+                for idx, row in enumerate(reader, start=2):
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
                     if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({"statusCode": 400, "status": True, "message": f'Missing required headers. Required: {required_headers}. Found: {set(row_lower.keys())}'}, status=400)
+                        return Response({'error': f'Missing required headers. Required: {required_headers}, Found: {set(row_lower.keys())}'}, status=400)
+                    row_lower["_row_number"] = idx
                     data.append(row_lower)
             else:
-                return Response({"statusCode": 400, "status": True, 'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
+                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
 
+            # ---------------- Process Data ----------------
             imported_count = 0
-            for row in  reversed(data):
+            for row in reversed(data):
+                row_number = row.get("_row_number", "Unknown")
                 level_code_id = row.get('education level code')
                 education_level_name = str(row.get('education level')).strip() if row.get('education level') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
                 is_deleted = bool(int(row.get('is_deleted', 0))) if row.get('is_deleted') is not None else False
 
+                # Skip if required fields are missing
                 if not level_code_id or not education_level_name:
+                    skipped_rows.append({"Row": row_number, "Reason": "Missing education level code or education level"})
                     continue
 
                 # Validate LevelCode existence
-                if not EducationLevelCode.objects.filter(id=level_code_id).exists():
+                level_code_obj = EducationLevelCode.objects.filter(id=level_code_id, is_deleted=False).first()
+                if not level_code_obj:
+                    skipped_rows.append({"Row": row_number, "Education Level Code": level_code_id, "Reason": "Invalid education level code"})
                     continue
 
                 existing = EducationLevel.objects.filter(level_code_id=level_code_id, educationlevel__iexact=education_level_name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicate_levels.append(education_level_name)
+                        duplicates.append({"Row": row_number, "Education Level": education_level_name, "Education Level Code": level_code_id,"Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -12496,14 +12520,19 @@ class EducationLevelImportAPIView(APIView):
                     imported_count += 1
 
         except Exception as e:
-            return Response({"statusCode": 400, "status": True, 'message': str(e)}, status=400)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                'message': str(e)
+            }, status=400)
 
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_levels)),
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
-            "imported_count": imported_count
+            "imported_count": imported_count,
+            "duplicates": duplicates,
+            "skipped_rows": skipped_rows
         }, status=200)
 
 #----------------------------EducationDuration----------------------
@@ -12789,14 +12818,16 @@ class EducationDurationImportAPIView(APIView):
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
-        duplicate_durations = []
+        duplicates = []
+        skipped_rows = []
+
         required_headers = {'education level', 'education duration'}
         optional_headers = {'description'}
 
         try:
             data = []
-            headers = []
 
+            # ---------------- XLSX ----------------
             if format_type == 'xlsx':
                 import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
@@ -12809,50 +12840,60 @@ class EducationDurationImportAPIView(APIView):
 
                 ws = wb[sheet_name]
                 if ws.max_row <= 1:
-                    return Response({"statusCode": 400, "status": False, "message": f'The uploaded XLSX sheet "{sheet_name}" is empty.'}, status=400)
+                    return Response({'error': f'Sheet "{sheet_name}" is empty'}, status=400)
 
                 headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                if not required_headers.issubset(set(headers)):
-                    return Response({"statusCode": 400, "status": True, "message": f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'}, status=400)
+                missing_headers = required_headers - set(headers)
+                if missing_headers:
+                    return Response({'error': f'Missing required headers: {missing_headers}'}, status=400)
 
-                for row in ws.iter_rows(min_row=2, values_only=True):
+                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     if not any(row):
                         continue
-                    data.append(dict(zip(headers, row)))
+                    row_dict = dict(zip(headers, row))
+                    row_dict["_row_number"] = idx
+                    data.append(row_dict)
 
+            # ---------------- CSV ----------------
             elif format_type == 'csv':
                 import csv
                 import io
                 decoded_file = file.read().decode('utf-8')
                 reader = csv.DictReader(io.StringIO(decoded_file))
-                for row in reader:
+                for idx, row in enumerate(reader, start=2):
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
                     if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({"statusCode": 400, "status": True, "message": f'Missing required headers. Required: {required_headers}. Found: {set(row_lower.keys())}'}, status=400)
+                        return Response({'error': f'Missing required headers. Required: {required_headers}, Found: {set(row_lower.keys())}'}, status=400)
+                    row_lower["_row_number"] = idx
                     data.append(row_lower)
             else:
-                return Response({"statusCode": 400, "status": True, 'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
+                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
 
+            # ---------------- Process Data ----------------
             imported_count = 0
             for row in reversed(data):
+                row_number = row.get("_row_number", "Unknown")
                 educationlevel_name = str(row.get('education level')).strip() if row.get('education level') else None
-                durations = str(row.get('education durations')).strip() if row.get('education durations') else None
+                durations = str(row.get('education duration')).strip() if row.get('education duration') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
+                # Skip if required fields are missing
                 if not educationlevel_name or not durations:
+                    skipped_rows.append({"Row": row_number, "Reason": "Missing education level or education duration"})
                     continue
 
-                # Get education level object
-                educationlevel_obj = EducationLevel.objects.filter(educationlevel__iexact=educationlevel_name).first()
+                # Validate EducationLevel existence
+                educationlevel_obj = EducationLevel.objects.filter(educationlevel__iexact=educationlevel_name, is_deleted=False).first()
                 if not educationlevel_obj:
-                    continue  # skip row if level not found
+                    skipped_rows.append({"Row": row_number, "Education Level": educationlevel_name, "Reason": "Invalid education level"})
+                    continue
 
                 existing = EducationDuration.objects.filter(
                     educationlevel=educationlevel_obj, durations__iexact=durations
                 ).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicate_durations.append(durations)
+                        duplicates.append({"Row": row_number, "Education Duration": durations, "Education Level": educationlevel_name, "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -12869,17 +12910,20 @@ class EducationDurationImportAPIView(APIView):
                     imported_count += 1
 
         except Exception as e:
-            return Response({"statusCode": 400, "status": True, 'message': str(e)}, status=400)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                'message': str(e)
+            }, status=400)
 
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_durations)),
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
-            "imported_count": imported_count
+            "imported_count": imported_count,
+            "duplicates": duplicates,
+            "skipped_rows": skipped_rows
         }, status=200)
-
-    
 
 # -------------------- Studymainarea -------------------- #
 class StudymainareaListAPIView(APIView):
@@ -13145,23 +13189,26 @@ class StudymainareaExportAPIView(APIView):
 
 # -------------------- IMPORT API --------------------
 class StudymainareaImportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')
+
         if not file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
-        duplicate_names = []
+        duplicates = []
+        skipped_rows = []
 
         required_headers = {'study main area'}
         optional_headers = {'description'}
 
         try:
             data = []
-            headers = []
 
-            # XLSX
+            # ---------------- XLSX ----------------
             if format_type == 'xlsx':
                 import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
@@ -13174,44 +13221,50 @@ class StudymainareaImportAPIView(APIView):
 
                 ws = wb[sheet_name]
                 if ws.max_row <= 1:
-                    return Response({'statusCode': 400, 'status': False, 'message': 'Sheet is empty'}, status=400)
+                    return Response({'error': f'Sheet "{sheet_name}" is empty'}, status=400)
 
                 headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                if not required_headers.issubset(set(headers)):
-                    return Response({'statusCode': 400, 'status': True, 'message': f'Missing required headers: {required_headers}'}, status=400)
+                missing_headers = required_headers - set(headers)
+                if missing_headers:
+                    return Response({'error': f'Missing required headers: {missing_headers}'}, status=400)
 
-                for row in ws.iter_rows(min_row=2, values_only=True):
+                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     if not any(row):
                         continue
                     row_dict = dict(zip(headers, row))
+                    row_dict["_row_number"] = idx
                     data.append(row_dict)
 
-            # CSV
+            # ---------------- CSV ----------------
             elif format_type == 'csv':
+                import csv
+                import io
                 decoded_file = file.read().decode('utf-8')
-                dataset = Dataset()
-                dataset.load(decoded_file, format='csv')
-                for row in dataset.dict:
+                reader = csv.DictReader(io.StringIO(decoded_file))
+                for idx, row in enumerate(reader, start=2):
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
                     if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({'statusCode': 400, 'status': True, 'message': f'Missing required headers: {required_headers}'}, status=400)
+                        return Response({'error': f'Missing required headers. Required: {required_headers}, Found: {set(row_lower.keys())}'}, status=400)
+                    row_lower["_row_number"] = idx
                     data.append(row_lower)
             else:
-                return Response({'statusCode': 400, 'status': True, 'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
+                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
 
+            # ---------------- Process Data ----------------
             imported_count = 0
-
-            for row in  reversed(data):
+            for row in reversed(data):
+                row_number = row.get("_row_number", "Unknown")
                 name = str(row.get('study main area')).strip() if row.get('study main area') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not name:
+                    skipped_rows.append({"Row": row_number, "Reason": "Missing study main area"})
                     continue
 
                 existing = Studymainarea.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicate_names.append(name)
+                        duplicates.append({"Row": row_number, "Study Main Area": name, "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -13223,15 +13276,20 @@ class StudymainareaImportAPIView(APIView):
                     imported_count += 1
 
         except Exception as e:
-            return Response({'statusCode': 400, 'status': True, 'message': str(e)}, status=400)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                'message': str(e)
+            }, status=400)
 
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_names)),
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
-            "imported_count": imported_count
-        }, status=status.HTTP_200_OK)
+            "imported_count": imported_count,
+            "duplicates": duplicates,
+            "skipped_rows": skipped_rows
+        }, status=200)
 
 
 

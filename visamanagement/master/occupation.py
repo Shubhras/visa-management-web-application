@@ -2757,3 +2757,747 @@ class OccupationCodeImportAPIView(APIView):
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=200)
+
+
+
+
+
+class OccupationTypeListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        search = request.GET.get('search', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_order = request.GET.get('sortOrder', 'desc')
+
+        allowed_sort_fields = ['name', 'description', 'updated_at']
+        if sort_by not in allowed_sort_fields:
+            sort_by = 'created_at'
+
+        if sort_order == 'desc':
+            sort_by = f'-{sort_by}'
+
+        queryset = OccupationType.objects.filter(is_deleted=False)
+
+        if search:
+            queryset = queryset.filter(Q(name__istartswith=search))
+
+        queryset = queryset.order_by(sort_by)
+
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = OccupationTypeSerializer(result_page, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
+
+
+# -------------------- CREATE API --------------------
+class OccupationTypeCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        name = request.data.get("name", "").strip()
+        if not name:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Name field is required."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        existing = OccupationType.objects.filter(name__iexact=name, is_deleted=False).first()
+        if existing:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "OccupationType with this name already exists."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = OccupationTypeSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "OccupationType created successfully",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK)
+        else:
+            errors = " ".join([str(msg) for msgs in serializer.errors.values() for msg in msgs])
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+
+# -------------------- RETRIEVE API --------------------
+class OccupationTypeRetrieveAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request, uuid):
+        try:
+            obj = OccupationType.objects.get(uuid=uuid, is_deleted=False)
+        except OccupationType.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "OccupationType not found",
+                "data": None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = OccupationTypeSerializer(obj)
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": "OccupationType retrieved successfully",
+            "data": serializer.data
+        })
+
+
+# -------------------- UPDATE API --------------------
+class OccupationTypeUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def put(self, request, uuid):
+        try:
+            obj = OccupationType.objects.get(uuid=uuid, is_deleted=False)
+        except OccupationType.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "OccupationType not found",
+                "data": None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = OccupationTypeSerializer(obj, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "OccupationType updated successfully",
+                "data": serializer.data
+            })
+
+        errors = " ".join([str(msg) for msgs in serializer.errors.values() for msg in msgs])
+        return Response({
+            "statusCode": 400,
+            "status": False,
+            "message": errors,
+            "data": None
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+# -------------------- DELETE API --------------------
+class OccupationTypeDeleteAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def delete(self, request, uuid=None):
+        ids = request.data.get('id', None)
+
+        # Single delete
+        if uuid:
+            try:
+                obj = OccupationType.objects.get(uuid=uuid)
+                obj.delete()
+                return Response({
+                    "statusCode": 204,
+                    "status": True,
+                    "message": "OccupationType permanently deleted.",
+                    "data": None
+                }, status=status.HTTP_204_NO_CONTENT)
+            except OccupationType.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "OccupationType not found.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+
+        # Delete all
+        if ids == "all":
+            objs = OccupationType.objects.all()
+            count = objs.count()
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No OccupationTypes found to delete.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+            objs.delete()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"All {count} OccupationType(s) permanently deleted.",
+                "data": None
+            }, status=status.HTTP_200_OK)
+
+        # Bulk delete
+        if not ids or not isinstance(ids, list):
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        valid_uuids = []
+        invalid_uuids = []
+        for u in ids:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(u)
+
+        if not valid_uuids:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "No valid UUIDs provided.",
+                "data": {"invalid_uuids": invalid_uuids}
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        objs = OccupationType.objects.filter(uuid__in=valid_uuids)
+        count = objs.count()
+        if count == 0:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "No matching OccupationTypes found.",
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        objs.delete()
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": f"{count} OccupationType(s) permanently deleted.",
+            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+        }, status=status.HTTP_200_OK)
+
+
+# -------------------- EXPORT API --------------------
+class OccupationTypeExportAPIView(APIView):
+
+    def get(self, request):
+        format_type = request.GET.get('format', 'xlsx').lower()
+        fields = request.GET.get('fields')
+        uuids_param = request.GET.get('uuids', '')
+
+        uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+        field_header_map = {
+            'uuid': 'UUID',
+            'name': 'Occupation Type',
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'updated_at': 'Modified On',
+        }
+
+        if fields:
+            field_list = [f.strip() for f in fields.split(',')]
+        else:
+            field_list = list(field_header_map.keys())
+
+        queryset = OccupationType.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-created_at')
+
+        dataset = Dataset()
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'OccupationType'
+
+        for obj in queryset:
+            row = []
+            for field in field_list:
+                value = getattr(obj, field, '')
+                if field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
+                    value = int(value)
+                row.append(value if value is not None else '')
+            dataset.append(row)
+
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'occupation_types.csv'
+        else:
+            file_data = io.BytesIO(dataset.export('xlsx'))
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'occupation_types.xlsx'
+
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        return response
+
+
+# -------------------- IMPORT API --------------------
+class OccupationTypeImportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        file = request.FILES.get("file")
+        sheet_name = request.data.get("sheet_name")
+        if not file:
+            return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
+
+        format_type = file.name.split(".")[-1].lower()
+        duplicates = []
+        skipped_rows = []
+
+        required_headers = {"occupation type"}
+        optional_headers = {"description"}
+
+        try:
+            data = []
+
+            if format_type == "xlsx":
+                wb = openpyxl.load_workbook(file, read_only=True)
+                available_sheets = wb.sheetnames
+
+                if not sheet_name:
+                    return Response({"error": "Please provide sheet_name", "available_sheets": available_sheets}, status=400)
+                if sheet_name not in available_sheets:
+                    return Response({"error": f'Sheet "{sheet_name}" not found', "available_sheets": available_sheets}, status=400)
+
+                ws = wb[sheet_name]
+                if ws.max_row <= 1:
+                    return Response({"statusCode": 400, "status": False, "message": f'Sheet "{sheet_name}" is empty.'}, status=400)
+
+                headers = [str(cell.value).strip().lower() if cell.value else "" for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response({"statusCode": 400, "status": False, "message": f"Missing required headers. Required: {required_headers}, Found: {set(headers)}"}, status=400)
+
+                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+                    if not any(row):
+                        continue
+                    row_dict = dict(zip(headers, row))
+                    row_dict["_row_number"] = idx
+                    data.append(row_dict)
+
+            elif format_type == "csv":
+                decoded_file = file.read().decode("utf-8")
+                dataset = Dataset()
+                dataset.load(decoded_file, format="csv")
+
+                for idx, row in enumerate(dataset.dict, start=2):
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    row_lower["_row_number"] = idx
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({"statusCode": 400, "status": False, "message": f"Missing required headers. Required: {', '.join(required_headers)}"}, status=400)
+                    data.append(row_lower)
+            else:
+                return Response({"statusCode": 400, "status": False, "error": "Unsupported file format. Use .xlsx or .csv"}, status=400)
+
+            imported_count = 0
+            for row in reversed(data):
+                row_number = row.get("_row_number", "Unknown")
+                name = str(row.get("occupation type")).strip() if row.get("occupation type") else None
+                description = str(row.get("description")).strip() if row.get("description") else ""
+
+                if not name:
+                    skipped_rows.append({"Row": row_number, "Reason": "Missing occupation type name"})
+                    continue
+
+                existing = OccupationType.objects.filter(name__iexact=name).first()
+                if existing:
+                    if not existing.is_deleted:
+                        duplicates.append({"Row": row_number, "Occupation Type": name, "Reason": "Already exists in database"})
+                        continue
+                    else:
+                        existing.description = description
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
+                else:
+                    OccupationType.objects.create(name=name, description=description, is_deleted=False)
+                    imported_count += 1
+
+        except Exception as e:
+            return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count,
+            "duplicates": duplicates,
+            "skipped_rows": skipped_rows,
+        }, status=200)
+    
+
+
+class OccupationProspectListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        search = request.GET.get('search', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_order = request.GET.get('sortOrder', 'desc')
+
+        allowed_sort_fields = ['name', 'description', 'updated_at']
+        if sort_by not in allowed_sort_fields:
+            sort_by = 'created_at'
+
+        if sort_order == 'desc':
+            sort_by = f'-{sort_by}'
+
+        queryset = OccupationProspect.objects.filter(is_deleted=False)
+
+        if search:
+            queryset = queryset.filter(Q(name__istartswith=search))
+
+        queryset = queryset.order_by(sort_by)
+
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = OccupationProspectSerializer(result_page, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
+
+
+# -------------------- CREATE API --------------------
+class OccupationProspectCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        name = request.data.get("name", "").strip()
+        if not name:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Name field is required."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        existing = OccupationProspect.objects.filter(name__iexact=name, is_deleted=False).first()
+        if existing:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "OccupationProspect with this name already exists."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = OccupationProspectSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "OccupationProspect created successfully",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK)
+        else:
+            errors = " ".join([str(msg) for msgs in serializer.errors.values() for msg in msgs])
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+
+# -------------------- RETRIEVE API --------------------
+class OccupationProspectRetrieveAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request, uuid):
+        try:
+            obj = OccupationProspect.objects.get(uuid=uuid, is_deleted=False)
+        except OccupationProspect.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "OccupationProspect not found",
+                "data": None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = OccupationProspectSerializer(obj)
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": "OccupationProspect retrieved successfully",
+            "data": serializer.data
+        })
+
+
+# -------------------- UPDATE API --------------------
+class OccupationProspectUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def put(self, request, uuid):
+        try:
+            obj = OccupationProspect.objects.get(uuid=uuid, is_deleted=False)
+        except OccupationProspect.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "OccupationProspect not found",
+                "data": None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = OccupationProspectSerializer(obj, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "OccupationProspect updated successfully",
+                "data": serializer.data
+            })
+
+        errors = " ".join([str(msg) for msgs in serializer.errors.values() for msg in msgs])
+        return Response({
+            "statusCode": 400,
+            "status": False,
+            "message": errors,
+            "data": None
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+# -------------------- DELETE API --------------------
+class OccupationProspectDeleteAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def delete(self, request, uuid=None):
+        ids = request.data.get('id', None)
+
+        # Single delete
+        if uuid:
+            try:
+                obj = OccupationProspect.objects.get(uuid=uuid)
+                obj.delete()
+                return Response({
+                    "statusCode": 204,
+                    "status": True,
+                    "message": "OccupationProspect permanently deleted.",
+                    "data": None
+                }, status=status.HTTP_204_NO_CONTENT)
+            except OccupationProspect.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "OccupationProspect not found.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+
+        # Delete all
+        if ids == "all":
+            objs = OccupationProspect.objects.all()
+            count = objs.count()
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No OccupationProspects found to delete.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+            objs.delete()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"All {count} OccupationProspect(s) permanently deleted.",
+                "data": None
+            }, status=status.HTTP_200_OK)
+
+        # Bulk delete
+        if not ids or not isinstance(ids, list):
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        valid_uuids = []
+        invalid_uuids = []
+        for u in ids:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(u)
+
+        if not valid_uuids:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "No valid UUIDs provided.",
+                "data": {"invalid_uuids": invalid_uuids}
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        objs = OccupationProspect.objects.filter(uuid__in=valid_uuids)
+        count = objs.count()
+        if count == 0:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "No matching OccupationProspects found.",
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        objs.delete()
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": f"{count} OccupationProspect(s) permanently deleted.",
+            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+        }, status=status.HTTP_200_OK)
+
+
+# -------------------- EXPORT API --------------------
+class OccupationProspectExportAPIView(APIView):
+
+    def get(self, request):
+        format_type = request.GET.get('format', 'xlsx').lower()
+        fields = request.GET.get('fields')
+        uuids_param = request.GET.get('uuids', '')
+
+        uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+        field_header_map = {
+            'uuid': 'UUID',
+            'name': 'Occupation Prospect',
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'updated_at': 'Modified On',
+        }
+
+        if fields:
+            field_list = [f.strip() for f in fields.split(',')]
+        else:
+            field_list = list(field_header_map.keys())
+
+        queryset = OccupationProspect.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-created_at')
+
+        dataset = Dataset()
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'OccupationProspect'
+
+        for obj in queryset:
+            row = []
+            for field in field_list:
+                value = getattr(obj, field, '')
+                if field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
+                    value = int(value)
+                row.append(value if value is not None else '')
+            dataset.append(row)
+
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'occupation_prospects.csv'
+        else:
+            file_data = io.BytesIO(dataset.export('xlsx'))
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'occupation_prospects.xlsx'
+
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        return response
+
+
+# -------------------- IMPORT API --------------------
+class OccupationProspectImportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        file = request.FILES.get("file")
+        sheet_name = request.data.get("sheet_name")
+        if not file:
+            return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
+
+        format_type = file.name.split(".")[-1].lower()
+        duplicates = []
+        skipped_rows = []
+
+        required_headers = {"occupation prospect"}
+        optional_headers = {"description"}
+
+        try:
+            data = []
+
+            if format_type == "xlsx":
+                wb = openpyxl.load_workbook(file, read_only=True)
+                available_sheets = wb.sheetnames
+
+                if not sheet_name:
+                    return Response({"error": "Please provide sheet_name", "available_sheets": available_sheets}, status=400)
+                if sheet_name not in available_sheets:
+                    return Response({"error": f'Sheet "{sheet_name}" not found', "available_sheets": available_sheets}, status=400)
+
+                ws = wb[sheet_name]
+                if ws.max_row <= 1:
+                    return Response({"statusCode": 400, "status": False, "message": f'Sheet "{sheet_name}" is empty.'}, status=400)
+
+                headers = [str(cell.value).strip().lower() if cell.value else "" for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response({"statusCode": 400, "status": False, "message": f"Missing required headers. Required: {required_headers}, Found: {set(headers)}"}, status=400)
+
+                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+                    if not any(row):
+                        continue
+                    row_dict = dict(zip(headers, row))
+                    row_dict["_row_number"] = idx
+                    data.append(row_dict)
+
+            elif format_type == "csv":
+                decoded_file = file.read().decode("utf-8")
+                dataset = Dataset()
+                dataset.load(decoded_file, format="csv")
+
+                for idx, row in enumerate(dataset.dict, start=2):
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    row_lower["_row_number"] = idx
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({"statusCode": 400, "status": False, "message": f"Missing required headers. Required: {', '.join(required_headers)}"}, status=400)
+                    data.append(row_lower)
+            else:
+                return Response({"statusCode": 400, "status": False, "error": "Unsupported file format. Use .xlsx or .csv"}, status=400)
+
+            imported_count = 0
+            for row in reversed(data):
+                row_number = row.get("_row_number", "Unknown")
+                name = str(row.get("occupation prospect")).strip() if row.get("occupation prospect") else None
+                description = str(row.get("description")).strip() if row.get("description") else ""
+
+                if not name:
+                    skipped_rows.append({"Row": row_number, "Reason": "Missing occupation prospect name"})
+                    continue
+
+                existing = OccupationProspect.objects.filter(name__iexact=name).first()
+                if existing:
+                    if not existing.is_deleted:
+                        duplicates.append({"Row": row_number, "Occupation Prospect": name, "Reason": "Already exists in database"})
+                        continue
+                    else:
+                        existing.description = description
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
+                else:
+                    OccupationProspect.objects.create(name=name, description=description, is_deleted=False)
+                    imported_count += 1
+
+        except Exception as e:
+            return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count,
+            "duplicates": duplicates,
+            "skipped_rows": skipped_rows,
+        }, status=200)
