@@ -10352,7 +10352,7 @@ class TagsExportAPIView(APIView):
         # Default fields if none provided
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Tags ',  
+            'name': 'Tags',  
             'description': 'Description',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',

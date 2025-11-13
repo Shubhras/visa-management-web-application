@@ -955,6 +955,170 @@ class OccupationVersionSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
 
 
+
+class OccupationCategorySerializer(serializers.ModelSerializer):
+    country = serializers.CharField(read_only=True, source='country.country_name')  # optional display
+    country_id = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=Country.objects.all(),
+        source='country',
+        write_only=True,
+        allow_null=True,
+        required=False
+    )
+
+    occupation_version = serializers.CharField(read_only=True, source='occupation_version.occupation_version')  # optional display
+    occupation_version_id = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=OccupationVersion.objects.all(),
+        source='occupation_version',
+        write_only=True,
+        allow_null=True,
+        required=False
+    )
+
+    class Meta:
+        model = OccupationCategory
+        fields = [
+            'id',
+            'uuid',
+            'country',
+            'country_id',
+            'occupation_version',
+            'occupation_version_id',
+            'occupationcategory',
+            'occupationcategorycode',
+            'description',
+            'is_deleted',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
+
+class OccupationLevelCodeSerializer(serializers.ModelSerializer):
+    country = serializers.CharField(read_only=True, source='country.country_name')
+    country_id = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=Country.objects.all(),
+        source='country',
+        write_only=True,
+        allow_null=True,
+        required=False
+    )
+
+    occupation_version = serializers.CharField(read_only=True, source='occupation_version.occupation_version')
+    occupation_version_id = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=OccupationVersion.objects.all(),
+        source='occupation_version',
+        write_only=True,
+        allow_null=True,
+        required=False
+    )
+
+    class Meta:
+        model = OccupationLevelCode
+        fields = [
+            'id', 'uuid',
+            'country', 'country_id',
+            'occupation_version', 'occupation_version_id',
+            'occupationlevelcode', 'description',
+            'is_deleted', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
+# ------------------- OccupationLevel Serializer ------------------- #
+class OccupationLevelSerializer(serializers.ModelSerializer):
+    country = serializers.CharField(read_only=True, source='country.country_name')
+    country_id = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=Country.objects.all(),
+        source='country',
+        write_only=True,
+        allow_null=True,
+        required=False
+    )
+
+    occupationversion = serializers.CharField(read_only=True, source='occupationversion.occupation_version')
+    occupationversion_id = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=OccupationVersion.objects.all(),
+        source='occupationversion',
+        write_only=True,
+        allow_null=True,
+        required=False
+    )
+
+    occupationcategory = serializers.CharField(read_only=True, source='occupationcategory.occupationcategory')
+    occupationcategory_id = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=OccupationCategory.objects.all(),
+        source='occupationcategory',
+        write_only=True,
+        allow_null=True,
+        required=False
+    )
+
+    occupationlevelcode = serializers.CharField(read_only=True, source='occupationlevelcode.occupationlevelcode')
+    occupationlevelcode_id = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=OccupationLevelCode.objects.all(),
+        source='occupationlevelcode',
+        write_only=True,
+        allow_null=True,
+        required=False
+    )
+
+    class Meta:
+        model = OccupationLevel
+        fields = [
+            'id', 'uuid',
+            'country', 'country_id',
+            'occupationversion', 'occupationversion_id',
+            'occupationcategory', 'occupationcategory_id',
+            'occupationlevelcode', 'occupationlevelcode_id',
+            'occupationlevel', 'description',
+            'is_deleted', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
+# ------------------- OccupationCode Serializer ------------------- #
+class OccupationCodeSerializer(serializers.ModelSerializer):
+    country = serializers.CharField(read_only=True, source='country.country_name')
+    country_id = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=Country.objects.all(),
+        source='country',
+        write_only=True,
+        allow_null=True,
+        required=False
+    )
+
+    occupationversion = serializers.CharField(read_only=True, source='occupationversion.occupation_version')
+    occupationversion_id = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=OccupationVersion.objects.all(),
+        source='occupationversion',
+        write_only=True,
+        allow_null=True,
+        required=False
+    )
+
+    class Meta:
+        model = OccupationCode
+        fields = [
+            'id', 'uuid',
+            'country', 'country_id',
+            'occupationversion', 'occupationversion_id',
+            'occupationcode', 'description',
+            'is_deleted', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
+
+
+
 class RepresentingCountrySerializer(serializers.ModelSerializer):
     country_name = serializers.CharField(source='country.name', read_only=True)
     largest_state_name = serializers.CharField(source='largest_state.name', read_only=True)
