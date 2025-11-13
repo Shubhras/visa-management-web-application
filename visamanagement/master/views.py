@@ -14845,7 +14845,7 @@ class AcademicResultExportAPIView(APIView):
         for obj in queryset:
             row = []
             for field in field_list:
-                if field == 'AcademicResulttype':
+                if field == 'AcademicResulttype_id':
                     value = obj.AcademicResulttype.name if obj.AcademicResulttype else ''
                 else:
                     value = getattr(obj, field, '')
