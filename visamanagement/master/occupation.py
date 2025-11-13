@@ -1201,6 +1201,7 @@ class OccupationVersionImportAPIView(APIView):
 
         format_type = file.name.split('.')[-1].lower()
         duplicate_entries = []
+        skipped_rows = []
         required_headers = {'country', 'occupation version', 'start date'}
         optional_headers = {'end date', 'description'}
 
@@ -1224,26 +1225,26 @@ class OccupationVersionImportAPIView(APIView):
                 if not required_headers.issubset(set(headers)):
                     return Response({'error': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'}, status=400)
 
-                for row in ws.iter_rows(min_row=2, values_only=True):
+                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     if not any(row):
                         continue
                     row_dict = dict(zip(headers, row))
-                    data.append(row_dict)
+                    data.append((idx, row_dict))  # keep row number for skipped rows
 
             # CSV
             elif format_type == 'csv':
                 dataset = Dataset()
                 dataset.load(file.read().decode('utf-8'), format='csv')
-                for row in dataset.dict:
+                for idx, row in enumerate(dataset.dict, start=2):
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
                     if not required_headers.issubset(set(row_lower.keys())):
                         return Response({'error': f'Missing required headers. Required: {required_headers}'}, status=400)
-                    data.append(row_lower)
+                    data.append((idx, row_lower))
             else:
                 return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
 
             imported_count = 0
-            for row in data:
+            for row_number, row in data:
                 country_name = str(row.get('country')).strip() if row.get('country') else None
                 occupation_version = str(row.get('occupation version')).strip() if row.get('occupation version') else None
                 effect_from = row.get('start date')
@@ -1251,11 +1252,13 @@ class OccupationVersionImportAPIView(APIView):
                 description = row.get('description', '')
 
                 if not country_name or not occupation_version or not effect_from:
+                    skipped_rows.append({'row': row_number, 'Reason': 'Mandatory fields missing'})
                     continue
 
                 try:
                     country_obj = Country.objects.get(country_name__iexact=country_name)
                 except Country.DoesNotExist:
+                    skipped_rows.append({'row': row_number, 'Reason': 'Country not found'})
                     continue
 
                 existing = OccupationVersion.objects.filter(
@@ -1292,8 +1295,1465 @@ class OccupationVersionImportAPIView(APIView):
             "statusCode": 200,
             "status": True,
             "duplicates": list(set(duplicate_entries)),
+            "skipped_rows": skipped_rows,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=200)
 
 
+
+class OccupationCategoryListAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        search = request.GET.get('search', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_order = request.GET.get('sortOrder', 'desc')
+        allowed_sort_fields = ['occupationcategory', 'occupationcategorycode', 'created_at']
+
+        if sort_by not in allowed_sort_fields:
+            sort_by = 'created_at'
+        if sort_order == 'desc':
+            sort_by = f'-{sort_by}'
+
+        queryset = OccupationCategory.objects.filter(is_deleted=False)
+        if search:
+            queryset = queryset.filter(
+                Q(occupationcategory__istartswith=search) |
+                Q(occupationcategorycode__istartswith=search) |
+                Q(country__country_name__istartswith=search) |
+                Q(occupation_version__occupation_version__istartswith=search)
+            )
+
+        queryset = queryset.order_by(sort_by)
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = OccupationCategorySerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+
+# -------------------- Create -------------------- #
+class OccupationCategoryCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        country_uuid = request.data.get("country_id")
+        occupation_version_uuid = request.data.get("occupation_version_id")
+        occupationcategory = request.data.get("occupationcategory")
+
+        if not occupationcategory:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Mandatory field missing: occupationcategory"
+            }, status=400)
+
+        country_obj = None
+        if country_uuid:
+            try:
+                country_obj = Country.objects.get(uuid=country_uuid)
+            except Country.DoesNotExist:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Invalid country UUID."
+                }, status=400)
+
+        occupation_version_obj = None
+        if occupation_version_uuid:
+            try:
+                occupation_version_obj = OccupationVersion.objects.get(uuid=occupation_version_uuid)
+            except OccupationVersion.DoesNotExist:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Invalid occupation version UUID."
+                }, status=400)
+
+        # Check duplicate
+        existing = OccupationCategory.objects.filter(
+            country=country_obj,
+            occupation_version=occupation_version_obj,
+            occupationcategory__iexact=occupationcategory,
+            is_deleted=False
+        ).first()
+
+        if existing:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Occupation category already exists for this country and occupation version."
+            }, status=400)
+
+        data = request.data.copy()
+        if country_obj:
+            data['country_id'] = country_obj.uuid
+        if occupation_version_obj:
+            data['occupation_version_id'] = occupation_version_obj.uuid
+
+        serializer = OccupationCategorySerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "Occupation category created successfully",
+                "data": serializer.data
+            })
+
+        errors = " ".join([msg for msgs in serializer.errors.values() for msg in msgs])
+        return Response({
+            "statusCode": 400,
+            "status": False,
+            "message": errors
+        }, status=400)
+
+
+# -------------------- Retrieve -------------------- #
+class OccupationCategoryRetrieveAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request, uuid):
+        try:
+            obj = OccupationCategory.objects.get(uuid=uuid, is_deleted=False)
+        except OccupationCategory.DoesNotExist:
+            return Response({"statusCode": 404, "status": False, "message": "Not found", "data": None}, status=404)
+
+        serializer = OccupationCategorySerializer(obj)
+        return Response({"statusCode": 200, "status": True, "message": "Retrieved successfully", "data": serializer.data})
+
+
+# -------------------- Update -------------------- #
+class OccupationCategoryUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def put(self, request, uuid):
+        try:
+            obj = OccupationCategory.objects.get(uuid=uuid, is_deleted=False)
+        except OccupationCategory.DoesNotExist:
+            return Response({"statusCode": 404, "status": False, "message": "Not found", "data": None}, status=404)
+
+        serializer = OccupationCategorySerializer(obj, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"statusCode": 200, "status": True, "message": "Updated successfully", "data": serializer.data})
+
+        errors = " ".join([msg for msgs in serializer.errors.values() for msg in msgs])
+        return Response({"statusCode": 400, "status": False, "message": errors}, status=400)
+
+
+# -------------------- Delete -------------------- #
+class OccupationCategoryDeleteAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def delete(self, request):
+        ids = request.data.get('id', None)
+        if not ids:
+            return Response({"statusCode": 400, "status": False, "message": "Provide 'id' field", "data": None}, status=400)
+
+        if ids == "all":
+            objs = OccupationCategory.objects.filter(is_deleted=False)
+            count = objs.count()
+            objs.delete()
+            return Response({"statusCode": 200, "status": True, "message": f"All {count} record(s) deleted", "data": None})
+
+        if not isinstance(ids, list):
+            return Response({"statusCode": 400, "status": False, "message": "Provide list of UUIDs", "data": None}, status=400)
+
+        valid_uuids, invalid_uuids = [], []
+        for u in ids:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(u)
+
+        objs = OccupationCategory.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+        count = objs.count()
+        if count == 0:
+            return Response({"statusCode": 404, "status": False, "message": "No matching record found", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None}, status=404)
+
+        objs.delete()
+        return Response({"statusCode": 200, "status": True, "message": f"{count} record(s) deleted", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None})
+
+
+# -------------------- Export -------------------- #
+class OccupationCategoryExportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        format_type = request.GET.get('format', 'xlsx').lower()
+        fields = request.GET.get('fields')
+        uuids_param = request.GET.get('uuids', '')
+        uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+        field_header_map = {
+            'uuid': 'UUID',
+            'country': 'Country',
+            'occupation_version': 'Occupation Version',
+            'occupationcategory': 'Occupation Category',
+            'occupationcategorycode': 'Category Code',
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'created_at': 'Created On',
+            'updated_at': 'Modified On',
+        }
+
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+        queryset = OccupationCategory.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-created_at')
+
+        dataset = Dataset()
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'Occupation Categories'
+
+        for obj in queryset:
+            row = []
+            for field in field_list:
+                value = getattr(obj, field, '')
+                if field == 'country' and value:
+                    value = value.country_name
+                elif field == 'occupation_version' and value:
+                    value = value.occupation_version
+                elif field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
+                    value = int(value)
+                row.append(value if value is not None else '')
+            dataset.append(row)
+
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'occupation_categories.csv'
+        else:
+            file_data = io.BytesIO(dataset.export('xlsx'))
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'occupation_categories.xlsx'
+
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        return response
+
+
+# -------------------- Import -------------------- #
+class OccupationCategoryImportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        file = request.FILES.get('file')
+        sheet_name = request.data.get('sheet_name')
+
+        if not file:
+            return Response({'error': 'No file uploaded'}, status=400)
+
+        format_type = file.name.split('.')[-1].lower()
+        duplicate_entries = []
+        skipped_rows = []
+        required_headers = {'country', 'occupation version', 'occupation category'}
+        optional_headers = {'category code', 'description'}
+
+        try:
+            data = []
+
+            # XLSX
+            if format_type == 'xlsx':
+                wb = openpyxl.load_workbook(file, read_only=True)
+                available_sheets = wb.sheetnames
+                if not sheet_name:
+                    return Response({'error': 'Provide sheet_name', 'available_sheets': available_sheets}, status=400)
+                if sheet_name not in available_sheets:
+                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
+
+                ws = wb[sheet_name]
+                if ws.max_row <= 1:
+                    return Response({'error': f'Sheet "{sheet_name}" is empty.'}, status=400)
+
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response({'error': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'}, status=400)
+
+                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+                    if not any(row):
+                        continue
+                    row_dict = dict(zip(headers, row))
+                    data.append((idx, row_dict))
+
+            # CSV
+            elif format_type == 'csv':
+                dataset = Dataset()
+                dataset.load(file.read().decode('utf-8'), format='csv')
+                for idx, row in enumerate(dataset.dict, start=2):
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({'error': f'Missing required headers. Required: {required_headers}'}, status=400)
+                    data.append((idx, row_lower))
+            else:
+                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
+
+            imported_count = 0
+            for row_number, row in data:
+                country_name = str(row.get('country')).strip() if row.get('country') else None
+                occupation_version_name = str(row.get('occupation version')).strip() if row.get('occupation version') else None
+                occupationcategory = str(row.get('occupation category')).strip() if row.get('occupation category') else None
+                category_code = row.get('category code', '')
+                description = row.get('description', '')
+
+                if not country_name or not occupation_version_name or not occupationcategory:
+                    skipped_rows.append({'row': row_number, 'Reason': 'Mandatory fields missing'})
+                    continue
+
+                try:
+                    country_obj = Country.objects.get(country_name__iexact=country_name)
+                except Country.DoesNotExist:
+                    skipped_rows.append({'row': row_number, 'Reason': 'Country not found'})
+                    continue
+
+                try:
+                    occupation_version_obj = OccupationVersion.objects.get(
+                        country=country_obj,
+                        occupation_version__iexact=occupation_version_name
+                    )
+                except OccupationVersion.DoesNotExist:
+                    skipped_rows.append({'row': row_number, 'Reason': 'Occupation version not found'})
+                    continue
+
+                existing = OccupationCategory.objects.filter(
+                    country=country_obj,
+                    occupation_version=occupation_version_obj,
+                    occupationcategory__iexact=occupationcategory
+                ).first()
+
+                if existing:
+                    if not existing.is_deleted:
+                        duplicate_entries.append(f"{country_name} - {occupation_version_name} - {occupationcategory}")
+                        continue
+                    else:
+                        existing.occupationcategorycode = category_code
+                        existing.description = description
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
+                else:
+                    OccupationCategory.objects.create(
+                        country=country_obj,
+                        occupation_version=occupation_version_obj,
+                        occupationcategory=occupationcategory,
+                        occupationcategorycode=category_code,
+                        description=description,
+                        is_deleted=False
+                    )
+                    imported_count += 1
+
+        except Exception as e:
+            return Response({'error': str(e)}, status=400)
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "duplicates": list(set(duplicate_entries)),
+            "skipped_rows": skipped_rows,
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count
+        }, status=200)
+    
+
+class OccupationLevelCodeListAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        search = request.GET.get('search', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_order = request.GET.get('sortOrder', 'desc')
+        allowed_sort_fields = ['occupationlevelcode', 'created_at']
+
+        if sort_by not in allowed_sort_fields:
+            sort_by = 'created_at'
+        if sort_order == 'desc':
+            sort_by = f'-{sort_by}'
+
+        queryset = OccupationLevelCode.objects.filter(is_deleted=False)
+        if search:
+            queryset = queryset.filter(
+                Q(occupationlevelcode__istartswith=search) |
+                Q(description__istartswith=search) |
+                Q(country__country_name__istartswith=search) |
+                Q(occupation_version__occupation_version__istartswith=search)
+            )
+
+        queryset = queryset.order_by(sort_by)
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = OccupationLevelCodeSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+
+# -------------------- Create -------------------- #
+class OccupationLevelCodeCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        country_uuid = request.data.get("country_id")
+        occupation_version_uuid = request.data.get("occupation_version_id")
+        occupationlevelcode = request.data.get("occupationlevelcode")
+
+        if not occupationlevelcode:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Mandatory field missing: occupationlevelcode"
+            }, status=400)
+
+        country_obj = None
+        if country_uuid:
+            try:
+                country_obj = Country.objects.get(uuid=country_uuid)
+            except Country.DoesNotExist:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Invalid country UUID."
+                }, status=400)
+
+        occupation_version_obj = None
+        if occupation_version_uuid:
+            try:
+                occupation_version_obj = OccupationVersion.objects.get(uuid=occupation_version_uuid)
+            except OccupationVersion.DoesNotExist:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Invalid occupation version UUID."
+                }, status=400)
+
+        # Check duplicate
+        existing = OccupationLevelCode.objects.filter(
+            country=country_obj,
+            occupation_version=occupation_version_obj,
+            occupationlevelcode__iexact=occupationlevelcode,
+            is_deleted=False
+        ).first()
+
+        if existing:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Occupation level code already exists for this country and occupation version."
+            }, status=400)
+
+        data = request.data.copy()
+        if country_obj:
+            data['country_id'] = country_obj.uuid
+        if occupation_version_obj:
+            data['occupation_version_id'] = occupation_version_obj.uuid
+
+        serializer = OccupationLevelCodeSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "Occupation level code created successfully",
+                "data": serializer.data
+            })
+
+        errors = " ".join([msg for msgs in serializer.errors.values() for msg in msgs])
+        return Response({
+            "statusCode": 400,
+            "status": False,
+            "message": errors
+        }, status=400)
+
+
+# -------------------- Retrieve -------------------- #
+class OccupationLevelCodeRetrieveAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request, uuid):
+        try:
+            obj = OccupationLevelCode.objects.get(uuid=uuid, is_deleted=False)
+        except OccupationLevelCode.DoesNotExist:
+            return Response({"statusCode": 404, "status": False, "message": "Not found", "data": None}, status=404)
+
+        serializer = OccupationLevelCodeSerializer(obj)
+        return Response({"statusCode": 200, "status": True, "message": "Retrieved successfully", "data": serializer.data})
+
+
+# -------------------- Update -------------------- #
+class OccupationLevelCodeUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def put(self, request, uuid):
+        try:
+            obj = OccupationLevelCode.objects.get(uuid=uuid, is_deleted=False)
+        except OccupationLevelCode.DoesNotExist:
+            return Response({"statusCode": 404, "status": False, "message": "Not found", "data": None}, status=404)
+
+        serializer = OccupationLevelCodeSerializer(obj, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"statusCode": 200, "status": True, "message": "Updated successfully", "data": serializer.data})
+
+        errors = " ".join([msg for msgs in serializer.errors.values() for msg in msgs])
+        return Response({"statusCode": 400, "status": False, "message": errors}, status=400)
+
+
+# -------------------- Delete -------------------- #
+class OccupationLevelCodeDeleteAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def delete(self, request):
+        ids = request.data.get('id', None)
+        if not ids:
+            return Response({"statusCode": 400, "status": False, "message": "Provide 'id' field", "data": None}, status=400)
+
+        if ids == "all":
+            objs = OccupationLevelCode.objects.filter(is_deleted=False)
+            count = objs.count()
+            objs.delete()
+            return Response({"statusCode": 200, "status": True, "message": f"All {count} record(s) deleted", "data": None})
+
+        if not isinstance(ids, list):
+            return Response({"statusCode": 400, "status": False, "message": "Provide list of UUIDs", "data": None}, status=400)
+
+        valid_uuids, invalid_uuids = [], []
+        for u in ids:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(u)
+
+        objs = OccupationLevelCode.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+        count = objs.count()
+        if count == 0:
+            return Response({"statusCode": 404, "status": False, "message": "No matching record found", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None}, status=404)
+
+        objs.delete()
+        return Response({"statusCode": 200, "status": True, "message": f"{count} record(s) deleted", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None})
+
+
+# -------------------- Export -------------------- #
+class OccupationLevelCodeExportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        format_type = request.GET.get('format', 'xlsx').lower()
+        fields = request.GET.get('fields')
+        uuids_param = request.GET.get('uuids', '')
+        uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+        field_header_map = {
+            'uuid': 'UUID',
+            'country': 'Country',
+            'occupation_version': 'Occupation Version',
+            'occupationlevelcode': 'Occupation Level Code',
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'created_at': 'Created On',
+            'updated_at': 'Modified On',
+        }
+
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+        queryset = OccupationLevelCode.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-created_at')
+
+        dataset = Dataset()
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'Occupation Level Codes'
+
+        for obj in queryset:
+            row = []
+            for field in field_list:
+                value = getattr(obj, field, '')
+                if field == 'country' and value:
+                    value = value.country_name
+                elif field == 'occupation_version' and value:
+                    value = value.occupation_version
+                elif field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
+                    value = int(value)
+                row.append(value if value is not None else '')
+            dataset.append(row)
+
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'occupation_level_codes.csv'
+        else:
+            file_data = io.BytesIO(dataset.export('xlsx'))
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'occupation_level_codes.xlsx'
+
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        return response
+
+
+# -------------------- Import -------------------- #
+class OccupationLevelCodeImportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        file = request.FILES.get('file')
+        sheet_name = request.data.get('sheet_name')
+
+        if not file:
+            return Response({'error': 'No file uploaded'}, status=400)
+
+        format_type = file.name.split('.')[-1].lower()
+        duplicate_entries = []
+        skipped_rows = []
+        required_headers = {'country', 'occupation version', 'occupation level code'}
+        optional_headers = {'description'}
+
+        try:
+            data = []
+
+            # XLSX
+            if format_type == 'xlsx':
+                wb = openpyxl.load_workbook(file, read_only=True)
+                available_sheets = wb.sheetnames
+                if not sheet_name:
+                    return Response({'error': 'Provide sheet_name', 'available_sheets': available_sheets}, status=400)
+                if sheet_name not in available_sheets:
+                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
+
+                ws = wb[sheet_name]
+                if ws.max_row <= 1:
+                    return Response({'error': f'Sheet "{sheet_name}" is empty.'}, status=400)
+
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response({'error': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'}, status=400)
+
+                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+                    if not any(row):
+                        continue
+                    row_dict = dict(zip(headers, row))
+                    data.append((idx, row_dict))
+
+            # CSV
+            elif format_type == 'csv':
+                dataset = Dataset()
+                dataset.load(file.read().decode('utf-8'), format='csv')
+                for idx, row in enumerate(dataset.dict, start=2):
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({'error': f'Missing required headers. Required: {required_headers}'}, status=400)
+                    data.append((idx, row_lower))
+            else:
+                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
+
+            imported_count = 0
+            for row_number, row in data:
+                country_name = str(row.get('country')).strip() if row.get('country') else None
+                occupation_version_name = str(row.get('occupation version')).strip() if row.get('occupation version') else None
+                occupationlevelcode = str(row.get('occupation level code')).strip() if row.get('occupation level code') else None
+                description = row.get('description', '')
+
+                if not country_name or not occupation_version_name or not occupationlevelcode:
+                    skipped_rows.append({'row': row_number, 'Reason': 'Mandatory fields missing'})
+                    continue
+
+                try:
+                    country_obj = Country.objects.get(country_name__iexact=country_name)
+                except Country.DoesNotExist:
+                    skipped_rows.append({'row': row_number, 'Reason': 'Country not found'})
+                    continue
+
+                try:
+                    occupation_version_obj = OccupationVersion.objects.get(
+                        country=country_obj,
+                        occupation_version__iexact=occupation_version_name
+                    )
+                except OccupationVersion.DoesNotExist:
+                    skipped_rows.append({'row': row_number, 'Reason': 'Occupation version not found'})
+                    continue
+
+                existing = OccupationLevelCode.objects.filter(
+                    country=country_obj,
+                    occupation_version=occupation_version_obj,
+                    occupationlevelcode__iexact=occupationlevelcode
+                ).first()
+
+                if existing:
+                    if not existing.is_deleted:
+                        duplicate_entries.append(f"{country_name} - {occupation_version_name} - {occupationlevelcode}")
+                        continue
+                    else:
+                        existing.description = description
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
+                else:
+                    OccupationLevelCode.objects.create(
+                        country=country_obj,
+                        occupation_version=occupation_version_obj,
+                        occupationlevelcode=occupationlevelcode,
+                        description=description,
+                        is_deleted=False
+                    )
+                    imported_count += 1
+
+        except Exception as e:
+            return Response({'error': str(e)}, status=400)
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "duplicates": list(set(duplicate_entries)),
+            "skipped_rows": skipped_rows,
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count
+        }, status=200)
+
+
+# -------------------- List -------------------- #
+class OccupationLevelListAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        search = request.GET.get('search', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_order = request.GET.get('sortOrder', 'desc')
+        allowed_sort_fields = ['occupationlevel', 'created_at']
+
+        if sort_by not in allowed_sort_fields:
+            sort_by = 'created_at'
+        if sort_order == 'desc':
+            sort_by = f'-{sort_by}'
+
+        queryset = OccupationLevel.objects.filter(is_deleted=False)
+        if search:
+            queryset = queryset.filter(
+                Q(occupationlevel__istartswith=search) |
+                Q(description__istartswith=search) |
+                Q(country__country_name__istartswith=search) |
+                Q(occupationversion__occupation_version__istartswith=search) |
+                Q(occupationcategory__occupationcategory__istartswith=search) |
+                Q(occupationlevelcode__occupationlevelcode__istartswith=search)
+            )
+
+        queryset = queryset.order_by(sort_by)
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = OccupationLevelSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+
+# -------------------- Create -------------------- #
+class OccupationLevelCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        country_uuid = request.data.get("country_id")
+        occupationversion_uuid = request.data.get("occupationversion_id")
+        occupationcategory_uuid = request.data.get("occupationcategory_id")
+        occupationlevelcode_uuid = request.data.get("occupationlevelcode_id")
+        occupationlevel_name = request.data.get("occupationlevel")
+
+        if not occupationlevel_name:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Mandatory field missing: occupationlevel"
+            }, status=400)
+
+        # Validate foreign keys
+        country_obj = None
+        if country_uuid:
+            try:
+                country_obj = Country.objects.get(uuid=country_uuid)
+            except Country.DoesNotExist:
+                return Response({"statusCode": 400, "status": False, "message": "Invalid country UUID."}, status=400)
+
+        occupationversion_obj = None
+        if occupationversion_uuid:
+            try:
+                occupationversion_obj = OccupationVersion.objects.get(uuid=occupationversion_uuid)
+            except OccupationVersion.DoesNotExist:
+                return Response({"statusCode": 400, "status": False, "message": "Invalid occupation version UUID."}, status=400)
+
+        occupationcategory_obj = None
+        if occupationcategory_uuid:
+            try:
+                occupationcategory_obj = OccupationCategory.objects.get(uuid=occupationcategory_uuid)
+            except OccupationCategory.DoesNotExist:
+                return Response({"statusCode": 400, "status": False, "message": "Invalid occupation category UUID."}, status=400)
+
+        occupationlevelcode_obj = None
+        if occupationlevelcode_uuid:
+            try:
+                occupationlevelcode_obj = OccupationLevelCode.objects.get(uuid=occupationlevelcode_uuid)
+            except OccupationLevelCode.DoesNotExist:
+                return Response({"statusCode": 400, "status": False, "message": "Invalid occupation level code UUID."}, status=400)
+
+        # Check duplicate
+        existing = OccupationLevel.objects.filter(
+            country=country_obj,
+            occupationversion=occupationversion_obj,
+            occupationcategory=occupationcategory_obj,
+            occupationlevelcode=occupationlevelcode_obj,
+            occupationlevel__iexact=occupationlevel_name,
+            is_deleted=False
+        ).first()
+
+        if existing:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Occupation level already exists for this combination."
+            }, status=400)
+
+        data = request.data.copy()
+        if country_obj:
+            data['country_id'] = country_obj.uuid
+        if occupationversion_obj:
+            data['occupationversion_id'] = occupationversion_obj.uuid
+        if occupationcategory_obj:
+            data['occupationcategory_id'] = occupationcategory_obj.uuid
+        if occupationlevelcode_obj:
+            data['occupationlevelcode_id'] = occupationlevelcode_obj.uuid
+
+        serializer = OccupationLevelSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "Occupation level created successfully",
+                "data": serializer.data
+            })
+
+        errors = " ".join([msg for msgs in serializer.errors.values() for msg in msgs])
+        return Response({"statusCode": 400, "status": False, "message": errors}, status=400)
+
+
+# -------------------- Retrieve -------------------- #
+class OccupationLevelRetrieveAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request, uuid):
+        try:
+            obj = OccupationLevel.objects.get(uuid=uuid, is_deleted=False)
+        except OccupationLevel.DoesNotExist:
+            return Response({"statusCode": 404, "status": False, "message": "Not found", "data": None}, status=404)
+
+        serializer = OccupationLevelSerializer(obj)
+        return Response({"statusCode": 200, "status": True, "message": "Retrieved successfully", "data": serializer.data})
+
+
+# -------------------- Update -------------------- #
+class OccupationLevelUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def put(self, request, uuid):
+        try:
+            obj = OccupationLevel.objects.get(uuid=uuid, is_deleted=False)
+        except OccupationLevel.DoesNotExist:
+            return Response({"statusCode": 404, "status": False, "message": "Not found", "data": None}, status=404)
+
+        serializer = OccupationLevelSerializer(obj, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"statusCode": 200, "status": True, "message": "Updated successfully", "data": serializer.data})
+
+        errors = " ".join([msg for msgs in serializer.errors.values() for msg in msgs])
+        return Response({"statusCode": 400, "status": False, "message": errors}, status=400)
+
+
+# -------------------- Delete -------------------- #
+class OccupationLevelDeleteAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def delete(self, request):
+        ids = request.data.get('id', None)
+        if not ids:
+            return Response({"statusCode": 400, "status": False, "message": "Provide 'id' field", "data": None}, status=400)
+
+        if ids == "all":
+            objs = OccupationLevel.objects.filter(is_deleted=False)
+            count = objs.count()
+            objs.delete()
+            return Response({"statusCode": 200, "status": True, "message": f"All {count} record(s) deleted", "data": None})
+
+        if not isinstance(ids, list):
+            return Response({"statusCode": 400, "status": False, "message": "Provide list of UUIDs", "data": None}, status=400)
+
+        valid_uuids, invalid_uuids = [], []
+        for u in ids:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(u)
+
+        objs = OccupationLevel.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+        count = objs.count()
+        if count == 0:
+            return Response({"statusCode": 404, "status": False, "message": "No matching record found", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None}, status=404)
+
+        objs.delete()
+        return Response({"statusCode": 200, "status": True, "message": f"{count} record(s) deleted", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None})
+
+
+# -------------------- Export -------------------- #
+class OccupationLevelExportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        format_type = request.GET.get('format', 'xlsx').lower()
+        fields = request.GET.get('fields')
+        uuids_param = request.GET.get('uuids', '')
+        uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+        field_header_map = {
+            'uuid': 'UUID',
+            'country': 'Country',
+            'occupationversion': 'Occupation Version',
+            'occupationcategory': 'Occupation Category',
+            'occupationlevelcode': 'Occupation Level Code',
+            'occupationlevel': 'Occupation Level',
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'created_at': 'Created On',
+            'updated_at': 'Modified On',
+        }
+
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+        queryset = OccupationLevel.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-created_at')
+
+        dataset = Dataset()
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'Occupation Levels'
+
+        for obj in queryset:
+            row = []
+            for field in field_list:
+                value = getattr(obj, field, '')
+                if field == 'country' and value:
+                    value = value.country_name
+                elif field == 'occupationversion' and value:
+                    value = value.occupationversion
+                elif field == 'occupationcategory' and value:
+                    value = value.occupationcategory
+                elif field == 'occupationlevelcode' and value:
+                    value = value.occupationlevelcode
+                elif field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
+                    value = int(value)
+                row.append(value if value is not None else '')
+            dataset.append(row)
+
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'occupation_levels.csv'
+        else:
+            file_data = io.BytesIO(dataset.export('xlsx'))
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'occupation_levels.xlsx'
+
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        return response
+
+
+# -------------------- Import -------------------- #
+class OccupationLevelImportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        file = request.FILES.get('file')
+        sheet_name = request.data.get('sheet_name')
+
+        if not file:
+            return Response({'error': 'No file uploaded'}, status=400)
+
+        format_type = file.name.split('.')[-1].lower()
+        duplicate_entries = []
+        skipped_rows = []
+        required_headers = {'country', 'occupation version', 'occupation category', 'occupation level code', 'occupation level'}
+        optional_headers = {'description'}
+
+        try:
+            data = []
+
+            # XLSX
+            if format_type == 'xlsx':
+                wb = openpyxl.load_workbook(file, read_only=True)
+                available_sheets = wb.sheetnames
+                if not sheet_name:
+                    return Response({'error': 'Provide sheet_name', 'available_sheets': available_sheets}, status=400)
+                if sheet_name not in available_sheets:
+                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
+
+                ws = wb[sheet_name]
+                if ws.max_row <= 1:
+                    return Response({'error': f'Sheet "{sheet_name}" is empty.'}, status=400)
+
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response({'error': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'}, status=400)
+
+                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+                    if not any(row):
+                        continue
+                    row_dict = dict(zip(headers, row))
+                    data.append((idx, row_dict))
+
+            # CSV
+            elif format_type == 'csv':
+                dataset = Dataset()
+                dataset.load(file.read().decode('utf-8'), format='csv')
+                for idx, row in enumerate(dataset.dict, start=2):
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({'error': f'Missing required headers. Required: {required_headers}'}, status=400)
+                    data.append((idx, row_lower))
+            else:
+                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
+
+            imported_count = 0
+            for row_number, row in data:
+                country_name = str(row.get('country')).strip() if row.get('country') else None
+                occupation_version_name = str(row.get('occupation version')).strip() if row.get('occupation version') else None
+                occupation_category_name = str(row.get('occupation category')).strip() if row.get('occupation category') else None
+                occupation_level_code_name = str(row.get('occupation level code')).strip() if row.get('occupation level code') else None
+                occupation_level_name = str(row.get('occupation level')).strip() if row.get('occupation level') else None
+                description = row.get('description', '')
+
+                if not country_name or not occupation_version_name or not occupation_category_name or not occupation_level_code_name or not occupation_level_name:
+                    skipped_rows.append({'row': row_number, 'Reason': 'Mandatory fields missing'})
+                    continue
+
+                try:
+                    country_obj = Country.objects.get(country_name__iexact=country_name)
+                except Country.DoesNotExist:
+                    skipped_rows.append({'row': row_number, 'Reason': 'Country not found'})
+                    continue
+
+                try:
+                    occupation_version_obj = OccupationVersion.objects.get(country=country_obj, occupation_version__iexact=occupation_version_name)
+                except OccupationVersion.DoesNotExist:
+                    skipped_rows.append({'row': row_number, 'Reason': 'Occupation version not found'})
+                    continue
+
+                try:
+                    occupation_category_obj = OccupationCategory.objects.get(country=country_obj, occupation_version=occupation_version_obj, occupationcategory__iexact=occupation_category_name)
+                except OccupationCategory.DoesNotExist:
+                    skipped_rows.append({'row': row_number, 'Reason': 'Occupation category not found'})
+                    continue
+
+                try:
+                    occupation_level_code_obj = OccupationLevelCode.objects.get(
+                        country=country_obj,
+                        occupation_version=occupation_version_obj,
+                        occupationlevelcode__iexact=occupation_level_code_name
+                    )
+                except OccupationLevelCode.DoesNotExist:
+                    skipped_rows.append({'row': row_number, 'Reason': 'Occupation level code not found'})
+                    continue
+
+                existing = OccupationLevel.objects.filter(
+                    country=country_obj,
+                    occupationversion=occupation_version_obj,
+                    occupationcategory=occupation_category_obj,
+                    occupationlevelcode=occupation_level_code_obj,
+                    occupationlevel__iexact=occupation_level_name
+                ).first()
+
+                if existing:
+                    if not existing.is_deleted:
+                        duplicate_entries.append(f"{country_name}-{occupation_version_name}-{occupation_category_name}-{occupation_level_code_name}-{occupation_level_name}")
+                        continue
+                    else:
+                        existing.description = description
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
+                else:
+                    OccupationLevel.objects.create(
+                        country=country_obj,
+                        occupationversion=occupation_version_obj,
+                        occupationcategory=occupation_category_obj,
+                        occupationlevelcode=occupation_level_code_obj,
+                        occupationlevel=occupation_level_name,
+                        description=description,
+                        is_deleted=False
+                    )
+                    imported_count += 1
+
+        except Exception as e:
+            return Response({'error': str(e)}, status=400)
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "duplicates": list(set(duplicate_entries)),
+            "skipped_rows": skipped_rows,
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count
+        }, status=200)
+
+
+
+
+
+# -------------------- List -------------------- #
+class OccupationCodeListAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        search = request.GET.get('search', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_order = request.GET.get('sortOrder', 'desc')
+        allowed_sort_fields = ['occupationcode', 'created_at']
+
+        if sort_by not in allowed_sort_fields:
+            sort_by = 'created_at'
+        if sort_order == 'desc':
+            sort_by = f'-{sort_by}'
+
+        queryset = OccupationCode.objects.filter(is_deleted=False)
+        if search:
+            queryset = queryset.filter(
+                Q(occupationcode__istartswith=search) |
+                Q(description__istartswith=search) |
+                Q(country__country_name__istartswith=search) |
+                Q(occupationversion__occupation_version__istartswith=search)
+            )
+
+        queryset = queryset.order_by(sort_by)
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = OccupationCodeSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+
+# -------------------- Create -------------------- #
+class OccupationCodeCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        country_uuid = request.data.get("country_id")
+        occupationversion_uuid = request.data.get("occupationversion_id")
+        occupationcode_name = request.data.get("occupationcode")
+
+        if not occupationcode_name:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Mandatory field missing: occupationcode"
+            }, status=400)
+
+        # Validate foreign keys
+        country_obj = None
+        if country_uuid:
+            try:
+                country_obj = Country.objects.get(uuid=country_uuid)
+            except Country.DoesNotExist:
+                return Response({"statusCode": 400, "status": False, "message": "Invalid country UUID."}, status=400)
+
+        occupationversion_obj = None
+        if occupationversion_uuid:
+            try:
+                occupationversion_obj = OccupationVersion.objects.get(uuid=occupationversion_uuid)
+            except OccupationVersion.DoesNotExist:
+                return Response({"statusCode": 400, "status": False, "message": "Invalid occupation version UUID."}, status=400)
+
+        # Check duplicate
+        existing = OccupationCode.objects.filter(
+            country=country_obj,
+            occupationversion=occupationversion_obj,
+            occupationcode__iexact=occupationcode_name,
+            is_deleted=False
+        ).first()
+
+        if existing:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Occupation code already exists for this combination."
+            }, status=400)
+
+        data = request.data.copy()
+        if country_obj:
+            data['country_id'] = country_obj.uuid
+        if occupationversion_obj:
+            data['occupationversion_id'] = occupationversion_obj.uuid
+
+        serializer = OccupationCodeSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "Occupation code created successfully",
+                "data": serializer.data
+            })
+
+        errors = " ".join([msg for msgs in serializer.errors.values() for msg in msgs])
+        return Response({"statusCode": 400, "status": False, "message": errors}, status=400)
+
+
+# -------------------- Retrieve -------------------- #
+class OccupationCodeRetrieveAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request, uuid):
+        try:
+            obj = OccupationCode.objects.get(uuid=uuid, is_deleted=False)
+        except OccupationCode.DoesNotExist:
+            return Response({"statusCode": 404, "status": False, "message": "Not found", "data": None}, status=404)
+
+        serializer = OccupationCodeSerializer(obj)
+        return Response({"statusCode": 200, "status": True, "message": "Retrieved successfully", "data": serializer.data})
+
+
+# -------------------- Update -------------------- #
+class OccupationCodeUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def put(self, request, uuid):
+        try:
+            obj = OccupationCode.objects.get(uuid=uuid, is_deleted=False)
+        except OccupationCode.DoesNotExist:
+            return Response({"statusCode": 404, "status": False, "message": "Not found", "data": None}, status=404)
+
+        serializer = OccupationCodeSerializer(obj, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"statusCode": 200, "status": True, "message": "Updated successfully", "data": serializer.data})
+
+        errors = " ".join([msg for msgs in serializer.errors.values() for msg in msgs])
+        return Response({"statusCode": 400, "status": False, "message": errors}, status=400)
+
+
+# -------------------- Delete -------------------- #
+class OccupationCodeDeleteAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def delete(self, request):
+        ids = request.data.get('id', None)
+        if not ids:
+            return Response({"statusCode": 400, "status": False, "message": "Provide 'id' field", "data": None}, status=400)
+
+        if ids == "all":
+            objs = OccupationCode.objects.filter(is_deleted=False)
+            count = objs.count()
+            objs.delete()
+            return Response({"statusCode": 200, "status": True, "message": f"All {count} record(s) deleted", "data": None})
+
+        if not isinstance(ids, list):
+            return Response({"statusCode": 400, "status": False, "message": "Provide list of UUIDs", "data": None}, status=400)
+
+        valid_uuids, invalid_uuids = [], []
+        for u in ids:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(u)
+
+        objs = OccupationCode.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+        count = objs.count()
+        if count == 0:
+            return Response({"statusCode": 404, "status": False, "message": "No matching record found", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None}, status=404)
+
+        objs.delete()
+        return Response({"statusCode": 200, "status": True, "message": f"{count} record(s) deleted", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None})
+
+
+# -------------------- Export -------------------- #
+class OccupationCodeExportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        format_type = request.GET.get('format', 'xlsx').lower()
+        fields = request.GET.get('fields')
+        uuids_param = request.GET.get('uuids', '')
+        uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+        field_header_map = {
+            'uuid': 'UUID',
+            'country': 'Country',
+            'occupationversion': 'Occupation Version',
+            'occupationcode': 'Occupation Code',
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'created_at': 'Created On',
+            'updated_at': 'Modified On',
+        }
+
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+        queryset = OccupationCode.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-created_at')
+
+        dataset = Dataset()
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'Occupation Codes'
+
+        for obj in queryset:
+            row = []
+            for field in field_list:
+                value = getattr(obj, field, '')
+                if field == 'country' and value:
+                    value = value.country_name
+                elif field == 'occupationversion' and value:
+                    value = value.occupationversion
+                elif field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
+                    value = int(value)
+                row.append(value if value is not None else '')
+            dataset.append(row)
+
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'occupation_codes.csv'
+        else:
+            file_data = io.BytesIO(dataset.export('xlsx'))
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'occupation_codes.xlsx'
+
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        return response
+
+
+# -------------------- Import -------------------- #
+class OccupationCodeImportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        file = request.FILES.get('file')
+        sheet_name = request.data.get('sheet_name')
+
+        if not file:
+            return Response({'error': 'No file uploaded'}, status=400)
+
+        format_type = file.name.split('.')[-1].lower()
+        duplicate_entries = []
+        skipped_rows = []
+        required_headers = {'country', 'occupation version', 'occupation code'}
+        optional_headers = {'description'}
+
+        try:
+            data = []
+
+            # XLSX
+            if format_type == 'xlsx':
+                wb = openpyxl.load_workbook(file, read_only=True)
+                available_sheets = wb.sheetnames
+                if not sheet_name:
+                    return Response({'error': 'Provide sheet_name', 'available_sheets': available_sheets}, status=400)
+                if sheet_name not in available_sheets:
+                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
+
+                ws = wb[sheet_name]
+                if ws.max_row <= 1:
+                    return Response({'error': f'Sheet "{sheet_name}" is empty.'}, status=400)
+
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response({'error': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'}, status=400)
+
+                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+                    if not any(row):
+                        continue
+                    row_dict = dict(zip(headers, row))
+                    data.append((idx, row_dict))
+
+            # CSV
+            elif format_type == 'csv':
+                dataset = Dataset()
+                dataset.load(file.read().decode('utf-8'), format='csv')
+                for idx, row in enumerate(dataset.dict, start=2):
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({'error': f'Missing required headers. Required: {required_headers}'}, status=400)
+                    data.append((idx, row_lower))
+            else:
+                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
+
+            imported_count = 0
+            for row_number, row in data:
+                country_name = str(row.get('country')).strip() if row.get('country') else None
+                occupation_version_name = str(row.get('occupation version')).strip() if row.get('occupation version') else None
+                occupation_code_name = str(row.get('occupation code')).strip() if row.get('occupation code') else None
+                description = row.get('description', '')
+
+                if not country_name or not occupation_version_name or not occupation_code_name:
+                    skipped_rows.append({'row': row_number, 'Reason': 'Mandatory fields missing'})
+                    continue
+
+                try:
+                    country_obj = Country.objects.get(country_name__iexact=country_name)
+                except Country.DoesNotExist:
+                    skipped_rows.append({'row': row_number, 'Reason': 'Country not found'})
+                    continue
+
+                try:
+                    occupation_version_obj = OccupationVersion.objects.get(country=country_obj, occupation_version__iexact=occupation_version_name)
+                except OccupationVersion.DoesNotExist:
+                    skipped_rows.append({'row': row_number, 'Reason': 'Occupation version not found'})
+                    continue
+
+                existing = OccupationCode.objects.filter(
+                    country=country_obj,
+                    occupationversion=occupation_version_obj,
+                    occupationcode__iexact=occupation_code_name
+                ).first()
+
+                if existing:
+                    if not existing.is_deleted:
+                        duplicate_entries.append(f"{country_name}-{occupation_version_name}-{occupation_code_name}")
+                        continue
+                    else:
+                        existing.description = description
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
+                else:
+                    OccupationCode.objects.create(
+                        country=country_obj,
+                        occupationversion=occupation_version_obj,
+                        occupationcode=occupation_code_name,
+                        description=description,
+                        is_deleted=False
+                    )
+                    imported_count += 1
+
+        except Exception as e:
+            return Response({'error': str(e)}, status=400)
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "duplicates": list(set(duplicate_entries)),
+            "skipped_rows": skipped_rows,
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count
+        }, status=200)

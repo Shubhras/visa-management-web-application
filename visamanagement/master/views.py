@@ -7854,7 +7854,7 @@ class AccreditationNameImportAPIView(APIView):
                                 'Accrediation Full Name': full_name,
                                 'country': country_name,
                                 'category': category_name,
-                                'reason': f"Invalid date format '{valid_date_raw}'. Expected formats: dd-mm-yyyy, dd/mm/yyyy "
+                                'Reason': f"Invalid date format '{valid_date_raw}'. Expected formats: dd-mm-yyyy, dd/mm/yyyy "
                             })
                             continue
 
@@ -10492,7 +10492,7 @@ class TagsImportAPIView(APIView):
                     if not existing.is_deleted:
                         duplicates.append({
                             "Row": row_number,
-                            "Tag": name,
+                            "Tags": name,
                             "Reason": "Already exists in database"
                         })
                         continue
@@ -15846,13 +15846,13 @@ class ECAAwardingBodyImportAPIView(APIView):
                 eca_valid_period = str(row.get('eca valid period')).strip() if row.get('eca valid period') else None
 
                 if not full_name or not country_name:
-                    skipped_rows.append({'full_name': full_name or 'Unknown', 'reason': 'Missing required field(s)'})
+                    skipped_rows.append({'full_name': full_name or 'Unknown', 'Reason': 'Missing required field(s)'})
                     continue
 
                 # Map by country name
                 country = Country.objects.filter(name__iexact=country_name).first()
                 if not country:
-                    skipped_rows.append({'full_name': full_name, 'reason': f'Country "{country_name}" not found'})
+                    skipped_rows.append({'full_name': full_name, 'Reason': f'Country "{country_name}" not found'})
                     continue
 
                 existing = ECAAwardingBody.objects.filter(eca_body_full_name__iexact=full_name, country=country).first()
@@ -16187,14 +16187,14 @@ class DegreeAwardedByImportAPIView(APIView):
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not degree_name or not country_name   or not education_level_name:
-                    skipped_rows.append({'degree_name': degree_name or 'Unknown', 'reason': 'Missing required field(s)'})
+                    skipped_rows.append({'degree_name': degree_name or 'Unknown', 'Reason': 'Missing required field(s)'})
                     continue
 
                 country = Country.objects.filter(name__iexact=country_name).first()
                 education_level = EducationLevel.objects.filter(name__iexact=education_level_name).first()
 
                 if not country  or not education_level:
-                    skipped_rows.append({'degree_name': degree_name, 'reason': 'Invalid country/state/education level'})
+                    skipped_rows.append({'degree_name': degree_name, 'Reason': 'Invalid country/state/education level'})
                     continue
 
                 existing = DegreeAwardedBy.objects.filter(degree_name__iexact=degree_name, country=country, education_level=education_level).first()
@@ -16573,13 +16573,13 @@ class DegreeAwardedInstituteImportAPIView(APIView):
                 education_level_name = str(row.get('education level')).strip() if row.get('education level') else None
 
                 if not name or not degree_awarded_by_name:
-                    skipped_rows.append({'name': name or 'Unknown', 'reason': 'Missing required field(s)'})
+                    skipped_rows.append({'name': name or 'Unknown', 'Reason': 'Missing required field(s)'})
                     continue
 
                 # Map DegreeAwardedBy
                 degree_awarded_by = DegreeAwardedBy.objects.filter(degree_name__iexact=degree_awarded_by_name).first()
                 if not degree_awarded_by:
-                    skipped_rows.append({'name': name, 'reason': f'Degree Awarded By "{degree_awarded_by_name}" not found'})
+                    skipped_rows.append({'name': name, 'Reason': f'Degree Awarded By "{degree_awarded_by_name}" not found'})
                     continue
 
                 # Map Country, State, Education Level

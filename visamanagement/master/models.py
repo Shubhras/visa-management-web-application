@@ -849,7 +849,7 @@ class OccupationVersion(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     country = models.ForeignKey('Country',on_delete=models.SET_NULL,null=True,blank=True,related_name='occupation_version')
-    occupation_version = models.CharField(max_length=255,)  
+    occupation_version = models.CharField(max_length=255)  
     effect_from = models.DateField(null=True, blank=True)
     valid_upto = models.DateField(null=True, blank=True)
     description =  models.TextField(max_length=255,blank=True)
