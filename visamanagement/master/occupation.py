@@ -3789,7 +3789,7 @@ class JobProspectImportAPIView(APIView):
                             "Country": country_obj.country_name,
                             "Occupation Version": occupationversion_obj.occupation_version
                         })
-                            continue
+                        continue
                     else:
                         existing.is_deleted = False
                         existing.save()
