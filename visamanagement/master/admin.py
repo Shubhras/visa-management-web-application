@@ -263,3 +263,5 @@ class AcademicResultAdmin(admin.ModelAdmin):
     list_filter = ('AcademicResulttype', 'is_deleted', 'created_at')
     search_fields = ('Academicresult', 'description')
     readonly_fields = ('uuid', 'created_at', 'updated_at')
+
+
