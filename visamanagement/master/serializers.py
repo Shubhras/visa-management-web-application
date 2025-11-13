@@ -1059,6 +1059,51 @@ class ApplicantTypeSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
 
 
+#----------------------------occupation-----------------
+
+class JobTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = JobType
+        fields = [
+            'id',
+            'uuid',
+            'name',
+            'description',
+            'is_deleted',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
+
+class ModeofSalarySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ModeofSalary
+        fields = [
+            'id',
+            'uuid',
+            'name',
+            'description',
+            'is_deleted',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
+
+class ITReturnStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ITReturnStatus
+        fields = [
+            'id',
+            'uuid',
+            'name',
+            'description',
+            'is_deleted',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
 
 
 #---------------------visa conditions master---------------------------
@@ -1129,6 +1174,8 @@ class ChildrenStudyWorkRightsSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+
+#--------------------instituite  master -----------------------------
 
 class InstituteTypeSerializer(serializers.ModelSerializer):
     class Meta:

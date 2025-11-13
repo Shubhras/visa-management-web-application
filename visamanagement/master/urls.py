@@ -4,6 +4,7 @@ from .test import *
 from .visamaster import *
 from .visacondition import *
 from .institutemasters import *
+from .occupation import  *
 
 urlpatterns = [
 
@@ -34,7 +35,7 @@ urlpatterns = [
     path('continents/export/', ContinentExportAPIView.as_view(),name='continents-export'),
     path('continents/import/', ContinentImportAPIView.as_view(),name='continents-import'),
     
-# 
+
     path('country/create/', CountryCreateAPIView.as_view(),name='country-create'),
     path('country/', CountryListAPIView.as_view(),name='country-list'),
     path('country/<uuid:uuid>/', StateRetrieveAPIView.as_view(), name='state-detail'),
@@ -470,6 +471,28 @@ urlpatterns = [
     path('applicanttype/delete/', ApplicantTypeDeleteAPIView.as_view(), name='applicanttype-delete'),
     path('applicanttype/export/', ApplicantTypeExportAPIView.as_view(), name='applicanttype-export'),
     path('applicanttype/import/', ApplicantTypeImportAPIView.as_view(), name='applicanttype-import'),
+    
+    path('jobtype/', JobTypeListAPIView.as_view(), name='jobtype-list'),
+    path('jobtype/create/', JobTypeCreateAPIView.as_view(), name='jobtype-create'),
+    path('jobtype/<uuid:uuid>/', JobTypeRetrieveAPIView.as_view(), name='jobtype-retrieve'),
+    path('jobtype/<uuid:uuid>/update/', JobTypeUpdateAPIView.as_view(), name='jobtype-update'),
+    path('jobtype/<uuid:uuid>/delete/', JobTypeDeleteAPIView.as_view(), name='jobtype-delete'),
+    path('jobtype/delete/', JobTypeDeleteAPIView.as_view(), name='jobtype-bulk-delete'),
+    path('jobtype/export/', JobTypeExportAPIView.as_view(), name='jobtype-export'),
+    path('jobtype/import/', JobTypeImportAPIView.as_view(), name='jobtype-import'),
+
+    path('modeofsalary/', ModeofSalaryListAPIView.as_view(), name='modeofsalary-list'),
+    path('modeofsalary/create/', ModeofSalaryCreateAPIView.as_view(), name='modeofsalary-create'),
+    path('modeofsalary/<uuid:uuid>/', ModeofSalaryRetrieveAPIView.as_view(), name='modeofsalary-retrieve'),
+    path('modeofsalary/<uuid:uuid>/update/', ModeofSalaryUpdateAPIView.as_view(), name='modeofsalary-update'),
+    path('modeofsalary/<uuid:uuid>/delete/', ModeofSalaryDeleteAPIView.as_view(), name='modeofsalary-delete'),
+    path('modeofsalary/delete/', ModeofSalaryDeleteAPIView.as_view(), name='modeofsalary-bulk-delete'),
+    path('modeofsalary/export/', ModeofSalaryExportAPIView.as_view(), name='modeofsalary-export'),
+    path('modeofsalary/import/', ModeofSalaryImportAPIView.as_view(), name='modeofsalary-import'),
+    
+    
+
+
 
     path('workrights/', WorkRightsListAPIView.as_view(), name='workrights-list'),
     path('workrights/create/', WorkRightsCreateAPIView.as_view(), name='workrights-create'),
