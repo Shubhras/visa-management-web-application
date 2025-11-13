@@ -936,6 +936,8 @@ class OccupationVersionSerializer(serializers.ModelSerializer):
         source='country',
         write_only=True
     )
+    country_name = serializers.CharField(source='country.country_name', read_only=True)
+    country_uuid = serializers.UUIDField(source='country.uuid', read_only=True)
 
     class Meta:
         model = OccupationVersion
@@ -944,6 +946,8 @@ class OccupationVersionSerializer(serializers.ModelSerializer):
             'uuid',
             'country',
             'country_id',
+            'country_name',
+            'country_uuid',
             'occupation_version',
             'effect_from',
             'valid_upto',
