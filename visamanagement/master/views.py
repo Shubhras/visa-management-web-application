@@ -16285,7 +16285,7 @@ class DegreeAwardedByExportAPIView(APIView):
                     value = value.strftime("%d-%m-%Y %I:%M:%S %p")
                 elif field == 'country' and degree.country:
                     value = degree.country.name
-                elif field == 'education_level' and degree.education_level:
+                elif field == 'education_level_name' and degree.education_level:
                     value = degree.education_level.educationlevel
                 elif isinstance(value, bool):
                     value = int(value)
