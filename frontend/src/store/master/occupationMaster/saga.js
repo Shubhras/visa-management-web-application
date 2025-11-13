@@ -30,6 +30,12 @@ import {
     DELETE_OCCUPATION_PROSPECT,
     EXPORT_OCCUPATION_PROSPECT,
     IMPORT_OCCUPATION_PROSPECT,
+    OCCUPATION_VERSION_LIST,
+    ADD_OCCUPATION_VERSION,
+    EDIT_OCCUPATION_VERSION,
+    DELETE_OCCUPATION_VERSION,
+    EXPORT_OCCUPATION_VERSION,
+    IMPORT_OCCUPATION_VERSION,
 } from "./actionType";
 
 import {
@@ -63,6 +69,12 @@ import {
     deleteOccupationProspectDataAPI,
     exportOccupationProspectDataAPI,
     importOccupationProspectDataAPI,
+    getOccupationVersionListDataAPI,
+    addOccupationVersionDataAPI,
+    editOccupationVersionDataAPI,
+    deleteOccupationVersionDataAPI,
+    exportOccupationVersionDataAPI,
+    importOccupationVersionDataAPI,
 } from "../../../service/api_helper";
 
 // --- JOB TYPE SAGAS ---
@@ -336,8 +348,60 @@ function* occupationProspectImportDataSaga(action) {
         action.callback?.(null, error);
     }
 }
+// --- OCCUPATION VERSION SAGAS ---
+function* occupationVersionListSaga(action) {
+    try {
+        const response = yield call(getOccupationVersionListDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
 
+function* occupationVersionAddSaga(action) {
+    try {
+        const response = yield call(addOccupationVersionDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
 
+function* occupationVersionEditSaga(action) {
+    try {
+        const response = yield call(editOccupationVersionDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* occupationVersionDeleteSaga(action) {
+    try {
+        const response = yield call(deleteOccupationVersionDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* occupationVersionExportDataSaga(action) {
+    try {
+        const response = yield call(exportOccupationVersionDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* occupationVersionImportDataSaga(action) {
+    try {
+        const response = yield call(importOccupationVersionDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
 
 
 
@@ -374,6 +438,13 @@ function* occupationMasterSaga() {
     yield takeEvery(DELETE_OCCUPATION_PROSPECT, occupationProspectDeleteSaga);
     yield takeEvery(EXPORT_OCCUPATION_PROSPECT, occupationProspectExportDataSaga);
     yield takeEvery(IMPORT_OCCUPATION_PROSPECT, occupationProspectImportDataSaga);
+    yield takeEvery(OCCUPATION_VERSION_LIST, occupationVersionListSaga);
+    yield takeEvery(ADD_OCCUPATION_VERSION, occupationVersionAddSaga);
+    yield takeEvery(EDIT_OCCUPATION_VERSION, occupationVersionEditSaga);
+    yield takeEvery(DELETE_OCCUPATION_VERSION, occupationVersionDeleteSaga);
+    yield takeEvery(EXPORT_OCCUPATION_VERSION, occupationVersionExportDataSaga);
+    yield takeEvery(IMPORT_OCCUPATION_VERSION, occupationVersionImportDataSaga);
+
 
 
 

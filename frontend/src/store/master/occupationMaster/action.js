@@ -29,6 +29,12 @@ import {
     DELETE_OCCUPATION_PROSPECT,
     EXPORT_OCCUPATION_PROSPECT,
     IMPORT_OCCUPATION_PROSPECT,
+    OCCUPATION_VERSION_LIST,
+    ADD_OCCUPATION_VERSION,
+    EDIT_OCCUPATION_VERSION,
+    DELETE_OCCUPATION_VERSION,
+    EXPORT_OCCUPATION_VERSION,
+    IMPORT_OCCUPATION_VERSION,
 } from "./actionType";
 
 // Job Type Actions
@@ -212,6 +218,44 @@ export const occupationProspectImportData = (data, callback) => ({
     data,
     callback,
 });
+
+// Occupation Version Actions
+export const occupationVersionList = (data, callback) => ({
+    type: OCCUPATION_VERSION_LIST,
+    data,
+    callback,
+});
+
+export const occupationVersionAdd = (data, callback) => ({
+    type: ADD_OCCUPATION_VERSION,
+    data,
+    callback,
+});
+
+export const occupationVersionEdit = (data, callback) => ({
+    type: EDIT_OCCUPATION_VERSION,
+    data,
+    callback,
+});
+
+export const occupationVersionDelete = (data, callback) => ({
+    type: DELETE_OCCUPATION_VERSION,
+    data,
+    callback,
+});
+
+export const occupationVersionExportData = (data, callback) => ({
+    type: EXPORT_OCCUPATION_VERSION,
+    data,
+    callback,
+});
+
+export const occupationVersionImportData = (data, callback) => ({
+    type: IMPORT_OCCUPATION_VERSION,
+    data,
+    callback,
+});
+
 
 
 

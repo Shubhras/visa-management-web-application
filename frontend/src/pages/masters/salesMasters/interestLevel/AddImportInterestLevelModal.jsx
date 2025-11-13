@@ -5,6 +5,7 @@ import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
 import { interestLevelImportData } from '../../../../store/master/salesMasters/actions';
 import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
+import { exportToExcelDuplicate } from '../../../../helper/utils/commanHelper';
 const AddImportInterestLevelModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
@@ -85,8 +86,20 @@ const AddImportInterestLevelModal = ({ show, handleClose }) => {
                         }
                     );
                     if (response?.duplicates?.length > 0) {
-                        handleExportToExcel(response.duplicates)
+                        const prepareData = {
+                            data: response.duplicates || [],
+                            headers: ["Interest Level"],
+                            sheetName: "InterestLevel",
+                            fileName: "InterestLevel",
+                        };
+                        exportToExcelDuplicate(
+                            prepareData.data,
+                            prepareData.headers,
+                            prepareData.sheetName,
+                            prepareData.fileName
+                        );
                     }
+
                     setFile(null);
                     setSheetNames([]);
                     setSelectedSheet('');
@@ -98,25 +111,6 @@ const AddImportInterestLevelModal = ({ show, handleClose }) => {
         }));
     };
 
-    const handleExportToExcel = (duplicatesData) => {
-        const header = ["Interest Level"];
-        const duplicates = duplicatesData //["test1", "test3", "test3"];
-        const worksheetData = [header, ...duplicates.map((item) => [item])];
-        const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "InterestLevel");
-
-        const excelBuffer = XLSX.write(workbook, {
-            bookType: "xlsx",
-            type: "array",
-        });
-
-        const blob = new Blob([excelBuffer], {
-            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        });
-
-        saveAs(blob, `InterestLevel-Duplicate-Data.xlsx`);
-    };
     // Handle modal close
     const onClose = () => {
         setFile(null);
@@ -230,7 +224,15 @@ const AddImportInterestLevelModal = ({ show, handleClose }) => {
                                             disabled={loading}
                                             className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                                         >
-                                            {loading ? "Upload" : "Upload"}
+                                            {loading ? (
+                                                <>
+                                                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                    Uploading...
+                                                </>
+                                            ) : (
+                                                "Upload"
+                                            )}
+
                                         </button>
                                     </div>
                                 </div>

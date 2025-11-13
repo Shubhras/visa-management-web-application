@@ -7,6 +7,7 @@ import { toast } from "react-toastify";
 import AddImportInterestLevelModal from './AddImportInterestLevelModal';
 import AddEditInterestLevelModal from './AddEditInterestLevelModal';
 import { interestLevelList, interestLevelDelete, interestLevelExportData } from '../../../../store/master/salesMasters/actions';
+import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 
 const InterestLevelList = () => {
   const dispatch = useDispatch();
@@ -458,21 +459,6 @@ const InterestLevelList = () => {
   const startIndex = (tableState.currentPage - 1) * tableState.limit;
   const statusOptions = ['All', 'Active', 'Inactive'];
 
-  const formatDateTime = (dateString) => {
-    const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    let hours = date.getHours();
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const seconds = String(date.getSeconds()).padStart(2, '0');
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12 || 12;
-    hours = String(hours).padStart(2, '0');
-    return `${day}-${month}-${year} ${hours}:${minutes}:${seconds} ${ampm}`
-  };
-
-
   return (
     <>
       <MasterLayout>
@@ -657,7 +643,7 @@ const InterestLevelList = () => {
                           <td><span>{rowItem.description}</span></td>
                         )}
                         {isColumnVisible('updated_at') && (
-                          <td><span>{formatDateTime(rowItem.updated_at)}</span></td>
+                          <td><span>{formatDateDDMMYYYYTime(rowItem.updated_at)}</span></td>
                         )}
                         <td className='action-td'>
                           <div className="d-flex align-items-end gap-2">
@@ -916,12 +902,16 @@ const InterestLevelList = () => {
                     >
                       Cancel
                     </button>
-                    <button
-                      onClick={handleExport}
-                      type="button"
+                    <button onClick={handleExport} type="button"
                       className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
-                    >
-                      Submit
+                      disabled={loadingExport}>{loadingExport ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                          Submit...
+                        </>
+                      ) : (
+                        "Submit"
+                      )}
                     </button>
                   </div>
                 </div>
