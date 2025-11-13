@@ -30,6 +30,7 @@ import {
     DELETE_STUDY_MAJOR_AREA,
     EXPORT_STUDY_MAJOR_AREA,
     IMPORT_STUDY_MAJOR_AREA,
+    STUDY_MAJOR_AREA_LIST_BY_MAIN_AREA,
     ACADEMIC_RESULT_TYPE_LIST,
     ADD_ACADEMIC_RESULT_TYPE,
     EDIT_ACADEMIC_RESULT_TYPE,
@@ -123,6 +124,7 @@ import {
     deleteStudyMajorAreaDataAPI,
     exportStudyMajorAreaDataAPI,
     importStudyMajorAreaDataAPI,
+    studyMajorAreaListByMainAreaAPI,
     getAcademicResultTypeListDataAPI,
     addAcademicResultTypeDataAPI,
     editAcademicResultTypeDataAPI,
@@ -453,6 +455,14 @@ function* studyMajorAreaExportDataSaga(action) {
 function* studyMajorAreaImportDataSaga(action) {
     try {
         const response = yield call(importStudyMajorAreaDataAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
+function* studyMajorAreaListByMainAreaSaga(action) {
+    try {
+        const response = yield call(studyMajorAreaListByMainAreaAPI, action?.data);
         if (action.callback) action.callback(response);
     } catch (error) {
         if (action.callback) action.callback(null, error);
@@ -1035,6 +1045,8 @@ function* educationmasterSaga() {
     yield takeEvery(DELETE_STUDY_MAJOR_AREA, studyMajorAreaDeleteSaga);
     yield takeEvery(EXPORT_STUDY_MAJOR_AREA, studyMajorAreaExportDataSaga);
     yield takeEvery(IMPORT_STUDY_MAJOR_AREA, studyMajorAreaImportDataSaga);
+    yield takeEvery(STUDY_MAJOR_AREA_LIST_BY_MAIN_AREA, studyMajorAreaListByMainAreaSaga);
+
     yield takeEvery(ACADEMIC_RESULT_TYPE_LIST, academicResultTypeListSaga);
     yield takeEvery(ADD_ACADEMIC_RESULT_TYPE, academicResultTypeAddSaga);
     yield takeEvery(EDIT_ACADEMIC_RESULT_TYPE, academicResultTypeEditSaga);

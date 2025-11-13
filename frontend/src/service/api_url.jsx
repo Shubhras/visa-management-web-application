@@ -226,6 +226,8 @@ export const EDIT_STUDY_MAJOR_AREA_API = "/api/v1/master/studymajorarea/";
 export const DELETE_STUDY_MAJOR_AREA_API = "/api/v1/master/studymajorarea/";
 export const EXPORT_STUDY_MAJOR_AREA_API = "/api/v1/master/studymajorarea/export/";
 export const IMPORT_STUDY_MAJOR_AREA_API = "/api/v1/master/studymajorarea/import/";
+export const STUDY_MAJOR_AREA_LIST_BY_MAIN_AREA_API = "/api/v1/master/study-major-by-main/";
+
 // Academic Result Type
 export const GET_ACADEMIC_RESULT_TYPE_LIST = "/api/v1/master/academicresulttype/";
 export const ADD_ACADEMIC_RESULT_TYPE_API = "/api/v1/master/academicresulttype/create/";

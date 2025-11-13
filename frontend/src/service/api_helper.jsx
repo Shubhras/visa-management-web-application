@@ -1045,6 +1045,11 @@ export const importStudyMajorAreaDataAPI = (payload) => {
     return post(apiUrl, payload);
 };
 
+export const studyMajorAreaListByMainAreaAPI = (payload) => {
+    const apiUrl = `${url.STUDY_MAJOR_AREA_LIST_BY_MAIN_AREA_API}?main_uuid=${payload.mainarea_id}`;
+    return get(apiUrl, payload);
+};
+
 // Academic Result Type
 export const getAcademicResultTypeListDataAPI = (data) => {
     const apiUrl = `${url.GET_ACADEMIC_RESULT_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
