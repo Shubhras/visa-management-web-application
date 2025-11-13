@@ -1096,35 +1096,92 @@ class OccupationVersionUpdateAPIView(APIView):
 class OccupationVersionDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
-    def delete(self, request):
+    def delete(self, request, uuid=None):
         ids = request.data.get('id', None)
-        if not ids:
-            return Response({"statusCode": 400, "status": False, "message": "Provide 'id' field", "data": None}, status=400)
 
+        # Single delete via URL parameter
+        if uuid:
+            try:
+                obj = OccupationVersion.objects.get(uuid=uuid, is_deleted=False)
+                obj.delete()
+                return Response({
+                    "statusCode": 204,
+                    "status": True,
+                    "message": "OccupationVersion permanently deleted.",
+                    "data": None
+                }, status=status.HTTP_204_NO_CONTENT)
+            except OccupationVersion.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "OccupationVersion not found.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+
+        # Delete all records
         if ids == "all":
             objs = OccupationVersion.objects.filter(is_deleted=False)
             count = objs.count()
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No records found to delete.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
             objs.delete()
-            return Response({"statusCode": 200, "status": True, "message": f"All {count} record(s) deleted", "data": None})
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"All {count} record(s) permanently deleted.",
+                "data": None
+            }, status=status.HTTP_200_OK)
 
-        if not isinstance(ids, list):
-            return Response({"statusCode": 400, "status": False, "message": "Provide list of UUIDs", "data": None}, status=400)
+        # Validate bulk UUIDs
+        if not ids or not isinstance(ids, list):
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
 
-        valid_uuids, invalid_uuids = [], []
+        valid_uuids = []
+        invalid_uuids = []
         for u in ids:
             try:
                 valid_uuids.append(UUID(u))
             except ValueError:
                 invalid_uuids.append(u)
 
+        if not valid_uuids:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "No valid UUIDs provided.",
+                "data": {"invalid_uuids": invalid_uuids}
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Bulk delete
         objs = OccupationVersion.objects.filter(uuid__in=valid_uuids, is_deleted=False)
         count = objs.count()
+
         if count == 0:
-            return Response({"statusCode": 404, "status": False, "message": "No matching record found", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None}, status=404)
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "No matching records found.",
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+            }, status=status.HTTP_404_NOT_FOUND)
 
         objs.delete()
-        return Response({"statusCode": 200, "status": True, "message": f"{count} record(s) deleted", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None})
 
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": f"{count} record(s) permanently deleted.",
+            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+        }, status=status.HTTP_200_OK)
 
 # -------------------- Export -------------------- #
 class OccupationVersionExportAPIView(APIView):
