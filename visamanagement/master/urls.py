@@ -549,7 +549,7 @@ urlpatterns = [
     path('occupationtype/create/', OccupationTypeCreateAPIView.as_view(), name='occupationtype-create'),
     path('occupationtype/<uuid:uuid>/', OccupationTypeRetrieveAPIView.as_view(), name='occupationtype-retrieve'),
     path('occupationtype/<uuid:uuid>/update/', OccupationTypeUpdateAPIView.as_view(), name='occupationtype-update'),
-    path('occupationtype/<uuid:uuid>/delete/', OccupationTypeDeleteAPIView.as_view(), name='occupationtype-delete'),
+    path('occupationtype/delete/', OccupationTypeDeleteAPIView.as_view(), name='occupationtype-delete'),
     path('occupationtype/export/', OccupationTypeExportAPIView.as_view(), name='occupationtype-export'),
     path('occupationtype/import/', OccupationTypeImportAPIView.as_view(), name='occupationtype-import'),
 
@@ -558,7 +558,7 @@ urlpatterns = [
     path('occupationprospect/create/', OccupationProspectCreateAPIView.as_view(), name='occupationprospect-create'),
     path('occupationprospect/<uuid:uuid>/', OccupationProspectRetrieveAPIView.as_view(), name='occupationprospect-retrieve'),
     path('occupationprospect/<uuid:uuid>/update/', OccupationProspectUpdateAPIView.as_view(), name='occupationprospect-update'),
-    path('occupationprospect/<uuid:uuid>/delete/', OccupationProspectDeleteAPIView.as_view(), name='occupationprospect-delete'),
+    path('occupationprospect/delete/', OccupationProspectDeleteAPIView.as_view(), name='occupationprospect-delete'),
     path('occupationprospect/export/', OccupationProspectExportAPIView.as_view(), name='occupationprospect-export'),
     path('occupationprospect/import/', OccupationProspectImportAPIView.as_view(), name='occupationprospect-import'),
 

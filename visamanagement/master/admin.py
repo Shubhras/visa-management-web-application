@@ -228,7 +228,7 @@ class EducationLevelCodeAdmin(admin.ModelAdmin):
 @admin.register(EducationLevel)
 class EducationLevelAdmin(admin.ModelAdmin):
     list_display = ('level_code', 'description', 'is_deleted', 'created_at', 'updated_at')
-    search_fields = ('level_code__level_code',)
+    search_fields = ('level_code_',)
     list_filter = ('is_deleted',)
     ordering = ('level_code__level_code',)
     autocomplete_fields = ('level_code',)

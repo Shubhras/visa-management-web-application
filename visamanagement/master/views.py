@@ -12397,6 +12397,10 @@ class EducationLevelDeleteAPIView(APIView):
             "message": f"{count} Education Level(s) permanently deleted.",
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         }, status=status.HTTP_200_OK)
+
+
+
+
 class EducationLevelExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -12434,11 +12438,14 @@ class EducationLevelExportAPIView(APIView):
                     value = obj.level_code.name if obj.level_code else ''
                 else:
                     value = getattr(obj, field, '')
+
                 if field in ['created_at', 'updated_at'] and value:
                     value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
                     value = int(value)
-                row.append(value if value is not None else '')
+
+                # Convert to string to prevent Excel from adding extra apostrophes
+                row.append(str(value) if value is not None else '')
             dataset.append(row)
 
         if format_type == 'csv':
