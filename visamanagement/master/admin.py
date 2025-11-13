@@ -343,55 +343,55 @@ class RequiredDocumentAdmin(admin.ModelAdmin):
     ordering = ("-created_at",)
 
 
-# @admin.register(ProcessStatus)
-# class ProcessStatusAdmin(admin.ModelAdmin):
-#     list_display = (
-#         "id",
-#         "uuid",
-#         "country",
-#         "visa_main_category",
-#         "process_status_name",
-#         "description",
-#         "is_deleted",
-#         "created_at",
-#         "updated_at",
-#     )
-#     list_filter = ("is_deleted", "created_at", "updated_at", "country", "visa_main_category")
-#     search_fields = (
-#         "country__name",
-#         "visa_main_category__name",
-#         "process_status_name__name",
-#         "description",
-#     )
-#     readonly_fields = ("uuid", "created_at", "updated_at")
-#     ordering = ("-created_at",)
+@admin.register(ProcessStatusName)
+class ProcessStatusAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "uuid",
+        "country",
+        "visa_main_category",
+        "process_status_name",
+        "description",
+        "is_deleted",
+        "created_at",
+        "updated_at",
+    )
+    list_filter = ("is_deleted", "created_at", "updated_at", "country", "visa_main_category")
+    search_fields = (
+        "country__name",
+        "visa_main_category__name",
+        "process_status_name__name",
+        "description",
+    )
+    readonly_fields = ("uuid", "created_at", "updated_at")
+    ordering = ("-created_at",)
 
 
 
-# @admin.register(ProcessSubStatus)
-# class ProcessSubStatusAdmin(admin.ModelAdmin):
-#     list_display = (
-#         "id",
-#         "uuid",
-#         "country",
-#         "visa_main_category",
-#         "process_status_name",
-#         "process_sub_status_name",
-#         "description",
-#         "is_deleted",
-#         "created_at",
-#         "updated_at",
-#     )
-#     list_filter = ("is_deleted", "country", "visa_main_category", "process_status_name")
-#     search_fields = (
-#         "country__name",
-#         "visa_main_category__name",
-#         "process_status_name__name",
-#         "process_sub_status_name",
-#         "description",
-#     )
-#     readonly_fields = ("uuid", "created_at", "updated_at")
-#     ordering = ("-created_at",)
+@admin.register(ProcessSubStatusName)
+class ProcessSubStatusAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "uuid",
+        "country",
+        "visa_main_category",
+        "process_status_name",
+        "process_sub_status_name",
+        "description",
+        "is_deleted",
+        "created_at",
+        "updated_at",
+    )
+    list_filter = ("is_deleted", "country", "visa_main_category", "process_status_name")
+    search_fields = (
+        "country__name",
+        "visa_main_category__name",
+        "process_status_name__name",
+        "process_sub_status_name",
+        "description",
+    )
+    readonly_fields = ("uuid", "created_at", "updated_at")
+    ordering = ("-created_at",)
 
 
 

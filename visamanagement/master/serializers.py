@@ -637,7 +637,7 @@ class AcademicResultSerializer(serializers.ModelSerializer):
         queryset=AcademicResultType.objects.all(),
         slug_field='uuid',
         source='AcademicResulttype',
-        slug_field='uuid',
+        # slug_field='uuid',
         write_only=True,
         required=False,
         allow_null=True
@@ -1221,96 +1221,96 @@ class RequiredDocumentSerializer(serializers.ModelSerializer):
 
 
 
-# class ProcessStatusSerializer(serializers.ModelSerializer):
-#     # Read-only names for related models
-#     country_name = serializers.CharField(source='country.name', read_only=True)
-#     visa_main_category_name = serializers.CharField(source='visa_main_category.name', read_only=True)
-#     process_status_name_value = serializers.CharField(source='process_status_name.name', read_only=True)
+class ProcessStatusSerializer(serializers.ModelSerializer):
+    # Read-only names for related models
+    country_name = serializers.CharField(source='country.name', read_only=True)
+    visa_main_category_name = serializers.CharField(source='visa_main_category.name', read_only=True)
+    process_status_name_value = serializers.CharField(source='process_status_name.name', read_only=True)
 
-#     # Accept UUIDs for foreign keys
-#     country = serializers.UUIDField(write_only=True)
-#     visa_main_category = serializers.UUIDField(write_only=True)
-#     process_status_name = serializers.UUIDField(write_only=True)
+    # Accept UUIDs for foreign keys
+    country = serializers.UUIDField(write_only=True)
+    visa_main_category = serializers.UUIDField(write_only=True)
+    process_status_name = serializers.UUIDField(write_only=True)
 
-#     class Meta:
-#         model = ProcessStatus
-#         fields = [
-#             "id",
-#             "uuid",
-#             "country",
-#             "country_name",
-#             "visa_main_category",
-#             "visa_main_category_name",
-#             "process_status_name",
-#             "process_status_name_value",
-#             "description",
-#             "is_deleted",
-#             "created_at",
-#             "updated_at",
-#         ]
-#         read_only_fields = ["id", "uuid", "created_at", "updated_at"]
+    class Meta:
+        model = ProcessStatusName
+        fields = [
+            "id",
+            "uuid",
+            "country",
+            "country_name",
+            "visa_main_category",
+            "visa_main_category_name",
+            "process_status_name",
+            "process_status_name_value",
+            "description",
+            "is_deleted",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "uuid", "created_at", "updated_at"]
 
-#     def _get_instance(self, model_class, value, label):
-#         try:
-#             return model_class.objects.get(uuid=value, is_deleted=False)
-#         except model_class.DoesNotExist:
-#             raise serializers.ValidationError({label: f"Invalid {label} UUID."})
+    def _get_instance(self, model_class, value, label):
+        try:
+            return model_class.objects.get(uuid=value, is_deleted=False)
+        except model_class.DoesNotExist:
+            raise serializers.ValidationError({label: f"Invalid {label} UUID."})
 
-#     def validate_country(self, value):
-#         return self._get_instance(Country, value, "country")
+    def validate_country(self, value):
+        return self._get_instance(Country, value, "country")
 
-#     def validate_visa_main_category(self, value):
-#         return self._get_instance(VisaMain, value, "visa_main_category")
+    def validate_visa_main_category(self, value):
+        return self._get_instance(VisaMain, value, "visa_main_category")
 
-#     def validate_process_status_name(self, value):
-#         return self._get_instance(ProcessStatus, value, "process_status_name")
-
-
-
-# class ProcessSubStatusSerializer(serializers.ModelSerializer):
-#     country_name = serializers.CharField(source='country.name', read_only=True)
-#     visa_main_category_name = serializers.CharField(source='visa_main_category.name', read_only=True)
-#     process_status_name_value = serializers.CharField(source='process_status_name.name', read_only=True)
-
-#     country = serializers.UUIDField(write_only=True)
-#     visa_main_category = serializers.UUIDField(write_only=True)
-#     process_status_name = serializers.UUIDField(write_only=True)
-
-#     class Meta:
-#         model = ProcessSubStatus
-#         fields = [
-#             "id",
-#             "uuid",
-#             "country",
-#             "country_name",
-#             "visa_main_category",
-#             "visa_main_category_name",
-#             "process_status_name",
-#             "process_status_name_value",
-#             "process_sub_status_name",
-#             "description",
-#             "is_deleted",
-#             "created_at",
-#             "updated_at",
-#         ]
-#         read_only_fields = ["id", "uuid", "created_at", "updated_at"]
-
-#     def _get_instance(self, model_class, value, label):
-#         try:
-#             return model_class.objects.get(uuid=value, is_deleted=False)
-#         except model_class.DoesNotExist:
-#             raise serializers.ValidationError({label: f"Invalid {label} UUID."})
-
-#     def validate_country(self, value):
-#         return self._get_instance(Country, value, "country")
-
-#     def validate_visa_main_category(self, value):
-#         return self._get_instance(VisaMain, value, "visa_main_category")
-
-#     def validate_process_status_name(self, value):
-#         return self._get_instance(ProcessStatus, value, "process_status_name")
+    def validate_process_status_name(self, value):
+        return self._get_instance(ProcessStatusName, value, "process_status_name")
 
 
+
+class ProcessSubStatusSerializer(serializers.ModelSerializer):
+    country_name = serializers.CharField(source='country.name', read_only=True)
+    visa_main_category_name = serializers.CharField(source='visa_main_category.name', read_only=True)
+    process_status_name_value = serializers.CharField(source='process_status_name.name', read_only=True)
+
+    country = serializers.UUIDField(write_only=True)
+    visa_main_category = serializers.UUIDField(write_only=True)
+    process_status_name = serializers.UUIDField(write_only=True)
+
+    class Meta:
+        model = ProcessSubStatusName
+        fields = [
+            "id",
+            "uuid",
+            "country",
+            "country_name",
+            "visa_main_category",
+            "visa_main_category_name",
+            "process_status_name",
+            "process_status_name_value",
+            "process_sub_status_name",
+            "description",
+            "is_deleted",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "uuid", "created_at", "updated_at"]
+
+    def _get_instance(self, model_class, value, label):
+        try:
+            return model_class.objects.get(uuid=value, is_deleted=False)
+        except model_class.DoesNotExist:
+            raise serializers.ValidationError({label: f"Invalid {label} UUID."})
+
+    def validate_country(self, value):
+        return self._get_instance(Country, value, "country")
+
+    def validate_visa_main_category(self, value):
+        return self._get_instance(VisaMain, value, "visa_main_category")
+
+    def validate_process_status_name(self, value):
+        return self._get_instance(ProcessStatusName, value, "process_status_name")
+
+    
 
 class ProcessTypeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -1367,8 +1367,6 @@ class PaymentCategorySerializer(serializers.ModelSerializer):
             return PaymentTo.objects.get(uuid=value, is_deleted=False)
         except PaymentTo.DoesNotExist:
             raise serializers.ValidationError("Invalid or deleted Payment To UUID.")
-
-
 
 
 

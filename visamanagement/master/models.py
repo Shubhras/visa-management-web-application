@@ -564,7 +564,7 @@ class StudySpecialisation(models.Model):
 class AcademicResultType(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    name=models.TextField(max_length=255,blank=True,null=True, unique=True)
+    name=models.CharField(max_length=255,blank=True,null=True, unique=True)
     description = models.TextField(max_length=255,blank=True,null=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -581,7 +581,7 @@ class AcademicResult(models.Model):
         related_name="Academic_result",
         blank=True,
         null=True)
-    Academicresult=models.TextField(max_length=255,blank=True,null=True, unique=True)
+    Academicresult=models.CharField(max_length=255,blank=True,null=True, unique=True)
     description = models.TextField(max_length=255,blank=True,null=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -1005,36 +1005,36 @@ class RequiredDocument(models.Model):
 
 
 
-# class ProcessStatus(models.Model):
-#     id = models.AutoField(primary_key=True)
-#     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-#     country = models.ForeignKey('Country', on_delete=models.CASCADE, related_name='process_statuses')
-#     visa_main_category = models.ForeignKey('master.VisaMain', on_delete=models.CASCADE, related_name='process_statuses')
-#     process_status_name = models.ForeignKey('ProcessStatusName', on_delete=models.CASCADE, related_name='process_statuses')
-#     description = models.CharField(max_length=500, blank=True, null=True)
-#     is_deleted = models.BooleanField(default=False)
-#     created_at = models.DateTimeField(default=timezone.now)
-#     updated_at = models.DateTimeField(auto_now=True)
+class ProcessStatusName(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    country = models.ForeignKey('Country', on_delete=models.CASCADE, related_name='process_statuses')
+    visa_main_category = models.ForeignKey('master.VisaMain', on_delete=models.CASCADE, related_name='process_statuses')
+    process_status_name = models.ForeignKey('ProcessStatusName', on_delete=models.CASCADE, related_name='process_statuses')
+    description = models.CharField(max_length=500, blank=True, null=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
 
-#     def __str__(self):
-#         return f"{self.country} - {self.visa_main_category} - {self.process_status_name}"
+    def __str__(self):
+        return f"{self.country} - {self.visa_main_category} - {self.process_status_name}"
 
 
 
-# class ProcessSubStatus(models.Model):
-#     id = models.AutoField(primary_key=True)
-#     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-#     country = models.ForeignKey('Country', on_delete=models.CASCADE, related_name='process_sub_statuses')
-#     visa_main_category = models.ForeignKey('master.VisaMain', on_delete=models.CASCADE, related_name='process_sub_statuses')
-#     process_status_name = models.ForeignKey('ProcessStatusName', on_delete=models.CASCADE, related_name='process_sub_statuses')
-#     process_sub_status_name = models.CharField(max_length=255)
-#     description = models.CharField(max_length=500, blank=True, null=True)
-#     is_deleted = models.BooleanField(default=False)
-#     created_at = models.DateTimeField(default=timezone.now)
-#     updated_at = models.DateTimeField(auto_now=True)
+class ProcessSubStatusName(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    country = models.ForeignKey('Country', on_delete=models.CASCADE, related_name='process_sub_statuses')
+    visa_main_category = models.ForeignKey('master.VisaMain', on_delete=models.CASCADE, related_name='process_sub_statuses')
+    process_status_name = models.ForeignKey('ProcessStatusName', on_delete=models.CASCADE, related_name='process_sub_statuses')
+    process_sub_status_name = models.CharField(max_length=255)
+    description = models.CharField(max_length=500, blank=True, null=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
 
-#     def __str__(self):
-#         return f"{self.country} - {self.visa_main_category} - {self.process_status_name} - {self.process_sub_status_name}"
+    def __str__(self):
+        return f"{self.country} - {self.visa_main_category} - {self.process_status_name} - {self.process_sub_status_name}"
 
 
 class ProcessType(models.Model):
