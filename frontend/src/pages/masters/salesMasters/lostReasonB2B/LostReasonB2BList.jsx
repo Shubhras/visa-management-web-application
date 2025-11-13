@@ -477,13 +477,13 @@ const LostReasonB2BList = () => {
               <div className="col-xl-6 col-lg-4 col-md-12">
                 <div className="d-flex flex-wrap align-items-center gap-2">
                   <button
-                    className="btn btn-sm  py-1 text-white fw-medium comman-btn-color"
+                    className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
                     onClick={handleShowImport}
                   >
                     Import
                   </button>
                   <button
-                    className="btn btn-sm  py-1 text-white fw-medium comman-btn-color"
+                    className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
                     onClick={handleExportTest}
                     disabled={loadingExport}
                   >
@@ -491,7 +491,7 @@ const LostReasonB2BList = () => {
                   </button>
                   <button
                     onClick={handleBulkDelete}
-                    className="btn btn-sm  py-1 text-white fw-medium comman-btn-color"
+                    className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
                   >
                     Delete
                   </button>

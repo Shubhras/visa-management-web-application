@@ -487,13 +487,13 @@ const StudySpecialisationList = () => {
               <div className="col-xl-6 col-lg-4 col-md-12">
                 <div className="d-flex flex-wrap align-items-center gap-2">
                   <button
-                    className="btn btn-sm  py-1 text-white fw-medium comman-btn-color"
+                    className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
                     onClick={handleShowImport}
                   >
                     Import
                   </button>
                   <button
-                    className="btn btn-sm  py-1 text-white fw-medium comman-btn-color"
+                    className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
                     onClick={handleExportTest}
                     disabled={loadingExport}
                   >
@@ -502,7 +502,7 @@ const StudySpecialisationList = () => {
                   {/* {selectedRows.length == 0 && (
                     <button
                       onClick={handleSelectAllButton}
-                      className="btn btn-sm  py-1 text-white fw-medium comman-btn-color"
+                      className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
                     >
                       Delete
                     </button>
@@ -524,7 +524,7 @@ const StudySpecialisationList = () => {
 
                   <button
                     onClick={handleBulkDelete}
-                    className="btn btn-sm  py-1 text-white fw-medium comman-btn-color"
+                    className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
                   >
                     Delete
                   </button>
