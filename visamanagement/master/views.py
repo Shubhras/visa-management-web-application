@@ -9247,9 +9247,7 @@ class LeadSourceImportAPIView(APIView):
                 row_number = row.get("_row_number", "Unknown")
                 name = str(row.get('lead source')).strip() if row.get('lead source') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
-                is_active_val = row.get('is_active')
-                is_active = bool(int(is_active_val)) if str(is_active_val).isdigit() else True
-
+                
                 if not name:
                     skipped_rows.append({
                         "Row": row_number,
@@ -9269,7 +9267,6 @@ class LeadSourceImportAPIView(APIView):
                     else:
                         # Reactivate deleted
                         existing.description = description
-                        existing.is_active = is_active
                         existing.is_deleted = False
                         existing.save()
                         imported_count += 1
@@ -9277,7 +9274,6 @@ class LeadSourceImportAPIView(APIView):
                     LeadSource.objects.create(
                         name=name,
                         description=description,
-                        is_active=is_active,
                         is_deleted=False
                     )
                     imported_count += 1
