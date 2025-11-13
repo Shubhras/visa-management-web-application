@@ -3,9 +3,11 @@ import { countryList } from "../../../../store/master/generalMasters/actions";
 import { useDispatch } from "react-redux";
 import Select from "react-select";
 import {
+  occupationCategoryAdd,
   occupationCategoryEdit,
   occupationTypeAdd,
   occupationTypeEdit,
+  occupationVersionList,
 } from "../../../../store/master/occupationMaster/action";
 import { toast } from "react-toastify";
 
@@ -17,7 +19,8 @@ const AddEditOccupationCategory = ({
 }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
-  const [countryDate, setCountryData] = useState([]);
+  const [countryData, setCountryData] = useState([]);
+  const [occupationversiondata, setOccupationVersionData] = useState([]);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -55,6 +58,25 @@ const AddEditOccupationCategory = ({
       })
     );
   };
+  const fetchOccupationVersionList = () => {
+    setLoading(true);
+    const params = {
+      page: 1,
+      limit: 2000,
+      search: "",
+      status: "",
+      sortBy: "updated_at",
+      sortOrder: "desc",
+    };
+    dispatch(
+      occupationVersionList(params, (response, error) => {
+        setLoading(false);
+        if (response?.statusCode === 200 && response?.status === true) {
+          setOccupationVersionData(response?.data || []);
+        }
+      })
+    );
+  };
 
   // Populate form data when in edit mode
   useEffect(() => {
@@ -79,6 +101,7 @@ const AddEditOccupationCategory = ({
       });
     }
     fetchCountryList();
+    fetchOccupationVersionList();
   }, [mode, rowData, show]);
 
   // Handle input changes
@@ -130,24 +153,24 @@ const AddEditOccupationCategory = ({
         mode === "edit"
           ? {
               uuid: formData.uuid,
-              name: formData.occupationCategory,
+              occupationcategory: formData.occupationCategory,
               description: formData.description,
-              country: formData.country,
-              occupationVersion: formData.occupationVersion,
-              occupationCategoryCode: formData.occupationCategoryCode,
+              country_id: formData.country,
+              occupation_version_id: formData.occupationVersion,
+              occupationcategorycode: formData.occupationCategoryCode,
             }
           : {
-              name: formData.occupationCategory,
+              occupationcategory: formData.occupationCategory,
               description: formData.description,
-              country: formData.country,
-              occupationVersion: formData.occupationVersion,
-              occupationCategoryCode: formData.occupationCategoryCode,
+              country_id: formData.country,
+              occupation_version_id: formData.occupationVersion,
+              occupationcategorycode: formData.occupationCategoryCode,
             };
 
       setLoading(true);
 
       const action =
-        mode === "edit" ? occupationCategoryEdit : occupationTypeAdd;
+        mode === "edit" ? occupationCategoryEdit : occupationCategoryAdd;
 
       dispatch(
         action(sendPayload, (response, error) => {
@@ -228,13 +251,13 @@ const AddEditOccupationCategory = ({
                     Country<span className="text-danger">*</span>
                   </label>
                   <Select
-                    options={countryDate.map((option) => ({
+                    options={countryData.map((option) => ({
                       value: option.uuid,
                       label: option.name,
                     }))}
                     value={
                       formData.country
-                        ? countryDate
+                        ? countryData
                             .map((option) => ({
                               value: option.uuid,
                               label: option.name,
@@ -264,6 +287,50 @@ const AddEditOccupationCategory = ({
                     </div>
                   )}
                 </div>
+
+                <div className="col-12 mb-20">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                    Occupation Version<span className="text-danger">*</span>
+                  </label>
+                  <Select
+                    options={occupationversiondata.map((option) => ({
+                      value: option.uuid,
+                      label: option.occupation_version,
+                    }))}
+                    value={
+                      formData.occupationVersion
+                        ? occupationversiondata
+                            .map((option) => ({
+                              value: option.uuid,
+                              label: option.occupation_version,
+                            }))
+                            .find(
+                              (opt) => opt.value === formData.occupationVersion
+                            )
+                        : null
+                    }
+                    onChange={(selectedOption) =>
+                      handleChange({
+                        target: {
+                          name: "occupationVersion",
+                          value: selectedOption ? selectedOption.value : "",
+                        },
+                      })
+                    }
+                    placeholder="Select Occupation Version"
+                    isClearable
+                    isSearchable
+                    className={`custom-select-container ${
+                      errors.country ? "is-invalid" : ""
+                    }`}
+                    classNamePrefix="custom-select"
+                  />
+                  {errors.occupationVersion && (
+                    <div className="text-danger text-sm mt-1">
+                      {errors.occupationVersion}
+                    </div>
+                  )}
+                </div>
                 <div className="col-12 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                     Occupation Category <span className="text-danger">*</span>
@@ -283,6 +350,25 @@ const AddEditOccupationCategory = ({
                       {errors.occupationCategory}
                     </div>
                   )}
+                </div>
+
+                <div className="col-12 mb-20">
+                  <label
+                    htmlFor="desc"
+                    className="form-label fw-semibold text-primary-light text-sm mb-8"
+                  >
+                    Occupation Category Code
+                  </label>
+                  <input
+                    className={`form-control`}
+                    id="desc"
+                    name="occupationCategoryCode"
+                    value={formData.occupationCategoryCode}
+                    onChange={handleChange}
+                    rows={1}
+                    cols={50}
+                    placeholder="Occupation Code"
+                  />
                 </div>
 
                 {/* Description */}

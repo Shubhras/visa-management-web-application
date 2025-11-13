@@ -65,7 +65,7 @@ const AddEditLeadSourceModal = ({ show, handleClose, mode = 'add', rowData = nul
       newErrors.name = 'Name is required';
       isValid = false;
     }
-    
+
     setErrors(newErrors);
     return isValid;
   };
@@ -75,21 +75,21 @@ const AddEditLeadSourceModal = ({ show, handleClose, mode = 'add', rowData = nul
     e.preventDefault();
 
     if (validateForm()) {
-      const sendPayload = mode === 'edit' 
+      const sendPayload = mode === 'edit'
         ? {
-            uuid: formData.uuid,
-            name: formData.name,
-            description: formData.description,
-          }
+          uuid: formData.uuid,
+          name: formData.name,
+          description: formData.description,
+        }
         : {
-            name: formData.name,
-            description: formData.description,
-          };
+          name: formData.name,
+          description: formData.description,
+        };
 
       setLoading(true);
-      
+
       const action = mode === 'edit' ? leadSourceEdit : leadSourceAdd;
-      
+
       dispatch(action(sendPayload, (response, error) => {
         setLoading(false);
         if (error) {
@@ -206,7 +206,14 @@ const AddEditLeadSourceModal = ({ show, handleClose, mode = 'add', rowData = nul
                     className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                     disabled={loading}
                   >
-                    {loading ? 'Saving...' : 'Save'}
+                    {loading ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        Saving...
+                      </>
+                    ) : (
+                      "Save"
+                    )}
                   </button>
                 </div>
               </div>

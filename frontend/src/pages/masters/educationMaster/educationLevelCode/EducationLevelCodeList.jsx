@@ -1,14 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useDispatch } from "react-redux";
 import MasterLayout from "../../../../masterLayout/MasterLayout";
-import Breadcrumb from "../../../../components/Breadcrumb";
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { Link } from 'react-router-dom';
 import { toast } from "react-toastify";
 import { educationLevelCodeList, educationLevelCodeDelete, educationLevelCodeExportData } from "../../../../store/master/educationMaster/action";
 import AddImportEducationLevelCodeModal from './AddImportEducationLevelCodeModal';
 import AddEditEducationLevelCodeModal from './AddEditEducationLevelCodeModal';
-import { formatDateDDMMYYYY, formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
+import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 const EducationLevelCodeList = () => {
     const dispatch = useDispatch();
     const [modalState, setModalState] = useState({
@@ -494,29 +493,6 @@ const EducationLevelCodeList = () => {
                                     >
                                         Export
                                     </button>
-                                    {/* {selectedRows.length == 0 && (
-                    <button
-                      onClick={handleSelectAllButton}
-                      className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
-                    >
-                      Delete
-                    </button>
-                  )}
-                  {selectedRows.length > 0 && (
-                    <button
-                      onClick={() => handleBulkDelete("")}
-                      className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
-                    >{`Delete Selected (${selectedRows.length})`}
-                    </button>
-                  )}
-                  {selectedRows.length > 0 && (
-                    <button
-                      onClick={() => handleBulkDelete("all")}
-                      className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
-                    >{`Delete All (${tableState.total})`}
-                    </button>
-                  )} */}
-
                                     <button
                                         onClick={handleBulkDelete}
                                         className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
@@ -957,12 +933,16 @@ const EducationLevelCodeList = () => {
                                         >
                                             Cancel
                                         </button>
-                                        <button
-                                            onClick={handleExport}
-                                            type="button"
+                                        <button onClick={handleExport} type="button"
                                             className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
-                                        >
-                                            Submit
+                                            disabled={loadingExport}>{loadingExport ? (
+                                                <>
+                                                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                    Submit...
+                                                </>
+                                            ) : (
+                                                "Submit"
+                                            )}
                                         </button>
                                     </div>
                                 </div>

@@ -36,6 +36,12 @@ import {
   DELETE_OCCUPATION_CATEGORY,
   EXPORT_OCCUPATION_CATEGORY,
   IMPORT_OCCUPATION_CATEGORY,
+  OCCUPATION_VERSION_LIST,
+  ADD_OCCUPATION_VERSION,
+  EDIT_OCCUPATION_VERSION,
+  DELETE_OCCUPATION_VERSION,
+  EXPORT_OCCUPATION_VERSION,
+  IMPORT_OCCUPATION_VERSION,
 } from "./actionType";
 
 import {
@@ -69,21 +75,19 @@ import {
   deleteOccupationProspectDataAPI,
   exportOccupationProspectDataAPI,
   importOccupationProspectDataAPI,
-  importOccupationCategoryDataAPI,
-  exportOccupationCategoryDataAPI,
-  deleteOccupationCategoryDataAPI,
-  editOccupationCategoryDataAPI,
-  addOccupationCategoryDataAPI,
+  getOccupationVersionListDataAPI,
+  addOccupationVersionDataAPI,
+  editOccupationVersionDataAPI,
+  deleteOccupationVersionDataAPI,
+  exportOccupationVersionDataAPI,
+  importOccupationVersionDataAPI,
   getOccupationCategoryListDataAPI,
+  addOccupationCategoryDataAPI,
+  editOccupationCategoryDataAPI,
+  deleteOccupationCategoryDataAPI,
+  exportOccupationCategoryDataAPI,
+  importOccupationCategoryDataAPI,
 } from "../../../service/api_helper";
-import {
-  ADD_OCCUPATION_CATEGORY_API,
-  DELETE_OCCUPATION_CATEGORY_API,
-  EDIT_OCCUPATION_CATEGORY_API,
-  EXPORT_OCCUPATION_CATEGORY_API,
-  GET_OCCUPATION_CATEGORY_LIST,
-  IMPORT_OCCUPATION_CATEGORY_API,
-} from "../../../service/api_url";
 
 // --- JOB TYPE SAGAS ---
 function* jobTypeListSaga(action) {
@@ -355,6 +359,15 @@ function* occupationProspectImportDataSaga(action) {
     action.callback?.(null, error);
   }
 }
+// --- OCCUPATION VERSION SAGAS ---
+function* occupationVersionListSaga(action) {
+  try {
+    const response = yield call(getOccupationVersionListDataAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
 
 // --- OCCUPATION CATEGORY SAGAS ---
 function* occupationCategoryListSaga(action) {
@@ -369,6 +382,50 @@ function* occupationCategoryListSaga(action) {
 function* occupationCategoryAddSaga(action) {
   try {
     const response = yield call(addOccupationCategoryDataAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+function* occupationVersionAddSaga(action) {
+  try {
+    const response = yield call(addOccupationVersionDataAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* occupationVersionEditSaga(action) {
+  try {
+    const response = yield call(editOccupationVersionDataAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* occupationVersionDeleteSaga(action) {
+  try {
+    const response = yield call(deleteOccupationVersionDataAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* occupationVersionExportDataSaga(action) {
+  try {
+    const response = yield call(exportOccupationVersionDataAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* occupationVersionImportDataSaga(action) {
+  try {
+    const response = yield call(importOccupationVersionDataAPI, action?.data);
     action.callback?.(response);
   } catch (error) {
     action.callback?.(null, error);
@@ -443,6 +500,48 @@ function* occupationMasterSaga() {
   yield takeEvery(DELETE_OCCUPATION_PROSPECT, occupationProspectDeleteSaga);
   yield takeEvery(EXPORT_OCCUPATION_PROSPECT, occupationProspectExportDataSaga);
   yield takeEvery(IMPORT_OCCUPATION_PROSPECT, occupationProspectImportDataSaga);
+  yield takeEvery(OCCUPATION_CATEGORY_LIST, occupationCategoryListSaga);
+  yield takeEvery(ADD_OCCUPATION_CATEGORY, occupationCategoryAddSaga);
+  yield takeEvery(EDIT_OCCUPATION_CATEGORY, occupationCategoryEditSaga);
+  yield takeEvery(DELETE_OCCUPATION_CATEGORY, occupationCategoryDeleteSaga);
+  yield takeEvery(EXPORT_OCCUPATION_CATEGORY, occupationCategoryExportDataSaga);
+  yield takeEvery(IMPORT_OCCUPATION_CATEGORY, occupationCategoryImportDataSaga);
+  yield takeEvery(JOB_TYPE_LIST, jobTypeListSaga);
+  yield takeEvery(ADD_JOB_TYPE, jobTypeAddSaga);
+  yield takeEvery(EDIT_JOB_TYPE, jobTypeEditSaga);
+  yield takeEvery(DELETE_JOB_TYPE, jobTypeDeleteSaga);
+  yield takeEvery(EXPORT_JOB_TYPE, jobTypeExportDataSaga);
+  yield takeEvery(IMPORT_JOB_TYPE, jobTypeImportDataSaga);
+  yield takeEvery(MODE_OF_SALARY_LIST, modeOfSalaryListSaga);
+  yield takeEvery(ADD_MODE_OF_SALARY, modeOfSalaryAddSaga);
+  yield takeEvery(EDIT_MODE_OF_SALARY, modeOfSalaryEditSaga);
+  yield takeEvery(DELETE_MODE_OF_SALARY, modeOfSalaryDeleteSaga);
+  yield takeEvery(EXPORT_MODE_OF_SALARY, modeOfSalaryExportDataSaga);
+  yield takeEvery(IMPORT_MODE_OF_SALARY, modeOfSalaryImportDataSaga);
+  yield takeEvery(IT_RETURN_STATUS_LIST, itReturnStatusListSaga);
+  yield takeEvery(ADD_IT_RETURN_STATUS, itReturnStatusAddSaga);
+  yield takeEvery(EDIT_IT_RETURN_STATUS, itReturnStatusEditSaga);
+  yield takeEvery(DELETE_IT_RETURN_STATUS, itReturnStatusDeleteSaga);
+  yield takeEvery(EXPORT_IT_RETURN_STATUS, itReturnStatusExportDataSaga);
+  yield takeEvery(IMPORT_IT_RETURN_STATUS, itReturnStatusImportDataSaga);
+  yield takeEvery(OCCUPATION_TYPE_LIST, occupationTypeListSaga);
+  yield takeEvery(ADD_OCCUPATION_TYPE, occupationTypeAddSaga);
+  yield takeEvery(EDIT_OCCUPATION_TYPE, occupationTypeEditSaga);
+  yield takeEvery(DELETE_OCCUPATION_TYPE, occupationTypeDeleteSaga);
+  yield takeEvery(EXPORT_OCCUPATION_TYPE, occupationTypeExportDataSaga);
+  yield takeEvery(IMPORT_OCCUPATION_TYPE, occupationTypeImportDataSaga);
+  yield takeEvery(OCCUPATION_PROSPECT_LIST, occupationProspectListSaga);
+  yield takeEvery(ADD_OCCUPATION_PROSPECT, occupationProspectAddSaga);
+  yield takeEvery(EDIT_OCCUPATION_PROSPECT, occupationProspectEditSaga);
+  yield takeEvery(DELETE_OCCUPATION_PROSPECT, occupationProspectDeleteSaga);
+  yield takeEvery(EXPORT_OCCUPATION_PROSPECT, occupationProspectExportDataSaga);
+  yield takeEvery(IMPORT_OCCUPATION_PROSPECT, occupationProspectImportDataSaga);
+  yield takeEvery(OCCUPATION_VERSION_LIST, occupationVersionListSaga);
+  yield takeEvery(ADD_OCCUPATION_VERSION, occupationVersionAddSaga);
+  yield takeEvery(EDIT_OCCUPATION_VERSION, occupationVersionEditSaga);
+  yield takeEvery(DELETE_OCCUPATION_VERSION, occupationVersionDeleteSaga);
+  yield takeEvery(EXPORT_OCCUPATION_VERSION, occupationVersionExportDataSaga);
+  yield takeEvery(IMPORT_OCCUPATION_VERSION, occupationVersionImportDataSaga);
   yield takeEvery(OCCUPATION_CATEGORY_LIST, occupationCategoryListSaga);
   yield takeEvery(ADD_OCCUPATION_CATEGORY, occupationCategoryAddSaga);
   yield takeEvery(EDIT_OCCUPATION_CATEGORY, occupationCategoryEditSaga);

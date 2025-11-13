@@ -8,7 +8,7 @@ import { toast } from "react-toastify";
 import AddImportEducationLevelModal from './AddImportEducationLevelModal';
 import AddEditEducationLevelModal from './AddEditEducationLevelModal';
 import { educationLevelList, educationLevelDelete, educationLevelExportData } from "../../../../store/master/educationMaster/action";
-import { formatDateDDMMYYYY, formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
+import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 const EducationLevelList = () => {
     const dispatch = useDispatch();
     const [modalState, setModalState] = useState({
@@ -675,11 +675,11 @@ const EducationLevelList = () => {
                                                         <span>{String(startIndex + index + 1).padStart(2, '0')}</span>
                                                     </div>
                                                 </td>
-                                                {isColumnVisible('educationlevel') && (
-                                                    <td><span>{rowItem.educationlevel}</span></td>
-                                                )}
                                                 {isColumnVisible('level_code_detail') && (
                                                     <td><span>{rowItem.level_code_detail}</span></td>
+                                                )}
+                                                {isColumnVisible('educationlevel') && (
+                                                    <td><span>{rowItem.educationlevel}</span></td>
                                                 )}
                                                 {isColumnVisible('description') && (
                                                     <td><span>{rowItem.description}</span></td>
@@ -944,12 +944,16 @@ const EducationLevelList = () => {
                                         >
                                             Cancel
                                         </button>
-                                        <button
-                                            onClick={handleExport}
-                                            type="button"
+                                        <button onClick={handleExport} type="button"
                                             className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
-                                        >
-                                            Submit
+                                            disabled={loadingExport}>{loadingExport ? (
+                                                <>
+                                                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                    Submit...
+                                                </>
+                                            ) : (
+                                                "Submit"
+                                            )}
                                         </button>
                                     </div>
                                 </div>

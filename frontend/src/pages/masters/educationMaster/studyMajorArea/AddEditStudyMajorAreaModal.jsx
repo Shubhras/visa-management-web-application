@@ -52,8 +52,8 @@ const AddEditStudyMajorAreaModal = ({ show, handleClose, mode = 'add', rowData =
       limit: 2000,
       search: '',
       status: '',
-      sortBy: 'updated_at', // Field to sort by
-      sortOrder: 'desc', // 'asc' or 'desc'
+      sortBy: 'created_at', // Field to sort by
+      sortOrder: 'asc', // 'asc' or 'desc'
     };
 
     dispatch(studyMainAreaList(params, (response, error) => {
@@ -83,6 +83,12 @@ const AddEditStudyMajorAreaModal = ({ show, handleClose, mode = 'add', rowData =
         [name]: ''
       }));
     }
+  };
+
+
+  const customFilterOption = (option, inputValue) => {
+    if (!inputValue) return true;
+    return option.label.toLowerCase().startsWith(inputValue.toLowerCase());
   };
 
   // Validate form
@@ -194,19 +200,6 @@ const AddEditStudyMajorAreaModal = ({ show, handleClose, mode = 'add', rowData =
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                     Study Main Area <span className="text-danger">*</span>
                   </label>
-                  {/* <select
-                    name="category"
-                    value={formData.category}
-                    onChange={handleChange}
-                    className={`form-control form-select radius-8 ${errors.category ? 'is-invalid' : ''}`}
-                  >
-                    <option value="">Select  Study Main Area</option>
-                    {educationLevelListData.map((option) => (
-                      <option key={option.uuid} value={option.uuid}>
-                        {option.name}
-                      </option>
-                    ))}
-                  </select> */}
                   <Select
                     options={educationLevelListData.map((option) => ({
                       value: option.uuid,
@@ -230,6 +223,7 @@ const AddEditStudyMajorAreaModal = ({ show, handleClose, mode = 'add', rowData =
                         },
                       })
                     }
+                    filterOption={customFilterOption}
                     placeholder="Select  Study Main Area"
                     isClearable
                     isSearchable
@@ -296,7 +290,14 @@ const AddEditStudyMajorAreaModal = ({ show, handleClose, mode = 'add', rowData =
                     className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                     disabled={loading}
                   >
-                    {loading ? 'Saving...' : 'Save'}
+                    {loading ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        Saving...
+                      </>
+                    ) : (
+                      "Save"
+                    )}
                   </button>
                 </div>
               </div>

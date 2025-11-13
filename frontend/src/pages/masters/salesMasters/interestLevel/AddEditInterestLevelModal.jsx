@@ -65,7 +65,7 @@ const AddEditInterestLevelModal = ({ show, handleClose, mode = 'add', rowData = 
       newErrors.name = 'Name is required';
       isValid = false;
     }
-    
+
     setErrors(newErrors);
     return isValid;
   };
@@ -75,21 +75,21 @@ const AddEditInterestLevelModal = ({ show, handleClose, mode = 'add', rowData = 
     e.preventDefault();
 
     if (validateForm()) {
-      const sendPayload = mode === 'edit' 
+      const sendPayload = mode === 'edit'
         ? {
-            uuid: formData.uuid,
-            name: formData.name,
-            description: formData.description,
-          }
+          uuid: formData.uuid,
+          name: formData.name,
+          description: formData.description,
+        }
         : {
-            name: formData.name,
-            description: formData.description,
-          };
+          name: formData.name,
+          description: formData.description,
+        };
 
       setLoading(true);
-      
+
       const action = mode === 'edit' ? interestLevelEdit : interestLevelAdd;
-      
+
       dispatch(action(sendPayload, (response, error) => {
         setLoading(false);
         if (error) {
@@ -155,7 +155,7 @@ const AddEditInterestLevelModal = ({ show, handleClose, mode = 'add', rowData = 
                 {/* Interest Level Name */}
                 <div className="col-12 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                   Interest Level <span className="text-danger">*</span>
+                    Interest Level <span className="text-danger">*</span>
                   </label>
                   <input
                     type="text"
@@ -206,7 +206,14 @@ const AddEditInterestLevelModal = ({ show, handleClose, mode = 'add', rowData = 
                     className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                     disabled={loading}
                   >
-                    {loading ? 'Saving...' : 'Save'}
+                    {loading ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        Saving...
+                      </>
+                    ) : (
+                      "Save"
+                    )}
                   </button>
                 </div>
               </div>

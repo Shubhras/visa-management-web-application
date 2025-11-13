@@ -402,7 +402,15 @@ import ModeofSalaryList from "./pages/masters/occupationMaster/modeofSalary/Mode
 import ITReturnStatusList from "./pages/masters/occupationMaster/iTReturnStatus/ITReturnStatusList";
 import OccupationTypeList from "./pages/masters/occupationMaster/occupationType/OccupationTypeList";
 import OccupationProspectList from "./pages/masters/occupationMaster/occupationProspect/OccupationProspectList";
+
 import OccupationCategoryList from "./pages/masters/occupationMaster/occupationCategory/OccupationCategoryList";
+import OccupationVersionList from "./pages/masters/occupationMaster/occupationVersion/OccupationVersionList";
+import InstituteTypeList from "./pages/masters/instituteMaster/instituteType/InstituteTypeList";
+import InstituteGroupNameList from "./pages/masters/instituteMaster/instituteGroupName/InstituteGroupNameList";
+import InstituteStatusList from "./pages/masters/instituteMaster/instituteStatus/InstituteStatusList";
+import InstitutePriorityList from "./pages/masters/instituteMaster/institutePriority/InstitutePriorityList";
+import InstituteDepartmentList from "./pages/masters/instituteMaster/instituteDepartment/InstituteDepartmentList";
+
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   // Check if user is authenticated
@@ -692,6 +700,18 @@ function App() {
         <Route path="/occupation-type" element={<ProtectedRoute><OccupationTypeList /></ProtectedRoute>}></Route>
         <Route path="/occupation-prospect" element={<ProtectedRoute><OccupationProspectList /></ProtectedRoute>}></Route>
         <Route path="/occupation-category" element={<ProtectedRoute><OccupationCategoryList /></ProtectedRoute>}></Route>
+        <Route path="/occupation-version" element={<ProtectedRoute><OccupationVersionList /></ProtectedRoute>}></Route>
+
+
+        {/*Institute Master*/}
+        <Route path="/institute-type" element={<ProtectedRoute><InstituteTypeList /></ProtectedRoute>}></Route>
+        <Route path="/institute-group-name" element={<ProtectedRoute><InstituteGroupNameList/></ProtectedRoute>}></Route>
+        <Route path="/institute-status" element={<ProtectedRoute><InstituteStatusList/></ProtectedRoute>}></Route>
+        <Route path="/institute-priority" element={<ProtectedRoute><InstitutePriorityList/></ProtectedRoute>}></Route>
+        <Route path="/institute-department" element={<ProtectedRoute><InstituteDepartmentList/></ProtectedRoute>}></Route>
+
+
+
 
         {/* 404 Error Page */}
         <Route path='*' element={<ErrorPage />} />

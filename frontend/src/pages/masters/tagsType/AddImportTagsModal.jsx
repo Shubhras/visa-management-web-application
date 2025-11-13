@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
 import CommanSampleExcelDownloadModal from '../../../components/comman/CommanSampleExcelDownloadModal';
+import { exportToExcelDuplicate } from '../../../helper/utils/commanHelper';
 const AddImportTagsModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
@@ -12,7 +13,7 @@ const AddImportTagsModal = ({ show, handleClose }) => {
     const [error, setError] = useState('');
     const [sheetNames, setSheetNames] = useState([]);
     const [selectedSheet, setSelectedSheet] = useState('');
-const [showSampleExcelDownload, setShowSampleExcelDownload] = useState(false);
+    const [showSampleExcelDownload, setShowSampleExcelDownload] = useState(false);
     // Handle file change and extract sheet names
     const handleFileChange = async (e) => {
         const selectedFile = e.target.files[0];
@@ -86,7 +87,18 @@ const [showSampleExcelDownload, setShowSampleExcelDownload] = useState(false);
                         }
                     );
                     if (response?.duplicates?.length > 0) {
-                        handleExportToExcel(response.duplicates)
+                        const prepareData = {
+                            data: response.duplicates || [],
+                            headers: ["Tags"],
+                            sheetName: "Tags",
+                            fileName: "Tags",
+                        };
+                        exportToExcelDuplicate(
+                            prepareData.data,
+                            prepareData.headers,
+                            prepareData.sheetName,
+                            prepareData.fileName
+                        );
                     }
                     setFile(null);
                     setSheetNames([]);
@@ -98,25 +110,7 @@ const [showSampleExcelDownload, setShowSampleExcelDownload] = useState(false);
             }
         }));
     };
-    const handleExportToExcel = (duplicatesData) => {
-        const header = ["Tags"];
-        const duplicates = duplicatesData //["test1", "test3", "test3"];
-        const worksheetData = [header, ...duplicates.map((item) => [item])];
-        const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Tags");
 
-        const excelBuffer = XLSX.write(workbook, {
-            bookType: "xlsx",
-            type: "array",
-        });
-
-        const blob = new Blob([excelBuffer], {
-            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        });
-
-        saveAs(blob, `Tags-Duplicate-Data.xlsx`);
-    };
     // Handle modal close
     const onClose = () => {
         setFile(null);
@@ -126,121 +120,128 @@ const [showSampleExcelDownload, setShowSampleExcelDownload] = useState(false);
         handleClose();
         setLoading(false);
     };
- const handleDownloadSample = () => {
-    setShowSampleExcelDownload(true);
-};
-const handleCloseSampleExcelDownload = () => {
-    setShowSampleExcelDownload(false);
-}
+    const handleDownloadSample = () => {
+        setShowSampleExcelDownload(true);
+    };
+    const handleCloseSampleExcelDownload = () => {
+        setShowSampleExcelDownload(false);
+    }
 
     if (!show) return null;
 
     return (
         <>
-        <div
-            className="modal fade show common-ctl-popup"
-            tabIndex={-1}
-            role="dialog"
-            aria-labelledby="tagsTypeModalLabel"
-            aria-hidden={!show}
+            <div
+                className="modal fade show common-ctl-popup"
+                tabIndex={-1}
+                role="dialog"
+                aria-labelledby="tagsTypeModalLabel"
+                aria-hidden={!show}
 
-        >
-            <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
-                <div className="modal-content radius-16 bg-base">
-                    <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                        <h1 className="modal-title fs-5" id="tagsTypeModalLabel">
-                            Upload Tags
-                        </h1>
-                        <button
-                            type="button"
-                            className="btn-close"
-                            onClick={onClose}
-                            aria-label="Close"
-                        />
-                    </div>
-
-                    <div className="modal-body p-24">
-                        <div className='text-md-end text-end'>
+            >
+                <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
+                    <div className="modal-content radius-16 bg-base">
+                        <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
+                            <h1 className="modal-title fs-5" id="tagsTypeModalLabel">
+                                Upload Tags
+                            </h1>
                             <button
                                 type="button"
-                                onClick={handleDownloadSample}
-                                className="btn btn-sm text-white fw-medium px-3 py-1 w-md-auto comman-btn-color">
-                                Sample Excel
-                            </button>
+                                className="btn-close"
+                                onClick={onClose}
+                                aria-label="Close"
+                            />
                         </div>
-                        <form onSubmit={handleSubmit}>
-                            <div className="row">
-                                <div className="col-12 mb-20">
-                                    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                                        Upload file <span className="text-danger">*</span>
-                                    </label>
-                                    <input
-                                        type="file"
-                                        className={`form-control radius-8 ${error && !selectedSheet ? 'is-invalid' : ''}`}
-                                        onChange={handleFileChange}
-                                        accept=".csv,.xlsx,.xls,.pdf,.docx"
-                                        style={{ height: "auto" }}
-                                    />
-                                    {error && !sheetNames.length && <div className="text-danger text-sm mt-1">{error}</div>}
-                                </div>
-                                {sheetNames.length > 0 && (
+
+                        <div className="modal-body p-24">
+                            <div className='text-md-end text-end'>
+                                <button
+                                    type="button"
+                                    onClick={handleDownloadSample}
+                                    className="btn btn-sm text-white fw-medium px-3 py-1 w-md-auto comman-btn-color">
+                                    Sample Excel
+                                </button>
+                            </div>
+                            <form onSubmit={handleSubmit}>
+                                <div className="row">
                                     <div className="col-12 mb-20">
                                         <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                                            Select name <span className="text-danger">*</span>
+                                            Upload file <span className="text-danger">*</span>
                                         </label>
-                                        <div className="d-flex flex-column gap-2">
-                                            {sheetNames.map((sheetName, index) => (
-                                                <div key={index} className="form-check d-flex align-items-center">
-                                                    <input
-                                                        className="form-check-input mt-0"
-                                                        type="radio"
-                                                        name="sheetSelection"
-                                                        id={`sheet-${index}`}
-                                                        value={sheetName}
-                                                        checked={selectedSheet === sheetName}
-                                                        onChange={(e) => setSelectedSheet(sheetName)}
-                                                        style={{
-                                                            width: '18px',
-                                                            height: '18px',
-                                                            cursor: 'pointer'
-                                                        }}
-                                                    />
-                                                    <label
-                                                        className="form-check-label ms-2"
-                                                        htmlFor={`sheet-${index}`}
-                                                        style={{ cursor: 'pointer' }}
-                                                    >
-                                                        {sheetName}
-                                                    </label>
-                                                </div>
-                                            ))}
-                                        </div>
-                                        {error && sheetNames.length > 0 && <div className="text-danger text-sm mt-1">{error}</div>}
+                                        <input
+                                            type="file"
+                                            className={`form-control radius-8 ${error && !selectedSheet ? 'is-invalid' : ''}`}
+                                            onChange={handleFileChange}
+                                            accept=".csv,.xlsx,.xls,.pdf,.docx"
+                                            style={{ height: "auto" }}
+                                        />
+                                        {error && !sheetNames.length && <div className="text-danger text-sm mt-1">{error}</div>}
                                     </div>
-                                )}
-                                <div className="d-flex align-items-center justify-content-center gap-3 mt-24">
-                                    <button
-                                        type="button"
-                                        onClick={onClose}
-                                        className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-16 py-4 radius-6"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={loading}
-                                        className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
-                                    >
-                                        {loading ? "Upload" : "Upload"}
-                                    </button>
+                                    {sheetNames.length > 0 && (
+                                        <div className="col-12 mb-20">
+                                            <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                                                Select name <span className="text-danger">*</span>
+                                            </label>
+                                            <div className="d-flex flex-column gap-2">
+                                                {sheetNames.map((sheetName, index) => (
+                                                    <div key={index} className="form-check d-flex align-items-center">
+                                                        <input
+                                                            className="form-check-input mt-0"
+                                                            type="radio"
+                                                            name="sheetSelection"
+                                                            id={`sheet-${index}`}
+                                                            value={sheetName}
+                                                            checked={selectedSheet === sheetName}
+                                                            onChange={(e) => setSelectedSheet(sheetName)}
+                                                            style={{
+                                                                width: '18px',
+                                                                height: '18px',
+                                                                cursor: 'pointer'
+                                                            }}
+                                                        />
+                                                        <label
+                                                            className="form-check-label ms-2"
+                                                            htmlFor={`sheet-${index}`}
+                                                            style={{ cursor: 'pointer' }}
+                                                        >
+                                                            {sheetName}
+                                                        </label>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            {error && sheetNames.length > 0 && <div className="text-danger text-sm mt-1">{error}</div>}
+                                        </div>
+                                    )}
+                                    <div className="d-flex align-items-center justify-content-center gap-3 mt-24">
+                                        <button
+                                            type="button"
+                                            onClick={onClose}
+                                            className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-16 py-4 radius-6"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            disabled={loading}
+                                            className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
+                                        >
+                                            {loading ? (
+                                                <>
+                                                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                    Uploading...
+                                                </>
+                                            ) : (
+                                                "Upload"
+                                            )}
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
-                        </form>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-        {
+            {
                 showSampleExcelDownload && (
                     <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
                         downloadFileName: "Tags",

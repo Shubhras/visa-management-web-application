@@ -91,7 +91,7 @@ const AddPriorityType = ({ show, handleClose }) => {
     });
     setErrors({});
     handleClose();
-     setLoading(false);
+    setLoading(false);
   };
 
   // NOW we can do the conditional return - AFTER all hooks
@@ -174,9 +174,16 @@ const AddPriorityType = ({ show, handleClose }) => {
                     <button
                       type="submit"
                       className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
-                       disabled={loading}
+                      disabled={loading}
                     >
-                       {loading ? "Save" : "Save"}
+                      {loading ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                          Saving...
+                        </>
+                      ) : (
+                        "Save"
+                      )}
                     </button>
                   </div>
                 </div>
