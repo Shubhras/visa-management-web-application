@@ -301,6 +301,7 @@ urlpatterns = [
     path('studymajorarea/delete/', StudyMajorAreaDeleteAPIView.as_view(), name='studymajorarea-delete'),
     path('studymajorarea/export/', StudyMajorAreaExportAPIView.as_view(), name='studymajorarea-export'),
     path('studymajorarea/import/', StudyMajorAreaImportAPIView.as_view(), name='studymajorarea-import'),
+    path('study-main-by-major-uuid/', StudyMainAreaByMajorUUIDAPIView.as_view(), name='study-main-by-major-uuid'),
 
     path("studyspecialisation/",StudySpecialisationListAPIView.as_view(), name='studyspecialisation-list'),
     path('studyspecialisation/create/', StudySpecialisationCreateAPIView.as_view(), name='studyspecialisation-create'),

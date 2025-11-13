@@ -3562,10 +3562,10 @@ class TimezoneListAPIView(APIView):
 
         if search:
             queryset = queryset.filter(
-                Q(Timezone__icontains=search) |
-                Q(description__icontains=search) |
-                Q(countryName__name__icontains=search) |
-                Q(stateName__stateName__icontains=search)
+                Q(Timezone__istartswith=search) |
+                Q(description__istartswith=search) |
+                Q(countryName__name__istartswith=search) |
+                Q(stateName__stateName__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -3985,10 +3985,10 @@ class CivilIdNameListAPIView(APIView):
  
         if search:
             queryset = queryset.filter(
-                Q(civil_id_name__icontains=search) |
-                Q(authority_full_name__icontains=search) |
-                Q(authority_short_name__icontains=search) |
-                Q(description__icontains=search)
+                Q(civil_id_name__istartswith=search) |
+                Q(authority_full_name__istartswith=search) |
+                Q(authority_short_name__istartswith=search) |
+                Q(description__istartswith=search)
             )
  
         queryset = queryset.order_by(sort_by)
@@ -11818,8 +11818,8 @@ class EducationLevelCodeListAPIView(APIView):
         queryset = EducationLevelCode.objects.all()
         if search:
             queryset = queryset.filter(
-                Q(Levelcode__icontains=search) |
-                Q(description__icontains=search)
+                Q(Levelcode__istartswith=search) |
+                Q(description__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -12211,8 +12211,8 @@ class EducationLevelListAPIView(APIView):
 
         if search:
             queryset = queryset.filter(
-                Q(educationlevel__icontains=search) |
-                Q(description__icontains=search)  # optional: search by level_code detail
+                Q(educationlevel__istartswith=search) |
+                Q(description__istartswith=search)  # optional: search by level_code detail
             )
 
         queryset = queryset.order_by(sort_by)
@@ -12611,8 +12611,8 @@ class EducationDurationListAPIView(APIView):
 
         if search:
             queryset = queryset.filter(
-                Q(educationlevel__educationlevel__icontains=search) |
-                Q(durations__icontains=search)
+                Q(educationlevel__educationlevel__istartswith=search) |
+                Q(durations__istartswith=search)
             )
 
         queryset = queryset.order_by(f'{sort_prefix}{sort_by}')
@@ -13008,7 +13008,7 @@ class StudymainareaListAPIView(APIView):
 
         queryset = Studymainarea.objects.filter(is_deleted=False)
         if search:
-            queryset = queryset.filter(Q(name__icontains=search) | Q(description__icontains=search))
+            queryset = queryset.filter(Q(name__istartswith=search) | Q(description__istartswith=search))
 
         queryset = queryset.order_by(sort_by)
 
@@ -13381,9 +13381,9 @@ class StudyMajorAreaListAPIView(APIView):
 
         if search:
             queryset = queryset.filter(
-                Q(majorarea__icontains=search) |
-                Q(description__icontains=search) |
-                Q(mainarea__name__icontains=search)
+                Q(majorarea__istartswith=search) |
+                Q(description__istartswith=search) |
+                Q(mainarea__name__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -13767,10 +13767,10 @@ class StudySpecialisationListAPIView(APIView):
 
         if search:
             queryset = queryset.filter(
-                Q(studyspecialisation__icontains=search) |
-                Q(description__icontains=search) |
-                Q(mainarea__name__icontains=search) |
-                Q(majorarea__majorarea__icontains=search)
+                Q(studyspecialisation__istartswith=search) |
+                Q(description__istartswith=search) |
+                Q(mainarea__name__istartswith=search) |
+                Q(majorarea__majorarea__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -14145,6 +14145,45 @@ class StudySpecialisationImportAPIView(APIView):
             "skipped_rows": skipped_rows
         }, status=200)
 
+
+class StudyMainAreaByMajorUUIDAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        major_uuid = request.GET.get('major_uuid', '').strip()
+        if not major_uuid:
+            return Response({
+                "status": False,
+                "statusCode": 400,
+                "message": "major_uuid query parameter is required",
+                "data": None
+            }, status=400)
+
+        try:
+            major_area = Studymajorarea.objects.select_related('mainarea').get(uuid=major_uuid, is_deleted=False)
+            main_area = major_area.mainarea
+            if main_area and not main_area.is_deleted:
+                serializer = StudyMajorAreaSerializer(main_area)
+                return Response({
+                    "status": True,
+                    "statusCode": 200,
+                    "message": "Main area retrieved successfully",
+                    "data": serializer.data
+                }, status=200)
+            else:
+                return Response({
+                    "status": False,
+                    "statusCode": 404,
+                    "message": "Main area not found or deleted",
+                    "data": None
+                }, status=404)
+        except Studymajorarea.DoesNotExist:
+            return Response({
+                "status": False,
+                "statusCode": 404,
+                "message": "Major area not found",
+                "data": None
+            }, status=404)
 
 
 # -------------------- AcademicResultType -------------------- 
@@ -15669,9 +15708,9 @@ class ECAAwardingBodyListAPIView(APIView):
         queryset = ECAAwardingBody.objects.all()
         if search:
             queryset = queryset.filter(
-                Q(eca_body_full_name__icontains=search) |
-                Q(eca_body_short_name__icontains=search) |
-                Q(country__name__icontains=search)
+                Q(eca_body_full_name__istartswith=search) |
+                Q(eca_body_short_name__istartswith=search) |
+                Q(country__name__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -16032,11 +16071,11 @@ class DegreeAwardedByListAPIView(APIView):
         queryset = DegreeAwardedBy.objects.all()
         if search:
             queryset = queryset.filter(
-                Q(degree_name__icontains=search) |
-                Q(description__icontains=search) |
-                Q(country__name__icontains=search) |
-                Q(state__name__icontains=search) |
-                Q(education_level__name__icontains=search)
+                Q(degree_name__istartswith=search) |
+                Q(description__istartswith=search) |
+                Q(country__name__istartswith=search) |
+                Q(state__name__istartswith=search) |
+                Q(education_level__name__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -16373,12 +16412,12 @@ class DegreeAwardedInstituteListAPIView(APIView):
         queryset = DegreeAwardedInstitute.objects.all()
         if search:
             queryset = queryset.filter(
-                Q(name__icontains=search) |
-                Q(description__icontains=search) |
-                Q(country__name__icontains=search) |
-                Q(state__stateName__icontains=search) |
-                Q(education_level__name__icontains=search) |
-                Q(degree_awarded_by__name__icontains=search)
+                Q(name__istartswith=search) |
+                Q(description__istartswith=search) |
+                Q(country__name__istartswith=search) |
+                Q(state__stateName__istartswith=search) |
+                Q(education_level__name__istartswith=search) |
+                Q(degree_awarded_by__name__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
