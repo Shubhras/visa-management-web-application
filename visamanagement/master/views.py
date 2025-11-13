@@ -12834,7 +12834,7 @@ class EducationDurationExportAPIView(APIView):
         for obj in queryset:
             row = []
             for field in field_list:
-                if field == 'Education Level':
+                if field == 'educationlevel':
                     value = obj.educationlevel.educationlevel if obj.educationlevel else ''
                 else:
                     value = getattr(obj, field, '')
@@ -12982,6 +12982,9 @@ class EducationDurationImportAPIView(APIView):
         }, status=200)
 
 # -------------------- Studymainarea -------------------- #
+
+
+
 class StudymainareaListAPIView(APIView):
     def get(self, request):
         search = request.GET.get('search', '').strip()

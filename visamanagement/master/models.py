@@ -487,7 +487,7 @@ class EducationLevel(models.Model):
         unique_together = ('level_code', 'educationlevel')
 
     def __str__(self):
-        return self.level_code.name if self.level_code else "No Level Code"
+        return self.educationlevel
     
 
 class  EducationDuration(models.Model):
