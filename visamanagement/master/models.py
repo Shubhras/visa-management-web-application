@@ -978,6 +978,41 @@ class OccupationProspect(models.Model):
         return self.name
 
 
+
+class JobProspect(models.Model):
+    VALID_UNIT_CHOICES = (
+        ("Hour", "Hour"),
+        ("Month","Month"),
+        ("Year", "Year"),
+    )
+
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    country = models.ForeignKey('Country',on_delete=models.SET_NULL,null=True,blank=True,related_name='job_prospect')
+    occupationversion =models.ForeignKey('OccupationVersion',on_delete=models.SET_NULL,null=True,blank=True,related_name='job_prospect')
+    occupationlevelcode =models.ForeignKey('OccupationLevelCode',on_delete=models.SET_NULL,null=True,blank=True,related_name='job_prospect')
+    occupationtype =models.ForeignKey('OccupationType',on_delete=models.SET_NULL,null=True,blank=True,related_name='job_prospect')
+    occupationcode =models.ForeignKey('OccupationCode',on_delete=models.SET_NULL,null=True,blank=True,related_name='job_prospect')
+    occupationprospect =models.ForeignKey('OccupationProspect',on_delete=models.SET_NULL,null=True,blank=True,related_name='job_prospect')
+    occupationname =  models.TextField(max_length=255,blank=True)
+    salarycurrency=models.TextField(max_length=255,blank=True,null=True)
+    salaryamount=models.IntegerField(null=True,blank=True)
+    duration=models.CharField(max_length=250,choices=VALID_UNIT_CHOICES,blank=True, null=True)
+    description =  models.TextField(max_length=255,blank=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('occupationtype', 'country','occupationversion','occupationlevelcode')
+    def __str__(self):
+        return self.occupationname
+
+
+
+
+
+
 class RepresentingCountry(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     country = models.ForeignKey('Country', on_delete=models.CASCADE, related_name='representations')
