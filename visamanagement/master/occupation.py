@@ -1100,6 +1100,7 @@ class OccupationVersionDeleteAPIView(APIView):
         ids = request.data.get('id', None)
 
         # Single delete via URL parameter
+        
         if uuid:
             try:
                 obj = OccupationVersion.objects.get(uuid=uuid, is_deleted=False)
@@ -1315,7 +1316,7 @@ class OccupationVersionImportAPIView(APIView):
                     continue
 
                 try:
-                    country_obj = Country.objects.get(country_name__iexact=country_name)
+                    country_obj = Country.objects.get(name__iexact=country_name)
                 except Country.DoesNotExist:
                     skipped_rows.append({'row': row_number, 'Reason': 'Country not found'})
                     continue
