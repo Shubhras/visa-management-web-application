@@ -9,5 +9,6 @@ export * from "./master/generalMasters/actions";
 export * from "./master/educationMaster/action";
 export * from "./master/testMaster/action";
 export * from "./master/occupationMaster/action";
+export * from "./master/instituteMaster/action";
  
 
