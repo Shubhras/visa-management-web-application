@@ -16380,7 +16380,7 @@ class DegreeAwardedByImportAPIView(APIView):
 
                 # Foreign key validation
                 country = Country.objects.filter(name__iexact=country_name).first()
-                education_level = EducationLevel.objects.filter(name__iexact=education_level_name).first()
+                education_level = EducationLevel.objects.filter(educationlevel__iexact=education_level_name).first()
                 if not country:
                     skipped_rows.append({
                         "Row": row_number,
