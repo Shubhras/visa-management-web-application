@@ -14846,7 +14846,7 @@ class AcademicResultExportAPIView(APIView):
             row = []
             for field in field_list:
                 if field == 'AcademicResulttype':
-                    value = obj.AcademicResulttype.Academicresulttype if obj.AcademicResulttype else ''
+                    value = obj.AcademicResulttype.name if obj.AcademicResulttype else ''
                 else:
                     value = getattr(obj, field, '')
                 if field in ['created_at', 'updated_at'] and value:
