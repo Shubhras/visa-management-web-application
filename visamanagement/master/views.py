@@ -14127,6 +14127,7 @@ class StudySpecialisationImportAPIView(APIView):
                 else:
                     StudySpecialisation.objects.create(
                         studyspecialisation=specialisation_name,
+                        mainarea=mainarea_obj,
                         majorarea=majorarea_obj,
                         description=description,
                         is_deleted=False
