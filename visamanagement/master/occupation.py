@@ -1159,21 +1159,19 @@ class OccupationVersionExportAPIView(APIView):
         dataset.title = 'Occupation Versions'
 
         for obj in queryset:
-            row = []
-            for field in field_list:
-                value = getattr(obj, field, '')
-                if field == 'country' and value:
-                    value = value.country.name
-                elif field in ['created_at', 'updated_at'] and value:
-                    # These are DateTimeFields
-                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-                elif field in ['effect_from', 'valid_upto'] and value:
-                    # These are DateFields
-                    value = value.strftime("%d-%m-%Y")
-                elif isinstance(value, bool):
-                    value = int(value)
-                row.append(value if value is not None else '')
-            dataset.append(row)
+                row = []
+                for field in field_list:
+                    value = getattr(obj, field, '')
+                    if field == 'country' and value:
+                        value = value.name  # <-- fixed here
+                    elif field in ['created_at', 'updated_at'] and value:
+                        value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                    elif field in ['effect_from', 'valid_upto'] and value:
+                        value = value.strftime("%d-%m-%Y")
+                    elif isinstance(value, bool):
+                        value = int(value)
+                    row.append(value if value is not None else '')
+                dataset.append(row)
 
         if format_type == 'csv':
             file_data = dataset.export('csv')
