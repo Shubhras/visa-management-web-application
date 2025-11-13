@@ -489,9 +489,15 @@ urlpatterns = [
     path('modeofsalary/delete/', ModeofSalaryDeleteAPIView.as_view(), name='modeofsalary-bulk-delete'),
     path('modeofsalary/export/', ModeofSalaryExportAPIView.as_view(), name='modeofsalary-export'),
     path('modeofsalary/import/', ModeofSalaryImportAPIView.as_view(), name='modeofsalary-import'),
-    
-    
 
+    path('itreturnstatus/', ITReturnStatusListAPIView.as_view(), name='itreturnstatus-list'),
+    path('itreturnstatus/create/', ITReturnStatusCreateAPIView.as_view(), name='itreturnstatus-create'),
+    path('itreturnstatus/<uuid:uuid>/', ITReturnStatusRetrieveAPIView.as_view(), name='itreturnstatus-retrieve'),
+    path('itreturnstatus/<uuid:uuid>/update/', ITReturnStatusUpdateAPIView.as_view(), name='itreturnstatus-update'),
+    path('itreturnstatus/<uuid:uuid>/delete/', ITReturnStatusDeleteAPIView.as_view(), name='itreturnstatus-delete'),
+    path('itreturnstatus/delete/', ITReturnStatusDeleteAPIView.as_view(), name='itreturnstatus-bulk-delete'),
+    path('itreturnstatus/export/', ITReturnStatusExportAPIView.as_view(), name='itreturnstatus-export'),
+    path('itreturnstatus/import/', ITReturnStatusImportAPIView.as_view(), name='itreturnstatus-import'),
 
 
     path('workrights/', WorkRightsListAPIView.as_view(), name='workrights-list'),
