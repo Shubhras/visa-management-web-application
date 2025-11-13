@@ -104,7 +104,7 @@ const EditActivityType = ({ show, handleCloseEdit, rowSelectData }) => {
         handleCloseEdit();
         setLoading(false);
     };
-  
+
     // NOW we can do the conditional return - AFTER all hooks
     if (!show) return null;
 
@@ -186,7 +186,14 @@ const EditActivityType = ({ show, handleCloseEdit, rowSelectData }) => {
                                             className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                                             disabled={loading}
                                         >
-                                            {loading ? "Save" : "Save"}
+                                            {loading ? (
+                                                <>
+                                                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                    Saving...
+                                                </>
+                                            ) : (
+                                                "Save"
+                                            )}
                                         </button>
                                     </div>
                                 </div>
