@@ -10371,7 +10371,7 @@ class TagsExportAPIView(APIView):
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title("Tags")
+        dataset.title="Tags"
 
         for dept in queryset:
             row = []
