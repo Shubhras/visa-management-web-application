@@ -16258,7 +16258,7 @@ class DegreeAwardedByExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'country_name': 'Country',
+            'country': 'Country',
             'education_level_name': 'Education Level',
             'degree_name': 'Degree Name By',
             'description': 'Description',
