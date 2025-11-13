@@ -12933,13 +12933,22 @@ class EducationDurationImportAPIView(APIView):
                 durations = str(row.get('education duration')).strip() if row.get('education duration') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
-                # Skip if required fields are missing
-                if not educationlevel_name or not durations:
+                if not educationlevel_name or durations is None:
                     skipped_rows.append({"Row": row_number, "Reason": "Missing education level or education duration"})
                     continue
 
+                # ✅ Check if duration is numeric
+                if not str(durations).isnumeric():
+                    skipped_rows.append({"Row": row_number, "Education Duration": durations, "Reason": "Education duration must be numeric"})
+                    continue
+
+                # Convert duration to int
+                durations = int(durations)
+
                 # Validate EducationLevel existence
-                educationlevel_obj = EducationLevel.objects.filter(educationlevel__iexact=educationlevel_name, is_deleted=False).first()
+                educationlevel_obj = EducationLevel.objects.filter(
+                    educationlevel__iexact=educationlevel_name, is_deleted=False
+                ).first()
                 if not educationlevel_obj:
                     skipped_rows.append({"Row": row_number, "Education Level": educationlevel_name, "Reason": "Invalid education level"})
                     continue
