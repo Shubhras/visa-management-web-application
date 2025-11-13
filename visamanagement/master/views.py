@@ -14146,42 +14146,35 @@ class StudySpecialisationImportAPIView(APIView):
         }, status=200)
 
 
-class StudyMainAreaByMajorUUIDAPIView(APIView):
+class StudyMajorAreaByMainUUIDAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        major_uuid = request.GET.get('major_uuid', '').strip()
-        if not major_uuid:
+        main_uuid = request.GET.get('main_uuid', '').strip()
+        if not main_uuid:
             return Response({
                 "status": False,
                 "statusCode": 400,
-                "message": "major_uuid query parameter is required",
+                "message": "main_uuid query parameter is required",
                 "data": None
             }, status=400)
 
-        try:
-            major_area = Studymajorarea.objects.select_related('mainarea').get(uuid=major_uuid, is_deleted=False)
-            main_area = major_area.mainarea
-            if main_area and not main_area.is_deleted:
-                serializer = StudyMajorAreaSerializer(main_area)
-                return Response({
-                    "status": True,
-                    "statusCode": 200,
-                    "message": "Main area retrieved successfully",
-                    "data": serializer.data
-                }, status=200)
-            else:
-                return Response({
-                    "status": False,
-                    "statusCode": 404,
-                    "message": "Main area not found or deleted",
-                    "data": None
-                }, status=404)
-        except Studymajorarea.DoesNotExist:
+        # Get all major areas for the given main area UUID
+        major_areas = Studymajorarea.objects.filter(mainarea__uuid=main_uuid, is_deleted=False)
+        
+        if major_areas.exists():
+            serializer = StudyMajorAreaSerializer(major_areas, many=True)
+            return Response({
+                "status": True,
+                "statusCode": 200,
+                "message": "Major areas retrieved successfully",
+                "data": serializer.data
+            }, status=200)
+        else:
             return Response({
                 "status": False,
                 "statusCode": 404,
-                "message": "Major area not found",
+                "message": "No major areas found for this main area",
                 "data": None
             }, status=404)
 
