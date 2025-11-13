@@ -981,6 +981,10 @@ class OccupationCategorySerializer(serializers.ModelSerializer):
         required=False
     )
 
+    country_name = serializers.CharField(source='country.name', read_only=True)
+    country_uuid = serializers.UUIDField(source='country.uuid', read_only=True)
+    occupation_version_name=serializers.CharField(source='occupationversion.occupation_version', read_only=True)
+    occupation_version_uuid=serializers.UUIDField(source='occupationversion.uuid', read_only=True)
     class Meta:
         model = OccupationCategory
         fields = [
@@ -988,7 +992,10 @@ class OccupationCategorySerializer(serializers.ModelSerializer):
             'uuid',
             'country',
             'country_id',
-            'occupation_version',
+            'country_name',
+            'country_uuid',
+            'occupation_version_name',
+            'occupation_version_uuid',
             'occupation_version_id',
             'occupationcategory',
             'occupationcategorycode',

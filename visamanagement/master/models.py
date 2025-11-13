@@ -633,9 +633,9 @@ class MediumofEducation(models.Model):
 
 class ECAAwardingBody(models.Model):
     VALID_UNIT_CHOICES = (
-        ("MONTHS", "Months"),
-        ("WEEKS","Weeks"),
-        ("YEARS", "Years"),
+        ("Months", "Months"),
+        ("Weeks","Weeks"),
+        ("Years", "Years"),
     )
 
     selection_choices=[
@@ -648,12 +648,15 @@ class ECAAwardingBody(models.Model):
     country = models.ForeignKey("Country", on_delete=models.SET_NULL, related_name="ECAAwarding_body", blank=True, null=True)
     selection_type = models.CharField(max_length=250,choices=selection_choices,blank=True, null=True)
     valid_duration_value = models.IntegerField(blank=True, null=True)
-    eca_body_full_name = models.CharField(max_length=255,unique=True,blank=True, null=True)
+    eca_body_full_name = models.CharField(max_length=255,blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     eca_body_short_name = models.CharField(max_length=100,blank=True, null=True)
     eca_valid_period = models.CharField(max_length=250,blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('country','eca_body_full_name')
 
 
     
@@ -663,6 +666,7 @@ class ECAAwardingBody(models.Model):
 
 
 class DegreeAwardedBy(models.Model):
+    id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)    
     country = models.ForeignKey("Country", on_delete=models.SET_NULL, blank=True, null=True, related_name="degree_awarded_by_country")
     education_level = models.ForeignKey("EducationLevel", on_delete=models.SET_NULL, blank=True, null=True, related_name="degree_awarded_by_education_level")

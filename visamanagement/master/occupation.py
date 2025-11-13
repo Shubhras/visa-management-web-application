@@ -1164,8 +1164,12 @@ class OccupationVersionExportAPIView(APIView):
                 value = getattr(obj, field, '')
                 if field == 'country' and value:
                     value = value.country_name
-                elif field in ['created_at', 'updated_at', 'effect_from', 'valid_upto'] and value:
+                elif field in ['created_at', 'updated_at'] and value:
+                    # These are DateTimeFields
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif field in ['effect_from', 'valid_upto'] and value:
+                    # These are DateFields
+                    value = value.strftime("%d-%m-%Y")
                 elif isinstance(value, bool):
                     value = int(value)
                 row.append(value if value is not None else '')
