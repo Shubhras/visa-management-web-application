@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useDispatch } from "react-redux";
-import { occupationTypeImportData } from "../../../../store/master/occupationMaster/action";
+import { occupationVersionImportData } from "../../../../store/master/occupationMaster/action";
 import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
@@ -66,7 +66,7 @@ const AddImportOccupationVersionModal = ({ show, handleClose }) => {
             formData.append('sheet_name', selectedSheet);
         }
         setLoading(true);
-        dispatch(occupationTypeImportData(formData, (response, error) => {
+        dispatch(occupationVersionImportData(formData, (response, error) => {
             setLoading(false);
             if (error) {
                 toast.error(error?.response?.data?.message || "Server error");

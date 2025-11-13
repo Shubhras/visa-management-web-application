@@ -5,10 +5,10 @@ import MasterLayout from "../../../../masterLayout/MasterLayout";
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { Link } from 'react-router-dom';
 import { toast } from "react-toastify";
-import { occupationTypeList, occupationTypeDelete, occupationTypeExportData } from "../../../../store/master/occupationMaster/action";
+import { occupationVersionList, occupationVersionDelete, occupationVersionExportData } from "../../../../store/master/occupationMaster/action";
 import AddImportOccupationVersionModal from './AddImportOccupationVersionModal';
 import AddEditOccupationVersionModal from './AddEditOccupationVersionModal';
-import { formatDateDDMMYYYY,formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
+import { formatDateDDMMYYYY, formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 
 const OccupationVersionList = () => {
     const dispatch = useDispatch();
@@ -140,7 +140,7 @@ const OccupationVersionList = () => {
             sortOrder: tableState.sortOrder || ''
         };
 
-        dispatch(occupationTypeList(params, (response, error) => {
+        dispatch(occupationVersionList(params, (response, error) => {
             setLoading(false);
             if (response?.statusCode === 200 && response?.status === true) {
                 const paginationData = response?.pagination || {};
@@ -332,7 +332,7 @@ const OccupationVersionList = () => {
             toast.error("No occupation version selected for deletion.");
             return;
         }
-        dispatch(occupationTypeDelete(sendPayload, (response, error) => {
+        dispatch(occupationVersionDelete(sendPayload, (response, error) => {
             if (error) {
                 toast.error(error?.response?.data?.message || "server error");
             } else {
@@ -429,7 +429,7 @@ const OccupationVersionList = () => {
             uuids: selectAllOrNot === "all" ? [] : selectedRows,
         };
         setLoadingExport(true);
-        dispatch(occupationTypeExportData(sendPayload, (response, error) => {
+        dispatch(occupationVersionExportData(sendPayload, (response, error) => {
             if (error) {
                 setLoadingExport(false);
                 toast.error(error?.response?.message || "server error");

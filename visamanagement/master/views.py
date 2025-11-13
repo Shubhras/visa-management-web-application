@@ -480,7 +480,8 @@ class GenderImportAPIView(APIView):
 
             # ---------------- Process Data ----------------
             imported_count = 0
-            for idx, row in enumerate(data, start=2):
+            for row in reversed(data):
+                row_number = row.get("_row_number", "Unknown")
                 name = str(row.get('gender')).strip() if row.get('gender') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
                 is_active_val = row.get('is_active')
@@ -488,7 +489,7 @@ class GenderImportAPIView(APIView):
 
                 if not name:
                     skipped_rows.append({
-                        "Row": idx,
+                        "Row": row_number,
                         "Reason": "Missing gender name"
                     })
                     continue
@@ -498,6 +499,7 @@ class GenderImportAPIView(APIView):
                 if existing:
                     if not existing.is_deleted:
                         duplicates.append({
+                            "Row": row_number,
                             "Gender": name,
                             "Reason": "Already exists in database"
                         })
@@ -12853,7 +12855,7 @@ class EducationDurationImportAPIView(APIView):
                 return Response({"statusCode": 400, "status": True, 'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
 
             imported_count = 0
-            for row in  reversed(data):
+            for row in reversed(data):
                 educationlevel_name = str(row.get('education level')).strip() if row.get('education level') else None
                 durations = str(row.get('education durations')).strip() if row.get('education durations') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''

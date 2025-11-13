@@ -630,7 +630,7 @@ class InstituteGroupNameExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Group Name',
+            'name': 'Institute Group Name',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',
@@ -691,7 +691,7 @@ class InstituteGroupNameImportAPIView(APIView):
         format_type = file.name.split(".")[-1].lower()
         duplicates = []
         skipped_rows = []
-        required_headers = {"group name"}  # adjust to exact header in file
+        required_headers = {"institute group name"}  # adjust to exact header in file
         optional_headers = {"description"}
 
         try:
@@ -762,7 +762,7 @@ class InstituteGroupNameImportAPIView(APIView):
             imported_count = 0
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("group name")) if row.get("group name") else None
+                name = str(row.get("institute group name")) if row.get("institute group name") else None
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
@@ -772,7 +772,7 @@ class InstituteGroupNameImportAPIView(APIView):
                 existing = InstituteGroupName.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Group Name": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "Institute Group Name": name, "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -1009,7 +1009,7 @@ class InstituteStatusExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Status Name',
+            'name': 'Institute Status Name',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',
@@ -1070,7 +1070,7 @@ class InstituteStatusImportAPIView(APIView):
         format_type = file.name.split(".")[-1].lower()
         duplicates = []
         skipped_rows = []
-        required_headers = {"status name"}  # adjust to exact header in file
+        required_headers = {"institute status name"}  # adjust to exact header in file
         optional_headers = {"description"}
 
         try:
@@ -1141,7 +1141,7 @@ class InstituteStatusImportAPIView(APIView):
             imported_count = 0
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("status name")) if row.get("status name") else None
+                name = str(row.get("institute status name")) if row.get("institute status name") else None
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
@@ -1151,7 +1151,7 @@ class InstituteStatusImportAPIView(APIView):
                 existing = InstituteStatus.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Status Name": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "Institute Status Name": name, "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -1389,7 +1389,7 @@ class InstitutePriorityExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Priority Name',
+            'name': 'Institute Priority Name',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',
@@ -1450,7 +1450,7 @@ class InstitutePriorityImportAPIView(APIView):
         format_type = file.name.split(".")[-1].lower()
         duplicates = []
         skipped_rows = []
-        required_headers = {"priority name"}  # adjust to match sheet
+        required_headers = {"institute priority name"}  # adjust to match sheet
         optional_headers = {"description"}
 
         try:
@@ -1521,7 +1521,7 @@ class InstitutePriorityImportAPIView(APIView):
             imported_count = 0
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("priority name")) if row.get("priority name") else None
+                name = str(row.get("institute priority name")) if row.get("institute priority name") else None
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
@@ -1531,7 +1531,7 @@ class InstitutePriorityImportAPIView(APIView):
                 existing = InstitutePriority.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Priority Name": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "Institute Priority Name": name, "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -1768,7 +1768,7 @@ class InstituteDepartmentExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Department Name',
+            'name': 'Institute Department Name',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',
@@ -1829,7 +1829,7 @@ class InstituteDepartmentImportAPIView(APIView):
         format_type = file.name.split(".")[-1].lower()
         duplicates = []
         skipped_rows = []
-        required_headers = {"department name"}  # adjust to match sheet
+        required_headers = {"institute department name"}  # adjust to match sheet
         optional_headers = {"description"}
 
         try:
@@ -1900,7 +1900,7 @@ class InstituteDepartmentImportAPIView(APIView):
             imported_count = 0
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("department name")) if row.get("department name") else None
+                name = str(row.get("institute department name")) if row.get("institute department name") else None
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
@@ -1910,7 +1910,7 @@ class InstituteDepartmentImportAPIView(APIView):
                 existing = InstituteDepartment.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Department Name": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "Institute Department Name": name, "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -2147,7 +2147,7 @@ class BankAccountForExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Name',
+            'name': 'Bank Account',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',
@@ -2208,7 +2208,7 @@ class BankAccountForImportAPIView(APIView):
         format_type = file.name.split(".")[-1].lower()
         duplicates = []
         skipped_rows = []
-        required_headers = {"name"}  # adjust to match sheet
+        required_headers = {"bank account"}  # adjust to match sheet
         optional_headers = {"description"}
 
         try:
@@ -2279,7 +2279,7 @@ class BankAccountForImportAPIView(APIView):
             imported_count = 0
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("name")) if row.get("name") else None
+                name = str(row.get("bank account")) if row.get("bank account") else None
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
@@ -2289,7 +2289,7 @@ class BankAccountForImportAPIView(APIView):
                 existing = BankAccountFor.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Name": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "Bank Account ": name, "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -2526,7 +2526,7 @@ class WhenCommissionIssueExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Name',
+            'name': 'When Commission Issue',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',
@@ -2587,7 +2587,7 @@ class WhenCommissionIssueImportAPIView(APIView):
         format_type = file.name.split(".")[-1].lower()
         duplicates = []
         skipped_rows = []
-        required_headers = {"name"}  # adjust to match your sheet
+        required_headers = {"when commission issue"}  # adjust to match your sheet
         optional_headers = {"description"}
 
         try:
@@ -2657,7 +2657,7 @@ class WhenCommissionIssueImportAPIView(APIView):
             imported_count = 0
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("name")) if row.get("name") else None
+                name = str(row.get("when commission issue")) if row.get("when commission issue") else None
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
@@ -2667,7 +2667,7 @@ class WhenCommissionIssueImportAPIView(APIView):
                 existing = WhenCommissionIssue.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Name": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "When Commission Issue": name, "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -2904,7 +2904,7 @@ class CourseLevelCodeExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Name',
+            'name': 'Course Level Code',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',
@@ -2965,7 +2965,7 @@ class CourseLevelCodeImportAPIView(APIView):
         format_type = file.name.split(".")[-1].lower()
         duplicates = []
         skipped_rows = []
-        required_headers = {"name"}
+        required_headers = {"course level code"}
         optional_headers = {"description"}
 
         try:
@@ -3035,7 +3035,7 @@ class CourseLevelCodeImportAPIView(APIView):
             imported_count = 0
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("name")) if row.get("name") else None
+                name = str(row.get("course level code")) if row.get("course level code") else None
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
@@ -3045,7 +3045,7 @@ class CourseLevelCodeImportAPIView(APIView):
                 existing = CourseLevelCode.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Name": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "Course Level Code": name, "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -3283,7 +3283,7 @@ class CourseDividedInExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Name',
+            'name': 'Course Divided In',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',
@@ -3344,7 +3344,7 @@ class CourseDividedInImportAPIView(APIView):
         format_type = file.name.split(".")[-1].lower()
         duplicates = []
         skipped_rows = []
-        required_headers = {"name"}
+        required_headers = {"course divided in"}
         optional_headers = {"description"}
 
         try:
@@ -3414,7 +3414,7 @@ class CourseDividedInImportAPIView(APIView):
             imported_count = 0
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("name")) if row.get("name") else None
+                name = str(row.get("course divided in")) if row.get("course divided in") else None
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
@@ -3424,7 +3424,7 @@ class CourseDividedInImportAPIView(APIView):
                 existing = CourseDividedIn.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Name": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "Course Divided In": name, "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -3661,7 +3661,7 @@ class CourseStatusExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Name',
+            'name': 'Course Status',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',
@@ -3722,7 +3722,7 @@ class CourseStatusImportAPIView(APIView):
         format_type = file.name.split(".")[-1].lower()
         duplicates = []
         skipped_rows = []
-        required_headers = {"name"}
+        required_headers = {"course status"}
         optional_headers = {"description"}
 
         try:
@@ -3792,7 +3792,7 @@ class CourseStatusImportAPIView(APIView):
             imported_count = 0
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("name")) if row.get("name") else None
+                name = str(row.get("course status")) if row.get("course status") else None
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
@@ -3802,7 +3802,7 @@ class CourseStatusImportAPIView(APIView):
                 existing = CourseStatus.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Name": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "Course Status": name, "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -4039,7 +4039,7 @@ class IntakeNameExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Name',
+            'name': 'Intake Name',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',
@@ -4100,7 +4100,7 @@ class IntakeNameImportAPIView(APIView):
         format_type = file.name.split(".")[-1].lower()
         duplicates = []
         skipped_rows = []
-        required_headers = {"name"}
+        required_headers = {"intake name"}
         optional_headers = {"description"}
 
         try:
@@ -4170,7 +4170,7 @@ class IntakeNameImportAPIView(APIView):
             imported_count = 0
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("name")) if row.get("name") else None
+                name = str(row.get("intake name")) if row.get("intake name") else None
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
@@ -4180,7 +4180,7 @@ class IntakeNameImportAPIView(APIView):
                 existing = IntakeName.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Name": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "Intake Name": name, "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -4416,7 +4416,7 @@ class CourseStatusIntakeExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Name',
+            'name': 'Course Status Intake',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',
@@ -4477,7 +4477,7 @@ class CourseStatusIntakeImportAPIView(APIView):
         format_type = file.name.split(".")[-1].lower()
         duplicates = []
         skipped_rows = []
-        required_headers = {"name"}
+        required_headers = {"course status intake"}
         optional_headers = {"description"}
 
         try:
@@ -4547,7 +4547,7 @@ class CourseStatusIntakeImportAPIView(APIView):
             imported_count = 0
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("name")) if row.get("name") else None
+                name = str(row.get("course status intake")) if row.get("course status intake") else None
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
@@ -4557,7 +4557,7 @@ class CourseStatusIntakeImportAPIView(APIView):
                 existing = CourseStatusIntake.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Name": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "Course Status Intake": name, "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -4794,7 +4794,7 @@ class ScholorshipBasedOnExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Name',
+            'name': 'Scholorship Based On',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',
@@ -4855,7 +4855,7 @@ class ScholorshipBasedOnImportAPIView(APIView):
         format_type = file.name.split(".")[-1].lower()
         duplicates = []
         skipped_rows = []
-        required_headers = {"name"}
+        required_headers = {"scholorship based on"}
         optional_headers = {"description"}
 
         try:
@@ -4925,7 +4925,7 @@ class ScholorshipBasedOnImportAPIView(APIView):
             imported_count = 0
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("name")) if row.get("name") else None
+                name = str(row.get("scholorship based on")) if row.get("scholorship based on") else None
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
@@ -4935,7 +4935,7 @@ class ScholorshipBasedOnImportAPIView(APIView):
                 existing = ScholorshipBasedOn.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Name": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "Scholorship Based On": name, "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description

@@ -135,7 +135,7 @@ const MasterLayout = ({ children }) => {
             { name: 'Language Test Result', path: '/language-test-result' },
           ]
         },
-         {
+        {
           name: 'Occupation',
           children: [
             { name: 'Job Type', path: '/job-type' },
@@ -143,10 +143,23 @@ const MasterLayout = ({ children }) => {
             { name: 'IT Return Status', path: '/it-return-status' },
             { name: 'Occupation Type', path: '/occupation-type' },
             { name: 'Occupation Prospect', path: '/occupation-prospect' },
-            {name: 'Occupation Version',path: '/occupation-version'}
- 
+            { name: 'Occupation Version', path: '/occupation-version' }
+
           ]
         },
+        {
+          name: 'Institute',
+          children: [
+            { name: 'Institute Type', path: '/institute-type' },
+            { name: 'Institute Group Name', path: '/institute-group-name' },
+            { name: "Institute Status", path: '/institute-status' },
+            { name: "Institute Priority", path: '/institute-priority' },
+            { name: "Institute Department", path: '/institute-department' },
+
+
+          ]
+        },
+
 
         // { name: 'Education', path: '/' },
         // { name: 'Test', path: '/' },

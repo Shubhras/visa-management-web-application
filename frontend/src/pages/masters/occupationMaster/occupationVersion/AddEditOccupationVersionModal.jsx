@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from "react-redux";
-import { occupationTypeAdd, occupationTypeEdit } from "../../../../store/master/occupationMaster/action";
+import { occupationVersionAdd, occupationVersionEdit } from "../../../../store/master/occupationMaster/action";
 import { toast } from "react-toastify";
 import { countryList } from "../../../../store/master/generalMasters/actions";
 import Select from "react-select";
@@ -99,12 +99,12 @@ const AddEditOccupationVersionModal = ({ show, handleClose, mode = 'add', rowDat
             newErrors.departmentName = 'Occupation version is required';
             isValid = false;
         }
-        if (!formData.startDate?.trim()) {
+        if (!formData.startDate) {
             newErrors.startDate = 'Start date is required';
             isValid = false;
         }
-        if (!formData.endDate?.trim()) {
-            newErrors.endDate = 'End date is required';
+        if (!formData.country?.trim()) {
+            newErrors.country = 'Country is required';
             isValid = false;
         }
 
@@ -136,7 +136,7 @@ const AddEditOccupationVersionModal = ({ show, handleClose, mode = 'add', rowDat
 
             setLoading(true);
 
-            const action = mode === 'edit' ? occupationTypeEdit : occupationTypeAdd;
+            const action = mode === 'edit' ? occupationVersionEdit : occupationVersionAdd;
 
             dispatch(action(sendPayload, (response, error) => {
                 setLoading(false);
