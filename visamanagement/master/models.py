@@ -844,14 +844,33 @@ class ITReturnStatus(models.Model):
     def __str__(self):
         return self.name
 
-        
+
 class OccupationVersion(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     country = models.ForeignKey('Country',on_delete=models.SET_NULL,null=True,blank=True,related_name='occupation_versions')
-    occupation_version = models.CharField(max_length=255, unique=True)  # duplicate not allowed
+    occupation_version = models.CharField(max_length=255,)  
     effect_from = models.DateField(null=True, blank=True)
     valid_upto = models.DateField(null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('occupation_version', 'country')
+
+    def __str__(self):
+        return self.occupation_version
+    
+
+    
+class OccupationLevelCode(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    country = models.ForeignKey('Country',on_delete=models.SET_NULL,null=True,blank=True,related_name='occupation_level')
+    occupation_version =models.ForeignKey('OccupationVersion',on_delete=models.SET_NULL,null=True,blank=True,related_name='occupation_level')
+    occupationlevelcode = models.TextField(null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)

@@ -484,9 +484,7 @@ class GenderImportAPIView(APIView):
                 row_number = row.get("_row_number", "Unknown")
                 name = str(row.get('gender')).strip() if row.get('gender') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
-                is_active_val = row.get('is_active')
-                is_active = bool(int(is_active_val)) if str(is_active_val).isdigit() else True
-
+                
                 if not name:
                     skipped_rows.append({
                         "Row": row_number,
@@ -506,8 +504,7 @@ class GenderImportAPIView(APIView):
                         continue
                     else:
                         # Reactivate deleted
-                        existing.description = description
-                        existing.is_active = is_active
+                        existing.description = description 
                         existing.is_deleted = False
                         existing.save()
                         imported_count += 1
@@ -913,9 +910,7 @@ class MaritalstatusImportAPIView(APIView):
                 row_number = row.get("_row_number", "Unknown")
                 name = str(row.get('marital status')).strip() if row.get('marital status') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
-                is_active_val = row.get('is_active')
-                is_active = bool(int(is_active_val)) if str(is_active_val).isdigit() else True
-
+                
                 if not name:
                     skipped_rows.append({
                         "Row": row_number,
@@ -935,7 +930,7 @@ class MaritalstatusImportAPIView(APIView):
                     else:
                         # Reactivate deleted
                         existing.description = description
-                        existing.is_active = is_active
+                        
                         existing.is_deleted = False
                         existing.save()
                         imported_count += 1
@@ -9633,9 +9628,7 @@ class InterestLevelImportAPIView(APIView):
                 row_number = row.get("_row_number", "Unknown")
                 name = str(row.get('interest level')).strip() if row.get('interest level') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
-                is_active_val = row.get('is_active')
-                is_active = bool(int(is_active_val)) if str(is_active_val).isdigit() else True
-
+                
                 if not name:
                     skipped_rows.append({
                         "Row": row_number,
@@ -9655,7 +9648,7 @@ class InterestLevelImportAPIView(APIView):
                     else:
                         # Reactivate deleted
                         existing.description = description
-                        existing.is_active = is_active
+                        
                         existing.is_deleted = False
                         existing.save()
                         imported_count += 1
@@ -10063,9 +10056,7 @@ class PriorityImportAPIView(APIView):
                 row_number = row.get("_row_number", "Unknown")
                 name = str(row.get('priority')).strip() if row.get('priority') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
-                is_active_val = row.get('is_active')
-                is_active = bool(int(is_active_val)) if str(is_active_val).isdigit() else True
-
+                
                 if not name:
                     skipped_rows.append({
                         "Row": row_number,
@@ -10085,7 +10076,7 @@ class PriorityImportAPIView(APIView):
                     else:
                         # Reactivate deleted
                         existing.description = description
-                        existing.is_active = is_active
+                        
                         existing.is_deleted = False
                         existing.save()
                         imported_count += 1
@@ -10488,9 +10479,7 @@ class TagsImportAPIView(APIView):
                 row_number = row.get("_row_number", "Unknown")
                 name = str(row.get('tags')).strip() if row.get('tags') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
-                is_active_val = row.get('is_active')
-                is_active = bool(int(is_active_val)) if str(is_active_val).isdigit() else True
-
+                
                 if not name:
                     skipped_rows.append({
                         "Row": row_number,
@@ -10510,7 +10499,7 @@ class TagsImportAPIView(APIView):
                     else:
                         # Reactivate deleted
                         existing.description = description
-                        existing.is_active = is_active
+                        
                         existing.is_deleted = False
                         existing.save()
                         imported_count += 1
@@ -10920,9 +10909,7 @@ class ActivityTypeImportAPIView(APIView):
                 row_number = row.get("_row_number", "Unknown")
                 name = str(row.get('activity type')).strip() if row.get('activity type') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
-                is_active_val = row.get('is_active')
-                is_active = bool(int(is_active_val)) if str(is_active_val).isdigit() else True
-
+                
                 if not name:
                     skipped_rows.append({
                         "Row": row_number,
@@ -10942,7 +10929,7 @@ class ActivityTypeImportAPIView(APIView):
                     else:
                         # Reactivate deleted
                         existing.description = description
-                        existing.is_active = is_active
+                        
                         existing.is_deleted = False
                         existing.save()
                         imported_count += 1
@@ -11348,9 +11335,7 @@ class LostReasonImportAPIView(APIView):
                 row_number = row.get("_row_number", "Unknown")
                 name = str(row.get('lost reason (b2c)')).strip() if row.get('lost reason (b2c)') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
-                is_active_val = row.get('is_active')
-                is_active = bool(int(is_active_val)) if str(is_active_val).isdigit() else True
-
+                
                 if not name:
                     skipped_rows.append({
                         "Row": row_number,
@@ -11370,7 +11355,7 @@ class LostReasonImportAPIView(APIView):
                     else:
                         # Reactivate deleted
                         existing.description = description
-                        existing.is_active = is_active
+                        
                         existing.is_deleted = False
                         existing.save()
                         imported_count += 1
@@ -11762,9 +11747,7 @@ class LostReasonB2BImportAPIView(APIView):
                 row_number = row.get("_row_number", "Unknown")
                 name = str(row.get('lost reason b2b')).strip() if row.get('lost reason b2b') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
-                is_active_val = row.get('is_active')
-                is_active = bool(int(is_active_val)) if str(is_active_val).isdigit() else True
-
+                
                 if not name:
                     skipped_rows.append({
                         "Row": row_number,
@@ -11784,7 +11767,7 @@ class LostReasonB2BImportAPIView(APIView):
                     else:
                         # Reactivate deleted
                         existing.description = description
-                        existing.is_active = is_active
+                        
                         existing.is_deleted = False
                         existing.save()
                         imported_count += 1

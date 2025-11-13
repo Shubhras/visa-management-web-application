@@ -929,9 +929,9 @@ class EntranceTestResultSerializer(serializers.ModelSerializer):
 
 
 class OccupationVersionSerializer(serializers.ModelSerializer):
-    country = CountrySerializer(read_only=True)
-
-    country_id = serializers.PrimaryKeyRelatedField(
+    country = serializers.CharField(read_only=True, source='country.country_name')  # optional display field
+    country_id = serializers.SlugRelatedField(
+        slug_field='uuid',
         queryset=Country.objects.all(),
         source='country',
         write_only=True
@@ -953,7 +953,6 @@ class OccupationVersionSerializer(serializers.ModelSerializer):
             'updated_at'
         ]
         read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
-
 
 
 class RepresentingCountrySerializer(serializers.ModelSerializer):
