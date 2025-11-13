@@ -2084,6 +2084,169 @@ export const importInstituteDepartmentDataAPI = (payload) => {
     return post(apiUrl, payload);
 };
 
+// Bank Account For API Calls
+export const getBankAccountForListDataAPI = (data) => {
+    const apiUrl = `${url.GET_BANK_ACCOUNT_FOR_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addBankAccountForDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_BANK_ACCOUNT_FOR_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editBankAccountForDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_BANK_ACCOUNT_FOR_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteBankAccountForDataAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_BANK_ACCOUNT_FOR_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportBankAccountForDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_BANK_ACCOUNT_FOR_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importBankAccountForDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_BANK_ACCOUNT_FOR_API}`;
+    return post(apiUrl, payload);
+};
+
+// When Commission Issue API Calls
+export const getWhenCommissionIssueListDataAPI = (data) => {
+    const apiUrl = `${url.GET_WHEN_COMMISSION_ISSUE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addWhenCommissionIssueDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_WHEN_COMMISSION_ISSUE_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editWhenCommissionIssueDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_WHEN_COMMISSION_ISSUE_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteWhenCommissionIssueDataAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_WHEN_COMMISSION_ISSUE_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportWhenCommissionIssueDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_WHEN_COMMISSION_ISSUE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importWhenCommissionIssueDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_WHEN_COMMISSION_ISSUE_API}`;
+    return post(apiUrl, payload);
+};
+// Course Level Code API Calls
+export const getCourseLevelCodeListDataAPI = (data) => {
+    const apiUrl = `${url.GET_COURSE_LEVEL_CODE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addCourseLevelCodeDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_COURSE_LEVEL_CODE_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editCourseLevelCodeDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_COURSE_LEVEL_CODE_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteCourseLevelCodeDataAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_COURSE_LEVEL_CODE_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportCourseLevelCodeDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_COURSE_LEVEL_CODE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importCourseLevelCodeDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_COURSE_LEVEL_CODE_API}`;
+    return post(apiUrl, payload);
+};
+// Course Divided In API Calls
+export const getCourseDividedInListDataAPI = (data) => {
+    const apiUrl = `${url.GET_COURSE_DIVIDED_IN_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addCourseDividedInDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_COURSE_DIVIDED_IN_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editCourseDividedInDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_COURSE_DIVIDED_IN_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteCourseDividedInDataAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_COURSE_DIVIDED_IN_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportCourseDividedInDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_COURSE_DIVIDED_IN_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importCourseDividedInDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_COURSE_DIVIDED_IN_API}`;
+    return post(apiUrl, payload);
+};
+// Course Status API Calls
+export const getCourseStatusListDataAPI = (data) => {
+    const apiUrl = `${url.GET_COURSE_STATUS_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addCourseStatusDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_COURSE_STATUS_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editCourseStatusDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_COURSE_STATUS_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteCourseStatusDataAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_COURSE_STATUS_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportCourseStatusDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_COURSE_STATUS_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importCourseStatusDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_COURSE_STATUS_API}`;
+    return post(apiUrl, payload);
+};
+
+
+
+
+
+
+
 
 
 
