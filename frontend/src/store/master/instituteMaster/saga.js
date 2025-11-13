@@ -30,6 +30,36 @@ import {
     DELETE_INSTITUTE_DEPARTMENT,
     EXPORT_INSTITUTE_DEPARTMENT,
     IMPORT_INSTITUTE_DEPARTMENT,
+    BANK_ACCOUNT_FOR_LIST,
+    ADD_BANK_ACCOUNT_FOR,
+    EDIT_BANK_ACCOUNT_FOR,
+    DELETE_BANK_ACCOUNT_FOR,
+    EXPORT_BANK_ACCOUNT_FOR,
+    IMPORT_BANK_ACCOUNT_FOR,
+    WHEN_COMMISSION_ISSUE_LIST,
+    ADD_WHEN_COMMISSION_ISSUE,
+    EDIT_WHEN_COMMISSION_ISSUE,
+    DELETE_WHEN_COMMISSION_ISSUE,
+    EXPORT_WHEN_COMMISSION_ISSUE,
+    IMPORT_WHEN_COMMISSION_ISSUE,
+    COURSE_LEVEL_CODE_LIST,
+    ADD_COURSE_LEVEL_CODE,
+    EDIT_COURSE_LEVEL_CODE,
+    DELETE_COURSE_LEVEL_CODE,
+    EXPORT_COURSE_LEVEL_CODE,
+    IMPORT_COURSE_LEVEL_CODE,
+    COURSE_DIVIDED_IN_LIST,
+    ADD_COURSE_DIVIDED_IN,
+    EDIT_COURSE_DIVIDED_IN,
+    DELETE_COURSE_DIVIDED_IN,
+    EXPORT_COURSE_DIVIDED_IN,
+    IMPORT_COURSE_DIVIDED_IN,
+    COURSE_STATUS_LIST,
+    ADD_COURSE_STATUS,
+    EDIT_COURSE_STATUS,
+    DELETE_COURSE_STATUS,
+    EXPORT_COURSE_STATUS,
+    IMPORT_COURSE_STATUS,
 } from "./actionType";
 
 import {
@@ -63,6 +93,39 @@ import {
     deleteInstituteDepartmentDataAPI,
     exportInstituteDepartmentDataAPI,
     importInstituteDepartmentDataAPI,
+    getBankAccountForListDataAPI,
+    addBankAccountForDataAPI,
+    editBankAccountForDataAPI,
+    deleteBankAccountForDataAPI,
+    exportBankAccountForDataAPI,
+    importBankAccountForDataAPI,
+    getWhenCommissionIssueListDataAPI,
+    addWhenCommissionIssueDataAPI,
+    editWhenCommissionIssueDataAPI,
+    deleteWhenCommissionIssueDataAPI,
+    exportWhenCommissionIssueDataAPI,
+    importWhenCommissionIssueDataAPI,
+    getCourseLevelCodeListDataAPI,
+    addCourseLevelCodeDataAPI,
+    editCourseLevelCodeDataAPI,
+    deleteCourseLevelCodeDataAPI,
+    exportCourseLevelCodeDataAPI,
+    importCourseLevelCodeDataAPI,
+    getCourseDividedInListDataAPI,
+    addCourseDividedInDataAPI,
+    editCourseDividedInDataAPI,
+    deleteCourseDividedInDataAPI,
+    exportCourseDividedInDataAPI,
+    importCourseDividedInDataAPI,
+    getCourseStatusListDataAPI,
+    addCourseStatusDataAPI,
+    editCourseStatusDataAPI,
+    deleteCourseStatusDataAPI,
+    exportCourseStatusDataAPI,
+    importCourseStatusDataAPI,
+
+
+
 
 } from "../../../service/api_helper";
 
@@ -340,6 +403,277 @@ function* instituteDepartmentImportDataSaga(action) {
         action.callback?.(null, error);
     }
 }
+// Bank Account For
+function* bankAccountForListSaga(action) {
+    try {
+        const response = yield call(getBankAccountForListDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* bankAccountForAddSaga(action) {
+    try {
+        const response = yield call(addBankAccountForDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* bankAccountForEditSaga(action) {
+    try {
+        const response = yield call(editBankAccountForDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* bankAccountForDeleteSaga(action) {
+    try {
+        const response = yield call(deleteBankAccountForDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* bankAccountForExportDataSaga(action) {
+    try {
+        const response = yield call(exportBankAccountForDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* bankAccountForImportDataSaga(action) {
+    try {
+        const response = yield call(importBankAccountForDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+// --- WHEN COMMISSION ISSUE SAGAS ---
+function* whenCommissionIssueListSaga(action) {
+    try {
+        const response = yield call(getWhenCommissionIssueListDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* whenCommissionIssueAddSaga(action) {
+    try {
+        const response = yield call(addWhenCommissionIssueDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* whenCommissionIssueEditSaga(action) {
+    try {
+        const response = yield call(editWhenCommissionIssueDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* whenCommissionIssueDeleteSaga(action) {
+    try {
+        const response = yield call(deleteWhenCommissionIssueDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* whenCommissionIssueExportDataSaga(action) {
+    try {
+        const response = yield call(exportWhenCommissionIssueDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* whenCommissionIssueImportDataSaga(action) {
+    try {
+        const response = yield call(importWhenCommissionIssueDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+// --- COURSE LEVEL CODE SAGAS ---
+function* courseLevelCodeListSaga(action) {
+    try {
+        const response = yield call(getCourseLevelCodeListDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* courseLevelCodeAddSaga(action) {
+    try {
+        const response = yield call(addCourseLevelCodeDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* courseLevelCodeEditSaga(action) {
+    try {
+        const response = yield call(editCourseLevelCodeDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* courseLevelCodeDeleteSaga(action) {
+    try {
+        const response = yield call(deleteCourseLevelCodeDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* courseLevelCodeExportDataSaga(action) {
+    try {
+        const response = yield call(exportCourseLevelCodeDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* courseLevelCodeImportDataSaga(action) {
+    try {
+        const response = yield call(importCourseLevelCodeDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+// --- COURSE DIVIDED IN SAGAS ---
+function* courseDividedInListSaga(action) {
+    try {
+        const response = yield call(getCourseDividedInListDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* courseDividedInAddSaga(action) {
+    try {
+        const response = yield call(addCourseDividedInDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* courseDividedInEditSaga(action) {
+    try {
+        const response = yield call(editCourseDividedInDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* courseDividedInDeleteSaga(action) {
+    try {
+        const response = yield call(deleteCourseDividedInDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* courseDividedInExportDataSaga(action) {
+    try {
+        const response = yield call(exportCourseDividedInDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* courseDividedInImportDataSaga(action) {
+    try {
+        const response = yield call(importCourseDividedInDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+// --- COURSE STATUS SAGAS ---
+function* courseStatusListSaga(action) {
+    try {
+        const response = yield call(getCourseStatusListDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* courseStatusAddSaga(action) {
+    try {
+        const response = yield call(addCourseStatusDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* courseStatusEditSaga(action) {
+    try {
+        const response = yield call(editCourseStatusDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* courseStatusDeleteSaga(action) {
+    try {
+        const response = yield call(deleteCourseStatusDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* courseStatusExportDataSaga(action) {
+    try {
+        const response = yield call(exportCourseStatusDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* courseStatusImportDataSaga(action) {
+    try {
+        const response = yield call(importCourseStatusDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
 
 
 
@@ -375,5 +709,39 @@ function* instituteMasterSaga() {
     yield takeEvery(DELETE_INSTITUTE_DEPARTMENT, instituteDepartmentDeleteSaga);
     yield takeEvery(EXPORT_INSTITUTE_DEPARTMENT, instituteDepartmentExportDataSaga);
     yield takeEvery(IMPORT_INSTITUTE_DEPARTMENT, instituteDepartmentImportDataSaga);
+    yield takeEvery(BANK_ACCOUNT_FOR_LIST, bankAccountForListSaga);
+    yield takeEvery(ADD_BANK_ACCOUNT_FOR, bankAccountForAddSaga);
+    yield takeEvery(EDIT_BANK_ACCOUNT_FOR, bankAccountForEditSaga);
+    yield takeEvery(DELETE_BANK_ACCOUNT_FOR, bankAccountForDeleteSaga);
+    yield takeEvery(EXPORT_BANK_ACCOUNT_FOR, bankAccountForExportDataSaga);
+    yield takeEvery(IMPORT_BANK_ACCOUNT_FOR, bankAccountForImportDataSaga);
+    yield takeEvery(WHEN_COMMISSION_ISSUE_LIST, whenCommissionIssueListSaga);
+    yield takeEvery(ADD_WHEN_COMMISSION_ISSUE, whenCommissionIssueAddSaga);
+    yield takeEvery(EDIT_WHEN_COMMISSION_ISSUE, whenCommissionIssueEditSaga);
+    yield takeEvery(DELETE_WHEN_COMMISSION_ISSUE, whenCommissionIssueDeleteSaga);
+    yield takeEvery(EXPORT_WHEN_COMMISSION_ISSUE, whenCommissionIssueExportDataSaga);
+    yield takeEvery(IMPORT_WHEN_COMMISSION_ISSUE, whenCommissionIssueImportDataSaga);
+    yield takeEvery(COURSE_LEVEL_CODE_LIST, courseLevelCodeListSaga);
+    yield takeEvery(ADD_COURSE_LEVEL_CODE, courseLevelCodeAddSaga);
+    yield takeEvery(EDIT_COURSE_LEVEL_CODE, courseLevelCodeEditSaga);
+    yield takeEvery(DELETE_COURSE_LEVEL_CODE, courseLevelCodeDeleteSaga);
+    yield takeEvery(EXPORT_COURSE_LEVEL_CODE, courseLevelCodeExportDataSaga);
+    yield takeEvery(IMPORT_COURSE_LEVEL_CODE, courseLevelCodeImportDataSaga);
+    yield takeEvery(COURSE_DIVIDED_IN_LIST, courseDividedInListSaga);
+    yield takeEvery(ADD_COURSE_DIVIDED_IN, courseDividedInAddSaga);
+    yield takeEvery(EDIT_COURSE_DIVIDED_IN, courseDividedInEditSaga);
+    yield takeEvery(DELETE_COURSE_DIVIDED_IN, courseDividedInDeleteSaga);
+    yield takeEvery(EXPORT_COURSE_DIVIDED_IN, courseDividedInExportDataSaga);
+    yield takeEvery(IMPORT_COURSE_DIVIDED_IN, courseDividedInImportDataSaga);
+    yield takeEvery(COURSE_STATUS_LIST, courseStatusListSaga);
+    yield takeEvery(ADD_COURSE_STATUS, courseStatusAddSaga);
+    yield takeEvery(EDIT_COURSE_STATUS, courseStatusEditSaga);
+    yield takeEvery(DELETE_COURSE_STATUS, courseStatusDeleteSaga);
+    yield takeEvery(EXPORT_COURSE_STATUS, courseStatusExportDataSaga);
+    yield takeEvery(IMPORT_COURSE_STATUS, courseStatusImportDataSaga);
+
+
+
+
 }
 export default instituteMasterSaga;
