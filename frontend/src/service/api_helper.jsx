@@ -2240,6 +2240,103 @@ export const importCourseStatusDataAPI = (payload) => {
     const apiUrl = `${url.IMPORT_COURSE_STATUS_API}`;
     return post(apiUrl, payload);
 };
+// Intake Name API
+export const getIntakeNameListDataAPI = (data) => {
+    const apiUrl = `${url.GET_INTAKE_NAME_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addIntakeNameDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_INTAKE_NAME_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editIntakeNameDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_INTAKE_NAME_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteIntakeNameDataAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_INTAKE_NAME_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportIntakeNameDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_INTAKE_NAME_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importIntakeNameDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_INTAKE_NAME_API}`;
+    return post(apiUrl, payload);
+};
+
+// Course Status for Intake API
+export const getCourseStatusIntakeListDataAPI = (data) => {
+    const apiUrl = `${url.GET_COURSE_STATUS_INTAKE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addCourseStatusIntakeDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_COURSE_STATUS_INTAKE_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editCourseStatusIntakeDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_COURSE_STATUS_INTAKE_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteCourseStatusIntakeDataAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_COURSE_STATUS_INTAKE_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportCourseStatusIntakeDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_COURSE_STATUS_INTAKE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importCourseStatusIntakeDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_COURSE_STATUS_INTAKE_API}`;
+    return post(apiUrl, payload);
+};
+// Scholarship Based On API
+export const getScholarshipBasedOnListDataAPI = (data) => {
+    const apiUrl = `${url.GET_SCHOLARSHIP_BASED_ON_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addScholarshipBasedOnDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_SCHOLARSHIP_BASED_ON_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editScholarshipBasedOnDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_SCHOLARSHIP_BASED_ON_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteScholarshipBasedOnDataAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_SCHOLARSHIP_BASED_ON_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportScholarshipBasedOnDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_SCHOLARSHIP_BASED_ON_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importScholarshipBasedOnDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_SCHOLARSHIP_BASED_ON_API}`;
+    return post(apiUrl, payload);
+};
+
+
+
 
 
 
