@@ -16832,3 +16832,55 @@ class DegreeAwardedInstituteImportAPIView(APIView):
             "imported_count": imported_count,
             "message": "Import successful"
         })
+
+
+
+
+
+class DegreeAwardedByEducationLevelAPIView(APIView):
+    def get(self, request):
+        # Get the uuid from the query parameters
+        uuid = request.GET.get('uuid')
+        
+        if not uuid:
+            return Response(
+                {
+                    "statuscode": 400,
+                    "status": "False",
+                    "message": "UUID parameter is required."
+                },
+                status=400
+            )
+
+        try:
+            degrees = DegreeAwardedBy.objects.filter(education_level__uuid=uuid)
+
+            if not degrees.exists():
+                return Response(
+                    {
+                        "statuscode": 404,
+                        "status": "False",
+                        "message": "No degrees found for the given Education Level."
+                    },
+                    status=404
+                )
+
+            serializer = DegreeAwardedBySerializer(degrees, many=True)
+            return Response(
+                {
+                    "statuscode": 200,
+                    "status": "True",
+                    "data": serializer.data
+                },
+                status=200
+            )
+
+        except Exception as e:
+            return Response(
+                {
+                    "statuscode": 500,
+                    "status": "False",
+                    "message": "An unexpected error occurred: " + str(e)
+                },
+                status=500
+            )

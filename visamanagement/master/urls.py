@@ -358,16 +358,15 @@ urlpatterns = [
     path('degree-awarded-institute/<uuid:uuid>/update/', DegreeAwardedInstituteUpdateAPIView.as_view(), name='degree_awarded_institute_update'),    path('degree-awarded-institute/delete/', DegreeAwardedInstituteDeleteAPIView.as_view(), name='degree_awarded_institute_delete_bulk'),
     path('degree-awarded-institute/export/', DegreeAwardedInstituteExportAPIView.as_view(), name='degree_awarded_institute_export'),
     path('degree-awarded-institute/import/', DegreeAwardedInstituteImportAPIView.as_view(), name='degree_awarded_institute_import'),
-
+    path('degrees-by-education-level/', DegreeAwardedByEducationLevelAPIView.as_view(), name='degrees-by-education-level'),
 
     path('language/create/', LanguageCreateAPIView.as_view(), name='language-create'),
     path('language/<uuid:uuid>/', LanguageRetrieveAPIView.as_view(), name='language-retrieve'),
     path('language/<uuid:uuid>/update', LanguageUpdateAPIView.as_view(), name='language-update'),
     path('language/delete/', LanguageDeleteAPIView.as_view(), name='language-delete'),
-    path('language/', LanguageListAPIView.as_view(), name='language-list'),
+    path('language/', LanguageListAPIView.as_view(), nme='language-list'),
     path('language/export/', LanguageExportAPIView.as_view(), name='language-export'),
     path('language/import/', LanguageImportAPIView.as_view(), name='language-import'),
-
 
     # ---------------- LanguageTest ---------------- #
     path('language-tests/', LanguageTestListAPIView.as_view(), name='language-test-list'),

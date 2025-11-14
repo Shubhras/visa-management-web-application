@@ -1643,7 +1643,7 @@ class CourseDurationSerializer(serializers.ModelSerializer):
 
     courselevel_id = serializers.SlugRelatedField(
         slug_field='uuid',
-        queryset=CourseLevel.objects.all(),
+        queryset=CourseLevelCode.objects.all(),
         source='courselevel',
         write_only=True,
         allow_null=False,
