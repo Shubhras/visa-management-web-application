@@ -16675,7 +16675,7 @@ class DegreeAwardedInstituteExportAPIView(APIView):
                 elif field == 'country' and obj.country:
                     value = obj.country.name
                 elif field == 'state' and obj.state:
-                    value = storeName
+                    value = obj.state.stateName
                 elif field == 'education_level' and obj.education_level:
                     value = obj.education_level.educationlevel
                 elif field == 'degree_awarded_by' and obj.degree_awarded_by:
