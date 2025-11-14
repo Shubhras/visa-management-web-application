@@ -416,6 +416,7 @@ import CourseStatusList from "./pages/masters/instituteMaster/courseStatus/Cours
 import IntakeNameList from "./pages/masters/instituteMaster/intakeName/IntakeNameList";
 import CourseStatusforIntakeList from "./pages/masters/instituteMaster/courseStatusforIntake/CourseStatusforIntakeList";
 import ScholorshipBasedOnList from "./pages/masters/instituteMaster/scholorshipBasedOn/ScholorshipBasedOnList";
+import CourseLevelList from "./pages/masters/instituteMaster/courseLevel/CourseLevelList";
 
 
 
@@ -724,6 +725,7 @@ function App() {
         <Route path="/intake-name" element={<ProtectedRoute><IntakeNameList /></ProtectedRoute>}></Route>
         <Route path="/course-status-for-intake" element={<ProtectedRoute><CourseStatusforIntakeList /></ProtectedRoute>}></Route>
         <Route path="/scholorship-based-on" element={<ProtectedRoute><ScholorshipBasedOnList /></ProtectedRoute>}></Route>
+        <Route path="/course-level" element={<ProtectedRoute><CourseLevelList/></ProtectedRoute>}></Route>
 
 
 

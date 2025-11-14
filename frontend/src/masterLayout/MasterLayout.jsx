@@ -163,6 +163,7 @@ const MasterLayout = ({ children }) => {
             { name: 'Intake Name', path: '/intake-name' },
             { name: 'Course Status for Intake', path: '/course-status-for-intake' },
             { name: 'Scholorship Based On', path: '/scholorship-based-on' },
+            { name: 'Course Level', path: '/course-level' },
           ]
         },
 

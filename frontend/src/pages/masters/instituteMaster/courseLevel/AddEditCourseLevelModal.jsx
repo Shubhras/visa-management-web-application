@@ -87,6 +87,11 @@ const AddEditCourseLevelModal = ({ show, handleClose, mode = 'add', rowData = nu
             newErrors.courseLevel = 'Course level is required';
             isValid = false;
         }
+        if (!formData.courseLevelCode) {
+            newErrors.courseLevelCode = 'Course level code is required';
+            isValid = false;
+
+        }
 
         setErrors(newErrors);
         return isValid;
@@ -101,10 +106,12 @@ const AddEditCourseLevelModal = ({ show, handleClose, mode = 'add', rowData = nu
                 ? {
                     uuid: formData.uuid,
                     name: formData.courseLevel,
+                    courselevelcode_id: formData.courseLevelCode,
                     description: formData.description,
                 }
                 : {
                     name: formData.courseLevel,
+                    courselevelcode_id: formData.courseLevelCode,
                     description: formData.description,
                 };
 
@@ -204,33 +211,33 @@ const AddEditCourseLevelModal = ({ show, handleClose, mode = 'add', rowData = nu
                                             label: option.name,
                                         }))}
                                         value={
-                                            formData.country
+                                            formData.courseLevelCode
                                                 ? courseLevelCode
                                                     .map((option) => ({
                                                         value: option.uuid,
                                                         label: option.name,
                                                     }))
-                                                    .find((opt) => opt.value === formData.country)
+                                                    .find((opt) => opt.value === formData.courseLevelCode)
                                                 : null
                                         }
                                         onChange={(selectedOption) =>
                                             handleChange({
                                                 target: {
-                                                    name: "country",
+                                                    name: "courseLevelCode",
                                                     value: selectedOption ? selectedOption.value : "",
                                                 },
                                             })
                                         }
-                                        placeholder="Select country"
+                                        placeholder="Select courseLevelCode"
                                         isClearable
                                         isSearchable
-                                        className={`custom-select-container ${errors.country ? "is-invalid" : ""
+                                        className={`custom-select-container ${errors.courseLevelCode ? "is-invalid" : ""
                                             }`}
                                         classNamePrefix="custom-select"
                                     />
-                                    {errors.courseLevel && (
+                                    {errors.courseLevelCode && (
                                         <div className="text-danger text-sm mt-1">
-                                            {errors.courseLevel}
+                                            {errors.courseLevelCode}
                                         </div>
                                     )}
                                 </div>
