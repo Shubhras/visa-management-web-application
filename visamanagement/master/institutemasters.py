@@ -5351,6 +5351,9 @@ class CourseLevelImportAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+
+
+
 class CourseDurationListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 

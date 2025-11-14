@@ -234,8 +234,8 @@ class LanguageListAPIView(APIView):
         queryset = Language.objects.filter(is_deleted=False)  
         if search:
             queryset = queryset.filter(
-                Q(name__icontains=search) |
-                Q(description__icontains=search)
+                Q(name__istartswith=search) |
+                Q(description__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -470,9 +470,9 @@ class LanguageTestListAPIView(APIView):
         queryset = LanguageTest.objects.filter(is_deleted=False)
         if search:
             queryset = queryset.filter(
-                Q(name__icontains=search) |
-                Q(fullname__icontains=search) |
-                Q(description__icontains=search)
+                Q(name__istartswith=search) |
+                Q(fullname__istartswith=search) |
+                Q(description__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -895,8 +895,8 @@ class LanguagetestmoduleNameListAPIView(APIView):
         queryset = LanguagetestmoduleName.objects.filter(is_deleted=False)
         if search:
             queryset = queryset.filter(
-                Q(name__icontains=search) |
-                Q(description__icontains=search)
+                Q(name__istartswith=search) |
+                Q(description__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -1245,8 +1245,8 @@ class CLBLevelListAPIView(APIView):
         queryset = CLBLevel.objects.filter(is_deleted=False)
         if search:
             queryset = queryset.filter(
-                Q(name__icontains=search) |
-                Q(description__icontains=search)
+                Q(name__istartswith=search) |
+                Q(description__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -1573,8 +1573,8 @@ class StudyLanguageBanchmarkListAPIView(APIView):
         queryset = StudyLanguageBanchmark.objects.filter(is_deleted=False)
         if search:
             queryset = queryset.filter(
-                Q(name__icontains=search) |
-                Q(description__icontains=search)
+                Q(name__istartswith=search) |
+                Q(description__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -1881,9 +1881,9 @@ class EntranceTestNameListAPIView(APIView):
         queryset = EntranceTestName.objects.filter(is_deleted=False)
         if search:
             queryset = queryset.filter(
-                Q(fullname__icontains=search) |
-                Q(shortname__icontains=search) |
-                Q(description__icontains=search)
+                Q(fullname__istartswith=search) |
+                Q(shortname__istartswith=search) |
+                Q(description__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -2192,8 +2192,8 @@ class EntranceTestModuleNameListAPIView(APIView):
         queryset = EntranceTestModuleName.objects.filter(is_deleted=False)
         if search:
             queryset = queryset.filter(
-                Q(moduleName__icontains=search) |
-                Q(description__icontains=search)
+                Q(moduleName__istartswith=search) |
+                Q(description__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -2476,10 +2476,10 @@ class EntranceTestResultListAPIView(APIView):
         queryset = EntranceTestResult.objects.filter(is_deleted=False)
         if search:
             queryset = queryset.filter(
-                Q(testresult__icontains=search) |
-                Q(description__icontains=search) |
-                Q(entrancetest__fullname__icontains=search) |
-                Q(moduleName__moduleName__icontains=search)
+                Q(testresult__istartswith=search) |
+                Q(description__istartswith=search) |
+                Q(entrancetest__fullname__istartswith=search) |
+                Q(moduleName__moduleName__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)

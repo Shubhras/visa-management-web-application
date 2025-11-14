@@ -889,6 +889,8 @@ class OccupationVersion(models.Model):
     def __str__(self):
         return self.occupation_version
     
+
+    
 class OccupationCategory(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
@@ -980,9 +982,6 @@ class OccupationName(models.Model):
     
     def __str__(self):
         return self.occupationname
-
-
-
 
 
 
@@ -1081,7 +1080,7 @@ class OccupationToOccupation(models.Model):
     class Meta:
         unique_together = ('occupationcode', 'country','occupationversion')
     def __str__(self):
-        return self.icontains
+        return self.country
 
 
 
