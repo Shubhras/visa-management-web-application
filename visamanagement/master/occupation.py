@@ -1799,11 +1799,11 @@ class OccupationLevelCodeCreateAPIView(APIView):
 
         # Check duplicate
         existing = OccupationLevelCode.objects.filter(
-            country=country_obj,
-            occupation_version=occupation_version_obj,
-            occupationlevelcode__iexact=occupationlevelcode,
-            is_deleted=False
-        ).first()
+                country=country_obj,
+                occupationversion=occupation_version_obj,  # ✅ Correct
+                occupationlevelcode__iexact=occupationlevelcode,
+                is_deleted=False
+            ).first()
 
         if existing:
             return Response({
@@ -1817,6 +1817,7 @@ class OccupationLevelCodeCreateAPIView(APIView):
             data['country_id'] = country_obj.uuid
         if occupation_version_obj:
             data['occupation_version_id'] = occupation_version_obj.uuid
+
 
         serializer = OccupationLevelCodeSerializer(data=data)
         if serializer.is_valid():

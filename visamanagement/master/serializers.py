@@ -1030,7 +1030,8 @@ class OccupationLevelCodeSerializer(serializers.ModelSerializer):
         required=False
     )
 
-    occupation_version = serializers.CharField(read_only=True, source='occupation_version.occupation_version')
+    occupation_version = serializers.CharField(read_only=True, source='occupationversion.occupation_version')
+
     occupation_version_id = serializers.SlugRelatedField(
         slug_field='uuid',
         queryset=OccupationVersion.objects.all(),
