@@ -1021,13 +1021,14 @@ class OccupationCategorySerializer(serializers.ModelSerializer):
 
 
 class OccupationLevelCodeSerializer(serializers.ModelSerializer):
-    country_name= serializers.SlugRelatedField(
+    country = serializers.CharField(read_only=True, source='country.name')
+    
+    # Country (write)
+    country_id = serializers.SlugRelatedField(
         slug_field='uuid',
         queryset=Country.objects.all(),
         source='country',
-        write_only=True,
-        allow_null=True,
-        required=False
+        write_only=True
     )
 
     occupation_version = serializers.CharField(read_only=True, source='occupationversion.occupation_version')
