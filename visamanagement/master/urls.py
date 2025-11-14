@@ -364,7 +364,7 @@ urlpatterns = [
     path('language/<uuid:uuid>/', LanguageRetrieveAPIView.as_view(), name='language-retrieve'),
     path('language/<uuid:uuid>/update', LanguageUpdateAPIView.as_view(), name='language-update'),
     path('language/delete/', LanguageDeleteAPIView.as_view(), name='language-delete'),
-    path('language/', LanguageListAPIView.as_view(), nme='language-list'),
+    path('language/', LanguageListAPIView.as_view(), name='language-list'),
     path('language/export/', LanguageExportAPIView.as_view(), name='language-export'),
     path('language/import/', LanguageImportAPIView.as_view(), name='language-import'),
 
