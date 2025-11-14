@@ -1063,6 +1063,25 @@ class RelatedOccupation(models.Model):
 
     
 
+class OccupationToOccupation(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    country = models.ForeignKey('Country',on_delete=models.SET_NULL,null=True,blank=True,related_name='Occupation_Occupation')
+    occupationversion =models.ForeignKey('OccupationVersion',on_delete=models.SET_NULL,null=True,blank=True,related_name='Occupation_Occupation')
+    occupationcode =models.ForeignKey('OccupationCode',on_delete=models.SET_NULL,null=True,blank=True,related_name='Occupation_Occupation')
+    occupationname =models.ForeignKey('OccupationName',on_delete=models.SET_NULL,null=True,blank=True,related_name='Occupation_Occupation')
+    comparecountry = models.ForeignKey('Country',on_delete=models.SET_NULL,null=True,blank=True,related_name='Occupation_Occupation')
+    compareoccupationversion =models.ForeignKey('OccupationVersion',on_delete=models.SET_NULL,null=True,blank=True,related_name='Occupation_Occupation')
+    compareoccupationcode =models.ForeignKey('OccupationCode',on_delete=models.SET_NULL,null=True,blank=True,related_name='Occupation_Occupation')
+    compareoccupationname =models.ForeignKey('OccupationName',on_delete=models.SET_NULL,null=True,blank=True,related_name='Occupation_Occupation')
+    description =  models.TextField(max_length=255,blank=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    class Meta:
+        unique_together = ('occupationcode', 'country','occupationversion')
+    def __str__(self):
+        return self.icontains
 
 
 

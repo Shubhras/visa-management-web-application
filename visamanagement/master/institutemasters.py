@@ -5566,8 +5566,8 @@ class CourseDurationExportAPIView(APIView):
         field_header_map = {
             'uuid': 'UUID',
             'courselevel': 'Course Level',
-            'valid_duration_value': 'Duration Value',
-            'valid_duration_unit': 'Duration Unit',
+            'valid_duration_value': 'Course Duration Value',
+            'valid_duration_unit': 'Course Duration Unit',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'created_at': 'Created On',
@@ -5630,7 +5630,7 @@ class CourseDurationImportAPIView(APIView):
         format_type = file.name.split('.')[-1].lower()
         duplicate_entries = []
         skipped_rows = []
-        required_headers = {'courselevel', 'valid_duration_value', 'valid_duration_unit', 'start date'}
+        required_headers = {'courselevel', 'course duration value', 'course duration unit', 'start date'}
         optional_headers = {'end date', 'description'}
 
         try:
@@ -5674,8 +5674,8 @@ class CourseDurationImportAPIView(APIView):
             imported_count = 0
             for row_number, row in data:
                 courselevel_name = str(row.get('courselevel')).strip() if row.get('courselevel') else None
-                valid_duration_value = row.get('valid_duration_value')
-                valid_duration_unit = row.get('valid_duration_unit')
+                valid_duration_value = row.get('course duration value')
+                valid_duration_unit = row.get('course duration unit')
                 description = row.get('description', '')
                 effect_from_str = row.get('start date')
                 valid_upto_str = row.get('end date', None)
@@ -5752,4 +5752,10 @@ class CourseDurationImportAPIView(APIView):
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=200)
+
+
+
+
+
+
 
