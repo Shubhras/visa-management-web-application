@@ -5396,6 +5396,16 @@ class CourseDurationCreateAPIView(APIView):
                 "message": "Mandatory fields missing: courselevel_id, valid_duration_value, valid_duration_unit"
             }, status=400)
 
+        # Validate courselevel_uuid format
+        try:
+            courselevel_uuid = uuid.UUID(courselevel_uuid)  # Check if it's a valid UUID
+        except ValueError:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Invalid courselevel_id format."
+            }, status=400)
+
         # Validate numeric value
         try:
             valid_duration_value = int(valid_duration_value)
@@ -5417,13 +5427,12 @@ class CourseDurationCreateAPIView(APIView):
         # Validate course level
         try:
             courselevel_obj = CourseLevelCode.objects.get(uuid=courselevel_uuid)
-        except CourseLevel.DoesNotExist:
+        except CourseLevelCode.DoesNotExist:
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Invalid courselevel_id."
+                "message": "Invalid courselevel_id. No matching CourseLevelCode found."
             }, status=400)
-
 
         data = request.data.copy()
         data['courselevel_id'] = courselevel_obj.uuid
@@ -5444,7 +5453,6 @@ class CourseDurationCreateAPIView(APIView):
             "status": False,
             "message": errors
         }, status=400)
-
 
 # -------------------- Retrieve -------------------- #
 class CourseDurationRetrieveAPIView(APIView):
