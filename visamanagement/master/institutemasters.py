@@ -5193,7 +5193,7 @@ class CourseLevelExportAPIView(APIView):
             row = []
             for field in field_list:
                 if field == 'courselevelcode':
-                    value = obj.courselevelcode.code if obj.courselevelcode else ''
+                    value = obj.courselevelcode.name if obj.courselevelcode else ''
                 else:
                     value = getattr(obj, field, '')
                     if field in ['created_at', 'updated_at'] and value:
