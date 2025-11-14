@@ -558,10 +558,10 @@ class LanguageTestUpdateAPIView(APIView):
             }, status=status.HTTP_404_NOT_FOUND)
 
         language_uuid = request.data.get('language')
+        language_instance = None
         if language_uuid:
             try:
-                language = Language.objects.get(uuid=language_uuid, is_deleted=False)
-                request.data['language'] = language.id  # assign FK
+                language_instance = Language.objects.get(uuid=language_uuid, is_deleted=False)
             except Language.DoesNotExist:
                 return Response({
                     "statusCode": 404,
@@ -569,9 +569,9 @@ class LanguageTestUpdateAPIView(APIView):
                     "message": "Language not found."
                 }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = LanguageTestSerializer(obj, data=request.data)
+        serializer = LanguageTestSerializer(obj, data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(language=language_instance)  # <-- assign FK here
             return Response({
                 "statusCode": 200,
                 "status": True,
@@ -584,6 +584,10 @@ class LanguageTestUpdateAPIView(APIView):
             "status": False,
             "message": " ".join([m for msgs in serializer.errors.values() for m in msgs])
         }, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
 
 class LanguageTestDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -1691,7 +1695,7 @@ class StudyLanguageBenchmarkExportAPIView(APIView):
         # Prepare dataset
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'Study Language Benchmark'
+        dataset.title = 'Language Benchmark Level'
 
         for obj in queryset:
             row = []
@@ -1989,7 +1993,7 @@ class EntranceTestNameExportAPIView(APIView):
         field_header_map = {
             'uuid': 'UUID',
             'fullname': 'Entrance Test Full Name',
-            'shortname': 'Entrance Test Short Name',
+            'shortname': 'Entrance Test Name',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'created_at': 'Created On',
@@ -2293,7 +2297,7 @@ class EntranceTestModuleExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'entrancetest': 'Entrance Test Short Name',
+            'entrancetest': 'Entrance Test Name',
             'moduleName': 'Entrance Test Module Name',
             'description': 'Description',
             'is_deleted': 'Deleted',
@@ -2358,7 +2362,7 @@ class EntranceTestModuleImportAPIView(APIView):
 
         format_type = file.name.split('.')[-1].lower()
         duplicate_entries = []
-        required_headers = {'entrance test short name', 'entrance test module name'}
+        required_headers = {'entrance test name', 'entrance test module name'}
         optional_headers = {'description'}
 
         try:
@@ -2407,7 +2411,7 @@ class EntranceTestModuleImportAPIView(APIView):
             imported_count = 0
 
             for row in data:
-                entrancetest_name = str(row.get('entrance test short name')).strip() if row.get('entrance test short name') else None
+                entrancetest_name = str(row.get('entrance test name')).strip() if row.get('entrance test name') else None
                 module_name = str(row.get('entrance test module name')).strip() if row.get('module name') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 

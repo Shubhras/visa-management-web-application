@@ -16675,7 +16675,7 @@ class DegreeAwardedInstituteExportAPIView(APIView):
                 elif field == 'country' and obj.country:
                     value = obj.country.name
                 elif field == 'state' and obj.state:
-                    value = obj.state.storeName
+                    value = obj.state.stateName
                 elif field == 'education_level' and obj.education_level:
                     value = obj.education_level.educationlevel
                 elif field == 'degree_awarded_by' and obj.degree_awarded_by:
@@ -16801,13 +16801,20 @@ class DegreeAwardedInstituteImportAPIView(APIView):
 
                 # Map Country, State, Education Level
                 country = Country.objects.filter(name__iexact=country_name).first() if country_name else None
-                state = State.objects.filter(name__iexact=state_name).first() if state_name else None
+                state = State.objects.filter(stateName__iexact=state_name).first() if state_name else None
                 education_level = EducationLevel.objects.filter(name__iexact=education_level_name).first() if education_level_name else None
 
                 # Check duplicate
                 existing = DegreeAwardedInstitute.objects.filter(name__iexact=name, degree_awarded_by=degree_awarded_by).first()
                 if existing:
-                    duplicate_names.append(name)
+                    duplicate_names.append({
+                        'name': name,
+                        'Degree Awarded By': degree_awarded_by_name,
+                        'Country': country_name,
+                        'State': state_name,
+                        'Education Level': education_level_name,
+                        'Reason': 'Duplicate entry found'
+                    })
                     continue
 
                 # Create record
@@ -16827,8 +16834,58 @@ class DegreeAwardedInstituteImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_names)),
+            "duplicates": duplicate_names,  
             "skipped_rows": skipped_rows,
             "imported_count": imported_count,
             "message": "Import successful"
         })
+
+
+
+class DegreeAwardedByEducationLevelAPIView(APIView):
+    def get(self, request):
+        # Get the uuid from the query parameters
+        uuid = request.GET.get('uuid')
+        
+        if not uuid:
+            return Response(
+                {
+                    "statuscode": 400,
+                    "status": False,
+                    "message": "UUID parameter is required."
+                },
+                status=400
+            )
+
+        try:
+            degrees = DegreeAwardedBy.objects.filter(education_level__uuid=uuid)
+
+            if not degrees.exists():
+                return Response(
+                    {
+                        "statuscode": 404,
+                        "status": False,
+                        "message": "No degrees found for the given Education Level."
+                    },
+                    status=404
+                )
+
+            serializer = DegreeAwardedBySerializer(degrees, many=True)
+            return Response(
+                {
+                    "statuscode": 200,
+                    "status": True,
+                    "data": serializer.data
+                },
+                status=200
+            )
+
+        except Exception as e:
+            return Response(
+                {
+                    "statuscode": 500,
+                    "status": False,
+                    "message": "An unexpected error occurred: " + str(e)
+                },
+                status=500
+            )

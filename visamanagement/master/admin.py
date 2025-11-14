@@ -383,3 +383,187 @@ class OccupationProspectAdmin(admin.ModelAdmin):
     search_fields = ('uuid', 'name')
     list_filter = ('is_deleted',)
     readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(WorkRights)
+class WorkRightsAdmin(admin.ModelAdmin):
+    list_display = ('uuid', 'name', 'is_deleted')
+    search_fields = ('uuid', 'name')
+    list_filter = ('is_deleted',)
+    readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(WorkRightsDuringStudy)
+class WorkRightsDuringStudyAdmin(admin.ModelAdmin):
+    list_display = ('uuid', 'name', 'is_deleted')
+    search_fields = ('uuid', 'name')
+    list_filter = ('is_deleted',)
+    readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(WorkRightsDuringVacation)
+class WorkRightsDuringVacationAdmin(admin.ModelAdmin):
+    list_display = ('uuid', 'name', 'is_deleted')
+    search_fields = ('uuid', 'name')
+    list_filter = ('is_deleted',)
+    readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(WorkRightsAfterStudy)
+class WorkRightsAfterStudyAdmin(admin.ModelAdmin):
+    list_display = ('uuid', 'name', 'is_deleted')
+    search_fields = ('uuid', 'name')
+    list_filter = ('is_deleted',)
+    readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(PRPossibility)
+class PRPossibilityAdmin(admin.ModelAdmin):
+    list_display = ('uuid', 'name', 'is_deleted')
+    search_fields = ('uuid', 'name')
+    list_filter = ('is_deleted',)
+    readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(SpouseCanApplywithCandidate)
+class SpouseCanApplywithCandidateAdmin(admin.ModelAdmin):
+    list_display = ('uuid', 'name', 'is_deleted')
+    search_fields = ('uuid', 'name')
+    list_filter = ('is_deleted',)
+    readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(SpouseVisaCategory)
+class SpouseVisaCategoryAdmin(admin.ModelAdmin):
+    list_display = ('uuid', 'name', 'is_deleted')
+    search_fields = ('uuid', 'name')
+    list_filter = ('is_deleted',)
+    readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(SpouseWorkRights)
+class SpouseWorkRightsAdmin(admin.ModelAdmin):
+    list_display = ('uuid', 'name', 'is_deleted')
+    search_fields = ('uuid', 'name')
+    list_filter = ('is_deleted',)
+    readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(ChildrenCanApplywithCandidate)
+class ChildrenCanApplywithCandidateAdmin(admin.ModelAdmin):
+    list_display = ('uuid', 'name', 'is_deleted')
+    search_fields = ('uuid', 'name')
+    list_filter = ('is_deleted',)
+    readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(ChildrenVisaCategory)
+class ChildrenVisaCategoryAdmin(admin.ModelAdmin):
+    list_display = ('uuid', 'name', 'is_deleted')
+    search_fields = ('uuid', 'name')
+    list_filter = ('is_deleted',)
+    readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(ChildrenStudyWorkRights)
+class ChildrenStudyWorkRightsAdmin(admin.ModelAdmin):
+    list_display = ('uuid', 'name', 'is_deleted')
+    search_fields = ('uuid', 'name')
+    list_filter = ('is_deleted',)
+    readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(InstituteType)
+class InstituteTypeAdmin(admin.ModelAdmin):
+    list_display = ('uuid', 'name', 'is_deleted')
+    search_fields = ('uuid', 'name')
+    list_filter = ('is_deleted',)
+    readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(InstituteGroupName)
+class InstituteGroupNameAdmin(admin.ModelAdmin):
+    list_display = ('uuid', 'name', 'is_deleted')
+    search_fields = ('uuid', 'name')
+    list_filter = ('is_deleted',)
+    readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(InstituteStatus)
+class InstituteStatusAdmin(admin.ModelAdmin):
+    list_display = ('uuid', 'name', 'is_deleted')
+    search_fields = ('uuid', 'name')
+    list_filter = ('is_deleted',)
+    readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(InstitutePriority)
+class InstitutePriorityAdmin(admin.ModelAdmin):
+    list_display = ('uuid', 'name', 'is_deleted')
+    search_fields = ('uuid', 'name')
+    list_filter = ('is_deleted',)
+    readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(InstituteDepartment)
+class InstituteDepartmentAdmin(admin.ModelAdmin):
+    list_display = ('uuid', 'name', 'is_deleted')
+    search_fields = ('uuid', 'name')
+    list_filter = ('is_deleted',)
+    readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(BankAccountFor)
+class BankAccountForAdmin(admin.ModelAdmin):
+    list_display = ('uuid', 'name', 'is_deleted')
+    search_fields = ('uuid', 'name')
+    list_filter = ('is_deleted',)
+    readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(WhenCommissionIssue)
+class WhenCommissionIssueAdmin(admin.ModelAdmin):
+    list_display = ('uuid', 'name', 'is_deleted')
+    search_fields = ('uuid', 'name')
+    list_filter = ('is_deleted',)
+    readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(CourseLevelCode)
+class CourseLevelCodeAdmin(admin.ModelAdmin):
+    list_display = ('uuid', 'name', 'is_deleted')
+    search_fields = ('uuid', 'name')
+    list_filter = ('is_deleted',)
+    readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(CourseLevel)
+class CourseLevelAdmin(admin.ModelAdmin):
+    list_display = ('uuid', 'name', 'courselevelcode', 'is_deleted')
+    search_fields = ('uuid', 'name', 'courselevelcode__name')
+    list_filter = ('is_deleted',)
+    readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(CourseDuration)
+class CourseDurationAdmin(admin.ModelAdmin):
+    list_display = ('uuid', 'courselevel', 'valid_duration_value', 'valid_duration_unit', 'is_deleted')
+    search_fields = ('uuid', 'courselevel__name')
+    list_filter = ('is_deleted', 'valid_duration_unit')
+    readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(CourseDividedIn)
+class CourseDividedInAdmin(admin.ModelAdmin):
+    list_display = ('uuid', 'name', 'is_deleted')
+    search_fields = ('uuid', 'name')
+    list_filter = ('is_deleted',)
+    readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(CourseStatus)
+class CourseStatusAdmin(admin.ModelAdmin):
+    list_display = ('uuid', 'name', 'is_deleted')
+    search_fields = ('uuid', 'name')
+    list_filter = ('is_deleted',)
+    readonly_fields = ('created_at', 'updated_at')

@@ -5193,7 +5193,7 @@ class CourseLevelExportAPIView(APIView):
             row = []
             for field in field_list:
                 if field == 'courselevelcode':
-                    value = obj.courselevelcode.code if obj.courselevelcode else ''
+                    value = obj.courselevelcode.name if obj.courselevelcode else ''
                 else:
                     value = getattr(obj, field, '')
                     if field in ['created_at', 'updated_at'] and value:
@@ -5235,8 +5235,8 @@ class CourseLevelImportAPIView(APIView):
         format_type = file.name.split(".")[-1].lower()
         duplicates = []
         skipped_rows = []
-        required_headers = {"name"}
-        optional_headers = {"description", "courselevelcode"}
+        required_headers = {"course level"}
+        optional_headers = {"description", "course level code"}
 
         try:
             data = []
@@ -5291,9 +5291,9 @@ class CourseLevelImportAPIView(APIView):
 
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("name")).strip() if row.get("name") else None
+                name = str(row.get("course level")).strip() if row.get("course level") else None
                 description = str(row.get("description")).strip() if row.get("description") else ""
-                courselevelcode_name = str(row.get("courselevelcode")).strip() if row.get("courselevelcode") else None
+                courselevelcode_name = str(row.get("course level code")).strip() if row.get("course level code") else None
 
                 if not name:
                     skipped_rows.append({"Row": row_number, "Reason": "Missing course level name"})
@@ -5301,7 +5301,7 @@ class CourseLevelImportAPIView(APIView):
 
                 courselevelcode = None
                 if courselevelcode_name:
-                    courselevelcode = CourseLevelCode.objects.filter(code__iexact=courselevelcode_name).first()
+                    courselevelcode = CourseLevelCode.objects.filter(name__iexact=courselevelcode_name).first()
                     if not courselevelcode:
                         skipped_rows.append({
                             "Row": row_number,
@@ -5396,6 +5396,16 @@ class CourseDurationCreateAPIView(APIView):
                 "message": "Mandatory fields missing: courselevel_id, valid_duration_value, valid_duration_unit"
             }, status=400)
 
+        # Validate courselevel_uuid format
+        try:
+            courselevel_uuid = uuid.UUID(courselevel_uuid)  # Check if it's a valid UUID
+        except ValueError:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Invalid courselevel_id format."
+            }, status=400)
+
         # Validate numeric value
         try:
             valid_duration_value = int(valid_duration_value)
@@ -5417,11 +5427,11 @@ class CourseDurationCreateAPIView(APIView):
         # Validate course level
         try:
             courselevel_obj = CourseLevel.objects.get(uuid=courselevel_uuid)
-        except CourseLevel.DoesNotExist:
+        except CourseLevelCode.DoesNotExist:
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Invalid courselevel_id."
+                "message": "Invalid courselevel_id. No matching CourseLevelCode found."
             }, status=400)
 
         data = request.data.copy()
@@ -5443,7 +5453,6 @@ class CourseDurationCreateAPIView(APIView):
             "status": False,
             "message": errors
         }, status=400)
-
 
 # -------------------- Retrieve -------------------- #
 class CourseDurationRetrieveAPIView(APIView):
@@ -5557,8 +5566,8 @@ class CourseDurationExportAPIView(APIView):
         field_header_map = {
             'uuid': 'UUID',
             'courselevel': 'Course Level',
-            'valid_duration_value': 'Duration Value',
-            'valid_duration_unit': 'Duration Unit',
+            'valid_duration_value': 'Course Duration Value',
+            'valid_duration_unit': 'Course Duration Unit',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'created_at': 'Created On',
@@ -5621,7 +5630,7 @@ class CourseDurationImportAPIView(APIView):
         format_type = file.name.split('.')[-1].lower()
         duplicate_entries = []
         skipped_rows = []
-        required_headers = {'courselevel', 'valid_duration_value', 'valid_duration_unit', 'start date'}
+        required_headers = {'courselevel', 'course duration value', 'course duration unit', 'start date'}
         optional_headers = {'end date', 'description'}
 
         try:
@@ -5665,8 +5674,8 @@ class CourseDurationImportAPIView(APIView):
             imported_count = 0
             for row_number, row in data:
                 courselevel_name = str(row.get('courselevel')).strip() if row.get('courselevel') else None
-                valid_duration_value = row.get('valid_duration_value')
-                valid_duration_unit = row.get('valid_duration_unit')
+                valid_duration_value = row.get('course duration value')
+                valid_duration_unit = row.get('course duration unit')
                 description = row.get('description', '')
                 effect_from_str = row.get('start date')
                 valid_upto_str = row.get('end date', None)
@@ -5743,4 +5752,10 @@ class CourseDurationImportAPIView(APIView):
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=200)
+
+
+
+
+
+
 
