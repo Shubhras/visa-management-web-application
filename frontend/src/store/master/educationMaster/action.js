@@ -60,6 +60,7 @@ import {
     DELETE_ACADEMIC_RESULT,
     EXPORT_ACADEMIC_RESULT,
     IMPORT_ACADEMIC_RESULT,
+    ACADEMIC_RESULT_LIST_BY_ACADEMIC_TYPE,
     DEGREE_AWARDED_INSTITUTE_LIST,
     ADD_DEGREE_AWARDED_INSTITUTE,
     EDIT_DEGREE_AWARDED_INSTITUTE,
@@ -458,6 +459,11 @@ export const academicResultExportData = (data, callback) => ({
 
 export const academicResultImportData = (data, callback) => ({
     type: IMPORT_ACADEMIC_RESULT,
+    data,
+    callback,
+});
+export const academicResultListByAcademicType = (data, callback) => ({
+    type: ACADEMIC_RESULT_LIST_BY_ACADEMIC_TYPE,
     data,
     callback,
 });

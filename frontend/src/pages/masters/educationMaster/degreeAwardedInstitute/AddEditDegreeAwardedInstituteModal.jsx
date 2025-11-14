@@ -1,20 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from "react-redux";
-import { degreeAwardedInstituteAdd, degreeAwardedInstituteEdit } from '../../../../store/master/educationMaster/action';
+import { academicResultListByAcademicType, degreeAwardedInstituteAdd, degreeAwardedInstituteEdit } from '../../../../store/master/educationMaster/action';
 import { toast } from "react-toastify";
-import { educationLevelList, degreeAwardedByList } from "../../../../store/master/educationMaster/action";
+import { educationLevelList } from "../../../../store/master/educationMaster/action";
 import { countryDemoList } from '../../../../store/master/companyMasters/actions';
 import { stateListByCountry } from '../../../../store/master/generalMasters/actions';
 import Select from "react-select";
+
 const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
-    const [studyMajorArea, setStudyMajorArea] = useState([]);
+    const [educationLevelListData, setEducationLevelListData] = useState([]);
     const [countryListData, setCountryListData] = useState([]);
     const [stateListData, setStateListData] = useState([]);
     const [degreeAwardedBy, setDegreeAwardedBy] = useState([]);
 
-    // console.log("rowData",rowData);
     const [formData, setFormData] = useState({
         uuid: "",
         countryUuid: "",
@@ -35,64 +35,81 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
     });
 
     useEffect(() => {
-        if (mode === 'edit' && rowData) {
-            setFormData({
-                uuid: rowData.uuid || '',
-                countryUuid: rowData.country || "",
-                stateUuid: rowData.stateUuid || "",
-                educationLevelUuid: rowData.education_level || "",
-                degreeAwardedBy: rowData.degreeAwardedBy || "",
-                degreeAwardedInstitute: rowData.degreeAwardedInstitute || "",
-                description: rowData.description || "",
-
-            });
-            if (rowData.countryUuid) {
-                fetchStateList(rowData.countryUuid);
+        if (show) {
+            if (mode === 'edit' && rowData) {
+                setFormData({
+                    uuid: rowData.uuid || '',
+                    countryUuid: rowData.country_uuid || "",
+                    stateUuid: rowData.state_uuid || "",
+                    educationLevelUuid: rowData.education_level_uuid || "",
+                    degreeAwardedBy: rowData.degree_awarded_by_uuid || "",
+                    degreeAwardedInstitute: rowData.name || "",
+                    description: rowData.description || "",
+                });
+                if (rowData.country_uuid) {
+                    fetchStateList(rowData.country_uuid);
+                }
+                if (rowData.education_level_uuid) {
+                    fetchDegreeAwardedByList(rowData.education_level_uuid);
+                }
+            } else {
+                setFormData({
+                    uuid: '',
+                    countryUuid: '',
+                    stateUuid: '',
+                    educationLevelUuid: '',
+                    degreeAwardedBy: '',
+                    degreeAwardedInstitute: '',
+                    description: ''
+                });
             }
-        } else {
-            setFormData({
-                uuid: '',
-                countryUuid: '',
-                stateUuid: '',
-                educationLevelUuid: '',
-                degreeAwardedBy: '',
-                degreeAwardedInstitute: '',
-                description: ''
-
-            });
+            fetchEducationlevelList();
+            fetchCountryList();
         }
-        fetchStudyList();
-        fetchCountryList();
     }, [mode, rowData, show]);
 
-    const fetchStudyList = () => {
-        setLoading(true);
+    const fetchEducationlevelList = () => {
         const params = {
             page: 1,
             limit: 2000,
             search: '',
             status: '',
-            sortBy: 'updated_at',
-            sortOrder: 'desc',
+            sortBy: 'educationlevel',
+            sortOrder: 'asc',
         };
         dispatch(educationLevelList(params, (response, error) => {
-            setLoading(false);
             if (response?.statusCode === 200 && response?.status === true) {
-                setStudyMajorArea(response?.data || []);
-
+                setEducationLevelListData(response?.data || []);
             }
         }));
-        dispatch(degreeAwardedByList(params, (response, error) => {
-            setLoading(false);
-            if (response?.statusCode === 200 && response?.status === true) {
-                setDegreeAwardedBy(response?.data || []);
+    };
 
+    const fetchDegreeAwardedByList = (educationLevelId) => {
+        if (!educationLevelId) {
+            setDegreeAwardedBy([]);
+            return;
+        }
+        const params = {
+            page: 1,
+            limit: 2000,
+            search: '',
+            status: '',
+            sortBy: 'degree_name',
+            sortOrder: 'asc',
+            educationLevelId: educationLevelId
+        };
+
+        dispatch(academicResultListByAcademicType(params, (response, error) => {
+            if (response?.statuscode === 200 && response?.status === true) {
+                setDegreeAwardedBy(response?.data || []);
+            } else {
+                setDegreeAwardedBy([]);
             }
         }));
     };
 
     const fetchCountryList = () => {
-        const params = { page: 1, limit: 2000, search: '', sortBy: 'updated_at', sortOrder: 'desc' };
+        const params = { page: 1, limit: 2000, search: '', sortBy: 'name', sortOrder: 'asc' };
         dispatch(countryDemoList(params, (response, error) => {
             if (response?.statusCode === 200 && response?.status) {
                 const formatted = response?.data?.map(item => ({
@@ -100,13 +117,15 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
                     name: item.name
                 })) || [];
                 setCountryListData(formatted);
-
             }
         }));
     };
 
     const fetchStateList = (countryId) => {
-        if (!countryId) return setStateListData([]);
+        if (!countryId) {
+            setStateListData([]);
+            return;
+        }
 
         const params = { countryId };
         dispatch(stateListByCountry(params, (response, error) => {
@@ -118,31 +137,22 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
         }));
     };
 
-
-
-    // const handleChange = (e) => {
-    //     const { name, value } = e.target;
-    //     setFormData(prev => ({
-    //         ...prev,
-    //         [name]: value
-    //     }));
-    //     if (errors[name]) {
-    //         setErrors(prev => ({
-    //             ...prev,
-    //             [name]: ''
-    //         }));
-    //     }
-    // };
     const handleChange = (e) => {
         const { name, value } = e.target;
 
         setFormData(prev => ({
             ...prev,
             [name]: value,
-            ...(name === "countryUuid" ? { stateUuid: "" } : {})
+            ...(name === "countryUuid" ? { stateUuid: "" } : {}),
+            ...(name === "educationLevelUuid" ? { degreeAwardedBy: "" } : {})
         }));
+
         if (name === "countryUuid") {
             fetchStateList(value);
+        }
+
+        if (name === "educationLevelUuid") {
+            fetchDegreeAwardedByList(value);
         }
 
         if (errors[name]) {
@@ -153,6 +163,25 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
         }
     };
 
+    const customFilterOptionCountry = (option, inputValue) => {
+        if (!inputValue) return true;
+        return option.label.toLowerCase().startsWith(inputValue.toLowerCase());
+    };
+
+    const customFilterOptionState = (option, inputValue) => {
+        if (!inputValue) return true;
+        return option.label.toLowerCase().startsWith(inputValue.toLowerCase());
+    };
+
+    const customFilterOptionEducationLevel = (option, inputValue) => {
+        if (!inputValue) return true;
+        return option.label.toLowerCase().startsWith(inputValue.toLowerCase());
+    };
+
+    const customFilterOptionDegreeAwardedBy = (option, inputValue) => {
+        if (!inputValue) return true;
+        return option.label.toLowerCase().startsWith(inputValue.toLowerCase());
+    };
 
     const validateForm = () => {
         const newErrors = {};
@@ -182,7 +211,6 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
         setErrors(newErrors);
         return isValid;
     };
-
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -218,7 +246,7 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
                     if (response?.statusCode === 200 && response?.status === true) {
                         toast.success(response?.message);
                         resetForm();
-                        handleClose();
+                        handleClose(true);
                     } else {
                         toast.error("Something went wrong.");
                     }
@@ -240,14 +268,12 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
         setErrors({});
     };
 
-    // Handle modal close
     const onClose = () => {
         resetForm();
         setLoading(false);
-        handleClose();
+        handleClose(false);
     };
 
-    // Conditional return after all hooks
     if (!show) return null;
 
     return (
@@ -275,7 +301,6 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
                     <div className="modal-body p-24">
                         <form onSubmit={handleSubmit}>
                             <div className="row">
-                                {/* Department Name */}
                                 <div className="col-12 mb-20">
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                                         Country<span className="text-danger">*</span>
@@ -303,11 +328,11 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
                                                 },
                                             })
                                         }
+                                        filterOption={customFilterOptionCountry}
                                         placeholder="Select country"
                                         isClearable
                                         isSearchable
-                                        className={`custom-select-container ${errors.countryUuid ? "is-invalid" : ""
-                                            }`}
+                                        className={`custom-select-container ${errors.countryUuid ? "is-invalid" : ""}`}
                                         classNamePrefix="custom-select"
                                     />
                                     {errors.countryUuid && (
@@ -316,6 +341,7 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
                                         </div>
                                     )}
                                 </div>
+
                                 <div className="col-12 mb-20">
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                                         State<span className="text-danger">*</span>
@@ -343,11 +369,12 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
                                                 },
                                             })
                                         }
+                                        filterOption={customFilterOptionState}
                                         placeholder="Select state"
                                         isClearable
                                         isSearchable
-                                        className={`custom-select-container ${errors.stateUuid ? "is-invalid" : ""
-                                            }`}
+                                        isDisabled={!formData.countryUuid}
+                                        className={`custom-select-container ${errors.stateUuid ? "is-invalid" : ""}`}
                                         classNamePrefix="custom-select"
                                     />
                                     {errors.stateUuid && (
@@ -356,18 +383,19 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
                                         </div>
                                     )}
                                 </div>
+
                                 <div className="col-12 mb-20">
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                                         Education Level <span className="text-danger">*</span>
                                     </label>
                                     <Select
-                                        options={studyMajorArea.map((option) => ({
+                                        options={educationLevelListData.map((option) => ({
                                             value: option.uuid,
                                             label: option.educationlevel,
                                         }))}
                                         value={
                                             formData.educationLevelUuid
-                                                ? studyMajorArea
+                                                ? educationLevelListData
                                                     .map((option) => ({
                                                         value: option.uuid,
                                                         label: option.educationlevel,
@@ -383,11 +411,11 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
                                                 },
                                             })
                                         }
+                                        filterOption={customFilterOptionEducationLevel}
                                         placeholder="Select education level"
                                         isClearable
                                         isSearchable
-                                        className={`custom-select-container ${errors.educationLevelUuid ? "is-invalid" : ""
-                                            }`}
+                                        className={`custom-select-container ${errors.educationLevelUuid ? "is-invalid" : ""}`}
                                         classNamePrefix="custom-select"
                                     />
                                     {errors.educationLevelUuid && (
@@ -396,6 +424,7 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
                                         </div>
                                     )}
                                 </div>
+
                                 <div className="col-12 mb-20">
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                                         Degree Awarded By <span className="text-danger">*</span>
@@ -423,11 +452,12 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
                                                 },
                                             })
                                         }
+                                        filterOption={customFilterOptionDegreeAwardedBy}
                                         placeholder="Select degree awarded by"
                                         isClearable
                                         isSearchable
-                                        className={`custom-select-container ${errors.degreeAwardedBy ? "is-invalid" : ""
-                                            }`}
+                                        isDisabled={!formData.educationLevelUuid}
+                                        className={`custom-select-container ${errors.degreeAwardedBy ? "is-invalid" : ""}`}
                                         classNamePrefix="custom-select"
                                     />
                                     {errors.degreeAwardedBy && (
@@ -436,6 +466,7 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
                                         </div>
                                     )}
                                 </div>
+
                                 <div className="col-12 mb-20">
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                                         Degree Awarded Institute <span className="text-danger">*</span>
@@ -455,7 +486,6 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
                                     )}
                                 </div>
 
-                                {/* Description */}
                                 <div className="col-12 mb-20">
                                     <label
                                         htmlFor="desc"
@@ -475,7 +505,6 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
                                     />
                                 </div>
 
-                                {/* Buttons */}
                                 <div className="d-flex align-items-center justify-content-center gap-3 mt-24">
                                     <button
                                         type="button"
@@ -489,7 +518,14 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
                                         className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                                         disabled={loading}
                                     >
-                                        {loading ? 'Saving...' : 'Save'}
+                                        {loading ? (
+                                            <>
+                                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                Saving...
+                                            </>
+                                        ) : (
+                                            "Save"
+                                        )}
                                     </button>
                                 </div>
                             </div>
@@ -500,4 +536,5 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
         </div>
     );
 };
+
 export default AddEditDegreeAwardedInstituteModal;

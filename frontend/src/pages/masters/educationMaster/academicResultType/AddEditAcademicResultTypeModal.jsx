@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch } from "react-redux";
 import { academicResultTypeAdd, academicResultTypeEdit } from '../../../../store/master/educationMaster/action';
 import { toast } from "react-toastify";
-
+import Select from "react-select";
 const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
@@ -11,12 +11,14 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
   const [formData, setFormData] = useState({
     uuid: '',
     departmentName: '',
+    dataType: '',
     description: '',
   });
 
   // Validation errors state
   const [errors, setErrors] = useState({
     departmentName: '',
+    dataType: '',
     description: '',
   });
 
@@ -26,6 +28,7 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
       setFormData({
         uuid: rowData.uuid || '',
         departmentName: rowData.name || '',
+        dataType: rowData.dataType || '',
         description: rowData.description || '',
       });
     } else {
@@ -33,6 +36,7 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
       setFormData({
         uuid: '',
         departmentName: '',
+        dataType: '',
         description: '',
       });
     }
@@ -66,6 +70,12 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
       isValid = false;
     }
 
+    // DataType validation
+    if (!formData.dataType) {
+      newErrors.dataType = 'Data type is required';
+      isValid = false;
+    }
+
     setErrors(newErrors);
     return isValid;
   };
@@ -79,10 +89,12 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
         ? {
           uuid: formData.uuid,
           name: formData.departmentName,
+          dataType: formData.dataType,
           description: formData.description,
         }
         : {
           name: formData.departmentName,
+          dataType: formData.dataType,
           description: formData.description,
         };
 
@@ -112,6 +124,7 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
     setFormData({
       uuid: '',
       departmentName: '',
+      dataType: '',
       description: '',
     });
     setErrors({});
@@ -169,6 +182,46 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
                     <div className="text-danger text-sm mt-1">
                       {errors.departmentName}
                     </div>
+                  )}
+                </div>
+
+                {/* Data Type Dropdown */}
+                <div className="col-12 mb-20">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                    Data Type <span className="text-danger">*</span>
+                  </label>
+
+                  <Select
+                    options={[
+                      { value: "text", label: "Text" },
+                      { value: "numeric", label: "Numeric" },
+                    ]}
+                    value={
+                      formData.dataType
+                        ? [
+                          { value: "text", label: "Text" },
+                          { value: "numeric", label: "Numeric" },
+                        ].find((opt) => opt.value === formData.dataType)
+                        : null
+                    }
+                    onChange={(selectedOption) =>
+                      handleChange({
+                        target: {
+                          name: "dataType",
+                          value: selectedOption ? selectedOption.value : "",
+                        },
+                      })
+                    }
+                    placeholder="Select data type"
+                    isClearable
+                    isSearchable
+                    className={`custom-select-container ${errors.dataType ? "is-invalid" : ""
+                      }`}
+                    classNamePrefix="custom-select"
+                  />
+
+                  {errors.dataType && (
+                    <div className="text-danger text-sm mt-1">{errors.dataType}</div>
                   )}
                 </div>
 

@@ -1,11 +1,11 @@
 import React, { useState } from 'react'
 import { useDispatch } from "react-redux";
-import { courseStatusImportData } from "../../../../store/master/instituteMaster/action";
+import { courseLevelImportData } from "../../../../store/master/instituteMaster/action";
 import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
 import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
-import { exportToExcelDuplicate } from '../../../../helper/utils/commanHelper';
+import { exportToExcelDuplicate, exportToExcelWrongData } from '../../../../helper/utils/commanHelper';
 const AddImportCourseLevelModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
@@ -66,7 +66,7 @@ const AddImportCourseLevelModal = ({ show, handleClose }) => {
             formData.append('sheet_name', selectedSheet);
         }
         setLoading(true);
-        dispatch(courseStatusImportData(formData, (response, error) => {
+        dispatch(courseLevelImportData(formData, (response, error) => {
             setLoading(false);
             if (error) {
                 toast.error(error?.response?.data?.message || "Server error");
@@ -94,6 +94,20 @@ const AddImportCourseLevelModal = ({ show, handleClose }) => {
                             fileName: "CourseLevel",
                         };
                         exportToExcelDuplicate(
+                            prepareData.data,
+                            prepareData.headers,
+                            prepareData.sheetName,
+                            prepareData.fileName
+                        );
+                    }
+                    if (response?.skipped_rows?.length > 0) {
+                        const prepareData = {
+                            data: response.skipped_rows || [],
+                            headers: ["Course Level", "Reason"],
+                            sheetName: "CourseLevel",
+                            fileName: "CourseLevel",
+                        };
+                        exportToExcelWrongData(
                             prepareData.data,
                             prepareData.headers,
                             prepareData.sheetName,
@@ -246,9 +260,9 @@ const AddImportCourseLevelModal = ({ show, handleClose }) => {
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
                     downloadFileName: "CourseLevel",
-                    items: ["Course Level", "Description"],
-                    selectedItems: ["Course Level"],
-                    ItemsRequired: ["Course Level"]
+                    items: ["Course Level", "Course Level Code", "Description"],
+                    selectedItems: ["Course Level", "Course Level Code"],
+                    ItemsRequired: ["Course Level", "Course Level Code"]
                 }
                 } />
             )}

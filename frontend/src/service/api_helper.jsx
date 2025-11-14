@@ -1186,6 +1186,12 @@ export const getAcademicResultListDataAPI = (data) => {
     return get(apiUrl);
 };
 
+export const getAcademicResultListByAcademicTypeDataAPI = (payload) => {
+    const apiUrl = `${url.GET_ACADEMIC_RESULT_LIST_BY_ACADEMIC_TYPE}?uuid=${payload?.educationLevelId}`;
+    return get(apiUrl);
+};
+
+
 export const addAcademicResultDataAPI = (payload) => {
     const apiUrl = `${url.ADD_ACADEMIC_RESULT_API}`;
     return post(apiUrl, payload);
@@ -2366,6 +2372,70 @@ export const importScholarshipBasedOnDataAPI = (payload) => {
     const apiUrl = `${url.IMPORT_SCHOLARSHIP_BASED_ON_API}`;
     return post(apiUrl, payload);
 };
+// Course Level API
+export const getCourseLevelListDataAPI = (data) => {
+    const apiUrl = `${url.GET_COURSE_LEVEL_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addCourseLevelDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_COURSE_LEVEL_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editCourseLevelDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_COURSE_LEVEL_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteCourseLevelDataAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_COURSE_LEVEL_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportCourseLevelDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_COURSE_LEVEL_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importCourseLevelDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_COURSE_LEVEL_API}`;
+    return post(apiUrl, payload);
+};
+// Course Duration API
+export const getCourseDurationListDataAPI = (data) => {
+    const apiUrl = `${url.GET_COURSE_DURATION_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addCourseDurationDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_COURSE_DURATION_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editCourseDurationDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_COURSE_DURATION_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteCourseDurationDataAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_COURSE_DURATION_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportCourseDurationDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_COURSE_DURATION_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importCourseDurationDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_COURSE_DURATION_API}`;
+    return post(apiUrl, payload);
+};
+
+
 
 
 

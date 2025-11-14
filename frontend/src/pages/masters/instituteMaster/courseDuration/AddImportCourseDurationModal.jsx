@@ -1,12 +1,12 @@
 import React, { useState } from 'react'
 import { useDispatch } from "react-redux";
-import { intakeNameImportData } from "../../../../store/master/instituteMaster/action";
+import { courseDurationImportData } from "../../../../store/master/instituteMaster/action";
 import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
 import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
 import { exportToExcelDuplicate, exportToExcelWrongData } from '../../../../helper/utils/commanHelper';
-const AddImportIntakeNameModal = ({ show, handleClose }) => {
+const AddImportCourseDurationModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
     const [file, setFile] = useState(null);
@@ -66,7 +66,7 @@ const AddImportIntakeNameModal = ({ show, handleClose }) => {
             formData.append('sheet_name', selectedSheet);
         }
         setLoading(true);
-        dispatch(intakeNameImportData(formData, (response, error) => {
+        dispatch(courseDurationImportData(formData, (response, error) => {
             setLoading(false);
             if (error) {
                 toast.error(error?.response?.data?.message || "Server error");
@@ -78,7 +78,7 @@ const AddImportIntakeNameModal = ({ show, handleClose }) => {
                             <div>{response?.message}</div>
                             {response?.duplicates?.length > 0 && (
                                 <div style={{ marginTop: '6px' }}>
-                                    <strong>Duplicate Intake Name skipped — the duplicate data from your uploaded file has been exported into an .xlsx file.</strong>
+                                    <strong>Duplicate Course Duration skipped — the duplicate data from your uploaded file has been exported into an .xlsx file.</strong>
                                 </div>
                             )}
                         </div>,
@@ -89,9 +89,9 @@ const AddImportIntakeNameModal = ({ show, handleClose }) => {
                     if (response?.duplicates?.length > 0) {
                         const prepareData = {
                             data: response.duplicates || [],
-                            headers: ["Intake Name"],
-                            sheetName: "IntakeName",
-                            fileName: "IntakeName",
+                            headers: ["Course Duration"],
+                            sheetName: "CourseDuration",
+                            fileName: "CourseDuration",
                         };
                         exportToExcelDuplicate(
                             prepareData.data,
@@ -103,9 +103,9 @@ const AddImportIntakeNameModal = ({ show, handleClose }) => {
                     if (response?.skipped_rows?.length > 0) {
                         const prepareData = {
                             data: response.skipped_rows || [],
-                            headers: ["Intake Name", "Reason"],
-                            sheetName: "IntakeName",
-                            fileName: "IntakeName",
+                            headers: ["Course Duration", "Reason"],
+                            sheetName: "CourseDuration",
+                            fileName: "CourseDuration",
                         };
                         exportToExcelWrongData(
                             prepareData.data,
@@ -155,7 +155,7 @@ const AddImportIntakeNameModal = ({ show, handleClose }) => {
                     <div className="modal-content radius-16 bg-base">
                         <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
                             <h1 className="modal-title fs-5" id="departmentModalLabel">
-                                Upload Intake Name
+                                Upload Course Duration
                             </h1>
                             <button
                                 type="button"
@@ -259,10 +259,10 @@ const AddImportIntakeNameModal = ({ show, handleClose }) => {
             </div>
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
-                    downloadFileName: "IntakeName",
-                    items: ["Intake Name", "Description"],
-                    selectedItems: ["Intake Name"],
-                    ItemsRequired: ["Intake Name"]
+                    downloadFileName: "CourseDuration",
+                    items: ["Course Level", "Course Duration", "Description"],
+                    selectedItems: ["Course Level", "Course Duration"],
+                    ItemsRequired: ["Course Level", "Course Duration"]
                 }
                 } />
             )}
@@ -270,4 +270,4 @@ const AddImportIntakeNameModal = ({ show, handleClose }) => {
     );
 };
 
-export default AddImportIntakeNameModal;
+export default AddImportCourseDurationModal;

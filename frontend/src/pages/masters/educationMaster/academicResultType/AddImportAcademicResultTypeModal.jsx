@@ -89,7 +89,7 @@ const AddImportAcademicResultTypeModal = ({ show, handleClose }) => {
                     if (response?.duplicates?.length > 0) {
                         const prepareData = {
                             data: response.duplicates || [],
-                            headers: ["Academic Result Type"],
+                            headers: ["Academic Result Type","Data Type"],
                             sheetName: "AcademicResultType",
                             fileName: "AcademicResultType",
                         };
@@ -243,9 +243,9 @@ const AddImportAcademicResultTypeModal = ({ show, handleClose }) => {
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
                     downloadFileName: "AcademicResultType",
-                    items: ["Academic Result Type", "Description"],
-                    selectedItems: ["Academic Result Type"],
-                    ItemsRequired: ["Academic Result Type"]
+                    items: ["Academic Result Type","Data Type","Description"],
+                    selectedItems: ["Academic Result Type","Data Type"],
+                    ItemsRequired: ["Academic Result Type","Data Type"]
                 }
                 } />
             )}
