@@ -5426,7 +5426,7 @@ class CourseDurationCreateAPIView(APIView):
 
         # Validate course level
         try:
-            courselevel_obj = CourseLevelCode.objects.get(uuid=courselevel_uuid)
+            courselevel_obj = CourseLevel.objects.get(uuid=courselevel_uuid)
         except CourseLevelCode.DoesNotExist:
             return Response({
                 "statusCode": 400,
