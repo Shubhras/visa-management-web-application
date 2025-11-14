@@ -5235,8 +5235,8 @@ class CourseLevelImportAPIView(APIView):
         format_type = file.name.split(".")[-1].lower()
         duplicates = []
         skipped_rows = []
-        required_headers = {"name"}
-        optional_headers = {"description", "courselevelcode"}
+        required_headers = {"course level"}
+        optional_headers = {"description", "course level code"}
 
         try:
             data = []
@@ -5291,9 +5291,9 @@ class CourseLevelImportAPIView(APIView):
 
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("name")).strip() if row.get("name") else None
+                name = str(row.get("course level")).strip() if row.get("course level") else None
                 description = str(row.get("description")).strip() if row.get("description") else ""
-                courselevelcode_name = str(row.get("courselevelcode")).strip() if row.get("courselevelcode") else None
+                courselevelcode_name = str(row.get("course level code")).strip() if row.get("course level code") else None
 
                 if not name:
                     skipped_rows.append({"Row": row_number, "Reason": "Missing course level name"})
@@ -5301,7 +5301,7 @@ class CourseLevelImportAPIView(APIView):
 
                 courselevelcode = None
                 if courselevelcode_name:
-                    courselevelcode = CourseLevelCode.objects.filter(code__iexact=courselevelcode_name).first()
+                    courselevelcode = CourseLevelCode.objects.filter(name__iexact=courselevelcode_name).first()
                     if not courselevelcode:
                         skipped_rows.append({
                             "Row": row_number,
