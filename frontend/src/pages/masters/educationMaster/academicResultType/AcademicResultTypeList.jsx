@@ -45,14 +45,15 @@ const AcademicResultTypeList = () => {
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [items] = useState(["Academic Result Type", "Description", "Modified On"]);
-  const [selectedItems, setSelectedItems] = useState(["Academic Result Type"]);
-  const [ItemsRequired] = useState(["Academic Result Type"]);
+  const [items] = useState(["Academic Result Type","Data Type", "Description", "Modified On"]);
+  const [selectedItems, setSelectedItems] = useState(["Academic Result Type","Data Type"]);
+  const [ItemsRequired] = useState(["Academic Result Type","Data Type"]);
 
 
   // Table columns configuration
   const [tableColumns] = useState([
     { id: 'name', label: 'Academic Result Type', field: 'name', visible: true, required: true },
+    { id: 'dataType', label: 'Data Type', field: 'dataType', visible: true, required: true },
     { id: 'description', label: 'Description', field: 'description', visible: true, required: false },
     { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false },
   ]);
@@ -669,6 +670,9 @@ const AcademicResultTypeList = () => {
                         </td>
                         {isColumnVisible('name') && (
                           <td><span>{rowItem.name}</span></td>
+                        )}
+                        {isColumnVisible('dataType') && (
+                          <td><span>{rowItem?.dataType}</span></td>
                         )}
                         {isColumnVisible('description') && (
                           <td><span>{rowItem.description}</span></td>

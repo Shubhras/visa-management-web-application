@@ -23,23 +23,24 @@ const AddEditAcademicResultModal = ({ show, handleClose, mode = 'add', rowData =
   });
 
   useEffect(() => {
-    if (mode === 'edit' && rowData) {
-      setFormData({
-        uuid: rowData.uuid || '',
-        departmentName: rowData.Academicresult || '',
-        category: rowData.AcademicResulttype_uuid || '',
-        description: rowData.description || '',
-      });
-    } else {
-
-      setFormData({
-        uuid: '',
-        departmentName: '',
-        category: '',
-        description: '',
-      });
+    if (show) { // Only run when modal is shown
+      if (mode === 'edit' && rowData) {
+        setFormData({
+          uuid: rowData.uuid || '',
+          departmentName: rowData.Academicresult || '',
+          category: rowData.AcademicResulttype_uuid || '',
+          description: rowData.description || '',
+        });
+      } else {
+        setFormData({
+          uuid: '',
+          departmentName: '',
+          category: '',
+          description: '',
+        });
+      }
+      fetchEducationLevelList();
     }
-    fetchEducationLevelList();
   }, [mode, rowData, show]);
 
   const fetchEducationLevelList = () => {
@@ -49,18 +50,15 @@ const AddEditAcademicResultModal = ({ show, handleClose, mode = 'add', rowData =
       limit: 2000,
       search: '',
       status: '',
-      sortBy: 'updated_at',
-      sortOrder: 'desc',
+      sortBy: 'name',
+      sortOrder: 'asc',
     };
 
     dispatch(academicResultTypeList(params, (response, error) => {
-
       if (response?.statusCode === 200 && response?.status === true) {
-
         setEducationLevelListData(response?.data || []);
-
       } else {
-
+        setEducationLevelListData([]);
       }
     }));
   };
@@ -130,7 +128,7 @@ const AddEditAcademicResultModal = ({ show, handleClose, mode = 'add', rowData =
           if (response?.statusCode === 200 && response?.status === true) {
             toast.success(response?.message);
             resetForm();
-            handleClose();
+            handleClose(true);
           } else {
             toast.error("Something went wrong.");
           }
@@ -154,7 +152,7 @@ const AddEditAcademicResultModal = ({ show, handleClose, mode = 'add', rowData =
   const onClose = () => {
     resetForm();
     setLoading(false);
-    handleClose();
+    handleClose(false);
   };
 
   // Conditional return after all hooks

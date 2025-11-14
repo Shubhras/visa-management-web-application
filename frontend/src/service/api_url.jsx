@@ -259,6 +259,7 @@ export const EXPORT_DEGREE_AWARDED_BY_API = "/api/v1/master/degree-awarded-by/ex
 export const IMPORT_DEGREE_AWARDED_BY_API = "/api/v1/master/degree-awarded-by/import/";
 // Academin Result
 export const GET_ACADEMIC_RESULT_LIST = "/api/v1/master/academicresult/";
+export const GET_ACADEMIC_RESULT_LIST_BY_ACADEMIC_TYPE = "/api/v1/master/degrees-by-education-level/";
 export const ADD_ACADEMIC_RESULT_API = "/api/v1/master/academicresult/create/";
 export const EDIT_ACADEMIC_RESULT_API = "/api/v1/master/academicresult/";
 export const DELETE_ACADEMIC_RESULT_API = "/api/v1/master/academicresult/";

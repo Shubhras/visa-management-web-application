@@ -1186,6 +1186,12 @@ export const getAcademicResultListDataAPI = (data) => {
     return get(apiUrl);
 };
 
+export const getAcademicResultListByAcademicTypeDataAPI = (payload) => {
+    const apiUrl = `${url.GET_ACADEMIC_RESULT_LIST_BY_ACADEMIC_TYPE}?uuid=${payload?.educationLevelId}`;
+    return get(apiUrl);
+};
+
+
 export const addAcademicResultDataAPI = (payload) => {
     const apiUrl = `${url.ADD_ACADEMIC_RESULT_API}`;
     return post(apiUrl, payload);
