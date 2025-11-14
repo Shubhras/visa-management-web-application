@@ -1690,3 +1690,56 @@ class ScholorshipBasedOnSerializer(serializers.ModelSerializer):
     class Meta:
         model = ScholorshipBasedOn
         fields = '__all__'
+
+
+class RelatedOccupationSerializer(serializers.ModelSerializer):
+    # -------------------- READ ONLY DISPLAY FIELDS -------------------- #
+    country = serializers.CharField(read_only=True, source='country.country_name')
+    occupationversion = serializers.CharField(read_only=True, source='occupationversion.occupation_version')
+    occupationcode = serializers.CharField(read_only=True, source='occupationcode.occupationcode')
+    occupationname = serializers.CharField(read_only=True, source='occupationname.occupationname')
+
+    # -------------------- WRITE ONLY UUID FIELDS -------------------- #
+    country_id = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=Country.objects.all(),
+        source='country',
+        write_only=True,
+        allow_null=True,
+        required=False
+    )
+    occupationversion_id = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=OccupationVersion.objects.all(),
+        source='occupationversion',
+        write_only=True,
+        allow_null=True,
+        required=False
+    )
+    occupationcode_id = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=OccupationCode.objects.all(),
+        source='occupationcode',
+        write_only=True,
+        allow_null=True,
+        required=False
+    )
+    occupationname_id = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=OccupationName.objects.all(),
+        source='occupationname',
+        write_only=True,
+        allow_null=True,
+        required=False
+    )
+
+    class Meta:
+        model = RelatedOccupation
+        fields = [
+            'id', 'uuid',
+            'country', 'occupationversion', 'occupationcode', 'occupationname',
+            'country_id', 'occupationversion_id', 'occupationcode_id', 'occupationname_id',
+            'relatedoccupation', 'description',
+            'is_deleted', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']

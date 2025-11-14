@@ -4124,7 +4124,7 @@ class OccupationNameExportAPIView(APIView):
             for f in field_list:
                 val = getattr(obj, f, "")
                 if f == "country" and val:
-                    val = val.country_name
+                    val = val.name
                 elif f == "occupationversion" and val:
                     val = val.occupation_version
                 elif f == "occupationcategory" and val:
@@ -4328,3 +4328,247 @@ class OccupationNameImportAPIView(APIView):
             "skipped_rows": skipped,
             "message": "Import successfully completed"
         })
+
+
+
+
+
+class RelatedOccupationListAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        search = request.GET.get('search', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_order = request.GET.get('sortOrder', 'desc')
+
+        allowed_sort_fields = ['relatedoccupation', 'created_at']
+        if sort_by not in allowed_sort_fields:
+            sort_by = 'created_at'
+        if sort_order == 'desc':
+            sort_by = f'-{sort_by}'
+
+        queryset = RelatedOccupation.objects.filter(is_deleted=False)
+
+        if search:
+            queryset = queryset.filter(
+                Q(relatedoccupation__icontains=search) |
+                Q(description__icontains=search) |
+                Q(country__country_name__icontains=search) |
+                Q(occupationversion__occupation_version__icontains=search) |
+                Q(occupationcode__occupationcode__icontains=search) |
+                Q(occupationname__occupationname__icontains=search)
+            )
+
+        queryset = queryset.order_by(sort_by)
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = RelatedOccupationSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+
+class RelatedOccupationCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        data = request.data.copy()
+
+        # -------------------- Validate foreign keys -------------------- #
+        fk_fields = {
+            "country_id": Country,
+            "occupationversion_id": OccupationVersion,
+            "occupationcode_id": OccupationCode,
+            "occupationname_id": OccupationName,
+        }
+
+        fk_objects = {}
+        for field, model in fk_fields.items():
+            uuid_val = data.get(field)
+            if uuid_val:
+                try:
+                    fk_objects[field] = model.objects.get(uuid=uuid_val)
+                except model.DoesNotExist:
+                    return Response({
+                        "statusCode": 400, "status": False,
+                        "message": f"Invalid {field.replace('_id', '')} UUID."
+                    }, status=400)
+            else:
+                fk_objects[field] = None
+
+        # -------------------- Mandatory field -------------------- #
+        relatedoccupation = request.data.get("relatedoccupation")
+        if not relatedoccupation:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Mandatory field missing: relatedoccupation"
+            }, status=400)
+
+        # -------------------- Duplicate Check -------------------- #
+        existing = RelatedOccupation.objects.filter(
+            country=fk_objects["country_id"],
+            occupationversion=fk_objects["occupationversion_id"],
+            occupationcode=fk_objects["occupationcode_id"],
+            occupationname=fk_objects["occupationname_id"],
+            relatedoccupation__iexact=relatedoccupation,
+            is_deleted=False
+        ).first()
+
+        if existing:
+            return Response({
+                "statusCode": 400, "status": False,
+                "message": "Related occupation already exists for this combination."
+            }, status=400)
+
+        # Fill FK UUIDs again
+        for field, obj in fk_objects.items():
+            if obj:
+                data[field] = obj.uuid
+
+        serializer = RelatedOccupationSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "Related occupation created successfully",
+                "data": serializer.data
+            })
+
+        error_message = " ".join([msg for msgs in serializer.errors.values() for msg in msgs])
+        return Response({"statusCode": 400, "status": False, "message": error_message}, status=400)
+
+
+class RelatedOccupationRetrieveAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request, uuid):
+        try:
+            obj = RelatedOccupation.objects.get(uuid=uuid, is_deleted=False)
+        except RelatedOccupation.DoesNotExist:
+            return Response({"statusCode": 404, "status": False, "message": "Not found"}, status=404)
+
+        serializer = RelatedOccupationSerializer(obj)
+        return Response({"statusCode": 200, "status": True, "data": serializer.data})
+
+
+class RelatedOccupationUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def put(self, request, uuid):
+        try:
+            obj = RelatedOccupation.objects.get(uuid=uuid, is_deleted=False)
+        except RelatedOccupation.DoesNotExist:
+            return Response({"statusCode": 404, "status": False, "message": "Not found"}, status=404)
+
+        serializer = RelatedOccupationSerializer(obj, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "Updated successfully",
+                "data": serializer.data
+            })
+
+        err = " ".join([msg for msgs in serializer.errors.values() for msg in msgs])
+        return Response({"statusCode": 400, "status": False, "message": err}, status=400)
+
+
+class RelatedOccupationDeleteAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def delete(self, request):
+        ids = request.data.get('id')
+
+        if not ids:
+            return Response({"status": False, "message": "Provide 'id' field"}, status=400)
+
+        if ids == "all":
+            objs = RelatedOccupation.objects.filter(is_deleted=False)
+            count = objs.count()
+            objs.update(is_deleted=True)
+            return Response({"status": True, "message": f"All {count} records deleted"})
+
+        if not isinstance(ids, list):
+            return Response({"status": False, "message": "Send list of UUIDs"}, status=400)
+
+        valid, invalid = [], []
+        for u in ids:
+            try:
+                valid.append(UUID(u))
+            except:
+                invalid.append(u)
+
+        objs = RelatedOccupation.objects.filter(uuid__in=valid, is_deleted=False)
+        count = objs.count()
+        objs.update(is_deleted=True)
+
+        return Response({
+            "status": True,
+            "message": f"{count} record(s) deleted",
+            "invalid_uuids": invalid if invalid else None
+        })
+
+
+class RelatedOccupationExportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        format_type = request.GET.get("format", "xlsx").lower()
+        fields = request.GET.get("fields")
+        uuids = request.GET.get("uuids", "")
+        uuids = [u for u in uuids.split(",") if u]
+
+        field_header = {
+            'uuid': 'UUID',
+            'country': 'Country',
+            'occupationversion': 'Occupation Version',
+            'occupationcode': 'Occupation Code',
+            'occupationname': 'Occupation Name',
+            'relatedoccupation': 'Related Occupation',
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'created_at': 'Created On',
+            'updated_at': 'Updated On',
+        }
+
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header.keys())
+
+        queryset = RelatedOccupation.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-created_at')
+
+        dataset = Dataset()
+        dataset.headers = [field_header.get(f, f) for f in field_list]
+
+        for obj in queryset:
+            row = []
+            for f in field_list:
+                val = getattr(obj, f, "")
+                if f == "country" and val:
+                    val = val.name
+                elif f == "occupationversion" and val:
+                    val = val.occupation_version
+                elif f == "occupationcode" and val:
+                    val = val.occupationcode
+                elif f == "occupationname" and val:
+                    val = val.occupationname
+                elif f in ["created_at", "updated_at"] and val:
+                    val = timezone.localtime(val, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(val, bool):
+                    val = int(val)
+                row.append(val)
+            dataset.append(row)
+
+        if format_type == "csv":
+            file_data = dataset.export("csv")
+            response = HttpResponse(file_data, content_type="text/csv")
+            response["Content-Disposition"] = 'attachment; filename="related_occupations.csv"'
+        else:
+            file_data = io.BytesIO(dataset.export("xlsx"))
+            response = HttpResponse(file_data.getvalue(),
+                                    content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+            response["Content-Disposition"] = 'attachment; filename="related_occupations.xlsx"'
+
+        return response

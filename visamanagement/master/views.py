@@ -16834,7 +16834,7 @@ class DegreeAwardedInstituteImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": duplicate_names,  # Return detailed duplicate info
+            "duplicates": duplicate_names,  
             "skipped_rows": skipped_rows,
             "imported_count": imported_count,
             "message": "Import successful"
@@ -16851,7 +16851,7 @@ class DegreeAwardedByEducationLevelAPIView(APIView):
             return Response(
                 {
                     "statuscode": 400,
-                    "status": "False",
+                    "status": False,
                     "message": "UUID parameter is required."
                 },
                 status=400
@@ -16864,7 +16864,7 @@ class DegreeAwardedByEducationLevelAPIView(APIView):
                 return Response(
                     {
                         "statuscode": 404,
-                        "status": "False",
+                        "status": False,
                         "message": "No degrees found for the given Education Level."
                     },
                     status=404
@@ -16874,7 +16874,7 @@ class DegreeAwardedByEducationLevelAPIView(APIView):
             return Response(
                 {
                     "statuscode": 200,
-                    "status": "True",
+                    "status": True,
                     "data": serializer.data
                 },
                 status=200
@@ -16884,7 +16884,7 @@ class DegreeAwardedByEducationLevelAPIView(APIView):
             return Response(
                 {
                     "statuscode": 500,
-                    "status": "False",
+                    "status": False,
                     "message": "An unexpected error occurred: " + str(e)
                 },
                 status=500
