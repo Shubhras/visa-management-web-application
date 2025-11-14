@@ -1119,7 +1119,7 @@ class OccupationLevelSerializer(serializers.ModelSerializer):
 
 # ------------------- OccupationCode Serializer ------------------- #
 class OccupationCodeSerializer(serializers.ModelSerializer):
-    country = serializers.CharField(read_only=True, source='country.country_name')
+    country_name = serializers.CharField(read_only=True, source='country.name')
     country_id = serializers.SlugRelatedField(
         slug_field='uuid',
         queryset=Country.objects.all(),
@@ -1129,7 +1129,7 @@ class OccupationCodeSerializer(serializers.ModelSerializer):
         required=False
     )
 
-    occupationversion = serializers.CharField(read_only=True, source='occupationversion.occupation_version')
+    occupationversion_name = serializers.CharField(read_only=True, source='occupationversion.occupation_version')
     occupationversion_id = serializers.SlugRelatedField(
         slug_field='uuid',
         queryset=OccupationVersion.objects.all(),
@@ -1143,8 +1143,8 @@ class OccupationCodeSerializer(serializers.ModelSerializer):
         model = OccupationCode
         fields = [
             'id', 'uuid',
-            'country', 'country_id',
-            'occupationversion', 'occupationversion_id',
+            'country_name', 'country_id',
+            'occupationversion_name', 'occupationversion_id',
             'occupationcode', 'description',
             'is_deleted', 'created_at', 'updated_at'
         ]
@@ -1522,6 +1522,51 @@ class CourseLevelCodeSerializer(serializers.ModelSerializer):
     class Meta:
         model = CourseLevelCode
         fields = '__all__'
+
+
+class CourseLevelSerializer(serializers.ModelSerializer):
+    courselevelcode = serializers.CharField(read_only=True, source='courselevelcode.code')  # optional display
+    courselevelcode_id = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=CourseLevelCode.objects.all(),
+        source='courselevelcode',
+        write_only=True,
+        allow_null=True,
+        required=False
+    )
+
+    class Meta:
+        model = CourseLevel
+        fields = [
+            'id', 'uuid',
+            'courselevelcode', 'courselevelcode_id',
+            'name', 'description',
+            'is_deleted', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
+# ------------------- CourseDuration Serializer ------------------- #
+class CourseDurationSerializer(serializers.ModelSerializer):
+    courselevel = serializers.CharField(read_only=True, source='courselevel.name')  # display course level name
+    courselevel_id = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=CourseLevel.objects.all(),
+        source='courselevel',
+        write_only=True,
+        allow_null=True,
+        required=False
+    )
+
+    class Meta:
+        model = CourseDuration
+        fields = [
+            'id', 'uuid',
+            'courselevel', 'courselevel_id',
+            'valid_duration_value', 'valid_duration_unit',
+            'description', 'is_deleted',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
 
 
 class CourseDividedInSerializer(serializers.ModelSerializer):
