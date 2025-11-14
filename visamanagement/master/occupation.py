@@ -1580,7 +1580,7 @@ class OccupationCategoryExportAPIView(APIView):
             for field in field_list:
                 value = getattr(obj, field, '')
                 if field == 'country' and value:
-                    value = value.country_name
+                        value = value.name 
                 elif field == 'occupation_version' and value:
                     value = value.occupation_version
                 elif field in ['created_at', 'updated_at'] and value:
