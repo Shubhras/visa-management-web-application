@@ -1631,22 +1631,23 @@ class CourseLevelSerializer(serializers.ModelSerializer):
 
 # ------------------- CourseDuration Serializer ------------------- #
 class CourseDurationSerializer(serializers.ModelSerializer):
-    courselevel = serializers.CharField(read_only=True, source='courselevel.name') 
+    courselevel = serializers.CharField(read_only=True, source='courselevel.name')
     courselevel_uuid = serializers.CharField(read_only=True, source='courselevel.uuid')
+
     courselevel_id = serializers.SlugRelatedField(
         slug_field='uuid',
         queryset=CourseLevel.objects.all(),
         source='courselevel',
         write_only=True,
-        allow_null=True,
-        required=False
+        allow_null=False,
+        required=True
     )
 
     class Meta:
         model = CourseDuration
         fields = [
             'id', 'uuid',
-            'courselevel', 'courselevel_id','courselevel_uuid',
+            'courselevel', 'courselevel_id', 'courselevel_uuid',
             'valid_duration_value', 'valid_duration_unit',
             'description', 'is_deleted',
             'created_at', 'updated_at'
