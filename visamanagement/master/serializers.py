@@ -963,7 +963,7 @@ class OccupationVersionSerializer(serializers.ModelSerializer):
 class OccupationCategorySerializer(serializers.ModelSerializer):
 
     # Country (display)
-    country = serializers.CharField(read_only=True, source='country.country_name')
+    country = serializers.CharField(read_only=True, source='country.name')
     
     # Country (write)
     country_id = serializers.SlugRelatedField(
@@ -988,7 +988,7 @@ class OccupationCategorySerializer(serializers.ModelSerializer):
     )
 
     # Additional display fields
-    country_name = serializers.CharField(source='country.country_name', read_only=True)
+    country_name = serializers.CharField(source='country.name', read_only=True)
     country_uuid = serializers.UUIDField(source='country.uuid', read_only=True)
 
     occupation_version_name = serializers.CharField(source='occupationversion.occupation_version', read_only=True)
