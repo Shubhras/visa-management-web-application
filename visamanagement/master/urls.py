@@ -301,6 +301,7 @@ urlpatterns = [
     path('studymajorarea/delete/', StudyMajorAreaDeleteAPIView.as_view(), name='studymajorarea-delete'),
     path('studymajorarea/export/', StudyMajorAreaExportAPIView.as_view(), name='studymajorarea-export'),
     path('studymajorarea/import/', StudyMajorAreaImportAPIView.as_view(), name='studymajorarea-import'),
+    path('study-major-by-main/', StudyMajorAreaByMainUUIDAPIView.as_view(), name='study-main-by-major-uuid'),
 
     path("studyspecialisation/",StudySpecialisationListAPIView.as_view(), name='studyspecialisation-list'),
     path('studyspecialisation/create/', StudySpecialisationCreateAPIView.as_view(), name='studyspecialisation-create'),
@@ -324,7 +325,7 @@ urlpatterns = [
     path('academicresult/<uuid:uuid>/update/', AcademicResultUpdateAPIView.as_view(), name='academicresult-update'),
     path('academicresult/delete/', AcademicResultDeleteAPIView.as_view(), name='academicresult-delete'),
     path('academicresult/export/', AcademicResultExportAPIView.as_view(), name='academicresult-export'),
-    # path('academicresult/import/', AcademicResultImportAPIView.as_view(), name='academicresult-import'),    
+    path('academicresult/import/', AcademicResultImportAPIView.as_view(), name='academicresult-import'),    
 
     path('mediumeducation/',MediumofEducationListAPIView.as_view(), name='educationlevel-list'),
     path('mediumeducation/create/', MediumofEducationCreateAPIView.as_view(), name='mediumeducation-create'),

@@ -226,6 +226,8 @@ export const EDIT_STUDY_MAJOR_AREA_API = "/api/v1/master/studymajorarea/";
 export const DELETE_STUDY_MAJOR_AREA_API = "/api/v1/master/studymajorarea/";
 export const EXPORT_STUDY_MAJOR_AREA_API = "/api/v1/master/studymajorarea/export/";
 export const IMPORT_STUDY_MAJOR_AREA_API = "/api/v1/master/studymajorarea/import/";
+export const STUDY_MAJOR_AREA_LIST_BY_MAIN_AREA_API = "/api/v1/master/study-major-by-main/";
+
 // Academic Result Type
 export const GET_ACADEMIC_RESULT_TYPE_LIST = "/api/v1/master/academicresulttype/";
 export const ADD_ACADEMIC_RESULT_TYPE_API = "/api/v1/master/academicresulttype/create/";
@@ -500,6 +502,48 @@ export const EDIT_INSTITUTE_DEPARTMENT_API = "/api/v1/master/institutedepartment
 export const DELETE_INSTITUTE_DEPARTMENT_API = "/api/v1/master/institutedepartment/";
 export const EXPORT_INSTITUTE_DEPARTMENT_API = "/api/v1/master/institutedepartment/export/";
 export const IMPORT_INSTITUTE_DEPARTMENT_API = "/api/v1/master/institutedepartment/import/";
+// Bank Account For API Endpoints
+export const GET_BANK_ACCOUNT_FOR_LIST = "/api/v1/master/bankaccountfor/";
+export const ADD_BANK_ACCOUNT_FOR_API = "/api/v1/master/bankaccountfor/create/";
+export const EDIT_BANK_ACCOUNT_FOR_API = "/api/v1/master/bankaccountfor/";
+export const DELETE_BANK_ACCOUNT_FOR_API = "/api/v1/master/bankaccountfor/";
+export const EXPORT_BANK_ACCOUNT_FOR_API = "/api/v1/master/bankaccountfor/export/";
+export const IMPORT_BANK_ACCOUNT_FOR_API = "/api/v1/master/bankaccountfor/import/";
+
+// When Commission Issue API Endpoints
+export const GET_WHEN_COMMISSION_ISSUE_LIST = "/api/v1/master/whencommissionissue/";
+export const ADD_WHEN_COMMISSION_ISSUE_API = "/api/v1/master/whencommissionissue/create/";
+export const EDIT_WHEN_COMMISSION_ISSUE_API = "/api/v1/master/whencommissionissue/";
+export const DELETE_WHEN_COMMISSION_ISSUE_API = "/api/v1/master/whencommissionissue/";
+export const EXPORT_WHEN_COMMISSION_ISSUE_API = "/api/v1/master/whencommissionissue/export/";
+export const IMPORT_WHEN_COMMISSION_ISSUE_API = "/api/v1/master/whencommissionissue/import/";
+
+// Course Level Code API Endpoints
+export const GET_COURSE_LEVEL_CODE_LIST = "/api/v1/master/courselevelcode/";
+export const ADD_COURSE_LEVEL_CODE_API = "/api/v1/master/courselevelcode/create/";
+export const EDIT_COURSE_LEVEL_CODE_API = "/api/v1/master/courselevelcode/";
+export const DELETE_COURSE_LEVEL_CODE_API = "/api/v1/master/courselevelcode/";
+export const EXPORT_COURSE_LEVEL_CODE_API = "/api/v1/master/courselevelcode/export/";
+export const IMPORT_COURSE_LEVEL_CODE_API = "/api/v1/master/courselevelcode/import/";
+
+// Course Divided In API Endpoints
+export const GET_COURSE_DIVIDED_IN_LIST = "/api/v1/master/coursedividedin/";
+export const ADD_COURSE_DIVIDED_IN_API = "/api/v1/master/coursedividedin/create/";
+export const EDIT_COURSE_DIVIDED_IN_API = "/api/v1/master/coursedividedin/";
+export const DELETE_COURSE_DIVIDED_IN_API = "/api/v1/master/coursedividedin/";
+export const EXPORT_COURSE_DIVIDED_IN_API = "/api/v1/master/coursedividedin/export/";
+export const IMPORT_COURSE_DIVIDED_IN_API = "/api/v1/master/coursedividedin/import/";
+// Course Status API Endpoints
+export const GET_COURSE_STATUS_LIST = "/api/v1/master/coursestatus/";
+export const ADD_COURSE_STATUS_API = "/api/v1/master/coursestatus/create/";
+export const EDIT_COURSE_STATUS_API = "/api/v1/master/coursestatus/";
+export const DELETE_COURSE_STATUS_API = "/api/v1/master/coursestatus/";
+export const EXPORT_COURSE_STATUS_API = "/api/v1/master/coursestatus/export/";
+export const IMPORT_COURSE_STATUS_API = "/api/v1/master/coursestatus/import/";
+
+
+
+
 
 
 

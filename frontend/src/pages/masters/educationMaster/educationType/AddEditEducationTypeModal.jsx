@@ -65,7 +65,7 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
       newErrors.departmentName = 'Education type is required';
       isValid = false;
     }
-    
+
     setErrors(newErrors);
     return isValid;
   };
@@ -75,21 +75,21 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
     e.preventDefault();
 
     if (validateForm()) {
-      const sendPayload = mode === 'edit' 
+      const sendPayload = mode === 'edit'
         ? {
-            uuid: formData.uuid,
-            educationType: formData.departmentName,
-            Perticulars: formData.description,
-          }
+          uuid: formData.uuid,
+          educationType: formData.departmentName,
+          Perticulars: formData.description,
+        }
         : {
-            educationType: formData.departmentName,
-            Perticulars: formData.description,
-          };
+          educationType: formData.departmentName,
+          Perticulars: formData.description,
+        };
 
       setLoading(true);
-      
+
       const action = mode === 'edit' ? educationTypeEdit : educationTypeAdd;
-      
+
       dispatch(action(sendPayload, (response, error) => {
         setLoading(false);
         if (error) {
@@ -206,7 +206,14 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
                     className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                     disabled={loading}
                   >
-                    {loading ? 'Saving...' : 'Save'}
+                    {loading ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        Saving...
+                      </>
+                    ) : (
+                      "Save"
+                    )}
                   </button>
                 </div>
               </div>

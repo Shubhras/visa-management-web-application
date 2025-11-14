@@ -29,6 +29,36 @@ import {
     DELETE_INSTITUTE_DEPARTMENT,
     EXPORT_INSTITUTE_DEPARTMENT,
     IMPORT_INSTITUTE_DEPARTMENT,
+    BANK_ACCOUNT_FOR_LIST,
+    ADD_BANK_ACCOUNT_FOR,
+    EDIT_BANK_ACCOUNT_FOR,
+    DELETE_BANK_ACCOUNT_FOR,
+    EXPORT_BANK_ACCOUNT_FOR,
+    IMPORT_BANK_ACCOUNT_FOR,
+    WHEN_COMMISSION_ISSUE_LIST,
+    ADD_WHEN_COMMISSION_ISSUE,
+    EDIT_WHEN_COMMISSION_ISSUE,
+    DELETE_WHEN_COMMISSION_ISSUE,
+    EXPORT_WHEN_COMMISSION_ISSUE,
+    IMPORT_WHEN_COMMISSION_ISSUE,
+    COURSE_LEVEL_CODE_LIST,
+    ADD_COURSE_LEVEL_CODE,
+    EDIT_COURSE_LEVEL_CODE,
+    DELETE_COURSE_LEVEL_CODE,
+    EXPORT_COURSE_LEVEL_CODE,
+    IMPORT_COURSE_LEVEL_CODE,
+    COURSE_DIVIDED_IN_LIST,
+    ADD_COURSE_DIVIDED_IN,
+    EDIT_COURSE_DIVIDED_IN,
+    DELETE_COURSE_DIVIDED_IN,
+    EXPORT_COURSE_DIVIDED_IN,
+    IMPORT_COURSE_DIVIDED_IN,
+    COURSE_STATUS_LIST,
+    ADD_COURSE_STATUS,
+    EDIT_COURSE_STATUS,
+    DELETE_COURSE_STATUS,
+    EXPORT_COURSE_STATUS,
+    IMPORT_COURSE_STATUS,
 } from "./actionType";
 
 
@@ -216,5 +246,191 @@ export const instituteDepartmentImportData = (data, callback) => ({
     data,
     callback,
 });
+
+// Bank Account For
+export const bankAccountForList = (data, callback) => ({
+    type: BANK_ACCOUNT_FOR_LIST,
+    data,
+    callback,
+});
+
+export const bankAccountForAdd = (data, callback) => ({
+    type: ADD_BANK_ACCOUNT_FOR,
+    data,
+    callback,
+});
+
+export const bankAccountForEdit = (data, callback) => ({
+    type: EDIT_BANK_ACCOUNT_FOR,
+    data,
+    callback,
+});
+
+export const bankAccountForDelete = (data, callback) => ({
+    type: DELETE_BANK_ACCOUNT_FOR,
+    data,
+    callback,
+});
+
+export const bankAccountForExportData = (data, callback) => ({
+    type: EXPORT_BANK_ACCOUNT_FOR,
+    data,
+    callback,
+});
+
+export const bankAccountForImportData = (data, callback) => ({
+    type: IMPORT_BANK_ACCOUNT_FOR,
+    data,
+    callback,
+});
+// When Commission Issue Actions
+export const whenCommissionIssueList = (data, callback) => ({
+    type: WHEN_COMMISSION_ISSUE_LIST,
+    data,
+    callback,
+});
+
+export const whenCommissionIssueAdd = (data, callback) => ({
+    type: ADD_WHEN_COMMISSION_ISSUE,
+    data,
+    callback,
+});
+
+export const whenCommissionIssueEdit = (data, callback) => ({
+    type: EDIT_WHEN_COMMISSION_ISSUE,
+    data,
+    callback,
+});
+
+export const whenCommissionIssueDelete = (data, callback) => ({
+    type: DELETE_WHEN_COMMISSION_ISSUE,
+    data,
+    callback,
+});
+
+export const whenCommissionIssueExportData = (data, callback) => ({
+    type: EXPORT_WHEN_COMMISSION_ISSUE,
+    data,
+    callback,
+});
+
+export const whenCommissionIssueImportData = (data, callback) => ({
+    type: IMPORT_WHEN_COMMISSION_ISSUE,
+    data,
+    callback,
+});
+// Course Level Code Actions
+export const courseLevelCodeList = (data, callback) => ({
+    type: COURSE_LEVEL_CODE_LIST,
+    data,
+    callback,
+});
+
+export const courseLevelCodeAdd = (data, callback) => ({
+    type: ADD_COURSE_LEVEL_CODE,
+    data,
+    callback,
+});
+
+export const courseLevelCodeEdit = (data, callback) => ({
+    type: EDIT_COURSE_LEVEL_CODE,
+    data,
+    callback,
+});
+
+export const courseLevelCodeDelete = (data, callback) => ({
+    type: DELETE_COURSE_LEVEL_CODE,
+    data,
+    callback,
+});
+
+export const courseLevelCodeExportData = (data, callback) => ({
+    type: EXPORT_COURSE_LEVEL_CODE,
+    data,
+    callback,
+});
+
+export const courseLevelCodeImportData = (data, callback) => ({
+    type: IMPORT_COURSE_LEVEL_CODE,
+    data,
+    callback,
+});
+// Course Divided In Actions
+export const courseDividedInList = (data, callback) => ({
+    type: COURSE_DIVIDED_IN_LIST,
+    data,
+    callback,
+});
+
+export const courseDividedInAdd = (data, callback) => ({
+    type: ADD_COURSE_DIVIDED_IN,
+    data,
+    callback,
+});
+
+export const courseDividedInEdit = (data, callback) => ({
+    type: EDIT_COURSE_DIVIDED_IN,
+    data,
+    callback,
+});
+
+export const courseDividedInDelete = (data, callback) => ({
+    type: DELETE_COURSE_DIVIDED_IN,
+    data,
+    callback,
+});
+
+export const courseDividedInExportData = (data, callback) => ({
+    type: EXPORT_COURSE_DIVIDED_IN,
+    data,
+    callback,
+});
+
+export const courseDividedInImportData = (data, callback) => ({
+    type: IMPORT_COURSE_DIVIDED_IN,
+    data,
+    callback,
+});
+// Course Status Actions
+export const courseStatusList = (data, callback) => ({
+    type: COURSE_STATUS_LIST,
+    data,
+    callback,
+});
+
+export const courseStatusAdd = (data, callback) => ({
+    type: ADD_COURSE_STATUS,
+    data,
+    callback,
+});
+
+export const courseStatusEdit = (data, callback) => ({
+    type: EDIT_COURSE_STATUS,
+    data,
+    callback,
+});
+
+export const courseStatusDelete = (data, callback) => ({
+    type: DELETE_COURSE_STATUS,
+    data,
+    callback,
+});
+
+export const courseStatusExportData = (data, callback) => ({
+    type: EXPORT_COURSE_STATUS,
+    data,
+    callback,
+});
+
+export const courseStatusImportData = (data, callback) => ({
+    type: IMPORT_COURSE_STATUS,
+    data,
+    callback,
+});
+
+
+
+
+
 
 

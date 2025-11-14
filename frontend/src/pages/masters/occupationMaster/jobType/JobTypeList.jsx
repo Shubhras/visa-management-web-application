@@ -374,7 +374,6 @@ const JobTypeList = () => {
     setShowExportPopop(false);
   };
 
-
   const handleDragStart = (e, index) => {
     e.dataTransfer.setData("dragIndex", index);
   };
@@ -456,7 +455,6 @@ const JobTypeList = () => {
 
   const startIndex = (tableState.currentPage - 1) * tableState.limit;
   const statusOptions = ['All', 'Active', 'Inactive'];
-
 
   return (
     <>

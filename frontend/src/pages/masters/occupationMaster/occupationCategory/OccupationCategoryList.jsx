@@ -52,35 +52,50 @@ const OccupationCategoryList = () => {
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [items] = useState(["Occupation Category", "Country","Occupation Version","Occupation Category Code", "Description", "Modified On"]);
-  const [selectedItems, setSelectedItems] = useState(["Occupation Category","Country","Occupation Version"]);
-  const [ItemsRequired] = useState(["Occupation Category","Country","Occupation Version"]);
+  const [items] = useState([
+    "Occupation Category",
+    "Country",
+    "Occupation Version",
+    "Occupation Category Code",
+    "Description",
+    "Modified On",
+  ]);
+  const [selectedItems, setSelectedItems] = useState([
+    "Occupation Category",
+    "Country",
+    "Occupation Version",
+  ]);
+  const [ItemsRequired] = useState([
+    "Occupation Category",
+    "Country",
+    "Occupation Version",
+  ]);
 
   // Table columns configuration
   const [tableColumns] = useState([
     {
       id: "name",
-      label: "Occupation Type",
+      label: "Occupation Category",
       field: "name",
       visible: true,
       required: false,
     },
-     {
-         id: "country",
+    {
+      id: "country",
       label: "Country",
       field: "country",
       visible: true,
       required: false,
     },
     {
-         id: "occupationversion",
+      id: "occupationversion",
       label: "Occupation Version",
       field: "occupationversion",
       visible: true,
       required: false,
     },
     {
-         id: "occupationcategorycode",
+      id: "occupationcategorycode",
       label: "Occupation Category Code",
       field: "occupationcategorycode",
       visible: true,
@@ -101,7 +116,6 @@ const OccupationCategoryList = () => {
       visible: true,
       required: false,
     },
-   
   ]);
 
   const [visibleColumns, setVisibleColumns] = useState(
@@ -481,7 +495,10 @@ const OccupationCategoryList = () => {
     }
     // Map frontend labels to backend field names
     const fieldMapping = {
-      "Occupation Type": "name",
+      "Occupation Category": "occupationcategory",
+      "Country": "country_name",
+      "Occupation Version": "occupation_version_name",
+      "Occupation Category Code": "occupationcategorycode",
       "Modified On": "updated_at",
       Description: "description",
     };
@@ -764,9 +781,25 @@ const OccupationCategoryList = () => {
                         </td>
                         {isColumnVisible("name") && (
                           <td>
-                            <span>{rowItem.name}</span>
+                            <span>{rowItem.occupationcategory}</span>
                           </td>
                         )}
+                        {isColumnVisible("country") && (
+                          <td>
+                            <span>{rowItem.country_name}</span>
+                          </td>
+                        )}
+                        {isColumnVisible("occupationversion") && (
+                          <td>
+                            <span>{rowItem.occupation_version_name}</span>
+                          </td>
+                        )}
+                        {isColumnVisible("occupationcategorycode") && (
+                          <td>
+                            <span>{rowItem.occupationcategorycode}</span>
+                          </td>
+                        )}
+
                         {isColumnVisible("description") && (
                           <td>
                             <span>{rowItem.description}</span>

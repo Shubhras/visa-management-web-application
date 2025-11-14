@@ -29,6 +29,7 @@ import {
     DELETE_STUDY_MAJOR_AREA,
     EXPORT_STUDY_MAJOR_AREA,
     IMPORT_STUDY_MAJOR_AREA,
+    STUDY_MAJOR_AREA_LIST_BY_MAIN_AREA,
     ACADEMIC_RESULT_TYPE_LIST,
     ADD_ACADEMIC_RESULT_TYPE,
     EDIT_ACADEMIC_RESULT_TYPE,
@@ -244,6 +245,12 @@ export const studyMajorAreaList = (data, callback) => ({
     data,
     callback,
 });
+export const studyMajorAreaListByMainArea = (data, callback) => ({
+    type: STUDY_MAJOR_AREA_LIST_BY_MAIN_AREA,
+    data,
+    callback,
+});
+
 
 export const studyMajorAreaAdd = (data, callback) => ({
     type: ADD_STUDY_MAJOR_AREA,

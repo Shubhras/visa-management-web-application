@@ -164,12 +164,17 @@ const MasterLayout = ({ children }) => {
         {
           name: "Institute",
           children: [
-            { name: "Institute Type", path: "/institute-type" },
-            { name: "Institute Group Name", path: "/institute-group-name" },
-            { name: "Institute Status", path: "/institute-status" },
-            { name: "Institute Priority", path: "/institute-priority" },
-            { name: "Institute Department", path: "/institute-department" },
-          ],
+            { name: 'Institute Type', path: '/institute-type' },
+            { name: 'Institute Group Name', path: '/institute-group-name' },
+            { name: "Institute Status", path: '/institute-status' },
+            { name: "Institute Priority", path: '/institute-priority' },
+            { name: "Institute Department", path: '/institute-department' },
+            { name: "Bank Account For", path: '/bank-account-for' },
+            { name: "When Commission Issue", path: '/when-commission-issue' },
+            { name: "Course Level Code", path: '/course-level-code' },
+            { name: 'Course Divided In', path: '/course-divided-in' },
+            { name: 'Course Status', path: '/course-status' },
+          ]
         },
 
         // { name: 'Education', path: '/' },

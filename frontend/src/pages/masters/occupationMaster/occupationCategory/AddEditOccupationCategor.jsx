@@ -5,8 +5,6 @@ import Select from "react-select";
 import {
   occupationCategoryAdd,
   occupationCategoryEdit,
-  occupationTypeAdd,
-  occupationTypeEdit,
   occupationVersionList,
 } from "../../../../store/master/occupationMaster/action";
 import { toast } from "react-toastify";
@@ -40,7 +38,7 @@ const AddEditOccupationCategory = ({
   });
 
   const fetchCountryList = () => {
-    setLoading(true);
+    // setLoading(true);
     const params = {
       page: 1,
       limit: 2000,
@@ -51,42 +49,34 @@ const AddEditOccupationCategory = ({
     };
     dispatch(
       countryList(params, (response, error) => {
-        setLoading(false);
+        // setLoading(false);
         if (response?.statusCode === 200 && response?.status === true) {
           setCountryData(response?.data || []);
         }
       })
     );
-  };
-  const fetchOccupationVersionList = () => {
-    setLoading(true);
-    const params = {
-      page: 1,
-      limit: 2000,
-      search: "",
-      status: "",
-      sortBy: "updated_at",
-      sortOrder: "desc",
-    };
     dispatch(
       occupationVersionList(params, (response, error) => {
-        setLoading(false);
+        // setLoading(false);
         if (response?.statusCode === 200 && response?.status === true) {
           setOccupationVersionData(response?.data || []);
         }
       })
     );
   };
-
+  const customFilterOptionCountry = (option, inputValue) => {
+    if (!inputValue) return true;
+    return option.label.toLowerCase().startsWith(inputValue.toLowerCase());
+  };
   // Populate form data when in edit mode
   useEffect(() => {
     if (mode === "edit" && rowData) {
       setFormData({
         uuid: rowData.uuid || "",
-        occupationCategory: rowData.name || "",
-        country: rowData.country || "",
-        occupationVersion: rowData.categoryVersion || "",
-        occupationCategoryCode: rowData.occupationCategoryCode || "",
+        occupationCategory: rowData.occupationcategory || "",
+        country: rowData.country_uuid || "",
+        occupationVersion: rowData.occupation_version_uuid || "",
+        occupationCategoryCode: rowData.occupationcategorycode || "",
         description: rowData.description || "",
       });
     } else {
@@ -101,7 +91,6 @@ const AddEditOccupationCategory = ({
       });
     }
     fetchCountryList();
-    fetchOccupationVersionList();
   }, [mode, rowData, show]);
 
   // Handle input changes
@@ -274,6 +263,7 @@ const AddEditOccupationCategory = ({
                       })
                     }
                     placeholder="Select country"
+                    filterOption={customFilterOptionCountry}
                     isClearable
                     isSearchable
                     className={`custom-select-container ${

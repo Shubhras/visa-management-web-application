@@ -411,6 +411,14 @@ import InstituteStatusList from "./pages/masters/instituteMaster/instituteStatus
 import InstitutePriorityList from "./pages/masters/instituteMaster/institutePriority/InstitutePriorityList";
 import InstituteDepartmentList from "./pages/masters/instituteMaster/instituteDepartment/InstituteDepartmentList";
 
+import BankAccountForList from "./pages/masters/instituteMaster/BankAccountFor/BankAccountForList";
+import WhenCommissionIssueList from "./pages/masters/instituteMaster/whenCommissionIssue/WhenCommissionIssueList";
+import CourseLevelCodeList from "./pages/masters/instituteMaster/courseLevelCode/CourseLevelCodeList";
+import CourseDividedInList from "./pages/masters/instituteMaster/courseDividedIn/CourseDividedInList";
+import CourseStatusList from "./pages/masters/instituteMaster/courseStatus/CourseStatusList";
+
+
+
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   // Check if user is authenticated
@@ -705,10 +713,15 @@ function App() {
 
         {/*Institute Master*/}
         <Route path="/institute-type" element={<ProtectedRoute><InstituteTypeList /></ProtectedRoute>}></Route>
-        <Route path="/institute-group-name" element={<ProtectedRoute><InstituteGroupNameList/></ProtectedRoute>}></Route>
-        <Route path="/institute-status" element={<ProtectedRoute><InstituteStatusList/></ProtectedRoute>}></Route>
-        <Route path="/institute-priority" element={<ProtectedRoute><InstitutePriorityList/></ProtectedRoute>}></Route>
-        <Route path="/institute-department" element={<ProtectedRoute><InstituteDepartmentList/></ProtectedRoute>}></Route>
+        <Route path="/institute-group-name" element={<ProtectedRoute><InstituteGroupNameList /></ProtectedRoute>}></Route>
+        <Route path="/institute-status" element={<ProtectedRoute><InstituteStatusList /></ProtectedRoute>}></Route>
+        <Route path="/institute-priority" element={<ProtectedRoute><InstitutePriorityList /></ProtectedRoute>}></Route>
+        <Route path="/institute-department" element={<ProtectedRoute><InstituteDepartmentList /></ProtectedRoute>}></Route>
+        <Route path="/bank-account-for" element={<ProtectedRoute><BankAccountForList /></ProtectedRoute>}> </Route>
+        <Route path="/when-commission-issue" element={<ProtectedRoute><WhenCommissionIssueList /></ProtectedRoute>}></Route>
+        <Route path="/course-level-code" element={<ProtectedRoute><CourseLevelCodeList /></ProtectedRoute>}></Route>
+        <Route path="/course-divided-in" element={<ProtectedRoute><CourseDividedInList/></ProtectedRoute>}></Route>
+        <Route path="/course-status" element={<ProtectedRoute><CourseStatusList/></ProtectedRoute>}></Route>
 
 
 

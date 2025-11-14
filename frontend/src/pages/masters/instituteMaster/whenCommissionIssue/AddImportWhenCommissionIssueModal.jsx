@@ -1,12 +1,12 @@
 import React, { useState } from 'react'
 import { useDispatch } from "react-redux";
-import { occupationCategoryImportData, occupationTypeImportData } from "../../../../store/master/occupationMaster/action";
+import { whenCommissionIssueImportData } from "../../../../store/master/instituteMaster/action";
 import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
 import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
 import { exportToExcelDuplicate } from '../../../../helper/utils/commanHelper';
-const AddImportOccupationCategory = ({ show, handleClose }) => {
+const AddImportWhenCommissionIssueModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
     const [file, setFile] = useState(null);
@@ -66,7 +66,7 @@ const AddImportOccupationCategory = ({ show, handleClose }) => {
             formData.append('sheet_name', selectedSheet);
         }
         setLoading(true);
-        dispatch(occupationCategoryImportData(formData, (response, error) => {
+        dispatch(whenCommissionIssueImportData(formData, (response, error) => {
             setLoading(false);
             if (error) {
                 toast.error(error?.response?.data?.message || "Server error");
@@ -78,7 +78,7 @@ const AddImportOccupationCategory = ({ show, handleClose }) => {
                             <div>{response?.message}</div>
                             {response?.duplicates?.length > 0 && (
                                 <div style={{ marginTop: '6px' }}>
-                                    <strong>Duplicate occupation categoryskipped — the duplicate data from your uploaded file has been exported into an .xlsx file.</strong>
+                                    <strong>Duplicate When Commission Issue skipped — the duplicate data from your uploaded file has been exported into an .xlsx file.</strong>
                                 </div>
                             )}
                         </div>,
@@ -89,9 +89,9 @@ const AddImportOccupationCategory = ({ show, handleClose }) => {
                     if (response?.duplicates?.length > 0) {
                         const prepareData = {
                             data: response.duplicates || [],
-                            headers: ["Occupation Category,Country,Occupation Version"],
-                            sheetName: "OccupationCategory",
-                            fileName: "OccupationCategory",
+                            headers: ["When Commission Issue"],
+                            sheetName: "WhenCommissionIssue",
+                            fileName: "WhenCommissionIssue",
                         };
                         exportToExcelDuplicate(
                             prepareData.data,
@@ -141,7 +141,7 @@ const AddImportOccupationCategory = ({ show, handleClose }) => {
                     <div className="modal-content radius-16 bg-base">
                         <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
                             <h1 className="modal-title fs-5" id="departmentModalLabel">
-                                Upload Occupation Type
+                                Upload When Commission Issue
                             </h1>
                             <button
                                 type="button"
@@ -245,10 +245,10 @@ const AddImportOccupationCategory = ({ show, handleClose }) => {
             </div>
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
-                    downloadFileName: "OccupationCategory",
-                    items: ["Occupation Category","Country","Occupation Version","Occupation Category Code", "Description"],
-                    selectedItems: ["Occupation Category","Country","Occupation Version",],
-                    ItemsRequired: ["Occupation Category","Country","Occupation Version",]
+                    downloadFileName: "WhenCommissionIssue",
+                    items: ["When Commission Issue", "Description"],
+                    selectedItems: ["When Commission Issue"],
+                    ItemsRequired: ["When Commission Issue"]
                 }
                 } />
             )}
@@ -256,4 +256,4 @@ const AddImportOccupationCategory = ({ show, handleClose }) => {
     );
 };
 
-export default AddImportOccupationCategory;
+export default AddImportWhenCommissionIssueModal;
