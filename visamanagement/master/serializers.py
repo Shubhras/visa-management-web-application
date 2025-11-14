@@ -1515,7 +1515,7 @@ class BankAccountForSerializer(serializers.ModelSerializer):
 class WhenCommissionIssueSerializer(serializers.ModelSerializer):
     class Meta:
         model = WhenCommissionIssue
-        fields = '__all__'
+        fields = '__all__ ,'
 
 
 class CourseLevelCodeSerializer(serializers.ModelSerializer):
