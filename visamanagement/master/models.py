@@ -1044,22 +1044,22 @@ class JobProspect(models.Model):
 
 
 
-# class RelatedOccupation(models.Model):
-#     id = models.AutoField(primary_key=True)
-#     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-#     country = models.ForeignKey('Country',on_delete=models.SET_NULL,null=True,blank=True,related_name='related_name')
-#     occupationversion =models.ForeignKey('OccupationVersion',on_delete=models.SET_NULL,null=True,blank=True,related_name='related_name')
-#     occupationcode =models.ForeignKey('OccupationCode',on_delete=models.SET_NULL,null=True,blank=True,related_name='related_name')
-#     occupationname =models.ForeignKey('OccupationName',on_delete=models.SET_NULL,null=True,blank=True,related_name='occupation_name')
-#     relatedoccupation =  models.TextField(max_length=255,blank=True)
-#     description =  models.TextField(max_length=255,blank=True)
-#     is_deleted = models.BooleanField(default=False)
-#     created_at = models.DateTimeField(auto_now_add=True)
-#     updated_at = models.DateTimeField(auto_now=True)
-#     class Meta:
-#         unique_together = ('occupationcode', 'country','occupationversion')
-#     def __str__(self):
-#         return self.relatedoccupation
+class RelatedOccupation(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    country = models.ForeignKey('Country',on_delete=models.SET_NULL,null=True,blank=True,related_name='related_name')
+    occupationversion =models.ForeignKey('OccupationVersion',on_delete=models.SET_NULL,null=True,blank=True,related_name='related_name')
+    occupationcode =models.ForeignKey('OccupationCode',on_delete=models.SET_NULL,null=True,blank=True,related_name='related_name')
+    occupationname =models.ForeignKey('OccupationName',on_delete=models.SET_NULL,null=True,blank=True,related_name='occupation_name')
+    relatedoccupation =  models.TextField(max_length=255,blank=True)
+    description =  models.TextField(max_length=255,blank=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    class Meta:
+        unique_together = ('occupationcode', 'country','occupationversion')
+    def __str__(self):
+        return self.relatedoccupation
 
     
 
@@ -1075,48 +1075,36 @@ class RepresentingCountry(models.Model):
     full_name = models.CharField(max_length=255, blank=True, null=True)
     official_name = models.CharField(max_length=255, blank=True, null=True)
     capital_city = models.CharField(max_length=255, blank=True, null=True)
-    
     dial_codes = models.JSONField(blank=True, null=True) 
     currency_full_name = models.CharField(max_length=255, blank=True, null=True)
     currency_short_name = models.CharField(max_length=250, blank=True, null=True)
     currency_code = models.CharField(max_length=250, blank=True, default="")
-    
     no_of_states = models.IntegerField(default=0)
     no_of_territories = models.IntegerField(default=0)
     total_states_and_territories = models.IntegerField(default=0)
     land_area_sq_km = models.FloatField(blank=True, null=True)
     water_area_sq_km = models.FloatField(blank=True, null=True)
     total_area_sq_km = models.FloatField(blank=True, null=True)
-    
     population = models.BigIntegerField(blank=True, null=True)
     religions = models.TextField(blank=True, null=True)
     monthly_living_cost = models.FloatField(blank=True, null=True)
     unemployment = models.FloatField(blank=True, null=True)
     skilled_shortages = models.TextField(blank=True, null=True)
-    
     independence_day = models.DateField(blank=True, null=True)
     government_type = models.CharField(max_length=255, blank=True, null=True)
     official_language = models.CharField(max_length=255, blank=True, null=True)
-    
-    
     largest_state = models.ForeignKey('State', on_delete=models.CASCADE, related_name='representations')
     largest_city = models.ForeignKey('City', on_delete=models.CASCADE, related_name='representations')
     major_cities = models.TextField(blank=True, null=True)
-    
     national_animal = models.CharField(max_length=255, blank=True, null=True)
     national_bird = models.CharField(max_length=255, blank=True, null=True)
     national_flower = models.CharField(max_length=255, blank=True, null=True)
-    
-
     border_countries_and_oceans = models.TextField(blank=True, null=True)
     national_flag = models.FileField(upload_to='flags/', blank=True, null=True)
     country_map = models.FileField(upload_to='maps/', blank=True, null=True)
-    
-
     status = models.BooleanField(default=True)
     is_active = models.BooleanField(default=True)
     is_deleted = models.BooleanField(default=False)
-    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

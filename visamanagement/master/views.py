@@ -16807,7 +16807,14 @@ class DegreeAwardedInstituteImportAPIView(APIView):
                 # Check duplicate
                 existing = DegreeAwardedInstitute.objects.filter(name__iexact=name, degree_awarded_by=degree_awarded_by).first()
                 if existing:
-                    duplicate_names.append(name)
+                    duplicate_names.append({
+                        'name': name,
+                        'Degree Awarded By': degree_awarded_by_name,
+                        'Country': country_name,
+                        'State': state_name,
+                        'Education Level': education_level_name,
+                        'Reason': 'Duplicate entry found'
+                    })
                     continue
 
                 # Create record
@@ -16827,13 +16834,11 @@ class DegreeAwardedInstituteImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_names)),
+            "duplicates": duplicate_names,  # Return detailed duplicate info
             "skipped_rows": skipped_rows,
             "imported_count": imported_count,
             "message": "Import successful"
         })
-
-
 
 
 
