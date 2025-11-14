@@ -501,6 +501,8 @@ const OccupationCategoryList = () => {
       "Occupation Category Code": "occupationcategorycode",
       "Modified On": "updated_at",
       Description: "description",
+
+      
     };
     // Convert selectedItems to backend field names
     const mappedFields = selectedItems.map(
