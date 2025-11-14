@@ -1432,10 +1432,10 @@ class OccupationCategoryCreateAPIView(APIView):
                     "message": "Invalid occupation version UUID."
                 }, status=400)
 
-        # Check duplicate
+        # Duplicate check
         existing = OccupationCategory.objects.filter(
             country=country_obj,
-            occupation_version=occupation_version_obj,
+            occupationversion=occupation_version_obj,
             occupationcategory__iexact=occupationcategory,
             is_deleted=False
         ).first()
@@ -1448,10 +1448,12 @@ class OccupationCategoryCreateAPIView(APIView):
             }, status=400)
 
         data = request.data.copy()
+
         if country_obj:
             data['country_id'] = country_obj.uuid
+
         if occupation_version_obj:
-            data['occupation_version_id'] = occupation_version_obj.uuid
+            data['occupation_version_id'] = occupation_version_obj.uuid   # ✅ FIXED
 
         serializer = OccupationCategorySerializer(data=data)
         if serializer.is_valid():
@@ -1463,12 +1465,15 @@ class OccupationCategoryCreateAPIView(APIView):
                 "data": serializer.data
             })
 
+        # Join all errors into a single message
         errors = " ".join([msg for msgs in serializer.errors.values() for msg in msgs])
         return Response({
             "statusCode": 400,
             "status": False,
             "message": errors
         }, status=400)
+
+
 
 
 # -------------------- Retrieve -------------------- #
@@ -1794,11 +1799,11 @@ class OccupationLevelCodeCreateAPIView(APIView):
 
         # Check duplicate
         existing = OccupationLevelCode.objects.filter(
-            country=country_obj,
-            occupation_version=occupation_version_obj,
-            occupationlevelcode__iexact=occupationlevelcode,
-            is_deleted=False
-        ).first()
+                country=country_obj,
+                occupationversion=occupation_version_obj,  # ✅ Correct
+                occupationlevelcode__iexact=occupationlevelcode,
+                is_deleted=False
+            ).first()
 
         if existing:
             return Response({
@@ -1812,6 +1817,7 @@ class OccupationLevelCodeCreateAPIView(APIView):
             data['country_id'] = country_obj.uuid
         if occupation_version_obj:
             data['occupation_version_id'] = occupation_version_obj.uuid
+
 
         serializer = OccupationLevelCodeSerializer(data=data)
         if serializer.is_valid():
