@@ -60,6 +60,25 @@ import {
     DELETE_COURSE_STATUS,
     EXPORT_COURSE_STATUS,
     IMPORT_COURSE_STATUS,
+    INTAKE_NAME_LIST,
+    ADD_INTAKE_NAME,
+    EDIT_INTAKE_NAME,
+    DELETE_INTAKE_NAME,
+    EXPORT_INTAKE_NAME,
+    IMPORT_INTAKE_NAME,
+    COURSE_STATUS_INTAKE_LIST,
+    ADD_COURSE_STATUS_INTAKE,
+    EDIT_COURSE_STATUS_INTAKE,
+    DELETE_COURSE_STATUS_INTAKE,
+    EXPORT_COURSE_STATUS_INTAKE,
+    IMPORT_COURSE_STATUS_INTAKE,
+    SCHOLARSHIP_BASED_ON_LIST,
+    ADD_SCHOLARSHIP_BASED_ON,
+    EDIT_SCHOLARSHIP_BASED_ON,
+    DELETE_SCHOLARSHIP_BASED_ON,
+    EXPORT_SCHOLARSHIP_BASED_ON,
+    IMPORT_SCHOLARSHIP_BASED_ON,
+
 } from "./actionType";
 
 import {
@@ -123,6 +142,28 @@ import {
     deleteCourseStatusDataAPI,
     exportCourseStatusDataAPI,
     importCourseStatusDataAPI,
+    getIntakeNameListDataAPI,
+    addIntakeNameDataAPI,
+    editIntakeNameDataAPI,
+    deleteIntakeNameDataAPI,
+    exportIntakeNameDataAPI,
+    importIntakeNameDataAPI,
+    getCourseStatusIntakeListDataAPI,
+    addCourseStatusIntakeDataAPI,
+    editCourseStatusIntakeDataAPI,
+    deleteCourseStatusIntakeDataAPI,
+    exportCourseStatusIntakeDataAPI,
+    importCourseStatusIntakeDataAPI,
+    getScholarshipBasedOnListDataAPI,
+    addScholarshipBasedOnDataAPI,
+    editScholarshipBasedOnDataAPI,
+    deleteScholarshipBasedOnDataAPI,
+    exportScholarshipBasedOnDataAPI,
+    importScholarshipBasedOnDataAPI,
+
+
+
+
 
 
 
@@ -673,6 +714,171 @@ function* courseStatusImportDataSaga(action) {
         action.callback?.(null, error);
     }
 }
+// Intake Name Sagas
+function* intakeNameListSaga(action) {
+    try {
+        const response = yield call(getIntakeNameListDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* intakeNameAddSaga(action) {
+    try {
+        const response = yield call(addIntakeNameDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* intakeNameEditSaga(action) {
+    try {
+        const response = yield call(editIntakeNameDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* intakeNameDeleteSaga(action) {
+    try {
+        const response = yield call(deleteIntakeNameDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* intakeNameExportDataSaga(action) {
+    try {
+        const response = yield call(exportIntakeNameDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* intakeNameImportDataSaga(action) {
+    try {
+        const response = yield call(importIntakeNameDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+// Course Status for Intake Sagas
+function* courseStatusIntakeListSaga(action) {
+    try {
+        const response = yield call(getCourseStatusIntakeListDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* courseStatusIntakeAddSaga(action) {
+    try {
+        const response = yield call(addCourseStatusIntakeDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* courseStatusIntakeEditSaga(action) {
+    try {
+        const response = yield call(editCourseStatusIntakeDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* courseStatusIntakeDeleteSaga(action) {
+    try {
+        const response = yield call(deleteCourseStatusIntakeDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* courseStatusIntakeExportDataSaga(action) {
+    try {
+        const response = yield call(exportCourseStatusIntakeDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* courseStatusIntakeImportDataSaga(action) {
+    try {
+        const response = yield call(importCourseStatusIntakeDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+// Scholarship Based On Sagas
+function* scholarshipBasedOnListSaga(action) {
+    try {
+        const response = yield call(getScholarshipBasedOnListDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* scholarshipBasedOnAddSaga(action) {
+    try {
+        const response = yield call(addScholarshipBasedOnDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* scholarshipBasedOnEditSaga(action) {
+    try {
+        const response = yield call(editScholarshipBasedOnDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* scholarshipBasedOnDeleteSaga(action) {
+    try {
+        const response = yield call(deleteScholarshipBasedOnDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* scholarshipBasedOnExportDataSaga(action) {
+    try {
+        const response = yield call(exportScholarshipBasedOnDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+function* scholarshipBasedOnImportDataSaga(action) {
+    try {
+        const response = yield call(importScholarshipBasedOnDataAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
+
+
 
 
 
@@ -739,7 +945,24 @@ function* instituteMasterSaga() {
     yield takeEvery(DELETE_COURSE_STATUS, courseStatusDeleteSaga);
     yield takeEvery(EXPORT_COURSE_STATUS, courseStatusExportDataSaga);
     yield takeEvery(IMPORT_COURSE_STATUS, courseStatusImportDataSaga);
-
+    yield takeEvery(INTAKE_NAME_LIST, intakeNameListSaga);
+    yield takeEvery(ADD_INTAKE_NAME, intakeNameAddSaga);
+    yield takeEvery(EDIT_INTAKE_NAME, intakeNameEditSaga);
+    yield takeEvery(DELETE_INTAKE_NAME, intakeNameDeleteSaga);
+    yield takeEvery(EXPORT_INTAKE_NAME, intakeNameExportDataSaga);
+    yield takeEvery(IMPORT_INTAKE_NAME, intakeNameImportDataSaga);
+    yield takeEvery(COURSE_STATUS_INTAKE_LIST, courseStatusIntakeListSaga);
+    yield takeEvery(ADD_COURSE_STATUS_INTAKE, courseStatusIntakeAddSaga);
+    yield takeEvery(EDIT_COURSE_STATUS_INTAKE, courseStatusIntakeEditSaga);
+    yield takeEvery(DELETE_COURSE_STATUS_INTAKE, courseStatusIntakeDeleteSaga);
+    yield takeEvery(EXPORT_COURSE_STATUS_INTAKE, courseStatusIntakeExportDataSaga);
+    yield takeEvery(IMPORT_COURSE_STATUS_INTAKE, courseStatusIntakeImportDataSaga);
+    yield takeEvery(SCHOLARSHIP_BASED_ON_LIST, scholarshipBasedOnListSaga);
+    yield takeEvery(ADD_SCHOLARSHIP_BASED_ON, scholarshipBasedOnAddSaga);
+    yield takeEvery(EDIT_SCHOLARSHIP_BASED_ON, scholarshipBasedOnEditSaga);
+    yield takeEvery(DELETE_SCHOLARSHIP_BASED_ON, scholarshipBasedOnDeleteSaga);
+    yield takeEvery(EXPORT_SCHOLARSHIP_BASED_ON, scholarshipBasedOnExportDataSaga);
+    yield takeEvery(IMPORT_SCHOLARSHIP_BASED_ON, scholarshipBasedOnImportDataSaga);
 
 
 
