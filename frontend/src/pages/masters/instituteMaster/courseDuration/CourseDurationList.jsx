@@ -5,12 +5,12 @@ import MasterLayout from "../../../../masterLayout/MasterLayout";
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { Link } from 'react-router-dom';
 import { toast } from "react-toastify";
-import { courseLevelList, courseLevelDelete, courseLevelExportData } from "../../../../store/master/instituteMaster/action";
-import AddImportCourseLevelModal from './AddImportCourseLevelModal';
-import AddEditCourseLevelModal from './AddEditCourseLevelModal';
+import { courseDurationList, courseDurationDelete, courseDurationExportData } from "../../../../store/master/instituteMaster/action";
+import AddImportCourseDurationModal from './AddImportCourseDurationModal';
+import AddEditCourseDurationModal from './AddEditCourseDurationModal';
 import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 
-const CourseLevelList = () => {
+const CourseDurationList = () => {
     const dispatch = useDispatch();
     const [modalState, setModalState] = useState({
         show: false,
@@ -38,21 +38,22 @@ const CourseLevelList = () => {
     const [rowSelectData, setRowSelectData] = useState({});
     const [selectedRows, setSelectedRows] = useState([]);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-    const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this Course Level?");
+    const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this Course Duration?");
     const [showExportPopop, setShowExportPopop] = useState(false);
     const [deleteId, setDeleteId] = useState(null);
     const [selectAllOrNot, setSelectAllOrNot] = useState('');
     const [departments, setDepartments] = useState([]);
     const [loading, setLoading] = useState(false);
     const [loadingExport, setLoadingExport] = useState(false);
-    const [items] = useState(["Course Level", "Course Level Code", "Description", "Modified On"]);
-    const [selectedItems, setSelectedItems] = useState(["Course Level"]);
-    const [ItemsRequired] = useState(["Course Level"]);
+    const [items] = useState(["Course Level", "Course Duration Value", "Course Duration Unit", "Description", "Modified On"]);
+    const [selectedItems, setSelectedItems] = useState(["Course Level", "Course Duration Value", "Course Duration Unit"]);
+    const [ItemsRequired] = useState(["Course Level", "Course Duration Value", "Course Duration Unit"]);
 
     // Table columns configuration
     const [tableColumns] = useState([
-        { id: 'name', label: 'Course Level', field: 'name', visible: true, required: false },
-        { id: 'courselevelcode_id', label: 'Course Level Code', field: 'courselevelcode_id', visible: true, required: false },
+        { id: 'courselevel_id', label: 'Course Level', field: 'courselevel_id', visible: true, required: false },
+        { id: 'valid_duration_value', label: 'Course Duration Value', field: 'valid_duration_value', visible: true, required: false },
+        { id: 'valid_duration_unit', label: 'Course Duration Unit', field: 'valid_duration_unit', visible: true, required: false },
         { id: 'description', label: 'Description', field: 'description', visible: true, required: false },
         { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false },
     ]);
@@ -137,7 +138,7 @@ const CourseLevelList = () => {
             sortOrder: tableState.sortOrder || ''
         };
 
-        dispatch(courseLevelList(params, (response, error) => {
+        dispatch(courseDurationList(params, (response, error) => {
             setLoading(false);
             if (response?.statusCode === 200 && response?.status === true) {
                 const paginationData = response?.pagination || {};
@@ -308,7 +309,7 @@ const CourseLevelList = () => {
     const handleDelete = (uuid) => {
         setDeleteId(uuid);
         setShowDeleteConfirm(true);
-        setDeleteConfirmMessage(`Are you sure you want to delete this Course Level?`);
+        setDeleteConfirmMessage(`Are you sure you want to delete this Course Duration?`);
     };
 
     const handleBulkDelete = () => {
@@ -317,8 +318,8 @@ const CourseLevelList = () => {
             return;
         }
         // Choose message based on delete type
-        const message = selectAllOrNot === "all" ? `${tableState.total} all Course Level` : `${selectedRows.length} selected Course Level`;
-        setDeleteConfirmMessage(`Are you sure you want to delete this Course Level (${message})?`);
+        const message = selectAllOrNot === "all" ? `${tableState.total} all Course Duration` : `${selectedRows.length} selected Course Duration`;
+        setDeleteConfirmMessage(`Are you sure you want to delete this Course Duration (${message})?`);
         setShowDeleteConfirm(true);
     };
 
@@ -326,10 +327,10 @@ const CourseLevelList = () => {
         // const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
         const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
         if (!sendPayload || sendPayload.length === 0) {
-            toast.error("No Course Level selected for deletion.");
+            toast.error("No Course Duration selected for deletion.");
             return;
         }
-        dispatch(courseLevelDelete(sendPayload, (response, error) => {
+        dispatch(courseDurationDelete(sendPayload, (response, error) => {
             if (error) {
                 toast.error(error?.response?.data?.message || "server error");
             } else {
@@ -409,14 +410,15 @@ const CourseLevelList = () => {
         }
         // Map frontend labels to backend field names
         const fieldMapping = {
-            "Course Level": "name",
-            "Course Level Code": "courselevelcode",
+            "Course Level": "courselevel",
+            "Course Duration Value": "valid_duration_value",
+            "Course Duration Unit": "valid_duration_unit",
             "Modified On": "updated_at",
             "Description": "description",
         };
-        // Convert selectedItems to backend field names
+
         const mappedFields = selectedItems.map((item) => fieldMapping[item] || item);
-        // Convert to comma-separated string
+
         const fieldsString = mappedFields.join(",");
         const sendPayload = {
             file: "xlsx",
@@ -424,7 +426,7 @@ const CourseLevelList = () => {
             uuids: selectAllOrNot === "all" ? [] : selectedRows,
         };
         setLoadingExport(true);
-        dispatch(courseLevelExportData(sendPayload, (response, error) => {
+        dispatch(courseDurationExportData(sendPayload, (response, error) => {
             if (error) {
                 setLoadingExport(false);
                 toast.error(error?.response?.message || "server error");
@@ -438,7 +440,7 @@ const CourseLevelList = () => {
                     const url = window.URL.createObjectURL(blob);
                     const link = document.createElement('a');
                     link.href = url;
-                    link.download = `CourseLevel.xlsx`;
+                    link.download = `CourseDuration.xlsx`;
                     document.body.appendChild(link);
                     link.click();
                     link.remove();
@@ -654,12 +656,12 @@ const CourseLevelList = () => {
                                                         <span>{String(startIndex + index + 1).padStart(2, '0')}</span>
                                                     </div>
                                                 </td>
-                                                {isColumnVisible('name') && (
-                                                    <td><span>{rowItem.name}</span></td>
+                                                {isColumnVisible('courselevel_id') && (
+                                                    <td><span>{rowItem.courselevel}</span></td>
                                                 )}
                                                 {
-                                                    isColumnVisible('courselevelcode_id') && (
-                                                        <td><span>{rowItem.courselevelcode}</span></td>
+                                                    isColumnVisible('valid_duration_unit') && (
+                                                        <td> <span>{`${rowItem.valid_duration_value} ${rowItem.valid_duration_unit}`}</span></td>
                                                     )
                                                 }
                                                 {isColumnVisible('description') && (
@@ -797,14 +799,14 @@ const CourseLevelList = () => {
                         </div>
                     </div>
                 </div>
-                <AddEditCourseLevelModal
+                <AddEditCourseDurationModal
                     show={modalState.show}
                     handleClose={handleClose}
                     mode={modalState.mode}
                     rowData={modalState.rowData}
                 />
                 {showImport && (
-                    <AddImportCourseLevelModal show={showImport} handleClose={handleCloseImport} />)}
+                    <AddImportCourseDurationModal show={showImport} handleClose={handleCloseImport} />)}
                 {showDeleteConfirm && (
                     <div className="modal fade show common-ctl-popup">
                         <div className="modal-dialog modal-dialog-centered">
@@ -848,7 +850,7 @@ const CourseLevelList = () => {
                         <div className="modal-dialog modal-xl modal-dialog-centered" role="document">
                             <div className="modal-content radius-16 bg-base">
                                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                                    <h1 className="modal-title fs-5">Export Course Level</h1>
+                                    <h1 className="modal-title fs-5">Export Course Duration</h1>
                                     <button
                                         type="button"
                                         className="btn-close"
@@ -950,4 +952,4 @@ const CourseLevelList = () => {
     );
 };
 
-export default CourseLevelList;
+export default CourseDurationList;

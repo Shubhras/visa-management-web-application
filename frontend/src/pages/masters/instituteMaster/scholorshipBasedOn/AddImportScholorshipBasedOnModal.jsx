@@ -114,7 +114,6 @@ const AddImportScholorshipBasedOnModal = ({ show, handleClose }) => {
                             prepareData.fileName
                         );
                     }
-
                     setFile(null);
                     setSheetNames([]);
                     setSelectedSheet('');

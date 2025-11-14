@@ -561,6 +561,23 @@ export const EDIT_SCHOLARSHIP_BASED_ON_API = "/api/v1/master/scholorshipbasedon/
 export const DELETE_SCHOLARSHIP_BASED_ON_API = "/api/v1/master/scholorshipbasedon/";
 export const EXPORT_SCHOLARSHIP_BASED_ON_API = "/api/v1/master/scholorshipbasedon/export/";
 export const IMPORT_SCHOLARSHIP_BASED_ON_API = "/api/v1/master/scholorshipbasedon/import/";
+// Course Level API Endpoints
+export const GET_COURSE_LEVEL_LIST = "/api/v1/master/course-level/";
+export const ADD_COURSE_LEVEL_API = "/api/v1/master/course-level/create/";
+export const EDIT_COURSE_LEVEL_API = "/api/v1/master/course-level/";
+export const DELETE_COURSE_LEVEL_API = "/api/v1/master/course-level/";
+export const EXPORT_COURSE_LEVEL_API = "/api/v1/master/course-level/export/";
+export const IMPORT_COURSE_LEVEL_API = "/api/v1/master/course-level/import/";
+
+// Course Duration API Endpoints
+export const GET_COURSE_DURATION_LIST = "/api/v1/master/course-durations/";
+export const ADD_COURSE_DURATION_API = "/api/v1/master/course-durations/create/";
+export const EDIT_COURSE_DURATION_API = "/api/v1/master/course-durations/";
+export const DELETE_COURSE_DURATION_API = "/api/v1/master/course-durations/";
+export const EXPORT_COURSE_DURATION_API = "/api/v1/master/course-durations/export/";
+export const IMPORT_COURSE_DURATION_API = "/api/v1/master/course-durations/import/";
+
+
 
 
 

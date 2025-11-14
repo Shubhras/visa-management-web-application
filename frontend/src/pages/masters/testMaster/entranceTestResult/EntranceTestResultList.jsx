@@ -674,7 +674,7 @@ const EntranceTestResultList = () => {
                                                     <td><span>{rowItem.entrancetest.shortname}</span></td>
                                                 )}
                                                 {isColumnVisible('fullname') && (
-                                                    <td><span>{rowItem.moduleName.moduleName}</span></td>
+                                                    <td><span>{rowItem.moduleName}</span></td>
                                                 )}
                                                 {isColumnVisible('result') && (
                                                     <td><span>{rowItem.testresult}</span></td>

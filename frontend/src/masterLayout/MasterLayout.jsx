@@ -178,6 +178,7 @@ const MasterLayout = ({ children }) => {
             { name: 'Course Status for Intake', path: '/course-status-for-intake' },
             { name: 'Scholorship Based On', path: '/scholorship-based-on' },
             { name: 'Course Level', path: '/course-level' },
+            { name: 'Course Duration', path: '/course-duration' },
           ]
         },
 
@@ -329,8 +330,8 @@ const MasterLayout = ({ children }) => {
           sidebarActive
             ? "sidebar active "
             : mobileMenu
-            ? "sidebar sidebar-open"
-            : "sidebar"
+              ? "sidebar sidebar-open"
+              : "sidebar"
         }
         style={{ display: "none" }}
       >
