@@ -407,40 +407,53 @@ export const EXPORT_LANGUAGE_TEST_RESULT_API = "api/v1/master/languagetestresult
 export const IMPORT_LANGUAGE_TEST_RESULT_API = "api/v1/master/languagetestresult/import/";
 
 // Job Type API Endpoints
-export const GET_JOB_TYPE_LIST = "/api/v1/master/job-types/";
-export const ADD_JOB_TYPE_API = "/api/v1/master/job-types/create/";
-export const EDIT_JOB_TYPE_API = "/api/v1/master/job-types/";
-export const DELETE_JOB_TYPE_API = "/api/v1/master/job-types/";
-export const EXPORT_JOB_TYPE_API = "/api/v1/master/job-types/export/";
-export const IMPORT_JOB_TYPE_API = "/api/v1/master/job-types/import/";
+export const GET_JOB_TYPE_LIST = "/api/v1/master/jobtype/";
+export const ADD_JOB_TYPE_API = "/api/v1/master/jobtype/create/";
+export const EDIT_JOB_TYPE_API = "/api/v1/master/jobtype/";
+export const DELETE_JOB_TYPE_API = "/api/v1/master/jobtype/";
+export const EXPORT_JOB_TYPE_API = "/api/v1/master/jobtype/export/";
+export const IMPORT_JOB_TYPE_API = "/api/v1/master/jobtype/import/";
+
 // Mode of Salary API Endpoints
-export const GET_MODE_OF_SALARY_LIST = "/api/v1/master/mode-of-salary/";
-export const ADD_MODE_OF_SALARY_API = "/api/v1/master/mode-of-salary/create/";
-export const EDIT_MODE_OF_SALARY_API = "/api/v1/master/mode-of-salary/";
-export const DELETE_MODE_OF_SALARY_API = "/api/v1/master/mode-of-salary/";
-export const EXPORT_MODE_OF_SALARY_API = "/api/v1/master/mode-of-salary/export/";
-export const IMPORT_MODE_OF_SALARY_API = "/api/v1/master/mode-of-salary/import/";
+export const GET_MODE_OF_SALARY_LIST = "/api/v1/master/modeofsalary/";
+export const ADD_MODE_OF_SALARY_API = "/api/v1/master/modeofsalary/create/";
+export const EDIT_MODE_OF_SALARY_API = "/api/v1/master/modeofsalary/";
+export const DELETE_MODE_OF_SALARY_API = "/api/v1/master/modeofsalary/";
+export const EXPORT_MODE_OF_SALARY_API = "/api/v1/master/modeofsalary/export/";
+export const IMPORT_MODE_OF_SALARY_API = "/api/v1/master/modeofsalary/import/";
+
 // IT Return Status API Endpoints
-export const GET_IT_RETURN_STATUS_LIST = "/api/v1/master/it-return-status/";
-export const ADD_IT_RETURN_STATUS_API = "/api/v1/master/it-return-status/create/";
-export const EDIT_IT_RETURN_STATUS_API = "/api/v1/master/it-return-status/";
-export const DELETE_IT_RETURN_STATUS_API = "/api/v1/master/it-return-status/";
-export const EXPORT_IT_RETURN_STATUS_API = "/api/v1/master/it-return-status/export/";
-export const IMPORT_IT_RETURN_STATUS_API = "/api/v1/master/it-return-status/import/";
+export const GET_IT_RETURN_STATUS_LIST = "/api/v1/master/itreturnstatus/";
+export const ADD_IT_RETURN_STATUS_API = "/api/v1/master/itreturnstatus/create/";
+export const EDIT_IT_RETURN_STATUS_API = "/api/v1/master/itreturnstatus/";
+export const DELETE_IT_RETURN_STATUS_API = "/api/v1/master/itreturnstatus/";
+export const EXPORT_IT_RETURN_STATUS_API = "/api/v1/master/itreturnstatus/export/";
+export const IMPORT_IT_RETURN_STATUS_API = "/api/v1/master/itreturnstatus/import/";
+
 // Occupation Type API Endpoints
-export const GET_OCCUPATION_TYPE_LIST = "/api/v1/master/occupation-types/";
-export const ADD_OCCUPATION_TYPE_API = "/api/v1/master/occupation-types/create/";
-export const EDIT_OCCUPATION_TYPE_API = "/api/v1/master/occupation-types/";
-export const DELETE_OCCUPATION_TYPE_API = "/api/v1/master/occupation-types/";
-export const EXPORT_OCCUPATION_TYPE_API = "/api/v1/master/occupation-types/export/";
-export const IMPORT_OCCUPATION_TYPE_API = "/api/v1/master/occupation-types/import/";
+export const GET_OCCUPATION_TYPE_LIST = "/api/v1/master/occupationtype/";
+export const ADD_OCCUPATION_TYPE_API = "/api/v1/master/occupationtype/create/";
+export const EDIT_OCCUPATION_TYPE_API = "/api/v1/master/occupationtype/";
+export const DELETE_OCCUPATION_TYPE_API = "/api/v1/master/occupationtype/";
+export const EXPORT_OCCUPATION_TYPE_API = "/api/v1/master/occupationtype/export/";
+export const IMPORT_OCCUPATION_TYPE_API = "/api/v1/master/occupationtype/import/";
+
 // Occupation Prospect API Endpoints
-export const GET_OCCUPATION_PROSPECT_LIST = "/api/v1/master/occupation-prospects/";
-export const ADD_OCCUPATION_PROSPECT_API = "/api/v1/master/occupation-prospects/create/";
-export const EDIT_OCCUPATION_PROSPECT_API = "/api/v1/master/occupation-prospects/";
-export const DELETE_OCCUPATION_PROSPECT_API = "/api/v1/master/occupation-prospects/";
-export const EXPORT_OCCUPATION_PROSPECT_API = "/api/v1/master/occupation-prospects/export/";
-export const IMPORT_OCCUPATION_PROSPECT_API = "/api/v1/master/occupation-prospects/import/";
+export const GET_OCCUPATION_PROSPECT_LIST = "/api/v1/master/occupationprospect/";
+export const ADD_OCCUPATION_PROSPECT_API = "/api/v1/master/occupationprospect/create/";
+export const EDIT_OCCUPATION_PROSPECT_API = "/api/v1/master/occupationprospect/";
+export const DELETE_OCCUPATION_PROSPECT_API = "/api/v1/master/occupationprospect/";
+export const EXPORT_OCCUPATION_PROSPECT_API = "/api/v1/master/occupationprospect/export/";
+export const IMPORT_OCCUPATION_PROSPECT_API = "/api/v1/master/occupationprospect/import/";
+
+// --- OCCUPATION CATEGORY API ENDPOINTS ---
+export const GET_OCCUPATION_CATEGORY_LIST = "/api/v1/master/occupation-category/";
+export const ADD_OCCUPATION_CATEGORY_API = "/api/v1/master/occupation-category/create/";
+export const EDIT_OCCUPATION_CATEGORY_API = "/api/v1/master/occupation-category/";
+export const DELETE_OCCUPATION_CATEGORY_API = "/api/v1/master/occupation-category/";
+export const EXPORT_OCCUPATION_CATEGORY_API = "/api/v1/master/occupation-category/export/";
+export const IMPORT_OCCUPATION_CATEGORY_API = "/api/v1/master/occupation-category/import/";
+
 
 // Occupation Version API Endpoints
 export const GET_OCCUPATION_VERSION_LIST = "/api/v1/master/occupation-version/";
@@ -452,9 +465,6 @@ export const IMPORT_OCCUPATION_VERSION_API = "/api/v1/master/occupation-version/
 
 
 export const GET_COUNTRY_LIST_DEMO = "/api/v1/master/country/";
-
-
-
 
 
 // Institute Type API Endpoints

@@ -32,11 +32,11 @@ const AddEditOccupationVersionModal = ({ show, handleClose, mode = 'add', rowDat
         if (mode === 'edit' && rowData) {
             setFormData({
                 uuid: rowData.uuid || '',
-                departmentName: rowData.name || '',
+                departmentName: rowData.occupation_version || '',
                 description: rowData.description || '',
-                startDate: rowData.startDate || '',
-                endDate: rowData.endDate || '',
-                country: rowData.country || '',
+                startDate: rowData.effect_from || '',
+                endDate: rowData.valid_upto || '',
+                country: rowData.country_uuid || '',
 
             });
         } else {
@@ -120,17 +120,17 @@ const AddEditOccupationVersionModal = ({ show, handleClose, mode = 'add', rowDat
             const sendPayload = mode === 'edit'
                 ? {
                     uuid: formData.uuid,
-                    startDate: formData.startDate,
-                    endDate: formData.endDate,
-                    country: formData.country,
-                    name: formData.departmentName,
+                    effect_from: formData.startDate,
+                    valid_upto: formData.endDate,
+                    country_id: formData.country,
+                    occupation_version: formData.departmentName,
                     description: formData.description,
                 }
                 : {
-                    startDate: formData.startDate,
-                    endDate: formData.endDate,
-                    country: formData.country,
-                    name: formData.departmentName,
+                    effect_from: formData.startDate,
+                    valid_upto: formData.endDate,
+                    country_id: formData.country,
+                    occupation_version: formData.departmentName,
                     description: formData.description,
                 };
 

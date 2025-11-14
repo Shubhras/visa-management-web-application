@@ -52,11 +52,11 @@ const OccupationVersionList = () => {
 
     // Table columns configuration
     const [tableColumns] = useState([
-        { id: 'startDate', label: 'Start Date', field: 'startDate', visible: true, required: false },
-        { id: 'endDate', label: 'End Date', field: 'endDate', visible: true, required: false },
         { id: 'country', label: 'Country', field: 'country', visible: true, required: false },
         { id: 'name', label: 'Occupation Version', field: 'name', visible: true, required: false },
         { id: 'description', label: 'Description', field: 'description', visible: true, required: false },
+        { id: 'startDate', label: 'Start Date', field: 'startDate', visible: true, required: false },
+        { id: 'endDate', label: 'End Date', field: 'endDate', visible: true, required: false },
         { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false },
     ]);
 
@@ -412,10 +412,10 @@ const OccupationVersionList = () => {
         }
         // Map frontend labels to backend field names
         const fieldMapping = {
-            "Start Date": "startDate",
-            "End Date": "endDate",
+            "Start Date": "effect_from",
+            "End Date": "valid_upto",
             "Country": "country",
-            "Occupation Version": "name",
+            "Occupation Version": "occupation_version",
             "Modified On": "updated_at",
             "Description": "description",
         };
@@ -659,20 +659,21 @@ const OccupationVersionList = () => {
                                                         <span>{String(startIndex + index + 1).padStart(2, '0')}</span>
                                                     </div>
                                                 </td>
-                                                {isColumnVisible('startDate') && (
-                                                    <td><span>{formatDateDDMMYYYY(rowItem.startDate)}</span></td>
-                                                )}
-                                                {isColumnVisible('endDate') && (
-                                                    <td><span>{formatDateDDMMYYYY(rowItem.endDate)}</span></td>
-                                                )}
+                                               
                                                 {isColumnVisible('country') && (
-                                                    <td><span>{rowItem.country}</span></td>
+                                                    <td><span>{rowItem.country_name}</span></td>
                                                 )}
                                                 {isColumnVisible('name') && (
-                                                    <td><span>{rowItem.name}</span></td>
+                                                    <td><span>{rowItem.occupation_version}</span></td>
                                                 )}
                                                 {isColumnVisible('description') && (
                                                     <td><span>{rowItem.description}</span></td>
+                                                )}
+                                                 {isColumnVisible('startDate') && (
+                                                    <td><span>{formatDateDDMMYYYY(rowItem.effect_from)}</span></td>
+                                                )}
+                                                {isColumnVisible('endDate') && (
+                                                    <td><span>{formatDateDDMMYYYY(rowItem.valid_upto)}</span></td>
                                                 )}
                                                 {isColumnVisible('updated_at') && (
                                                     <td><span>{formatDateDDMMYYYYTime(rowItem.updated_at)}</span></td>

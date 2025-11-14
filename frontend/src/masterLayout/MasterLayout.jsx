@@ -3,152 +3,166 @@ import { Icon } from "@iconify/react/dist/iconify.js";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import ThemeToggleButton from "../helper/ThemeToggleButton";
 // import Header from "./Header";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 const MasterLayout = ({ children }) => {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   let [sidebarActive, seSidebarActive] = useState(false);
   let [mobileMenu, setMobileMenu] = useState(false);
   const location = useLocation();
-  const [selectedItemName, setSelectedItemName] = useState('Dashboard');
+  const [selectedItemName, setSelectedItemName] = useState("Dashboard");
   const [openSubmenu, setOpenSubmenu] = useState(null);
   const [openChildMenu, setOpenChildMenu] = useState(null);
   const menuItems = [
     {
-      name: 'Dashboard',
-      path: '/',
-      submenu: []
+      name: "Dashboard",
+      path: "/",
+      submenu: [],
     },
     {
-      name: 'Sales',
-      path: '/',
-      submenu: []
+      name: "Sales",
+      path: "/",
+      submenu: [],
     },
     {
-      name: 'Clients',
-      path: '/',
-      submenu: []
+      name: "Clients",
+      path: "/",
+      submenu: [],
     },
     {
-      name: 'Partners',
-      path: '/',
-      submenu: []
+      name: "Partners",
+      path: "/",
+      submenu: [],
     },
     {
-      name: 'Visa',
-      path: '/',
-      submenu: []
+      name: "Visa",
+      path: "/",
+      submenu: [],
     },
     {
-      name: 'Institutes',
-      path: '/',
-      submenu: []
+      name: "Institutes",
+      path: "/",
+      submenu: [],
     },
     {
-      name: 'Layout',
-      path: '/',
-      submenu: []
+      name: "Layout",
+      path: "/",
+      submenu: [],
     },
     {
-      name: 'Masters',
+      name: "Masters",
       // path: '/department',
       submenu: [
         {
-          name: 'General',
+          name: "General",
           children: [
-            { name: 'Gender', path: '/gender-list' },
-            { name: 'Marital Status', path: '/marital-status' },
-            { name: 'Continents ', path: '/continent-list' },
+            { name: "Gender", path: "/gender-list" },
+            { name: "Marital Status", path: "/marital-status" },
+            { name: "Continents ", path: "/continent-list" },
             { name: "Country ", path: "/country-list" },
-            { name: 'State', path: '/state-list' },
-            { name: 'District', path: '/district-list' },
-            { name: 'City', path: '/city-list' },
-            { name: 'Time Zone', path: '/timezone-list' },
-            { name: 'Relation', path: '/relation-list' },
-            { name: 'Civil ID Name', path: '/civil-name-list' },
-          ]
+            { name: "State", path: "/state-list" },
+            { name: "District", path: "/district-list" },
+            { name: "City", path: "/city-list" },
+            { name: "Time Zone", path: "/timezone-list" },
+            { name: "Relation", path: "/relation-list" },
+            { name: "Civil ID Name", path: "/civil-name-list" },
+          ],
         },
         {
           // name: 'Admin',
-          name: 'Company',
+          name: "Company",
           // path: '/Department',
           children: [
-            { name: 'Department', path: '/department' },
-            { name: 'Employee Type', path: '/employeetype' },
-            { name: 'Company Type', path: '/companylist' },
-            { name: 'Ownership Type', path: '/ownership-type' },
-            { name: 'Stakeholder Category', path: '/stakeholder-list' },
-            { name: 'Stakeholder Type', path: '/stakeholder-type' },
-            { name: 'Accrediation Category ', path: '/accrediation-category' },
-            { name: 'Accrediation Name', path: '/accrediation-name' },
-            { name: 'Bank Account Type', path: '/bank-ccount-type' },
-            { name: 'License Name', path: '/license-name' },
-          ]
+            { name: "Department", path: "/department" },
+            { name: "Employee Type", path: "/employeetype" },
+            { name: "Company Type", path: "/companylist" },
+            { name: "Ownership Type", path: "/ownership-type" },
+            { name: "Stakeholder Category", path: "/stakeholder-list" },
+            { name: "Stakeholder Type", path: "/stakeholder-type" },
+            { name: "Accrediation Category ", path: "/accrediation-category" },
+            { name: "Accrediation Name", path: "/accrediation-name" },
+            { name: "Bank Account Type", path: "/bank-ccount-type" },
+            { name: "License Name", path: "/license-name" },
+          ],
         },
         {
-          name: 'Sales',
+          name: "Sales",
           // path: '/priority-type',
           children: [
-            { name: 'Lead Source', path: '/lead-source' },
-            { name: 'Interest Level', path: '/interest-level' },
-            { name: 'Priority', path: '/priority-type' },
-            { name: 'Tags', path: '/tags-type' },
-            { name: 'Activity Type', path: '/activity-type' },
-            { name: 'Lost Reason (B2C)', path: '/lost-reason-B2C' },
-            { name: 'Lost Reason (B2B)', path: '/lost-reason-B2B' },
-          ]
+            { name: "Lead Source", path: "/lead-source" },
+            { name: "Interest Level", path: "/interest-level" },
+            { name: "Priority", path: "/priority-type" },
+            { name: "Tags", path: "/tags-type" },
+            { name: "Activity Type", path: "/activity-type" },
+            { name: "Lost Reason (B2C)", path: "/lost-reason-B2C" },
+            { name: "Lost Reason (B2B)", path: "/lost-reason-B2B" },
+          ],
         },
         {
-          name: 'Education',
+          name: "Education",
           // path: '/priority-type',
           children: [
-            { name: 'Education Level Code', path: '/education-level-code' },
-            { name: 'Education Level', path: '/education-level' },
-            { name: 'Study Main Area', path: '/study-main-area' },
-            { name: 'Education Duration', path: '/education-duration' },
-            { name: 'Study Major Area', path: '/study-major-area' },
-            { name: 'Academic Result Type', path: '/academic-result-type' },
-            { name: 'Education Type', path: '/education-type' },
-            { name: 'Study Specialisation', path: '/study-specialisation' },
-            { name: 'Degree Awarded By', path: '/degree-awarded-by' },
-            { name: 'Academic Result', path: '/academic-result' },
-            { name: 'Degree Awarded Institute', path: '/degree-awarded-institute' },
-            { name: 'Compare : Academic Result To Result', path: '/academic-result-to-result' },
-            { name: 'ECA Awarding Body', path: '/eca-awarding-body' },
-            { name: 'Medium of Education', path: '/medium-of-education' },
-            { name: 'ECA For', path: '/eca-for' },
-
-          ]
+            { name: "Education Level Code", path: "/education-level-code" },
+            { name: "Education Level", path: "/education-level" },
+            { name: "Study Main Area", path: "/study-main-area" },
+            { name: "Education Duration", path: "/education-duration" },
+            { name: "Study Major Area", path: "/study-major-area" },
+            { name: "Academic Result Type", path: "/academic-result-type" },
+            { name: "Education Type", path: "/education-type" },
+            { name: "Study Specialisation", path: "/study-specialisation" },
+            { name: "Degree Awarded By", path: "/degree-awarded-by" },
+            { name: "Academic Result", path: "/academic-result" },
+            {
+              name: "Degree Awarded Institute",
+              path: "/degree-awarded-institute",
+            },
+            {
+              name: "Compare : Academic Result To Result",
+              path: "/academic-result-to-result",
+            },
+            { name: "ECA Awarding Body", path: "/eca-awarding-body" },
+            { name: "Medium of Education", path: "/medium-of-education" },
+            { name: "ECA For", path: "/eca-for" },
+          ],
         },
         {
-          name: 'Test',
+          name: "Test",
           // path: '/priority-type',
           children: [
-            { name: 'Language Name(Test)', path: '/language-name-test' },
-            { name: 'Language Test Name', path: '/language-test-name' },
-            { name: 'Language Test Module Name', path: '/language-test-module-name' },
-            { name: 'Language Banchmark Level', path: '/language-banchmark-level' },
-            { name: 'CLB Level', path: '/cbl-level' },
-            { name: 'Entrance Test Name', path: '/entrance-test-name' },
-            { name: 'Entrance Test Module Name', path: '/entrance-test-module-name' },
-            { name: 'Entrance Test Result', path: '/entrance-test-result' },
-            { name: 'Language Test Result', path: '/language-test-result' },
-          ]
+            { name: "Language Name(Test)", path: "/language-name-test" },
+            { name: "Language Test Name", path: "/language-test-name" },
+            {
+              name: "Language Test Module Name",
+              path: "/language-test-module-name",
+            },
+            {
+              name: "Language Banchmark Level",
+              path: "/language-banchmark-level",
+            },
+            { name: "CLB Level", path: "/cbl-level" },
+            { name: "Entrance Test Name", path: "/entrance-test-name" },
+            {
+              name: "Entrance Test Module Name",
+              path: "/entrance-test-module-name",
+            },
+            { name: "Entrance Test Result", path: "/entrance-test-result" },
+            { name: "Language Test Result", path: "/language-test-result" },
+          ],
         },
         {
-          name: 'Occupation',
+          name: "Occupation",
           children: [
-            { name: 'Job Type', path: '/job-type' },
-            { name: 'Mode of Salary', path: '/mode-of-salary' },
-            { name: 'IT Return Status', path: '/it-return-status' },
-            { name: 'Occupation Type', path: '/occupation-type' },
-            { name: 'Occupation Prospect', path: '/occupation-prospect' },
-            { name: 'Occupation Version', path: '/occupation-version' }
-
-          ]
+            { name: "Job Type", path: "/job-type" },
+            { name: "Mode of Salary", path: "/mode-of-salary" },
+            { name: "IT Return Status", path: "/it-return-status" },
+            { name: "Occupation Type", path: "/occupation-type" },
+            { name: "Occupation Prospect", path: "/occupation-prospect" },
+            { name: "Occupation Category", path: "/occupation-category" },
+            { name: "Occupation Version", path: "/occupation-version" },
+          ],
         },
         {
-          name: 'Institute',
+          name: "Institute",
           children: [
             { name: 'Institute Type', path: '/institute-type' },
             { name: 'Institute Group Name', path: '/institute-group-name' },
@@ -167,7 +181,6 @@ const MasterLayout = ({ children }) => {
           ]
         },
 
-
         // { name: 'Education', path: '/' },
         // { name: 'Test', path: '/' },
         // { name: 'Occupation', path: '/' },
@@ -176,21 +189,19 @@ const MasterLayout = ({ children }) => {
         // { name: 'Visa', path: '/' },
         // { name: 'Process', path: '/' },
         // { name: 'Institute', path: '/' },
-
-      ]
+      ],
     },
     {
-      name: 'Packages',
-      path: '/',
-      submenu: []
+      name: "Packages",
+      path: "/",
+      submenu: [],
     },
     {
-      name: 'Subscribers',
-      path: '/',
-      submenu: []
-    }
+      name: "Subscribers",
+      path: "/",
+      submenu: [],
+    },
   ];
-
 
   const handleMenuClick = (item, parent = null, grandParent = null) => {
     if (item.children && item.children.length > 0) {
@@ -201,17 +212,17 @@ const MasterLayout = ({ children }) => {
   };
 
   const handleLogout = () => {
-    toast.success('Logout successful');
+    toast.success("Logout successful");
     // // 1. Clear user data (localStorage / sessionStorage / Redux)
     // localStorage.removeItem('userToken') // or whatever you use
-    localStorage.removeItem('authUser')
+    localStorage.removeItem("authUser");
 
     // // 2. Optionally reset Redux state
-    // // dispatch({ type: 'LOGOUT' }) 
+    // // dispatch({ type: 'LOGOUT' })
 
     // // 3. Navigate to login page
-    navigate('/sign-in');
-  }
+    navigate("/sign-in");
+  };
 
   useEffect(() => {
     // Current path के basis पर menu item ढूंढो
@@ -303,8 +314,6 @@ const MasterLayout = ({ children }) => {
     };
   }, [location.pathname]);
 
-
-
   let sidebarControl = () => {
     seSidebarActive(!sidebarActive);
   };
@@ -313,7 +322,6 @@ const MasterLayout = ({ children }) => {
     setMobileMenu(!mobileMenu);
   };
 
-
   return (
     <section className={mobileMenu ? "overlay active" : "overlay "}>
       <aside
@@ -321,24 +329,24 @@ const MasterLayout = ({ children }) => {
           sidebarActive
             ? "sidebar active "
             : mobileMenu
-              ? "sidebar sidebar-open"
-              : "sidebar"
+            ? "sidebar sidebar-open"
+            : "sidebar"
         }
         style={{ display: "none" }}
       >
         <button
           onClick={mobileMenuControl}
-          type='button'
-          className='sidebar-close-btn'
+          type="button"
+          className="sidebar-close-btn"
         >
-          <Icon icon='radix-icons:cross-2' />
+          <Icon icon="radix-icons:cross-2" />
         </button>
         <div>
-          <Link to='/' className='sidebar-logo'>
+          <Link to="/" className="sidebar-logo">
             <img
-              src='assets/images/logo-test1.png'
-              alt='site logo'
-              className='light-logo'
+              src="assets/images/logo-test1.png"
+              alt="site logo"
+              className="light-logo"
             />
             {/* <img
               src='assets/images/logo-test11.jpg'
@@ -346,9 +354,9 @@ const MasterLayout = ({ children }) => {
               className='light-logo'
             /> */}
             <img
-              src='assets/images/logo-light.png'
-              alt='site logo'
-              className='dark-logo'
+              src="assets/images/logo-light.png"
+              alt="site logo"
+              className="dark-logo"
             />
             {/* <img
               src='assets/images/logo-icon.png'
@@ -356,13 +364,13 @@ const MasterLayout = ({ children }) => {
               className='logo-icon'
             /> */}
             <img
-              src='assets/images/logo-test2.png'
-              alt='site logo'
-              className='logo-icon'
+              src="assets/images/logo-test2.png"
+              alt="site logo"
+              className="logo-icon"
             />
           </Link>
         </div>
-        <div className='sidebar-menu-area'>
+        <div className="sidebar-menu-area">
           {/* <ul className='sidebar-menu' id='sidebar-menu'>
                     <li className='dropdown'>
                       <Link to='#'>
@@ -1640,11 +1648,11 @@ const MasterLayout = ({ children }) => {
           <div className="flex-grow-1 d-flex flex-column">
             <div className="top-header-bar">
               {/* <Header onMenuItemClick={handleMenuClick} /> */}
-              <nav className='d-none d-lg-flex align-items-center gap-2'>
+              <nav className="d-none d-lg-flex align-items-center gap-2">
                 {menuItems.map((item, index) => (
                   <div
                     key={index}
-                    className='position-relative'
+                    className="position-relative"
                     onMouseEnter={() => setOpenSubmenu(index)}
                     onMouseLeave={() => {
                       setOpenSubmenu(null);
@@ -1654,43 +1662,49 @@ const MasterLayout = ({ children }) => {
                     <Link
                       to={item.path}
                       onClick={() => handleMenuClick(item)}
-
-                      className='text-white text-decoration-none d-flex align-items-center gap-1 main-menu-items'
+                      className="text-white text-decoration-none d-flex align-items-center gap-1 main-menu-items"
                       style={{
-                        backgroundColor: openSubmenu === index ? 'rgba(255, 255, 255, 0.1)' : 'transparent'
+                        backgroundColor:
+                          openSubmenu === index
+                            ? "rgba(255, 255, 255, 0.1)"
+                            : "transparent",
                       }}
                       onMouseEnter={(e) => {
                         if (openSubmenu !== index) {
-                          e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
+                          e.currentTarget.style.backgroundColor =
+                            "rgba(255, 255, 255, 0.08)";
                         }
                       }}
                       onMouseLeave={(e) => {
                         if (openSubmenu !== index) {
-                          e.currentTarget.style.backgroundColor = 'transparent';
+                          e.currentTarget.style.backgroundColor = "transparent";
                         }
                       }}
                     >
                       {item.name}
                       {item.submenu && item.submenu.length > 0 && (
                         <Icon
-                          icon='mingcute:down-line'
-                          width='16'
-                          height='16'
+                          icon="mingcute:down-line"
+                          width="16"
+                          height="16"
                           style={{
-                            transition: 'transform 0.2s ease',
-                            transform: openSubmenu === index ? 'rotate(180deg)' : 'rotate(0deg)'
+                            transition: "transform 0.2s ease",
+                            transform:
+                              openSubmenu === index
+                                ? "rotate(180deg)"
+                                : "rotate(0deg)",
                           }}
                         />
                       )}
                     </Link>
 
                     {/* Submenu Dropdown */}
-                    {item.submenu && item.submenu.length > 0 && openSubmenu === index && (
-                      <div
-                        className='position-absolute main-submenu-items'
-                      >
-                        <style>
-                          {`
+                    {item.submenu &&
+                      item.submenu.length > 0 &&
+                      openSubmenu === index && (
+                        <div className="position-absolute main-submenu-items">
+                          <style>
+                            {`
                                               @keyframes slideDown {
                                                   from {
                                                       opacity: 0;
@@ -1712,74 +1726,88 @@ const MasterLayout = ({ children }) => {
                                                   }
                                               }
                                           `}
-                        </style>
-                        {item.submenu.map((subItem, subIndex) => (
-                          <div
-                            key={subIndex}
-                            className='position-relative'
-                            onMouseEnter={() => setOpenChildMenu(subIndex)}
-                            onMouseLeave={() => setOpenChildMenu(null)}
-                          >
-                            <Link
-                              to={subItem.path}
-                              onClick={() => handleMenuClick(subItem, item)}
-
-                              className='d-flex align-items-center justify-content-between text-decoration-none main-submenu-items-link'
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor = '#f3f4f6';
-                                e.currentTarget.style.color = '#111827';
-                                e.currentTarget.style.paddingLeft = '18px';
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor = 'transparent';
-                                e.currentTarget.style.color = '#374151';
-                                e.currentTarget.style.paddingLeft = '14px';
-                              }}
+                          </style>
+                          {item.submenu.map((subItem, subIndex) => (
+                            <div
+                              key={subIndex}
+                              className="position-relative"
+                              onMouseEnter={() => setOpenChildMenu(subIndex)}
+                              onMouseLeave={() => setOpenChildMenu(null)}
                             >
-                              <span>{subItem.name}</span>
-                              {subItem.children && subItem.children.length > 0 && (
-                                <Icon
-                                  icon='mingcute:right-line'
-                                  width='16'
-                                  height='16'
-                                  style={{ opacity: 0.6 }}
-                                />
-                              )}
-                            </Link>
-
-                            {/* Child Menu (Third Level) */}
-                            {subItem.children && subItem.children.length > 0 && openChildMenu === subIndex && (
-                              <div
-                                className='position-absolute main-submenu-children-items'
+                              <Link
+                                to={subItem.path}
+                                onClick={() => handleMenuClick(subItem, item)}
+                                className="d-flex align-items-center justify-content-between text-decoration-none main-submenu-items-link"
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.backgroundColor =
+                                    "#f3f4f6";
+                                  e.currentTarget.style.color = "#111827";
+                                  e.currentTarget.style.paddingLeft = "18px";
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.backgroundColor =
+                                    "transparent";
+                                  e.currentTarget.style.color = "#374151";
+                                  e.currentTarget.style.paddingLeft = "14px";
+                                }}
                               >
-                                {subItem.children.map((childItem, childIndex) => (
-                                  <Link
-                                    key={childIndex}
-                                    to={childItem.path}
-                                    onClick={() => handleMenuClick(childItem, subItem, item)}
+                                <span>{subItem.name}</span>
+                                {subItem.children &&
+                                  subItem.children.length > 0 && (
+                                    <Icon
+                                      icon="mingcute:right-line"
+                                      width="16"
+                                      height="16"
+                                      style={{ opacity: 0.6 }}
+                                    />
+                                  )}
+                              </Link>
 
-                                    className='d-block text-decoration-none main-submenu-children-items-link'
-
-                                    onMouseEnter={(e) => {
-                                      e.currentTarget.style.backgroundColor = '#f3f4f6';
-                                      e.currentTarget.style.color = '#111827';
-                                      e.currentTarget.style.paddingLeft = '18px';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                      e.currentTarget.style.backgroundColor = 'transparent';
-                                      e.currentTarget.style.color = '#374151';
-                                      e.currentTarget.style.paddingLeft = '14px';
-                                    }}
-                                  >
-                                    {childItem.name}
-                                  </Link>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                              {/* Child Menu (Third Level) */}
+                              {subItem.children &&
+                                subItem.children.length > 0 &&
+                                openChildMenu === subIndex && (
+                                  <div className="position-absolute main-submenu-children-items">
+                                    {subItem.children.map(
+                                      (childItem, childIndex) => (
+                                        <Link
+                                          key={childIndex}
+                                          to={childItem.path}
+                                          onClick={() =>
+                                            handleMenuClick(
+                                              childItem,
+                                              subItem,
+                                              item
+                                            )
+                                          }
+                                          className="d-block text-decoration-none main-submenu-children-items-link"
+                                          onMouseEnter={(e) => {
+                                            e.currentTarget.style.backgroundColor =
+                                              "#f3f4f6";
+                                            e.currentTarget.style.color =
+                                              "#111827";
+                                            e.currentTarget.style.paddingLeft =
+                                              "18px";
+                                          }}
+                                          onMouseLeave={(e) => {
+                                            e.currentTarget.style.backgroundColor =
+                                              "transparent";
+                                            e.currentTarget.style.color =
+                                              "#374151";
+                                            e.currentTarget.style.paddingLeft =
+                                              "14px";
+                                          }}
+                                        >
+                                          {childItem.name}
+                                        </Link>
+                                      )
+                                    )}
+                                  </div>
+                                )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                   </div>
                 ))}
               </nav>
@@ -1789,7 +1817,10 @@ const MasterLayout = ({ children }) => {
                   {/* Alarm Icon */}
                   <div className="dropdown">
                     <button className="has-indicator w-32-px h-32-px bg-neutral-200 rounded-circle d-flex justify-content-center align-items-center">
-                      <Icon icon="solar:alarm-linear" className="text-primary-light text-md" />
+                      <Icon
+                        icon="solar:alarm-linear"
+                        className="text-primary-light text-md"
+                      />
                     </button>
                   </div>
 
@@ -1800,13 +1831,18 @@ const MasterLayout = ({ children }) => {
                       type="button"
                       data-bs-toggle="dropdown"
                     >
-                      <Icon icon="iconoir:bell" className="text-primary-light text-md" />
+                      <Icon
+                        icon="iconoir:bell"
+                        className="text-primary-light text-md"
+                      />
                     </button>
 
                     <div className="dropdown-menu to-top dropdown-menu-lg p-0">
                       <div className="notification-header">
                         <div>
-                          <h6 className="text-lg text-primary-light fw-semibold mb-0">Notifications</h6>
+                          <h6 className="text-lg text-primary-light fw-semibold mb-0">
+                            Notifications
+                          </h6>
                         </div>
                         <span className="notification-count">05</span>
                       </div>
@@ -1829,11 +1865,18 @@ const MasterLayout = ({ children }) => {
                     <div className="dropdown-menu to-top dropdown-menu-sm">
                       <div className="user-info-header">
                         <div>
-                          <h6 className="text-lg text-primary-light fw-semibold mb-2">Shaidul Islam</h6>
-                          <span className="text-secondary-light fw-medium text-sm">Admin</span>
+                          <h6 className="text-lg text-primary-light fw-semibold mb-2">
+                            Shaidul Islam
+                          </h6>
+                          <span className="text-secondary-light fw-medium text-sm">
+                            Admin
+                          </span>
                         </div>
                         <button type="button" className="hover-text-danger">
-                          <Icon icon="radix-icons:cross-1" className="icon text-xl" />
+                          <Icon
+                            icon="radix-icons:cross-1"
+                            className="icon text-xl"
+                          />
                         </button>
                       </div>
 
@@ -1843,7 +1886,11 @@ const MasterLayout = ({ children }) => {
                             className="dropdown-item text-black px-0 py-8 hover-bg-transparent hover-text-primary d-flex align-items-center gap-3"
                             to="/"
                           >
-                            <Icon icon="solar:user-linear" className="icon text-xl" /> My Profile
+                            <Icon
+                              icon="solar:user-linear"
+                              className="icon text-xl"
+                            />{" "}
+                            My Profile
                           </Link>
                         </li>
                         <li>
@@ -1852,7 +1899,11 @@ const MasterLayout = ({ children }) => {
                             to="/sign-in"
                             onClick={handleLogout}
                           >
-                            <Icon icon="lucide:power" className="icon text-xl" /> Log Out
+                            <Icon
+                              icon="lucide:power"
+                              className="icon text-xl"
+                            />{" "}
+                            Log Out
                           </Link>
                         </li>
                       </ul>
@@ -1864,32 +1915,28 @@ const MasterLayout = ({ children }) => {
 
             {/* Sub Header */}
             <div className="sub-header-bar">
-              <div className="sub-header-title">
-                {selectedItemName}
-              </div>
+              <div className="sub-header-title">{selectedItemName}</div>
             </div>
           </div>
         </div>
-        <div className='dashboard-main-body'>{children}</div>
+        <div className="dashboard-main-body">{children}</div>
 
-        <footer className='d-footer main-footer'>
-          <div className='row align-items-center justify-content-between'>
-            <div className='col-auto'>
-              <p className='mb-0'>© 2025 Abrova. All Rights Reserved.</p>
+        <footer className="d-footer main-footer">
+          <div className="row align-items-center justify-content-between">
+            <div className="col-auto">
+              <p className="mb-0">© 2025 Abrova. All Rights Reserved.</p>
             </div>
             {/* <div className='col-auto'>
               <p className='mb-0'>
                 Powered by <span className='text-primary-600'>Abrova</span>
               </p>
             </div> */}
-            <div className='col-auto d-flex align-items-center gap-2 pe-5 pe-lg-6 flex-wrap justify-content-center justify-content-md-end'>
-              <p className='mb-0'>
-                Powered by
-              </p>
+            <div className="col-auto d-flex align-items-center gap-2 pe-5 pe-lg-6 flex-wrap justify-content-center justify-content-md-end">
+              <p className="mb-0">Powered by</p>
               <img
-                src='assets/images/logo-test1.png'
-                alt='site logo'
-                className='light-logo'
+                src="assets/images/logo-test1.png"
+                alt="site logo"
+                className="light-logo"
               />
             </div>
           </div>
