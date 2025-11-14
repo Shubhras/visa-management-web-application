@@ -728,6 +728,25 @@ urlpatterns = [
     path('coursedividedin/export/', CourseDividedInExportAPIView.as_view(), name='coursedividedin-export'),
     path('coursedividedin/import/', CourseDividedInImportAPIView.as_view(), name='coursedividedin-import'),
 
+    path('course-durations/', CourseDurationListAPIView.as_view(), name='course-duration-list'),
+    path('course-durations/create/', CourseDurationCreateAPIView.as_view(), name='course-duration-create'),
+    path('course-durations/<uuid:uuid>/', CourseDurationRetrieveAPIView.as_view(), name='course-duration-retrieve'),
+    path('course-durations/<uuid:uuid>/update/', CourseDurationUpdateAPIView.as_view(), name='course-duration-update'),
+    path('course-durations/delete/', CourseDurationDeleteAPIView.as_view(), name='course-duration-delete-bulk'),
+    path('course-durations/export/', CourseDurationExportAPIView.as_view(), name='course-duration-export'),
+    path('course-durations/import/', CourseDurationImportAPIView.as_view(), name='course-duration-import'),
+
+
+    path('course-level/', CourseLevelListAPIView.as_view(), name='course-Level-list'),
+    path('course-level/create/', CourseLevelCreateAPIView.as_view(), name='course-Level-create'),
+    path('course-level/<uuid:uuid>/',CourseLevelRetrieveAPIView.as_view(), name='course-Level-retrieve'),
+    path('course-level/<uuid:uuid>/update/', CourseLevelUpdateAPIView.as_view(), name='course-Level-update'),
+    path('course-level/delete/', CourseLevelDeleteAPIView.as_view(), name='course-Level-delete-bulk'),
+    path('course-level/export/', CourseLevelExportAPIView.as_view(), name='course-Level-export'),
+    path('course-level/import/', CourseLevelImportAPIView.as_view(), name='course-Level-import'),
+
+
+
     # ------------------ CourseStatus ------------------
     path('coursestatus/', CourseStatusListAPIView.as_view(), name='coursestatus-list'),
     path('coursestatus/create/', CourseStatusCreateAPIView.as_view(), name='coursestatus-create'),

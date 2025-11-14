@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useDispatch } from "react-redux";
 import MasterLayout from "../../../masterLayout/MasterLayout";
-// import Breadcrumb from "../../../components/Breadcrumb";
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { Link } from 'react-router-dom';
 import { toast } from "react-toastify";
@@ -14,9 +13,10 @@ const DepartmentList = () => {
   const dispatch = useDispatch();
   const [modalState, setModalState] = useState({
     show: false,
-    mode: 'add', // 'add' or 'edit'
+    mode: 'add',
     rowData: null
   })
+
   const handleShow = () => {
     setModalState({
       show: true,
@@ -24,17 +24,20 @@ const DepartmentList = () => {
       rowData: null
     });
   };
-  // For closing modal
-  const handleClose = () => {
+
+  // ✅ FIXED: For closing modal - only refresh if shouldRefresh is true
+  const handleClose = (shouldRefresh = false) => {
     setModalState({
       show: false,
       mode: 'add',
       rowData: null
     });
-    fetchDepartmentList();
+    // Only call API when data was successfully added/updated
+    if (shouldRefresh) {
+      fetchDepartmentList();
+    }
   }
 
-  // const [showEdit, setShowEdit] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [rowSelectData, setRowSelectData] = useState({});
   const [selectedRows, setSelectedRows] = useState([]);
@@ -50,7 +53,6 @@ const DepartmentList = () => {
   const [selectedItems, setSelectedItems] = useState(["Department"]);
   const [ItemsRequired] = useState(["Department"]);
 
-  // Table columns configuration
   const [tableColumns] = useState([
     { id: 'name', label: 'Department', field: 'name', visible: true, required: false },
     { id: 'description', label: 'Description', field: 'description', visible: true, required: false },
@@ -62,10 +64,10 @@ const DepartmentList = () => {
   );
   const [showColumnDropdown, setShowColumnDropdown] = useState(false);
   const columnDropdownRef = useRef(null);
-  // Column visibility toggle handler
+
   const toggleColumnVisibility = (columnId) => {
     const column = tableColumns.find(col => col.id === columnId);
-    if (column?.required) return; // Don't allow hiding required columns
+    if (column?.required) return;
 
     setVisibleColumns(prev => {
       if (prev.includes(columnId)) {
@@ -76,7 +78,6 @@ const DepartmentList = () => {
     });
   };
 
-  // Check if column is visible
   const isColumnVisible = (columnId) => {
     return visibleColumns.includes(columnId);
   };
@@ -97,14 +98,13 @@ const DepartmentList = () => {
     };
   }, [showColumnDropdown]);
 
-  // Updated state with sorting
   const [tableState, setTableState] = useState({
     page: 1,
     limit: 25,
     search: '',
     status: '',
-    sortBy: 'created_at', // Field to sort by
-    sortOrder: 'desc', // 'asc' or 'desc'
+    sortBy: 'created_at',
+    sortOrder: 'desc',
     total: 0,
     totalPages: 0,
     currentPage: 1,
@@ -172,10 +172,8 @@ const DepartmentList = () => {
     }));
   };
 
-  // Handle sorting
   const handleSort = (field) => {
     setTableState(prev => {
-      // If clicking the same field, toggle between asc -> desc -> no sort
       if (prev.sortBy === field) {
         if (prev.sortOrder === 'asc') {
           return { ...prev, sortOrder: 'desc', page: 1 };
@@ -183,12 +181,10 @@ const DepartmentList = () => {
           return { ...prev, sortBy: '', sortOrder: '', page: 1 };
         }
       }
-      // If clicking a new field, start with asc
       return { ...prev, sortBy: field, sortOrder: 'asc', page: 1 };
     });
   };
 
-  // Get sort icon for a column
   const getSortIcon = (field) => {
     if (tableState.sortBy !== field) {
       return <Icon icon="ri:sort-desc" className='sorting-th-icone' />;
@@ -223,7 +219,6 @@ const DepartmentList = () => {
     }));
   };
 
-  // For "Select All" button
   const handleSelectAllButton = () => {
     if (isAllSelected) {
       setSelectedRows([]);
@@ -231,7 +226,7 @@ const DepartmentList = () => {
       setSelectedRows(departments.map(Item => Item.uuid));
     }
   };
-  // For checkbox in table header
+
   const handleSelectAll = (e) => {
     const checked = e.target.checked;
     if (checked) {
@@ -305,6 +300,7 @@ const DepartmentList = () => {
   const handleSelectAllOrNot = (a) => {
     setSelectAllOrNot(a);
   }
+
   const handleDelete = (uuid) => {
     setDeleteId(uuid);
     setShowDeleteConfirm(true);
@@ -316,14 +312,12 @@ const DepartmentList = () => {
       toast.error("Please select at least one row to delete");
       return;
     }
-    // Choose message based on delete type
     const message = selectAllOrNot === "all" ? `${tableState.total} all departments` : `${selectedRows.length} selected departments`;
     setDeleteConfirmMessage(`Are you sure you want to delete this department (${message})?`);
     setShowDeleteConfirm(true);
   };
 
   const confirmDelete = () => {
-    // const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
     const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
     if (!sendPayload || sendPayload.length === 0) {
       toast.error("No department selected for deletion.");
@@ -357,9 +351,13 @@ const DepartmentList = () => {
     setSelectAllOrNot('');
   };
 
-  const handleCloseImport = () => {
+  // ✅ FIXED: For closing import modal - only refresh if shouldRefresh is true
+  const handleCloseImport = (shouldRefresh = false) => {
     setShowImport(false);
-    fetchDepartmentList();
+    // Only call API when data was successfully imported
+    if (shouldRefresh) {
+      fetchDepartmentList();
+    }
   };
 
   const handleShowImport = () => {
@@ -374,7 +372,6 @@ const DepartmentList = () => {
     setShowExportPopop(false);
   };
 
-
   const handleDragStart = (e, index) => {
     e.dataTransfer.setData("dragIndex", index);
   };
@@ -387,12 +384,12 @@ const DepartmentList = () => {
     newSelected.splice(dropIndex, 0, draggedItem);
     setSelectedItems(newSelected);
   };
+
   const handleDragOver = (e) => {
     e.preventDefault();
   };
 
   const handleCheckboxChange = (item, checked) => {
-    // prevent unchecking required items
     if (ItemsRequired.includes(item)) return;
 
     if (checked) {
@@ -407,15 +404,12 @@ const DepartmentList = () => {
       toast.error("Please select at least one field");
       return
     }
-    // Map frontend labels to backend field names
     const fieldMapping = {
       "Department": "name",
       "Modified On": "updated_at",
       "Description": "description",
     };
-    // Convert selectedItems to backend field names
     const mappedFields = selectedItems.map((item) => fieldMapping[item] || item);
-    // Convert to comma-separated string
     const fieldsString = mappedFields.join(",");
     const sendPayload = {
       file: "xlsx",
@@ -457,15 +451,12 @@ const DepartmentList = () => {
   const startIndex = (tableState.currentPage - 1) * tableState.limit;
   const statusOptions = ['All', 'Active', 'Inactive'];
 
-
   return (
     <>
       <MasterLayout>
-        {/* <Breadcrumb title="Department" subTitle="List" /> */}
         <div className="card basic-data-table main-container-data">
           <div className="card-body container-data">
             <div className="row align-items-center gy-3 gx-2 flex-wrap filter-action-btn">
-              {/* Left Section: Import / Export / Delete */}
               <div className="col-xl-6 col-lg-4 col-md-12">
                 <div className="d-flex flex-wrap align-items-center gap-2">
                   <button
@@ -506,7 +497,6 @@ const DepartmentList = () => {
                 </div>
               </div>
 
-              {/* Right Section: Select / Search / +Add New */}
               <div className="col-xl-6 col-lg-8 col-md-12">
                 <div className="d-flex flex-wrap align-items-center justify-content-end gap-2">
                   <select
@@ -545,7 +535,6 @@ const DepartmentList = () => {
                           lineHeight: 1
                         }}
                         onClick={() => {
-
                           handleSearchChange('');
                         }}
                       >
@@ -791,14 +780,21 @@ const DepartmentList = () => {
             </div>
           </div>
         </div>
+
+        {/* Add/Edit Modal */}
         <AddEditDepartmentModal
           show={modalState.show}
           handleClose={handleClose}
           mode={modalState.mode}
           rowData={modalState.rowData}
         />
+
+        {/* Import Modal */}
         {showImport && (
-          <AddImportDepartmentModal show={showImport} handleClose={handleCloseImport} />)}
+          <AddImportDepartmentModal show={showImport} handleClose={handleCloseImport} />
+        )}
+
+        {/* Delete Confirmation Modal */}
         {showDeleteConfirm && (
           <div className="modal fade show common-ctl-popup">
             <div className="modal-dialog modal-dialog-centered">
@@ -808,10 +804,7 @@ const DepartmentList = () => {
                   <button type="button" className="btn-close" onClick={cancelDelete}></button>
                 </div>
                 <div className="modal-body">
-                  {/* <p className="mb-0">Are you sure you want to delete this department?</p> */}
-                  {/* <p className="mb-0"> Are you sure you want to delete this department ({selectedRows.length})?</p> */}
                   <p className="mb-0">{deleteConfirmMessage}</p>
-
                 </div>
                 <div className="modal-footer">
                   <button
@@ -833,6 +826,8 @@ const DepartmentList = () => {
             </div>
           </div>
         )}
+
+        {/* Export Modal */}
         {showExportPopop && (
           <div
             className="modal fade show common-ctl-popup"
@@ -865,7 +860,7 @@ const DepartmentList = () => {
                               id={`item-${index}`}
                               checked={selectedItems.includes(item)}
                               onChange={(e) => handleCheckboxChange(item, e.target.checked)}
-                              disabled={ItemsRequired.includes(item)} // 🔒 Disable required item
+                              disabled={ItemsRequired.includes(item)}
                               className="form-check-input"
                             />
                             <label htmlFor={`item-${index}`} className="mb-0 flex-grow-1">
@@ -922,9 +917,13 @@ const DepartmentList = () => {
                     >
                       Cancel
                     </button>
-                    <button onClick={handleExport} type="button"
+                    <button 
+                      onClick={handleExport} 
+                      type="button"
                       className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
-                      disabled={loadingExport}>{loadingExport ? (
+                      disabled={loadingExport}
+                    >
+                      {loadingExport ? (
                         <>
                           <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                           Submit...
