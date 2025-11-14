@@ -568,6 +568,14 @@ urlpatterns = [
     path('occupation-names/export/',OccupationNameExportAPIView.as_view(),name='occupationname-delete'),
     path('occupation-names/import/',OccupationNameImportAPIView.as_view(),name='occupationname-delete'),
 
+    path('JobProspect/', JobProspectListAPIView.as_view(), name='JobProspect-list'),
+    path('JobProspect/create/', JobProspectCreateAPIView.as_view(), name='JobProspect-create'),
+    path('JobProspect/<uuid:uuid>/', JobProspectRetrieveAPIView.as_view(), name='JobProspect-retrieve'),
+    path('JobProspect/<uuid:uuid>/update/', JobProspectUpdateAPIView.as_view(), name='JobProspect-update'),
+    path('JobProspect/delete/', JobProspectDeleteAPIView.as_view(), name='JobProspect-delete'),
+    path('JobProspect/export/', JobProspectExportAPIView.as_view(), name='JobProspect-export'),
+    path('JobProspect/import/', JobProspectImportAPIView.as_view(), name='JobProspect-import'),
+
 
     path('workrights/', WorkRightsListAPIView.as_view(), name='workrights-list'),
     path('workrights/create/', WorkRightsCreateAPIView.as_view(), name='workrights-create'),
