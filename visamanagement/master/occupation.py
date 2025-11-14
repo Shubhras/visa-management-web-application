@@ -1435,7 +1435,7 @@ class OccupationCategoryCreateAPIView(APIView):
         # Check duplicate
         existing = OccupationCategory.objects.filter(
             country=country_obj,
-            occupation_version=occupation_version_obj,
+            occupationversion=occupation_version_obj,
             occupationcategory__iexact=occupationcategory,
             is_deleted=False
         ).first()
@@ -1451,7 +1451,7 @@ class OccupationCategoryCreateAPIView(APIView):
         if country_obj:
             data['country_id'] = country_obj.uuid
         if occupation_version_obj:
-            data['occupation_version_id'] = occupation_version_obj.uuid
+            data['occupationversion_id'] = occupation_version_obj.uuid
 
         serializer = OccupationCategorySerializer(data=data)
         if serializer.is_valid():
