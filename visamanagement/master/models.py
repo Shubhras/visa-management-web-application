@@ -957,6 +957,35 @@ class OccupationCode(models.Model):
     def __str__(self):
         return self.occupationcode
     
+
+
+class OccupationName(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    country = models.ForeignKey('Country',on_delete=models.SET_NULL,null=True,blank=True,related_name='occupation_name')
+    occupationversion =models.ForeignKey('OccupationVersion',on_delete=models.SET_NULL,null=True,blank=True,related_name='occupation_name')
+    occupationcategory =models.ForeignKey('OccupationCategory',on_delete=models.SET_NULL,null=True,blank=True,related_name='occupation_name')
+    occupationlevel =models.ForeignKey('OccupationLevel',on_delete=models.SET_NULL,null=True,blank=True,related_name='occupation_name')
+    occupationlevelcode =models.ForeignKey('OccupationLevelCode',on_delete=models.SET_NULL,null=True,blank=True,related_name='occupation_name')
+    occupationcode =models.ForeignKey('OccupationCode',on_delete=models.SET_NULL,null=True,blank=True,related_name='occupation_name')
+    occupationname =  models.TextField(max_length=255,blank=True)
+    description =  models.TextField(max_length=255,blank=True)
+    Mainduties=models.TextField(max_length=500,blank=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('occupationcategory', 'country','occupationversion','occupationlevelcode','occupationlevel','occupationcode')
+    
+    def __str__(self):
+        return self.occupationname
+
+
+
+
+
+
 class OccupationType(models.Model):
     id = models.AutoField(primary_key=True) 
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True) 
@@ -1012,6 +1041,27 @@ class JobProspect(models.Model):
     def __str__(self):
         return self.occupationname
 
+
+
+
+# class RelatedOccupation(models.Model):
+#     id = models.AutoField(primary_key=True)
+#     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+#     country = models.ForeignKey('Country',on_delete=models.SET_NULL,null=True,blank=True,related_name='related_name')
+#     occupationversion =models.ForeignKey('OccupationVersion',on_delete=models.SET_NULL,null=True,blank=True,related_name='related_name')
+#     occupationcode =models.ForeignKey('OccupationCode',on_delete=models.SET_NULL,null=True,blank=True,related_name='related_name')
+#     occupationname =models.ForeignKey('OccupationName',on_delete=models.SET_NULL,null=True,blank=True,related_name='occupation_name')
+#     relatedoccupation =  models.TextField(max_length=255,blank=True)
+#     description =  models.TextField(max_length=255,blank=True)
+#     is_deleted = models.BooleanField(default=False)
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     updated_at = models.DateTimeField(auto_now=True)
+#     class Meta:
+#         unique_together = ('occupationcode', 'country','occupationversion')
+#     def __str__(self):
+#         return self.relatedoccupation
+
+    
 
 
 
