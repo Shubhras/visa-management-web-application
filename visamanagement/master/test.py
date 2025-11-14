@@ -558,10 +558,10 @@ class LanguageTestUpdateAPIView(APIView):
             }, status=status.HTTP_404_NOT_FOUND)
 
         language_uuid = request.data.get('language')
+        language_instance = None
         if language_uuid:
             try:
-                language = Language.objects.get(uuid=language_uuid, is_deleted=False)
-                request.data['language'] = language.id  # assign FK
+                language_instance = Language.objects.get(uuid=language_uuid, is_deleted=False)
             except Language.DoesNotExist:
                 return Response({
                     "statusCode": 404,
@@ -569,9 +569,9 @@ class LanguageTestUpdateAPIView(APIView):
                     "message": "Language not found."
                 }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = LanguageTestSerializer(obj, data=request.data)
+        serializer = LanguageTestSerializer(obj, data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(language=language_instance)  # <-- assign FK here
             return Response({
                 "statusCode": 200,
                 "status": True,
@@ -584,6 +584,10 @@ class LanguageTestUpdateAPIView(APIView):
             "status": False,
             "message": " ".join([m for msgs in serializer.errors.values() for m in msgs])
         }, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+        
 
 class LanguageTestDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
