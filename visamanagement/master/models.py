@@ -1050,7 +1050,7 @@ class RelatedOccupation(models.Model):
     country = models.ForeignKey('Country',on_delete=models.SET_NULL,null=True,blank=True,related_name='related_name')
     occupationversion =models.ForeignKey('OccupationVersion',on_delete=models.SET_NULL,null=True,blank=True,related_name='related_name')
     occupationcode =models.ForeignKey('OccupationCode',on_delete=models.SET_NULL,null=True,blank=True,related_name='related_name')
-    occupationname =models.ForeignKey('OccupationName',on_delete=models.SET_NULL,null=True,blank=True,related_name='occupation_name')
+    occupationname =models.ForeignKey('OccupationName',on_delete=models.SET_NULL,null=True,blank=True,related_name='related_name')
     relatedoccupation =  models.TextField(max_length=255,blank=True)
     description =  models.TextField(max_length=255,blank=True)
     is_deleted = models.BooleanField(default=False)
