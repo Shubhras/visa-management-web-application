@@ -1030,8 +1030,10 @@ class OccupationLevelCodeSerializer(serializers.ModelSerializer):
         source='country',
         write_only=True
     )
+    country_uuid = serializers.UUIDField(source='country.uuid', read_only=True)
 
     occupation_version = serializers.CharField(read_only=True, source='occupationversion.occupation_version')
+    occupation_version_uuid = serializers.UUIDField(source='occupationversion.uuid', read_only=True)
 
     occupation_version_id = serializers.SlugRelatedField(
         slug_field='uuid',
@@ -1055,7 +1057,9 @@ class OccupationLevelCodeSerializer(serializers.ModelSerializer):
 
 # ------------------- OccupationLevel Serializer ------------------- #
 class OccupationLevelSerializer(serializers.ModelSerializer):
-    country = serializers.CharField(read_only=True, source='country.country_name')
+    country_name = serializers.CharField(read_only=True, source='country.name')
+    country_uuid = serializers.CharField(read_only=True, source='country.uuid')
+
     country_id = serializers.SlugRelatedField(
         slug_field='uuid',
         queryset=Country.objects.all(),
@@ -1066,6 +1070,7 @@ class OccupationLevelSerializer(serializers.ModelSerializer):
     )
 
     occupationversion = serializers.CharField(read_only=True, source='occupationversion.occupation_version')
+    occupationversion_uuid = serializers.CharField(read_only=True, source='occupationversion.uuid')
     occupationversion_id = serializers.SlugRelatedField(
         slug_field='uuid',
         queryset=OccupationVersion.objects.all(),
@@ -1076,6 +1081,8 @@ class OccupationLevelSerializer(serializers.ModelSerializer):
     )
 
     occupationcategory = serializers.CharField(read_only=True, source='occupationcategory.occupationcategory')
+    occupationcategory_uuid = serializers.CharField(read_only=True, source='occupationcategory.uuid')
+
     occupationcategory_id = serializers.SlugRelatedField(
         slug_field='uuid',
         queryset=OccupationCategory.objects.all(),
@@ -1086,6 +1093,8 @@ class OccupationLevelSerializer(serializers.ModelSerializer):
     )
 
     occupationlevelcode = serializers.CharField(read_only=True, source='occupationlevelcode.occupationlevelcode')
+    occupationlevelcode_uuid = serializers.CharField(read_only=True, source='occupationlevelcode.uuid')
+
     occupationlevelcode_id = serializers.SlugRelatedField(
         slug_field='uuid',
         queryset=OccupationLevelCode.objects.all(),
@@ -1099,10 +1108,10 @@ class OccupationLevelSerializer(serializers.ModelSerializer):
         model = OccupationLevel
         fields = [
             'id', 'uuid',
-            'country', 'country_id',
-            'occupationversion', 'occupationversion_id',
-            'occupationcategory', 'occupationcategory_id',
-            'occupationlevelcode', 'occupationlevelcode_id',
+            'country', 'country_id','country_uuid',
+            'occupationversion', 'occupationversion_id','occupationversion_uuid',
+            'occupationcategory', 'occupationcategory_id','occupationcategory_uuid',
+            'occupationlevelcode', 'occupationlevelcode_id','occupationlevelcode_uuid',
             'occupationlevel', 'description',
             'is_deleted', 'created_at', 'updated_at'
         ]
