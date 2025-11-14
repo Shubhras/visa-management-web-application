@@ -1,24 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from "react-redux";
-import { courseLevelAdd, courseLevelEdit, courseLevelCodeList } from "../../../../store/master/instituteMaster/action";
+import { courseDurationAdd, courseDurationEdit, courseLevelList } from "../../../../store/master/instituteMaster/action";
 import { toast } from "react-toastify";
 import Select from "react-select";
-const AddEditCourseLevelModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
+const AddEditCourseDurationModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
-    const [courseLevelCode, setCourseLevelCode] = useState([]);
-
+    const [courseLevel, setCourseLevel] = useState([]);
     // Form state
     const [formData, setFormData] = useState({
         uuid: '',
         courseLevel: '',
-        courseLevelCode: '',
+        validPeriod: '',
+        validPeriodType: '',
         description: '',
     });
 
     // Validation errors state
     const [errors, setErrors] = useState({
-        courseLevelCode: '',
+        validPeriod: '',
+        validPeriodType: '',
         courseLevel: '',
         description: '',
     });
@@ -28,8 +29,9 @@ const AddEditCourseLevelModal = ({ show, handleClose, mode = 'add', rowData = nu
         if (mode === 'edit' && rowData) {
             setFormData({
                 uuid: rowData.uuid || '',
-                courseLevel: rowData.name || '',
-                courseLevelCode: rowData.courselevelcode_uuid || '',
+                courseLevel: rowData.courselevel_uuid || '',
+                validPeriod: rowData.valid_duration_value || "",
+                validPeriodType: rowData.valid_duration_unit || "",
                 description: rowData.description || '',
             });
         } else {
@@ -37,7 +39,8 @@ const AddEditCourseLevelModal = ({ show, handleClose, mode = 'add', rowData = nu
             setFormData({
                 uuid: '',
                 courseLevel: '',
-                courseLevelCode: '',
+                validPeriod: '',
+                validPeriodType: '',
                 description: '',
             });
         }
@@ -53,9 +56,9 @@ const AddEditCourseLevelModal = ({ show, handleClose, mode = 'add', rowData = nu
             sortBy: 'updated_at',
             sortOrder: 'desc',
         };
-        dispatch(courseLevelCodeList(params, (response, error) => {
+        dispatch(courseLevelList(params, (response, error) => {
             if (response?.statusCode === 200 && response?.status === true) {
-                setCourseLevelCode(response?.data || []);
+                setCourseLevel(response?.data || []);
             }
         }));
     }
@@ -83,15 +86,20 @@ const AddEditCourseLevelModal = ({ show, handleClose, mode = 'add', rowData = nu
         let isValid = true;
 
         // Department Name validation
-        if (!formData.courseLevel.trim()) {
+        if (!formData.courseLevel) {
             newErrors.courseLevel = 'Course level is required';
             isValid = false;
         }
-        if (!formData.courseLevelCode) {
-            newErrors.courseLevelCode = 'Course level code is required';
+        if (!formData.validPeriod) {
+            newErrors.validPeriod = 'Course duration value is required';
             isValid = false;
 
         }
+        if (!formData.validPeriodType) {
+            newErrors.validPeriodType = 'Course duration unit is required';
+            isValid = false;
+        }
+
 
         setErrors(newErrors);
         return isValid;
@@ -102,22 +110,25 @@ const AddEditCourseLevelModal = ({ show, handleClose, mode = 'add', rowData = nu
         e.preventDefault();
 
         if (validateForm()) {
+
             const sendPayload = mode === 'edit'
                 ? {
                     uuid: formData.uuid,
-                    name: formData.courseLevel,
-                    courselevelcode_id: formData.courseLevelCode,
+                    courselevel_id: formData.courseLevel,
+                    valid_duration_value: formData.validPeriod,
+                    valid_duration_unit: formData.validPeriodType,
                     description: formData.description,
                 }
                 : {
-                    name: formData.courseLevel,
-                    courselevelcode_id: formData.courseLevelCode,
+                    courselevel_id: formData.courseLevel,
+                    valid_duration_value: formData.validPeriod,
+                    valid_duration_unit: formData.validPeriodType,
                     description: formData.description,
                 };
 
             setLoading(true);
 
-            const action = mode === 'edit' ? courseLevelEdit : courseLevelAdd;
+            const action = mode === 'edit' ? courseDurationEdit : courseDurationAdd;
 
             dispatch(action(sendPayload, (response, error) => {
                 setLoading(false);
@@ -141,7 +152,8 @@ const AddEditCourseLevelModal = ({ show, handleClose, mode = 'add', rowData = nu
         setFormData({
             uuid: '',
             courseLevel: '',
-            courseLevelCode: '',
+            validPeriod: '',
+            validPeriodType: '',
             description: '',
         });
         setErrors({});
@@ -169,7 +181,7 @@ const AddEditCourseLevelModal = ({ show, handleClose, mode = 'add', rowData = nu
                 <div className="modal-content radius-16 bg-base">
                     <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
                         <h1 className="modal-title fs-5" id="departmentModalLabel">
-                            {mode === 'edit' ? 'Edit Course Level' : 'Add Course Level'}
+                            {mode === 'edit' ? 'Edit Course Duration' : 'Add Course Duration'}
                         </h1>
                         <button
                             type="button"
@@ -187,13 +199,35 @@ const AddEditCourseLevelModal = ({ show, handleClose, mode = 'add', rowData = nu
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                                         Course Level <span className="text-danger">*</span>
                                     </label>
-                                    <input
-                                        type="text"
-                                        name="courseLevel"
-                                        value={formData.courseLevel}
-                                        onChange={handleChange}
-                                        className={`form-control radius-8 ${errors.courseLevel ? 'is-invalid' : ''}`}
-                                        placeholder="Enter course level"
+                                    <Select
+                                        options={courseLevel.map((option) => ({
+                                            value: option.uuid,
+                                            label: option.name,
+                                        }))}
+                                        value={
+                                            formData.courseLevel
+                                                ? courseLevel
+                                                    .map((option) => ({
+                                                        value: option.uuid,
+                                                        label: option.name,
+                                                    }))
+                                                    .find((opt) => opt.value === formData.courseLevel)
+                                                : null
+                                        }
+                                        onChange={(selectedOption) =>
+                                            handleChange({
+                                                target: {
+                                                    name: "courseLevel",
+                                                    value: selectedOption ? selectedOption.value : "",
+                                                },
+                                            })
+                                        }
+                                        placeholder="Select course level"
+                                        isClearable
+                                        isSearchable
+                                        className={`custom-select-container ${errors.courseLevel ? "is-invalid" : ""
+                                            }`}
+                                        classNamePrefix="custom-select"
                                     />
                                     {errors.courseLevel && (
                                         <div className="text-danger text-sm mt-1">
@@ -202,46 +236,49 @@ const AddEditCourseLevelModal = ({ show, handleClose, mode = 'add', rowData = nu
                                     )}
                                 </div>
                                 <div className="col-12 mb-20">
-                                    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                                        Course Level Code <span className="text-danger">*</span>
-                                    </label>
-                                    <Select
-                                        options={courseLevelCode.map((option) => ({
-                                            value: option.uuid,
-                                            label: option.name,
-                                        }))}
-                                        value={
-                                            formData.courseLevelCode
-                                                ? courseLevelCode
-                                                    .map((option) => ({
-                                                        value: option.uuid,
-                                                        label: option.name,
-                                                    }))
-                                                    .find((opt) => opt.value === formData.courseLevelCode)
-                                                : null
-                                        }
-                                        onChange={(selectedOption) =>
-                                            handleChange({
-                                                target: {
-                                                    name: "courseLevelCode",
-                                                    value: selectedOption ? selectedOption.value : "",
-                                                },
-                                            })
-                                        }
-                                        placeholder="Select courseLevelCode"
-                                        isClearable
-                                        isSearchable
-                                        className={`custom-select-container ${errors.courseLevelCode ? "is-invalid" : ""
-                                            }`}
-                                        classNamePrefix="custom-select"
-                                    />
-                                    {errors.courseLevelCode && (
-                                        <div className="text-danger text-sm mt-1">
-                                            {errors.courseLevelCode}
-                                        </div>
-                                    )}
-                                </div>
 
+                                    <div className="row gx-2">
+                                        <div className="col-6">
+                                            <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                                                Course Duration Value <span className="text-danger">*</span>
+                                            </label>
+                                            <input
+                                                type="number"
+                                                name="validPeriod"
+                                                value={formData.validPeriod}
+                                                onChange={handleChange}
+                                                className={`form-control radius-8 ${errors.validPeriod ? 'is-invalid' : ''}`}
+                                                placeholder="Numeric"
+                                            />
+                                            {errors.validPeriod && (
+                                                <div className="text-danger text-sm mt-1">
+                                                    {errors.validPeriod}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="col-6">
+                                            <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                                                Course Duration Unit <span className="text-danger">*</span>
+                                            </label>
+                                            <select
+                                                name="validPeriodType"
+                                                value={formData.validPeriodType || ""}
+                                                onChange={handleChange}
+                                                className={`form-control form-select radius-8 ${errors.validPeriodType ? 'is-invalid' : ''}`}
+                                            >
+                                                <option value="">Select Course Duration unit</option>
+                                                <option value="Weeks">Weeks</option>
+                                                <option value="Months">Months</option>
+                                                <option value="Years">Years</option>
+                                            </select>
+                                            {errors.validPeriodType && (
+                                                <div className="text-danger text-sm mt-1">
+                                                    {errors.validPeriodType}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
                                 {/* Description */}
                                 <div className="col-12 mb-20">
                                     <label
@@ -299,4 +336,4 @@ const AddEditCourseLevelModal = ({ show, handleClose, mode = 'add', rowData = nu
     );
 };
 
-export default AddEditCourseLevelModal;
+export default AddEditCourseDurationModal;

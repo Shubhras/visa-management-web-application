@@ -77,6 +77,18 @@ import {
     DELETE_SCHOLARSHIP_BASED_ON,
     EXPORT_SCHOLARSHIP_BASED_ON,
     IMPORT_SCHOLARSHIP_BASED_ON,
+    COURSE_LEVEL_LIST,
+    ADD_COURSE_LEVEL,
+    EDIT_COURSE_LEVEL,
+    DELETE_COURSE_LEVEL,
+    EXPORT_COURSE_LEVEL,
+    IMPORT_COURSE_LEVEL,
+    COURSE_DURATION_LIST,
+    ADD_COURSE_DURATION,
+    EDIT_COURSE_DURATION,
+    DELETE_COURSE_DURATION,
+    EXPORT_COURSE_DURATION,
+    IMPORT_COURSE_DURATION,
 } from "./actionType";
 
 
@@ -554,6 +566,80 @@ export const scholarshipBasedOnImportData = (data, callback) => ({
     data,
     callback,
 });
+// Course Level Actions
+export const courseLevelList = (data, callback) => ({
+    type: COURSE_LEVEL_LIST,
+    data,
+    callback,
+});
+
+export const courseLevelAdd = (data, callback) => ({
+    type: ADD_COURSE_LEVEL,
+    data,
+    callback,
+});
+
+export const courseLevelEdit = (data, callback) => ({
+    type: EDIT_COURSE_LEVEL,
+    data,
+    callback,
+});
+
+export const courseLevelDelete = (data, callback) => ({
+    type: DELETE_COURSE_LEVEL,
+    data,
+    callback,
+});
+
+export const courseLevelExportData = (data, callback) => ({
+    type: EXPORT_COURSE_LEVEL,
+    data,
+    callback,
+});
+
+export const courseLevelImportData = (data, callback) => ({
+    type: IMPORT_COURSE_LEVEL,
+    data,
+    callback,
+});
+// Course Duration Actions
+export const courseDurationList = (data, callback) => ({
+    type: COURSE_DURATION_LIST,
+    data,
+    callback,
+});
+
+export const courseDurationAdd = (data, callback) => ({
+    type: ADD_COURSE_DURATION,
+    data,
+    callback,
+});
+
+export const courseDurationEdit = (data, callback) => ({
+    type: EDIT_COURSE_DURATION,
+    data,
+    callback,
+});
+
+export const courseDurationDelete = (data, callback) => ({
+    type: DELETE_COURSE_DURATION,
+    data,
+    callback,
+});
+
+export const courseDurationExportData = (data, callback) => ({
+    type: EXPORT_COURSE_DURATION,
+    data,
+    callback,
+});
+
+export const courseDurationImportData = (data, callback) => ({
+    type: IMPORT_COURSE_DURATION,
+    data,
+    callback,
+});
+
+
 
 
 

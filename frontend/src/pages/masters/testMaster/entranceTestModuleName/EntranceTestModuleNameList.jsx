@@ -409,7 +409,7 @@ const EntranceTestModuleNameList = () => {
         }
         // Map frontend labels to backend field names
         const fieldMapping = {
-            "Entrance Test Name": "entrancetest_id",
+            "Entrance Test Name": "entrancetest",
             "Entrance Test Module Name": "moduleName",
             "Modified On": "updated_at",
             "Description": "description",
