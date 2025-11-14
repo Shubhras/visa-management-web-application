@@ -961,43 +961,55 @@ class OccupationVersionSerializer(serializers.ModelSerializer):
 
 
 class OccupationCategorySerializer(serializers.ModelSerializer):
-    country = serializers.CharField(read_only=True, source='country.country_name')  # optional display
+
+    # Country (display)
+    country = serializers.CharField(read_only=True, source='country.country_name')
+    
+    # Country (write)
     country_id = serializers.SlugRelatedField(
         slug_field='uuid',
         queryset=Country.objects.all(),
         source='country',
-        write_only=True,
-        allow_null=True,
-        required=False
+        write_only=True
     )
 
-    occupation_version = serializers.CharField(read_only=True, source='occupation_version.occupation_version')  # optional display
+    # Occupation Version (display)
+    occupation_version = serializers.CharField(
+        read_only=True,
+        source='occupationversion.occupation_version'
+    )
+
+    # Occupation Version (write)
     occupation_version_id = serializers.SlugRelatedField(
         slug_field='uuid',
         queryset=OccupationVersion.objects.all(),
-        source='occupation_version',
-        write_only=True,
-        allow_null=True,
-        required=False
+        source='occupationversion',   # ✅ Correct
+        write_only=True
     )
 
-    country_name = serializers.CharField(source='country.name', read_only=True)
+    # Additional display fields
+    country_name = serializers.CharField(source='country.country_name', read_only=True)
     country_uuid = serializers.UUIDField(source='country.uuid', read_only=True)
-    occupation_version_name=serializers.CharField(source='occupationversion.occupation_version', read_only=True)
-    occupation_version_uuid=serializers.UUIDField(source='occupationversion.uuid', read_only=True)
+
+    occupation_version_name = serializers.CharField(source='occupationversion.occupation_version', read_only=True)
+    occupation_version_uuid = serializers.UUIDField(source='occupationversion.uuid', read_only=True)
+
     class Meta:
         model = OccupationCategory
         fields = [
             'id',
             'uuid',
+
             'country',
             'country_id',
             'country_name',
             'country_uuid',
+
             'occupation_version',
+            'occupation_version_id',
             'occupation_version_name',
             'occupation_version_uuid',
-            'occupation_version_id',
+
             'occupationcategory',
             'occupationcategorycode',
             'description',
