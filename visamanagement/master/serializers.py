@@ -994,6 +994,7 @@ class OccupationCategorySerializer(serializers.ModelSerializer):
             'country_id',
             'country_name',
             'country_uuid',
+            'occupation_version',
             'occupation_version_name',
             'occupation_version_uuid',
             'occupation_version_id',
