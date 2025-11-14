@@ -716,7 +716,7 @@ class DegreeAwardedBySerializer(serializers.ModelSerializer):
 
     country_name = serializers.CharField(source='country.name', read_only=True)
     education_level_name = serializers.CharField(source='education_level.educationlevel', read_only=True)
-
+   
     class Meta:
         model = DegreeAwardedBy
         fields = [
@@ -763,16 +763,23 @@ class DegreeAwardedInstituteSerializer(serializers.ModelSerializer):
         allow_null=True
     )
 
+
     # For output: show readable names
     degree_awarded_by_name = serializers.CharField(source='degree_awarded_by.degree_name', read_only=True)
     country_name = serializers.CharField(source='country.name', read_only=True)
     state_name = serializers.CharField(source='state.stateName', read_only=True)
     education_level_name = serializers.CharField(source='education_level.educationlevel', read_only=True)
+    
+    degree_awarded_by_uuid = serializers.CharField(source='degree_awarded_by.uuid', read_only=True)
+    country_uuid= serializers.CharField(source='country.uuid', read_only=True)
+    state_uuid = serializers.CharField(source='state.uuid', read_only=True)
+    education_level_uuid = serializers.CharField(source='education_level.uuid', read_only=True)
+
 
     class Meta:
         model = DegreeAwardedInstitute
         fields = [
-            'id', 'uuid', 'name', 'description',
+            'id', 'uuid', 'name', 'description','degree_awarded_by_uuid','country_uuid','state_uuid','education_level_uuid',
             'degree_awarded_by_id', 'degree_awarded_by_name',
             'country_id', 'country_name',
             'state_id', 'state_name',
