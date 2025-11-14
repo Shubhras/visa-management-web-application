@@ -540,6 +540,30 @@ export const EDIT_COURSE_STATUS_API = "/api/v1/master/coursestatus/";
 export const DELETE_COURSE_STATUS_API = "/api/v1/master/coursestatus/";
 export const EXPORT_COURSE_STATUS_API = "/api/v1/master/coursestatus/export/";
 export const IMPORT_COURSE_STATUS_API = "/api/v1/master/coursestatus/import/";
+// Intake Name API Endpoints
+export const GET_INTAKE_NAME_LIST = "/api/v1/master/intakename/";
+export const ADD_INTAKE_NAME_API = "/api/v1/master/intakename/create/";
+export const EDIT_INTAKE_NAME_API = "/api/v1/master/intakename/";
+export const DELETE_INTAKE_NAME_API = "/api/v1/master/intakename/";
+export const EXPORT_INTAKE_NAME_API = "/api/v1/master/intakename/export/";
+export const IMPORT_INTAKE_NAME_API = "/api/v1/master/intakename/import/";
+// Course Status for Intake API Endpoints
+export const GET_COURSE_STATUS_INTAKE_LIST = "/api/v1/master/coursestatusintake/";
+export const ADD_COURSE_STATUS_INTAKE_API = "/api/v1/master/coursestatusintake/create/";
+export const EDIT_COURSE_STATUS_INTAKE_API = "/api/v1/master/coursestatusintake/";
+export const DELETE_COURSE_STATUS_INTAKE_API = "/api/v1/master/coursestatusintake/";
+export const EXPORT_COURSE_STATUS_INTAKE_API = "/api/v1/master/coursestatusintake/export/";
+export const IMPORT_COURSE_STATUS_INTAKE_API = "/api/v1/master/coursestatusintake/import/";
+// Scholarship Based On API Endpoints
+export const GET_SCHOLARSHIP_BASED_ON_LIST = "/api/v1/master/scholorshipbasedon/";
+export const ADD_SCHOLARSHIP_BASED_ON_API = "/api/v1/master/scholorshipbasedon/create/";
+export const EDIT_SCHOLARSHIP_BASED_ON_API = "/api/v1/master/scholorshipbasedon/";
+export const DELETE_SCHOLARSHIP_BASED_ON_API = "/api/v1/master/scholorshipbasedon/";
+export const EXPORT_SCHOLARSHIP_BASED_ON_API = "/api/v1/master/scholorshipbasedon/export/";
+export const IMPORT_SCHOLARSHIP_BASED_ON_API = "/api/v1/master/scholorshipbasedon/import/";
+
+
+
 
 
 

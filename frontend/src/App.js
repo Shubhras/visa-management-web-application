@@ -416,6 +416,9 @@ import WhenCommissionIssueList from "./pages/masters/instituteMaster/whenCommiss
 import CourseLevelCodeList from "./pages/masters/instituteMaster/courseLevelCode/CourseLevelCodeList";
 import CourseDividedInList from "./pages/masters/instituteMaster/courseDividedIn/CourseDividedInList";
 import CourseStatusList from "./pages/masters/instituteMaster/courseStatus/CourseStatusList";
+import IntakeNameList from "./pages/masters/instituteMaster/intakeName/IntakeNameList";
+import CourseStatusforIntakeList from "./pages/masters/instituteMaster/courseStatusforIntake/CourseStatusforIntakeList";
+import ScholorshipBasedOnList from "./pages/masters/instituteMaster/scholorshipBasedOn/ScholorshipBasedOnList";
 
 
 
@@ -720,8 +723,11 @@ function App() {
         <Route path="/bank-account-for" element={<ProtectedRoute><BankAccountForList /></ProtectedRoute>}> </Route>
         <Route path="/when-commission-issue" element={<ProtectedRoute><WhenCommissionIssueList /></ProtectedRoute>}></Route>
         <Route path="/course-level-code" element={<ProtectedRoute><CourseLevelCodeList /></ProtectedRoute>}></Route>
-        <Route path="/course-divided-in" element={<ProtectedRoute><CourseDividedInList/></ProtectedRoute>}></Route>
-        <Route path="/course-status" element={<ProtectedRoute><CourseStatusList/></ProtectedRoute>}></Route>
+        <Route path="/course-divided-in" element={<ProtectedRoute><CourseDividedInList /></ProtectedRoute>}></Route>
+        <Route path="/course-status" element={<ProtectedRoute><CourseStatusList /></ProtectedRoute>}></Route>
+        <Route path="/intake-name" element={<ProtectedRoute><IntakeNameList /></ProtectedRoute>}></Route>
+        <Route path="/course-status-for-intake" element={<ProtectedRoute><CourseStatusforIntakeList /></ProtectedRoute>}></Route>
+        <Route path="/scholorship-based-on" element={<ProtectedRoute><ScholorshipBasedOnList /></ProtectedRoute>}></Route>
 
 
 
