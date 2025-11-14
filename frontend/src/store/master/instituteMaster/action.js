@@ -59,6 +59,24 @@ import {
     DELETE_COURSE_STATUS,
     EXPORT_COURSE_STATUS,
     IMPORT_COURSE_STATUS,
+    INTAKE_NAME_LIST,
+    ADD_INTAKE_NAME,
+    EDIT_INTAKE_NAME,
+    DELETE_INTAKE_NAME,
+    EXPORT_INTAKE_NAME,
+    IMPORT_INTAKE_NAME,
+    COURSE_STATUS_INTAKE_LIST,
+    ADD_COURSE_STATUS_INTAKE,
+    EDIT_COURSE_STATUS_INTAKE,
+    DELETE_COURSE_STATUS_INTAKE,
+    EXPORT_COURSE_STATUS_INTAKE,
+    IMPORT_COURSE_STATUS_INTAKE,
+    SCHOLARSHIP_BASED_ON_LIST,
+    ADD_SCHOLARSHIP_BASED_ON,
+    EDIT_SCHOLARSHIP_BASED_ON,
+    DELETE_SCHOLARSHIP_BASED_ON,
+    EXPORT_SCHOLARSHIP_BASED_ON,
+    IMPORT_SCHOLARSHIP_BASED_ON,
 } from "./actionType";
 
 
@@ -427,6 +445,118 @@ export const courseStatusImportData = (data, callback) => ({
     data,
     callback,
 });
+
+// Intake Name Actions
+export const intakeNameList = (data, callback) => ({
+    type: INTAKE_NAME_LIST,
+    data,
+    callback,
+});
+
+export const intakeNameAdd = (data, callback) => ({
+    type: ADD_INTAKE_NAME,
+    data,
+    callback,
+});
+
+export const intakeNameEdit = (data, callback) => ({
+    type: EDIT_INTAKE_NAME,
+    data,
+    callback,
+});
+
+export const intakeNameDelete = (data, callback) => ({
+    type: DELETE_INTAKE_NAME,
+    data,
+    callback,
+});
+
+export const intakeNameExportData = (data, callback) => ({
+    type: EXPORT_INTAKE_NAME,
+    data,
+    callback,
+});
+
+export const intakeNameImportData = (data, callback) => ({
+    type: IMPORT_INTAKE_NAME,
+    data,
+    callback,
+});
+// Course Status for Intake Actions
+export const courseStatusIntakeList = (data, callback) => ({
+    type: COURSE_STATUS_INTAKE_LIST,
+    data,
+    callback,
+});
+
+export const courseStatusIntakeAdd = (data, callback) => ({
+    type: ADD_COURSE_STATUS_INTAKE,
+    data,
+    callback,
+});
+
+export const courseStatusIntakeEdit = (data, callback) => ({
+    type: EDIT_COURSE_STATUS_INTAKE,
+    data,
+    callback,
+});
+
+export const courseStatusIntakeDelete = (data, callback) => ({
+    type: DELETE_COURSE_STATUS_INTAKE,
+    data,
+    callback,
+});
+
+export const courseStatusIntakeExportData = (data, callback) => ({
+    type: EXPORT_COURSE_STATUS_INTAKE,
+    data,
+    callback,
+});
+
+export const courseStatusIntakeImportData = (data, callback) => ({
+    type: IMPORT_COURSE_STATUS_INTAKE,
+    data,
+    callback,
+});
+// Scholarship Based On Actions
+export const scholarshipBasedOnList = (data, callback) => ({
+    type: SCHOLARSHIP_BASED_ON_LIST,
+    data,
+    callback,
+});
+
+export const scholarshipBasedOnAdd = (data, callback) => ({
+    type: ADD_SCHOLARSHIP_BASED_ON,
+    data,
+    callback,
+});
+
+export const scholarshipBasedOnEdit = (data, callback) => ({
+    type: EDIT_SCHOLARSHIP_BASED_ON,
+    data,
+    callback,
+});
+
+export const scholarshipBasedOnDelete = (data, callback) => ({
+    type: DELETE_SCHOLARSHIP_BASED_ON,
+    data,
+    callback,
+});
+
+export const scholarshipBasedOnExportData = (data, callback) => ({
+    type: EXPORT_SCHOLARSHIP_BASED_ON,
+    data,
+    callback,
+});
+
+export const scholarshipBasedOnImportData = (data, callback) => ({
+    type: IMPORT_SCHOLARSHIP_BASED_ON,
+    data,
+    callback,
+});
+
+
+
 
 
 

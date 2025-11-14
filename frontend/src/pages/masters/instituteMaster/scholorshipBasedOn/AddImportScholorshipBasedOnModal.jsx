@@ -1,12 +1,12 @@
 import React, { useState } from 'react'
 import { useDispatch } from "react-redux";
-import { departmentImportData } from '../../../store/master/actions';
+import { scholarshipBasedOnImportData } from "../../../../store/master/instituteMaster/action";
 import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
-import CommanSampleExcelDownloadModal from '../../../components/comman/CommanSampleExcelDownloadModal';
-import { exportToExcelDuplicate } from '../../../helper/utils/commanHelper';
-const AddImportDepartmentModal = ({ show, handleClose }) => {
+import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
+import { exportToExcelDuplicate, exportToExcelWrongData } from '../../../../helper/utils/commanHelper';
+const AddImportScholorshipBasedOnModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
     const [file, setFile] = useState(null);
@@ -66,7 +66,7 @@ const AddImportDepartmentModal = ({ show, handleClose }) => {
             formData.append('sheet_name', selectedSheet);
         }
         setLoading(true);
-        dispatch(departmentImportData(formData, (response, error) => {
+        dispatch(scholarshipBasedOnImportData(formData, (response, error) => {
             setLoading(false);
             if (error) {
                 toast.error(error?.response?.data?.message || "Server error");
@@ -78,7 +78,7 @@ const AddImportDepartmentModal = ({ show, handleClose }) => {
                             <div>{response?.message}</div>
                             {response?.duplicates?.length > 0 && (
                                 <div style={{ marginTop: '6px' }}>
-                                    <strong>Duplicate departments skipped — the duplicate data from your uploaded file has been exported into an .xlsx file.</strong>
+                                    <strong>Duplicate Scholorship Based On skipped — the duplicate data from your uploaded file has been exported into an .xlsx file.</strong>
                                 </div>
                             )}
                         </div>,
@@ -86,12 +86,12 @@ const AddImportDepartmentModal = ({ show, handleClose }) => {
                             autoClose: 10000,
                         }
                     );
-                     if (response?.duplicates?.length > 0) {
+                    if (response?.duplicates?.length > 0) {
                         const prepareData = {
                             data: response.duplicates || [],
-                            headers: ["Department"],
-                            sheetName: "Department",
-                            fileName: "Department",
+                            headers: ["Scholorship Based On"],
+                            sheetName: "ScholorshipBasedOn",
+                            fileName: "ScholorshipBasedOn",
                         };
                         exportToExcelDuplicate(
                             prepareData.data,
@@ -100,10 +100,25 @@ const AddImportDepartmentModal = ({ show, handleClose }) => {
                             prepareData.fileName
                         );
                     }
+                    if (response?.skipped_rows?.length > 0) {
+                        const prepareData = {
+                            data: response.skipped_rows || [],
+                            headers: ["Scholorship Based On", "Reason"],
+                            sheetName: "ScholorshipBasedOn",
+                            fileName: "ScholorshipBasedOn",
+                        };
+                        exportToExcelWrongData(
+                            prepareData.data,
+                            prepareData.headers,
+                            prepareData.sheetName,
+                            prepareData.fileName
+                        );
+                    }
+
                     setFile(null);
                     setSheetNames([]);
                     setSelectedSheet('');
-                    handleClose(true);
+                    handleClose();
                 } else {
                     toast.error("Something went wrong.");
                 }
@@ -117,7 +132,7 @@ const AddImportDepartmentModal = ({ show, handleClose }) => {
         setError('');
         setSheetNames([]);
         setSelectedSheet('');
-        handleClose(false);
+        handleClose();
         setLoading(false);
     };
     const handleDownloadSample = () => {
@@ -141,7 +156,7 @@ const AddImportDepartmentModal = ({ show, handleClose }) => {
                     <div className="modal-content radius-16 bg-base">
                         <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
                             <h1 className="modal-title fs-5" id="departmentModalLabel">
-                                Upload Department
+                                Upload Scholorship Based On
                             </h1>
                             <button
                                 type="button"
@@ -245,10 +260,10 @@ const AddImportDepartmentModal = ({ show, handleClose }) => {
             </div>
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
-                    downloadFileName: "Department",
-                    items: ["Department", "Description"],
-                    selectedItems: ["Department"],
-                    ItemsRequired: ["Department"]
+                    downloadFileName: "ScholorshipBasedOn",
+                    items: ["Scholorship Based On", "Description"],
+                    selectedItems: ["Scholorship Based On"],
+                    ItemsRequired: ["Scholorship Based On"]
                 }
                 } />
             )}
@@ -256,4 +271,4 @@ const AddImportDepartmentModal = ({ show, handleClose }) => {
     );
 };
 
-export default AddImportDepartmentModal;
+export default AddImportScholorshipBasedOnModal;

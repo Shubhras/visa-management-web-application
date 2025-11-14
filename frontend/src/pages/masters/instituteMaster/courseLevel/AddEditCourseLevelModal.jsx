@@ -1,29 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from "react-redux";
-import { occupationVersionAdd, occupationVersionEdit } from "../../../../store/master/occupationMaster/action";
+import { courseStatusAdd, courseStatusEdit, courseLevelCodeList } from "../../../../store/master/instituteMaster/action";
 import { toast } from "react-toastify";
-import { countryList } from "../../../../store/master/generalMasters/actions";
 import Select from "react-select";
-const AddEditOccupationVersionModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
+const AddEditCourseLevelModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
-    const [countryDate, setCountryData] = useState([]);
+    const [courseLevelCode, setCourseLevelCode] = useState([]);
 
     // Form state
     const [formData, setFormData] = useState({
         uuid: '',
-        startDate: '',
-        endDate: '',
-        country: '',
-        departmentName: '',
+        courseLevel: '',
+        courseLevelCode: '',
         description: '',
     });
 
     // Validation errors state
     const [errors, setErrors] = useState({
-        startDate: '',
-        country: '',
-        departmentName: '',
+        courseLevelCode: '',
+        courseLevel: '',
         description: '',
     });
 
@@ -32,29 +28,23 @@ const AddEditOccupationVersionModal = ({ show, handleClose, mode = 'add', rowDat
         if (mode === 'edit' && rowData) {
             setFormData({
                 uuid: rowData.uuid || '',
-                departmentName: rowData.occupation_version || '',
+                courseLevel: rowData.name || '',
+                courseLevelCode: rowData.courseLevelCode || '',
                 description: rowData.description || '',
-                startDate: rowData.effect_from || '',
-                endDate: rowData.valid_upto || '',
-                country: rowData.country_uuid || '',
-
             });
         } else {
             // Reset form when switching to add mode
             setFormData({
                 uuid: '',
-                departmentName: '',
+                courseLevel: '',
+                courseLevelCode: '',
                 description: '',
-                startDate: '',
-                endDate: '',
-                country: '',
             });
         }
-        fetchCountryList();
+        fetchCourseLevelCode();
     }, [mode, rowData, show]);
 
-    const fetchCountryList = () => {
-        setLoading(true);
+    const fetchCourseLevelCode = () => {
         const params = {
             page: 1,
             limit: 2000,
@@ -63,14 +53,12 @@ const AddEditOccupationVersionModal = ({ show, handleClose, mode = 'add', rowDat
             sortBy: 'updated_at',
             sortOrder: 'desc',
         };
-        dispatch(countryList(params, (response, error) => {
-            setLoading(false);
+        dispatch(courseLevelCodeList(params, (response, error) => {
             if (response?.statusCode === 200 && response?.status === true) {
-                setCountryData(response?.data || []);
-
+                setCourseLevelCode(response?.data || []);
             }
         }));
-    };
+    }
 
     // Handle input changes
     const handleChange = (e) => {
@@ -95,16 +83,8 @@ const AddEditOccupationVersionModal = ({ show, handleClose, mode = 'add', rowDat
         let isValid = true;
 
         // Department Name validation
-        if (!formData.departmentName?.trim()) {
-            newErrors.departmentName = 'Occupation version is required';
-            isValid = false;
-        }
-        if (!formData.startDate) {
-            newErrors.startDate = 'Start date is required';
-            isValid = false;
-        }
-        if (!formData.country?.trim()) {
-            newErrors.country = 'Country is required';
+        if (!formData.courseLevel.trim()) {
+            newErrors.courseLevel = 'Course level is required';
             isValid = false;
         }
 
@@ -120,23 +100,17 @@ const AddEditOccupationVersionModal = ({ show, handleClose, mode = 'add', rowDat
             const sendPayload = mode === 'edit'
                 ? {
                     uuid: formData.uuid,
-                    effect_from: formData.startDate,
-                    valid_upto: formData.endDate,
-                    country_id: formData.country,
-                    occupation_version: formData.departmentName,
+                    name: formData.courseLevel,
                     description: formData.description,
                 }
                 : {
-                    effect_from: formData.startDate,
-                    valid_upto: formData.endDate,
-                    country_id: formData.country,
-                    occupation_version: formData.departmentName,
+                    name: formData.courseLevel,
                     description: formData.description,
                 };
 
             setLoading(true);
 
-            const action = mode === 'edit' ? occupationVersionEdit : occupationVersionAdd;
+            const action = mode === 'edit' ? courseStatusEdit : courseStatusAdd;
 
             dispatch(action(sendPayload, (response, error) => {
                 setLoading(false);
@@ -159,10 +133,8 @@ const AddEditOccupationVersionModal = ({ show, handleClose, mode = 'add', rowDat
     const resetForm = () => {
         setFormData({
             uuid: '',
-            startDate: '',
-            endDate: '',
-            country: '',
-            departmentName: '',
+            courseLevel: '',
+            courseLevelCode: '',
             description: '',
         });
         setErrors({});
@@ -190,7 +162,7 @@ const AddEditOccupationVersionModal = ({ show, handleClose, mode = 'add', rowDat
                 <div className="modal-content radius-16 bg-base">
                     <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
                         <h1 className="modal-title fs-5" id="departmentModalLabel">
-                            {mode === 'edit' ? 'Edit Occupation Version' : 'Add Occupation Version'}
+                            {mode === 'edit' ? 'Edit Course Level' : 'Add Course Level'}
                         </h1>
                         <button
                             type="button"
@@ -206,52 +178,34 @@ const AddEditOccupationVersionModal = ({ show, handleClose, mode = 'add', rowDat
                                 {/* Department Name */}
                                 <div className="col-12 mb-20">
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                                        Start Date <span className="text-danger">*</span>
+                                        Course Level <span className="text-danger">*</span>
                                     </label>
                                     <input
-                                        type="date"
-                                        name="startDate"
-                                        value={formData.startDate}
+                                        type="text"
+                                        name="courseLevel"
+                                        value={formData.courseLevel}
                                         onChange={handleChange}
-                                        className={`form-control radius-8 ${errors.startDate ? 'is-invalid' : ''}`}
-                                        placeholder="Enter start date"
+                                        className={`form-control radius-8 ${errors.courseLevel ? 'is-invalid' : ''}`}
+                                        placeholder="Enter course level"
                                     />
-                                    {errors.startDate && (
+                                    {errors.courseLevel && (
                                         <div className="text-danger text-sm mt-1">
-                                            {errors.startDate}
+                                            {errors.courseLevel}
                                         </div>
                                     )}
                                 </div>
                                 <div className="col-12 mb-20">
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                                        End Date
-                                    </label>
-                                    <input
-                                        type="date"
-                                        name="endDate"
-                                        value={formData.endDate}
-                                        onChange={handleChange}
-                                        className={`form-control radius-8 ${errors.endDate ? 'is-invalid' : ''}`}
-                                        placeholder="Enter end date"
-                                    />
-                                    {errors.endDate && (
-                                        <div className="text-danger text-sm mt-1">
-                                            {errors.endDate}
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="col-12 mb-20">
-                                    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                                        Country<span className="text-danger">*</span>
+                                        Course Level Code <span className="text-danger">*</span>
                                     </label>
                                     <Select
-                                        options={countryDate.map((option) => ({
+                                        options={courseLevelCode.map((option) => ({
                                             value: option.uuid,
                                             label: option.name,
                                         }))}
                                         value={
                                             formData.country
-                                                ? countryDate
+                                                ? courseLevelCode
                                                     .map((option) => ({
                                                         value: option.uuid,
                                                         label: option.name,
@@ -274,27 +228,9 @@ const AddEditOccupationVersionModal = ({ show, handleClose, mode = 'add', rowDat
                                             }`}
                                         classNamePrefix="custom-select"
                                     />
-                                    {errors.country && (
+                                    {errors.courseLevel && (
                                         <div className="text-danger text-sm mt-1">
-                                            {errors.country}
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="col-12 mb-20">
-                                    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                                        Occupation Version <span className="text-danger">*</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="departmentName"
-                                        value={formData.departmentName}
-                                        onChange={handleChange}
-                                        className={`form-control radius-8 ${errors.departmentName ? 'is-invalid' : ''}`}
-                                        placeholder="Enter occupation version"
-                                    />
-                                    {errors.departmentName && (
-                                        <div className="text-danger text-sm mt-1">
-                                            {errors.departmentName}
+                                            {errors.courseLevel}
                                         </div>
                                     )}
                                 </div>
@@ -356,4 +292,4 @@ const AddEditOccupationVersionModal = ({ show, handleClose, mode = 'add', rowDat
     );
 };
 
-export default AddEditOccupationVersionModal;
+export default AddEditCourseLevelModal;

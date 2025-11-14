@@ -1,28 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from "react-redux";
-import { occupationVersionAdd, occupationVersionEdit } from "../../../../store/master/occupationMaster/action";
+import { courseStatusIntakeAdd, courseStatusIntakeEdit } from "../../../../store/master/instituteMaster/action";
 import { toast } from "react-toastify";
-import { countryList } from "../../../../store/master/generalMasters/actions";
-import Select from "react-select";
-const AddEditOccupationVersionModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
+
+const AddEditCourseStatusforIntakeModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
-    const [countryDate, setCountryData] = useState([]);
 
     // Form state
     const [formData, setFormData] = useState({
         uuid: '',
-        startDate: '',
-        endDate: '',
-        country: '',
         departmentName: '',
         description: '',
     });
 
     // Validation errors state
     const [errors, setErrors] = useState({
-        startDate: '',
-        country: '',
         departmentName: '',
         description: '',
     });
@@ -32,12 +25,8 @@ const AddEditOccupationVersionModal = ({ show, handleClose, mode = 'add', rowDat
         if (mode === 'edit' && rowData) {
             setFormData({
                 uuid: rowData.uuid || '',
-                departmentName: rowData.occupation_version || '',
+                departmentName: rowData.name || '',
                 description: rowData.description || '',
-                startDate: rowData.effect_from || '',
-                endDate: rowData.valid_upto || '',
-                country: rowData.country_uuid || '',
-
             });
         } else {
             // Reset form when switching to add mode
@@ -45,32 +34,9 @@ const AddEditOccupationVersionModal = ({ show, handleClose, mode = 'add', rowDat
                 uuid: '',
                 departmentName: '',
                 description: '',
-                startDate: '',
-                endDate: '',
-                country: '',
             });
         }
-        fetchCountryList();
     }, [mode, rowData, show]);
-
-    const fetchCountryList = () => {
-        setLoading(true);
-        const params = {
-            page: 1,
-            limit: 2000,
-            search: '',
-            status: '',
-            sortBy: 'updated_at',
-            sortOrder: 'desc',
-        };
-        dispatch(countryList(params, (response, error) => {
-            setLoading(false);
-            if (response?.statusCode === 200 && response?.status === true) {
-                setCountryData(response?.data || []);
-
-            }
-        }));
-    };
 
     // Handle input changes
     const handleChange = (e) => {
@@ -95,16 +61,8 @@ const AddEditOccupationVersionModal = ({ show, handleClose, mode = 'add', rowDat
         let isValid = true;
 
         // Department Name validation
-        if (!formData.departmentName?.trim()) {
-            newErrors.departmentName = 'Occupation version is required';
-            isValid = false;
-        }
-        if (!formData.startDate) {
-            newErrors.startDate = 'Start date is required';
-            isValid = false;
-        }
-        if (!formData.country?.trim()) {
-            newErrors.country = 'Country is required';
+        if (!formData.departmentName.trim()) {
+            newErrors.departmentName = 'Course status for intake is required';
             isValid = false;
         }
 
@@ -120,23 +78,17 @@ const AddEditOccupationVersionModal = ({ show, handleClose, mode = 'add', rowDat
             const sendPayload = mode === 'edit'
                 ? {
                     uuid: formData.uuid,
-                    effect_from: formData.startDate,
-                    valid_upto: formData.endDate,
-                    country_id: formData.country,
-                    occupation_version: formData.departmentName,
+                    name: formData.departmentName,
                     description: formData.description,
                 }
                 : {
-                    effect_from: formData.startDate,
-                    valid_upto: formData.endDate,
-                    country_id: formData.country,
-                    occupation_version: formData.departmentName,
+                    name: formData.departmentName,
                     description: formData.description,
                 };
 
             setLoading(true);
 
-            const action = mode === 'edit' ? occupationVersionEdit : occupationVersionAdd;
+            const action = mode === 'edit' ? courseStatusIntakeEdit : courseStatusIntakeAdd;
 
             dispatch(action(sendPayload, (response, error) => {
                 setLoading(false);
@@ -159,9 +111,6 @@ const AddEditOccupationVersionModal = ({ show, handleClose, mode = 'add', rowDat
     const resetForm = () => {
         setFormData({
             uuid: '',
-            startDate: '',
-            endDate: '',
-            country: '',
             departmentName: '',
             description: '',
         });
@@ -190,7 +139,7 @@ const AddEditOccupationVersionModal = ({ show, handleClose, mode = 'add', rowDat
                 <div className="modal-content radius-16 bg-base">
                     <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
                         <h1 className="modal-title fs-5" id="departmentModalLabel">
-                            {mode === 'edit' ? 'Edit Occupation Version' : 'Add Occupation Version'}
+                            {mode === 'edit' ? 'Edit Course Status for Intake' : 'Add Course Status for Intake'}
                         </h1>
                         <button
                             type="button"
@@ -206,83 +155,7 @@ const AddEditOccupationVersionModal = ({ show, handleClose, mode = 'add', rowDat
                                 {/* Department Name */}
                                 <div className="col-12 mb-20">
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                                        Start Date <span className="text-danger">*</span>
-                                    </label>
-                                    <input
-                                        type="date"
-                                        name="startDate"
-                                        value={formData.startDate}
-                                        onChange={handleChange}
-                                        className={`form-control radius-8 ${errors.startDate ? 'is-invalid' : ''}`}
-                                        placeholder="Enter start date"
-                                    />
-                                    {errors.startDate && (
-                                        <div className="text-danger text-sm mt-1">
-                                            {errors.startDate}
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="col-12 mb-20">
-                                    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                                        End Date
-                                    </label>
-                                    <input
-                                        type="date"
-                                        name="endDate"
-                                        value={formData.endDate}
-                                        onChange={handleChange}
-                                        className={`form-control radius-8 ${errors.endDate ? 'is-invalid' : ''}`}
-                                        placeholder="Enter end date"
-                                    />
-                                    {errors.endDate && (
-                                        <div className="text-danger text-sm mt-1">
-                                            {errors.endDate}
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="col-12 mb-20">
-                                    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                                        Country<span className="text-danger">*</span>
-                                    </label>
-                                    <Select
-                                        options={countryDate.map((option) => ({
-                                            value: option.uuid,
-                                            label: option.name,
-                                        }))}
-                                        value={
-                                            formData.country
-                                                ? countryDate
-                                                    .map((option) => ({
-                                                        value: option.uuid,
-                                                        label: option.name,
-                                                    }))
-                                                    .find((opt) => opt.value === formData.country)
-                                                : null
-                                        }
-                                        onChange={(selectedOption) =>
-                                            handleChange({
-                                                target: {
-                                                    name: "country",
-                                                    value: selectedOption ? selectedOption.value : "",
-                                                },
-                                            })
-                                        }
-                                        placeholder="Select country"
-                                        isClearable
-                                        isSearchable
-                                        className={`custom-select-container ${errors.country ? "is-invalid" : ""
-                                            }`}
-                                        classNamePrefix="custom-select"
-                                    />
-                                    {errors.country && (
-                                        <div className="text-danger text-sm mt-1">
-                                            {errors.country}
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="col-12 mb-20">
-                                    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                                        Occupation Version <span className="text-danger">*</span>
+                                        Course Status for Intake <span className="text-danger">*</span>
                                     </label>
                                     <input
                                         type="text"
@@ -290,7 +163,7 @@ const AddEditOccupationVersionModal = ({ show, handleClose, mode = 'add', rowDat
                                         value={formData.departmentName}
                                         onChange={handleChange}
                                         className={`form-control radius-8 ${errors.departmentName ? 'is-invalid' : ''}`}
-                                        placeholder="Enter occupation version"
+                                        placeholder="Enter course status for intake"
                                     />
                                     {errors.departmentName && (
                                         <div className="text-danger text-sm mt-1">
@@ -356,4 +229,4 @@ const AddEditOccupationVersionModal = ({ show, handleClose, mode = 'add', rowDat
     );
 };
 
-export default AddEditOccupationVersionModal;
+export default AddEditCourseStatusforIntakeModal;

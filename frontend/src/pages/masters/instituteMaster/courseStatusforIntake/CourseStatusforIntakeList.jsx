@@ -5,12 +5,12 @@ import MasterLayout from "../../../../masterLayout/MasterLayout";
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { Link } from 'react-router-dom';
 import { toast } from "react-toastify";
-import { occupationVersionList, occupationVersionDelete, occupationVersionExportData } from "../../../../store/master/occupationMaster/action";
-import AddImportOccupationVersionModal from './AddImportOccupationVersionModal';
-import AddEditOccupationVersionModal from './AddEditOccupationVersionModal';
-import { formatDateDDMMYYYY, formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
+import { courseStatusIntakeList, courseStatusIntakeDelete, courseStatusIntakeExportData } from "../../../../store/master/instituteMaster/action";
+import AddImportCourseStatusforIntakeModal from './AddImportCourseStatusforIntakeModal';
+import AddEditCourseStatusforIntakeModal from './AddEditCourseStatusforIntakeModal';
+import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 
-const OccupationVersionList = () => {
+const CourseStatusforIntakeList = () => {
     const dispatch = useDispatch();
     const [modalState, setModalState] = useState({
         show: false,
@@ -34,29 +34,25 @@ const OccupationVersionList = () => {
         fetchDepartmentList();
     }
 
-    // const [showEdit, setShowEdit] = useState(false);
     const [showImport, setShowImport] = useState(false);
     const [rowSelectData, setRowSelectData] = useState({});
     const [selectedRows, setSelectedRows] = useState([]);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-    const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this occupation version?");
+    const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this Course Status for Intake?");
     const [showExportPopop, setShowExportPopop] = useState(false);
     const [deleteId, setDeleteId] = useState(null);
     const [selectAllOrNot, setSelectAllOrNot] = useState('');
     const [departments, setDepartments] = useState([]);
     const [loading, setLoading] = useState(false);
     const [loadingExport, setLoadingExport] = useState(false);
-    const [items] = useState(["Start Date", "End Date", "Country", "Occupation Version", "Description", "Modified On"]);
-    const [selectedItems, setSelectedItems] = useState(["Start Date", "Country", "Occupation Version"]);
-    const [ItemsRequired] = useState(["Start Date", "Country", "Occupation Version"]);
+    const [items] = useState(["Course Status for Intake", "Description", "Modified On"]);
+    const [selectedItems, setSelectedItems] = useState(["Course Status for Intake"]);
+    const [ItemsRequired] = useState(["Course Status for Intake"]);
 
     // Table columns configuration
     const [tableColumns] = useState([
-        { id: 'country', label: 'Country', field: 'country', visible: true, required: false },
-        { id: 'name', label: 'Occupation Version', field: 'name', visible: true, required: false },
+        { id: 'name', label: 'Course Status for Intake', field: 'name', visible: true, required: false },
         { id: 'description', label: 'Description', field: 'description', visible: true, required: false },
-        { id: 'startDate', label: 'Start Date', field: 'startDate', visible: true, required: false },
-        { id: 'endDate', label: 'End Date', field: 'endDate', visible: true, required: false },
         { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false },
     ]);
 
@@ -140,7 +136,7 @@ const OccupationVersionList = () => {
             sortOrder: tableState.sortOrder || ''
         };
 
-        dispatch(occupationVersionList(params, (response, error) => {
+        dispatch(courseStatusIntakeList(params, (response, error) => {
             setLoading(false);
             if (response?.statusCode === 200 && response?.status === true) {
                 const paginationData = response?.pagination || {};
@@ -311,7 +307,7 @@ const OccupationVersionList = () => {
     const handleDelete = (uuid) => {
         setDeleteId(uuid);
         setShowDeleteConfirm(true);
-        setDeleteConfirmMessage(`Are you sure you want to delete this occupation version?`);
+        setDeleteConfirmMessage(`Are you sure you want to delete this Course Status for Intake?`);
     };
 
     const handleBulkDelete = () => {
@@ -320,8 +316,8 @@ const OccupationVersionList = () => {
             return;
         }
         // Choose message based on delete type
-        const message = selectAllOrNot === "all" ? `${tableState.total} all occupation version` : `${selectedRows.length} selected occupation versions`;
-        setDeleteConfirmMessage(`Are you sure you want to delete this occupation version (${message})?`);
+        const message = selectAllOrNot === "all" ? `${tableState.total} all Course Status for Intake` : `${selectedRows.length} selected Course Status for Intake`;
+        setDeleteConfirmMessage(`Are you sure you want to delete this Course Status for Intake (${message})?`);
         setShowDeleteConfirm(true);
     };
 
@@ -329,10 +325,10 @@ const OccupationVersionList = () => {
         // const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
         const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
         if (!sendPayload || sendPayload.length === 0) {
-            toast.error("No occupation version selected for deletion.");
+            toast.error("No Course Status for Intake selected for deletion.");
             return;
         }
-        dispatch(occupationVersionDelete(sendPayload, (response, error) => {
+        dispatch(courseStatusIntakeDelete(sendPayload, (response, error) => {
             if (error) {
                 toast.error(error?.response?.data?.message || "server error");
             } else {
@@ -412,10 +408,7 @@ const OccupationVersionList = () => {
         }
         // Map frontend labels to backend field names
         const fieldMapping = {
-            "Start Date": "effect_from",
-            "End Date": "valid_upto",
-            "Country": "country",
-            "Occupation Version": "occupation_version",
+            "Course Status for Intake": "name",
             "Modified On": "updated_at",
             "Description": "description",
         };
@@ -429,7 +422,7 @@ const OccupationVersionList = () => {
             uuids: selectAllOrNot === "all" ? [] : selectedRows,
         };
         setLoadingExport(true);
-        dispatch(occupationVersionExportData(sendPayload, (response, error) => {
+        dispatch(courseStatusIntakeExportData(sendPayload, (response, error) => {
             if (error) {
                 setLoadingExport(false);
                 toast.error(error?.response?.message || "server error");
@@ -443,7 +436,7 @@ const OccupationVersionList = () => {
                     const url = window.URL.createObjectURL(blob);
                     const link = document.createElement('a');
                     link.href = url;
-                    link.download = `OccupationVersion.xlsx`;
+                    link.download = `CourseStatusforIntake.xlsx`;
                     document.body.appendChild(link);
                     link.click();
                     link.remove();
@@ -659,21 +652,11 @@ const OccupationVersionList = () => {
                                                         <span>{String(startIndex + index + 1).padStart(2, '0')}</span>
                                                     </div>
                                                 </td>
-                                               
-                                                {isColumnVisible('country') && (
-                                                    <td><span>{rowItem.country_name}</span></td>
-                                                )}
                                                 {isColumnVisible('name') && (
-                                                    <td><span>{rowItem.occupation_version}</span></td>
+                                                    <td><span>{rowItem.name}</span></td>
                                                 )}
                                                 {isColumnVisible('description') && (
                                                     <td><span>{rowItem.description}</span></td>
-                                                )}
-                                                 {isColumnVisible('startDate') && (
-                                                    <td><span>{formatDateDDMMYYYY(rowItem.effect_from)}</span></td>
-                                                )}
-                                                {isColumnVisible('endDate') && (
-                                                    <td><span>{formatDateDDMMYYYY(rowItem.valid_upto)}</span></td>
                                                 )}
                                                 {isColumnVisible('updated_at') && (
                                                     <td><span>{formatDateDDMMYYYYTime(rowItem.updated_at)}</span></td>
@@ -807,14 +790,14 @@ const OccupationVersionList = () => {
                         </div>
                     </div>
                 </div>
-                <AddEditOccupationVersionModal
+                <AddEditCourseStatusforIntakeModal
                     show={modalState.show}
                     handleClose={handleClose}
                     mode={modalState.mode}
                     rowData={modalState.rowData}
                 />
                 {showImport && (
-                    <AddImportOccupationVersionModal show={showImport} handleClose={handleCloseImport} />)}
+                    <AddImportCourseStatusforIntakeModal show={showImport} handleClose={handleCloseImport} />)}
                 {showDeleteConfirm && (
                     <div className="modal fade show common-ctl-popup">
                         <div className="modal-dialog modal-dialog-centered">
@@ -858,7 +841,7 @@ const OccupationVersionList = () => {
                         <div className="modal-dialog modal-xl modal-dialog-centered" role="document">
                             <div className="modal-content radius-16 bg-base">
                                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                                    <h1 className="modal-title fs-5">Export Occupation Version</h1>
+                                    <h1 className="modal-title fs-5">Export Course Status for Intake</h1>
                                     <button
                                         type="button"
                                         className="btn-close"
@@ -960,4 +943,4 @@ const OccupationVersionList = () => {
     );
 };
 
-export default OccupationVersionList;
+export default CourseStatusforIntakeList;
