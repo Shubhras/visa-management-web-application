@@ -8,7 +8,7 @@ import { toast } from "react-toastify";
 import { studySpecialisationList, studySpecialisationDelete, studySpecialisationExportData } from "../../../../store/master/educationMaster/action";
 import AddImportStudySpecialisationModal from './AddImportStudySpecialisationModal';
 import AddEditStudySpecialisationModal from './AddEditStudySpecialisationModal';
-import { formatDateDDMMYYYY, formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
+import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 const StudySpecialisationList = () => {
   const dispatch = useDispatch();
   const [modalState, setModalState] = useState({
@@ -499,29 +499,6 @@ const StudySpecialisationList = () => {
                   >
                     Export
                   </button>
-                  {/* {selectedRows.length == 0 && (
-                    <button
-                      onClick={handleSelectAllButton}
-                      className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
-                    >
-                      Delete
-                    </button>
-                  )}
-                  {selectedRows.length > 0 && (
-                    <button
-                      onClick={() => handleBulkDelete("")}
-                      className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
-                    >{`Delete Selected (${selectedRows.length})`}
-                    </button>
-                  )}
-                  {selectedRows.length > 0 && (
-                    <button
-                      onClick={() => handleBulkDelete("all")}
-                      className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
-                    >{`Delete All (${tableState.total})`}
-                    </button>
-                  )} */}
-
                   <button
                     onClick={handleBulkDelete}
                     className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
@@ -855,10 +832,7 @@ const StudySpecialisationList = () => {
                   <button type="button" className="btn-close" onClick={cancelDelete}></button>
                 </div>
                 <div className="modal-body">
-                  {/* <p className="mb-0">Are you sure you want to delete this department?</p> */}
-                  {/* <p className="mb-0"> Are you sure you want to delete this department ({selectedRows.length})?</p> */}
                   <p className="mb-0">{deleteConfirmMessage}</p>
-
                 </div>
                 <div className="modal-footer">
                   <button
@@ -969,12 +943,16 @@ const StudySpecialisationList = () => {
                     >
                       Cancel
                     </button>
-                    <button
-                      onClick={handleExport}
-                      type="button"
+                    <button onClick={handleExport} type="button"
                       className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
-                    >
-                      Submit
+                      disabled={loadingExport}>{loadingExport ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                          Submit...
+                        </>
+                      ) : (
+                        "Submit"
+                      )}
                     </button>
                   </div>
                 </div>

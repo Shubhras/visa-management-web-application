@@ -8,7 +8,7 @@ import Select from "react-select";
 const AddEditDegreeAwardedByModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
-    const [studyMainArea, setStudyMainArea] = useState([]);
+    const [countryListData, setCountryListData] = useState([]);
     const [studyMajorArea, setStudyMajorArea] = useState([]);
 
 
@@ -46,31 +46,43 @@ const AddEditDegreeAwardedByModal = ({ show, handleClose, mode = 'add', rowData 
                 description: '',
             });
         }
-        fetchStudyList();
+        fetchCountrylList();
+        fetchEducationLevelList();
     }, [mode, rowData, show]);
 
-    const fetchStudyList = () => {
-        setLoading(true);
+    const fetchCountrylList = () => {
         const params = {
             page: 1,
             limit: 2000,
             search: '',
             status: '',
-            sortBy: 'updated_at',
-            sortOrder: 'desc',
+            sortBy: 'name',
+            sortOrder: 'asc',
         };
         dispatch(countryList(params, (response, error) => {
-            setLoading(false);
-            if (response?.statusCode === 200 && response?.status === true) {
-                setStudyMainArea(response?.data || []);
 
+            if (response?.statusCode === 200 && response?.status === true) {
+                setCountryListData(response?.data || []);
+            } else {
+                setCountryListData([]);
             }
         }));
+
+    };
+    const fetchEducationLevelList = () => {
+        const params = {
+            page: 1,
+            limit: 2000,
+            search: '',
+            status: '',
+            sortBy: 'educationlevel',
+            sortOrder: 'asc',
+        };
         dispatch(educationLevelList(params, (response, error) => {
-            setLoading(false);
             if (response?.statusCode === 200 && response?.status === true) {
                 setStudyMajorArea(response?.data || []);
-
+            } else {
+                setStudyMajorArea([]);
             }
         }));
     };
@@ -89,6 +101,16 @@ const AddEditDegreeAwardedByModal = ({ show, handleClose, mode = 'add', rowData 
             }));
         }
     };
+
+    const customFilterOption = (option, inputValue) => {
+        if (!inputValue) return true;
+        return option.label.toLowerCase().startsWith(inputValue.toLowerCase());
+    };
+    const customFilterOptionEducation = (option, inputValue) => {
+        if (!inputValue) return true;
+        return option.label.toLowerCase().startsWith(inputValue.toLowerCase());
+    };
+
 
     const validateForm = () => {
         const newErrors = {};
@@ -202,13 +224,13 @@ const AddEditDegreeAwardedByModal = ({ show, handleClose, mode = 'add', rowData 
                                         Country<span className="text-danger">*</span>
                                     </label>
                                     <Select
-                                        options={studyMainArea.map((option) => ({
+                                        options={countryListData.map((option) => ({
                                             value: option.uuid,
                                             label: option.name,
                                         }))}
                                         value={
                                             formData.countryUuid
-                                                ? studyMainArea
+                                                ? countryListData
                                                     .map((option) => ({
                                                         value: option.uuid,
                                                         label: option.name,
@@ -224,6 +246,7 @@ const AddEditDegreeAwardedByModal = ({ show, handleClose, mode = 'add', rowData 
                                                 },
                                             })
                                         }
+                                        filterOption={customFilterOption}
                                         placeholder="Select country"
                                         isClearable
                                         isSearchable
@@ -264,6 +287,7 @@ const AddEditDegreeAwardedByModal = ({ show, handleClose, mode = 'add', rowData 
                                                 },
                                             })
                                         }
+                                        filterOption={customFilterOptionEducation}
                                         placeholder="Select education level"
                                         isClearable
                                         isSearchable
@@ -331,7 +355,14 @@ const AddEditDegreeAwardedByModal = ({ show, handleClose, mode = 'add', rowData 
                                         className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                                         disabled={loading}
                                     >
-                                        {loading ? 'Saving...' : 'Save'}
+                                        {loading ? (
+                                            <>
+                                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                Saving...
+                                            </>
+                                        ) : (
+                                            "Save"
+                                        )}
                                     </button>
                                 </div>
                             </div>

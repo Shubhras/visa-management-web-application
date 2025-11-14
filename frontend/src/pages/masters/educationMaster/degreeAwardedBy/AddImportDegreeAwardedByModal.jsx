@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
 import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
+import { exportToExcelDuplicate,exportToExcelWrongData } from '../../../../helper/utils/commanHelper';
 const AddImportDegreeAwardedByModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
@@ -34,7 +35,7 @@ const AddImportDegreeAwardedByModal = ({ show, handleClose }) => {
                         const sheets = workbook.SheetNames;
                         setSheetNames(sheets);
                         if (sheets.length > 0) {
-                            setSelectedSheet(sheets[0]); 
+                            setSelectedSheet(sheets[0]);
                         }
                     };
                     reader.readAsArrayBuffer(selectedFile);
@@ -85,8 +86,33 @@ const AddImportDegreeAwardedByModal = ({ show, handleClose }) => {
                             autoClose: 10000,
                         }
                     );
-                    if (response?.duplicates?.length > 0) {
-                        handleExportToExcel(response.duplicates)
+                     if (response?.duplicates?.length > 0) {
+                        const prepareData = {
+                            data: response.duplicates || [],
+                            headers: ["Country", "Education Level", "Degree Awarded By"],
+                            sheetName: "DegreeAwardedBy",
+                            fileName: "DegreeAwardedBy",
+                        };
+                        exportToExcelDuplicate(
+                            prepareData.data,
+                            prepareData.headers,
+                            prepareData.sheetName,
+                            prepareData.fileName
+                        );
+                    }
+                    if (response?.skipped_rows?.length > 0) {
+                        const prepareData = {
+                            data: response.skipped_rows || [],
+                            headers: ["Country", "Education Level", "Degree Awarded By", "Reason"],
+                            sheetName: "DegreeAwardedBy",
+                            fileName: "StudySpecialisation",
+                        };
+                        exportToExcelWrongData(
+                            prepareData.data,
+                            prepareData.headers,
+                            prepareData.sheetName,
+                            prepareData.fileName
+                        );
                     }
                     setFile(null);
                     setSheetNames([]);
@@ -99,25 +125,6 @@ const AddImportDegreeAwardedByModal = ({ show, handleClose }) => {
         }));
     };
 
-    const handleExportToExcel = (duplicatesData) => {
-        const header = ["Degree Awarded By"];
-        const duplicates = duplicatesData //["test1", "test3", "test3"];
-        const worksheetData = [header, ...duplicates.map((item) => [item])];
-        const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "DegreeAwardedBy");
-
-        const excelBuffer = XLSX.write(workbook, {
-            bookType: "xlsx",
-            type: "array",
-        });
-
-        const blob = new Blob([excelBuffer], {
-            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        });
-
-        saveAs(blob, `DegreeAwardedBy-Duplicate-Data.xlsx`);
-    };
     // Handle modal close
     const onClose = () => {
         setFile(null);
@@ -230,7 +237,14 @@ const AddImportDegreeAwardedByModal = ({ show, handleClose }) => {
                                             disabled={loading}
                                             className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                                         >
-                                            {loading ? "Upload" : "Upload"}
+                                            {loading ? (
+                                                <>
+                                                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                    Uploading...
+                                                </>
+                                            ) : (
+                                                "Upload"
+                                            )}
                                         </button>
                                     </div>
                                 </div>
@@ -241,10 +255,10 @@ const AddImportDegreeAwardedByModal = ({ show, handleClose }) => {
             </div>
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
-                    downloadFileName:"DegreeAwardedBy",
+                    downloadFileName: "DegreeAwardedBy",
                     items: ["Country", "Education Level", "Degree Awarded By", "Description"],
-                    selectedItems: ["Country","Education Level","Degree Awarded By"],
-                    ItemsRequired:["Country","Education Level","Degree Awarded By"]
+                    selectedItems: ["Country", "Education Level", "Degree Awarded By"],
+                    ItemsRequired: ["Country", "Education Level", "Degree Awarded By"]
                 }
                 } />
             )}
