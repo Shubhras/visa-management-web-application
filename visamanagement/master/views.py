@@ -16801,7 +16801,7 @@ class DegreeAwardedInstituteImportAPIView(APIView):
 
                 # Map Country, State, Education Level
                 country = Country.objects.filter(name__iexact=country_name).first() if country_name else None
-                state = State.objects.filter(name__iexact=state_name).first() if state_name else None
+                state = State.objects.filter(stateName__iexact=state_name).first() if state_name else None
                 education_level = EducationLevel.objects.filter(name__iexact=education_level_name).first() if education_level_name else None
 
                 # Check duplicate
