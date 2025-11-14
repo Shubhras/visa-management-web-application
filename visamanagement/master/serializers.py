@@ -1525,7 +1525,9 @@ class CourseLevelCodeSerializer(serializers.ModelSerializer):
 
 
 class CourseLevelSerializer(serializers.ModelSerializer):
-    courselevelcode = serializers.CharField(read_only=True, source='courselevelcode.code')  # optional display
+    courselevelcode = serializers.CharField(read_only=True, source='courselevelcode.name') 
+    courselevelcode_uuid = serializers.CharField(read_only=True, source='courselevelcode.uuid') 
+
     courselevelcode_id = serializers.SlugRelatedField(
         slug_field='uuid',
         queryset=CourseLevelCode.objects.all(),
@@ -1539,7 +1541,7 @@ class CourseLevelSerializer(serializers.ModelSerializer):
         model = CourseLevel
         fields = [
             'id', 'uuid',
-            'courselevelcode', 'courselevelcode_id',
+            'courselevelcode', 'courselevelcode_id','courselevelcode_uuid',
             'name', 'description',
             'is_deleted', 'created_at', 'updated_at'
         ]
@@ -1547,7 +1549,8 @@ class CourseLevelSerializer(serializers.ModelSerializer):
 
 # ------------------- CourseDuration Serializer ------------------- #
 class CourseDurationSerializer(serializers.ModelSerializer):
-    courselevel = serializers.CharField(read_only=True, source='courselevel.name')  # display course level name
+    courselevel = serializers.CharField(read_only=True, source='courselevel.name') 
+    courselevel_uuid = serializers.CharField(read_only=True, source='courselevel.uuid')
     courselevel_id = serializers.SlugRelatedField(
         slug_field='uuid',
         queryset=CourseLevel.objects.all(),
@@ -1561,7 +1564,7 @@ class CourseDurationSerializer(serializers.ModelSerializer):
         model = CourseDuration
         fields = [
             'id', 'uuid',
-            'courselevel', 'courselevel_id',
+            'courselevel', 'courselevel_id','courselevel_uuid',
             'valid_duration_value', 'valid_duration_unit',
             'description', 'is_deleted',
             'created_at', 'updated_at'
