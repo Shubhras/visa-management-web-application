@@ -85,7 +85,7 @@ class State(models.Model):
     updated_at = models.DateTimeField(auto_now=True) 
 
     class Meta:
-        unique_together = ('countryName', 'state')
+        unique_together = ('countryName', 'stateName')
 
 
 

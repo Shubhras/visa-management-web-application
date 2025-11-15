@@ -1830,7 +1830,7 @@ class StateListAPIView(APIView):
         return paginator.get_paginated_response(serializer.data)
 
 
-class StateCreateAPIView(APIView):
+class XStateCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
