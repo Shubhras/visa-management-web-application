@@ -262,7 +262,7 @@ class LanguageExportAPIView(APIView):
         # --- Field to header mapping ---
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Language',
+            'name': 'Language Name (Test)',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'created_at': 'Created On',
@@ -333,7 +333,7 @@ class LanguageImportAPIView(APIView):
         duplicate_names = []
 
         # Required & optional headers
-        required_headers = {'language'}
+        required_headers = {'language name (test)'}
         optional_headers = {'description', 'is_deleted'}
 
         try:
@@ -407,7 +407,7 @@ class LanguageImportAPIView(APIView):
 
             # ---------- Import Rows ----------
             for row in data:
-                name = str(row.get('language')).strip() if row.get('language') else None
+                name = str(row.get('language name (test)')).strip() if row.get('language name (test)') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
                 is_deleted = row.get('is_deleted', False)
 
@@ -2631,7 +2631,7 @@ class EntranceTestResultExportAPIView(APIView):
         # Field to header mapping
         field_header_map = {
             'uuid': 'UUID',
-            'entrancetest': 'Entrance Test Short Name',
+            'entrancetest': 'Entrance Test Name',
             'moduleName': 'Entrance Test Module Name',
             'testresult': 'Entrance Test Result',
             'description': 'Description',
@@ -2702,7 +2702,7 @@ class EntranceTestResultImportAPIView(APIView):
 
         format_type = file.name.split('.')[-1].lower()
         duplicate_entries = []
-        required_headers = {'entrance test short name', 'entrance test module name', 'entrance test result'}
+        required_headers = {'entrance test name', 'entrance test module name', 'entrance test result'}
         optional_headers = {'description'}
 
         try:
@@ -2751,7 +2751,7 @@ class EntranceTestResultImportAPIView(APIView):
             imported_count = 0
 
             for row in data:
-                entrancetest_name = str(row.get('entrance test short name')).strip() if row.get('entrance test short name') else None
+                entrancetest_name = str(row.get('entrance test name')).strip() if row.get('entrance test name') else None
                 moduleName_name = str(row.get('entrance test module name')).strip() if row.get('entrance test module name') else None
                 testresult = str(row.get('entrance test result')).strip() if row.get('entrance test result') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
