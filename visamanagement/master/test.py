@@ -2412,7 +2412,7 @@ class EntranceTestModuleImportAPIView(APIView):
 
             for row in data:
                 entrancetest_name = str(row.get('entrance test name')).strip() if row.get('entrance test name') else None
-                module_name = str(row.get('entrance test module name')).strip() if row.get('module name') else None
+                module_name = str(row.get('entrance test module name')).strip() if row.get('entrance test module name') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not entrancetest_name or not module_name:
