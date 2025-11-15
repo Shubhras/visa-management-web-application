@@ -1417,14 +1417,14 @@ class RepresentingCountrySerializer(serializers.ModelSerializer):
 
         # Autofill fields from selected country
         validated_data['continent'] = country.continent
-        validated_data['short_name'] = country.short_name
-        validated_data['full_name'] = country.full_name
-        validated_data['official_name'] = country.official_name
-        validated_data['capital_city'] = country.capital_city
-        validated_data['dial_codes'] = country.dial_codes
-        validated_data['currency_full_name'] = country.currency_full_name
-        validated_data['currency_short_name'] = country.currency_short_name
-        validated_data['currency_code'] = country.currency_code
+        validated_data['short_name'] = country.shortName
+        validated_data['full_name'] = country.fullName
+        validated_data['official_name'] = country.officialName
+        validated_data['capital_city'] = country.capitalCity
+        validated_data['dial_codes'] = country.dialCodes
+        validated_data['currency_full_name'] = country.currencyfullname
+        validated_data['currency_short_name'] = country.currencyshortname
+        validated_data['currency_code'] = country.currencyCode
 
         return super().create(validated_data)
 class VisaMainSerializer(serializers.ModelSerializer):
