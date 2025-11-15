@@ -2777,11 +2777,7 @@ class CityListAPIView(APIView):
         queryset = City.objects.filter(is_deleted=False)
         if search:
             queryset = queryset.filter(
-                Q(cityName__istartswith=search) |
-                Q(description__istartswith=search) |
-                Q(districtName__districtName__istartswith=search) |
-                Q(stateName__stateName__istartswith=search) |
-                Q(countryName__name__istartswith=search)
+                Q(cityName__istartswith=search) 
             )
 
         queryset = queryset.order_by(sort_by)
