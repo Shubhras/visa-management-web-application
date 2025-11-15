@@ -271,14 +271,14 @@ const AddEditDistrictModal = ({ show, handleClose, mode = 'add', rowData = null 
                     name="country"
                     options={countryListData.map((option) => ({
                       value: option.uuid,
-                      label: option.name,
+                      label: option.name+" ("+option.continent.name +")",
                     }))}
                     value={
                       formData.country
                         ? countryListData
                           .map((option) => ({
                             value: option.uuid,
-                            label: option.name,
+                            label: option.name+" ("+option.continent.name +")",
                           }))
                           .find((opt) => opt.value === formData.country)
                         : null
