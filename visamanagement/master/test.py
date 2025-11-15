@@ -2766,7 +2766,7 @@ class EntranceTestResultImportAPIView(APIView):
                     continue
 
                 existing = EntranceTestResult.objects.filter(
-                    entrancetest__fullname__iexact=entrancetest_name,
+                    entrancetest__shortname__iexact=entrancetest_name,
                     moduleName__moduleName__iexact=moduleName_name
                 ).first()
 
@@ -2782,7 +2782,7 @@ class EntranceTestResultImportAPIView(APIView):
                         imported_count += 1
                 else:
                     # Gracefully handle missing EntranceTestName or ModuleName
-                    entrance_obj = EntranceTestName.objects.filter(fullname__iexact=entrancetest_name).first()
+                    entrance_obj = EntranceTestName.objects.filter(shortname__iexact=entrancetest_name).first()
                     module_obj = EntranceTestModuleName.objects.filter(moduleName__iexact=moduleName_name).first()
 
                     if not entrance_obj:
