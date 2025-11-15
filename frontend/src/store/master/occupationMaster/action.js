@@ -41,6 +41,18 @@ import {
   DELETE_OCCUPATION_VERSION,
   EXPORT_OCCUPATION_VERSION,
   IMPORT_OCCUPATION_VERSION,
+  OCCUPATION_LEVEL_CODE_LIST,
+  ADD_OCCUPATION_LEVEL_CODE,
+  EDIT_OCCUPATION_LEVEL_CODE,
+  DELETE_OCCUPATION_LEVEL_CODE,
+  EXPORT_OCCUPATION_LEVEL_CODE,
+  IMPORT_OCCUPATION_LEVEL_CODE,
+  OCCUPATION_LEVEL_LIST,
+  ADD_OCCUPATION_LEVEL,
+  EDIT_OCCUPATION_LEVEL,
+  DELETE_OCCUPATION_LEVEL,
+  EXPORT_OCCUPATION_LEVEL,
+  IMPORT_OCCUPATION_LEVEL,
 } from "./actionType";
 
 // Job Type Actions
@@ -294,6 +306,77 @@ export const occupationCategoryExportData = (data, callback) => ({
 
 export const occupationCategoryImportData = (data, callback) => ({
   type: IMPORT_OCCUPATION_CATEGORY,
+  data,
+  callback,
+});
+
+export const occupationLevelCodeList = (data, callback) => ({
+  type: OCCUPATION_LEVEL_CODE_LIST,
+  data,
+  callback,
+});
+
+export const occupationLevelCodeAdd = (data, callback) => ({
+  type: ADD_OCCUPATION_LEVEL_CODE,
+  data,
+  callback,
+});
+
+export const occupationLevelCodeEdit = (data, callback) => ({
+  type: EDIT_OCCUPATION_LEVEL_CODE,
+  data,
+  callback,
+});
+
+export const occupationLevelCodeDelete = (data, callback) => ({
+  type: DELETE_OCCUPATION_LEVEL_CODE,
+  data,
+  callback,
+});
+
+export const occupationLevelCodeExportData = (data, callback) => ({
+  type: EXPORT_OCCUPATION_LEVEL_CODE,
+  data,
+  callback,
+});
+
+export const occupationLevelCodeImportData = (data, callback) => ({
+  type: IMPORT_OCCUPATION_LEVEL_CODE,
+  data,
+  callback,
+});
+export const occupationLevelList = (data, callback) => ({
+  type: OCCUPATION_LEVEL_LIST,
+  data,
+  callback,
+});
+
+export const occupationLevelAdd = (data, callback) => ({
+  type: ADD_OCCUPATION_LEVEL,
+  data,
+  callback,
+});
+
+export const occupationLevelEdit = (data, callback) => ({
+  type: EDIT_OCCUPATION_LEVEL,
+  data,
+  callback,
+});
+
+export const occupationLevelDelete = (data, callback) => ({
+  type: DELETE_OCCUPATION_LEVEL,
+  data,
+  callback,
+});
+
+export const occupationLevelExportData = (data, callback) => ({
+  type: EXPORT_OCCUPATION_LEVEL,
+  data,
+  callback,
+});
+
+export const occupationLevelImportData = (data, callback) => ({
+  type: IMPORT_OCCUPATION_LEVEL,
   data,
   callback,
 });
