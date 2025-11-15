@@ -560,6 +560,22 @@ urlpatterns = [
     path('occupationprospect/export/', OccupationProspectExportAPIView.as_view(), name='occupationprospect-export'),
     path('occupationprospect/import/', OccupationProspectImportAPIView.as_view(), name='occupationprospect-import'),
 
+    path('occupation-names/',OccupationNameListAPIView.as_view(),name='occupationname-list'),
+    path('occupation-names/create/',OccupationNameCreateAPIView.as_view(),name='occupationname-create'),
+    path('occupation-names/<uuid:uuid>/',OccupationNameRetrieveAPIView.as_view(),name='occupationname-retrieve'),
+    path('occupation-names/<uuid:uuid>/update/',OccupationNameUpdateAPIView.as_view(),name='occupationname-update'),
+    path('occupation-names/<uuid:uuid>/delete/',OccupationNameDeleteAPIView.as_view(),name='occupationname-delete'),
+    path('occupation-names/export/',OccupationNameExportAPIView.as_view(),name='occupationname-delete'),
+    path('occupation-names/import/',OccupationNameImportAPIView.as_view(),name='occupationname-delete'),
+
+    path('jobprospect/', JobProspectListAPIView.as_view(), name='JobProspect-list'),
+    path('jobprospect/create/', JobProspectCreateAPIView.as_view(), name='JobProspect-create'),
+    path('jobprospect/<uuid:uuid>/', JobProspectRetrieveAPIView.as_view(), name='JobProspect-retrieve'),
+    path('jobprospect/<uuid:uuid>/update/', JobProspectUpdateAPIView.as_view(), name='JobProspect-update'),
+    path('jobprospect/delete/', JobProspectDeleteAPIView.as_view(), name='JobProspect-delete'),
+    path('jobprospect/export/', JobProspectExportAPIView.as_view(), name='JobProspect-export'),
+    path('jobprospect/import/', JobProspectImportAPIView.as_view(), name='JobProspect-import'),
+
 
     path('workrights/', WorkRightsListAPIView.as_view(), name='workrights-list'),
     path('workrights/create/', WorkRightsCreateAPIView.as_view(), name='workrights-create'),

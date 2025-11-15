@@ -925,11 +925,14 @@ class EntranceTestResultSerializer(serializers.ModelSerializer):
         source='moduleName',
         write_only=True
     )
+    moduleName_uuid=serializers.CharField(source='moduleName.uuid', read_only=True)
+
+
     class Meta:
         model = EntranceTestResult
         fields = ['id', 'uuid', 
                   'entrancetest', 'entrancetest_id', 
-                  'moduleName', 'moduleName_id', 
+                  'moduleName', 'moduleName_id','moduleName_uuid', 
                   'testresult', 'description',
                   'is_deleted', 'created_at', 'updated_at']
         read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
@@ -1188,6 +1191,14 @@ class OccupationNameSerializer(serializers.ModelSerializer):
     occupationlevelcode = serializers.CharField(read_only=True, source='occupationlevelcode.occupationlevelcode')
     occupationcode = serializers.CharField(read_only=True, source='occupationcode.occupationcode')
 
+    country_uuid= serializers.CharField(read_only=True, source='country.uuid')
+    occupationversion_uuid = serializers.CharField(read_only=True, source='occupationversion.uuid')
+    occupationcategory_uuid = serializers.CharField(read_only=True, source='occupationcategory.uuid')
+    occupationlevel_uuid = serializers.CharField(read_only=True, source='occupationlevel.uuid')
+    occupationlevelcode_uuid = serializers.CharField(read_only=True, source='occupationlevelcode.uuid')
+    occupationcode_uuid = serializers.CharField(read_only=True, source='occupationcode.uuid')
+
+
     # -------------------- WRITE ONLY UUID FIELDS -------------------- #
     country_id = serializers.SlugRelatedField(
         slug_field='uuid',
@@ -1241,14 +1252,14 @@ class OccupationNameSerializer(serializers.ModelSerializer):
     class Meta:
         model = OccupationName
         fields = [
-            'id', 'uuid',
+            'id', 'uuid','occupationlevelcode_uuid','occupationcode_uuid',
 
             # READ fields
-            'country', 'occupationversion', 'occupationcategory',
+            'country', 'occupationlevel_uuid','occupationversion', 'occupationcategory','country_uuid','occupationcategory_uuid',
             'occupationlevel', 'occupationlevelcode', 'occupationcode',
 
             # WRITE UUID fields
-            'country_id', 'occupationversion_id', 'occupationcategory_id',
+            'country_id', 'occupationversion_id', 'occupationcategory_id','occupationversion_uuid',
             'occupationlevel_id', 'occupationlevelcode_id', 'occupationcode_id',
 
             # Model fields
@@ -1445,6 +1456,37 @@ class ApplicantTypeSerializer(serializers.ModelSerializer):
             'is_deleted', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
+
+class VisaEligibilityTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VisaEligibilityType
+        fields = [
+            'id', 'uuid', 'name', 'description',
+            'is_deleted', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
+
+class VisaStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VisaStatus
+        fields = [
+            'id', 'uuid', 'name', 'description',
+            'is_deleted', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
+
+class PossibilityLevelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PossibilityLevel
+        fields = [
+            'id', 'uuid', 'name', 'description',
+            'is_deleted', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
 
 
 #----------------------------occupation-----------------

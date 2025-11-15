@@ -5351,6 +5351,9 @@ class CourseLevelImportAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+
+
+
 class CourseDurationListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -5630,8 +5633,8 @@ class CourseDurationImportAPIView(APIView):
         format_type = file.name.split('.')[-1].lower()
         duplicate_entries = []
         skipped_rows = []
-        required_headers = {'courselevel', 'course duration value', 'course duration unit', 'start date'}
-        optional_headers = {'end date', 'description'}
+        required_headers = {'course level', 'course duration value', 'course duration unit'}
+        optional_headers = {'description'}
 
         try:
             data = []
@@ -5673,20 +5676,10 @@ class CourseDurationImportAPIView(APIView):
 
             imported_count = 0
             for row_number, row in data:
-                courselevel_name = str(row.get('courselevel')).strip() if row.get('courselevel') else None
+                courselevel_name = str(row.get('course level')).strip() if row.get('course level') else None
                 valid_duration_value = row.get('course duration value')
                 valid_duration_unit = row.get('course duration unit')
                 description = row.get('description', '')
-                effect_from_str = row.get('start date')
-                valid_upto_str = row.get('end date', None)
-                
-                # Validate date fields
-                try:
-                    effect_from = datetime.strptime(effect_from_str, '%d-%m-%Y').date()
-                    valid_upto = datetime.strptime(valid_upto_str, '%d-%m-%Y').date() if valid_upto_str else None
-                except ValueError:
-                    skipped_rows.append({'row': row_number, 'Reason': 'Invalid date format'})
-                    continue
 
                 if not courselevel_name or valid_duration_value is None or not valid_duration_unit:
                     skipped_rows.append({'row': row_number, 'Reason': 'Mandatory fields missing'})
@@ -5716,7 +5709,6 @@ class CourseDurationImportAPIView(APIView):
                     courselevel=courselevel_obj,
                     valid_duration_value=valid_duration_value,
                     valid_duration_unit=valid_duration_unit,
-                    effect_from=effect_from
                 ).first()
 
                 if existing:
@@ -5724,7 +5716,6 @@ class CourseDurationImportAPIView(APIView):
                         duplicate_entries.append(f"{courselevel_name} - {valid_duration_value} {valid_duration_unit}")
                         continue
                     else:
-                        existing.valid_upto = valid_upto
                         existing.description = description
                         existing.is_deleted = False
                         existing.save()
@@ -5734,8 +5725,6 @@ class CourseDurationImportAPIView(APIView):
                         courselevel=courselevel_obj,
                         valid_duration_value=valid_duration_value,
                         valid_duration_unit=valid_duration_unit,
-                        effect_from=effect_from,
-                        valid_upto=valid_upto,
                         description=description,
                         is_deleted=False
                     )

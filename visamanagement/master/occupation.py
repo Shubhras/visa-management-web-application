@@ -642,7 +642,7 @@ class ModeofSalaryImportAPIView(APIView):
                 existing = ModeofSalary.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Name": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "Mode Of Salary": name, "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -940,7 +940,7 @@ class ITReturnStatusImportAPIView(APIView):
                 existing = ITReturnStatus.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Name": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "It Return Status": name, "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -1331,7 +1331,12 @@ class OccupationVersionImportAPIView(APIView):
 
                 if existing:
                     if not existing.is_deleted:
-                        duplicate_entries.append(f"{country_name} - {occupation_version}")
+                        duplicate_entries.append({
+            'row': row_number,
+            'Country': country_name,
+            'Occupation Version': occupation_version,
+            'Reason': 'Duplicate entry'
+        })
                         continue
                     else:
                         existing.valid_upto = valid_upto
@@ -1697,7 +1702,13 @@ class OccupationCategoryImportAPIView(APIView):
 
                 if existing:
                     if not existing.is_deleted:
-                        duplicate_entries.append(f"{country_name} - {occupation_version_name} - {occupationcategory}")
+                        duplicate_entries.append({
+            'row': row_number,
+            'country': country_name,
+            'Occupation Version': occupation_version_name,
+            'Occupation Category': occupationcategory,
+            'Reason': 'Duplicate entry'
+        })
                         continue
                     else:
                         existing.occupationcategorycode = category_code
@@ -2056,7 +2067,13 @@ class OccupationLevelCodeImportAPIView(APIView):
 
                 if existing:
                     if not existing.is_deleted:
-                        duplicate_entries.append(f"{country_name} - {occupation_version_name} - {occupationlevelcode}")
+                        duplicate_entries.append({
+            'row': row_number,
+            'country': country_name,
+            'Occupation Version': occupation_version_name,
+            'Occupation Level Code': occupationlevelcode,
+            'Reason': 'Duplicate entry'
+        })
                         continue
                     else:
                         existing.description = description
@@ -2449,7 +2466,15 @@ class OccupationLevelImportAPIView(APIView):
 
                 if existing:
                     if not existing.is_deleted:
-                        duplicate_entries.append(f"{country_name}-{occupation_version_name}-{occupation_category_name}-{occupation_level_code_name}-{occupation_level_name}")
+                        duplicate_entries.append({
+            'row': row_number,
+            'country': country_name,
+            'Occupation Version': occupation_version_name,
+            'Occupation Category': occupation_category_name,
+            'Occupation Level Code': occupation_level_code_name,
+            'Occupation Level': occupation_level_name,
+            'Reason': 'Duplicate entry'
+        })
                         continue
                     else:
                         existing.description = description
@@ -2797,7 +2822,13 @@ class OccupationCodeImportAPIView(APIView):
 
                 if existing:
                     if not existing.is_deleted:
-                        duplicate_entries.append(f"{country_name}-{occupation_version_name}-{occupation_code_name}")
+                        duplicate_entries.append({
+            'row': row_number,
+            'country': country_name,
+            'Occupation Version': occupation_version_name,
+            'Occupation Code': occupation_code_name,
+            'Reason': 'Duplicate entry'
+        })
                         continue
                     else:
                         existing.description = description
@@ -4294,7 +4325,13 @@ class OccupationNameImportAPIView(APIView):
 
                 if existing:
                     if not existing.is_deleted:
-                        duplicate.append(f"{country_name} - {version_name} - {occ_name}")
+                        duplicate.append({
+            'row': row_num,
+            'country': country_name,
+            'Occupation Version': version_name,
+            'Occupation Name': occ_name,
+            'Reason': 'Duplicate entry'
+        })
                         continue
                     else:
                         existing.description = desc
