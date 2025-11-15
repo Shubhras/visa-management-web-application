@@ -42,7 +42,7 @@ class Continents(models.Model):
 
 class Country(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=255, unique=True)
+    name = models.CharField(max_length=255)
     continent=models.ForeignKey(Continents,on_delete=models.SET_NULL,related_name="countries", blank=True, null=True)
     shortName = models.CharField(max_length=250, blank=True, null=True)
     fullName = models.CharField(max_length=250, blank=True, null=True)
@@ -58,6 +58,9 @@ class Country(models.Model):
     updated_at = models.DateTimeField(auto_now=True) 
     is_active = models.BooleanField(default=True)
     is_deleted = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('continent', 'name')
    
 
     def __str__(self):
@@ -72,7 +75,7 @@ class State(models.Model):
     )
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     countryName=models.ForeignKey(Country,on_delete=models.SET_NULL,related_name="states", blank=True, null=True)
-    stateName=models.CharField(max_length=255, unique=True)
+    stateName=models.CharField(max_length=255)
     state = models.CharField(max_length=20, choices=STATE_CHOICES)
     stateshortName=models.CharField(max_length=250, blank=True, null=True)
     description = models.TextField(max_length=255,blank=True, null=True)
@@ -80,6 +83,11 @@ class State(models.Model):
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)  
     updated_at = models.DateTimeField(auto_now=True) 
+
+    class Meta:
+        unique_together = ('countryName', 'stateName')
+
+
 
     def __str__(self):
         return self.stateName
@@ -107,11 +115,14 @@ class City(models.Model):
     countryName=models.ForeignKey(Country,on_delete=models.SET_NULL,  related_name="cities_in_country",  blank=True, null=True)
     stateName=models.ForeignKey(State,on_delete=models.SET_NULL,related_name="cities_in_state", blank=True, null=True)
     districtName=models.ForeignKey(District,on_delete=models.SET_NULL,related_name="cities_in_district", blank=True, null=True)
-    cityName=models.CharField(max_length=255, unique=True)
+    cityName=models.CharField(max_length=255)
     description = models.TextField(max_length=255,null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     is_deleted = models.BooleanField(default=False,null=True, blank=True)  
     updated_at = models.DateTimeField(auto_now=True) 
+
+    class Meta:
+        unique_together = ('districtName', 'stateName', 'countryName','cityName')
 
     def __str__(self):
         return self.cityName
@@ -192,6 +203,8 @@ class Department(models.Model):
 
     def __str__(self):
         return self.name
+
+
 
 class EmployeeType(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -574,9 +587,14 @@ class StudySpecialisation(models.Model):
 
 
 class AcademicResultType(models.Model):
+    VALID_TYPE_CHOICES = (
+        ("Numeric", "Numeric"),
+        ("Text", "Text")
+    )
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     name=models.TextField(max_length=255,blank=True,null=True, unique=True)
+    datatype=models.CharField(max_length=250,choices=VALID_TYPE_CHOICES,blank=True, null=True)
     description = models.TextField(max_length=255,blank=True,null=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -827,6 +845,8 @@ class EntranceTestResult(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+
+
     def __str__(self):
         return self.testresult
 
@@ -888,9 +908,9 @@ class OccupationVersion(models.Model):
 
     def __str__(self):
         return self.occupation_version
-    
 
-    
+
+
 class OccupationCategory(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
@@ -1185,6 +1205,47 @@ class ApplicantType(models.Model):
     def __str__(self):
         return self.name
 
+
+
+class VisaEligibilityType(models.Model):
+    id = models.AutoField(primary_key=True) 
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True) 
+    name = models.CharField(max_length=255,unique=True)
+    description = models.TextField(max_length=255,blank=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+
+
+class VisaStatus(models.Model):
+    id = models.AutoField(primary_key=True) 
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True) 
+    name = models.CharField(max_length=255,unique=True)
+    description = models.TextField(max_length=255,blank=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+    
+
+
+class PossibilityLevel(models.Model):
+    id = models.AutoField(primary_key=True) 
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True) 
+    name = models.CharField(max_length=255,unique=True)
+    description = models.TextField(max_length=255,blank=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
 
 
 

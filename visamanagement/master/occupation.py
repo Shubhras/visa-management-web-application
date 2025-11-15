@@ -1318,7 +1318,7 @@ class OccupationVersionImportAPIView(APIView):
                     continue
 
                 try:
-                    country_obj = Country.objects.get(name__iexact=country_name)
+                    country_obj = Country.objects.get(name__iexact=country_name).first()
                 except Country.DoesNotExist:
                     skipped_rows.append({'row': row_number, 'Reason': 'Country not found'})
                     continue
@@ -1680,7 +1680,7 @@ class OccupationCategoryImportAPIView(APIView):
                     continue
 
                 try:
-                    country_obj = Country.objects.get(country_name__iexact=country_name)
+                    country_obj = Country.objects.get(name__iexact=country_name).first()
                 except Country.DoesNotExist:
                     skipped_rows.append({'row': row_number, 'Reason': 'Country not found'})
                     continue
@@ -2045,7 +2045,7 @@ class OccupationLevelCodeImportAPIView(APIView):
                     continue
 
                 try:
-                    country_obj = Country.objects.get(country_name__iexact=country_name)
+                    country_obj = Country.objects.get(name__iexact=country_name).first()
                 except Country.DoesNotExist:
                     skipped_rows.append({'row': row_number, 'Reason': 'Country not found'})
                     continue
@@ -2121,12 +2121,7 @@ class OccupationLevelListAPIView(APIView):
         queryset = OccupationLevel.objects.filter(is_deleted=False)
         if search:
             queryset = queryset.filter(
-                Q(occupationlevel__istartswith=search) |
-                Q(description__istartswith=search) |
-                Q(country__country_name__istartswith=search) |
-                Q(occupationversion__occupation_version__istartswith=search) |
-                Q(occupationcategory__occupationcategory__istartswith=search) |
-                Q(occupationlevelcode__occupationlevelcode__istartswith=search)
+                Q(occupationlevel__istartswith=search) 
             )
 
         queryset = queryset.order_by(sort_by)
@@ -2429,7 +2424,7 @@ class OccupationLevelImportAPIView(APIView):
                     continue
 
                 try:
-                    country_obj = Country.objects.get(country_name__iexact=country_name)
+                    country_obj = Country.objects.get(name__iexact=country_name).first()
                 except Country.DoesNotExist:
                     skipped_rows.append({'row': row_number, 'Reason': 'Country not found'})
                     continue
@@ -2803,7 +2798,7 @@ class OccupationCodeImportAPIView(APIView):
                     continue
 
                 try:
-                    country_obj = Country.objects.get(country_name__iexact=country_name)
+                    country_obj = Country.objects.get(name__iexact=country_name).first()
                 except Country.DoesNotExist:
                     skipped_rows.append({'row': row_number, 'Reason': 'Country not found'})
                     continue
@@ -4259,7 +4254,7 @@ class OccupationNameImportAPIView(APIView):
                     continue
 
                 try:
-                    country_obj = Country.objects.get(country_name__iexact=country_name)
+                    country_obj = Country.objects.get(name__iexact=country_name).first()
                 except:
                     skipped.append({"row": row_num, "Reason": "Country not found"})
                     continue

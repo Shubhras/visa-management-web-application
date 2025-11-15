@@ -1349,10 +1349,7 @@ class CountryListAPIView(APIView):
         queryset = Country.objects.filter(is_deleted=False)
         if search:
             queryset = queryset.filter(
-                Q(name__istartswith=search) |
-                Q(shortName__istartswith=search) |
-                Q(fullName__istartswith=search) |
-                Q(capitalCity__istartswith=search)
+                Q(name__istartswith=search) 
             )
 
         queryset = queryset.order_by(sort_by)
@@ -1366,17 +1363,31 @@ class CountryCreateAPIView(APIView):
 
     def post(self, request):
         name = request.data.get("name", "").strip()
-        existing = Country.objects.filter(name__iexact=name, is_deleted=False).first()
+        continent_id = request.data.get("continent_id")  # Continent select kar rahe ho
+        if not continent_id:
+            return Response({"statusCode": 400, "status": False, "message": "continent_id is required."}, status=400)
+
+        # Check for existing country in same continent
+        existing = Country.objects.filter(
+            name__iexact=name,
+            continent_id=continent_id,
+            is_deleted=False
+        ).first()
+
         if existing:
-            return Response({"statusCode": 400, "status": False, "message": "Country with this name already exists."}, status=400)
+            return Response({"statusCode": 400, "status": False, "message": "Country with this name already exists in the selected continent."}, status=400)
 
         serializer = CountrySerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response({"statusCode": 200, "status": True, "message": "Country created successfully", "data": serializer.data})
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "Country created successfully",
+                "data": serializer.data
+            })
         errors = " ".join([msg for msgs in serializer.errors.values() for msg in msgs])
         return Response({"statusCode": 400, "status": False, "message": errors}, status=400)
-
 
 class CountryRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -1676,7 +1687,7 @@ class CountryImportAPIView(APIView):
                         })
                         continue
 
-                existing = Country.objects.filter(name__iexact=country_name).first()
+                existing = Country.objects.filter(name__iexact=country_name, continent=continent_obj).first()
                 if existing:
                     if not getattr(existing, "is_deleted", False):
                         duplicate_names.append({
@@ -1806,10 +1817,7 @@ class StateListAPIView(APIView):
         queryset = State.objects.filter(is_deleted=False)
         if search:
             queryset = queryset.filter(
-                Q(stateName__istartswith=search) |
-                Q(stateshortName__istartswith=search) |
-                Q(description__istartswith=search) |
-                Q(countryName__name__istartswith=search)
+                Q(stateName__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -2188,50 +2196,65 @@ class StateImportAPIView(APIView):
 
 class StateByCountryAPIView(APIView):
     def get(self, request):
-        country_id = request.GET.get("country_id")
-        if not country_id:
+        # Get multiple country_ids (comma-separated)
+        country_ids = request.GET.get("country_id", "").split(',')
+        search_term = request.GET.get("search", "")  # Search query parameter
+        sort_by = request.GET.get("sort_by", "stateName")  # Sort by state name by default
+
+        if not country_ids:
             return Response({
                 "statusCode": 400,
                 "status": False,
                 "message": "country_id is required"
             }, status=status.HTTP_400_BAD_REQUEST)
-        
 
-        try:
-            country_uuid = uuid.UUID(country_id)
-        except ValueError:
+        # Validate each country_id and fetch countries
+        valid_countries = []
+        invalid_countries = []
+        for country_id in country_ids:
+            try:
+                country_uuid = uuid.UUID(country_id.strip())  # Convert string to UUID
+                country = Country.objects.get(uuid=country_uuid)
+                valid_countries.append(country)
+            except (ValueError, Country.DoesNotExist):
+                invalid_countries.append(country_id)
+
+        if invalid_countries:
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Invalid UUID format for country_id"
+                "message": f"Invalid or non-existent country IDs: {', '.join(invalid_countries)}"
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        try:
-            country = Country.objects.get(uuid=country_uuid)
+        # Fetch states for valid countries
+        states = State.objects.filter(countryName__in=valid_countries)
+        
+        # Search filtering
+        if search_term:
+            states = states.filter(stateName__icontains=search_term)
 
-        except Country.DoesNotExist:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "Invalid Country ID"
-            }, status=status.HTTP_404_NOT_FOUND)
+        # Sorting
+        if sort_by and hasattr(State, sort_by):
+            states = states.order_by(sort_by)
 
-        states = State.objects.filter(countryName=country)
+        # Pagination
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(states, request)
         data = []
-        for state in states:
+
+        # Prepare response data with country name and state details
+        for state in result_page:
             data.append({
                 "uuid": str(state.uuid),
                 "name": state.stateName,
                 "shortName": state.stateshortName,
-                "fullName": state.description
+                "fullName": state.description,
+                "country": state.countryName.name  # Include country name in each state
             })
 
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"State for country '{state.stateName}' fetched successfully",
-            "data": data
-        }, status=status.HTTP_200_OK)
+        return paginator.get_paginated_response(data)
+
+
 
 
 
@@ -2257,10 +2280,7 @@ class DistrictListAPIView(APIView):
         queryset = District.objects.filter(is_deleted=False)
         if search:
             queryset = queryset.filter(
-                Q(districtName__istartswith=search) |
-                Q(description__istartswith=search) |
-                Q(stateName__stateName__istartswith=search) |
-                Q(countryName__name__istartswith=search)
+                Q(districtName__istartswith=search) 
             )
 
         queryset = queryset.order_by(sort_by)
@@ -2677,62 +2697,71 @@ class DistrictImportAPIView(APIView):
         }, status=200)
 
         
-
 class DistrictByFilterAPIView(APIView):
     def get(self, request):
-        country_id = request.GET.get("country_id")
-        state_id = request.GET.get("state_id")
+        country_ids = request.GET.get("country_id", "").split(',')  # multiple countries
+        state_ids = request.GET.get("state_id", "").split(',')      # multiple states
+        search_term = request.GET.get("search", "")                 # search by district name
+        sort_by = request.GET.get("sort_by", "districtName")        # default sort by districtName
 
-
-        if country_id:
+        # Validate countries
+        valid_countries = []
+        invalid_countries = []
+        for country_id in filter(None, country_ids):
             try:
-                country_uuid = uuid.UUID(country_id)
-            except ValueError:
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "Invalid UUID format for country_id"
-                }, status=status.HTTP_400_BAD_REQUEST)
-            try:
+                country_uuid = uuid.UUID(country_id.strip())
                 country = Country.objects.get(uuid=country_uuid)
-            except Country.DoesNotExist:
-                return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "Country not found"
-                }, status=status.HTTP_404_NOT_FOUND)
-        else:
-            country = None
+                valid_countries.append(country)
+            except (ValueError, Country.DoesNotExist):
+                invalid_countries.append(country_id)
 
-        if state_id:
+        if invalid_countries:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": f"Invalid or non-existent country IDs: {', '.join(invalid_countries)}"
+            }, status=400)
+
+        # Validate states
+        valid_states = []
+        invalid_states = []
+        for state_id in filter(None, state_ids):
             try:
-                state_uuid = uuid.UUID(state_id)
-            except ValueError:
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "Invalid UUID format for state_id"
-                }, status=status.HTTP_400_BAD_REQUEST)
-            try:
+                state_uuid = uuid.UUID(state_id.strip())
                 state = State.objects.get(uuid=state_uuid)
-            except State.DoesNotExist:
-                return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "State not found"
-                }, status=status.HTTP_404_NOT_FOUND)
-        else:
-            state = None
+                valid_states.append(state)
+            except (ValueError, State.DoesNotExist):
+                invalid_states.append(state_id)
 
+        if invalid_states:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": f"Invalid or non-existent state IDs: {', '.join(invalid_states)}"
+            }, status=400)
 
+        # Fetch districts
         districts = District.objects.filter(is_deleted=False)
-        if country:
-            districts = districts.filter(countryName=country)
-        if state:
-            districts = districts.filter(stateName=state)
+        if valid_countries:
+            districts = districts.filter(countryName__in=valid_countries)
+        if valid_states:
+            districts = districts.filter(stateName__in=valid_states)
 
+        # Search filter
+        if search_term:
+            districts = districts.filter(districtName__icontains=search_term)
+
+        # Sorting
+        if sort_by and hasattr(District, sort_by):
+            districts = districts.order_by(sort_by)
+
+        # Pagination
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(districts, request)
+
+        # Prepare response
         data = []
-        for district in districts:
+        for district in result_page:
             data.append({
                 "uuid": str(district.uuid),
                 "districtName": district.districtName,
@@ -2741,13 +2770,7 @@ class DistrictByFilterAPIView(APIView):
                 "description": district.description
             })
 
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"{len(data)} districts fetched successfully",
-            "data": data
-        }, status=status.HTTP_200_OK)
-
+        return paginator.get_paginated_response(data)
 
 
 
@@ -2757,31 +2780,57 @@ class CityListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
+
+        # MULTI-SELECT SUPPORT
+        country_list = request.GET.getlist('country[]') or request.GET.getlist('country')
+        state_list = request.GET.getlist('state[]') or request.GET.getlist('state')
+        district_list = request.GET.getlist('district[]') or request.GET.getlist('district')
+        city_list = request.GET.getlist('city[]') or request.GET.getlist('city')
+
         sort_by = request.GET.get('sortBy', 'created_at')
         sort_order = request.GET.get('sortOrder', 'desc')
         allowed_sort_fields = ['cityName', 'created_at']
 
+        # Validate sortBy
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
         queryset = City.objects.filter(is_deleted=False)
+
+        # ---------------------------
+        # MULTI-SELECT FILTERS
+        # ---------------------------
+        if country_list:
+            queryset = queryset.filter(countryName__uuid__in=country_list)
+
+        if state_list:
+            queryset = queryset.filter(stateName__uuid__in=state_list)
+
+        if district_list:
+            queryset = queryset.filter(districtName__uuid__in=district_list)
+
+        if city_list:
+            queryset = queryset.filter(uuid__in=city_list)
+
+        # ---------------------------
+        # TEXT SEARCH (CITY / COUNTRY / STATE / DISTRICT)
+        # ---------------------------
         if search:
             queryset = queryset.filter(
                 Q(cityName__istartswith=search) |
-                Q(description__istartswith=search) |
-                Q(districtName__districtName__istartswith=search) |
+                Q(countryName__name__istartswith=search) |
                 Q(stateName__stateName__istartswith=search) |
-                Q(countryName__name__istartswith=search)
+                Q(districtName__districtName__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
+
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = CitySerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
-
 
 # -------------------- City -------------------- 
 class CityCreateAPIView(APIView):
@@ -3073,7 +3122,7 @@ class CityImportAPIView(APIView):
             skipped_rows = []
             existing_in_file = set()
 
-            for row in data:
+            for row in reversed(data):
                 city_name = str(row.get("city name") or "").strip()
                 country_name = str(row.get("country name") or "").strip()
                 state_name = str(row.get("state name") or "").strip()
@@ -3158,6 +3207,8 @@ class CityImportAPIView(APIView):
                 "message": str(e)
             }, status=400)
 
+
+ 
         
 #---------------------------Realtion-----------------------
 class RelationListAPIView(APIView):
@@ -3562,10 +3613,7 @@ class TimezoneListAPIView(APIView):
 
         if search:
             queryset = queryset.filter(
-                Q(Timezone__istartswith=search) |
-                Q(description__istartswith=search) |
-                Q(countryName__name__istartswith=search) |
-                Q(stateName__stateName__istartswith=search)
+                Q(Timezone__istartswith=search) 
             )
 
         queryset = queryset.order_by(sort_by)
@@ -3985,10 +4033,7 @@ class CivilIdNameListAPIView(APIView):
  
         if search:
             queryset = queryset.filter(
-                Q(civil_id_name__istartswith=search) |
-                Q(authority_full_name__istartswith=search) |
-                Q(authority_short_name__istartswith=search) |
-                Q(description__istartswith=search)
+                Q(civil_id_name__istartswith=search) 
             )
  
         queryset = queryset.order_by(sort_by)
@@ -6029,115 +6074,6 @@ class OwnershipTypeExportAPIView(APIView):
         return response
 
 
-    class OwnershipTypeImportAPIView(APIView):
-        """
-        Import OwnershipType data from XLSX or CSV.
-        Matches `company_type` by name instead of ID.
-        """
-
-        def post(self, request):
-            file = request.FILES.get('file')
-            sheet_name = request.data.get('sheet_name')
-            if not file:
-                return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
-
-            format_type = file.name.split('.')[-1].lower()
-            duplicate_names = []
-            required_headers = {'ownership type'}  # Ownership type name is required
-            optional_headers = {'description', 'company type'}  # company_type optional
-
-            try:
-                data = []
-
-                # XLSX
-                if format_type == 'xlsx':
-                    import openpyxl
-                    wb = openpyxl.load_workbook(file, read_only=True)
-                    available_sheets = wb.sheetnames
-
-                    if not sheet_name:
-                        return Response({'error': 'Please provide sheet_name', 'available_sheets': available_sheets},
-                                        status=status.HTTP_400_BAD_REQUEST)
-                    if sheet_name not in available_sheets:
-                        return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets},
-                                        status=status.HTTP_400_BAD_REQUEST)
-
-                    ws = wb[sheet_name]
-                    headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                    if not required_headers.issubset(set(headers)):
-                        return Response({'statusCode': 400, 'status': True,
-                                        'message': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'},
-                                        status=status.HTTP_400_BAD_REQUEST)
-
-                    for row in ws.iter_rows(min_row=2, values_only=True):
-                        if not any(row):
-                            continue
-                        row_dict = dict(zip(headers, row))
-                        data.append(row_dict)
-
-                # CSV
-                elif format_type == 'csv':
-                    decoded_file = file.read().decode('utf-8')
-                    dataset = Dataset()
-                    dataset.load(decoded_file, format='csv')
-                    for row in dataset.dict:
-                        row_lower = {k.strip().lower(): v for k, v in row.items()}
-                        if not required_headers.issubset(set(row_lower.keys())):
-                            return Response({'statusCode': 400, 'status': True,
-                                            'message': f'Missing required headers. Required: {", ".join(required_headers)}. Found headers: {", ".join(row_lower.keys())}'},
-                                            status=status.HTTP_400_BAD_REQUEST)
-                        data.append(row_lower)
-                else:
-                    return Response({'statusCode': 400, 'status': True, 'error': 'Unsupported file format. Use .xlsx or .csv'},
-                                    status=status.HTTP_400_BAD_REQUEST)
-
-                imported_count = 0
-                for row in  reversed(data):
-                    name = str(row.get('ownership  type')).strip() if row.get('ownership type') else None
-                    description = str(row.get('description')).strip() if row.get('description') else ''
-                    company_type_name = str(row.get('company type')).strip() if row.get('company type') else None
-
-                    if not name:
-                        continue
-
-                    
-                    company_type = None
-                    if company_type_name:
-                        company_type = CompanyType.objects.filter(name__iexact=company_type_name).first()
-
-                    existing = OwnershipType.objects.filter(name__iexact=name).first()
-                    if existing:
-                        if not existing.is_deleted:
-                            duplicate_names.append(name)
-                            continue
-                        else:
-                            existing.description = description
-                            existing.company_type = company_type
-                            existing.is_deleted = False
-                            existing.save()
-                            imported_count += 1
-                    else:
-                        OwnershipType.objects.create(
-                            name=name,
-                            description=description,
-                            company_type=company_type,
-                            is_deleted=False
-                        )
-                        imported_count += 1
-
-            except Exception as e:
-                return Response({'statusCode': 400, 'status': True, 'message': str(e)},
-                                status=status.HTTP_400_BAD_REQUEST)
-
-            return Response({
-                'statusCode': 200,
-                'status': True,
-                'duplicates': list(set(duplicate_names)),
-                'message': f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
-                'imported_count': imported_count
-            }, status=status.HTTP_200_OK)
-
-
 class OwnershipTypeImportAPIView(APIView):
     
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -6757,14 +6693,17 @@ class StakeholderTypeCreateAPIView(APIView):
 
     def post(self, request):
         name = request.data.get("name", "").strip()
+        category_id = request.data.get("category")
 
-        existing = StakeholderType.objects.filter(name__iexact=name, is_deleted=False).first()
+        # Check if the stakeholder type already exists with the same name and category
+        existing = StakeholderType.objects.filter(name__iexact=name, category_id=category_id, is_deleted=False).first()
         if existing:
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "StakeholderType with this name already exists."
+                "message": "StakeholderType with this name and category already exists."
             }, status=status.HTTP_400_BAD_REQUEST)
+
 
         serializer = StakeholderTypeSerializer(data=request.data)
         if serializer.is_valid():
@@ -12228,16 +12167,22 @@ class EducationLevelCreateAPIView(APIView):
 
     def post(self, request):
         educationlevel_name = request.data.get('educationlevel', '').strip()
+        level_code_id = request.data.get('level_code')  # UUID of EducationLevelCode
 
-        # Check for duplicate
-        if EducationLevel.objects.filter(educationlevel__iexact=educationlevel_name).exists():
+        # Check for duplicate based on combination of level_code and educationlevel
+        existing = EducationLevel.objects.filter(
+            educationlevel__iexact=educationlevel_name,
+            level_code_id=level_code_id
+        ).first()
+
+        if existing:
             return Response({
                 "statusCode": 400,
                 "status": False,
                 "message": "This Education Level with the selected Level Code already exists."
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # If no duplicate, create new
+        # Create new record
         serializer = EducationLevelSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -12259,6 +12204,9 @@ class EducationLevelCreateAPIView(APIView):
             "status": False,
             "message": " ".join(messages)
         }, status=status.HTTP_400_BAD_REQUEST)
+
+
+        
 
 class EducationLevelRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -14392,6 +14340,7 @@ class AcademicResultTypeExportAPIView(APIView):
             'name': 'Academic Result Type',
             'description': 'Description',
             'is_deleted': 'Deleted',
+            'datatype':'Data Type',
             'updated_at': 'Modified On',
             'created_at': 'Created On',
         }
@@ -14438,39 +14387,40 @@ class AcademicResultTypeExportAPIView(APIView):
 # --------------------- Import API ---------------------
 class AcademicResultTypeImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
- 
+
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')
- 
+
         if not file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
- 
+
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
- 
-        required_headers = {'academic result type'}
+
+        required_headers = {'name', 'datatype'}  # datatype is required now
         optional_headers = {'description'}
- 
+
         try:
             data = []
- 
+
             if format_type == 'xlsx':
                 import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
- 
+
                 if not sheet_name:
                     return Response({
                         'error': 'Please provide sheet_name',
                         'available_sheets': available_sheets
                     }, status=status.HTTP_400_BAD_REQUEST)
+
                 if sheet_name not in available_sheets:
                     return Response({
                         'error': f'Sheet "{sheet_name}" not found',
                         'available_sheets': available_sheets
                     }, status=status.HTTP_400_BAD_REQUEST)
- 
+
                 ws = wb[sheet_name]
                 if ws.max_row <= 1:
                     return Response({
@@ -14478,7 +14428,7 @@ class AcademicResultTypeImportAPIView(APIView):
                         "status": False,
                         "message": f'The uploaded XLSX file is empty.'
                     }, status=status.HTTP_400_BAD_REQUEST)
- 
+
                 headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
                 if not required_headers.issubset(set(headers)):
                     return Response({
@@ -14486,19 +14436,18 @@ class AcademicResultTypeImportAPIView(APIView):
                         "status": True,
                         'message': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
                     }, status=status.HTTP_400_BAD_REQUEST)
- 
+
                 for row in ws.iter_rows(min_row=2, values_only=True):
                     if not any(row):
                         continue
                     row_dict = dict(zip(headers, row))
                     data.append(row_dict)
- 
+
             elif format_type == 'csv':
-                decoded_file = file.read().decode('utf-8')
-                dataset = Dataset()
-                dataset.load(decoded_file, format='csv')
- 
-                for row in dataset.dict:
+                import csv
+                decoded_file = file.read().decode('utf-8').splitlines()
+                reader = csv.DictReader(decoded_file)
+                for row in reader:
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
                     if not required_headers.issubset(set(row_lower.keys())):
                         return Response({
@@ -14513,15 +14462,33 @@ class AcademicResultTypeImportAPIView(APIView):
                     "status": True,
                     'error': 'Unsupported file format. Use .xlsx or .csv'
                 }, status=status.HTTP_400_BAD_REQUEST)
- 
+
             imported_count = 0
-            for row in  reversed(data):
+            errors = []
+
+            VALID_TYPES = ["Numeric", "Text"]
+
+            for idx, row in enumerate(reversed(data), start=2):  # row number starts at 2 (after header)
                 name = str(row.get('name')).strip() if row.get('name') else None
+                datatype = str(row.get('datatype')).strip() if row.get('datatype') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
- 
-                if not name:
+
+                if not name or not datatype:
+                    errors.append(f"Row {idx}: 'name' and 'datatype' are required.")
                     continue
- 
+
+                if datatype not in VALID_TYPES:
+                    errors.append(f"Row {idx}: Invalid datatype '{datatype}'. Must be one of {VALID_TYPES}.")
+                    continue
+
+                # Validate based on datatype
+                if datatype == "Numeric" and not name.isdigit():
+                    errors.append(f"Row {idx}: Name '{name}' must be numeric for datatype 'Numeric'.")
+                    continue
+                elif datatype == "Text" and any(char.isdigit() for char in name):
+                    errors.append(f"Row {idx}: Name '{name}' must not contain numbers for datatype 'Text'.")
+                    continue
+
                 existing = AcademicResultType.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
@@ -14529,31 +14496,35 @@ class AcademicResultTypeImportAPIView(APIView):
                         continue
                     else:
                         existing.description = description
+                        existing.datatype = datatype
                         existing.is_deleted = False
                         existing.save()
                         imported_count += 1
                 else:
                     AcademicResultType.objects.create(
                         name=name,
+                        datatype=datatype,
                         description=description,
                         is_deleted=False
                     )
                     imported_count += 1
- 
+
         except Exception as e:
             return Response({
                 "statusCode": 400,
                 "status": True,
                 'message': str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
- 
+
         return Response({
             "statusCode": 200,
             "status": True,
             "duplicates": list(set(duplicate_names)),
+            "errors": errors,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=status.HTTP_200_OK)
+
  
 # -------------------- AcademicResult -------------------- #
 
@@ -14580,9 +14551,7 @@ class AcademicResultListAPIView(APIView):
         # Apply search filter if search query is provided
         if search:
             queryset = queryset.filter(
-                Q(Academicresult__istartwith=search) |
-                Q(description__istartwith=search) |
-                Q(AcademicResulttype____istartwith=search)  # Assuming you want to search by AcademicResulttype
+                Q(Academicresult__istartwith=search) 
             )
 
         # Sorting
@@ -16889,3 +16858,65 @@ class DegreeAwardedByEducationLevelAPIView(APIView):
                 },
                 status=500
             )
+
+
+
+class EntranceTestModulesAPIView(APIView):
+    def get(self, request):
+        entrance_test_id = request.GET.get("entrance_test_id")
+        search_term = request.GET.get("search", "")       # search by module name
+        sort_by = request.GET.get("sort_by", "moduleName")  # default sorting
+
+        if not entrance_test_id:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "entrance_test_id is required"
+            }, status=400)
+
+        # Validate UUID
+        try:
+            test_uuid = uuid.UUID(entrance_test_id.strip())
+        except ValueError:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Invalid UUID format for entrance_test_id"
+            }, status=400)
+
+        # Fetch EntranceTest
+        try:
+            entrance_test = EntranceTestName.objects.get(uuid=test_uuid, is_deleted=False)
+        except EntranceTestName.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "Entrance Test not found"
+            }, status=404)
+
+        # Fetch associated modules
+        modules = EntranceTestModuleName.objects.filter(entrancetest=entrance_test, is_deleted=False)
+
+        # Search filter
+        if search_term:
+            modules = modules.filter(moduleName__icontains=search_term)
+
+        # Sorting
+        if sort_by and hasattr(EntranceTestModuleName, sort_by):
+            modules = modules.order_by(sort_by)
+
+        # Pagination
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(modules, request)
+
+        # Prepare response
+        data = []
+        for module in result_page:
+            data.append({
+                "uuid": str(module.uuid),
+                "moduleName": module.moduleName,
+                "description": module.description,
+                "entrance_test": entrance_test.fullname
+            })
+
+        return paginator.get_paginated_response(data)

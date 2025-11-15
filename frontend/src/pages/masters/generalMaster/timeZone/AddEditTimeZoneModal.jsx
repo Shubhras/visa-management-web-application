@@ -215,14 +215,14 @@ const AddEditTimeZoneModal = ({ show, handleClose, mode = 'add', rowData = null 
                   <Select
                     options={countryListData.map((option) => ({
                       value: option.uuid,
-                      label: option.name,
+                      label: option.name+" ("+option?.continent?.name+")",
                     }))}
                     value={
                       formData.country
                         ? countryListData
                           .map((option) => ({
                             value: option.uuid,
-                            label: option.name,
+                            label: option.name+" ("+option?.continent?.name+")",
                           }))
                           .find((opt) => opt.value === formData.country)
                         : null

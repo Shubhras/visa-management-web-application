@@ -262,7 +262,7 @@ class LanguageExportAPIView(APIView):
         # --- Field to header mapping ---
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Language',
+            'name': 'Language Name (Test)',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'created_at': 'Created On',
@@ -284,7 +284,7 @@ class LanguageExportAPIView(APIView):
         # --- Prepare dataset ---
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'Language'
+        dataset.title = 'Language Name(Test)'
 
         for lang in queryset:
             row = []
@@ -333,7 +333,7 @@ class LanguageImportAPIView(APIView):
         duplicate_names = []
 
         # Required & optional headers
-        required_headers = {'language'}
+        required_headers = {'language name (test)'}
         optional_headers = {'description', 'is_deleted'}
 
         try:
@@ -406,8 +406,8 @@ class LanguageImportAPIView(APIView):
             imported_count = 0
 
             # ---------- Import Rows ----------
-            for row in data:
-                name = str(row.get('language')).strip() if row.get('language') else None
+            for row in reversed(data):
+                name = str(row.get('language name (test)')).strip() if row.get('language name (test)') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
                 is_deleted = row.get('is_deleted', False)
 
@@ -830,7 +830,7 @@ class LanguageTestImportAPIView(APIView):
 
             imported_count = 0
 
-            for row in data:
+            for row in reversed(data):
                 lang_name = str(row.get('language name (test)')).strip()
                 name = str(row.get('language test name')).strip()
                 fullname = str(row.get('language test full name')).strip() if row.get('language test full name') else ''
@@ -1188,7 +1188,7 @@ class LanguagetestmoduleNameImportAPIView(APIView):
             imported_count = 0
 
             # ---------- Import Rows ----------
-            for row in data:
+            for row in reversed(data):
                 name = str(row.get('language test module name')).strip() if row.get('language test module name') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
                 is_deleted = row.get('is_deleted', False)
@@ -1512,7 +1512,7 @@ class CLBLevelImportAPIView(APIView):
             imported_count = 0
 
             # ---------- Import Rows ----------
-            for row in data:
+            for row in reversed(data):
                 name = str(row.get('clb level')).strip() if row.get('clb level') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
@@ -1817,7 +1817,7 @@ class StudyLanguageBenchmarkImportAPIView(APIView):
             imported_count = 0
 
             # ---------- Import Rows ----------
-            for row in data:
+            for row in reversed(data):
                 name = str(row.get('language banchmark level')).strip() if row.get('language banchmark level') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
@@ -2057,7 +2057,7 @@ class EntranceTestNameImportAPIView(APIView):
         duplicate_names = []
 
         required_headers = {'entrance test full name'}  # Must exist
-        optional_headers = {'entrance test short name', 'description'}
+        optional_headers = {'entrance test name', 'description'}
 
         try:
             data = []
@@ -2128,9 +2128,9 @@ class EntranceTestNameImportAPIView(APIView):
             imported_count = 0
 
             # ---------- Import Rows ----------
-            for row in data:
+            for row in reversed(data):
                 fullname = str(row.get('entrance test full name')).strip() if row.get('entrance test full name') else None
-                shortname = str(row.get('entrance test short name')).strip() if row.get('entrance test short name') else ''
+                shortname = str(row.get('entrance test name')).strip() if row.get('entrance test name') else ''
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not fullname:
@@ -2410,9 +2410,9 @@ class EntranceTestModuleImportAPIView(APIView):
 
             imported_count = 0
 
-            for row in data:
+            for row in reversed(data):
                 entrancetest_name = str(row.get('entrance test name')).strip() if row.get('entrance test name') else None
-                module_name = str(row.get('entrance test module name')).strip() if row.get('module name') else None
+                module_name = str(row.get('entrance test module name')).strip() if row.get('entrance test module name') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not entrancetest_name or not module_name:
@@ -2631,7 +2631,7 @@ class EntranceTestResultExportAPIView(APIView):
         # Field to header mapping
         field_header_map = {
             'uuid': 'UUID',
-            'entrancetest': 'Entrance Test Short Name',
+            'entrancetest': 'Entrance Test Name',
             'moduleName': 'Entrance Test Module Name',
             'testresult': 'Entrance Test Result',
             'description': 'Description',
@@ -2702,7 +2702,9 @@ class EntranceTestResultImportAPIView(APIView):
 
         format_type = file.name.split('.')[-1].lower()
         duplicate_entries = []
-        required_headers = {'entrance test short name', 'entrance test module name', 'entrance test result'}
+        skipped_rows = []
+
+        required_headers = {'entrance test name', 'entrance test module name', 'entrance test result'}
         optional_headers = {'description'}
 
         try:
@@ -2750,17 +2752,21 @@ class EntranceTestResultImportAPIView(APIView):
 
             imported_count = 0
 
-            for row in data:
-                entrancetest_name = str(row.get('entrance test short name')).strip() if row.get('entrance test short name') else None
+            for row in reversed(data):
+                entrancetest_name = str(row.get('entrance test name')).strip() if row.get('entrance test name') else None
                 moduleName_name = str(row.get('entrance test module name')).strip() if row.get('entrance test module name') else None
                 testresult = str(row.get('entrance test result')).strip() if row.get('entrance test result') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not entrancetest_name or not moduleName_name or not testresult:
+                    skipped_rows.append({
+                        "row": row,
+                        "reason": "Required field(s) missing"
+                    })
                     continue
 
                 existing = EntranceTestResult.objects.filter(
-                    entrancetest__fullname__iexact=entrancetest_name,
+                    entrancetest__shortname__iexact=entrancetest_name,
                     moduleName__moduleName__iexact=moduleName_name
                 ).first()
 
@@ -2775,9 +2781,28 @@ class EntranceTestResultImportAPIView(APIView):
                         existing.save()
                         imported_count += 1
                 else:
+                    # Gracefully handle missing EntranceTestName or ModuleName
+                    entrance_obj = EntranceTestName.objects.filter(shortname__iexact=entrancetest_name).first()
+                    module_obj = EntranceTestModuleName.objects.filter(moduleName__iexact=moduleName_name).first()
+
+                    if not entrance_obj:
+                        skipped_rows.append({
+                            "row": row,
+                            "reason": f'EntranceTestName "{entrancetest_name}" does not exist'
+                        })
+                        continue
+
+                    if not module_obj:
+                        skipped_rows.append({
+                            "row": row,
+                            "reason": f'EntranceTestModuleName "{moduleName_name}" does not exist'
+                        })
+                        continue
+
+                    # Create new record
                     EntranceTestResult.objects.create(
-                        entrancetest=EntranceTestName.objects.get(fullname__iexact=entrancetest_name),
-                        moduleName=EntranceTestModuleName.objects.get(moduleName__iexact=moduleName_name),
+                        entrancetest=entrance_obj,
+                        moduleName=module_obj,
                         testresult=testresult,
                         description=description,
                         is_deleted=False
@@ -2791,6 +2816,7 @@ class EntranceTestResultImportAPIView(APIView):
             "statusCode": 200,
             "status": True,
             "duplicates": list(set(duplicate_entries)),
+            "skipped_rows": skipped_rows,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=200)

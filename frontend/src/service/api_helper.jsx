@@ -870,8 +870,8 @@ export const importStateDataAPI = (payload) => {
     const apiUrl = `${url.IMPORT_STATE_LIST_API}`;
     return post(apiUrl, payload);
 };
-export const getStateDataByCountryAPI = (payload) => {
-    const apiUrl = `${url.GET_STATE_LIST_BY_COUNTRY_API}?country_id=${payload.countryId}`;
+export const getStateDataByCountryAPI = (data) => {
+    const apiUrl = `${url.GET_STATE_LIST_BY_COUNTRY_API}?country_id=${data.countryId}&search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
     return get(apiUrl);
 };
 
@@ -1316,7 +1316,7 @@ export const importDistrictDataAPI = (payload) => {
     return post(apiUrl, payload);
 };
 export const getDistrictDataByStateAPI = (payload) => {
-    const apiUrl = `${url.GET_DISTRICT_LIST_BY_STATE_API}?country_id=${payload.countryId}&state_id=${payload.stateId}`;
+    const apiUrl = `${url.GET_DISTRICT_LIST_BY_STATE_API}?country_id=${payload.countryId}&state_id=${payload.stateId}&search=${payload?.search}&page=${payload?.page}&limit=${payload?.limit}&sortBy=${payload?.sortBy}&sortOrder=${payload?.sortOrder}`;
     return get(apiUrl);
 };
 

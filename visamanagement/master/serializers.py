@@ -606,6 +606,7 @@ class AcademicResultTypeSerializer(serializers.ModelSerializer):
             'id',
             'uuid',
             'name',
+            'datatype',
             'description',
             'is_deleted',
             'created_at',
@@ -925,11 +926,14 @@ class EntranceTestResultSerializer(serializers.ModelSerializer):
         source='moduleName',
         write_only=True
     )
+    moduleName_uuid=serializers.CharField(source='moduleName.uuid', read_only=True)
+
+
     class Meta:
         model = EntranceTestResult
         fields = ['id', 'uuid', 
                   'entrancetest', 'entrancetest_id', 
-                  'moduleName', 'moduleName_id', 
+                  'moduleName', 'moduleName_id','moduleName_uuid', 
                   'testresult', 'description',
                   'is_deleted', 'created_at', 'updated_at']
         read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
@@ -1055,8 +1059,8 @@ class OccupationLevelCodeSerializer(serializers.ModelSerializer):
         model = OccupationLevelCode
         fields = [
             'id', 'uuid',
-            'country', 'country_id',
-            'occupation_version', 'occupation_version_id',
+            'country', 'country_id','country_uuid',
+            'occupation_version', 'occupation_version_id','occupation_version_uuid',
             'occupationlevelcode', 'description',
             'is_deleted', 'created_at', 'updated_at'
         ]
@@ -1356,13 +1360,13 @@ class RepresentingCountrySerializer(serializers.ModelSerializer):
     country_name = serializers.CharField(source='country.name', read_only=True)
     largest_state_name = serializers.CharField(source='largest_state.name', read_only=True)
     largest_city_name = serializers.CharField(source='largest_city.name', read_only=True)
-    
+
     class Meta:
         model = RepresentingCountry
         fields = [
             'uuid',
-            'country',            
-            'country_name',       
+            'country',
+            'country_name',
             'continent',
             'short_name',
             'full_name',
@@ -1403,9 +1407,26 @@ class RepresentingCountrySerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at',
         ]
-        read_only_fields = ['created_at', 'updated_at', 'country_name', 'largest_state_name', 'largest_city_name']
+        read_only_fields = [
+            'created_at', 'updated_at',
+            'country_name', 'largest_state_name', 'largest_city_name'
+        ]
 
+    def create(self, validated_data):
+        country = validated_data.get('country')
 
+        # Autofill fields from selected country
+        validated_data['continent'] = country.continent
+        validated_data['short_name'] = country.shortName
+        validated_data['full_name'] = country.fullName
+        validated_data['official_name'] = country.officialName
+        validated_data['capital_city'] = country.capitalCity
+        validated_data['dial_codes'] = country.dialCodes
+        validated_data['currency_full_name'] = country.currencyfullname
+        validated_data['currency_short_name'] = country.currencyshortname
+        validated_data['currency_code'] = country.currencyCode
+
+        return super().create(validated_data)
 class VisaMainSerializer(serializers.ModelSerializer):
     class Meta:
         model = VisaMain
@@ -1453,6 +1474,37 @@ class ApplicantTypeSerializer(serializers.ModelSerializer):
             'is_deleted', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
+
+class VisaEligibilityTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VisaEligibilityType
+        fields = [
+            'id', 'uuid', 'name', 'description',
+            'is_deleted', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
+
+class VisaStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VisaStatus
+        fields = [
+            'id', 'uuid', 'name', 'description',
+            'is_deleted', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
+
+class PossibilityLevelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PossibilityLevel
+        fields = [
+            'id', 'uuid', 'name', 'description',
+            'is_deleted', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
 
 
 #----------------------------occupation-----------------
