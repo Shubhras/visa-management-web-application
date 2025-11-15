@@ -2780,27 +2780,57 @@ class CityListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
+
+        # MULTI-SELECT SUPPORT
+        country_list = request.GET.getlist('country[]') or request.GET.getlist('country')
+        state_list = request.GET.getlist('state[]') or request.GET.getlist('state')
+        district_list = request.GET.getlist('district[]') or request.GET.getlist('district')
+        city_list = request.GET.getlist('city[]') or request.GET.getlist('city')
+
         sort_by = request.GET.get('sortBy', 'created_at')
         sort_order = request.GET.get('sortOrder', 'desc')
         allowed_sort_fields = ['cityName', 'created_at']
 
+        # Validate sortBy
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
         queryset = City.objects.filter(is_deleted=False)
+
+        # ---------------------------
+        # MULTI-SELECT FILTERS
+        # ---------------------------
+        if country_list:
+            queryset = queryset.filter(countryName__uuid__in=country_list)
+
+        if state_list:
+            queryset = queryset.filter(stateName__uuid__in=state_list)
+
+        if district_list:
+            queryset = queryset.filter(districtName__uuid__in=district_list)
+
+        if city_list:
+            queryset = queryset.filter(uuid__in=city_list)
+
+        # ---------------------------
+        # TEXT SEARCH (CITY / COUNTRY / STATE / DISTRICT)
+        # ---------------------------
         if search:
             queryset = queryset.filter(
-                Q(cityName__istartswith=search) 
+                Q(cityName__istartswith=search) |
+                Q(countryName__name__istartswith=search) |
+                Q(stateName__stateName__istartswith=search) |
+                Q(districtName__districtName__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
+
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = CitySerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
-
 
 # -------------------- City -------------------- 
 class CityCreateAPIView(APIView):
