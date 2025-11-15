@@ -1680,7 +1680,7 @@ class OccupationCategoryImportAPIView(APIView):
                     continue
 
                 try:
-                    country_obj = Country.objects.get(country_name__iexact=country_name)
+                    country_obj = Country.objects.get(name__iexact=country_name)
                 except Country.DoesNotExist:
                     skipped_rows.append({'row': row_number, 'Reason': 'Country not found'})
                     continue
@@ -2045,7 +2045,7 @@ class OccupationLevelCodeImportAPIView(APIView):
                     continue
 
                 try:
-                    country_obj = Country.objects.get(country_name__iexact=country_name)
+                    country_obj = Country.objects.get(name__iexact=country_name)
                 except Country.DoesNotExist:
                     skipped_rows.append({'row': row_number, 'Reason': 'Country not found'})
                     continue
@@ -2424,7 +2424,7 @@ class OccupationLevelImportAPIView(APIView):
                     continue
 
                 try:
-                    country_obj = Country.objects.get(country_name__iexact=country_name)
+                    country_obj = Country.objects.get(name__iexact=country_name)
                 except Country.DoesNotExist:
                     skipped_rows.append({'row': row_number, 'Reason': 'Country not found'})
                     continue
@@ -2798,7 +2798,7 @@ class OccupationCodeImportAPIView(APIView):
                     continue
 
                 try:
-                    country_obj = Country.objects.get(country_name__iexact=country_name)
+                    country_obj = Country.objects.get(name__iexact=country_name)
                 except Country.DoesNotExist:
                     skipped_rows.append({'row': row_number, 'Reason': 'Country not found'})
                     continue
@@ -4254,7 +4254,7 @@ class OccupationNameImportAPIView(APIView):
                     continue
 
                 try:
-                    country_obj = Country.objects.get(country_name__iexact=country_name)
+                    country_obj = Country.objects.get(name__iexact=country_name)
                 except:
                     skipped.append({"row": row_num, "Reason": "Country not found"})
                     continue
