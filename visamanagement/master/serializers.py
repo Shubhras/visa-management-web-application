@@ -925,6 +925,9 @@ class EntranceTestResultSerializer(serializers.ModelSerializer):
         source='moduleName',
         write_only=True
     )
+    moduleName_uuid=serializers.CharField(source='moduleName.uuid', read_only=True)
+
+
     class Meta:
         model = EntranceTestResult
         fields = ['id', 'uuid', 
@@ -1463,7 +1466,7 @@ class VisaEligibilityTypeSerializer(serializers.ModelSerializer):
             'is_deleted', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
-        
+
 
 class VisaStatusSerializer(serializers.ModelSerializer):
     class Meta:
