@@ -1366,17 +1366,31 @@ class CountryCreateAPIView(APIView):
 
     def post(self, request):
         name = request.data.get("name", "").strip()
-        existing = Country.objects.filter(name__iexact=name, is_deleted=False).first()
+        continent_id = request.data.get("continent_id")  # Continent select kar rahe ho
+        if not continent_id:
+            return Response({"statusCode": 400, "status": False, "message": "continent_id is required."}, status=400)
+
+        # Check for existing country in same continent
+        existing = Country.objects.filter(
+            name__iexact=name,
+            continent_id=continent_id,
+            is_deleted=False
+        ).first()
+
         if existing:
-            return Response({"statusCode": 400, "status": False, "message": "Country with this name already exists."}, status=400)
+            return Response({"statusCode": 400, "status": False, "message": "Country with this name already exists in the selected continent."}, status=400)
 
         serializer = CountrySerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response({"statusCode": 200, "status": True, "message": "Country created successfully", "data": serializer.data})
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "Country created successfully",
+                "data": serializer.data
+            })
         errors = " ".join([msg for msgs in serializer.errors.values() for msg in msgs])
         return Response({"statusCode": 400, "status": False, "message": errors}, status=400)
-
 
 class CountryRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -1806,10 +1820,7 @@ class StateListAPIView(APIView):
         queryset = State.objects.filter(is_deleted=False)
         if search:
             queryset = queryset.filter(
-                Q(stateName__istartswith=search) |
-                Q(stateshortName__istartswith=search) |
-                Q(description__istartswith=search) |
-                Q(countryName__name__istartswith=search)
+                Q(stateName__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -2257,10 +2268,7 @@ class DistrictListAPIView(APIView):
         queryset = District.objects.filter(is_deleted=False)
         if search:
             queryset = queryset.filter(
-                Q(districtName__istartswith=search) |
-                Q(description__istartswith=search) |
-                Q(stateName__stateName__istartswith=search) |
-                Q(countryName__name__istartswith=search)
+                Q(districtName__istartswith=search) 
             )
 
         queryset = queryset.order_by(sort_by)

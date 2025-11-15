@@ -42,7 +42,7 @@ class Continents(models.Model):
 
 class Country(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=255, unique=True)
+    name = models.CharField(max_length=255)
     continent=models.ForeignKey(Continents,on_delete=models.SET_NULL,related_name="countries", blank=True, null=True)
     shortName = models.CharField(max_length=250, blank=True, null=True)
     fullName = models.CharField(max_length=250, blank=True, null=True)
@@ -58,6 +58,9 @@ class Country(models.Model):
     updated_at = models.DateTimeField(auto_now=True) 
     is_active = models.BooleanField(default=True)
     is_deleted = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('continent', 'name')
    
 
     def __str__(self):
@@ -80,6 +83,11 @@ class State(models.Model):
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)  
     updated_at = models.DateTimeField(auto_now=True) 
+
+    class Meta:
+        unique_together = ('countryName', 'state')
+
+
 
     def __str__(self):
         return self.stateName
