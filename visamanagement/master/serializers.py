@@ -1360,13 +1360,13 @@ class RepresentingCountrySerializer(serializers.ModelSerializer):
     country_name = serializers.CharField(source='country.name', read_only=True)
     largest_state_name = serializers.CharField(source='largest_state.name', read_only=True)
     largest_city_name = serializers.CharField(source='largest_city.name', read_only=True)
-    
+
     class Meta:
         model = RepresentingCountry
         fields = [
             'uuid',
-            'country',            
-            'country_name',       
+            'country',
+            'country_name',
             'continent',
             'short_name',
             'full_name',
@@ -1407,9 +1407,26 @@ class RepresentingCountrySerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at',
         ]
-        read_only_fields = ['created_at', 'updated_at', 'country_name', 'largest_state_name', 'largest_city_name']
+        read_only_fields = [
+            'created_at', 'updated_at',
+            'country_name', 'largest_state_name', 'largest_city_name'
+        ]
 
+    def create(self, validated_data):
+        country = validated_data.get('country')
 
+        # Autofill fields from selected country
+        validated_data['continent'] = country.continent
+        validated_data['short_name'] = country.short_name
+        validated_data['full_name'] = country.full_name
+        validated_data['official_name'] = country.official_name
+        validated_data['capital_city'] = country.capital_city
+        validated_data['dial_codes'] = country.dial_codes
+        validated_data['currency_full_name'] = country.currency_full_name
+        validated_data['currency_short_name'] = country.currency_short_name
+        validated_data['currency_code'] = country.currency_code
+
+        return super().create(validated_data)
 class VisaMainSerializer(serializers.ModelSerializer):
     class Meta:
         model = VisaMain

@@ -1349,10 +1349,7 @@ class CountryListAPIView(APIView):
         queryset = Country.objects.filter(is_deleted=False)
         if search:
             queryset = queryset.filter(
-                Q(name__istartswith=search) |
-                Q(shortName__istartswith=search) |
-                Q(fullName__istartswith=search) |
-                Q(capitalCity__istartswith=search)
+                Q(name__istartswith=search) 
             )
 
         queryset = queryset.order_by(sort_by)
@@ -4006,10 +4003,7 @@ class CivilIdNameListAPIView(APIView):
  
         if search:
             queryset = queryset.filter(
-                Q(civil_id_name__istartswith=search) |
-                Q(authority_full_name__istartswith=search) |
-                Q(authority_short_name__istartswith=search) |
-                Q(description__istartswith=search)
+                Q(civil_id_name__istartswith=search) 
             )
  
         queryset = queryset.order_by(sort_by)
