@@ -14636,9 +14636,7 @@ class AcademicResultListAPIView(APIView):
         # Apply search filter if search query is provided
         if search:
             queryset = queryset.filter(
-                Q(Academicresult__istartwith=search) |
-                Q(description__istartwith=search) |
-                Q(AcademicResulttype____istartwith=search)  # Assuming you want to search by AcademicResulttype
+                Q(Academicresult__istartwith=search) 
             )
 
         # Sorting
