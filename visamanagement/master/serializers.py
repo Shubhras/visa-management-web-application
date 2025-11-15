@@ -606,6 +606,7 @@ class AcademicResultTypeSerializer(serializers.ModelSerializer):
             'id',
             'uuid',
             'name',
+            'datatype',
             'description',
             'is_deleted',
             'created_at',
