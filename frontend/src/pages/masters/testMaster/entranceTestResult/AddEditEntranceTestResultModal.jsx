@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from "react-redux";
-import { entranceTestResultAdd, entranceTestResultEdit, entranceTestNameList, entranceTestModuleNameList } from '../../../../store/master/testMaster/action';
+import { entranceTestResultAdd, entranceTestResultEdit, entranceTestNameList, entranceTestModuleNameList,entranceTestIdModuleList } from '../../../../store/master/testMaster/action';
 import { toast } from "react-toastify";
 import Select from "react-select";
 const AddEditEntranceTestResultModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
@@ -27,25 +27,27 @@ const AddEditEntranceTestResultModal = ({ show, handleClose, mode = 'add', rowDa
 
     // Populate form data when in edit mode
     useEffect(() => {
-        if (mode === 'edit' && rowData) {
-            setFormData({
-                uuid: rowData.uuid || '',
-                name: rowData.entrancetest.uuid || '',
-                result: rowData.testresult || '',
-                fullname: rowData.moduleName.uuid || '',
-                description: rowData.description || '',
-            });
-        } else {
-            // Reset form when switching to add mode
-            setFormData({
-                uuid: '',
-                name: '',
-                fullname: '',
-                result: '',
-                description: '',
-            });
+        if (show) {
+            if (mode === 'edit' && rowData) {
+                setFormData({
+                    uuid: rowData.uuid || '',
+                    name: rowData?.entrancetest?.uuid || '',
+                    result: rowData.testresult || '',
+                    fullname: rowData.moduleName_uuid || '',
+                    description: rowData.description || '',
+                });
+            } else {
+                // Reset form when switching to add mode
+                setFormData({
+                    uuid: '',
+                    name: '',
+                    fullname: '',
+                    result: '',
+                    description: '',
+                });
+            }
+            fetchEnteranceTestNameList();
         }
-        fetchEnteranceTestNameList();
     }, [mode, rowData, show]);
 
     const fetchEnteranceTestNameList = () => {
@@ -58,7 +60,6 @@ const AddEditEntranceTestResultModal = ({ show, handleClose, mode = 'add', rowDa
             sortBy: 'updated_at', // Field to sort by
             sortOrder: 'desc', // 'asc' or 'desc'
         };
-
         dispatch(entranceTestNameList(params, (response, error) => {
             setLoading(false);
             if (response?.statusCode === 200 && response?.status === true) {
@@ -148,7 +149,7 @@ const AddEditEntranceTestResultModal = ({ show, handleClose, mode = 'add', rowDa
                     if (response?.statusCode === 200 && response?.status === true) {
                         toast.success(response?.message);
                         resetForm();
-                        handleClose();
+                        handleClose(true);
                     } else {
                         toast.error("Something went wrong.");
                     }
@@ -173,7 +174,7 @@ const AddEditEntranceTestResultModal = ({ show, handleClose, mode = 'add', rowDa
     const onClose = () => {
         resetForm();
         setLoading(false);
-        handleClose();
+        handleClose(false);
     };
 
     // Conditional return after all hooks
@@ -249,7 +250,7 @@ const AddEditEntranceTestResultModal = ({ show, handleClose, mode = 'add', rowDa
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                                         Entrance Test Module Name <span className="text-danger">*</span>
                                     </label>
-                                      <Select
+                                    <Select
                                         options={enteranceTestModule.map((option) => ({
                                             value: option.uuid,
                                             label: option.moduleName,
@@ -329,16 +330,24 @@ const AddEditEntranceTestResultModal = ({ show, handleClose, mode = 'add', rowDa
                                     <button
                                         type="button"
                                         onClick={onClose}
-                                        className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-16 py-4 radius-6"
+                                        className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-16 py-6 radius-6"
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         type="submit"
-                                        className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
+                                        className="btn comman-btn-color border border-primary-600 text-md px-16 py-6 radius-6"
                                         disabled={loading}
                                     >
-                                        {loading ? 'Saving...' : 'Save'}
+                                        {/* {loading ? 'Saving...' : 'Save'} */}
+                                        {loading ? (
+                                            <>
+                                                <span className="spinner-border spinner-border-sm me-2"></span>
+                                                Saving...
+                                            </>
+                                        ) : (
+                                            "Save"
+                                        )}
                                     </button>
                                 </div>
                             </div>

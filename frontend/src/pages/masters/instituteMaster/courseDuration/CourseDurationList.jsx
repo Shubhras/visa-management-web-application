@@ -660,8 +660,13 @@ const CourseDurationList = () => {
                                                     <td><span>{rowItem.courselevel}</span></td>
                                                 )}
                                                 {
+                                                    isColumnVisible('valid_duration_value') && (
+                                                        <td> <span>{rowItem.valid_duration_value}</span></td>
+                                                    )
+                                                }
+                                                {
                                                     isColumnVisible('valid_duration_unit') && (
-                                                        <td> <span>{`${rowItem.valid_duration_value} ${rowItem.valid_duration_unit}`}</span></td>
+                                                        <td> <span>{rowItem.valid_duration_unit}</span></td>
                                                     )
                                                 }
                                                 {isColumnVisible('description') && (

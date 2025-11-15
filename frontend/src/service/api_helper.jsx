@@ -1707,6 +1707,11 @@ export const importEntranceTestResultAPI = (payload) => {
     return post(apiUrl, payload);
 };
 
+export const getEntranceTestIdModuleListAPI = (payload) => {
+    const apiUrl = `${url.GET_ENTRANCE_TEST_ID_MODULE_LIST}?uuid=${payload?.entrance_test_id}`;
+    return get(apiUrl);
+};
+
 // Language Test Result
 export const getLanguageTestResultListAPI = (data) => {
     const apiUrl = `${url.GET_LANGUAGE_TEST_RESULT_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
