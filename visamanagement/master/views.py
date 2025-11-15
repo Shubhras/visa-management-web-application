@@ -3122,7 +3122,7 @@ class CityImportAPIView(APIView):
             skipped_rows = []
             existing_in_file = set()
 
-            for row in data:
+            for row in reversed(data):
                 city_name = str(row.get("city name") or "").strip()
                 country_name = str(row.get("country name") or "").strip()
                 state_name = str(row.get("state name") or "").strip()

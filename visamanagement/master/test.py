@@ -284,7 +284,7 @@ class LanguageExportAPIView(APIView):
         # --- Prepare dataset ---
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'Language'
+        dataset.title = 'Language Name(Test)'
 
         for lang in queryset:
             row = []
@@ -406,7 +406,7 @@ class LanguageImportAPIView(APIView):
             imported_count = 0
 
             # ---------- Import Rows ----------
-            for row in data:
+            for row in reversed(data):
                 name = str(row.get('language name (test)')).strip() if row.get('language name (test)') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
                 is_deleted = row.get('is_deleted', False)
@@ -830,7 +830,7 @@ class LanguageTestImportAPIView(APIView):
 
             imported_count = 0
 
-            for row in data:
+            for row in reversed(data):
                 lang_name = str(row.get('language name (test)')).strip()
                 name = str(row.get('language test name')).strip()
                 fullname = str(row.get('language test full name')).strip() if row.get('language test full name') else ''
@@ -1188,7 +1188,7 @@ class LanguagetestmoduleNameImportAPIView(APIView):
             imported_count = 0
 
             # ---------- Import Rows ----------
-            for row in data:
+            for row in reversed(data):
                 name = str(row.get('language test module name')).strip() if row.get('language test module name') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
                 is_deleted = row.get('is_deleted', False)
@@ -1512,7 +1512,7 @@ class CLBLevelImportAPIView(APIView):
             imported_count = 0
 
             # ---------- Import Rows ----------
-            for row in data:
+            for row in reversed(data):
                 name = str(row.get('clb level')).strip() if row.get('clb level') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
@@ -1817,7 +1817,7 @@ class StudyLanguageBenchmarkImportAPIView(APIView):
             imported_count = 0
 
             # ---------- Import Rows ----------
-            for row in data:
+            for row in reversed(data):
                 name = str(row.get('language banchmark level')).strip() if row.get('language banchmark level') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
@@ -2128,7 +2128,7 @@ class EntranceTestNameImportAPIView(APIView):
             imported_count = 0
 
             # ---------- Import Rows ----------
-            for row in data:
+            for row in reversed(data):
                 fullname = str(row.get('entrance test full name')).strip() if row.get('entrance test full name') else None
                 shortname = str(row.get('entrance test name')).strip() if row.get('entrance test name') else ''
                 description = str(row.get('description')).strip() if row.get('description') else ''
@@ -2410,7 +2410,7 @@ class EntranceTestModuleImportAPIView(APIView):
 
             imported_count = 0
 
-            for row in data:
+            for row in reversed(data):
                 entrancetest_name = str(row.get('entrance test name')).strip() if row.get('entrance test name') else None
                 module_name = str(row.get('entrance test module name')).strip() if row.get('entrance test module name') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
@@ -2752,7 +2752,7 @@ class EntranceTestResultImportAPIView(APIView):
 
             imported_count = 0
 
-            for row in data:
+            for row in reversed(data):
                 entrancetest_name = str(row.get('entrance test name')).strip() if row.get('entrance test name') else None
                 moduleName_name = str(row.get('entrance test module name')).strip() if row.get('entrance test module name') else None
                 testresult = str(row.get('entrance test result')).strip() if row.get('entrance test result') else None

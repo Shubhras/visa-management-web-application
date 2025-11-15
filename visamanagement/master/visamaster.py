@@ -314,7 +314,7 @@ class RepresentingCountryImportAPIView(APIView):
                 }, status=400)
 
             imported_count = 0
-            for row in data:
+            for row in reversed(data):
                 full_name = str(row.get('full name')).strip() if row.get('full name') else None
                 if not full_name:
                     skipped_rows.append({"Full Name": "Unknown", "Reason": "Missing required field: full name"})
@@ -551,7 +551,7 @@ class VisaMainImportAPIView(APIView):
             else:
                 return Response({'error': 'Unsupported file format'}, status=400)
 
-            for row in data:
+            for row in reversed(data):
                 name = str(row.get('name')).strip() if row.get('name') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
                 if not name:
@@ -756,7 +756,7 @@ class VisaMajorImportAPIView(APIView):
             else:
                 return Response({'error': 'Unsupported file format'}, status=400)
 
-            for row in data:
+            for row in reversed(data):
                 visamain_id = row.get('visamain')
                 name = str(row.get('name')).strip() if row.get('name') else ''
                 description = str(row.get('description')).strip() if row.get('description') else ''
@@ -983,7 +983,7 @@ class VisaNameImportAPIView(APIView):
             else:
                 return Response({'error': 'Unsupported file format'}, status=400)
 
-            for row in data:
+            for row in reversed(data):
                 country_id = row.get('country')
                 visamain_id = row.get('visamain')
                 visamajor_id = row.get('visamajor')
@@ -1208,7 +1208,7 @@ class ApplicantTypeImportAPIView(APIView):
             else:
                 return Response({'error': 'Unsupported file format'}, status=400)
 
-            for row in data:
+            for row in reversed(data):
                 name = str(row.get('name')).strip() if row.get('name') else ''
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
