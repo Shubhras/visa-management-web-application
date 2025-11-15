@@ -1455,6 +1455,37 @@ class ApplicantTypeSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
 
 
+class VisaEligibilityTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VisaEligibilityType
+        fields = [
+            'id', 'uuid', 'name', 'description',
+            'is_deleted', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+        
+
+class VisaStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VisaStatus
+        fields = [
+            'id', 'uuid', 'name', 'description',
+            'is_deleted', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
+
+class PossibilityLevelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PossibilityLevel
+        fields = [
+            'id', 'uuid', 'name', 'description',
+            'is_deleted', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
+
+
 #----------------------------occupation-----------------
 
 class JobTypeSerializer(serializers.ModelSerializer):
