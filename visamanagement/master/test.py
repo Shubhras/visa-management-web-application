@@ -2056,8 +2056,8 @@ class EntranceTestNameImportAPIView(APIView):
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
 
-        required_headers = {'entrance test name'}  # Must exist
-        optional_headers = {'entrance test short name', 'description'}
+        required_headers = {'entrance test full name'}  # Must exist
+        optional_headers = {'entrance test name', 'description'}
 
         try:
             data = []
@@ -2129,8 +2129,8 @@ class EntranceTestNameImportAPIView(APIView):
 
             # ---------- Import Rows ----------
             for row in data:
-                fullname = str(row.get('entrance test name')).strip() if row.get('entrance test name') else None
-                shortname = str(row.get('entrance test short name')).strip() if row.get('entrance test short name') else ''
+                fullname = str(row.get('entrance test full name')).strip() if row.get('entrance test full name') else None
+                shortname = str(row.get('entrance test name')).strip() if row.get('entrance test name') else ''
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not fullname:
