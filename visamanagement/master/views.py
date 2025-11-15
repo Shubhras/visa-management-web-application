@@ -2199,50 +2199,63 @@ class StateImportAPIView(APIView):
 
 class StateByCountryAPIView(APIView):
     def get(self, request):
-        country_id = request.GET.get("country_id")
-        if not country_id:
+        # Get multiple country_ids (comma-separated)
+        country_ids = request.GET.get("country_id", "").split(',')
+        search_term = request.GET.get("search", "")  # Search query parameter
+        sort_by = request.GET.get("sort_by", "stateName")  # Sort by state name by default
+
+        if not country_ids:
             return Response({
                 "statusCode": 400,
                 "status": False,
                 "message": "country_id is required"
             }, status=status.HTTP_400_BAD_REQUEST)
-        
 
-        try:
-            country_uuid = uuid.UUID(country_id)
-        except ValueError:
+        # Validate each country_id and fetch countries
+        valid_countries = []
+        invalid_countries = []
+        for country_id in country_ids:
+            try:
+                country_uuid = uuid.UUID(country_id.strip())  # Convert string to UUID
+                country = Country.objects.get(uuid=country_uuid)
+                valid_countries.append(country)
+            except (ValueError, Country.DoesNotExist):
+                invalid_countries.append(country_id)
+
+        if invalid_countries:
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Invalid UUID format for country_id"
+                "message": f"Invalid or non-existent country IDs: {', '.join(invalid_countries)}"
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        try:
-            country = Country.objects.get(uuid=country_uuid)
+        # Fetch states for valid countries
+        states = State.objects.filter(countryName__in=valid_countries)
+        
+        # Search filtering
+        if search_term:
+            states = states.filter(stateName__icontains=search_term)
 
-        except Country.DoesNotExist:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "Invalid Country ID"
-            }, status=status.HTTP_404_NOT_FOUND)
+        # Sorting
+        if sort_by and hasattr(State, sort_by):
+            states = states.order_by(sort_by)
 
-        states = State.objects.filter(countryName=country)
+        # Pagination
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(states, request)
         data = []
-        for state in states:
+
+        # Prepare response data with country name and state details
+        for state in result_page:
             data.append({
                 "uuid": str(state.uuid),
                 "name": state.stateName,
                 "shortName": state.stateshortName,
-                "fullName": state.description
+                "fullName": state.description,
+                "country": state.countryName.name  # Include country name in each state
             })
 
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"State for country '{state.stateName}' fetched successfully",
-            "data": data
-        }, status=status.HTTP_200_OK)
+        return paginator.get_paginated_response(data)
 
 
 
@@ -2250,6 +2263,8 @@ class StateByCountryAPIView(APIView):
 
 
 
+
+        
 #-------------------------------------------district---------------------------------
 class DistrictListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
