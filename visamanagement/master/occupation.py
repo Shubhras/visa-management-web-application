@@ -2121,12 +2121,7 @@ class OccupationLevelListAPIView(APIView):
         queryset = OccupationLevel.objects.filter(is_deleted=False)
         if search:
             queryset = queryset.filter(
-                Q(occupationlevel__istartswith=search) |
-                Q(description__istartswith=search) |
-                Q(country__country_name__istartswith=search) |
-                Q(occupationversion__occupation_version__istartswith=search) |
-                Q(occupationcategory__occupationcategory__istartswith=search) |
-                Q(occupationlevelcode__occupationlevelcode__istartswith=search)
+                Q(occupationlevel__istartswith=search) 
             )
 
         queryset = queryset.order_by(sort_by)
