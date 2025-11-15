@@ -82,6 +82,12 @@ const AddEditDistrictModal = ({ show, handleClose, mode = 'add', rowData = null 
 
     //setLoading(true);
     const params = {
+      page: 1,
+      limit: 2000,
+      search: '',
+      status: '',
+      sortBy: 'name',
+      sortOrder: 'asc',
       countryId: countryId,
     };
 
@@ -271,14 +277,14 @@ const AddEditDistrictModal = ({ show, handleClose, mode = 'add', rowData = null 
                     name="country"
                     options={countryListData.map((option) => ({
                       value: option.uuid,
-                      label: option.name+" ("+option.continent.name +")",
+                      label: option.name+" ("+option?.continent?.name+")",
                     }))}
                     value={
                       formData.country
                         ? countryListData
                           .map((option) => ({
                             value: option.uuid,
-                            label: option.name+" ("+option.continent.name +")",
+                            label: option.name+" ("+option?.continent?.name+")",
                           }))
                           .find((opt) => opt.value === formData.country)
                         : null
@@ -308,14 +314,14 @@ const AddEditDistrictModal = ({ show, handleClose, mode = 'add', rowData = null 
                     name="state"
                     options={stateListData.map((option) => ({
                       value: option.uuid,
-                      label: option.name,
+                      label: option.name+" ("+option?.country+")",
                     }))}
                     value={
                       formData.state
                         ? stateListData
                           .map((option) => ({
                             value: option.uuid,
-                            label: option.name,
+                            label: option.name+" ("+option?.country+")",
                           }))
                           .find((opt) => opt.value === formData.state)
                         : null

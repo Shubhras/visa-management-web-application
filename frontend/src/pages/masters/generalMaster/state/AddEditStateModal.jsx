@@ -16,7 +16,7 @@ const AddEditStateModal = ({ show, handleClose, mode = 'add', rowData = null }) 
     country: '',
     name: '',
     short_name: '',
-    stateTerritory: '',
+    stateTerritory: 'State',
     description: '',
   });
 
@@ -25,7 +25,7 @@ const AddEditStateModal = ({ show, handleClose, mode = 'add', rowData = null }) 
     country: '',
     name: '',
     short_name: '',
-    stateTerritory: '',
+    stateTerritory: 'State',
     description: '',
   });
 
@@ -48,7 +48,7 @@ const AddEditStateModal = ({ show, handleClose, mode = 'add', rowData = null }) 
 
   // Fetch country list
   const fetchCountryList = () => {
-   // setLoading(true);
+    // setLoading(true);
     const params = {
       page: 1,
       limit: 2000,
@@ -173,7 +173,7 @@ const AddEditStateModal = ({ show, handleClose, mode = 'add', rowData = null }) 
       country: '',
       name: '',
       short_name: '',
-      stateTerritory: '',
+      stateTerritory: 'State',
       description: '',
     });
     setErrors({});
@@ -217,14 +217,14 @@ const AddEditStateModal = ({ show, handleClose, mode = 'add', rowData = null }) 
                   <Select
                     options={countryListData.map((option) => ({
                       value: option.uuid,
-                      label: option.name+" ("+option.continent.name +")",
+                      label: option.name + " (" + option?.continent?.name + ")",
                     }))}
                     value={
                       formData.country
                         ? countryListData
                           .map((option) => ({
                             value: option.uuid,
-                            label: option.name+" ("+option.continent.name +")",
+                            label: option.name + " (" + option?.continent?.name + ")",
                           }))
                           .find((opt) => opt.value === formData.country)
                         : null
@@ -281,21 +281,33 @@ const AddEditStateModal = ({ show, handleClose, mode = 'add', rowData = null }) 
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                     State / Territory <span className="text-danger">*</span>
                   </label>
-                  <select
-                    name="stateTerritory"
-                    value={formData.stateTerritory}
-                    onChange={handleChange}
-                    className={`form-control form-select radius-8 ${errors.stateTerritory ? 'is-invalid' : ''}`}
-                  >
-                    <option value="">State / Territory</option>
-                    <option value="State">State</option>
-                    <option value="Territory">Territory</option>
+                  <Select
+                    options={[
+                      { value: "State", label: "State" },
+                      { value: "Territory", label: "Territory" },
+                    ]}
+                    value={[
+                      { value: "State", label: "State" },
+                      { value: "Territory", label: "Territory" },
+                    ].find((opt) => opt.value === (formData.stateTerritory || "State"))}
+                    onChange={(selectedOption) =>
+                      handleChange({
+                        target: {
+                          name: "stateTerritory",
+                          value: selectedOption ? selectedOption.value : "",
+                        },
+                      })
+                    }
+                    placeholder="State / Territory"
+                    isClearable
+                    isSearchable
+                    className={`custom-select-container ${errors.stateTerritory ? "is-invalid" : ""
+                      }`}
+                    classNamePrefix="custom-select"
+                  />
 
-                  </select>
                   {errors.stateTerritory && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.stateTerritory}
-                    </div>
+                    <div className="text-danger text-sm mt-1">{errors.stateTerritory}</div>
                   )}
                 </div>
                 {/* Description */}

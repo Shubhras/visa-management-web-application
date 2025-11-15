@@ -62,7 +62,6 @@ const AddEditCityModal = ({ show, handleClose, mode = 'add', rowData = null }) =
   }, [mode, rowData, show]);
 
   const fetchCountryList = () => {
-    //setLoading(true);
     const params = {
       page: 1,
       limit: 2000,
@@ -85,10 +84,14 @@ const AddEditCityModal = ({ show, handleClose, mode = 'add', rowData = null }) =
       setStateListData([]);
       return;
     }
-
-    //setLoading(true);
     const params = {
-      countryId: countryId,
+      page: 1,
+      limit: 2000,
+      search: '',
+      status: '',
+      sortBy: 'name',
+      sortOrder: 'asc',
+      countryId: countryId
     };
 
     dispatch(stateListByCountry(params, (response, error) => {
@@ -109,6 +112,12 @@ const AddEditCityModal = ({ show, handleClose, mode = 'add', rowData = null }) =
 
     //setLoading(true);
     const params = {
+      page: 1,
+      limit: 2000,
+      search: '',
+      status: '',
+      sortBy: 'districtName',
+      sortOrder: 'asc',
       countryId: countryId,
       stateId: stateId
     };
@@ -323,14 +332,14 @@ const AddEditCityModal = ({ show, handleClose, mode = 'add', rowData = null }) =
                     name="country"
                     options={countryListData.map((option) => ({
                       value: option.uuid,
-                      label: option.name+" ("+option.continent.name +")",
+                      label: option.name + " (" + option?.continent?.name + ")",
                     }))}
                     value={
                       formData.country
                         ? countryListData
                           .map((option) => ({
                             value: option.uuid,
-                            label: option.name+" ("+option.continent.name +")",
+                            label: option.name + " (" + option?.continent?.name + ")",
                           }))
                           .find((opt) => opt.value === formData.country)
                         : null
@@ -360,14 +369,14 @@ const AddEditCityModal = ({ show, handleClose, mode = 'add', rowData = null }) =
                     name="state"
                     options={stateListData.map((option) => ({
                       value: option.uuid,
-                      label: option.name,
+                      label: option.name + " (" + option?.country + ")",
                     }))}
                     value={
                       formData.state
                         ? stateListData
                           .map((option) => ({
                             value: option.uuid,
-                            label: option.name,
+                            label: option.name + " (" + option?.country + ")",
                           }))
                           .find((opt) => opt.value === formData.state)
                         : null
@@ -392,14 +401,14 @@ const AddEditCityModal = ({ show, handleClose, mode = 'add', rowData = null }) =
                     name="district"
                     options={districtListData.map((option) => ({
                       value: option.uuid,
-                      label: option.districtName,
+                      label: option.districtName + " (" + option?.state + ")",
                     }))}
                     value={
                       formData.district
                         ? districtListData
                           .map((option) => ({
                             value: option.uuid,
-                            label: option.districtName,
+                            label: option.districtName + " (" + option?.state + ")",
                           }))
                           .find((opt) => opt.value === formData.district)
                         : null
