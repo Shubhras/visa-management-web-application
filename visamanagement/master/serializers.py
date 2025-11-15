@@ -1058,8 +1058,8 @@ class OccupationLevelCodeSerializer(serializers.ModelSerializer):
         model = OccupationLevelCode
         fields = [
             'id', 'uuid',
-            'country', 'country_id',
-            'occupation_version', 'occupation_version_id',
+            'country', 'country_id','country_uuid',
+            'occupation_version', 'occupation_version_id','occupation_version_uuid',
             'occupationlevelcode', 'description',
             'is_deleted', 'created_at', 'updated_at'
         ]
