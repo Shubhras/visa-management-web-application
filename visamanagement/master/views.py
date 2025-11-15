@@ -14472,127 +14472,6 @@ class AcademicResultTypeExportAPIView(APIView):
 # --------------------- Import API ---------------------
 class AcademicResultTypeImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
- 
-    def post(self, request):
-        file = request.FILES.get('file')
-        sheet_name = request.data.get('sheet_name')
- 
-        if not file:
-            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
- 
-        format_type = file.name.split('.')[-1].lower()
-        duplicate_names = []
- 
-        required_headers = {'academic result type'}
-        optional_headers = {'description'}
- 
-        try:
-            data = []
- 
-            if format_type == 'xlsx':
-                import openpyxl
-                wb = openpyxl.load_workbook(file, read_only=True)
-                available_sheets = wb.sheetnames
- 
-                if not sheet_name:
-                    return Response({
-                        'error': 'Please provide sheet_name',
-                        'available_sheets': available_sheets
-                    }, status=status.HTTP_400_BAD_REQUEST)
-                if sheet_name not in available_sheets:
-                    return Response({
-                        'error': f'Sheet "{sheet_name}" not found',
-                        'available_sheets': available_sheets
-                    }, status=status.HTTP_400_BAD_REQUEST)
- 
-                ws = wb[sheet_name]
-                if ws.max_row <= 1:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": f'The uploaded XLSX file is empty.'
-                    }, status=status.HTTP_400_BAD_REQUEST)
- 
-                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                if not required_headers.issubset(set(headers)):
-                    return Response({
-                        "statusCode": 400,
-                        "status": True,
-                        'message': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
-                    }, status=status.HTTP_400_BAD_REQUEST)
- 
-                for row in ws.iter_rows(min_row=2, values_only=True):
-                    if not any(row):
-                        continue
-                    row_dict = dict(zip(headers, row))
-                    data.append(row_dict)
- 
-            elif format_type == 'csv':
-                decoded_file = file.read().decode('utf-8')
-                dataset = Dataset()
-                dataset.load(decoded_file, format='csv')
- 
-                for row in dataset.dict:
-                    row_lower = {k.strip().lower(): v for k, v in row.items()}
-                    if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({
-                            "statusCode": 400,
-                            "status": True,
-                            "message": f'Missing required headers. Required: {required_headers}'
-                        }, status=status.HTTP_400_BAD_REQUEST)
-                    data.append(row_lower)
-            else:
-                return Response({
-                    "statusCode": 400,
-                    "status": True,
-                    'error': 'Unsupported file format. Use .xlsx or .csv'
-                }, status=status.HTTP_400_BAD_REQUEST)
- 
-            imported_count = 0
-            for row in  reversed(data):
-                name = str(row.get('name')).strip() if row.get('name') else None
-                description = str(row.get('description')).strip() if row.get('description') else ''
- 
-                if not name:
-                    continue
- 
-                existing = AcademicResultType.objects.filter(name__iexact=name).first()
-                if existing:
-                    if not existing.is_deleted:
-                        duplicate_names.append(name)
-                        continue
-                    else:
-                        existing.description = description
-                        existing.is_deleted = False
-                        existing.save()
-                        imported_count += 1
-                else:
-                    AcademicResultType.objects.create(
-                        name=name,
-                        description=description,
-                        is_deleted=False
-                    )
-                    imported_count += 1
- 
-        except Exception as e:
-            return Response({
-                "statusCode": 400,
-                "status": True,
-                'message': str(e)
-            }, status=status.HTTP_400_BAD_REQUEST)
- 
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "duplicates": list(set(duplicate_names)),
-            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
-            "imported_count": imported_count
-        }, status=status.HTTP_200_OK)
- 
-
-
-class AcademicResultTypeImportAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
         file = request.FILES.get('file')
@@ -14731,7 +14610,50 @@ class AcademicResultTypeImportAPIView(APIView):
             "imported_count": imported_count
         }, status=status.HTTP_200_OK)
 
+ 
 # -------------------- AcademicResult -------------------- #
+
+
+class AcademicResultListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # Optional search query parameters
+        search = request.GET.get('search', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_order = request.GET.get('sortOrder', 'desc')
+
+        # Allowed sort fields
+        allowed_sort_fields = ['Academicresult', 'description', 'created_at']
+        if sort_by not in allowed_sort_fields:
+            sort_by = 'created_at'
+        if sort_order == 'desc':
+            sort_by = f'-{sort_by}'
+
+        # Initial queryset filtered for non-deleted results
+        queryset = AcademicResult.objects.filter(is_deleted=False)
+
+        # Apply search filter if search query is provided
+        if search:
+            queryset = queryset.filter(
+                Q(Academicresult__istartwith=search) |
+                Q(description__istartwith=search) |
+                Q(AcademicResulttype____istartwith=search)  # Assuming you want to search by AcademicResulttype
+            )
+
+        # Sorting
+        queryset = queryset.order_by(sort_by)
+
+        # Pagination
+        paginator = CustomPagination()  # CustomPagination should be implemented in your project
+        result_page = paginator.paginate_queryset(queryset, request)
+        
+        serializer = AcademicResultSerializer(result_page, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
+
+
+
 
 class AcademicResultCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
