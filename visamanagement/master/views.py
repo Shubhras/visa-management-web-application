@@ -1690,7 +1690,7 @@ class CountryImportAPIView(APIView):
                         })
                         continue
 
-                existing = Country.objects.filter(name__iexact=country_name).first()
+                existing = Country.objects.filter(name__iexact=country_name, continent=continent_obj).first()
                 if existing:
                     if not getattr(existing, "is_deleted", False):
                         duplicate_names.append({
@@ -3180,6 +3180,8 @@ class CityImportAPIView(APIView):
                 "message": str(e)
             }, status=400)
 
+
+ 
         
 #---------------------------Realtion-----------------------
 class RelationListAPIView(APIView):
@@ -6776,14 +6778,17 @@ class StakeholderTypeCreateAPIView(APIView):
 
     def post(self, request):
         name = request.data.get("name", "").strip()
+        category_id = request.data.get("category")
 
-        existing = StakeholderType.objects.filter(name__iexact=name, is_deleted=False).first()
+        # Check if the stakeholder type already exists with the same name and category
+        existing = StakeholderType.objects.filter(name__iexact=name, category_id=category_id, is_deleted=False).first()
         if existing:
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "StakeholderType with this name already exists."
+                "message": "StakeholderType with this name and category already exists."
             }, status=status.HTTP_400_BAD_REQUEST)
+
 
         serializer = StakeholderTypeSerializer(data=request.data)
         if serializer.is_valid():
