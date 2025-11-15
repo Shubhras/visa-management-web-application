@@ -932,7 +932,7 @@ class EntranceTestResultSerializer(serializers.ModelSerializer):
         model = EntranceTestResult
         fields = ['id', 'uuid', 
                   'entrancetest', 'entrancetest_id', 
-                  'moduleName', 'moduleName_id', 
+                  'moduleName', 'moduleName_id','moduleName_uuid', 
                   'testresult', 'description',
                   'is_deleted', 'created_at', 'updated_at']
         read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
