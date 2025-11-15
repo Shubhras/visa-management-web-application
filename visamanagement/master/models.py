@@ -908,7 +908,7 @@ class OccupationVersion(models.Model):
 
     def __str__(self):
         return self.occupation_version
-    
+
 
 
 class OccupationCategory(models.Model):
