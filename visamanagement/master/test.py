@@ -2702,6 +2702,8 @@ class EntranceTestResultImportAPIView(APIView):
 
         format_type = file.name.split('.')[-1].lower()
         duplicate_entries = []
+        skipped_rows = []
+
         required_headers = {'entrance test name', 'entrance test module name', 'entrance test result'}
         optional_headers = {'description'}
 
@@ -2757,6 +2759,10 @@ class EntranceTestResultImportAPIView(APIView):
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not entrancetest_name or not moduleName_name or not testresult:
+                    skipped_rows.append({
+                        "row": row,
+                        "reason": "Required field(s) missing"
+                    })
                     continue
 
                 existing = EntranceTestResult.objects.filter(
@@ -2775,9 +2781,28 @@ class EntranceTestResultImportAPIView(APIView):
                         existing.save()
                         imported_count += 1
                 else:
+                    # Gracefully handle missing EntranceTestName or ModuleName
+                    entrance_obj = EntranceTestName.objects.filter(fullname__iexact=entrancetest_name).first()
+                    module_obj = EntranceTestModuleName.objects.filter(moduleName__iexact=moduleName_name).first()
+
+                    if not entrance_obj:
+                        skipped_rows.append({
+                            "row": row,
+                            "reason": f'EntranceTestName "{entrancetest_name}" does not exist'
+                        })
+                        continue
+
+                    if not module_obj:
+                        skipped_rows.append({
+                            "row": row,
+                            "reason": f'EntranceTestModuleName "{moduleName_name}" does not exist'
+                        })
+                        continue
+
+                    # Create new record
                     EntranceTestResult.objects.create(
-                        entrancetest=EntranceTestName.objects.get(fullname__iexact=entrancetest_name),
-                        moduleName=EntranceTestModuleName.objects.get(moduleName__iexact=moduleName_name),
+                        entrancetest=entrance_obj,
+                        moduleName=module_obj,
                         testresult=testresult,
                         description=description,
                         is_deleted=False
@@ -2791,6 +2816,7 @@ class EntranceTestResultImportAPIView(APIView):
             "statusCode": 200,
             "status": True,
             "duplicates": list(set(duplicate_entries)),
+            "skipped_rows": skipped_rows,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=200)
