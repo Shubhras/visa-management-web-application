@@ -16858,3 +16858,65 @@ class DegreeAwardedByEducationLevelAPIView(APIView):
                 },
                 status=500
             )
+
+
+
+class EntranceTestModulesAPIView(APIView):
+    def get(self, request):
+        entrance_test_id = request.GET.get("entrance_test_id")
+        search_term = request.GET.get("search", "")       # search by module name
+        sort_by = request.GET.get("sort_by", "moduleName")  # default sorting
+
+        if not entrance_test_id:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "entrance_test_id is required"
+            }, status=400)
+
+        # Validate UUID
+        try:
+            test_uuid = uuid.UUID(entrance_test_id.strip())
+        except ValueError:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Invalid UUID format for entrance_test_id"
+            }, status=400)
+
+        # Fetch EntranceTest
+        try:
+            entrance_test = EntranceTestName.objects.get(uuid=test_uuid, is_deleted=False)
+        except EntranceTestName.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "Entrance Test not found"
+            }, status=404)
+
+        # Fetch associated modules
+        modules = EntranceTestModuleName.objects.filter(entrancetest=entrance_test, is_deleted=False)
+
+        # Search filter
+        if search_term:
+            modules = modules.filter(moduleName__icontains=search_term)
+
+        # Sorting
+        if sort_by and hasattr(EntranceTestModuleName, sort_by):
+            modules = modules.order_by(sort_by)
+
+        # Pagination
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(modules, request)
+
+        # Prepare response
+        data = []
+        for module in result_page:
+            data.append({
+                "uuid": str(module.uuid),
+                "moduleName": module.moduleName,
+                "description": module.description,
+                "entrance_test": entrance_test.fullname
+            })
+
+        return paginator.get_paginated_response(data)
