@@ -888,6 +888,15 @@ class CLBLevelSerializer(serializers.ModelSerializer):
 
 
 
+
+class StudyLanguageBanchmarkSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StudyLanguageBanchmark
+        fields = ['id', 'uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
+
+
 class LanguageTestResultSerializer(serializers.ModelSerializer):
     
     language = LanguageSerializer(read_only=True)
@@ -924,11 +933,6 @@ class LanguageTestResultSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
 
 
-class StudyLanguageBanchmarkSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = StudyLanguageBanchmark
-        fields = ['id', 'uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
-        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
 
 class EntranceTestNameSerializer(serializers.ModelSerializer):
     class Meta:
