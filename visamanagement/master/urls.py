@@ -397,7 +397,7 @@ urlpatterns = [
     path('language/', LanguageListAPIView.as_view(), name='language-list'),
     path('language/export/', LanguageExportAPIView.as_view(), name='language-export'),
     path('language/import/', LanguageImportAPIView.as_view(), name='language-import'),
-    path('language-tests/', LanguageTestsAPIView.as_view(), name='language-tests'),
+    path('language-tests-by-language/', LanguageTestsAPIView.as_view(), name='language-tests'),
     path('entrance-test-modules/', EntranceTestModulesAPIView.as_view(), name='entrance-test-modules'),
     # ---------------- LanguageTest ---------------- #
     path('language-tests/', LanguageTestListAPIView.as_view(), name='language-test-list'),
