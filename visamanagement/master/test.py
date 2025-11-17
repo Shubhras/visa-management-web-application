@@ -457,25 +457,17 @@ class LanguageTestListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
-        language_id = request.GET.get('language_id')
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'created_at')
         sort_order = request.GET.get('sortOrder', 'desc')
         allowed_sort_fields = ['name', 'fullname', 'description', 'updated_at']
-
-        if not language_id:
-            return Response(
-                {"error": "language_id is required."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
 
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
-        queryset = LanguageTest.objects.filter(is_deleted=False, language_id=language_id)
-
+        queryset = LanguageTest.objects.filter(is_deleted=False)
         if search:
             queryset = queryset.filter(
                 Q(name__istartswith=search)
