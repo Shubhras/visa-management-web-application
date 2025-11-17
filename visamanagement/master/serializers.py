@@ -896,17 +896,17 @@ class LanguageTestResultSerializer(serializers.ModelSerializer):
     clb_level = CLBLevelSerializer(read_only=True)
 
 
-    language_id = serializers.PrimaryKeyRelatedField(
-        queryset=Language.objects.all(), source='language', write_only=True
+    language_id = serializers.SlugRelatedField(
+        queryset=Language.objects.all(), source='language', slug_field='uuid', write_only=True
     )
-    language_test_id = serializers.PrimaryKeyRelatedField(
-        queryset=LanguageTest.objects.all(), source='language_test', write_only=True
+    language_test_id = serializers.SlugRelatedField(
+        queryset=LanguageTest.objects.all(), source='language_test', slug_field='uuid',write_only=True
     )
-    module_name_id = serializers.PrimaryKeyRelatedField(
-        queryset=LanguagetestmoduleName.objects.all(), source='languagetest_module_name', write_only=True
+    module_name_id = serializers.SlugRelatedField(
+        queryset=LanguagetestmoduleName.objects.all(), source='languagetest_module_name', slug_field='uuid',write_only=True
     )
-    clb_level_id = serializers.PrimaryKeyRelatedField(
-        queryset=CLBLevel.objects.all(), source='clb_level', write_only=True
+    clb_level_id = serializers.SlugRelatedField(
+        queryset=CLBLevel.objects.all(), source='clb_level', slug_field='uuid', write_only=True
     )
 
     class Meta:
@@ -1072,7 +1072,6 @@ class OccupationCategorySerializer(serializers.ModelSerializer):
 class OccupationLevelCodeSerializer(serializers.ModelSerializer):
     country = serializers.CharField(read_only=True, source='country.name')
     
-    # Country (write)
     country_id = serializers.SlugRelatedField(
         slug_field='uuid',
         queryset=Country.objects.all(),
@@ -1103,6 +1102,10 @@ class OccupationLevelCodeSerializer(serializers.ModelSerializer):
             'is_deleted', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
+
+
+
 
 # ------------------- OccupationLevel Serializer ------------------- #
 class OccupationLevelSerializer(serializers.ModelSerializer):
@@ -1169,6 +1172,7 @@ class OccupationLevelSerializer(serializers.ModelSerializer):
 # ------------------- OccupationCode Serializer ------------------- #
 class OccupationCodeSerializer(serializers.ModelSerializer):
     country_name = serializers.CharField(read_only=True, source='country.name')
+    country_uuid=serializers.CharField(read_only=True, source='country.uuid')
     country_id = serializers.SlugRelatedField(
         slug_field='uuid',
         queryset=Country.objects.all(),
@@ -1179,6 +1183,8 @@ class OccupationCodeSerializer(serializers.ModelSerializer):
     )
 
     occupationversion_name = serializers.CharField(read_only=True, source='occupationversion.occupation_version')
+    occupationversion_uuid=serializers.CharField(read_only=True, source='occupationversion.uuid')
+
     occupationversion_id = serializers.SlugRelatedField(
         slug_field='uuid',
         queryset=OccupationVersion.objects.all(),
@@ -1193,6 +1199,7 @@ class OccupationCodeSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'uuid',
             'country_name', 'country_id',
+            'occupationversion_uuid','country_uuid',
             'occupationversion_name', 'occupationversion_id',
             'occupationcode', 'description',
             'is_deleted', 'created_at', 'updated_at'
