@@ -423,6 +423,8 @@ import CourseLevelList from "./pages/masters/instituteMaster/courseLevel/CourseL
 import CourseDurationList from "./pages/masters/instituteMaster/courseDuration/CourseDurationList";
 import OccupationLevelCodeList from "./pages/masters/occupationMaster/occupationlevelcode/OccupationLevelCodeList";
 import OccupationLevelList from "./pages/masters/occupationMaster/occupationlevel/OccupationLevelList";
+import OccupationCodeList from "./pages/masters/occupationMaster/occupationcode/OccupationCodeList";
+import OccupationNameList from "./pages/masters/occupationMaster/occupationname/OccupationNameList";
 
 
 
@@ -718,6 +720,8 @@ function App() {
         <Route path="/occupation-version" element={<ProtectedRoute><OccupationVersionList /></ProtectedRoute>}></Route>
         <Route path="/occupation-level-code" element={<ProtectedRoute><OccupationLevelCodeList /></ProtectedRoute>}></Route>
         <Route path="/occupation-level" element={<ProtectedRoute><OccupationLevelList /></ProtectedRoute>}></Route>
+        <Route path="/occupation-code" element={<ProtectedRoute><OccupationCodeList /></ProtectedRoute>}></Route>
+        <Route path="/occupation-name" element={<ProtectedRoute><OccupationNameList /></ProtectedRoute>}></Route>
         
 
 

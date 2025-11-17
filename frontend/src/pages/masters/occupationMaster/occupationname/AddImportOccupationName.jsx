@@ -9,7 +9,7 @@ import {
   exportToExcelWrongData,
 } from "../../../../helper/utils/commanHelper";
 import { occupationLevelCodeImportData } from "../../../../store/master/occupationMaster/action";
-const AddImportOccupationLevel = ({ show, handleClose }) => {
+const AddImportOccupationName = ({ show, handleClose }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState(null);
@@ -327,4 +327,4 @@ const AddImportOccupationLevel = ({ show, handleClose }) => {
   );
 };
 
-export default AddImportOccupationLevel;
+export default AddImportOccupationName;
