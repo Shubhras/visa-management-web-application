@@ -725,27 +725,27 @@ class ECAForSerializer(serializers.ModelSerializer):
 
 
 class ECAAwardingBodySerializer(serializers.ModelSerializer):
-    country_name = serializers.CharField(source='country.name', read_only=True)  # Display country name
-    eca_for_name = serializers.CharField(source='ecafor.name', read_only=True)  # Display ECAFor name
-    eca_for_uuid = serializers.CharField(source='ecafor.uuid', read_only=True)  # Display ECAFor name
-  
+    country_name = serializers.CharField(source='country.name', read_only=True)
+    eca_for_name = serializers.CharField(source='ecafor.name', read_only=True)
+    eca_for_uuid = serializers.CharField(source='ecafor.uuid', read_only=True)
+
+    country = serializers.SlugRelatedField(
+        queryset=Country.objects.all(),
+        slug_field='uuid'
+    )
+    ecafor = serializers.SlugRelatedField(
+        queryset=ECAFor.objects.all(),
+        slug_field='uuid'
+    )
+
     class Meta:
         model = ECAAwardingBody
         fields = [
-            'uuid',
-            'id',
-            'country',
-            'country_name',
-            'ecafor',
-            'eca_for_uuid',
-            'eca_for_name',
-            'description',
-            'valid_duration_value',
-            'eca_body_full_name',
-            'eca_body_short_name',
-            'eca_valid_period',
-            'created_at',
-            'updated_at',
+            'uuid', 'id', 'country', 'country_name',
+            'ecafor', 'eca_for_uuid', 'eca_for_name',
+            'description', 'valid_duration_value',
+            'eca_body_full_name', 'eca_body_short_name',
+            'eca_valid_period', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
 
