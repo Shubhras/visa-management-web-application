@@ -2706,7 +2706,7 @@ class OccupationCodeExportAPIView(APIView):
                 if field == 'country' and value:
                     value = value.name
                 elif field == 'occupationversion' and value:
-                    value = value.occupationversion
+                    value = value.occupation_version
                 elif field in ['created_at', 'updated_at'] and value:
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
