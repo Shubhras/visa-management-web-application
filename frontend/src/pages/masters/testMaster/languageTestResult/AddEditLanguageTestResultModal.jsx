@@ -32,29 +32,31 @@ const AddEditLanguageTestResultModal = ({ show, handleClose, mode = 'add', rowDa
 
     // Populate form data when in edit mode
     useEffect(() => {
-        if (mode === 'edit' && rowData) {
-            setFormData({
-                uuid: rowData.uuid || '',
-                languageNameTest: rowData.language.uuid || '',
-                shortName: rowData.name || '',
-                moduleName: rowData.moduleName || '',
-                testResult: rowData.testResult || '',
-                benchmarkLevel: rowData.benchmarkLevel || '',
-                description: rowData.description || '',
-            });
-        } else {
-            // Reset form when switching to add mode
-            setFormData({
-                uuid: '',
-                languageNameTest: '',
-                shortName: '',
-                moduleName: '',
-                testResult: '',
-                benchmarkLevel: '',
-                description: '',
-            });
+        if (show) {
+            if (mode === 'edit' && rowData) {
+                setFormData({
+                    uuid: rowData.uuid || '',
+                    languageNameTest: rowData.language.uuid || '',
+                    shortName: rowData.name || '',
+                    moduleName: rowData.moduleName || '',
+                    testResult: rowData.testResult || '',
+                    benchmarkLevel: rowData.benchmarkLevel || '',
+                    description: rowData.description || '',
+                });
+            } else {
+                // Reset form when switching to add mode
+                setFormData({
+                    uuid: '',
+                    languageNameTest: '',
+                    shortName: '',
+                    moduleName: '',
+                    testResult: '',
+                    benchmarkLevel: '',
+                    description: '',
+                });
+            }
+            fetchLanguageTestNameList();
         }
-        fetchLanguageTestNameList();
     }, [mode, rowData, show]);
 
     const fetchLanguageTestNameList = () => {
@@ -179,7 +181,7 @@ const AddEditLanguageTestResultModal = ({ show, handleClose, mode = 'add', rowDa
                     if (response?.statusCode === 200 && response?.status === true) {
                         toast.success(response?.message);
                         resetForm();
-                        handleClose();
+                        handleClose(true);
                     } else {
                         toast.error("Something went wrong.");
                     }
@@ -206,7 +208,7 @@ const AddEditLanguageTestResultModal = ({ show, handleClose, mode = 'add', rowDa
     const onClose = () => {
         resetForm();
         setLoading(false);
-        handleClose();
+        handleClose(false);
     };
 
     // Conditional return after all hooks
@@ -442,16 +444,24 @@ const AddEditLanguageTestResultModal = ({ show, handleClose, mode = 'add', rowDa
                                     <button
                                         type="button"
                                         onClick={onClose}
-                                        className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-16 py-4 radius-6"
+                                        className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-16 py-6 radius-6"
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         type="submit"
-                                        className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
+                                        className="btn comman-btn-color border border-primary-600 text-md px-16 py-6 radius-6"
                                         disabled={loading}
                                     >
-                                        {loading ? 'Saving...' : 'Save'}
+                                        {/* {loading ? 'Saving...' : 'Save'} */}
+                                        {loading ? (
+                                            <>
+                                                <span className="spinner-border spinner-border-sm me-2"></span>
+                                                Saving...
+                                            </>
+                                        ) : (
+                                            "Save"
+                                        )}
                                     </button>
                                 </div>
                             </div>

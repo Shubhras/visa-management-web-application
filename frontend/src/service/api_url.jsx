@@ -398,6 +398,7 @@ export const EDIT_ENTRANCE_TEST_RESULT_API = "/api/v1/master/entrancetestresult/
 export const DELETE_ENTRANCE_TEST_RESULT_API = "/api/v1/master/entrancetestresult/";
 export const EXPORT_ENTRANCE_TEST_RESULT_API = "/api/v1/master/entrancetestresult/export/";
 export const IMPORT_ENTRANCE_TEST_RESULT_API = "/api/v1/master/entrancetestresult/import/";
+export const GET_ENTRANCE_TEST_ID_MODULE_LIST = "/api/v1/master/entrancetestresult/";
 
 // Language Test Result
 export const GET_LANGUAGE_TEST_RESULT_LIST = "/api/v1/master/languagetestresult/";
