@@ -1396,7 +1396,7 @@ class LanguageTestResultExportAPIView(APIView):
             'uuid': 'UUID',
             'language': 'Language',
             'language_test': 'Language Test',
-            'languagetest_module_name': 'Module Name',
+            'languagetest_module_name': 'Language Test Module Name',
             'clb_level': 'CLB Level',
             'numeric_score': 'Numeric Score',
             'description': 'Description',

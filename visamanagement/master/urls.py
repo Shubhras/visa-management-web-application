@@ -353,6 +353,14 @@ urlpatterns = [
     path('eca-for/export/',ECAForExportAPIView.as_view(), name='ecs-for-export'),
     path('eca-for/import/',ECAForImportAPIView.as_view(), name='ecs-for-import'),
 
+    path('language-test-results/', LanguageTestResultListAPIView.as_view(), name='language_test_result_list'),
+    path('language-test-results/create/', LanguageTestResultCreateAPIView.as_view(), name='language_test_result_create'),
+    path('language-test-results/<uuid:uuid>/', LanguageTestResultRetrieveAPIView.as_view(), name='language_test_result_retrieve'),
+    path('language-test-results/<uuid:uuid>/update/', LanguageTestResultUpdateAPIView.as_view(), name='language_test_result_update'),
+    path('language-test-results/delete/', LanguageTestResultDeleteAPIView.as_view(), name='language_test_result_delete'),
+    path('language-test-results/import/', LanguageTestResultImportAPIView.as_view(), name='language_test_result_import'),
+    path('language-test-results/export/', LanguageTestResultExportAPIView.as_view(), name='language_test_result_export'),
+
    
     path('eca-awarding-bodies/', ECAAwardingBodyListAPIView.as_view(), name='eca-awarding-body-list'),
     path('eca-awarding-bodies/create/', ECAAwardingBodyCreateAPIView.as_view(), name='eca-awarding-body-create'),
