@@ -582,3 +582,28 @@ class LanguageTestAdmin(admin.ModelAdmin):
     search_fields = ('name', 'fullname', 'description', 'language__name')
     list_filter = ('is_deleted', 'created_at', 'updated_at', 'language')
     ordering = ('-created_at',)
+
+
+
+@admin.register(LanguagetestmoduleName)
+class LanguagetestmoduleNameAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'description', 'is_deleted', 'created_at', 'updated_at')
+    search_fields = ('name', 'description')
+    list_filter = ('is_deleted', 'created_at', 'updated_at')
+    readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(CLBLevel)
+class CLBLevelAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'description', 'is_deleted', 'created_at', 'updated_at')
+    search_fields = ('name', 'description')
+    list_filter = ('is_deleted', 'created_at', 'updated_at')
+    readonly_fields = ('created_at', 'updated_at')
+
+@admin.register(StudyLanguageBanchmark)
+class StudyLanguageBanchmarkAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'description', 'is_deleted', 'created_at', 'updated_at')
+    search_fields = ('name', 'description')
+    list_filter = ('is_deleted', 'created_at', 'updated_at')
+    readonly_fields = ('created_at', 'updated_at')
+    
