@@ -898,27 +898,24 @@ class StudyLanguageBanchmarkSerializer(serializers.ModelSerializer):
 
 
 class LanguageTestResultSerializer(serializers.ModelSerializer):
-    
     language = LanguageSerializer(read_only=True)
     language_test = LanguageTestSerializer(read_only=True)
     module_name = LanguagetestmoduleNameSerializer(read_only=True)
-    module_name = StudyLanguageBanchmarkSerializer(read_only=True)
-
+    lb_level = StudyLanguageBanchmarkSerializer(read_only=True)
 
     language_id = serializers.SlugRelatedField(
         queryset=Language.objects.all(), source='language', slug_field='uuid', write_only=True
     )
     language_test_id = serializers.SlugRelatedField(
-        queryset=LanguageTest.objects.all(), source='language_test', slug_field='uuid',write_only=True
+        queryset=LanguageTest.objects.all(), source='language_test', slug_field='uuid', write_only=True
     )
     module_name_id = serializers.SlugRelatedField(
-        queryset=LanguagetestmoduleName.objects.all(), source='languagetest_module_name', slug_field='uuid',write_only=True
+        queryset=LanguagetestmoduleName.objects.all(), source='module_name', slug_field='uuid', write_only=True
+    )
+    lb_level_id = serializers.SlugRelatedField(
+        queryset=StudyLanguageBanchmark.objects.all(), source='lb_level', slug_field='uuid', write_only=True
     )
 
-    lb_id = serializers.SlugRelatedField(
-        queryset=StudyLanguageBanchmark.objects.all(), source='languagetestresult_name', slug_field='uuid',write_only=True
-    )
-  
     class Meta: 
         model = LanguageTestResult
         fields = [
@@ -926,13 +923,11 @@ class LanguageTestResultSerializer(serializers.ModelSerializer):
             'language', 'language_id',
             'language_test', 'language_test_id',
             'module_name', 'module_name_id',
-            'lb_id',
+            'lb_level', 'lb_level_id',
             'numeric_score', 'description',
             'is_deleted', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
-
-
 
 class EntranceTestNameSerializer(serializers.ModelSerializer):
     class Meta:
