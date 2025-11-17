@@ -421,6 +421,8 @@ import CourseStatusforIntakeList from "./pages/masters/instituteMaster/courseSta
 import ScholorshipBasedOnList from "./pages/masters/instituteMaster/scholorshipBasedOn/ScholorshipBasedOnList";
 import CourseLevelList from "./pages/masters/instituteMaster/courseLevel/CourseLevelList";
 import CourseDurationList from "./pages/masters/instituteMaster/courseDuration/CourseDurationList";
+import OccupationLevelCodeList from "./pages/masters/occupationMaster/occupationlevelcode/OccupationLevelCodeList";
+import OccupationLevelList from "./pages/masters/occupationMaster/occupationlevel/OccupationLevelList";
 
 
 
@@ -714,6 +716,9 @@ function App() {
         <Route path="/occupation-prospect" element={<ProtectedRoute><OccupationProspectList /></ProtectedRoute>}></Route>
         <Route path="/occupation-category" element={<ProtectedRoute><OccupationCategoryList /></ProtectedRoute>}></Route>
         <Route path="/occupation-version" element={<ProtectedRoute><OccupationVersionList /></ProtectedRoute>}></Route>
+        <Route path="/occupation-level-code" element={<ProtectedRoute><OccupationLevelCodeList /></ProtectedRoute>}></Route>
+        <Route path="/occupation-level" element={<ProtectedRoute><OccupationLevelList /></ProtectedRoute>}></Route>
+        
 
 
         {/*Institute Master*/}

@@ -1966,6 +1966,69 @@ export const importOccupationVersionDataAPI = (payload) => {
     return post(apiUrl, payload);
 };
 
+// Occupation Level Code
+export const getOccupationLevelCodeListAPI = (data) => {
+  const apiUrl = `${url.GET_OCCUPATION_LEVEL_CODE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
+
+export const addOccupationLevelCodeAPI = (payload) => {
+  const apiUrl = `${url.ADD_OCCUPATION_LEVEL_CODE}`;
+  return post(apiUrl, payload);
+};
+
+export const editOccupationLevelCodeAPI = (payload) => {
+  const apiUrl = `${url.EDIT_OCCUPATION_LEVEL_CODE}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+
+export const deleteOccupationLevelCodeAPI = (payload) => {
+  const prepareData = { id: payload };
+  const apiUrl = `${url.DELETE_OCCUPATION_LEVEL_CODE}delete/`;
+  return delWithPayload(apiUrl, prepareData);
+};
+
+export const exportOccupationLevelCodeAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_OCCUPATION_LEVEL_CODE}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+
+export const importOccupationLevelCodeAPI = (payload) => {
+  const apiUrl = `${url.IMPORT_OCCUPATION_LEVEL_CODE}`;
+  return post(apiUrl, payload);
+};
+
+// Occupation Level 
+export const getOccupationLevelListAPI = (data) => {
+  const apiUrl = `${url.GET_OCCUPATION_LEVEL_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
+
+export const addOccupationLevelAPI = (payload) => {
+  const apiUrl = `${url.ADD_OCCUPATION_LEVEL_API}`;
+  return post(apiUrl, payload);
+};
+
+export const editOccupationLevelAPI = (payload) => {
+  const apiUrl = `${url.EDIT_OCCUPATION_LEVEL_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+
+export const deleteOccupationLevelAPI = (payload) => {
+  const preparedData = { id: payload };
+  const apiUrl = `${url.DELETE_OCCUPATION_LEVEL_API}delete/`;
+  return delWithPayload(apiUrl, preparedData);
+};
+
+export const exportOccupationLevelAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_OCCUPATION_LEVEL_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+
+export const importOccupationLevelAPI = (payload) => {
+  const apiUrl = `${url.IMPORT_OCCUPATION_LEVEL_API}`;
+  return post(apiUrl, payload);
+};
 
 
 // Institute Type

@@ -159,27 +159,32 @@ const MasterLayout = ({ children }) => {
             { name: "Occupation Prospect", path: "/occupation-prospect" },
             { name: "Occupation Category", path: "/occupation-category" },
             { name: "Occupation Version", path: "/occupation-version" },
+            { name: "Occupation Level Code", path: "/occupation-level-code" },
+            { name: "Occupation Level", path: "/occupation-level" },
           ],
         },
         {
           name: "Institute",
           children: [
-            { name: 'Institute Type', path: '/institute-type' },
-            { name: 'Institute Group Name', path: '/institute-group-name' },
-            { name: "Institute Status", path: '/institute-status' },
-            { name: "Institute Priority", path: '/institute-priority' },
-            { name: "Institute Department", path: '/institute-department' },
-            { name: "Bank Account For", path: '/bank-account-for' },
-            { name: "When Commission Issue", path: '/when-commission-issue' },
-            { name: "Course Level Code", path: '/course-level-code' },
-            { name: 'Course Divided In', path: '/course-divided-in' },
-            { name: 'Course Status', path: '/course-status' },
-            { name: 'Intake Name', path: '/intake-name' },
-            { name: 'Course Status for Intake', path: '/course-status-for-intake' },
-            { name: 'Scholorship Based On', path: '/scholorship-based-on' },
-            { name: 'Course Level', path: '/course-level' },
-            { name: 'Course Duration', path: '/course-duration' },
-          ]
+            { name: "Institute Type", path: "/institute-type" },
+            { name: "Institute Group Name", path: "/institute-group-name" },
+            { name: "Institute Status", path: "/institute-status" },
+            { name: "Institute Priority", path: "/institute-priority" },
+            { name: "Institute Department", path: "/institute-department" },
+            { name: "Bank Account For", path: "/bank-account-for" },
+            { name: "When Commission Issue", path: "/when-commission-issue" },
+            { name: "Course Level Code", path: "/course-level-code" },
+            { name: "Course Divided In", path: "/course-divided-in" },
+            { name: "Course Status", path: "/course-status" },
+            { name: "Intake Name", path: "/intake-name" },
+            {
+              name: "Course Status for Intake",
+              path: "/course-status-for-intake",
+            },
+            { name: "Scholorship Based On", path: "/scholorship-based-on" },
+            { name: "Course Level", path: "/course-level" },
+            { name: "Course Duration", path: "/course-duration" },
+          ],
         },
 
         // { name: 'Education', path: '/' },
@@ -330,8 +335,8 @@ const MasterLayout = ({ children }) => {
           sidebarActive
             ? "sidebar active "
             : mobileMenu
-              ? "sidebar sidebar-open"
-              : "sidebar"
+            ? "sidebar sidebar-open"
+            : "sidebar"
         }
         style={{ display: "none" }}
       >
