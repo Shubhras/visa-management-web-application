@@ -791,9 +791,6 @@ class DocumentType(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
 
-    class Meta:
-        unique_together = ('name')
-
     def __str__(self):
         return self.name    
     
@@ -808,8 +805,6 @@ class PurposeOfVisit(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
 
-    class Meta:
-        unique_together = ('name')
     
 
     def __str__(self):
@@ -825,9 +820,7 @@ class DocumentsFor(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
 
-    class Meta:
-        unique_together = ('name')
-    
+
 
     def __str__(self):
         return self.name
@@ -908,8 +901,7 @@ class ProcessType(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
 
-    class Meta:
-        unique_together = ('name')
+  
 
     def __str__(self):
         return self.name
@@ -926,8 +918,6 @@ class PaymentTo(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
 
-    class Meta:
-        unique_together =('name')
     
     def __str__(self):
         return self.name
@@ -951,7 +941,7 @@ class PaymentCategory(models.Model):
         return f"{self.payment_category} ({self.payment_to.name})"
 
 
-        
+
     
 class  Language(models.Model):
     id = models.AutoField(primary_key=True)
