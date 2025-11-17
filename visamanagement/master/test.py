@@ -1396,7 +1396,7 @@ class LanguageTestResultExportAPIView(APIView):
             'language': 'Language',
             'language_test': 'Language Test',
             'languagetest_module_name': 'Language Test Module Name',
-            'clb_level': 'CLB Level',
+            'lb_level': 'Language Benchmark Level',
             'numeric_score': 'Numeric Score',
             'description': 'Description',
             'is_deleted': 'Deleted',
@@ -1428,8 +1428,8 @@ class LanguageTestResultExportAPIView(APIView):
                 elif field == 'language_test' and value:
                     value = value.name
                 elif field == 'languagetest_module_name' and value:
-                    value = value.moduleName
-                elif field == 'clb_level' and value:
+                    value = value.name
+                elif field == 'lb_level' and value:
                     value = value.name
                 # Datetime formatting
                 elif field in ['created_at', 'updated_at'] and value:
