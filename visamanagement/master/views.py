@@ -2797,7 +2797,7 @@ class CityListAPIView(APIView):
             if raw:
                 items = [x.strip() for x in raw.split(',') if x.strip()]
             else:
-                items = request.GET.getlist(f"{param_name}[]") or request.GET.getlist(param_name)
+                items = request.GET.getlist(f"{param_name}") or request.GET.getlist(param_name)
             return items
 
         # Helper: filter valid UUIDs
@@ -2880,7 +2880,7 @@ class CityListAPIView(APIView):
         return paginator.get_paginated_response(serializer.data)
 
 
-        
+
 # -------------------- City -------------------- 
 class CityCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
