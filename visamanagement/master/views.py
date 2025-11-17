@@ -3261,7 +3261,7 @@ class CityImportAPIView(APIView):
                     continue
 
                 # ------------------ Duplicate check ------------------
-                key = (city_name.lower(), district_obj.uuid, state_obj.uuid, country_obj.uuid)
+                key = (city_name.lower(), district_obj, state_obj, country_obj)
                 if key in existing_city_keys or key in existing_in_file:
                     duplicate_names.append({
                         "City Name": city_name,
