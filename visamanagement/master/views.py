@@ -2703,19 +2703,23 @@ class DistrictByFilterAPIView(APIView):
         country_ids = request.GET.get("country_id", "").split(',')  # multiple countries
         state_ids = request.GET.get("state_id", "").split(',')      # multiple states
         search_term = request.GET.get("search", "")                 # search by district name
-        sort_by = request.GET.get("sort_by", "districtName")        # default sort by districtName
+        sort_by = request.GET.get("sort_by", "districtName")        # default sort
 
-        # Validate countries
-        valid_countries = []
-        invalid_countries = []
-        for country_id in filter(None, country_ids):
-            try:
-                country_uuid = uuid.UUID(country_id.strip())
-                country = Country.objects.get(uuid=country_uuid)
-                valid_countries.append(country)
-            except (ValueError, Country.DoesNotExist):
-                invalid_countries.append(country_id)
+        # Helper: validate UUIDs and fetch objects
+        def get_valid_objects(model, ids):
+            valid_objs = []
+            invalid_ids = []
+            for _id in filter(None, ids):
+                try:
+                    obj_uuid = uuid.UUID(_id.strip())
+                    obj = model.objects.get(uuid=obj_uuid)
+                    valid_objs.append(obj)
+                except (ValueError, model.DoesNotExist):
+                    invalid_ids.append(_id)
+            return valid_objs, invalid_ids
 
+        # Validate countries (optional)
+        valid_countries, invalid_countries = get_valid_objects(Country, country_ids)
         if invalid_countries:
             return Response({
                 "statusCode": 400,
@@ -2723,17 +2727,8 @@ class DistrictByFilterAPIView(APIView):
                 "message": f"Invalid or non-existent country IDs: {', '.join(invalid_countries)}"
             }, status=400)
 
-        # Validate states
-        valid_states = []
-        invalid_states = []
-        for state_id in filter(None, state_ids):
-            try:
-                state_uuid = uuid.UUID(state_id.strip())
-                state = State.objects.get(uuid=state_uuid)
-                valid_states.append(state)
-            except (ValueError, State.DoesNotExist):
-                invalid_states.append(state_id)
-
+        # Validate states (optional)
+        valid_states, invalid_states = get_valid_objects(State, state_ids)
         if invalid_states:
             return Response({
                 "statusCode": 400,
@@ -2743,6 +2738,7 @@ class DistrictByFilterAPIView(APIView):
 
         # Fetch districts
         districts = District.objects.filter(is_deleted=False)
+
         if valid_countries:
             districts = districts.filter(countryName__in=valid_countries)
         if valid_states:
@@ -2761,15 +2757,16 @@ class DistrictByFilterAPIView(APIView):
         result_page = paginator.paginate_queryset(districts, request)
 
         # Prepare response
-        data = []
-        for district in result_page:
-            data.append({
-                "uuid": str(district.uuid),
-                "districtName": district.districtName,
-                "Country": district.countryName.name if district.countryName else None,
-                "state": district.stateName.stateName if district.stateName else None,
-                "description": district.description
-            })
+        data = [
+            {
+                "uuid": str(d.uuid),
+                "districtName": d.districtName,
+                "Country": d.countryName.name if d.countryName else None,
+                "state": d.stateName.stateName if d.stateName else None,
+                "description": d.description
+            }
+            for d in result_page
+        ]
 
         return paginator.get_paginated_response(data)
 
