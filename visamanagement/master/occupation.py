@@ -2798,7 +2798,7 @@ class OccupationCodeImportAPIView(APIView):
                     continue
 
                 try:
-                    country_obj = Country.objects.get(name__iexact=country_name).first()
+                    country_obj = Country.objects.get(name__iexact=country_name)
                 except Country.DoesNotExist:
                     skipped_rows.append({'row': row_number, 'Reason': 'Country not found'})
                     continue

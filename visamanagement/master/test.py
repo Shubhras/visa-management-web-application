@@ -1228,7 +1228,341 @@ class LanguagetestmoduleNameImportAPIView(APIView):
 
 
 
+class LanguageTestResultListAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
+    def get(self, request):
+        search = request.GET.get('search', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_order = request.GET.get('sortOrder', 'desc')
+        allowed_sort_fields = ['numeric_score', 'description', 'created_at']
+
+        if sort_by not in allowed_sort_fields:
+            sort_by = 'created_at'
+        if sort_order == 'desc':
+            sort_by = f'-{sort_by}'
+
+        queryset = LanguageTestResult.objects.filter(is_deleted=False)
+        if search:
+            queryset = queryset.filter(
+                Q(numeric_score__istartswith=search) |
+                Q(description__istartswith=search) |
+                Q(language_test__name__istartswith=search) |
+                Q(languagetest_module_name__moduleName__istartswith=search)
+            )
+
+        queryset = queryset.order_by(sort_by)
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = LanguageTestResultSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+
+# -------------------- Create -------------------- #
+class LanguageTestResultCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        # Get UUIDs
+        language_uuid = request.data.get("language_id")
+        language_test_uuid = request.data.get("language_test_id")
+        module_uuid = request.data.get("module_name_id")
+        clb_uuid = request.data.get("clb_level_id")
+
+        # Fetch FK objects
+        try:
+            language_obj = Language.objects.get(uuid=language_uuid)
+        except Language.DoesNotExist:
+            return Response({"statusCode": 400, "status": False, "message": "Invalid Language UUID"}, status=400)
+
+        try:
+            language_test_obj = LanguageTest.objects.get(uuid=language_test_uuid)
+        except LanguageTest.DoesNotExist:
+            return Response({"statusCode": 400, "status": False, "message": "Invalid Language Test UUID"}, status=400)
+
+        try:
+            module_obj = LanguagetestmoduleName.objects.get(uuid=module_uuid)
+        except LanguagetestmoduleName.DoesNotExist:
+            return Response({"statusCode": 400, "status": False, "message": "Invalid Module UUID"}, status=400)
+
+        try:
+            clb_obj = CLBLevel.objects.get(uuid=clb_uuid)
+        except CLBLevel.DoesNotExist:
+            return Response({"statusCode": 400, "status": False, "message": "Invalid CLB Level UUID"}, status=400)
+
+        # Check duplicate
+        existing = LanguageTestResult.objects.filter(
+            language=language_obj,
+            language_test=language_test_obj,
+            languagetest_module_name=module_obj,
+            clb_level=clb_obj,
+            is_deleted=False
+        ).first()
+        if existing:
+            return Response({"statusCode": 400, "status": False, "message": "Result already exists."}, status=400)
+
+        data = request.data.copy()
+        data['language_id'] = language_obj.uuid
+        data['language_test_id'] = language_test_obj.uuid
+        data['module_name_id'] = module_obj.uuid
+        data['clb_level_id'] = clb_obj.uuid
+
+        serializer = LanguageTestResultSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"statusCode": 200, "status": True, "message": "Result created successfully", "data": serializer.data})
+
+        errors = " ".join([msg for msgs in serializer.errors.values() for msg in msgs])
+        return Response({"statusCode": 400, "status": False, "message": errors}, status=400)
+
+
+# -------------------- Retrieve -------------------- #
+class LanguageTestResultRetrieveAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request, uuid):
+        try:
+            obj = LanguageTestResult.objects.get(uuid=uuid, is_deleted=False)
+        except LanguageTestResult.DoesNotExist:
+            return Response({"statusCode": 404, "status": False, "message": "Not found", "data": None}, status=404)
+        serializer = LanguageTestResultSerializer(obj)
+        return Response({"statusCode": 200, "status": True, "message": "Retrieved successfully", "data": serializer.data})
+
+
+# -------------------- Update -------------------- #
+class LanguageTestResultUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def put(self, request, uuid):
+        try:
+            obj = LanguageTestResult.objects.get(uuid=uuid, is_deleted=False)
+        except LanguageTestResult.DoesNotExist:
+            return Response({"statusCode": 404, "status": False, "message": "Not found", "data": None}, status=404)
+
+        serializer = LanguageTestResultSerializer(obj, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"statusCode": 200, "status": True, "message": "Updated successfully", "data": serializer.data})
+
+        errors = " ".join([msg for msgs in serializer.errors.values() for msg in msgs])
+        return Response({"statusCode": 400, "status": False, "message": errors}, status=400)
+
+
+# -------------------- Delete -------------------- #
+class LanguageTestResultDeleteAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def delete(self, request):
+        ids = request.data.get('id', None)
+        if not ids:
+            return Response({"statusCode": 400, "status": False, "message": "Provide 'id' field", "data": None}, status=400)
+
+        if ids == "all":
+            objs = LanguageTestResult.objects.filter(is_deleted=False)
+            count = objs.count()
+            objs.delete()
+            return Response({"statusCode": 200, "status": True, "message": f"All {count} result(s) deleted", "data": None})
+
+        if not isinstance(ids, list):
+            return Response({"statusCode": 400, "status": False, "message": "Provide list of UUIDs", "data": None}, status=400)
+
+        valid_uuids, invalid_uuids = [], []
+        for u in ids:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(u)
+
+        objs = LanguageTestResult.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+        count = objs.count()
+        if count == 0:
+            return Response({"statusCode": 404, "status": False, "message": "No matching result found", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None}, status=404)
+
+        objs.delete()
+        return Response({"statusCode": 200, "status": True, "message": f"{count} result(s) deleted", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None})
+
+
+class LanguageTestResultExportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        format_type = request.GET.get('format', 'xlsx').lower()
+        fields = request.GET.get('fields')
+        uuids_param = request.GET.get('uuids', '')
+        uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+        # Field to header mapping
+        field_header_map = {
+            'uuid': 'UUID',
+            'language': 'Language',
+            'language_test': 'Language Test',
+            'languagetest_module_name': 'Module Name',
+            'clb_level': 'CLB Level',
+            'numeric_score': 'Numeric Score',
+            'description': 'Description',
+            'is_deleted': 'Deleted',
+            'created_at': 'Created On',
+            'updated_at': 'Modified On',
+        }
+
+        # Fields to export
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+        # Fetch queryset
+        queryset = LanguageTestResult.objects.filter(is_deleted=False)
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+        queryset = queryset.order_by('-created_at')
+
+        # Prepare dataset
+        dataset = Dataset()
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = 'Language Test Results'
+
+        for obj in queryset:
+            row = []
+            for field in field_list:
+                value = getattr(obj, field, '')
+                # Foreign keys formatting
+                if field == 'language' and value:
+                    value = value.name
+                elif field == 'language_test' and value:
+                    value = value.name
+                elif field == 'languagetest_module_name' and value:
+                    value = value.moduleName
+                elif field == 'clb_level' and value:
+                    value = value.name
+                # Datetime formatting
+                elif field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                # Boolean formatting
+                elif isinstance(value, bool):
+                    value = int(value)
+                row.append(value if value is not None else '')
+            dataset.append(row)
+
+        # Export data
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'language_test_results.csv'
+        else:
+            file_data = io.BytesIO(dataset.export('xlsx'))
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'language_test_results.xlsx'
+
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        return response
+    
+# -------------------- Import -------------------- #
+class LanguageTestResultImportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        file = request.FILES.get('file')
+        sheet_name = request.data.get('sheet_name')
+        if not file:
+            return Response({'error': 'No file uploaded'}, status=400)
+
+        format_type = file.name.split('.')[-1].lower()
+        duplicate_entries, skipped_rows, imported_count = [], [], 0
+
+        required_headers = {'language', 'language test', 'language test module name', 'clb level', 'numeric score'}
+        optional_headers = {'description'}
+
+        try:
+            data = []
+
+            if format_type == 'xlsx':
+                wb = openpyxl.load_workbook(file, read_only=True)
+                if not sheet_name:
+                    return Response({'error': 'Provide sheet_name', 'available_sheets': wb.sheetnames}, status=400)
+                if sheet_name not in wb.sheetnames:
+                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': wb.sheetnames}, status=400)
+                ws = wb[sheet_name]
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response({'error': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'}, status=400)
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    if not any(row):
+                        continue
+                    data.append(dict(zip(headers, row)))
+
+            elif format_type == 'csv':
+                dataset = Dataset()
+                dataset.load(file.read().decode('utf-8'), format='csv')
+                for row in dataset.dict:
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({'error': f'Missing required headers'}, status=400)
+                    data.append(row_lower)
+            else:
+                return Response({'error': 'Unsupported file format'}, status=400)
+
+            for row in reversed(data):
+                language_name = str(row.get('language')).strip()
+                language_test_name = str(row.get('language test')).strip()
+                module_name = str(row.get('module name')).strip()
+                clb_level_name = str(row.get('clb level')).strip()
+                numeric_score = row.get('numeric score')
+                description = row.get('description', '')
+
+                if not (language_name and language_test_name and module_name and clb_level_name and numeric_score):
+                    skipped_rows.append({"row": row, "reason": "Required field(s) missing"})
+                    continue
+
+                existing = LanguageTestResult.objects.filter(
+                    language__name__iexact=language_name,
+                    language_test__name__iexact=language_test_name,
+                    languagetest_module_name__moduleName__iexact=module_name,
+                    clb_level__name__iexact=clb_level_name
+                ).first()
+
+                if existing and not existing.is_deleted:
+                    duplicate_entries.append(f"{language_name} - {language_test_name} - {module_name} - {clb_level_name}")
+                    continue
+
+                language_obj = Language.objects.filter(name__iexact=language_name).first()
+                language_test_obj = LanguageTest.objects.filter(name__iexact=language_test_name).first()
+                module_obj = LanguagetestmoduleName.objects.filter(moduleName__iexact=module_name).first()
+                clb_obj = CLBLevel.objects.filter(name__iexact=clb_level_name).first()
+
+                if not (language_obj and language_test_obj and module_obj and clb_obj):
+                    skipped_rows.append({"row": row, "reason": "Invalid FK reference"})
+                    continue
+
+                if existing and existing.is_deleted:
+                    existing.numeric_score = numeric_score
+                    existing.description = description
+                    existing.is_deleted = False
+                    existing.save()
+                else:
+                    LanguageTestResult.objects.create(
+                        language=language_obj,
+                        language_test=language_test_obj,
+                        languagetest_module_name=module_obj,
+                        clb_level=clb_obj,
+                        numeric_score=numeric_score,
+                        description=description
+                    )
+                imported_count += 1
+
+        except Exception as e:
+            return Response({'error': str(e)}, status=400)
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "duplicates": list(set(duplicate_entries)),
+            "skipped_rows": skipped_rows,
+            "imported_count": imported_count,
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
+        }, status=200)
 
 
 

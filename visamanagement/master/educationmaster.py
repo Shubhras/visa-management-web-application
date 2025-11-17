@@ -4702,7 +4702,7 @@ class ECAAwardingBodyExportAPIView(APIView):
             'uuid': 'UUID',
             'country': 'Country',
             'ecafor': 'ECA For',
-            'valid_duration_value': 'Valid Duration',
+            'valid_duration_value': 'ECA Valid Duration',
             'eca_body_full_name': 'ECA Body Full Name',
             'eca_body_short_name': 'ECA Body Short Name',
             'eca_valid_period': 'ECA Valid Period',
@@ -4718,7 +4718,7 @@ class ECAAwardingBodyExportAPIView(APIView):
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'ECAAwardingBody'
+        dataset.title = 'ECA Awarding Body'
 
         for eca in queryset:
             row = []
