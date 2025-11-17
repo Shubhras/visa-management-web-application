@@ -5,6 +5,7 @@ import ThemeToggleButton from "../helper/ThemeToggleButton";
 // import Header from "./Header";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { useGlobalSearch } from '../components/comman/GlobalSearchContext';
 const MasterLayout = ({ children }) => {
   const navigate = useNavigate();
   let [sidebarActive, seSidebarActive] = useState(false);
@@ -13,6 +14,9 @@ const MasterLayout = ({ children }) => {
   const [selectedItemName, setSelectedItemName] = useState("Dashboard");
   const [openSubmenu, setOpenSubmenu] = useState(null);
   const [openChildMenu, setOpenChildMenu] = useState(null);
+
+  // Global Search State - Har page pe same rahega
+  const { globalSearch, setGlobalSearch } = useGlobalSearch();
   const menuItems = [
     {
       name: "Dashboard",
@@ -209,6 +213,12 @@ const MasterLayout = ({ children }) => {
     },
   ];
 
+  // // Global search clear karne ka function
+  // const handleGlobalSearchChange = (value) => {
+  //   setGlobalSearch(value);
+  //   // Yaha aap chahe to Redux dispatch kar sakte ho ya context use kar sakte ho
+  //   // Abhi ke liye sirf UI clear ho raha hai
+  // };
   const handleMenuClick = (item, parent = null, grandParent = null) => {
     if (item.children && item.children.length > 0) {
       return;
@@ -229,6 +239,16 @@ const MasterLayout = ({ children }) => {
     // // 3. Navigate to login page
     navigate("/sign-in");
   };
+
+  // // Page title set karne ke liye (optional improvement)
+  // useEffect(() => {
+  //   const path = location.pathname;
+  //   if (path === "/") setSelectedItemName("Dashboard");
+  //   else if (path.includes("city-list")) setSelectedItemName("City");
+  //   else if (path.includes("country-list")) setSelectedItemName("Country");
+  //   // ... aur baki pages ke liye add kar sakte ho
+  //   else setSelectedItemName("Dashboard");
+  // }, [location.pathname]);
 
   useEffect(() => {
     // Current path के basis पर menu item ढूंढो
@@ -335,8 +355,8 @@ const MasterLayout = ({ children }) => {
           sidebarActive
             ? "sidebar active "
             : mobileMenu
-            ? "sidebar sidebar-open"
-            : "sidebar"
+              ? "sidebar sidebar-open"
+              : "sidebar"
         }
         style={{ display: "none" }}
       >
@@ -1920,8 +1940,43 @@ const MasterLayout = ({ children }) => {
             </div>
 
             {/* Sub Header */}
-            <div className="sub-header-bar">
+            <div className="sub-header-bar d-flex align-items-center justify-content-between">
               <div className="sub-header-title">{selectedItemName}</div>
+              {selectedItemName === "City" && (
+                <div className="position-relative search-filter-div">
+                  <Icon
+                    icon="ion:search-outline"
+                    className="position-absolute search-filter-icone"
+                  />
+                  <input
+                    type="text"
+                    className="form-control form-control-sm ps-5 search-filter-input"
+                    placeholder="Search..."
+                    value={globalSearch}
+                    onChange={(e) => setGlobalSearch(e.target.value)}
+                  />
+                  {/* Clear Button (×) */}
+                  {globalSearch && (
+                    <span
+                      className="position-absolute"
+                      style={{
+                        right: '10px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        cursor: 'pointer',
+                        zIndex: 999,
+                        fontSize: '20px',
+                        color: '#6c757d',
+                        lineHeight: 1,
+                      }}
+                      onClick={() => setGlobalSearch('')}
+                    >
+                      ×
+                    </span>
+                  )}
+                </div>
+              )}
+
             </div>
           </div>
         </div>

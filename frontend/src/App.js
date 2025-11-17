@@ -423,7 +423,7 @@ import CourseLevelList from "./pages/masters/instituteMaster/courseLevel/CourseL
 import CourseDurationList from "./pages/masters/instituteMaster/courseDuration/CourseDurationList";
 import OccupationLevelCodeList from "./pages/masters/occupationMaster/occupationlevelcode/OccupationLevelCodeList";
 import OccupationLevelList from "./pages/masters/occupationMaster/occupationlevel/OccupationLevelList";
-
+import { GlobalSearchProvider } from '../src/components/comman/GlobalSearchContext';
 
 
 // Protected Route Component
@@ -489,6 +489,7 @@ function App() {
   return (
     <BrowserRouter>
       <RouteScrollToTop />
+      <GlobalSearchProvider>
       <Routes>
         {/* Public Routes - Accessible without login */}
         <Route path='/sign-in' element={
@@ -744,6 +745,7 @@ function App() {
         {/* 404 Error Page */}
         <Route path='*' element={<ErrorPage />} />
       </Routes>
+      </GlobalSearchProvider>
     </BrowserRouter>
   );
 }
