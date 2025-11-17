@@ -2800,7 +2800,16 @@ class CityListAPIView(APIView):
 
       
         if country_list:
-            queryset = queryset.filter(countryName__uuid__in=country_list)
+            queryset = queryset.filter(
+                Q(countryName__uuid__in=country_list) |
+                Q(countryName__isnull=True) |
+                Q(countryName__name__exact='')
+            )
+        else:
+            queryset = queryset.filter(
+                Q(countryName__isnull=True) |
+                Q(countryName__name__exact='')
+            )
 
         if state_list:
             queryset = queryset.filter(stateName__uuid__in=state_list)
