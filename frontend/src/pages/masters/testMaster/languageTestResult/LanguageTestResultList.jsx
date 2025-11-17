@@ -418,11 +418,11 @@ const LanguageTestResultList = () => {
         }
         // Map frontend labels to backend field names
         const fieldMapping = {
-            "Language Name (Test)": "languageNameTest",
-            "Language Test Name": "languageTestName",
-            "Module Name": "moduleName",
-            "Language Test Result": "languageTestResult",
-            "Language Banchmark Level": "languageBenchmark",
+            "Language Name (Test)": "language",
+            "Language Test Name": "language_test",
+            "Module Name": "languagetest_module_name",
+            "Language Test Result": "numeric_score",
+            "Language Banchmark Level": "lb_level",
             "Modified On": "updated_at",
             "Description": "description",
         };
@@ -680,19 +680,19 @@ const LanguageTestResultList = () => {
                                                     </div>
                                                 </td>
                                                 {isColumnVisible('languageNameTest') && (
-                                                    <td><span>{rowItem.language.name}</span></td>
+                                                    <td><span>{rowItem?.language?.name}</span></td>
                                                 )}
                                                 {isColumnVisible('languageTestName') && (
-                                                    <td><span>{rowItem.name}</span></td>
+                                                    <td><span>{rowItem?.language_test?.name}</span></td>
                                                 )}
                                                 {isColumnVisible('moduleName') && (
-                                                    <td><span>{rowItem.moduleName}</span></td>
+                                                    <td><span>{rowItem?.module_name?.name}</span></td>
                                                 )}
                                                 {isColumnVisible('languageTestResult') && (
-                                                    <td><span>{rowItem.languageTestResult}</span></td>
+                                                    <td><span>{rowItem.numeric_score}</span></td>
                                                 )}
                                                 {isColumnVisible('languageBenchmark') && (
-                                                    <td><span>{rowItem.languageBenchmark}</span></td>
+                                                    <td><span>{rowItem?.lb_level?.name}</span></td>
                                                 )}
                                                 {isColumnVisible('description') && (
                                                     <td><span>{rowItem.description}</span></td>

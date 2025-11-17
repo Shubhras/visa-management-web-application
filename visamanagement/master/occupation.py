@@ -2326,7 +2326,7 @@ class OccupationLevelExportAPIView(APIView):
                 if field == 'country' and value:
                     value = value.name
                 elif field == 'occupationversion' and value:
-                    value = value.occupationversion
+                    value = value.occupation_version
                 elif field == 'occupationcategory' and value:
                     value = value.occupationcategory
                 elif field == 'occupationlevelcode' and value:
@@ -2706,7 +2706,7 @@ class OccupationCodeExportAPIView(APIView):
                 if field == 'country' and value:
                     value = value.name
                 elif field == 'occupationversion' and value:
-                    value = value.occupationversion
+                    value = value.occupation_version
                 elif field in ['created_at', 'updated_at'] and value:
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
@@ -2798,7 +2798,7 @@ class OccupationCodeImportAPIView(APIView):
                     continue
 
                 try:
-                    country_obj = Country.objects.get(name__iexact=country_name).first()
+                    country_obj = Country.objects.get(name__iexact=country_name)
                 except Country.DoesNotExist:
                     skipped_rows.append({'row': row_number, 'Reason': 'Country not found'})
                     continue

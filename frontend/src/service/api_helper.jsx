@@ -1708,7 +1708,7 @@ export const importEntranceTestResultAPI = (payload) => {
 };
 
 export const getEntranceTestIdModuleListAPI = (payload) => {
-    const apiUrl = `${url.GET_ENTRANCE_TEST_ID_MODULE_LIST}?uuid=${payload?.entrance_test_id}`;
+    const apiUrl = `${url.GET_ENTRANCE_TEST_ID_MODULE_LIST}?entrance_test_id=${payload?.entrance_test_id}`;
     return get(apiUrl);
 };
 
@@ -1743,6 +1743,13 @@ export const importLanguageTestResultAPI = (payload) => {
     const apiUrl = `${url.IMPORT_LANGUAGE_TEST_RESULT_API}`;
     return post(apiUrl, payload);
 };
+
+export const getLanguageNameTestIDAPI = (params) => {
+    // console.log("params",params);
+    const apiUrl = `${url.GET_LANGUAGE_NAME_TEST_ID_API}?language_id=${params?.language_id}`;
+    return get(apiUrl);
+
+}
 
 // Job Type
 export const getJobTypeListDataAPI = (data) => {

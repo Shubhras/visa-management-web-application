@@ -412,8 +412,8 @@ const ECAAwardingBodyList = () => {
     }
     // Map frontend labels to backend field names
     const fieldMapping = {
-      "Country": "country_name",
-      "ECA For": "selection_type_display",
+      "Country": "country",
+      "ECA For": "ecafor",
       "ECA Body Full Name": "eca_body_full_name",
       "ECA Body Short Name": "eca_body_short_name",
       "ECA Valid Period": "eca_valid_period",
