@@ -24,13 +24,15 @@ const LanguageTestNameList = () => {
         });
     };
     // For closing modal
-    const handleClose = () => {
+    const handleClose = (shouldRefresh = false) => {
         setModalState({
             show: false,
             mode: 'add',
             rowData: null
         });
-        fetchDepartmentList();
+        if (shouldRefresh) {
+            fetchDepartmentList();
+        }
     }
 
     // const [showEdit, setShowEdit] = useState(false);
@@ -358,9 +360,11 @@ const LanguageTestNameList = () => {
         setSelectAllOrNot('');
     };
 
-    const handleCloseImport = () => {
+    const handleCloseImport = (shouldRefresh = false) => {
         setShowImport(false);
-        fetchDepartmentList();
+        if (shouldRefresh) {
+            fetchDepartmentList();
+        }
     };
 
     const handleShowImport = () => {
@@ -671,16 +675,16 @@ const LanguageTestNameList = () => {
                                                     </div>
                                                 </td>
                                                 {isColumnVisible('languageNameTest') && (
-                                                    <td><span>{rowItem.language.name}</span></td>
+                                                    <td><span>{rowItem?.language?.name}</span></td>
                                                 )}
                                                 {isColumnVisible('languageTestName') && (
-                                                    <td><span>{rowItem.name}</span></td>
+                                                    <td><span>{rowItem?.name}</span></td>
                                                 )}
                                                 {isColumnVisible('languageTestFullName') && (
-                                                    <td><span>{rowItem.fullname}</span></td>
+                                                    <td><span>{rowItem?.fullname}</span></td>
                                                 )}
                                                 {isColumnVisible('description') && (
-                                                    <td><span>{rowItem.description}</span></td>
+                                                    <td><span>{rowItem?.description}</span></td>
                                                 )}
                                                 {isColumnVisible('updated_at') && (
                                                     <td><span>{formatDateDDMMYYYYTime(rowItem.updated_at)}</span></td>

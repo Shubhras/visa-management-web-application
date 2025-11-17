@@ -25,29 +25,31 @@ const AddEditLanguageTestNameModal = ({ show, handleClose, mode = 'add', rowData
 
   // Populate form data when in edit mode
   useEffect(() => {
-    if (mode === 'edit' && rowData) {
-      setFormData({
-        uuid: rowData.uuid || '',
-        languageNameTest: rowData.language.uuid || '',
-        shortName: rowData.name || '',
-        fullName: rowData.fullname || '',
-        description: rowData.description || '',
-      });
-    } else {
-      // Reset form when switching to add mode
-      setFormData({
-        uuid: '',
-        languageNameTest: '',
-        shortName: '',
-        fullName: '',
-        description: '',
-      });
+    if (show) {
+      if (mode === 'edit' && rowData) {
+        setFormData({
+          uuid: rowData.uuid || '',
+          languageNameTest: rowData?.language?.uuid || '',
+          shortName: rowData.name || '',
+          fullName: rowData.fullname || '',
+          description: rowData.description || '',
+        });
+      } else {
+        // Reset form when switching to add mode
+        setFormData({
+          uuid: '',
+          languageNameTest: '',
+          shortName: '',
+          fullName: '',
+          description: '',
+        });
+      }
+      fetchLanguageTestNameList();
     }
-    fetchLanguageTestNameList();
   }, [mode, rowData, show]);
 
   const fetchLanguageTestNameList = () => {
-    setLoading(true);
+    // setLoading(true);
     const params = {
       page: 1,
       limit: 2000,
@@ -58,7 +60,7 @@ const AddEditLanguageTestNameModal = ({ show, handleClose, mode = 'add', rowData
     };
 
     dispatch(languageNameTestList(params, (response, error) => {
-      setLoading(false);
+      // setLoading(false);
       if (response?.statusCode === 200 && response?.status === true) {
         setLanguageNameTest(response?.data || []);
 
@@ -134,7 +136,7 @@ const AddEditLanguageTestNameModal = ({ show, handleClose, mode = 'add', rowData
           if (response?.statusCode === 200 && response?.status === true) {
             toast.success(response?.message);
             resetForm();
-            handleClose();
+            handleClose(true);
           } else {
             toast.error("Something went wrong.");
           }
@@ -159,7 +161,7 @@ const AddEditLanguageTestNameModal = ({ show, handleClose, mode = 'add', rowData
   const onClose = () => {
     resetForm();
     setLoading(false);
-    handleClose();
+    handleClose(false);
   };
 
   // Conditional return after all hooks
@@ -293,16 +295,24 @@ const AddEditLanguageTestNameModal = ({ show, handleClose, mode = 'add', rowData
                   <button
                     type="button"
                     onClick={onClose}
-                    className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-16 py-4 radius-6"
+                    className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-16 py-6 radius-6"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
+                    className="btn comman-btn-color border border-primary-600 text-md px-16 py-6 radius-6"
                     disabled={loading}
                   >
-                    {loading ? 'Saving...' : 'Save'}
+                    {/* {loading ? 'Saving...' : 'Save'} */}
+                    {loading ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2"></span>
+                        Saving...
+                      </>
+                    ) : (
+                      "Save"
+                    )}
                   </button>
                 </div>
               </div>

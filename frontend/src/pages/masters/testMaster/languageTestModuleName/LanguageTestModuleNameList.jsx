@@ -24,13 +24,15 @@ const LanguageTestModuleNameList = () => {
         });
     };
     // For closing modal
-    const handleClose = () => {
+    const handleClose = (shouldRefresh = false) => {
         setModalState({
             show: false,
             mode: 'add',
             rowData: null
         });
-        fetchDepartmentList();
+        if (shouldRefresh) {
+            fetchDepartmentList();
+        }
     }
 
     // const [showEdit, setShowEdit] = useState(false);
@@ -356,9 +358,11 @@ const LanguageTestModuleNameList = () => {
         setSelectAllOrNot('');
     };
 
-    const handleCloseImport = () => {
+    const handleCloseImport = (shouldRefresh = false) => {
         setShowImport(false);
-        fetchDepartmentList();
+        if (shouldRefresh) {
+            fetchDepartmentList();
+        }
     };
 
     const handleShowImport = () => {

@@ -54,6 +54,7 @@ import {
     DELETE_LANGUAGE_TEST_RESULT,
     EXPORT_LANGUAGE_TEST_RESULT,
     IMPORT_LANGUAGE_TEST_RESULT,
+    ENTRANCE_TEST_ID_MODULE_LIST,
 } from "./actionType";
 import {
     getLanguageNameTestListAPI,
@@ -110,6 +111,7 @@ import {
     deleteLanguageTestResultAPI,
     exportLanguageTestResultAPI,
     importLanguageTestResultAPI,
+    getEntranceTestIdModuleListAPI,
 } from "../../../service/api_helper";
 
 // --- LANGUAGE NAME TEST SAGAS ---
@@ -547,6 +549,14 @@ function* entranceTestResultImportDataSaga(action) {
         action.callback?.(null, error);
     }
 }
+function* entranceTestIdModuleSaga(action) {
+    try {
+        const response = yield call(getEntranceTestIdModuleListAPI, action?.data);
+        action.callback?.(response);
+    } catch (error) {
+        action.callback?.(null, error);
+    }
+}
 
 // Language Test Result
 function* languageTestResultListSaga(action) {
@@ -665,6 +675,7 @@ function* testMasterSaga() {
     yield takeEvery(DELETE_LANGUAGE_TEST_RESULT, languageTestResultDeleteSaga);
     yield takeEvery(EXPORT_LANGUAGE_TEST_RESULT, languageTestResultExportDataSaga);
     yield takeEvery(IMPORT_LANGUAGE_TEST_RESULT, languageTestResultImportDataSaga);
+    yield takeEvery(ENTRANCE_TEST_ID_MODULE_LIST,entranceTestIdModuleSaga);
 
 
 

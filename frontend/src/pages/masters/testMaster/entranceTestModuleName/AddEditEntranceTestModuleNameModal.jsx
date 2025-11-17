@@ -24,23 +24,25 @@ const AddEditEntranceTestModuleNameModal = ({ show, handleClose, mode = 'add', r
 
     // Populate form data when in edit mode
     useEffect(() => {
-        if (mode === 'edit' && rowData) {
-            setFormData({
-                uuid: rowData.uuid || '',
-                name: rowData.entrancetest.uuid || '',
-                fullname: rowData.moduleName || '',
-                description: rowData.description || '',
-            });
-        } else {
-            // Reset form when switching to add mode
-            setFormData({
-                uuid: '',
-                name: '',
-                fullname: '',
-                description: '',
-            });
+        if (show) {
+            if (mode === 'edit' && rowData) {
+                setFormData({
+                    uuid: rowData.uuid || '',
+                    name: rowData?.entrancetest?.uuid || '',
+                    fullname: rowData.moduleName || '',
+                    description: rowData.description || '',
+                });
+            } else {
+                // Reset form when switching to add mode
+                setFormData({
+                    uuid: '',
+                    name: '',
+                    fullname: '',
+                    description: '',
+                });
+            }
+            fetchEnteranceTestNameList();
         }
-        fetchEnteranceTestNameList();
     }, [mode, rowData, show]);
 
     const fetchEnteranceTestNameList = () => {
@@ -130,7 +132,7 @@ const AddEditEntranceTestModuleNameModal = ({ show, handleClose, mode = 'add', r
                     if (response?.statusCode === 200 && response?.status === true) {
                         toast.success(response?.message);
                         resetForm();
-                        handleClose();
+                        handleClose(true);
                     } else {
                         toast.error("Something went wrong.");
                     }
@@ -154,7 +156,7 @@ const AddEditEntranceTestModuleNameModal = ({ show, handleClose, mode = 'add', r
     const onClose = () => {
         resetForm();
         setLoading(false);
-        handleClose();
+        handleClose(false);
     };
 
     // Conditional return after all hooks
@@ -279,7 +281,15 @@ const AddEditEntranceTestModuleNameModal = ({ show, handleClose, mode = 'add', r
                                         className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                                         disabled={loading}
                                     >
-                                        {loading ? 'Saving...' : 'Save'}
+                                        {/* {loading ? 'Saving...' : 'Save'} */}
+                                        {loading ? (
+                                            <>
+                                                <span className="spinner-border spinner-border-sm me-2"></span>
+                                                Saving...
+                                            </>
+                                        ) : (
+                                            "Save"
+                                        )}
                                     </button>
                                 </div>
                             </div>
