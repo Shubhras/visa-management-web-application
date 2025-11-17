@@ -1011,7 +1011,7 @@ class LanguageTestResult(models.Model):
     language = models.ForeignKey('Language',on_delete=models.SET_NULL,null=True,blank=True,related_name='test_results')
     language_test = models.ForeignKey('LanguageTest',on_delete=models.SET_NULL,null=True,blank=True,related_name='results')
     module_name = models.ForeignKey('LanguagetestmoduleName',  on_delete=models.SET_NULL,null=True,blank=True,related_name='test_results')
-    clb_level = models.ForeignKey('CLBLevel', on_delete=models.SET_NULL,null=True,blank=True,related_name='language_test_results'    )
+    lb_level = models.ForeignKey('StudyLanguageBanchmark', on_delete=models.SET_NULL,null=True,blank=True,related_name='language_test_results')
 
     numeric_score = models.DecimalField(max_digits=4, decimal_places=1, null=True, blank=True)
     description =  models.TextField(max_length=255,blank=True)

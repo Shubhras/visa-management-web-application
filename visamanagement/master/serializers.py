@@ -893,7 +893,7 @@ class LanguageTestResultSerializer(serializers.ModelSerializer):
     language = LanguageSerializer(read_only=True)
     language_test = LanguageTestSerializer(read_only=True)
     module_name = LanguagetestmoduleNameSerializer(read_only=True)
-    clb_level = CLBLevelSerializer(read_only=True)
+    module_name = StudyLanguageBanchmarkSerializer(read_only=True)
 
 
     language_id = serializers.SlugRelatedField(
@@ -905,10 +905,11 @@ class LanguageTestResultSerializer(serializers.ModelSerializer):
     module_name_id = serializers.SlugRelatedField(
         queryset=LanguagetestmoduleName.objects.all(), source='languagetest_module_name', slug_field='uuid',write_only=True
     )
-    clb_level_id = serializers.SlugRelatedField(
-        queryset=CLBLevel.objects.all(), source='clb_level', slug_field='uuid', write_only=True
-    )
 
+    lb_id = serializers.SlugRelatedField(
+        queryset=StudyLanguageBanchmark.objects.all(), source='languagetestresult_name', slug_field='uuid',write_only=True
+    )
+  
     class Meta: 
         model = LanguageTestResult
         fields = [
@@ -916,7 +917,7 @@ class LanguageTestResultSerializer(serializers.ModelSerializer):
             'language', 'language_id',
             'language_test', 'language_test_id',
             'module_name', 'module_name_id',
-            'clb_level', 'clb_level_id',
+            'lb_id',
             'numeric_score', 'description',
             'is_deleted', 'created_at', 'updated_at'
         ]
