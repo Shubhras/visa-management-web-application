@@ -2836,10 +2836,7 @@ class CityListAPIView(APIView):
         # ---------------------------
         if search:
             queryset = queryset.filter(
-                Q(cityName__istartswith=search) |
-                Q(countryName__name__istartswith=search) |
-                Q(stateName__stateName__istartswith=search) |
-                Q(districtName__districtName__istartswith=search)
+                Q(cityName__istartswith=search) 
             )
 
         # Apply sorting
