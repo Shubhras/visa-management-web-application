@@ -1293,7 +1293,7 @@ class LanguageTestResultCreateAPIView(APIView):
         existing = LanguageTestResult.objects.filter(
             language=language_obj,
             language_test=language_test_obj,
-            languagetest_module_name=module_obj,
+            module_name=module_obj,
             lb_level=lb_obj,
             is_deleted=False
         ).first()
