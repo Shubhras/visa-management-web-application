@@ -112,11 +112,7 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
         const params = { page: 1, limit: 2000, search: '', sortBy: 'name', sortOrder: 'asc' };
         dispatch(countryDemoList(params, (response, error) => {
             if (response?.statusCode === 200 && response?.status) {
-                const formatted = response?.data?.map(item => ({
-                    uuid: item.uuid,
-                    name: item.name
-                })) || [];
-                setCountryListData(formatted);
+                setCountryListData(response?.data || []);
             }
         }));
     };
@@ -126,8 +122,16 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
             setStateListData([]);
             return;
         }
-
-        const params = { countryId };
+        const params = {
+            page: 1,
+            limit: 2000,
+            search: '',
+            status: '',
+            sortBy: 'name',
+            sortOrder: 'asc',
+            countryId: countryId,
+        };
+        // const params = { countryId };
         dispatch(stateListByCountry(params, (response, error) => {
             if (response?.statusCode === 200 && response?.status) {
                 setStateListData(response?.data || []);
@@ -308,14 +312,14 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
                                     <Select
                                         options={countryListData.map((option) => ({
                                             value: option.uuid,
-                                            label: option.name,
+                                            label: option.name + " (" + option?.continent?.name + ")",
                                         }))}
                                         value={
                                             formData.countryUuid
                                                 ? countryListData
                                                     .map((option) => ({
                                                         value: option.uuid,
-                                                        label: option.name,
+                                                        label: option.name + " (" + option?.continent?.name + ")",
                                                     }))
                                                     .find((opt) => opt.value === formData.countryUuid)
                                                 : null
@@ -349,14 +353,14 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
                                     <Select
                                         options={stateListData.map((option) => ({
                                             value: option.uuid,
-                                            label: option.name,
+                                            label: option.name + " (" + option?.country + ")",
                                         }))}
                                         value={
                                             formData.stateUuid
                                                 ? stateListData
                                                     .map((option) => ({
                                                         value: option.uuid,
-                                                        label: option.name,
+                                                        label: option.name + " (" + option?.country + ")",
                                                     }))
                                                     .find((opt) => opt.value === formData.stateUuid)
                                                 : null
