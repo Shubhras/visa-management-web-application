@@ -345,13 +345,13 @@ urlpatterns = [
     path('mediumeducation/export/', MediumofEducationExportAPIView.as_view(), name='educationlevel-export'),
     path('mediumeducation/import/',MediumofEducationImportAPIView.as_view(), name='educationlevel-import'),
 
-    path('ecs-for/',ECAForListAPIView.as_view(), name='ecs-for-list'),
-    path('ecs-for/create/',ECAForCreateAPIView.as_view(), name='ecs-for-create'),
-    path('ecs-for/<uuid:uuid>/',ECAForRetrieveAPIView.as_view(), name='ecs-for-retrieve'),
-    path('ecs-for/<uuid:uuid>/update/',ECAForUpdateAPIView.as_view(), name='ecs-for-update'),
-    path('ecs-for/delete/',ECAForDeleteAPIView.as_view(), name='ecs-for-delete-multiple'),
-    path('ecs-for/export/',ECAForExportAPIView.as_view(), name='ecs-for-export'),
-    path('ecs-for/import/',ECAForImportAPIView.as_view(), name='ecs-for-import'),
+    path('eca-for/',ECAForListAPIView.as_view(), name='ecs-for-list'),
+    path('eca-for/create/',ECAForCreateAPIView.as_view(), name='ecs-for-create'),
+    path('eca-for/<uuid:uuid>/',ECAForRetrieveAPIView.as_view(), name='ecs-for-retrieve'),
+    path('eca-for/<uuid:uuid>/update/',ECAForUpdateAPIView.as_view(), name='ecs-for-update'),
+    path('eca-for/delete/',ECAForDeleteAPIView.as_view(), name='ecs-for-delete-multiple'),
+    path('eca-for/export/',ECAForExportAPIView.as_view(), name='ecs-for-export'),
+    path('eca-for/import/',ECAForImportAPIView.as_view(), name='ecs-for-import'),
 
    
     path('eca-awarding-bodies/', ECAAwardingBodyListAPIView.as_view(), name='eca-awarding-body-list'),

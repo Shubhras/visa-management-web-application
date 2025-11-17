@@ -2299,7 +2299,6 @@ class DistrictListAPIView(APIView):
         return paginator.get_paginated_response(serializer.data)
 
 
-# -------------------- Create -------------------- #
 class DistrictCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -2325,7 +2324,6 @@ class DistrictCreateAPIView(APIView):
         return Response({"statusCode": 400, "status": False, "message": errors}, status=400)
 
 
-# -------------------- Retrieve -------------------- #
 class DistrictRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -2338,7 +2336,6 @@ class DistrictRetrieveAPIView(APIView):
         return Response({"statusCode": 200, "status": True, "message": "Retrieved successfully", "data": serializer.data})
 
 
-# -------------------- Update -------------------- #
 class DistrictUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -2356,7 +2353,6 @@ class DistrictUpdateAPIView(APIView):
         return Response({"statusCode": 400, "status": False, "message": errors}, status=400)
 
 
-# -------------------- Delete -------------------- #
 class DistrictDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -2437,9 +2433,6 @@ class DistrictDeleteAPIView(APIView):
 
 
 
-
-# -------------------- Export -------------------- 
-
 class DistrictExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -2513,7 +2506,6 @@ class DistrictExportAPIView(APIView):
 
 
 
-# -------------------- Import -------------------- 
 class DistrictImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -2790,7 +2782,6 @@ class CityListAPIView(APIView):
     def get(self, request):
         search = request.GET.get('search', '').strip()
 
-        # MULTI-SELECT SUPPORT
         country_list = request.GET.getlist('country[]') or request.GET.getlist('country')
         state_list = request.GET.getlist('state[]') or request.GET.getlist('state')
         district_list = request.GET.getlist('district[]') or request.GET.getlist('district')
@@ -2800,7 +2791,6 @@ class CityListAPIView(APIView):
         sort_order = request.GET.get('sortOrder', 'desc')
         allowed_sort_fields = ['cityName', 'created_at']
 
-        # Validate sortBy
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
         if sort_order == 'desc':
@@ -2808,9 +2798,7 @@ class CityListAPIView(APIView):
 
         queryset = City.objects.filter(is_deleted=False)
 
-        # ---------------------------
-        # MULTI-SELECT FILTERS
-        # ---------------------------
+      
         if country_list:
             queryset = queryset.filter(countryName__uuid__in=country_list)
 
@@ -2823,9 +2811,6 @@ class CityListAPIView(APIView):
         if city_list:
             queryset = queryset.filter(uuid__in=city_list)
 
-        # ---------------------------
-        # TEXT SEARCH (CITY / COUNTRY / STATE / DISTRICT)
-        # ---------------------------
         if search:
             queryset = queryset.filter(
                 Q(cityName__istartswith=search) |
@@ -3247,7 +3232,6 @@ class RelationListAPIView(APIView):
         return paginator.get_paginated_response(serializer.data)
 
 
-# -------------------- Create -------------------- #
 class RelationCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -3266,7 +3250,6 @@ class RelationCreateAPIView(APIView):
         return Response({"statusCode": 400, "status": False, "message": errors}, status=400)
 
 
-# -------------------- Retrieve -------------------- #
 class RelationRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -3279,7 +3262,6 @@ class RelationRetrieveAPIView(APIView):
         return Response({"statusCode": 200, "status": True, "message": "Retrieved successfully", "data": serializer.data})
 
 
-# -------------------- Update -------------------- #
 class RelationUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -3297,7 +3279,6 @@ class RelationUpdateAPIView(APIView):
         return Response({"statusCode": 400, "status": False, "message": errors}, status=400)
 
 
-# -------------------- Delete -------------------- #
 class RelationDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -3376,7 +3357,7 @@ class RelationDeleteAPIView(APIView):
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         }, status=status.HTTP_200_OK)
 
-# -------------------- Export -------------------- #
+#
 class RelationExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
