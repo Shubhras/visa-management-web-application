@@ -2797,7 +2797,7 @@ class CityListAPIView(APIView):
             if raw:
                 items = [x.strip() for x in raw.split(',') if x.strip()]
             else:
-                items = request.GET.getlist(f"{param_name}") or request.GET.getlist(param_name)
+                items = request.GET.getlist(param_name)
             return items
 
         # Helper: filter valid UUIDs
@@ -2807,7 +2807,7 @@ class CityListAPIView(APIView):
                 try:
                     valid_uuids.append(UUID(u))
                 except ValueError:
-                    pass  # skip invalid UUIDs
+                    pass
             return valid_uuids
 
         country_list = validate_uuid_list(parse_ids('country'))
@@ -2818,46 +2818,18 @@ class CityListAPIView(APIView):
         queryset = City.objects.filter(is_deleted=False)
 
         # ---------------------------
-        # MULTI-SELECT FILTERS
+        # HIERARCHICAL FILTERING
         # ---------------------------
-        if country_list:
-            queryset = queryset.filter(
-                Q(countryName__uuid__in=country_list) |
-                Q(countryName__isnull=True) |
-                Q(countryName__name__exact='')
-            )
-        else:
-            queryset = queryset.filter(
-                Q(countryName__isnull=True) |
-                Q(countryName__name__exact='')
-            )
-
-        if state_list:
-            queryset = queryset.filter(
-                Q(stateName__uuid__in=state_list) |
-                Q(stateName__isnull=True) |
-                Q(stateName__stateName__exact='')
-            )
-        else:
-            queryset = queryset.filter(
-                Q(stateName__isnull=True) |
-                Q(stateName__stateName__exact='')
-            )
-
-        if district_list:
-            queryset = queryset.filter(
-                Q(districtName__uuid__in=district_list) |
-                Q(districtName__isnull=True) |
-                Q(districtName__districtName__exact='')
-            )
-        else:
-            queryset = queryset.filter(
-                Q(districtName__isnull=True) |
-                Q(districtName__districtName__exact='')
-            )
-
         if city_list:
+            # City UUID takes absolute priority
             queryset = queryset.filter(uuid__in=city_list)
+        else:
+            if district_list:
+                queryset = queryset.filter(districtName__uuid__in=district_list)
+            if state_list:
+                queryset = queryset.filter(stateName__uuid__in=state_list)
+            if country_list:
+                queryset = queryset.filter(countryName__uuid__in=country_list)
 
         # ---------------------------
         # TEXT SEARCH (CITY / COUNTRY / STATE / DISTRICT)
@@ -2878,8 +2850,6 @@ class CityListAPIView(APIView):
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = CitySerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
-
-
 
 # -------------------- City -------------------- 
 class CityCreateAPIView(APIView):
