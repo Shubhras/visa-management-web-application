@@ -727,8 +727,8 @@ class ECAForSerializer(serializers.ModelSerializer):
 class ECAAwardingBodySerializer(serializers.ModelSerializer):
     country_name = serializers.CharField(source='country.name', read_only=True)  # Display country name
     eca_for_name = serializers.CharField(source='ecafor.name', read_only=True)  # Display ECAFor name
-    selection_type_display = serializers.CharField(source='get_selection_type_display', read_only=True)
-
+    eca_for_uuid = serializers.CharField(source='ecafor.uuid', read_only=True)  # Display ECAFor name
+  
     class Meta:
         model = ECAAwardingBody
         fields = [
@@ -737,6 +737,7 @@ class ECAAwardingBodySerializer(serializers.ModelSerializer):
             'country',
             'country_name',
             'ecafor',
+            'eca_for_uuid',
             'eca_for_name',
             'description',
             'valid_duration_value',
@@ -1775,7 +1776,6 @@ class IntakeNameSerializer(serializers.ModelSerializer):
     class Meta:
         model = IntakeName
         fields = '__all__'
-
 
 class CourseStatusIntakeSerializer(serializers.ModelSerializer):
     class Meta:
