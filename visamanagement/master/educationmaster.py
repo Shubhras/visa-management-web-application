@@ -4397,6 +4397,7 @@ class ECAForExportAPIView(APIView):
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title='ECA For'
 
         for obj in queryset:
             row = []
