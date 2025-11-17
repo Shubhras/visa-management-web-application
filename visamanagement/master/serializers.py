@@ -6,6 +6,34 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 User = get_user_model()
 
+# class AdminUserLoginSerializer(serializers.Serializer):
+#     email = serializers.EmailField()
+#     password = serializers.CharField(write_only=True)
+
+#     def validate(self, data):
+#         email = data.get("email")
+#         password = data.get("password")
+
+#         # Look up user by email
+#         try:
+#             user = User.objects.get(email=email)
+#         except User.DoesNotExist:
+#             raise serializers.ValidationError("Invalid email or password.")
+
+#         # Authenticate using username (Django default)
+#         user = authenticate(username=user.username, password=password)
+#         if not user:
+#             raise serializers.ValidationError("Invalid email or password.")
+
+#         # Only allow superuser/staff
+#         if not (user.is_staff or user.is_superuser):
+#             raise serializers.ValidationError("User is not an admin.")
+
+#         data['user'] = user
+#         return data
+
+
+
 class AdminUserLoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
@@ -14,23 +42,32 @@ class AdminUserLoginSerializer(serializers.Serializer):
         email = data.get("email")
         password = data.get("password")
 
-        # Look up user by email
-        try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
+        # Look up users by email (use filter instead of get to avoid crash)
+        users = User.objects.filter(email=email)
+        if not users.exists():
             raise serializers.ValidationError("Invalid email or password.")
+
+        # Handle multiple users with same email
+        if users.count() > 1:
+            raise serializers.ValidationError(
+                "Multiple users found with this email. Please contact the administrator."
+            )
+
+        user = users.first()
 
         # Authenticate using username (Django default)
         user = authenticate(username=user.username, password=password)
         if not user:
             raise serializers.ValidationError("Invalid email or password.")
 
-        # Only allow superuser/staff
+        # Allow only admin/staff
         if not (user.is_staff or user.is_superuser):
             raise serializers.ValidationError("User is not an admin.")
 
-        data['user'] = user
+        data["user"] = user
         return data
+
+
 
 class GenderSerializer(serializers.ModelSerializer):
     description = serializers.CharField(required=False, allow_blank=True)  
@@ -942,9 +979,9 @@ class EntranceTestResultSerializer(serializers.ModelSerializer):
 
 
 class OccupationVersionSerializer(serializers.ModelSerializer):
-    country = CountrySerializer(read_only=True)
-
-    country_id = serializers.PrimaryKeyRelatedField(
+    country = serializers.CharField(read_only=True, source='country.country_name')  # optional display field
+    country_id = serializers.SlugRelatedField(
+        slug_field='uuid',
         queryset=Country.objects.all(),
         source='country',
         write_only=True
@@ -966,7 +1003,6 @@ class OccupationVersionSerializer(serializers.ModelSerializer):
             'updated_at'
         ]
         read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
-
 
 
 class RepresentingCountrySerializer(serializers.ModelSerializer):
@@ -1045,7 +1081,28 @@ class VisaMajorSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'uuid', 'created_at', 'updated_at', 'visamain_name']
 
 
+# class VisaNameSerializer(serializers.ModelSerializer):
+#     country_name = serializers.CharField(source='country.full_name', read_only=True)
+#     visamain_name = serializers.CharField(source='visamain.name', read_only=True)
+#     visamajor_name = serializers.CharField(source='visamajor.name', read_only=True)
+
+#     class Meta:
+#         model = VisaName
+#         fields = [
+#             'id', 'uuid', 'country', 'country_name',
+#             'visamain', 'visamain_name',
+#             'visamajor', 'visamajor_name',
+#             'full_name', 'short_name', 'description',
+#             'is_deleted', 'created_at', 'updated_at'
+#         ]
+#         read_only_fields = ['id', 'uuid', 'created_at', 'updated_at', 'country_name', 'visamain_name', 'visamajor_name']
+
+
 class VisaNameSerializer(serializers.ModelSerializer):
+    country = serializers.UUIDField(write_only=True)
+    visamain = serializers.UUIDField(write_only=True)
+    visamajor = serializers.UUIDField(write_only=True)
+
     country_name = serializers.CharField(source='country.full_name', read_only=True)
     visamain_name = serializers.CharField(source='visamain.name', read_only=True)
     visamajor_name = serializers.CharField(source='visamajor.name', read_only=True)
@@ -1053,13 +1110,40 @@ class VisaNameSerializer(serializers.ModelSerializer):
     class Meta:
         model = VisaName
         fields = [
-            'id', 'uuid', 'country', 'country_name',
+            'id', 'uuid',
+            'country', 'country_name',
             'visamain', 'visamain_name',
             'visamajor', 'visamajor_name',
             'full_name', 'short_name', 'description',
             'is_deleted', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at', 'country_name', 'visamain_name', 'visamajor_name']
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at',
+                            'country_name', 'visamain_name', 'visamajor_name']
+
+    def create(self, validated_data):
+        country_uuid = validated_data.pop("country")
+        visamain_uuid = validated_data.pop("visamain")
+        visamajor_uuid = validated_data.pop("visamajor")
+
+        from master.models import RepresentingCountry, VisaMain, VisaMajor
+
+        try:
+            validated_data["country"] = RepresentingCountry.objects.get(uuid=country_uuid)
+        except RepresentingCountry.DoesNotExist:
+            raise serializers.ValidationError({"country": "Invalid country UUID"})
+
+        try:
+            validated_data["visamain"] = VisaMain.objects.get(uuid=visamain_uuid)
+        except VisaMain.DoesNotExist:
+            raise serializers.ValidationError({"visamain": "Invalid visamain UUID"})
+
+        try:
+            validated_data["visamajor"] = VisaMajor.objects.get(uuid=visamajor_uuid)
+        except VisaMajor.DoesNotExist:
+            raise serializers.ValidationError({"visamajor": "Invalid visamajor UUID"})
+
+        return VisaName.objects.create(**validated_data)
+
 
 
 class ApplicantTypeSerializer(serializers.ModelSerializer):
@@ -1152,6 +1236,90 @@ class PurposeOfVisitSerializer(serializers.ModelSerializer):
 
 
 
+
+class DocumentsForSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DocumentsFor
+        fields = [
+            "uuid",
+            "name",
+            "description",
+            "is_deleted",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["uuid", "created_at", "updated_at"]
+
+
+
+
+# class RequiredDocumentSerializer(serializers.ModelSerializer):
+#     # Read-only human-readable fields
+#     country_name = serializers.CharField(source='country.name', read_only=True)
+#     visa_main_category_name = serializers.CharField(source='visa_main_category.name', read_only=True)
+#     visa_major_category_name = serializers.CharField(source='visa_major_category.name', read_only=True)
+#     visa_name_name = serializers.CharField(source='visa_name.name', read_only=True)
+#     document_category_name = serializers.CharField(source='document_category.name', read_only=True)
+#     document_name_name = serializers.CharField(source='document_name.document_name', read_only=True)
+
+#     # Accept UUIDs for foreign keys in write operations
+#     country = serializers.UUIDField(write_only=True)
+#     visa_main_category = serializers.UUIDField(write_only=True)
+#     visa_major_category = serializers.UUIDField(write_only=True)
+#     visa_name = serializers.UUIDField(write_only=True)
+#     document_category = serializers.UUIDField(write_only=True)
+#     document_name = serializers.UUIDField(write_only=True)
+
+#     class Meta:
+#         model = RequiredDocument
+#         fields = [
+#             "id",
+#             "uuid",
+#             "country",
+#             "country_name",
+#             "visa_main_category",
+#             "visa_main_category_name",
+#             "visa_major_category",
+#             "visa_major_category_name",
+#             "visa_name",
+#             "visa_name_name",
+#             "document_category",
+#             "document_category_name",
+#             "document_name",
+#             "document_name_name",
+#             "description",
+#             "is_deleted",
+#             "created_at",
+#             "updated_at",
+#         ]
+#         read_only_fields = ["id", "uuid", "created_at", "updated_at"]
+
+#     # Validate-and-convert helper: convert incoming UUID -> model instance
+#     def _get_instance_by_uuid(self, model_class, value, field_label):
+#         try:
+#             return model_class.objects.get(uuid=value, is_deleted=False)
+#         except model_class.DoesNotExist:
+#             raise serializers.ValidationError({field_label: f"Invalid {field_label} UUID."})
+
+#     def validate_country(self, value):
+#         return self._get_instance_by_uuid(Country, value, 'country')
+
+#     def validate_visa_main_category(self, value):
+#         return self._get_instance_by_uuid(VisaMain, value, 'visa_main_category')
+
+#     def validate_visa_major_category(self, value):
+#         return self._get_instance_by_uuid(VisaMajor, value, 'visa_major_category')
+
+#     def validate_visa_name(self, value):
+#         return self._get_instance_by_uuid(VisaName, value, 'visa_name')
+
+#     def validate_document_category(self, value):
+#         return self._get_instance_by_uuid(DocumentCategory, value, 'document_category')
+
+#     def validate_document_name(self, value):
+#         return self._get_instance_by_uuid(DocumentName, value, 'document_name')
+
+
 class RequiredDocumentSerializer(serializers.ModelSerializer):
     # Read-only human-readable fields
     country_name = serializers.CharField(source='country.name', read_only=True)
@@ -1219,18 +1387,61 @@ class RequiredDocumentSerializer(serializers.ModelSerializer):
         return self._get_instance_by_uuid(DocumentName, value, 'document_name')
 
 
+# class ProcessStatusSerializer(serializers.ModelSerializer):
+#     # Read-only names for related models
+#     country_name = serializers.CharField(source='country.name', read_only=True)
+#     visa_main_category_name = serializers.CharField(source='visa_main_category.name', read_only=True)
+#     process_status_name_value = serializers.CharField(source='process_status_name.name', read_only=True)
 
+#     # Accept UUIDs for foreign keys
+#     country = serializers.UUIDField(write_only=True)
+#     visa_main_category = serializers.UUIDField(write_only=True)
+#     process_status_name = serializers.UUIDField(write_only=True)
+
+#     class Meta:
+#         model = ProcessStatusName
+#         fields = [
+#             "id",
+#             "uuid",
+#             "country",
+#             "country_name",
+#             "visa_main_category",
+#             "visa_main_category_name",
+#             "process_status_name",
+#             "process_status_name_value",
+#             "description",
+#             "is_deleted",
+#             "created_at",
+#             "updated_at",
+#         ]
+#         read_only_fields = ["id", "uuid", "created_at", "updated_at"]
+
+#     def _get_instance(self, model_class, value, label):
+#         try:
+#             return model_class.objects.get(uuid=value, is_deleted=False)
+#         except model_class.DoesNotExist:
+#             raise serializers.ValidationError({label: f"Invalid {label} UUID."})
+
+#     def validate_country(self, value):
+#         return self._get_instance(Country, value, "country")
+
+#     def validate_visa_main_category(self, value):
+#         return self._get_instance(VisaMain, value, "visa_main_category")
+
+#     def validate_process_status_name(self, value):
+#         return self._get_instance(ProcessStatusName, value, "process_status_name")
 
 class ProcessStatusSerializer(serializers.ModelSerializer):
     # Read-only names for related models
     country_name = serializers.CharField(source='country.name', read_only=True)
     visa_main_category_name = serializers.CharField(source='visa_main_category.name', read_only=True)
-    process_status_name_value = serializers.CharField(source='process_status_name.name', read_only=True)
 
-    # Accept UUIDs for foreign keys
+    # Accept UUIDs for foreign-key fields
     country = serializers.UUIDField(write_only=True)
     visa_main_category = serializers.UUIDField(write_only=True)
-    process_status_name = serializers.UUIDField(write_only=True)
+
+    # Now process_status_name is a TEXT field, so:
+    process_status_name = serializers.CharField()
 
     class Meta:
         model = ProcessStatusName
@@ -1242,7 +1453,7 @@ class ProcessStatusSerializer(serializers.ModelSerializer):
             "visa_main_category",
             "visa_main_category_name",
             "process_status_name",
-            "process_status_name_value",
+            # removed: process_status_name_value
             "description",
             "is_deleted",
             "created_at",
@@ -1261,10 +1472,6 @@ class ProcessStatusSerializer(serializers.ModelSerializer):
 
     def validate_visa_main_category(self, value):
         return self._get_instance(VisaMain, value, "visa_main_category")
-
-    def validate_process_status_name(self, value):
-        return self._get_instance(ProcessStatusName, value, "process_status_name")
-
 
 
 class ProcessSubStatusSerializer(serializers.ModelSerializer):
@@ -1404,3 +1611,197 @@ class CivilIdNameSerializer(serializers.ModelSerializer):
 
     def get_valid_duration_unit_detail(self, obj):
         return obj.get_valid_duration_unit_display() if obj.valid_duration_unit else None
+#----------------------------occupation-----------------
+
+class JobTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = JobType
+        fields = [
+            'id',
+            'uuid',
+            'name',
+            'description',
+            'is_deleted',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
+
+class ModeofSalarySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ModeofSalary
+        fields = [
+            'id',
+            'uuid',
+            'name',
+            'description',
+            'is_deleted',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
+
+class ITReturnStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ITReturnStatus
+        fields = [
+            'id',
+            'uuid',
+            'name',
+            'description',
+            'is_deleted',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
+
+#---------------------visa conditions master---------------------------
+
+class WorkRightsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WorkRights
+        fields = '__all__'
+
+
+class WorkRightsDuringStudySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WorkRightsDuringStudy
+        fields = '__all__'
+
+
+class WorkRightsDuringVacationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WorkRightsDuringVacation
+        fields = '__all__'
+
+
+class WorkRightsAfterStudySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WorkRightsAfterStudy
+        fields = '__all__'
+
+
+class PRPossibilitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PRPossibility
+        fields = '__all__'
+
+
+class SpouseCanApplywithCandidateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SpouseCanApplywithCandidate
+        fields = '__all__'
+
+
+class SpouseVisaCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SpouseVisaCategory
+        fields = '__all__'
+
+
+class SpouseWorkRightsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SpouseWorkRights
+        fields = '__all__'
+
+
+class ChildrenCanApplywithCandidateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ChildrenCanApplywithCandidate
+        fields = '__all__'
+
+
+class ChildrenVisaCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ChildrenVisaCategory
+        fields = '__all__'
+
+
+class ChildrenStudyWorkRightsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ChildrenStudyWorkRights
+        fields = '__all__'
+
+
+
+#--------------------instituite  master -----------------------------
+
+class InstituteTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InstituteType
+        fields = '__all__'
+
+
+class InstituteGroupNameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InstituteGroupName
+        fields = '__all__'
+
+
+class InstituteStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InstituteStatus
+        fields = '__all__'
+
+
+class InstitutePrioritySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InstitutePriority
+        fields = '__all__'
+
+
+class InstituteDepartmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InstituteDepartment
+        fields = '__all__'
+
+
+class BankAccountForSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BankAccountFor
+        fields = '__all__'
+
+
+class WhenCommissionIssueSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WhenCommissionIssue
+        fields = '__all__'
+
+
+class CourseLevelCodeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CourseLevelCode
+        fields = '__all__'
+
+
+class CourseDividedInSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CourseDividedIn
+        fields = '__all__'
+
+
+class CourseStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CourseStatus
+        fields = '__all__'
+
+
+class IntakeNameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = IntakeName
+        fields = '__all__'
+
+
+class CourseStatusIntakeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CourseStatusIntake
+        fields = '__all__'
+
+
+class ScholorshipBasedOnSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ScholorshipBasedOn
+        fields = '__all__'

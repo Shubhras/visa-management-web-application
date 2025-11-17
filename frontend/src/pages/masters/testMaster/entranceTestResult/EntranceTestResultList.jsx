@@ -8,7 +8,7 @@ import { toast } from "react-toastify";
 import { entranceTestResultList, entranceTestResultDelete, entranceTestResultExportData } from '../../../../store/master/testMaster/action';
 import AddImportEntranceTestResultModal from './AddImportEntranceTestResultModal';
 import AddEditEntranceTestResultModal from './AddEditEntranceTestResultModal';
-
+import { formatDateDDMMYYYY, formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 const EntranceTestResultList = () => {
     const dispatch = useDispatch();
     const [modalState, setModalState] = useState({
@@ -483,16 +483,16 @@ const EntranceTestResultList = () => {
                     <div className="card-body container-data">
                         <div className="row align-items-center gy-3 gx-2 flex-wrap filter-action-btn">
                             {/* Left Section: Import / Export / Delete */}
-                            <div className="col-xl-4 col-lg-4 col-md-12">
+                            <div className="col-xl-6 col-lg-4 col-md-12">
                                 <div className="d-flex flex-wrap align-items-center gap-2">
                                     <button
-                                        className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
+                                        className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
                                         onClick={handleShowImport}
                                     >
                                         Import
                                     </button>
                                     <button
-                                        className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
+                                        className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
                                         onClick={handleExportTest}
                                         disabled={loadingExport}
                                     >
@@ -500,7 +500,7 @@ const EntranceTestResultList = () => {
                                     </button>
                                     <button
                                         onClick={handleBulkDelete}
-                                        className="btn btn-sm px-3 py-1 text-white fw-medium comman-btn-color"
+                                        className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
                                     >
                                         Delete
                                     </button>
@@ -508,13 +508,13 @@ const EntranceTestResultList = () => {
                                         <>
                                             <button
                                                 onClick={() => handleSelectAllOrNot("onlySelected")}
-                                                className={`btn btn-sm px-3 py-1 fw-medium ${selectAllOrNot === "onlySelected" ? "comman-btn-color" : "comman-inactive-btn"}`}
+                                                className={`btn btn-sm py-1 fw-medium ${selectAllOrNot === "onlySelected" ? "comman-btn-color" : "comman-inactive-btn"}`}
                                             >
                                                 {`Select (${selectedRows.length})`}
                                             </button>
                                             <button
                                                 onClick={() => handleSelectAllOrNot("all")}
-                                                className={`btn btn-sm px-3 py-1 fw-medium ${selectAllOrNot === "all" ? "comman-btn-color" : "comman-inactive-btn"}`}
+                                                className={`btn btn-sm py-1 fw-medium ${selectAllOrNot === "all" ? "comman-btn-color" : "comman-inactive-btn"}`}
                                             >
                                                 {`Select All (${tableState.total})`}
                                             </button>
@@ -524,7 +524,7 @@ const EntranceTestResultList = () => {
                             </div>
 
                             {/* Right Section: Select / Search / +Add New */}
-                            <div className="col-xl-8 col-lg-8 col-md-12">
+                            <div className="col-xl-6 col-lg-8 col-md-12">
                                 <div className="d-flex flex-wrap align-items-center justify-content-end gap-2">
                                     <select
                                         className="form-select form-select-sm select-page-filter"
@@ -573,7 +573,7 @@ const EntranceTestResultList = () => {
                                     <button
                                         className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
                                         onClick={handleShow}
-                                    >+ New</button>
+                                    >New</button>
                                 </div>
                             </div>
                         </div>
@@ -683,7 +683,7 @@ const EntranceTestResultList = () => {
                                                     <td><span>{rowItem.description}</span></td>
                                                 )}
                                                 {isColumnVisible('updated_at') && (
-                                                    <td><span>{formatDateTime(rowItem.updated_at)}</span></td>
+                                                    <td><span>{formatDateDDMMYYYYTime(rowItem.updated_at)}</span></td>
                                                 )}
                                                 <td className='action-td'>
                                                     <div className="d-flex align-items-end gap-2">
@@ -941,14 +941,14 @@ const EntranceTestResultList = () => {
                                         <button
                                             type="button"
                                             onClick={cancelExportTest}
-                                            className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-40 py-6 radius-8"
+                                            className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-16 py-4 radius-6"
                                         >
                                             Cancel
                                         </button>
                                         <button
                                             onClick={handleExport}
                                             type="button"
-                                            className="btn comman-btn-color border border-primary-600 text-md px-40 py-6 radius-8"
+                                            className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                                         >
                                             Submit
                                         </button>

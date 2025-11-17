@@ -3,11 +3,12 @@ import { useDispatch } from "react-redux";
 import { academicResultAdd, academicResultEdit } from '../../../../store/master/educationMaster/action';
 import { toast } from "react-toastify";
 import { academicResultTypeList } from '../../../../store/master/educationMaster/action';
+import Select from "react-select";
 const AddEditAcademicResultModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const [educationLevelListData, setEducationLevelListData] = useState([]);
- 
+
   const [formData, setFormData] = useState({
     uuid: '',
     departmentName: '',
@@ -30,7 +31,7 @@ const AddEditAcademicResultModal = ({ show, handleClose, mode = 'add', rowData =
         description: rowData.description || '',
       });
     } else {
-    
+
       setFormData({
         uuid: '',
         departmentName: '',
@@ -48,8 +49,8 @@ const AddEditAcademicResultModal = ({ show, handleClose, mode = 'add', rowData =
       limit: 2000,
       search: '',
       status: '',
-      sortBy: 'updated_at', 
-      sortOrder: 'desc', 
+      sortBy: 'updated_at',
+      sortOrder: 'desc',
     };
 
     dispatch(academicResultTypeList(params, (response, error) => {
@@ -189,7 +190,7 @@ const AddEditAcademicResultModal = ({ show, handleClose, mode = 'add', rowData =
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                     Academic Result Type <span className="text-danger">*</span>
                   </label>
-                  <select
+                  {/* <select
                     name="category"
                     value={formData.category}
                     onChange={handleChange}
@@ -201,7 +202,37 @@ const AddEditAcademicResultModal = ({ show, handleClose, mode = 'add', rowData =
                         {option.name}
                       </option>
                     ))}
-                  </select>
+                  </select> */}
+                  <Select
+                    options={educationLevelListData.map((option) => ({
+                      value: option.uuid,
+                      label: option.name,
+                    }))}
+                    value={
+                      formData.category
+                        ? educationLevelListData
+                          .map((option) => ({
+                            value: option.uuid,
+                            label: option.name,
+                          }))
+                          .find((opt) => opt.value === formData.category)
+                        : null
+                    }
+                    onChange={(selectedOption) =>
+                      handleChange({
+                        target: {
+                          name: "category",
+                          value: selectedOption ? selectedOption.value : "",
+                        },
+                      })
+                    }
+                    placeholder="Select academic result type"
+                    isClearable
+                    isSearchable
+                    className={`custom-select-container ${errors.category ? "is-invalid" : ""
+                      }`}
+                    classNamePrefix="custom-select"
+                  />
                   {errors.category && (
                     <div className="text-danger text-sm mt-1">
                       {errors.category}
@@ -252,13 +283,13 @@ const AddEditAcademicResultModal = ({ show, handleClose, mode = 'add', rowData =
                   <button
                     type="button"
                     onClick={onClose}
-                    className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-40 py-6 radius-8"
+                    className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-16 py-4 radius-6"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="btn comman-btn-color border border-primary-600 text-md px-40 py-6 radius-8"
+                    className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                     disabled={loading}
                   >
                     {loading ? 'Saving...' : 'Save'}

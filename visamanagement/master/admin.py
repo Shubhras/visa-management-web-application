@@ -312,6 +312,15 @@ class PurposeOfVisitAdmin(admin.ModelAdmin):
 
 
 
+@admin.register(DocumentsFor)
+class DocumentsForAdmin(admin.ModelAdmin):
+    list_display = ("uuid", "name", "description", "is_deleted", "created_at", "updated_at")
+    list_filter = ("is_deleted", "created_at", "updated_at")
+    search_fields = ("name", "description")
+    readonly_fields = ("uuid", "created_at", "updated_at")
+    ordering = ("name",)
+
+
 
 @admin.register(RequiredDocument)
 class RequiredDocumentAdmin(admin.ModelAdmin):
@@ -518,4 +527,46 @@ class AcademicResultAdmin(admin.ModelAdmin):
     list_display = ('id', 'AcademicResulttype', 'Academicresult', 'description', 'is_deleted', 'created_at', 'updated_at')
     list_filter = ('AcademicResulttype', 'is_deleted', 'created_at')
     search_fields = ('Academicresult', 'description')
+    readonly_fields = ('uuid', 'created_at', 'updated_at')
+
+
+
+
+@admin.register(RepresentingCountry)
+class RepresentingCountryAdmin(admin.ModelAdmin):
+    list_display = (
+        'uuid',
+        'country',
+        'continent',
+        'short_name',
+        'full_name',
+        'official_name',
+        'capital_city',
+        'population',
+        'status',
+        'is_active',
+        'is_deleted',
+        'created_at',
+        'updated_at',
+    )
+
+    list_filter = (
+        'continent',
+        'status',
+        'is_active',
+        'is_deleted',
+        'country',
+    )
+
+    search_fields = (
+        'uuid',
+        'full_name',
+        'short_name',
+        'official_name',
+        'capital_city',
+        'country__name',
+    )
+
+    ordering = ('-created_at',)
+
     readonly_fields = ('uuid', 'created_at', 'updated_at')

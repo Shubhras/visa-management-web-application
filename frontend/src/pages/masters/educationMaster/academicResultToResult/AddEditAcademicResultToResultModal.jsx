@@ -3,6 +3,7 @@ import { useDispatch } from "react-redux";
 import { academicResultToResultAdd, academicResultToResultEdit } from '../../../../store/master/educationMaster/action';
 import { toast } from "react-toastify";
 import { academicResultTypeList, academicResultList } from '../../../../store/master/educationMaster/action';
+import Select from "react-select";
 const AddEditAcademicResultToResultModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
@@ -219,19 +220,36 @@ const AddEditAcademicResultToResultModal = ({ show, handleClose, mode = 'add', r
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                                         Academic Result Type <span className="text-danger">*</span>
                                     </label>
-                                    <select
-                                        name="academicResultType"
-                                        value={formData.academicResultType}
-                                        onChange={handleChange}
-                                        className={`form-control form-select radius-8 ${errors.academicResultType ? 'is-invalid' : ''}`}
-                                    >
-                                        <option value="">Select Academic Result Type</option>
-                                        {academicResultType.map((option) => (
-                                            <option key={option.uuid} value={option.uuid}>
-                                                {option.name}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <Select
+                                        options={academicResultType.map((option) => ({
+                                            value: option.uuid,
+                                            label: option.name,
+                                        }))}
+                                        value={
+                                            formData.academicResultType
+                                                ? academicResultType
+                                                    .map((option) => ({
+                                                        value: option.uuid,
+                                                        label: option.name,
+                                                    }))
+                                                    .find((opt) => opt.value === formData.academicResultType)
+                                                : null
+                                        }
+                                        onChange={(selectedOption) =>
+                                            handleChange({
+                                                target: {
+                                                    name: "academicResultType",
+                                                    value: selectedOption ? selectedOption.value : "",
+                                                },
+                                            })
+                                        }
+                                        placeholder="Select Academic Result Type"
+                                        isClearable
+                                        isSearchable
+                                        className={`custom-select-container ${errors.academicResultType ? "is-invalid" : ""
+                                            }`}
+                                        classNamePrefix="custom-select"
+                                    />
                                     {errors.academicResultType && (
                                         <div className="text-danger text-sm mt-1">
                                             {errors.academicResultType}
@@ -242,7 +260,7 @@ const AddEditAcademicResultToResultModal = ({ show, handleClose, mode = 'add', r
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                                         Academic Result <span className="text-danger">*</span>
                                     </label>
-                                    <select
+                                    {/* <select
                                         name="academicResult"
                                         value={formData.academicResult}
                                         onChange={handleChange}
@@ -252,12 +270,42 @@ const AddEditAcademicResultToResultModal = ({ show, handleClose, mode = 'add', r
                                         {
                                             academicResult.map((option) => (
                                                 <option key={option.uuid} value={option.uuid}>
-                                                    {option.name}
+                                                    {option.Academicresult}
                                                 </option>
 
                                             ))
                                         }
-                                    </select>
+                                    </select> */}
+                                    <Select
+                                        options={academicResult.map((option) => ({
+                                            value: option.uuid,
+                                            label: option.Academicresult,
+                                        }))}
+                                        value={
+                                            formData.academicResult
+                                                ? academicResult
+                                                    .map((option) => ({
+                                                        value: option.uuid,
+                                                        label: option.Academicresult,
+                                                    }))
+                                                    .find((opt) => opt.value === formData.academicResult)
+                                                : null
+                                        }
+                                        onChange={(selectedOption) =>
+                                            handleChange({
+                                                target: {
+                                                    name: "academicResult",
+                                                    value: selectedOption ? selectedOption.value : "",
+                                                },
+                                            })
+                                        }
+                                        placeholder="Select Academic Result"
+                                        isClearable
+                                        isSearchable
+                                        className={`custom-select-container ${errors.academicResult ? "is-invalid" : ""
+                                            }`}
+                                        classNamePrefix="custom-select"
+                                    />
                                     {errors.academicResult && (
                                         <div className="text-danger text-sm mt-1">
                                             {errors.academicResult}
@@ -327,13 +375,13 @@ const AddEditAcademicResultToResultModal = ({ show, handleClose, mode = 'add', r
                                     <button
                                         type="button"
                                         onClick={onClose}
-                                        className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-40 py-6 radius-8"
+                                        className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-16 py-4 radius-6"
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         type="submit"
-                                        className="btn comman-btn-color border border-primary-600 text-md px-40 py-6 radius-8"
+                                        className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                                         disabled={loading}
                                     >
                                         {loading ? 'Saving...' : 'Save'}

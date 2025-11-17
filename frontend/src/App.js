@@ -396,6 +396,12 @@ import EntranceTestNameList from "./pages/masters/testMaster/entranceTestName/En
 import EntranceTestModuleNameList from "./pages/masters/testMaster/entranceTestModuleName/EntranceTestModuleNameList";
 import EntranceTestResultList from "./pages/masters/testMaster/entranceTestResult/EntranceTestResultList";
 import LanguageTestResultList from "./pages/masters/testMaster/languageTestResult/LanguageTestResultList";
+
+import JobTypeList from "./pages/masters/occupationMaster/jobType/JobTypeList";
+import ModeofSalaryList from "./pages/masters/occupationMaster/modeofSalary/ModeofSalaryList";
+import ITReturnStatusList from "./pages/masters/occupationMaster/iTReturnStatus/ITReturnStatusList";
+import OccupationTypeList from "./pages/masters/occupationMaster/occupationType/OccupationTypeList";
+import OccupationProspectList from "./pages/masters/occupationMaster/occupationProspect/OccupationProspectList";
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   // Check if user is authenticated
@@ -663,22 +669,27 @@ function App() {
         <Route path='/academic-result' element={<ProtectedRoute><AcademicResultList /></ProtectedRoute>}></Route>
         <Route path='/degree-awarded-institute' element={<ProtectedRoute><DegreeAwardedInstituteList /></ProtectedRoute>}></Route>
         <Route path='/academic-result-to-result' element={<ProtectedRoute><AcademicResultToResultList /></ProtectedRoute>}></Route>
-          <Route path='/eca-awarding-body' element={<ProtectedRoute><ECAAwardingBodyList/></ProtectedRoute>}></Route>
-        <Route path='/medium-of-education' element={<ProtectedRoute><MediumofEducationList/></ProtectedRoute>}></Route>
- <Route path='/eca-for' element={<ProtectedRoute><ECAForList/></ProtectedRoute>}></Route>
- 
-  {/* test Masters */}
-       <Route path="/language-name-test" element={<ProtectedRoute><LanguageNameTestList/></ProtectedRoute>}></Route>
-       <Route path="/language-test-name" element={<ProtectedRoute><LanguageTestNameList/></ProtectedRoute>}></Route>
-             <Route path="/language-test-module-name" element={<ProtectedRoute><LanguageTestModuleNameList /></ProtectedRoute>}></Route>
+        <Route path='/eca-awarding-body' element={<ProtectedRoute><ECAAwardingBodyList /></ProtectedRoute>}></Route>
+        <Route path='/medium-of-education' element={<ProtectedRoute><MediumofEducationList /></ProtectedRoute>}></Route>
+        <Route path='/eca-for' element={<ProtectedRoute><ECAForList /></ProtectedRoute>}></Route>
+
+        {/* test Masters */}
+        <Route path="/language-name-test" element={<ProtectedRoute><LanguageNameTestList /></ProtectedRoute>}></Route>
+        <Route path="/language-test-name" element={<ProtectedRoute><LanguageTestNameList /></ProtectedRoute>}></Route>
+        <Route path="/language-test-module-name" element={<ProtectedRoute><LanguageTestModuleNameList /></ProtectedRoute>}></Route>
         <Route path="/language-banchmark-level" element={<ProtectedRoute><LanguageBanchmarkLevelList /></ProtectedRoute>}></Route>
-        <Route path="/cbl-level" element={<ProtectedRoute><CLBLevelList/></ProtectedRoute>}></Route>
-        <Route path="/entrance-test-name" element={<ProtectedRoute><EntranceTestNameList/></ProtectedRoute>}></Route>
-        <Route path="/entrance-test-module-name" element={<ProtectedRoute><EntranceTestModuleNameList/></ProtectedRoute>}></Route>
-        <Route path="/entrance-test-result" element={<ProtectedRoute><EntranceTestResultList/></ProtectedRoute>}></Route>
-        <Route path="/language-test-result" element={<ProtectedRoute><LanguageTestResultList/></ProtectedRoute>}></Route>
+        <Route path="/cbl-level" element={<ProtectedRoute><CLBLevelList /></ProtectedRoute>}></Route>
+        <Route path="/entrance-test-name" element={<ProtectedRoute><EntranceTestNameList /></ProtectedRoute>}></Route>
+        <Route path="/entrance-test-module-name" element={<ProtectedRoute><EntranceTestModuleNameList /></ProtectedRoute>}></Route>
+        <Route path="/entrance-test-result" element={<ProtectedRoute><EntranceTestResultList /></ProtectedRoute>}></Route>
+        <Route path="/language-test-result" element={<ProtectedRoute><LanguageTestResultList /></ProtectedRoute>}></Route>
 
-
+        {/*Occupation Master*/}
+        <Route path="/job-type" element={<ProtectedRoute><JobTypeList /></ProtectedRoute>}></Route>
+        <Route path="/mode-of-salary" element={<ProtectedRoute><ModeofSalaryList /></ProtectedRoute>}></Route>
+        <Route path="/it-return-status" element={<ProtectedRoute><ITReturnStatusList /></ProtectedRoute>}></Route>
+        <Route path="/occupation-type" element={<ProtectedRoute><OccupationTypeList /></ProtectedRoute>}></Route>
+        <Route path="/occupation-prospect" element={<ProtectedRoute><OccupationProspectList /></ProtectedRoute>}></Route>
         {/* 404 Error Page */}
         <Route path='*' element={<ErrorPage />} />
       </Routes>

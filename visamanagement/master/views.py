@@ -480,15 +480,14 @@ class GenderImportAPIView(APIView):
 
             # ---------------- Process Data ----------------
             imported_count = 0
-            for idx, row in enumerate(data, start=2):
+            for row in reversed(data):
+                row_number = row.get("_row_number", "Unknown")
                 name = str(row.get('gender')).strip() if row.get('gender') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
-                is_active_val = row.get('is_active')
-                is_active = bool(int(is_active_val)) if str(is_active_val).isdigit() else True
-
+                
                 if not name:
                     skipped_rows.append({
-                        "Row": idx,
+                        "Row": row_number,
                         "Reason": "Missing gender name"
                     })
                     continue
@@ -498,14 +497,14 @@ class GenderImportAPIView(APIView):
                 if existing:
                     if not existing.is_deleted:
                         duplicates.append({
+                            "Row": row_number,
                             "Gender": name,
                             "Reason": "Already exists in database"
                         })
                         continue
                     else:
                         # Reactivate deleted
-                        existing.description = description
-                        existing.is_active = is_active
+                        existing.description = description 
                         existing.is_deleted = False
                         existing.save()
                         imported_count += 1
@@ -513,7 +512,7 @@ class GenderImportAPIView(APIView):
                     Gender.objects.create(
                         name=name,
                         description=description,
-                        is_active=is_active,
+                       
                         is_deleted=False
                     )
                     imported_count += 1
@@ -911,9 +910,7 @@ class MaritalstatusImportAPIView(APIView):
                 row_number = row.get("_row_number", "Unknown")
                 name = str(row.get('marital status')).strip() if row.get('marital status') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
-                is_active_val = row.get('is_active')
-                is_active = bool(int(is_active_val)) if str(is_active_val).isdigit() else True
-
+                
                 if not name:
                     skipped_rows.append({
                         "Row": row_number,
@@ -933,7 +930,7 @@ class MaritalstatusImportAPIView(APIView):
                     else:
                         # Reactivate deleted
                         existing.description = description
-                        existing.is_active = is_active
+                        
                         existing.is_deleted = False
                         existing.save()
                         imported_count += 1
@@ -941,7 +938,7 @@ class MaritalstatusImportAPIView(APIView):
                     Maritalstatus.objects.create(
                         name=name,
                         description=description,
-                        is_active=is_active,
+                       
                         is_deleted=False
                     )
                     imported_count += 1
@@ -1012,7 +1009,6 @@ class ContinentCreateAPIView(APIView):
             return Response({"statusCode": 200, "status": True, "message": "Continent created successfully", "data": serializer.data})
         errors = " ".join([msg for msgs in serializer.errors.values() for msg in msgs])
         return Response({"statusCode": 400, "status": False, "message": errors}, status=400)
-
 
 
 class ContinentRetrieveAPIView(APIView):
@@ -1135,8 +1131,6 @@ class ContinentDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-
-
 class ContinentExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -1206,9 +1200,6 @@ class ContinentExportAPIView(APIView):
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
-
-
-
 
 
 class ContinentImportAPIView(APIView):
@@ -4459,37 +4450,9 @@ class CivilIdNameImportAPIView(APIView):
 
 
 
+# -----------------------department---------------------------------
 
 
-class DepartmentListAPIView(APIView):
-    def get(self, request):
-        search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')  
-
-        allowed_sort_fields = ['name', 'description', 'updated_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-
-        # Apply descending order for 'desc'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
-
-        queryset = Department.objects.filter(is_deleted=False)
-
-        if search:
-            queryset = queryset.filter(
-                Q(name__istartswith=search)
-            )
-
-        # Apply dynamic ordering
-        queryset = queryset.order_by(sort_by)
-
-        paginator = CustomPagination()
-        result_page = paginator.paginate_queryset(queryset, request)
-        serializer = DepartmentSerializer(result_page, many=True)
-
-        return paginator.get_paginated_response(serializer.data)
 
 
 class DepartmentCreateAPIView(APIView):
@@ -4530,6 +4493,38 @@ class DepartmentCreateAPIView(APIView):
                 "status": False,
                 "message": message_text,
             }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DepartmentListAPIView(APIView):
+    def get(self, request):
+        search = request.GET.get('search', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_order = request.GET.get('sortOrder', 'desc')  
+
+        allowed_sort_fields = ['name', 'description', 'updated_at']
+        if sort_by not in allowed_sort_fields:
+            sort_by = 'created_at'
+
+        # Apply descending order for 'desc'
+        if sort_order == 'desc':
+            sort_by = f'-{sort_by}'
+
+        queryset = Department.objects.filter(is_deleted=False)
+
+        if search:
+            queryset = queryset.filter(
+                Q(name__istartswith=search)
+            )
+
+        # Apply dynamic ordering
+        queryset = queryset.order_by(sort_by)
+
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = DepartmentSerializer(result_page, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
+
 
 class DepartmentRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -5294,7 +5289,7 @@ class EmployeeTypeImportAPIView(APIView):
                     if not existing.is_deleted:
                         duplicates.append({
                             "Row": row_number,
-                            "EmployeeType": name,
+                            "Employee Type": name,
                             "Reason": "Already exists in database"
                         })
                         continue
@@ -5730,7 +5725,7 @@ class CompanyTypeImportAPIView(APIView):
                     if not existing.is_deleted:
                         duplicates.append({
                             "Row": row_number,
-                            "CompanyType": name,
+                            "Company Type": name,
                             "Reason": "Already exists in database"
                         })
                         continue
@@ -6256,17 +6251,23 @@ class OwnershipTypeImportAPIView(APIView):
                     })
                     continue
 
-                # Find company type (if provided)
-                company_type = None
-                if company_type_name:
-                    company_type = CompanyType.objects.filter(name__iexact=company_type_name).first()
-                    if not company_type:
-                        skipped_rows.append({
-                            "Row": row_number,
-                            "OwnershipType": ownership_name,
-                            "Reason": f'Company Type "{company_type_name}" not found'
-                        })
-                        continue
+                if not company_type_name:
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Ownership Type": ownership_name,
+                        "Reason": "Missing company type"
+                    })
+                    continue
+
+                # Find company type
+                company_type = CompanyType.objects.filter(name__iexact=company_type_name).first()
+                if not company_type:
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Ownership Type": ownership_name,
+                        "Reason": f'Company Type "{company_type_name}" not found'
+                    })
+                    continue
 
                 # Check uniqueness on (ownership_name, company_type)
                 existing = OwnershipType.objects.filter(
@@ -6278,8 +6279,8 @@ class OwnershipTypeImportAPIView(APIView):
                     if not existing.is_deleted:
                         duplicates.append({
                             "Row": row_number,
-                            "OwnershipType": ownership_name,
-                            "CompanyType": company_type_name or "N/A",
+                            "Ownership Type": ownership_name,
+                            "Company Type": company_type_name or "N/A",
                             "Reason": "Already exists in database"
                         })
                         continue
@@ -6661,7 +6662,7 @@ class StakeholderCategoryImportAPIView(APIView):
                 existing = StakeholderCategory.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "StakeholderCategory": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "Stakeholder Category": name, "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -6978,7 +6979,6 @@ class StakeholderTypeExportAPIView(APIView):
 
 # ----------------- IMPORT -----------------
 class StakeholderTypeImportAPIView(APIView):
-   
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
@@ -6992,13 +6992,14 @@ class StakeholderTypeImportAPIView(APIView):
         duplicates = []
         skipped_rows = []
 
-        required_headers = {'stakeholder type'}
-        optional_headers = {'description', 'stakeholder category'}
-
         def normalize_header(h):
             if not h:
                 return ''
             return ''.join(c for c in str(h).lower() if c.isalnum())
+
+        # Normalized required and optional headers
+        required_headers = {normalize_header('stakeholder type'), normalize_header('stakeholder category')}
+        optional_headers = {normalize_header('description')}
 
         try:
             data = []
@@ -7057,9 +7058,11 @@ class StakeholderTypeImportAPIView(APIView):
                     data.append(row_lower)
 
             else:
-                return Response({  "statusCode": 400,
-                            "status": False,'error': 'Unsupported file format. Use .xlsx or .csv'},
-                                status=status.HTTP_400_BAD_REQUEST)
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    'error': 'Unsupported file format. Use .xlsx or .csv'
+                }, status=status.HTTP_400_BAD_REQUEST)
 
             # ---------- Import Logic ----------
             imported_count = 0
@@ -7073,12 +7076,15 @@ class StakeholderTypeImportAPIView(APIView):
                     skipped_rows.append({"Row": row_number, "Reason": "Missing stakeholder type name"})
                     continue
 
-                # Resolve category object
-                category_obj = None
-                if category_name:
-                    category_obj = StakeholderCategory.objects.filter(name__iexact=category_name, is_deleted=False).first()
+                if not category_name:
+                    skipped_rows.append({"Row": row_number, "Stakeholder Type": name, "Reason": "Missing stakeholder category"})
+                    continue
 
-                # Check duplicate by name + category
+                category_obj = StakeholderCategory.objects.filter(name__iexact=category_name, is_deleted=False).first()
+                if not category_obj:
+                    skipped_rows.append({"Row": row_number, "Stakeholder Type": name, "Reason": f'Category "{category_name}" not found'})
+                    continue
+
                 existing = StakeholderType.objects.filter(
                     name__iexact=name,
                     category=category_obj
@@ -7086,7 +7092,8 @@ class StakeholderTypeImportAPIView(APIView):
 
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "StakeholderType": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "Stakeholder Type": name,
+                                           "Stakeholder Category": category_name, "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -7118,7 +7125,6 @@ class StakeholderTypeImportAPIView(APIView):
             "duplicates": duplicates,
             "skipped_rows": skipped_rows
         }, status=status.HTTP_200_OK)
-
 
 
 
@@ -7369,10 +7375,6 @@ class AccreditationCategoryExportAPIView(APIView):
 
 # ------------------ Import API ------------------
 class AccreditationCategoryImportAPIView(APIView):
-    """
-    API to import Accreditation Categories from CSV or XLSX.
-    Handles duplicates, deleted records, and skips empty rows.
-    """
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
@@ -7386,13 +7388,14 @@ class AccreditationCategoryImportAPIView(APIView):
         duplicates = []
         skipped_rows = []
 
-        required_headers = {'accrediation category'}
-        optional_headers = {'description'}
-
         def normalize_header(h):
             if not h:
                 return ''
             return ''.join(c for c in str(h).lower() if c.isalnum())
+
+        # Normalize required and optional headers
+        required_headers = {normalize_header('accrediation category')}
+        optional_headers = {normalize_header('description')}
 
         try:
             data = []
@@ -7456,7 +7459,7 @@ class AccreditationCategoryImportAPIView(APIView):
                 existing = AccreditationCategory.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "AccreditationCategory": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "Accrediation Category": name, "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -7477,9 +7480,7 @@ class AccreditationCategoryImportAPIView(APIView):
             "imported_count": imported_count,
             "duplicates": duplicates,
             "skipped_rows": skipped_rows
-        }, status=200)
-
-
+        }, status=200)  
 
 
 #-------------------------------------------accrediation Name---------------------------------
@@ -7853,7 +7854,7 @@ class AccreditationNameImportAPIView(APIView):
                                 continue
                         if not valid_date:
                             skipped_rows.append({
-                                'full_name': full_name,
+                                'Accrediation Full Name': full_name,
                                 'country': country_name,
                                 'category': category_name,
                                 'reason': f"Invalid date format '{valid_date_raw}'. Expected formats: dd-mm-yyyy, dd/mm/yyyy "
@@ -8220,9 +8221,9 @@ class BankAccountTypeDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-        
+
 class BankAccountTypeExportAPIView(APIView):
-    # permission_classes = [IsAuthenticated]  # Uncomment if needed
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
@@ -8290,10 +8291,6 @@ class BankAccountTypeExportAPIView(APIView):
 
 
 class BankAccountTypeImportAPIView(APIView):
-    """
-    API to import Bank Account Types from CSV or XLSX.
-    Handles duplicates, deleted records, and skips empty rows.
-    """
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
@@ -8307,13 +8304,14 @@ class BankAccountTypeImportAPIView(APIView):
         duplicates = []
         skipped_rows = []
 
-        required_headers = {'bank account type'}
-        optional_headers = {'description'}
-
         def normalize_header(h):
             if not h:
                 return ''
             return ''.join(c for c in str(h).lower() if c.isalnum())
+
+        # Normalize required and optional headers
+        required_headers = {normalize_header('bank account type')}
+        optional_headers = {normalize_header('description')}
 
         try:
             data = []
@@ -8375,7 +8373,7 @@ class BankAccountTypeImportAPIView(APIView):
                 existing = BankAccountType.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "BankAccountType": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "Bank Account Type": name, "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -8403,10 +8401,9 @@ class BankAccountTypeImportAPIView(APIView):
 
 
 
-
 #-------------------------------------------LicenseName---------------------------------
 class LicenseNameListAPIView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
@@ -8424,11 +8421,11 @@ class LicenseNameListAPIView(APIView):
 
         if search:
             queryset = queryset.filter(
-                Q(full_name__icontains=search) |
-                Q(short_name__icontains=search) |
-                Q(issuing_authority__icontains=search) |
-                Q(description__icontains=search) |
-                Q(country__name__icontains=search)
+                Q(full_name__istartswith=search) |
+                Q(short_name__istartswith=search) |
+                Q(issuing_authority__istartswith=search) |
+                Q(description__istartswith=search) |
+                Q(country__name__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -8601,7 +8598,7 @@ class LicenseNameDeleteAPIView(APIView):
 
 # ------------------ Export API ------------------
 class LicenseNameExportAPIView(APIView):
-
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')
@@ -8618,7 +8615,7 @@ class LicenseNameExportAPIView(APIView):
             'valid_duration_value': 'License Valid Duration Value',
             'valid_duration_unit': 'License Valid Duration Unit',
             'valid_date': 'License Valid Date',
-            'country': 'Country Name',
+            'country': 'Country',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',
         }
@@ -8674,6 +8671,7 @@ class LicenseNameExportAPIView(APIView):
 
 # ------------------ Import API ------------------
 class LicenseNameImportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
         file = request.FILES.get('file')
@@ -8903,6 +8901,7 @@ class LicenseNameImportAPIView(APIView):
 #-------------------------------------------LeadSource---------------------------------
 
 class LeadSourceCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def post(self, request):
         serializer = LeadSourceSerializer(data=request.data)
         if serializer.is_valid():
@@ -8927,10 +8926,9 @@ class LeadSourceCreateAPIView(APIView):
             "message": serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
 
-
-    
-
 class LeadSourceListAPIView(APIView):    
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
     def get(self, request):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'created_at')
@@ -8961,6 +8959,7 @@ class LeadSourceListAPIView(APIView):
 
 
 class LeadSourceRetrieveAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def get(self, request, uuid):
         try:
             leadsource = LeadSource.objects.get(uuid=uuid, is_deleted=False)
@@ -8981,6 +8980,7 @@ class LeadSourceRetrieveAPIView(APIView):
 
 
 class LeadSourceUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def put(self, request, uuid):
         try:
             category = LeadSource.objects.get(uuid=uuid, is_deleted=False)
@@ -9099,7 +9099,7 @@ class LeadSourceDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 class LeadSourceExportAPIView(APIView):
-    # permission_classes = [IsAuthenticated]  # Uncomment if needed
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
@@ -9172,10 +9172,7 @@ class LeadSourceExportAPIView(APIView):
 
 
 class LeadSourceImportAPIView(APIView):
-    """
-    API to import Lead Sources from CSV or XLSX.
-    """
-
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')
@@ -9184,17 +9181,16 @@ class LeadSourceImportAPIView(APIView):
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
-        duplicate_names = []
+        duplicates = []
+        skipped_rows = []
 
-        # Define required and optional headers
-        required_headers = {'lead source'}  # mandatory
-        optional_headers = {'description'}  # optional
+        required_headers = {'lead source'}
+        optional_headers = {'description', 'is_active'}
 
         try:
             data = []
-            headers = []
 
-            # ---------- XLSX Handling ----------
+            # ---------------- XLSX ----------------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
@@ -9207,7 +9203,7 @@ class LeadSourceImportAPIView(APIView):
 
                 if sheet_name not in available_sheets:
                     return Response({
-                        'error': f'Sheet "{sheet_name}" not found in uploaded file',
+                        'error': f'Sheet "{sheet_name}" not found',
                         'available_sheets': available_sheets
                     }, status=status.HTTP_400_BAD_REQUEST)
 
@@ -9216,82 +9212,62 @@ class LeadSourceImportAPIView(APIView):
                     return Response({
                         "statusCode": 400,
                         "status": False,
-                        "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Please provide at least one data row.'
+                        "message": f'Sheet "{sheet_name}" is empty.'
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
 
-                # Validate required headers only
-                if not required_headers.issubset(set(headers)):
-                    return Response({
-                        "statusCode": 400,
-                        "status": True,
-                        'message': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
-                    }, status=status.HTTP_400_BAD_REQUEST)
-
-                for row in ws.iter_rows(min_row=2, values_only=True):
+                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     if not any(row):
                         continue
                     row_dict = dict(zip(headers, row))
+                    row_dict["_row_number"] = idx
                     data.append(row_dict)
 
-                if not data:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Please provide at least one data row.'
-                    }, status=status.HTTP_400_BAD_REQUEST)
-
-            # ---------- CSV Handling ----------
+            # ---------------- CSV ----------------
             elif format_type == 'csv':
                 decoded_file = file.read().decode('utf-8')
-                dataset = Dataset()
-                dataset.load(decoded_file, format='csv')
-
-                for row in dataset.dict:
+                reader = csv.DictReader(io.StringIO(decoded_file))
+                for idx, row in enumerate(reader, start=2):
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
-
-                    if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({
-                            "statusCode": 400,
-                            "status": True,
-                            "message": f'Missing required headers. Required: {required_headers}. Found: {set(row_lower.keys())}.'
-                        }, status=status.HTTP_400_BAD_REQUEST)
-
-                    if not any(row_lower.values()):
-                        continue
+                    row_lower["_row_number"] = idx
                     data.append(row_lower)
-
-                if not data:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": "The uploaded CSV file is empty. Please provide at least one data row."
-                    }, status=status.HTTP_400_BAD_REQUEST)
-
             else:
-                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": 'Unsupported file format. Use .xlsx or .csv'
+                }, status=status.HTTP_400_BAD_REQUEST)
 
-            # ---------- Process Each Row ----------
+            # ---------------- Process Data ----------------
             imported_count = 0
-            for row in  reversed(data):
+            for row in reversed(data):
+                row_number = row.get("_row_number", "Unknown")
                 name = str(row.get('lead source')).strip() if row.get('lead source') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
-
+                
                 if not name:
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Reason": "Missing lead source name"
+                    })
                     continue
 
                 existing = LeadSource.objects.filter(name__iexact=name).first()
-
                 if existing:
-                    if existing.is_deleted:
+                    if not existing.is_deleted:
+                        duplicates.append({
+                            "Row": row_number,
+                            "Lead Source": name,
+                            "Reason": "Already exists in database"
+                        })
+                        continue
+                    else:
+                        # Reactivate deleted
                         existing.description = description
                         existing.is_deleted = False
                         existing.save()
                         imported_count += 1
-                    else:
-                        duplicate_names.append(name)
-                        continue
                 else:
                     LeadSource.objects.create(
                         name=name,
@@ -9303,22 +9279,27 @@ class LeadSourceImportAPIView(APIView):
         except Exception as e:
             return Response({
                 "statusCode": 400,
-                "status": True,
-                'message': str(e)
+                "status": False,
+                "message": str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
 
+        # ---------------- Response ----------------
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_names)),
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
-            "imported_count": imported_count
+            "imported_count": imported_count,
+            "duplicates": duplicates,
+            "skipped_rows": skipped_rows
         }, status=status.HTTP_200_OK)
+
+
 #-------------------------------------------InterestLevel---------------------------------
 
 
 
 class InterestLevelCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def post(self, request):
         serializer = InterestLevelSerializer(data=request.data)
         if serializer.is_valid():
@@ -9344,7 +9325,8 @@ class InterestLevelCreateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
-class InterestLevelListAPIView(APIView):    
+class InterestLevelListAPIView(APIView):   
+    permission_classes = [IsAuthenticated, IsAdminUser] 
     def get(self, request):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'created_at')
@@ -9374,6 +9356,7 @@ class InterestLevelListAPIView(APIView):
         return paginator.get_paginated_response(serializer.data)
 
 class InterestLevelRetrieveAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def get(self, request, uuid):
         try:
             interestlevel = InterestLevel.objects.get(uuid=uuid, is_deleted=False)
@@ -9394,6 +9377,7 @@ class InterestLevelRetrieveAPIView(APIView):
 
 
 class InterestLevelUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def put(self, request, uuid):
         try:
             category = InterestLevel.objects.get(uuid=uuid, is_deleted=False)
@@ -9512,8 +9496,7 @@ class InterestLevelDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 class InterestLevelExportAPIView(APIView):
-    # permission_classes = [IsAuthenticated]  # Uncomment and adjust as needed
-
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')  
@@ -9575,12 +9558,7 @@ class InterestLevelExportAPIView(APIView):
 
 
 class InterestLevelImportAPIView(APIView):
-    """
-    API to import Interest Levels from CSV or XLSX.
-    Interest Level: mandatory
-    Description: optional
-    """
-
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')
@@ -9589,15 +9567,16 @@ class InterestLevelImportAPIView(APIView):
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
-        duplicate_names = []
-        data = []
+        duplicates = []
+        skipped_rows = []
 
-        # Required and optional headers
-        required_headers = {'interest level'}  # mandatory
-        optional_headers = {'description'}    # optional
+        required_headers = {'interest level'}
+        optional_headers = {'description', 'is_active'}
 
         try:
-            # ---------- XLSX Handling ----------
+            data = []
+
+            # ---------------- XLSX ----------------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
@@ -9610,7 +9589,7 @@ class InterestLevelImportAPIView(APIView):
 
                 if sheet_name not in available_sheets:
                     return Response({
-                        'error': f'Sheet "{sheet_name}" not found in uploaded file',
+                        'error': f'Sheet "{sheet_name}" not found',
                         'available_sheets': available_sheets
                     }, status=status.HTTP_400_BAD_REQUEST)
 
@@ -9619,88 +9598,68 @@ class InterestLevelImportAPIView(APIView):
                     return Response({
                         "statusCode": 400,
                         "status": False,
-                        "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Please provide at least one data row.'
+                        "message": f'Sheet "{sheet_name}" is empty.'
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
 
-                # Validate only required headers
-                if not required_headers.issubset(set(headers)):
-                    return Response({
-                        "statusCode": 400,
-                        "status": True,
-                        'message': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
-                    }, status=status.HTTP_400_BAD_REQUEST)
-
-                for row in ws.iter_rows(min_row=2, values_only=True):
+                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     if not any(row):
                         continue
                     row_dict = dict(zip(headers, row))
+                    row_dict["_row_number"] = idx
                     data.append(row_dict)
 
-                if not data:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Please provide at least one data row.'
-                    }, status=status.HTTP_400_BAD_REQUEST)
-
-            # ---------- CSV Handling ----------
+            # ---------------- CSV ----------------
             elif format_type == 'csv':
                 decoded_file = file.read().decode('utf-8')
-                dataset = Dataset()
-                dataset.load(decoded_file, format='csv')
-
-                for row in dataset.dict:
+                reader = csv.DictReader(io.StringIO(decoded_file))
+                for idx, row in enumerate(reader, start=2):
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
-                    # Validate only required headers
-                    if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({
-                            "statusCode": 400,
-                            "status": True,
-                            "message": f'Missing required headers. Required: {required_headers}. Found: {set(row_lower.keys())}.'
-                        }, status=status.HTTP_400_BAD_REQUEST)
-                    if not any(row_lower.values()):
-                        continue
+                    row_lower["_row_number"] = idx
                     data.append(row_lower)
-
-                if not data:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": "The uploaded CSV file is empty. Please provide at least one data row."
-                    }, status=status.HTTP_400_BAD_REQUEST)
-
             else:
-                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": 'Unsupported file format. Use .xlsx or .csv'
+                }, status=status.HTTP_400_BAD_REQUEST)
 
-            # ---------- Process Each Row ----------
+            # ---------------- Process Data ----------------
             imported_count = 0
-            for row in  reversed(data):
+            for row in reversed(data):
+                row_number = row.get("_row_number", "Unknown")
                 name = str(row.get('interest level')).strip() if row.get('interest level') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
-
+                
                 if not name:
-                    continue  # skip empty mandatory field
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Reason": "Missing interest level name"
+                    })
+                    continue
 
                 existing = InterestLevel.objects.filter(name__iexact=name).first()
-
                 if existing:
-                    if existing.is_deleted:
-                        # Reactivate deleted entry
+                    if not existing.is_deleted:
+                        duplicates.append({
+                            "Row": row_number,
+                            "Interest Level": name,
+                            "Reason": "Already exists in database"
+                        })
+                        continue
+                    else:
+                        # Reactivate deleted
                         existing.description = description
+                        
                         existing.is_deleted = False
                         existing.save()
                         imported_count += 1
-                    else:
-                        # Already active — track as duplicate
-                        duplicate_names.append(name)
-                        continue
                 else:
-                    # Create new record
                     InterestLevel.objects.create(
                         name=name,
                         description=description,
+                       
                         is_deleted=False
                     )
                     imported_count += 1
@@ -9708,18 +9667,19 @@ class InterestLevelImportAPIView(APIView):
         except Exception as e:
             return Response({
                 "statusCode": 400,
-                "status": True,
-                'message': str(e)
+                "status": False,
+                "message": str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
 
+        # ---------------- Response ----------------
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_names)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
+            "duplicates": duplicates,
+            "skipped_rows": skipped_rows
         }, status=status.HTTP_200_OK)
-
 
 
 
@@ -9773,7 +9733,8 @@ class PriorityCreateAPIView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
 
-class PriorityListAPIView(APIView):    
+class PriorityListAPIView(APIView):   
+    permission_classes = [IsAuthenticated, IsAdminUser] 
     def get(self, request):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'created_at')
@@ -9804,6 +9765,7 @@ class PriorityListAPIView(APIView):
 
 
 class PriorityRetrieveAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def get(self, request, uuid):
         try:
             priority = Priority.objects.get(uuid=uuid, is_deleted=False)
@@ -9823,6 +9785,7 @@ class PriorityRetrieveAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 class PriorityUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def put(self, request, uuid):
         try:
             category = Priority.objects.get(uuid=uuid, is_deleted=False)
@@ -9951,7 +9914,7 @@ class PriorityDeleteAPIView(APIView):
 
 
 class PriorityExportAPIView(APIView):
-    # permission_classes = [IsAuthenticated]  # Uncomment if needed
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
@@ -10023,12 +9986,7 @@ class PriorityExportAPIView(APIView):
 
 
 class PriorityImportAPIView(APIView):
-    """
-    API to import Priority from CSV or XLSX.
-    Priority: mandatory
-    Description: optional
-    """
-
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')
@@ -10037,15 +9995,16 @@ class PriorityImportAPIView(APIView):
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
-        duplicate_names = []
-        data = []
+        duplicates = []
+        skipped_rows = []
 
-        # Required and optional headers
-        required_headers = {'priority'}  # mandatory
-        optional_headers = {'description'}  # optional
+        required_headers = {'priority'}
+        optional_headers = {'description', 'is_active'}
 
         try:
-            # ---------- XLSX Handling ----------
+            data = []
+
+            # ---------------- XLSX ----------------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
@@ -10058,7 +10017,7 @@ class PriorityImportAPIView(APIView):
 
                 if sheet_name not in available_sheets:
                     return Response({
-                        'error': f'Sheet "{sheet_name}" not found in uploaded file',
+                        'error': f'Sheet "{sheet_name}" not found',
                         'available_sheets': available_sheets
                     }, status=status.HTTP_400_BAD_REQUEST)
 
@@ -10067,89 +10026,68 @@ class PriorityImportAPIView(APIView):
                     return Response({
                         "statusCode": 400,
                         "status": False,
-                        "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Please provide at least one data row.'
+                        "message": f'Sheet "{sheet_name}" is empty.'
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
 
-                # Validate only required headers
-                if not required_headers.issubset(set(headers)):
-                    return Response({
-                        "statusCode": 400,
-                        "status": True,
-                        'message': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
-                    }, status=status.HTTP_400_BAD_REQUEST)
-
-                for row in ws.iter_rows(min_row=2, values_only=True):
+                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     if not any(row):
                         continue
                     row_dict = dict(zip(headers, row))
+                    row_dict["_row_number"] = idx
                     data.append(row_dict)
 
-                if not data:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Please provide at least one data row.'
-                    }, status=status.HTTP_400_BAD_REQUEST)
-
-            # ---------- CSV Handling ----------
+            # ---------------- CSV ----------------
             elif format_type == 'csv':
                 decoded_file = file.read().decode('utf-8')
-                dataset = Dataset()
-                dataset.load(decoded_file, format='csv')
-
-                for row in dataset.dict:
+                reader = csv.DictReader(io.StringIO(decoded_file))
+                for idx, row in enumerate(reader, start=2):
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
-                    # Validate only required headers
-                    if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({
-                            "statusCode": 400,
-                            "status": True,
-                            "message": f'Missing required headers. Required: {required_headers}. Found: {set(row_lower.keys())}.'
-                        }, status=status.HTTP_400_BAD_REQUEST)
-
-                    if not any(row_lower.values()):
-                        continue
+                    row_lower["_row_number"] = idx
                     data.append(row_lower)
-
-                if not data:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": "The uploaded CSV file is empty. Please provide at least one data row."
-                    }, status=status.HTTP_400_BAD_REQUEST)
-
             else:
-                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": 'Unsupported file format. Use .xlsx or .csv'
+                }, status=status.HTTP_400_BAD_REQUEST)
 
-            # ---------- Process Each Row ----------
+            # ---------------- Process Data ----------------
             imported_count = 0
-            for row in  reversed(data):
+            for row in reversed(data):
+                row_number = row.get("_row_number", "Unknown")
                 name = str(row.get('priority')).strip() if row.get('priority') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
-
+                
                 if not name:
-                    continue  # skip empty mandatory field
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Reason": "Missing priority name"
+                    })
+                    continue
 
                 existing = Priority.objects.filter(name__iexact=name).first()
-
                 if existing:
-                    if existing.is_deleted:
-                        # Reactivate soft-deleted record
+                    if not existing.is_deleted:
+                        duplicates.append({
+                            "Row": row_number,
+                            "Priority": name,
+                            "Reason": "Already exists in database"
+                        })
+                        continue
+                    else:
+                        # Reactivate deleted
                         existing.description = description
+                        
                         existing.is_deleted = False
                         existing.save()
                         imported_count += 1
-                    else:
-                        # Already active — track duplicate
-                        duplicate_names.append(name)
-                        continue
                 else:
-                    # Create new record
                     Priority.objects.create(
                         name=name,
                         description=description,
+                       
                         is_deleted=False
                     )
                     imported_count += 1
@@ -10157,17 +10095,23 @@ class PriorityImportAPIView(APIView):
         except Exception as e:
             return Response({
                 "statusCode": 400,
-                "status": True,
-                'message': str(e)
+                "status": False,
+                "message": str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
 
+        # ---------------- Response ----------------
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_names)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
+            "duplicates": duplicates,
+            "skipped_rows": skipped_rows
         }, status=status.HTTP_200_OK)
+
+
+
+
 
 #-------------------------------------------Tags---------------------------------
 
@@ -10219,7 +10163,8 @@ class TagsCreateAPIView(APIView):
                 "message": message_text,
             }, status=status.HTTP_400_BAD_REQUEST)
 
-class TagsListAPIView(APIView):    
+class TagsListAPIView(APIView):  
+    permission_classes = [IsAuthenticated, IsAdminUser]  
     def get(self, request):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'created_at')
@@ -10399,8 +10344,7 @@ class TagsDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK) 
 
 class TagsExportAPIView(APIView):
-    # permission_classes = [IsAuthenticated]  # Uncomment and adjust as needed
-
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')  
@@ -10465,12 +10409,7 @@ class TagsExportAPIView(APIView):
 
 
 class TagsImportAPIView(APIView):
-    """
-    API to import Tags from CSV or XLSX.
-    Tags: mandatory
-    Description: optional
-    """
-
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')  # optional, for XLSX
@@ -10479,14 +10418,16 @@ class TagsImportAPIView(APIView):
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
-        duplicate_names = []
-        data = []
+        duplicates = []
+        skipped_rows = []
 
-        required_headers = {'tags'}       # mandatory
-        optional_headers = {'description'}  # optional
+        required_headers = {'tags'}
+        optional_headers = {'description', 'is_active'}
 
         try:
-            # ---------- XLSX Handling ----------
+            data = []
+
+            # ---------------- XLSX ----------------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
@@ -10499,7 +10440,7 @@ class TagsImportAPIView(APIView):
 
                 if sheet_name not in available_sheets:
                     return Response({
-                        'error': f'Sheet "{sheet_name}" not found in uploaded file',
+                        'error': f'Sheet "{sheet_name}" not found',
                         'available_sheets': available_sheets
                     }, status=status.HTTP_400_BAD_REQUEST)
 
@@ -10508,69 +10449,68 @@ class TagsImportAPIView(APIView):
                     return Response({
                         "statusCode": 400,
                         "status": False,
-                        "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Provide at least one data row.'
+                        "message": f'Sheet "{sheet_name}" is empty.'
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
 
-                if not required_headers.issubset(set(headers)):
-                    return Response({
-                        "statusCode": 400,
-                        "status": True,
-                        'message': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
-                    }, status=status.HTTP_400_BAD_REQUEST)
-
-                for row in ws.iter_rows(min_row=2, values_only=True):
+                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     if not any(row):
                         continue
                     row_dict = dict(zip(headers, row))
+                    row_dict["_row_number"] = idx
                     data.append(row_dict)
 
-            # ---------- CSV Handling ----------
+            # ---------------- CSV ----------------
             elif format_type == 'csv':
                 decoded_file = file.read().decode('utf-8')
-                dataset = Dataset()
-                dataset.load(decoded_file, format='csv')
-
-                for row in dataset.dict:
+                reader = csv.DictReader(io.StringIO(decoded_file))
+                for idx, row in enumerate(reader, start=2):
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
-                    if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({
-                            "statusCode": 400,
-                            "status": True,
-                            "message": f'Missing required headers. Required: {required_headers}. Found: {set(row_lower.keys())}.'
-                        }, status=status.HTTP_400_BAD_REQUEST)
-                    if not any(row_lower.values()):
-                        continue
+                    row_lower["_row_number"] = idx
                     data.append(row_lower)
-
             else:
-                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": 'Unsupported file format. Use .xlsx or .csv'
+                }, status=status.HTTP_400_BAD_REQUEST)
 
-            # ---------- Process Each Row ----------
+            # ---------------- Process Data ----------------
             imported_count = 0
-            for row in  reversed(data):
+            for row in reversed(data):
+                row_number = row.get("_row_number", "Unknown")
                 name = str(row.get('tags')).strip() if row.get('tags') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
-
+                
                 if not name:
-                    continue  # skip empty mandatory field
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Reason": "Missing tag name"
+                    })
+                    continue
 
                 existing = Tags.objects.filter(name__iexact=name).first()
-
                 if existing:
-                    if existing.is_deleted:
+                    if not existing.is_deleted:
+                        duplicates.append({
+                            "Row": row_number,
+                            "Tag": name,
+                            "Reason": "Already exists in database"
+                        })
+                        continue
+                    else:
+                        # Reactivate deleted
                         existing.description = description
+                        
                         existing.is_deleted = False
                         existing.save()
                         imported_count += 1
-                    else:
-                        duplicate_names.append(name)
-                        continue
                 else:
                     Tags.objects.create(
                         name=name,
                         description=description,
+                       
                         is_deleted=False
                     )
                     imported_count += 1
@@ -10578,17 +10518,20 @@ class TagsImportAPIView(APIView):
         except Exception as e:
             return Response({
                 "statusCode": 400,
-                "status": True,
-                'message': str(e)
+                "status": False,
+                "message": str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
 
+        # ---------------- Response ----------------
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_names)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
+            "duplicates": duplicates,
+            "skipped_rows": skipped_rows
         }, status=status.HTTP_200_OK)
+
 #-------------------------------------------ActivityType---------------------------------
 
 
@@ -10641,7 +10584,8 @@ class ActivityTypeCreateAPIView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ActivityTypeListAPIView(APIView):    
+class ActivityTypeListAPIView(APIView):  
+    permission_classes = [IsAuthenticated, IsAdminUser]  
     def get(self, request):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'created_at')
@@ -10821,8 +10765,7 @@ class ActivityTypeDeleteAPIView(APIView):
 
 
 class ActivityTypeExportAPIView(APIView):
-    # permission_classes = [IsAuthenticated]  # Uncomment and adjust as needed
-
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')  
@@ -10891,14 +10834,9 @@ class ActivityTypeExportAPIView(APIView):
 
 
 class ActivityTypeImportAPIView(APIView):
-    """
-    API to import ActivityType from CSV or XLSX files.
-    Mandatory header: Activity Type
-    Optional: Description
-    """
-
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    
     def normalize_header(self, header):
-        """Normalize headers: lowercase, strip spaces, remove parentheses."""
         if not header:
             return ''
         return header.strip().lower().replace('(', '').replace(')', '')
@@ -10906,82 +10844,103 @@ class ActivityTypeImportAPIView(APIView):
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')  # optional for XLSX
-        duplicate_names = []
-        data = []
-
-        required_headers = {'activity type'}
-        optional_headers = {'description'}
 
         if not file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
+        duplicates = []
+        skipped_rows = []
+
+        required_headers = {'activity type'}
+        optional_headers = {'description', 'is_active'}
+        data = []
 
         try:
-            # ---------- XLSX Handling ----------
+            # ---------------- XLSX ----------------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
-                ws = wb[sheet_name] if sheet_name else wb.active
-                headers = [self.normalize_header(str(cell.value)) for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                available_sheets = wb.sheetnames
 
-                if not required_headers.issubset(set(headers)):
+                if not sheet_name:
                     return Response({
-                        "statusCode": 400,
-                        "status": True,
-                        'message': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
+                        'error': 'Please provide sheet_name',
+                        'available_sheets': available_sheets
                     }, status=status.HTTP_400_BAD_REQUEST)
 
-                for row in ws.iter_rows(min_row=2, values_only=True):
+                if sheet_name not in available_sheets:
+                    return Response({
+                        'error': f'Sheet "{sheet_name}" not found',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                ws = wb[sheet_name]
+                if ws.max_row <= 1:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'Sheet "{sheet_name}" is empty.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                headers = [self.normalize_header(str(cell.value)) for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+
+                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     if not any(row):
                         continue
                     row_dict = dict(zip(headers, row))
+                    row_dict["_row_number"] = idx
                     data.append(row_dict)
 
-            # ---------- CSV Handling ----------
+            # ---------------- CSV ----------------
             elif format_type == 'csv':
                 decoded_file = file.read().decode('utf-8')
-                dataset = Dataset()
-                dataset.load(decoded_file, format='csv')
-
-                for row in dataset.dict:
+                reader = csv.DictReader(io.StringIO(decoded_file))
+                for idx, row in enumerate(reader, start=2):
                     row_lower = {self.normalize_header(k): v for k, v in row.items()}
-                    if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({
-                            "statusCode": 400,
-                            "status": True,
-                            "message": f'Missing required headers. Required: {required_headers}, Found: {set(row_lower.keys())}.'
-                        }, status=status.HTTP_400_BAD_REQUEST)
-                    if not any(row_lower.values()):
-                        continue
+                    row_lower["_row_number"] = idx
                     data.append(row_lower)
-
             else:
-                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": 'Unsupported file format. Use .xlsx or .csv'
+                }, status=status.HTTP_400_BAD_REQUEST)
 
-            # ---------- Process Each Row ----------
+            # ---------------- Process Data ----------------
             imported_count = 0
-            for row in  reversed(data):
+            for row in reversed(data):
+                row_number = row.get("_row_number", "Unknown")
                 name = str(row.get('activity type')).strip() if row.get('activity type') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
-
+                
                 if not name:
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Reason": "Missing activity type name"
+                    })
                     continue
 
                 existing = ActivityType.objects.filter(name__iexact=name).first()
-
                 if existing:
-                    if existing.is_deleted:
+                    if not existing.is_deleted:
+                        duplicates.append({
+                            "Row": row_number,
+                            "Activity Type": name,
+                            "Reason": "Already exists in database"
+                        })
+                        continue
+                    else:
+                        # Reactivate deleted
                         existing.description = description
+                        
                         existing.is_deleted = False
                         existing.save()
                         imported_count += 1
-                    else:
-                        duplicate_names.append(name)
-                        continue
                 else:
                     ActivityType.objects.create(
                         name=name,
                         description=description,
+                       
                         is_deleted=False
                     )
                     imported_count += 1
@@ -10989,17 +10948,24 @@ class ActivityTypeImportAPIView(APIView):
         except Exception as e:
             return Response({
                 "statusCode": 400,
-                "status": True,
-                'message': str(e)
+                "status": False,
+                "message": str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
 
+        # ---------------- Response ----------------
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_names)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
+            "duplicates": duplicates,
+            "skipped_rows": skipped_rows
         }, status=status.HTTP_200_OK)
+
+
+
+
+
 #-------------------------------------------LostReasonSerializer---------------------------------
 class LostReasonCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -11054,7 +11020,8 @@ class LostReasonCreateAPIView(APIView):
             "message": serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
 
-class LostReasonListAPIView(APIView):    
+class LostReasonListAPIView(APIView):  
+    permission_classes = [IsAuthenticated, IsAdminUser]  
     def get(self, request):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'created_at')
@@ -11234,8 +11201,7 @@ class LostReasonDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 class LostReasonExportAPIView(APIView):
-    # permission_classes = [IsAuthenticated]  # Uncomment and adjust as needed
-
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')  
@@ -11300,12 +11266,7 @@ class LostReasonExportAPIView(APIView):
 
 
 class LostReasonImportAPIView(APIView):
-    """
-    API to import Lost Reasons (B2C) from CSV or XLSX.
-    Lost Reason (B2C): mandatory
-    Description: optional
-    """
-
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')  # optional for XLSX
@@ -11314,14 +11275,15 @@ class LostReasonImportAPIView(APIView):
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
-        duplicate_names = []
+        duplicates = []
+        skipped_rows = []
+
+        required_headers = {'lost reason (b2c)'}
+        optional_headers = {'description', 'is_active'}
         data = []
 
-        required_headers = {'lost reason (b2c)'}  # mandatory
-        optional_headers = {'description'}       # optional
-
         try:
-            # ---------- XLSX Handling ----------
+            # ---------------- XLSX ----------------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
@@ -11334,7 +11296,7 @@ class LostReasonImportAPIView(APIView):
 
                 if sheet_name not in available_sheets:
                     return Response({
-                        'error': f'Sheet "{sheet_name}" not found in uploaded file',
+                        'error': f'Sheet "{sheet_name}" not found',
                         'available_sheets': available_sheets
                     }, status=status.HTTP_400_BAD_REQUEST)
 
@@ -11343,69 +11305,68 @@ class LostReasonImportAPIView(APIView):
                     return Response({
                         "statusCode": 400,
                         "status": False,
-                        "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Provide at least one data row.'
+                        "message": f'Sheet "{sheet_name}" is empty.'
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
 
-                if not required_headers.issubset(set(headers)):
-                    return Response({
-                        "statusCode": 400,
-                        "status": True,
-                        'message': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
-                    }, status=status.HTTP_400_BAD_REQUEST)
-
-                for row in ws.iter_rows(min_row=2, values_only=True):
+                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     if not any(row):
                         continue
                     row_dict = dict(zip(headers, row))
+                    row_dict["_row_number"] = idx
                     data.append(row_dict)
 
-            # ---------- CSV Handling ----------
+            # ---------------- CSV ----------------
             elif format_type == 'csv':
                 decoded_file = file.read().decode('utf-8')
-                dataset = Dataset()
-                dataset.load(decoded_file, format='csv')
-
-                for row in dataset.dict:
+                reader = csv.DictReader(io.StringIO(decoded_file))
+                for idx, row in enumerate(reader, start=2):
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
-                    if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({
-                            "statusCode": 400,
-                            "status": True,
-                            "message": f'Missing required headers. Required: {required_headers}. Found: {set(row_lower.keys())}.'
-                        }, status=status.HTTP_400_BAD_REQUEST)
-                    if not any(row_lower.values()):
-                        continue
+                    row_lower["_row_number"] = idx
                     data.append(row_lower)
-
             else:
-                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": 'Unsupported file format. Use .xlsx or .csv'
+                }, status=status.HTTP_400_BAD_REQUEST)
 
-            # ---------- Process Each Row ----------
+            # ---------------- Process Data ----------------
             imported_count = 0
-            for row in  reversed(data):
+            for row in reversed(data):
+                row_number = row.get("_row_number", "Unknown")
                 name = str(row.get('lost reason (b2c)')).strip() if row.get('lost reason (b2c)') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
-
+                
                 if not name:
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Reason": "Missing lost reason name"
+                    })
                     continue
 
                 existing = LostReason.objects.filter(name__iexact=name).first()
-
                 if existing:
-                    if existing.is_deleted:
+                    if not existing.is_deleted:
+                        duplicates.append({
+                            "Row": row_number,
+                            "Lost Reason": name,
+                            "Reason": "Already exists in database"
+                        })
+                        continue
+                    else:
+                        # Reactivate deleted
                         existing.description = description
+                        
                         existing.is_deleted = False
                         existing.save()
                         imported_count += 1
-                    else:
-                        duplicate_names.append(name)
-                        continue
                 else:
                     LostReason.objects.create(
                         name=name,
                         description=description,
+                       
                         is_deleted=False
                     )
                     imported_count += 1
@@ -11413,19 +11374,19 @@ class LostReasonImportAPIView(APIView):
         except Exception as e:
             return Response({
                 "statusCode": 400,
-                "status": True,
-                'message': str(e)
+                "status": False,
+                "message": str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
 
+        # ---------------- Response ----------------
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_names)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
+            "duplicates": duplicates,
+            "skipped_rows": skipped_rows
         }, status=status.HTTP_200_OK)
-
-
 
 
 
@@ -11458,7 +11419,8 @@ class LostReasonB2BCreateAPIView(APIView):
             "message": serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
 
-class LostReasonB2BListAPIView(APIView):    
+class LostReasonB2BListAPIView(APIView): 
+    permission_classes = [IsAuthenticated, IsAdminUser]   
     def get(self, request):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'created_at')
@@ -11640,8 +11602,7 @@ class LostReasonB2BDeleteAPIView(APIView):
 
 
 class LostReasonB2BExportAPIView(APIView):
-    # permission_classes = [IsAuthenticated]  # Uncomment and adjust as needed
-
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')  
@@ -11710,8 +11671,7 @@ class LostReasonB2BExportAPIView(APIView):
         return response
 
 class LostReasonB2BImportAPIView(APIView):
-    
-
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def normalize_header(self, header):
         """Normalize headers: lowercase, strip spaces, remove parentheses."""
         if not header:
@@ -11721,94 +11681,129 @@ class LostReasonB2BImportAPIView(APIView):
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')  # optional for XLSX
-        duplicate_names = []
-        data = []
-
-        required_headers = {'lost reason b2b'}
-        optional_headers = {'description'}
 
         if not file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
+        duplicates = []
+        skipped_rows = []
+        data = []
+
+        required_headers = {'lost reason b2b'}
+        optional_headers = {'description', 'is_active'}
 
         try:
-            # ---------- XLSX Handling ----------
+            # ---------------- XLSX ----------------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
-                ws = wb[sheet_name] if sheet_name else wb.active
+                available_sheets = wb.sheetnames
 
-                # Read headers and normalize
-                headers = [self.normalize_header(str(cell.value)) for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-
-                if not required_headers.issubset(set(headers)):
+                if not sheet_name:
                     return Response({
-                        "statusCode": 400,
-                        "status": True,
-                        'message': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
+                        'error': 'Please provide sheet_name',
+                        'available_sheets': available_sheets
                     }, status=status.HTTP_400_BAD_REQUEST)
 
-                # Read rows
-                for row in ws.iter_rows(min_row=2, values_only=True):
+                if sheet_name not in available_sheets:
+                    return Response({
+                        'error': f'Sheet "{sheet_name}" not found',
+                        'available_sheets': available_sheets
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                ws = wb[sheet_name]
+                if ws.max_row <= 1:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'Sheet "{sheet_name}" is empty.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                headers = [self.normalize_header(str(cell.value)) for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+
+                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     if not any(row):
                         continue
                     row_dict = dict(zip(headers, row))
+                    row_dict["_row_number"] = idx
                     data.append(row_dict)
 
-            # ---------- CSV Handling ----------
+            # ---------------- CSV ----------------
             elif format_type == 'csv':
                 decoded_file = file.read().decode('utf-8')
-                dataset = Dataset()
-                dataset.load(decoded_file, format='csv')
-
-                for row in dataset.dict:
+                reader = csv.DictReader(io.StringIO(decoded_file))
+                for idx, row in enumerate(reader, start=2):
                     row_lower = {self.normalize_header(k): v for k, v in row.items()}
-                    if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({
-                            "statusCode": 400,
-                            "status": True,
-                            "message": f'Missing required headers. Required: {required_headers}, Found: {set(row_lower.keys())}.'
-                        }, status=status.HTTP_400_BAD_REQUEST)
-                    if not any(row_lower.values()):
-                        continue
+                    row_lower["_row_number"] = idx
                     data.append(row_lower)
 
             else:
-                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": 'Unsupported file format. Use .xlsx or .csv'
+                }, status=status.HTTP_400_BAD_REQUEST)
 
-            # ---------- Process Each Row ----------
-            for row in  reversed(data):
+            # ---------------- Process Data ----------------
+            imported_count = 0
+            for row in reversed(data):
+                row_number = row.get("_row_number", "Unknown")
                 name = str(row.get('lost reason b2b')).strip() if row.get('lost reason b2b') else None
-                if not name:
-                    continue  # skip empty names
                 description = str(row.get('description')).strip() if row.get('description') else ''
+                
+                if not name:
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Reason": "Missing lost reason name"
+                    })
+                    continue
 
                 existing = LostReasonB2B.objects.filter(name__iexact=name).first()
-
                 if existing:
-                    if existing.is_deleted:
+                    if not existing.is_deleted:
+                        duplicates.append({
+                            "Row": row_number,
+                            "Lost Reason B2B": name,
+                            "Reason": "Already exists in database"
+                        })
+                        continue
+                    else:
+                        # Reactivate deleted
                         existing.description = description
+                        
                         existing.is_deleted = False
                         existing.save()
-                    else:
-                        duplicate_names.append(name)
-                        continue
+                        imported_count += 1
                 else:
                     LostReasonB2B.objects.create(
                         name=name,
                         description=description,
+                       
                         is_deleted=False
                     )
+                    imported_count += 1
 
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
+        # ---------------- Response ----------------
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_names)),
-            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count,
+            "duplicates": duplicates,
+            "skipped_rows": skipped_rows
         }, status=status.HTTP_200_OK)
+
+
+
+
+
 
 # -------------------- EducationLevelCode -------------------- #
 
@@ -12816,7 +12811,7 @@ class EducationDurationImportAPIView(APIView):
                 return Response({"statusCode": 400, "status": True, 'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
 
             imported_count = 0
-            for row in  reversed(data):
+            for row in reversed(data):
                 educationlevel_name = str(row.get('education level')).strip() if row.get('education level') else None
                 durations = str(row.get('education durations')).strip() if row.get('education durations') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''

@@ -5,7 +5,7 @@ import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
 import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
 import { stateImportData } from '../../../../store/master/generalMasters/actions';
-import { exportToExcelWrongData } from '../../../../helper/utils/commanHelper';
+import { exportToExcelDuplicate, exportToExcelWrongData } from '../../../../helper/utils/commanHelper';
 const AddImportStateModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
@@ -87,7 +87,18 @@ const AddImportStateModal = ({ show, handleClose }) => {
                         }
                     );
                     if (response?.duplicates?.length > 0) {
-                        handleExportToExcel(response.duplicates)
+                        const prepareData = {
+                            data: response.duplicates || [],
+                            headers: ["Country Name", "State Name","State / Territory"],
+                            sheetName: "State",
+                            fileName: "State",
+                        };
+                        exportToExcelDuplicate(
+                            prepareData.data,
+                            prepareData.headers,
+                            prepareData.sheetName,
+                            prepareData.fileName
+                        );
                     }
                      if (response?.skipped_rows?.length > 0) {
                         const prepareData = {
@@ -114,38 +125,6 @@ const AddImportStateModal = ({ show, handleClose }) => {
         }));
     };
 
-    const handleExportToExcel = (duplicatesData) => {
-        // Define headers
-        const header = ["Country Name", "State Name","State / Territory"];
-
-        // Map the data in the same order as header
-        const worksheetData = [
-            header,
-            ...duplicatesData.map(item => [
-                item["Country Name"] || "",
-                item["State Name"] || "",
-                 item["State / Territory"] || "",
-            ])
-        ];
-
-        // Create worksheet and workbook
-        const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "State");
-
-        // Write workbook to buffer
-        const excelBuffer = XLSX.write(workbook, {
-            bookType: "xlsx",
-            type: "array"
-        });
-
-        // Create Blob and save file
-        const blob = new Blob([excelBuffer], {
-            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        });
-
-        saveAs(blob, "State-Duplicate-Data.xlsx");
-    };
     // Handle modal close
     const onClose = () => {
         setFile(null);
@@ -249,16 +228,23 @@ const AddImportStateModal = ({ show, handleClose }) => {
                                         <button
                                             type="button"
                                             onClick={onClose}
-                                            className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-40 py-6 radius-8"
+                                            className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-16 py-4 radius-6"
                                         >
                                             Cancel
                                         </button>
                                         <button
                                             type="submit"
                                             disabled={loading}
-                                            className="btn comman-btn-color border border-primary-600 text-md px-40 py-6 radius-8"
+                                            className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                                         >
-                                            {loading ? "Upload" : "Upload"}
+                                           {loading ? (
+                                                <>
+                                                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                    Uploading...
+                                                </>
+                                            ) : (
+                                                "Upload"
+                                            )}
                                         </button>
                                     </div>
                                 </div>

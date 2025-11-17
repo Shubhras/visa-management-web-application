@@ -65,7 +65,7 @@ const AddEditMaritalStatusModal = ({ show, handleClose, mode = 'add', rowData = 
       newErrors.name = 'Marital Status is required';
       isValid = false;
     }
-    
+
     setErrors(newErrors);
     return isValid;
   };
@@ -75,21 +75,21 @@ const AddEditMaritalStatusModal = ({ show, handleClose, mode = 'add', rowData = 
     e.preventDefault();
 
     if (validateForm()) {
-      const sendPayload = mode === 'edit' 
+      const sendPayload = mode === 'edit'
         ? {
-            uuid: formData.uuid,
-            name: formData.name,
-            description: formData.description,
-          }
+          uuid: formData.uuid,
+          name: formData.name,
+          description: formData.description,
+        }
         : {
-            name: formData.name,
-            description: formData.description,
-          };
+          name: formData.name,
+          description: formData.description,
+        };
 
       setLoading(true);
-      
+
       const action = mode === 'edit' ? maritalStatusEdit : maritalStatusAdd;
-      
+
       dispatch(action(sendPayload, (response, error) => {
         setLoading(false);
         if (error) {
@@ -197,16 +197,23 @@ const AddEditMaritalStatusModal = ({ show, handleClose, mode = 'add', rowData = 
                   <button
                     type="button"
                     onClick={onClose}
-                    className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-40 py-6 radius-8"
+                    className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-16 py-4 radius-6"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="btn comman-btn-color border border-primary-600 text-md px-40 py-6 radius-8"
+                    className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                     disabled={loading}
                   >
-                    {loading ? 'Saving...' : 'Save'}
+                    {loading ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        Saving...
+                      </>
+                    ) : (
+                      "Save"
+                    )}
                   </button>
                 </div>
               </div>

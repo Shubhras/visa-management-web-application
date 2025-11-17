@@ -1727,3 +1727,161 @@ export const importLanguageTestResultAPI = (payload) => {
     const apiUrl = `${url.IMPORT_LANGUAGE_TEST_RESULT_API}`;
     return post(apiUrl, payload);
 };
+
+// Job Type
+export const getJobTypeListDataAPI = (data) => {
+    const apiUrl = `${url.GET_JOB_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+ 
+export const addJobTypeDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_JOB_TYPE_API}`;
+    return post(apiUrl, payload);
+};
+ 
+export const editJobTypeDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_JOB_TYPE_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+ 
+export const deleteJobTypeDataAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_JOB_TYPE_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+ 
+export const exportJobTypeDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_JOB_TYPE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+ 
+export const importJobTypeDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_JOB_TYPE_API}`;
+    return post(apiUrl, payload);
+};
+// Mode of Salary
+export const getModeOfSalaryDataAPI = (data) => {
+    const apiUrl = `${url.GET_MODE_OF_SALARY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+ 
+export const addModeOfSalaryDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_MODE_OF_SALARY_API}`;
+    return post(apiUrl, payload);
+};
+ 
+export const editModeOfSalaryDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_MODE_OF_SALARY_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+ 
+export const deleteModeOfSalaryDataAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_MODE_OF_SALARY_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+ 
+export const exportModeOfSalaryDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_MODE_OF_SALARY_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+ 
+export const importModeOfSalaryDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_MODE_OF_SALARY_API}`;
+    return post(apiUrl, payload);
+};
+ 
+// IT Return Status
+export const getItReturnStatusListDataAPI = (data) => {
+    const apiUrl = `${url.GET_IT_RETURN_STATUS_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+ 
+export const addItReturnStatusDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_IT_RETURN_STATUS_API}`;
+    return post(apiUrl, payload);
+};
+ 
+export const editItReturnStatusDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_IT_RETURN_STATUS_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+ 
+export const deleteItReturnStatusDataAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_IT_RETURN_STATUS_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+ 
+export const exportItReturnStatusDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_IT_RETURN_STATUS_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+ 
+export const importItReturnStatusDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_IT_RETURN_STATUS_API}`;
+    return post(apiUrl, payload);
+};
+// Occupation Type
+export const getOccupationTypeListDataAPI = (data) => {
+    const apiUrl = `${url.GET_OCCUPATION_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+ 
+export const addOccupationTypeDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_OCCUPATION_TYPE_API}`;
+    return post(apiUrl, payload);
+};
+ 
+export const editOccupationTypeDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_OCCUPATION_TYPE_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+ 
+export const deleteOccupationTypeDataAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_OCCUPATION_TYPE_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+ 
+export const exportOccupationTypeDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_OCCUPATION_TYPE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+ 
+export const importOccupationTypeDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_OCCUPATION_TYPE_API}`;
+    return post(apiUrl, payload);
+};
+ 
+// Occupation Prospect
+export const getOccupationProspectListDataAPI = (data) => {
+    const apiUrl = `${url.GET_OCCUPATION_PROSPECT_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+ 
+export const addOccupationProspectDataAPI = (payload) => {
+    const apiUrl = `${url.ADD_OCCUPATION_PROSPECT_API}`;
+    return post(apiUrl, payload);
+};
+ 
+export const editOccupationProspectDataAPI = (payload) => {
+    const apiUrl = `${url.EDIT_OCCUPATION_PROSPECT_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+ 
+export const deleteOccupationProspectDataAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_OCCUPATION_PROSPECT_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+ 
+export const exportOccupationProspectDataAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_OCCUPATION_PROSPECT_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+ 
+export const importOccupationProspectDataAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_OCCUPATION_PROSPECT_API}`;
+    return post(apiUrl, payload);
+};

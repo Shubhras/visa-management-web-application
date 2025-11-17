@@ -3,6 +3,7 @@ import { useDispatch } from "react-redux";
 import { studyMajorAreaAdd, studyMajorAreaEdit } from '../../../../store/master/educationMaster/action';
 import { toast } from "react-toastify";
 import { studyMainAreaList } from '../../../../store/master/educationMaster/action';
+import Select from "react-select";
 const AddEditStudyMajorAreaModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
@@ -193,7 +194,7 @@ const AddEditStudyMajorAreaModal = ({ show, handleClose, mode = 'add', rowData =
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                     Study Main Area <span className="text-danger">*</span>
                   </label>
-                  <select
+                  {/* <select
                     name="category"
                     value={formData.category}
                     onChange={handleChange}
@@ -205,7 +206,37 @@ const AddEditStudyMajorAreaModal = ({ show, handleClose, mode = 'add', rowData =
                         {option.name}
                       </option>
                     ))}
-                  </select>
+                  </select> */}
+                  <Select
+                    options={educationLevelListData.map((option) => ({
+                      value: option.uuid,
+                      label: option.name,
+                    }))}
+                    value={
+                      formData.category
+                        ? educationLevelListData
+                          .map((option) => ({
+                            value: option.uuid,
+                            label: option.name,
+                          }))
+                          .find((opt) => opt.value === formData.category)
+                        : null
+                    }
+                    onChange={(selectedOption) =>
+                      handleChange({
+                        target: {
+                          name: "category",
+                          value: selectedOption ? selectedOption.value : "",
+                        },
+                      })
+                    }
+                    placeholder="Select  Study Main Area"
+                    isClearable
+                    isSearchable
+                    className={`custom-select-container ${errors.category ? "is-invalid" : ""
+                      }`}
+                    classNamePrefix="custom-select"
+                  />
                   {errors.category && (
                     <div className="text-danger text-sm mt-1">
                       {errors.category}
@@ -256,13 +287,13 @@ const AddEditStudyMajorAreaModal = ({ show, handleClose, mode = 'add', rowData =
                   <button
                     type="button"
                     onClick={onClose}
-                    className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-40 py-6 radius-8"
+                    className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-16 py-4 radius-6"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="btn comman-btn-color border border-primary-600 text-md px-40 py-6 radius-8"
+                    className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                     disabled={loading}
                   >
                     {loading ? 'Saving...' : 'Save'}

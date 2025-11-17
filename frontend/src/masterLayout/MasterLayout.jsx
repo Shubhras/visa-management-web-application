@@ -135,6 +135,17 @@ const MasterLayout = ({ children }) => {
             { name: 'Language Test Result', path: '/language-test-result' },
           ]
         },
+         {
+          name: 'Occupation',
+          children: [
+            { name: 'Job Type', path: '/job-type' },
+            { name: 'Mode of Salary', path: '/mode-of-salary' },
+            { name: 'IT Return Status', path: '/it-return-status' },
+            { name: 'Occupation Type', path: '/occupation-type' },
+            { name: 'Occupation Prospect', path: '/occupation-prospect' },
+ 
+          ]
+        },
 
         // { name: 'Education', path: '/' },
         // { name: 'Test', path: '/' },

@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import { educationLevelList, degreeAwardedByList } from "../../../../store/master/educationMaster/action";
 import { countryDemoList } from '../../../../store/master/companyMasters/actions';
 import { stateListByCountry } from '../../../../store/master/generalMasters/actions';
+import Select from "react-select";
 const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
@@ -12,9 +13,6 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
     const [countryListData, setCountryListData] = useState([]);
     const [stateListData, setStateListData] = useState([]);
     const [degreeAwardedBy, setDegreeAwardedBy] = useState([]);
-
-
-
 
     // console.log("rowData",rowData);
     const [formData, setFormData] = useState({
@@ -282,19 +280,36 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                                         Country<span className="text-danger">*</span>
                                     </label>
-                                    <select
-                                        name="countryUuid"
-                                        value={formData.countryUuid}
-                                        onChange={handleChange}
-                                        className={`form-control form-select radius-8 ${errors.countryUuid ? 'is-invalid' : ''}`}
-                                    >
-                                        <option value="">Select country</option>
-                                        {countryListData.map((option) => (
-                                            <option key={option.uuid} value={option.uuid}>
-                                                {option.name}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <Select
+                                        options={countryListData.map((option) => ({
+                                            value: option.uuid,
+                                            label: option.name,
+                                        }))}
+                                        value={
+                                            formData.countryUuid
+                                                ? countryListData
+                                                    .map((option) => ({
+                                                        value: option.uuid,
+                                                        label: option.name,
+                                                    }))
+                                                    .find((opt) => opt.value === formData.countryUuid)
+                                                : null
+                                        }
+                                        onChange={(selectedOption) =>
+                                            handleChange({
+                                                target: {
+                                                    name: "countryUuid",
+                                                    value: selectedOption ? selectedOption.value : "",
+                                                },
+                                            })
+                                        }
+                                        placeholder="Select country"
+                                        isClearable
+                                        isSearchable
+                                        className={`custom-select-container ${errors.countryUuid ? "is-invalid" : ""
+                                            }`}
+                                        classNamePrefix="custom-select"
+                                    />
                                     {errors.countryUuid && (
                                         <div className="text-danger text-sm mt-1">
                                             {errors.countryUuid}
@@ -305,19 +320,36 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                                         State<span className="text-danger">*</span>
                                     </label>
-                                    <select
-                                        name="stateUuid"
-                                        value={formData.stateUuid}
-                                        onChange={handleChange}
-                                        className={`form-control form-select radius-8 ${errors.stateUuid ? 'is-invalid' : ''}`}
-                                    >
-                                        <option value="">Select state</option>
-                                        {stateListData.map((option) => (
-                                            <option key={option.uuid} value={option.uuid}>
-                                                {option.name}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <Select
+                                        options={stateListData.map((option) => ({
+                                            value: option.uuid,
+                                            label: option.name,
+                                        }))}
+                                        value={
+                                            formData.stateUuid
+                                                ? stateListData
+                                                    .map((option) => ({
+                                                        value: option.uuid,
+                                                        label: option.name,
+                                                    }))
+                                                    .find((opt) => opt.value === formData.stateUuid)
+                                                : null
+                                        }
+                                        onChange={(selectedOption) =>
+                                            handleChange({
+                                                target: {
+                                                    name: "stateUuid",
+                                                    value: selectedOption ? selectedOption.value : "",
+                                                },
+                                            })
+                                        }
+                                        placeholder="Select state"
+                                        isClearable
+                                        isSearchable
+                                        className={`custom-select-container ${errors.stateUuid ? "is-invalid" : ""
+                                            }`}
+                                        classNamePrefix="custom-select"
+                                    />
                                     {errors.stateUuid && (
                                         <div className="text-danger text-sm mt-1">
                                             {errors.stateUuid}
@@ -328,19 +360,36 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                                         Education Level <span className="text-danger">*</span>
                                     </label>
-                                    <select
-                                        name="educationLevelUuid"
-                                        value={formData.educationLevelUuid}
-                                        onChange={handleChange}
-                                        className={`form-control form-select radius-8 ${errors.educationLevelUuid ? 'is-invalid' : ''}`}
-                                    >
-                                        <option value="">Select education level</option>
-                                        {studyMajorArea.map((option) => (
-                                            <option key={option.uuid} value={option.uuid}>
-                                                {option.educationlevel}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <Select
+                                        options={studyMajorArea.map((option) => ({
+                                            value: option.uuid,
+                                            label: option.educationlevel,
+                                        }))}
+                                        value={
+                                            formData.educationLevelUuid
+                                                ? studyMajorArea
+                                                    .map((option) => ({
+                                                        value: option.uuid,
+                                                        label: option.educationlevel,
+                                                    }))
+                                                    .find((opt) => opt.value === formData.educationLevelUuid)
+                                                : null
+                                        }
+                                        onChange={(selectedOption) =>
+                                            handleChange({
+                                                target: {
+                                                    name: "educationLevelUuid",
+                                                    value: selectedOption ? selectedOption.value : "",
+                                                },
+                                            })
+                                        }
+                                        placeholder="Select education level"
+                                        isClearable
+                                        isSearchable
+                                        className={`custom-select-container ${errors.educationLevelUuid ? "is-invalid" : ""
+                                            }`}
+                                        classNamePrefix="custom-select"
+                                    />
                                     {errors.educationLevelUuid && (
                                         <div className="text-danger text-sm mt-1">
                                             {errors.educationLevelUuid}
@@ -351,19 +400,36 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                                         Degree Awarded By <span className="text-danger">*</span>
                                     </label>
-                                    <select
-                                        name="degreeAwardedBy"
-                                        value={formData.degreeAwardedBy}
-                                        onChange={handleChange}
-                                        className={`form-control form-select radius-8 ${errors.degreeAwardedBy ? 'is-invalid' : ''}`}
-                                    >
-                                        <option value="">Select degree awarded by</option>
-                                        {degreeAwardedBy.map((option) => (
-                                            <option key={option.uuid} value={option.uuid}>
-                                                {option.degree_name}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <Select
+                                        options={degreeAwardedBy.map((option) => ({
+                                            value: option.uuid,
+                                            label: option.degree_name,
+                                        }))}
+                                        value={
+                                            formData.degreeAwardedBy
+                                                ? degreeAwardedBy
+                                                    .map((option) => ({
+                                                        value: option.uuid,
+                                                        label: option.degree_name,
+                                                    }))
+                                                    .find((opt) => opt.value === formData.degreeAwardedBy)
+                                                : null
+                                        }
+                                        onChange={(selectedOption) =>
+                                            handleChange({
+                                                target: {
+                                                    name: "degreeAwardedBy",
+                                                    value: selectedOption ? selectedOption.value : "",
+                                                },
+                                            })
+                                        }
+                                        placeholder="Select degree awarded by"
+                                        isClearable
+                                        isSearchable
+                                        className={`custom-select-container ${errors.degreeAwardedBy ? "is-invalid" : ""
+                                            }`}
+                                        classNamePrefix="custom-select"
+                                    />
                                     {errors.degreeAwardedBy && (
                                         <div className="text-danger text-sm mt-1">
                                             {errors.degreeAwardedBy}
@@ -388,7 +454,6 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
                                         </div>
                                     )}
                                 </div>
-
 
                                 {/* Description */}
                                 <div className="col-12 mb-20">
@@ -415,13 +480,13 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
                                     <button
                                         type="button"
                                         onClick={onClose}
-                                        className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-40 py-6 radius-8"
+                                        className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-16 py-4 radius-6"
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         type="submit"
-                                        className="btn comman-btn-color border border-primary-600 text-md px-40 py-6 radius-8"
+                                        className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                                         disabled={loading}
                                     >
                                         {loading ? 'Saving...' : 'Save'}

@@ -8,6 +8,8 @@ import companyMasterSaga from "./master/companyMasters/saga";
 import generalMasterSaga from "./master/generalMasters/saga";
 import educationmasterSaga from "./master/educationMaster/saga";
 import testMasterSaga from "./master/testMaster/saga";
+import occupationMasterSaga from "./master/occupationMaster/saga";
+ 
 export default function* rootSaga() {
   yield all([
 
@@ -18,6 +20,6 @@ export default function* rootSaga() {
     fork(generalMasterSaga),
     fork(educationmasterSaga),
     fork(testMasterSaga),
-    
+     fork(occupationMasterSaga),
   ]);
 }
