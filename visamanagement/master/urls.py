@@ -5,7 +5,7 @@ from .visamaster import *
 from .visacondition import *
 from .institutemasters import *
 from .occupation import  *
-
+from .educationmaster import *
 urlpatterns = [
 
     path("login/", MasterTokenLoginAPIView.as_view(), name="master-login"),
@@ -327,6 +327,16 @@ urlpatterns = [
     path('academicresult/export/', AcademicResultExportAPIView.as_view(), name='academicresult-export'),
     path('academicresult/import/', AcademicResultImportAPIView.as_view(), name='academicresult-import'),    
 
+   
+    
+    path('academic-result-comparison/', AcademicResultComparisonListAPIView.as_view(), name='academic-result-comparison-list'),
+    path('academic-result-comparison/create/', AcademicResultComparisonCreateAPIView.as_view(), name='academic-result-comparison-create'),
+    path('academic-result-comparison/<uuid:uuid>/', AcademicResultComparisonRetrieveAPIView.as_view(), name='academic-result-comparison-retrieve'),
+    path('academic-result-comparison/<uuid:uuid>/update/', AcademicResultComparisonUpdateAPIView.as_view(), name='academic-result-comparison-update'),
+    path('academic-result-comparison/delete/', AcademicResultComparisonDeleteAPIView.as_view(), name='academic-result-comparison-delete'),
+    path('academic-result-comparison/export/', AcademicResultComparisonExportAPIView.as_view(), name='academic-result-comparison-export'),
+
+
     path('mediumeducation/',MediumofEducationListAPIView.as_view(), name='educationlevel-list'),
     path('mediumeducation/create/', MediumofEducationCreateAPIView.as_view(), name='mediumeducation-create'),
     path('mediumeducation/<uuid:uuid>/', MediumofEducationRetrieveAPIView.as_view(), name='mediumeducation-retrieve'),
@@ -335,6 +345,15 @@ urlpatterns = [
     path('mediumeducation/export/', MediumofEducationExportAPIView.as_view(), name='educationlevel-export'),
     path('mediumeducation/import/',MediumofEducationImportAPIView.as_view(), name='educationlevel-import'),
 
+    path('ecs-for/',ECAForListAPIView.as_view(), name='ecs-for-list'),
+    path('ecs-for/create/',ECAForCreateAPIView.as_view(), name='ecs-for-create'),
+    path('ecs-for/<uuid:uuid>/',ECAForRetrieveAPIView.as_view(), name='ecs-for-retrieve'),
+    path('ecs-for/<uuid:uuid>/update/',ECAForUpdateAPIView.as_view(), name='ecs-for-update'),
+    path('ecs-for/delete/',ECAForDeleteAPIView.as_view(), name='ecs-for-delete-multiple'),
+    path('ecs-for/export/',ECAForExportAPIView.as_view(), name='ecs-for-export'),
+    path('ecs-for/import/',ECAForImportAPIView.as_view(), name='ecs-for-import'),
+
+   
     path('eca-awarding-bodies/', ECAAwardingBodyListAPIView.as_view(), name='eca-awarding-body-list'),
     path('eca-awarding-bodies/create/', ECAAwardingBodyCreateAPIView.as_view(), name='eca-awarding-body-create'),
     path('eca-awarding-bodies/<uuid:uuid>/', ECAAwardingBodyRetrieveAPIView.as_view(), name='eca-awarding-body-retrieve'),
@@ -367,6 +386,7 @@ urlpatterns = [
     path('language/', LanguageListAPIView.as_view(), name='language-list'),
     path('language/export/', LanguageExportAPIView.as_view(), name='language-export'),
     path('language/import/', LanguageImportAPIView.as_view(), name='language-import'),
+    path('language-tests/', LanguageTestsAPIView.as_view(), name='language-tests'),
     path('entrance-test-modules/', EntranceTestModulesAPIView.as_view(), name='entrance-test-modules'),
     # ---------------- LanguageTest ---------------- #
     path('language-tests/', LanguageTestListAPIView.as_view(), name='language-test-list'),
@@ -461,6 +481,35 @@ urlpatterns = [
     path('visaname/delete/', VisaNameDeleteAPIView.as_view(), name='visaname-delete'),
     path('visaname/export/', VisaNameExportAPIView.as_view(), name='visaname-export'),
     path('visaname/import/', VisaNameImportAPIView.as_view(), name='visaname-import'),
+
+    path('visa-status/', VisaStatusListAPIView.as_view(), name='visastatus-list'),
+    path('visa-status/create/', VisaStatusCreateAPIView.as_view(), name='visastatus-create'),
+    path('visa-status/<uuid:uuid>/', VisaStatusRetrieveAPIView.as_view(), name='visastatus-retrieve'),
+    path('visa-status/<uuid:uuid>/update/', VisaStatusUpdateAPIView.as_view(), name='visastatus-update'),
+    path('visa-status/delete/', VisaStatusDeleteAPIView.as_view(), name='visastatus-delete'),
+    path('visa-status/export/', VisaStatusExportAPIView.as_view(), name='visastatus-export'),
+    path('visa-status/import/', VisaStatusImportAPIView.as_view(), name='visastatus-import'),
+
+
+    path('visa-eligibility-type/', VisaEligibilityTypeListAPIView.as_view(), name='visaeligibility-list'),
+    path('visa-eligibility-type/create/', VisaEligibilityTypeCreateAPIView.as_view(), name='visaeligibility-create'),
+    path('visa-eligibility-type/<uuid:uuid>/', VisaEligibilityTypeRetrieveAPIView.as_view(), name='visaeligibility-retrieve'),
+    path('visa-eligibility-type/<uuid:uuid>/update/', VisaEligibilityTypeUpdateAPIView.as_view(), name='visaeligibility-update'),
+    path('visa-eligibility-type/delete/', VisaEligibilityTypeDeleteAPIView.as_view(), name='visaeligibility-delete-multiple'),
+    path('visa-eligibility-type/export/', VisaEligibilityTypeExportAPIView.as_view(), name='visaeligibility-export'),
+    path('visa-eligibility-type/import/', VisaEligibilityTypeImportAPIView.as_view(), name='visaeligibility-import'),
+    
+    path('possibility-level/', PossibilityLevelListAPIView.as_view(), name='possibilitylevel-list'),
+    path('possibility-level/create/', PossibilityLevelCreateAPIView.as_view(), name='possibilitylevel-create'),
+    path('possibility-level/<uuid:uuid>/', PossibilityLevelRetrieveAPIView.as_view(), name='possibilitylevel-retrieve'),
+    path('possibility-level/<uuid:uuid>/update/', PossibilityLevelUpdateAPIView.as_view(), name='possibilitylevel-update'),
+    path('possibility-level/<uuid:uuid>/delete/', PossibilityLevelDeleteAPIView.as_view(), name='possibilitylevel-delete'),
+    path('possibility-level/delete/', PossibilityLevelDeleteAPIView.as_view(), name='possibilitylevel-delete-multiple'),
+    path('possibility-level/export/', PossibilityLevelExportAPIView.as_view(), name='possibilitylevel-export'),
+    path('possibility-level/import/', PossibilityLevelImportAPIView.as_view(), name='possibilitylevel-import'),
+
+
+
 
     path('applicanttype/', ApplicantTypeListAPIView.as_view(), name='applicanttype-list'),
     path('applicanttype/create/', ApplicantTypeCreateAPIView.as_view(), name='applicanttype-create'),
