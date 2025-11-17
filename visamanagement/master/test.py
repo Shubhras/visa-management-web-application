@@ -1266,7 +1266,7 @@ class LanguageTestResultCreateAPIView(APIView):
         language_uuid = request.data.get("language_id")
         language_test_uuid = request.data.get("language_test_id")
         module_uuid = request.data.get("module_name_id")
-        clb_uuid = request.data.get("clb_level_id")
+        lb_uuid = request.data.get("lb_level_id")
 
         # Fetch FK objects
         try:
@@ -1285,8 +1285,8 @@ class LanguageTestResultCreateAPIView(APIView):
             return Response({"statusCode": 400, "status": False, "message": "Invalid Module UUID"}, status=400)
 
         try:
-            clb_obj = CLBLevel.objects.get(uuid=clb_uuid)
-        except CLBLevel.DoesNotExist:
+            lb_obj = StudyLanguageBanchmark.objects.get(uuid=lb_uuid)
+        except StudyLanguageBanchmark.DoesNotExist:
             return Response({"statusCode": 400, "status": False, "message": "Invalid CLB Level UUID"}, status=400)
 
         # Check duplicate
@@ -1294,7 +1294,7 @@ class LanguageTestResultCreateAPIView(APIView):
             language=language_obj,
             language_test=language_test_obj,
             languagetest_module_name=module_obj,
-            clb_level=clb_obj,
+            lb_level=lb_obj,
             is_deleted=False
         ).first()
         if existing:
@@ -1304,7 +1304,7 @@ class LanguageTestResultCreateAPIView(APIView):
         data['language_id'] = language_obj.uuid
         data['language_test_id'] = language_test_obj.uuid
         data['module_name_id'] = module_obj.uuid
-        data['clb_level_id'] = clb_obj.uuid
+        data['lb_level_id'] = lb_obj.uuid
 
         serializer = LanguageTestResultSerializer(data=data)
         if serializer.is_valid():
