@@ -2196,64 +2196,73 @@ class StateImportAPIView(APIView):
 
 class StateByCountryAPIView(APIView):
     def get(self, request):
-        # Get multiple country_ids (comma-separated)
-        country_ids = request.GET.get("country_id", "").split(',')
-        search_term = request.GET.get("search", "")  # Search query parameter
-        sort_by = request.GET.get("sort_by", "stateName")  # Sort by state name by default
+        country_param = request.GET.get("country_id", "")
+        search_term = request.GET.get("search", "")
+        sort_by = request.GET.get("sort_by", "stateName")
 
-        if not country_ids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "country_id is required"
-            }, status=status.HTTP_400_BAD_REQUEST)
+        # If 'all' → return all states
+        if country_param.lower() == "all":
+            states = State.objects.all()
+        else:
+            # Get comma-separated country IDs
+            country_ids = [cid.strip() for cid in country_param.split(",") if cid.strip()]
+            
+            if not country_ids:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "country_id is required"
+                }, status=status.HTTP_400_BAD_REQUEST)
 
-        # Validate each country_id and fetch countries
-        valid_countries = []
-        invalid_countries = []
-        for country_id in country_ids:
-            try:
-                country_uuid = uuid.UUID(country_id.strip())  # Convert string to UUID
-                country = Country.objects.get(uuid=country_uuid)
-                valid_countries.append(country)
-            except (ValueError, Country.DoesNotExist):
-                invalid_countries.append(country_id)
+            # Validate country UUIDs
+            valid_countries = []
+            invalid_countries = []
 
-        if invalid_countries:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": f"Invalid or non-existent country IDs: {', '.join(invalid_countries)}"
-            }, status=status.HTTP_400_BAD_REQUEST)
+            for country_id in country_ids:
+                try:
+                    country_uuid = uuid.UUID(country_id)
+                    country = Country.objects.get(uuid=country_uuid)
+                    valid_countries.append(country)
+                except (ValueError, Country.DoesNotExist):
+                    invalid_countries.append(country_id)
 
-        # Fetch states for valid countries
-        states = State.objects.filter(countryName__in=valid_countries)
-        
-        # Search filtering
+            if invalid_countries:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": f"Invalid or non-existent country IDs: {', '.join(invalid_countries)}"
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Filter states by valid countries
+            states = State.objects.filter(countryName__in=valid_countries)
+
+        # Search
         if search_term:
             states = states.filter(stateName__icontains=search_term)
 
-        # Sorting
-        if sort_by and hasattr(State, sort_by):
-            states = states.order_by(sort_by)
+        # Sorting (safe fields)
+        allowed_sort_fields = ["stateName", "created_at", "updated_at"]
+        if sort_by not in allowed_sort_fields:
+            sort_by = "stateName"
+        states = states.order_by(sort_by)
 
         # Pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(states, request)
-        data = []
 
-        # Prepare response data with country name and state details
-        for state in result_page:
-            data.append({
+        # Response
+        data = [
+            {
                 "uuid": str(state.uuid),
                 "name": state.stateName,
                 "shortName": state.stateshortName,
                 "fullName": state.description,
-                "country": state.countryName.name  # Include country name in each state
-            })
+                "country": state.countryName.name
+            }
+            for state in result_page
+        ]
 
         return paginator.get_paginated_response(data)
-
 
 
 
