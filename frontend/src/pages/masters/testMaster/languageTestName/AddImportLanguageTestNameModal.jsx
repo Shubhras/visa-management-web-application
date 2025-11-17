@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
 import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
+import { exportToExcelDuplicate, exportToExcelWrongData } from '../../../../helper/utils/commanHelper';
 const AddImportLanguageTestNameModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
@@ -86,12 +87,37 @@ const AddImportLanguageTestNameModal = ({ show, handleClose }) => {
                         }
                     );
                     if (response?.duplicates?.length > 0) {
-                        handleExportToExcel(response.duplicates)
+                        const prepareData = {
+                            data: response?.duplicates || [],
+                            headers: ["Language Name (Test)", "Language Test Name"],
+                            sheetName: "LanguageTestName",
+                            fileName: "LanguageTestName",
+                        };
+                        exportToExcelDuplicate(
+                            prepareData.data,
+                            prepareData.headers,
+                            prepareData.sheetName,
+                            prepareData.fileName
+                        );
+                    }
+                    if (response?.skipped_rows?.length > 0) {
+                        const prepareData = {
+                            data: response.skipped_rows || [],
+                            headers: ["Language Name (Test)", "Language Test Name", "Reason"],
+                            sheetName: "LanguageTestName",
+                            fileName: "LanguageTestName",
+                        };
+                        exportToExcelWrongData(
+                            prepareData.data,
+                            prepareData.headers,
+                            prepareData.sheetName,
+                            prepareData.fileName
+                        );
                     }
                     setFile(null);
                     setSheetNames([]);
                     setSelectedSheet('');
-                    handleClose();
+                    handleClose(true);
                 } else {
                     toast.error("Something went wrong.");
                 }
@@ -99,32 +125,13 @@ const AddImportLanguageTestNameModal = ({ show, handleClose }) => {
         }));
     };
 
-    const handleExportToExcel = (duplicatesData) => {
-        const header = ["Language Test Name"];
-        const duplicates = duplicatesData //["test1", "test3", "test3"];
-        const worksheetData = [header, ...duplicates.map((item) => [item])];
-        const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "LanguageTestName");
-
-        const excelBuffer = XLSX.write(workbook, {
-            bookType: "xlsx",
-            type: "array",
-        });
-
-        const blob = new Blob([excelBuffer], {
-            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        });
-
-        saveAs(blob, `LanguageTestName-Duplicate-Data.xlsx`);
-    };
     // Handle modal close
     const onClose = () => {
         setFile(null);
         setError('');
         setSheetNames([]);
         setSelectedSheet('');
-        handleClose();
+        handleClose(false);
         setLoading(false);
     };
     const handleDownloadSample = () => {
@@ -221,16 +228,28 @@ const AddImportLanguageTestNameModal = ({ show, handleClose }) => {
                                         <button
                                             type="button"
                                             onClick={onClose}
-                                            className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-16 py-4 radius-6"
+                                            className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-16 py-6 radius-6"
                                         >
                                             Cancel
                                         </button>
                                         <button
                                             type="submit"
                                             disabled={loading}
-                                            className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
+                                            className="btn comman-btn-color border border-primary-600 text-md px-16 py-6 radius-6"
                                         >
-                                            {loading ? "Upload" : "Upload"}
+                                            {/* {loading ? "Upload" : "Upload"} */}
+                                            {loading ? (
+                                                <>
+                                                    <span
+                                                        className="spinner-border spinner-border-sm me-2"
+                                                        role="status"
+                                                        aria-hidden="true"
+                                                    ></span>
+                                                    Uploading...
+                                                </>
+                                            ) : (
+                                                "Upload"
+                                            )}
                                         </button>
                                     </div>
                                 </div>

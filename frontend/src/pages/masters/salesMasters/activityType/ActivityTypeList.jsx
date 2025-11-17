@@ -1,4 +1,4 @@
-import React, { useState, useEffect , useRef} from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useDispatch } from "react-redux";
 import MasterLayout from "../../../../masterLayout/MasterLayout";
 import Breadcrumb from "../../../../components/Breadcrumb";
@@ -11,6 +11,7 @@ import AddActivityType from './AddActivityType';
 import EditActivityType from './EditActivityType';
 import AddImportActivityModal from './AddImportActivityModal';
 import { activityTypeList, activityTypeDelete, activityTypeExportData } from '../../../../store/master/salesMasters/actions';
+import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 
 const ActivityTypeList = () => {
   const dispatch = useDispatch();
@@ -37,7 +38,7 @@ const ActivityTypeList = () => {
   const [items] = useState(["Activity Type", "Description", "Modified On"]);
   const [selectedItems, setSelectedItems] = useState(["Activity Type"]);
   const [ItemsRequired] = useState(["Activity Type"]);
-const [tableColumns] = useState([
+  const [tableColumns] = useState([
     { id: 'name', label: 'Activity Type', field: 'name', visible: true, required: false },
     { id: 'description', label: 'Description', field: 'description', visible: true, required: false },
     { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false },
@@ -137,7 +138,7 @@ const [tableColumns] = useState([
           hasNext: paginationData.nextPage || false,
           hasPrevious: paginationData.previousPage || false
         }));
-          setSelectedRows(prev => {
+        setSelectedRows(prev => {
           const filtered = prev.filter(rowId =>
             response?.data.some(rowItems => rowItems.uuid === rowId)
           );
@@ -451,21 +452,6 @@ const [tableColumns] = useState([
   const startIndex = (tableState.currentPage - 1) * tableState.limit;
   const statusOptions = ['All', 'Active', 'Inactive'];
 
-  const formatDateTime = (dateString) => {
-    const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    let hours = date.getHours();
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const seconds = String(date.getSeconds()).padStart(2, '0');
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12 || 12;
-    hours = String(hours).padStart(2, '0');
-    return `${day}-${month}-${year} ${hours}:${minutes}:${seconds} ${ampm}`
-  };
-
-
   return (
     <>
       <MasterLayout>
@@ -495,7 +481,7 @@ const [tableColumns] = useState([
                   >
                     Delete
                   </button>
-                  {(selectedRows?.length > 0 && selectedRows?.length === activityTypeListData?.length)  && (
+                  {(selectedRows?.length > 0 && selectedRows?.length === activityTypeListData?.length) && (
                     <>
                       <button
                         onClick={() => handleSelectAllOrNot("onlySelected")}
@@ -553,7 +539,7 @@ const [tableColumns] = useState([
                           lineHeight: 1
                         }}
                         onClick={() => {
-                         
+
                           handleSearchChange('');
                         }}
                       >
@@ -571,109 +557,109 @@ const [tableColumns] = useState([
           </div>
           <div className="card-body pt-0 container-table" >
             <div className='container-table-div'>
-             <table className="table mb-0">
-                            <thead>
-                              <tr>
-                                <th scope="col" className='sl-numbar-th'>
-                                  <div className="d-flex align-items-center gap-2">
-                                    <input className="form-check-input" type="checkbox" checked={isAllSelected} onChange={handleSelectAll}
-                                      disabled={activityTypeListData.length === 0} />
-                                    <span>No.</span>
-                                  </div>
-                                </th>
-                                {tableColumns.map((column) => (
-                                  isColumnVisible(column.id) && (
-                                    <th key={column.id} scope="col" className='sorting-th' onClick={() => handleSort(column.field)}
-                                    >
-                                      <div className="d-flex align-items-center">
-                                        {column.label}
-                                        {getSortIcon(column.field)}
-                                      </div>
-                                    </th>
-                                  )
-                                ))}
-                                <th scope="col" className='action-th'>
-                                  <div className="position-relative table-header-hide-show" ref={columnDropdownRef}>
-                                    <button className="position-relative table-header-hide-show" onClick={() =>
-                                      setShowColumnDropdown(!showColumnDropdown)}
-                                    >
-                                      Action
-                                      <Icon icon="mdi:table-column" width="20" className='icone' />
-                                    </button>
-                                    {showColumnDropdown && (
-                                      <div className="position-absolute bg-white border rounded shadow-sm p-2 show-dropdowns-header">
-                                        {tableColumns.map((column) => (
-                                          <div key={column.id} className="bg-white p-2 mb-2 d-flex align-items-center gap-2">
-                                            <input type="checkbox" id={`column-${column.id}`} checked={isColumnVisible(column.id)} onChange={() =>
-                                              toggleColumnVisibility(column.id)}
-                                              disabled={column.required}
-                                              className="form-check-input"
-                                            />
-                                            <label htmlFor={`column-${column.id}`} className="mb-0 flex-grow-1 form-label">
-                                              {column.label}
-                                            </label>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    )}
-                                  </div>
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {loading ? (
-                                <tr>
-                                  <td colSpan={visibleColumns.length + 2} className='loding-data'>
-                                    <div className="d-flex justify-content-center align-items-center gap-2">
-                                      <div className="spinner-border spinner-border-sm" role="status">
-                                        <span className="visually-hidden">Loading...</span>
-                                      </div>
-                                      Loading...
-                                    </div>
-                                  </td>
-                                </tr>
-                              ) : activityTypeListData.length > 0 ? (
-                                activityTypeListData.map((rowItem, index) => (
-                                  <tr key={rowItem.uuid}>
-                                    <td>
-                                      <div className="d-flex align-items-center gap-2">
-                                        <input className="form-check-input" type="checkbox" checked={selectedRows.includes(rowItem.uuid)}
-                                          onChange={() => handleRowSelect(rowItem.uuid)}
-                                        />
-                                        <span>{String(startIndex + index + 1).padStart(2, '0')}</span>
-                                      </div>
-                                    </td>
-                                    {isColumnVisible('name') && (
-                                      <td><span>{rowItem.name}</span></td>
-                                    )}
-                                    
-                                    {isColumnVisible('description') && (
-                                      <td><span>{rowItem.description}</span></td>
-                                    )}
-                                    {isColumnVisible('updated_at') && (
-                                      <td><span>{formatDateTime(rowItem.updated_at)}</span></td>
-                                    )}
-                                    <td className='action-td'>
-                                      <div className="d-flex align-items-end gap-2">
-                                        <Link to="#" className='edit-btn-icone' onClick={(e) => { e.preventDefault(); handleShowEdit(rowItem); }}>
-                                          <Icon icon="lucide:edit" width="18" className='icone' />
-                                        </Link>
-                                        <button onClick={() => handleDelete(rowItem.uuid)} className='delete-btn-icone'>
-                                          <Icon icon="mingcute:delete-2-line" width="18" className='icone' />
-                                        </button>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                ))
-                              ) : (
-                                <tr>
-                                  <td colSpan={visibleColumns.length + 2} className='no-records-found'>
-                                    No records found
-                                  </td>
-                                </tr>
-                              )}
-                            </tbody>
-                          </table>
+              <table className="table mb-0">
+                <thead>
+                  <tr>
+                    <th scope="col" className='sl-numbar-th'>
+                      <div className="d-flex align-items-center gap-2">
+                        <input className="form-check-input" type="checkbox" checked={isAllSelected} onChange={handleSelectAll}
+                          disabled={activityTypeListData.length === 0} />
+                        <span>No.</span>
+                      </div>
+                    </th>
+                    {tableColumns.map((column) => (
+                      isColumnVisible(column.id) && (
+                        <th key={column.id} scope="col" className='sorting-th' onClick={() => handleSort(column.field)}
+                        >
+                          <div className="d-flex align-items-center">
+                            {column.label}
+                            {getSortIcon(column.field)}
+                          </div>
+                        </th>
+                      )
+                    ))}
+                    <th scope="col" className='action-th'>
+                      <div className="position-relative table-header-hide-show" ref={columnDropdownRef}>
+                        <button className="position-relative table-header-hide-show" onClick={() =>
+                          setShowColumnDropdown(!showColumnDropdown)}
+                        >
+                          Action
+                          <Icon icon="mdi:table-column" width="20" className='icone' />
+                        </button>
+                        {showColumnDropdown && (
+                          <div className="position-absolute bg-white border rounded shadow-sm p-2 show-dropdowns-header">
+                            {tableColumns.map((column) => (
+                              <div key={column.id} className="bg-white p-2 mb-2 d-flex align-items-center gap-2">
+                                <input type="checkbox" id={`column-${column.id}`} checked={isColumnVisible(column.id)} onChange={() =>
+                                  toggleColumnVisibility(column.id)}
+                                  disabled={column.required}
+                                  className="form-check-input"
+                                />
+                                <label htmlFor={`column-${column.id}`} className="mb-0 flex-grow-1 form-label">
+                                  {column.label}
+                                </label>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr>
+                      <td colSpan={visibleColumns.length + 2} className='loding-data'>
+                        <div className="d-flex justify-content-center align-items-center gap-2">
+                          <div className="spinner-border spinner-border-sm" role="status">
+                            <span className="visually-hidden">Loading...</span>
+                          </div>
+                          Loading...
+                        </div>
+                      </td>
+                    </tr>
+                  ) : activityTypeListData.length > 0 ? (
+                    activityTypeListData.map((rowItem, index) => (
+                      <tr key={rowItem.uuid}>
+                        <td>
+                          <div className="d-flex align-items-center gap-2">
+                            <input className="form-check-input" type="checkbox" checked={selectedRows.includes(rowItem.uuid)}
+                              onChange={() => handleRowSelect(rowItem.uuid)}
+                            />
+                            <span>{String(startIndex + index + 1).padStart(2, '0')}</span>
+                          </div>
+                        </td>
+                        {isColumnVisible('name') && (
+                          <td><span>{rowItem.name}</span></td>
+                        )}
+
+                        {isColumnVisible('description') && (
+                          <td><span>{rowItem.description}</span></td>
+                        )}
+                        {isColumnVisible('updated_at') && (
+                          <td><span>{formatDateDDMMYYYYTime(rowItem.updated_at)}</span></td>
+                        )}
+                        <td className='action-td'>
+                          <div className="d-flex align-items-end gap-2">
+                            <Link to="#" className='edit-btn-icone' onClick={(e) => { e.preventDefault(); handleShowEdit(rowItem); }}>
+                              <Icon icon="lucide:edit" width="18" className='icone' />
+                            </Link>
+                            <button onClick={() => handleDelete(rowItem.uuid)} className='delete-btn-icone'>
+                              <Icon icon="mingcute:delete-2-line" width="18" className='icone' />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={visibleColumns.length + 2} className='no-records-found'>
+                        No records found
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
 
               {tableState.total > 0 && (
                 <div className="d-flex justify-content-between align-items-center px-4 py-3" >
@@ -910,12 +896,16 @@ const [tableColumns] = useState([
                     >
                       Cancel
                     </button>
-                    <button
-                      onClick={handleExport}
-                      type="button"
+                    <button onClick={handleExport} type="button"
                       className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
-                    >
-                      Submit
+                      disabled={loadingExport}>{loadingExport ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                          Submit...
+                        </>
+                      ) : (
+                        "Submit"
+                      )}
                     </button>
                   </div>
                 </div>

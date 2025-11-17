@@ -199,19 +199,6 @@ const AddEditEducationLevelModal = ({ show, handleClose, mode = 'add', rowData =
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                     Education Level Code <span className="text-danger">*</span>
                   </label>
-                  {/* <select
-                    name="category"
-                    value={formData.category}
-                    onChange={handleChange}
-                    className={`form-control form-select radius-8 ${errors.category ? 'is-invalid' : ''}`}
-                  >
-                    <option value="">Select  Education Level Code</option>
-                    {stakeholderListData.map((option) => (
-                      <option key={option.uuid} value={option.uuid}>
-                        {option.name}
-                      </option>
-                    ))}
-                  </select> */}
                   <Select
                     options={stakeholderListData.map((option) => ({
                       value: option.uuid,
@@ -302,7 +289,14 @@ const AddEditEducationLevelModal = ({ show, handleClose, mode = 'add', rowData =
                     className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                     disabled={loading}
                   >
-                    {loading ? 'Saving...' : 'Save'}
+                    {loading ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        Saving...
+                      </>
+                    ) : (
+                      "Save"
+                    )}
                   </button>
                 </div>
               </div>

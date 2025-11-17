@@ -46,24 +46,21 @@ const AddEditEducationDurationModal = ({ show, handleClose, mode = 'add', rowDat
   }, [mode, rowData, show]);
 
   const fetchEducationLevelList = () => {
-    setLoading(true);
     const params = {
       page: 1,
       limit: 2000,
       search: '',
       status: '',
-      sortBy: 'updated_at', // Field to sort by
-      sortOrder: 'desc', // 'asc' or 'desc'
+      sortBy: 'created_at', // Field to sort by
+      sortOrder: 'asc', // 'asc' or 'desc'
     };
 
     dispatch(educationLevelList(params, (response, error) => {
-      setLoading(false);
       if (response?.statusCode === 200 && response?.status === true) {
-
         setEducationLevelListData(response?.data || []);
 
       } else {
-
+        setEducationLevelListData([]);
       }
     }));
   };
@@ -84,6 +81,11 @@ const AddEditEducationDurationModal = ({ show, handleClose, mode = 'add', rowDat
       }));
     }
   };
+  const customFilterOption = (option, inputValue) => {
+    if (!inputValue) return true;
+    return option.label.toLowerCase().startsWith(inputValue.toLowerCase());
+  };
+
 
   // Validate form
   const validateForm = () => {
@@ -230,6 +232,7 @@ const AddEditEducationDurationModal = ({ show, handleClose, mode = 'add', rowDat
                         },
                       })
                     }
+                    filterOption={customFilterOption}
                     placeholder="Select Education Level"
                     isClearable
                     isSearchable
@@ -296,7 +299,15 @@ const AddEditEducationDurationModal = ({ show, handleClose, mode = 'add', rowDat
                     className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                     disabled={loading}
                   >
-                    {loading ? 'Saving...' : 'Save'}
+                    {loading ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        Saving...
+                      </>
+                    ) : (
+                      "Save"
+                    )}
+
                   </button>
                 </div>
               </div>

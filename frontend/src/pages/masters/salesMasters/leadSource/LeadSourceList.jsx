@@ -7,6 +7,7 @@ import { toast } from "react-toastify";
 import AddImportLeadSourceModal from './AddImportLeadSourceModal';
 import AddEditLeadSourceModal from './AddEditLeadSourceModal';
 import { leadSourceList, leadSourceDelete, leadSourceExportData } from '../../../../store/master/salesMasters/actions';
+import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 
 const LeadSourceList = () => {
   const dispatch = useDispatch();
@@ -457,21 +458,6 @@ const LeadSourceList = () => {
   const startIndex = (tableState.currentPage - 1) * tableState.limit;
   const statusOptions = ['All', 'Active', 'Inactive'];
 
-  const formatDateTime = (dateString) => {
-    const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    let hours = date.getHours();
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const seconds = String(date.getSeconds()).padStart(2, '0');
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12 || 12;
-    hours = String(hours).padStart(2, '0');
-    return `${day}-${month}-${year} ${hours}:${minutes}:${seconds} ${ampm}`
-  };
-
-
   return (
     <>
       <MasterLayout>
@@ -576,7 +562,7 @@ const LeadSourceList = () => {
           </div>
           <div className="card-body pt-0 container-table" >
             <div className='container-table-div'>
-            
+
               <table className="table mb-0">
                 <thead>
                   <tr>
@@ -652,12 +638,12 @@ const LeadSourceList = () => {
                         {isColumnVisible('name') && (
                           <td><span>{rowItem.name}</span></td>
                         )}
-                        
+
                         {isColumnVisible('description') && (
                           <td><span>{rowItem.description}</span></td>
                         )}
                         {isColumnVisible('updated_at') && (
-                          <td><span>{formatDateTime(rowItem.updated_at)}</span></td>
+                          <td><span>{formatDateDDMMYYYYTime(rowItem.updated_at)}</span></td>
                         )}
                         <td className='action-td'>
                           <div className="d-flex align-items-end gap-2">
@@ -915,12 +901,16 @@ const LeadSourceList = () => {
                     >
                       Cancel
                     </button>
-                    <button
-                      onClick={handleExport}
-                      type="button"
+                    <button onClick={handleExport} type="button"
                       className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
-                    >
-                      Submit
+                      disabled={loadingExport}>{loadingExport ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                          Submit...
+                        </>
+                      ) : (
+                        "Submit"
+                      )}
                     </button>
                   </div>
                 </div>

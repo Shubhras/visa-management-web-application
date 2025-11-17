@@ -29,6 +29,7 @@ import {
     DELETE_STUDY_MAJOR_AREA,
     EXPORT_STUDY_MAJOR_AREA,
     IMPORT_STUDY_MAJOR_AREA,
+    STUDY_MAJOR_AREA_LIST_BY_MAIN_AREA,
     ACADEMIC_RESULT_TYPE_LIST,
     ADD_ACADEMIC_RESULT_TYPE,
     EDIT_ACADEMIC_RESULT_TYPE,
@@ -59,6 +60,7 @@ import {
     DELETE_ACADEMIC_RESULT,
     EXPORT_ACADEMIC_RESULT,
     IMPORT_ACADEMIC_RESULT,
+    ACADEMIC_RESULT_LIST_BY_ACADEMIC_TYPE,
     DEGREE_AWARDED_INSTITUTE_LIST,
     ADD_DEGREE_AWARDED_INSTITUTE,
     EDIT_DEGREE_AWARDED_INSTITUTE,
@@ -244,6 +246,12 @@ export const studyMajorAreaList = (data, callback) => ({
     data,
     callback,
 });
+export const studyMajorAreaListByMainArea = (data, callback) => ({
+    type: STUDY_MAJOR_AREA_LIST_BY_MAIN_AREA,
+    data,
+    callback,
+});
+
 
 export const studyMajorAreaAdd = (data, callback) => ({
     type: ADD_STUDY_MAJOR_AREA,
@@ -451,6 +459,11 @@ export const academicResultExportData = (data, callback) => ({
 
 export const academicResultImportData = (data, callback) => ({
     type: IMPORT_ACADEMIC_RESULT,
+    data,
+    callback,
+});
+export const academicResultListByAcademicType = (data, callback) => ({
+    type: ACADEMIC_RESULT_LIST_BY_ACADEMIC_TYPE,
     data,
     callback,
 });

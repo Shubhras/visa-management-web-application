@@ -8,7 +8,7 @@ import { toast } from "react-toastify";
 import { academicResultTypeList, academicResultTypeDelete, academicResultTypeExportData } from '../../../../store/master/educationMaster/action';
 import AddImportAcademicResultTypeModal from './AddImportAcademicResultTypeModal';
 import AddEditAcademicResultTypeModal from './AddEditAcademicResultTypeModal';
-import { formatDateDDMMYYYY, formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
+import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 const AcademicResultTypeList = () => {
   const dispatch = useDispatch();
   const [modalState, setModalState] = useState({
@@ -45,14 +45,15 @@ const AcademicResultTypeList = () => {
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [items] = useState(["Academic Result Type", "Description", "Modified On"]);
-  const [selectedItems, setSelectedItems] = useState(["Academic Result Type"]);
-  const [ItemsRequired] = useState(["Academic Result Type"]);
+  const [items] = useState(["Academic Result Type","Data Type", "Description", "Modified On"]);
+  const [selectedItems, setSelectedItems] = useState(["Academic Result Type","Data Type"]);
+  const [ItemsRequired] = useState(["Academic Result Type","Data Type"]);
 
 
   // Table columns configuration
   const [tableColumns] = useState([
     { id: 'name', label: 'Academic Result Type', field: 'name', visible: true, required: true },
+    { id: 'dataType', label: 'Data Type', field: 'dataType', visible: true, required: true },
     { id: 'description', label: 'Description', field: 'description', visible: true, required: false },
     { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false },
   ]);
@@ -495,29 +496,6 @@ const AcademicResultTypeList = () => {
                   >
                     Export
                   </button>
-                  {/* {selectedRows.length == 0 && (
-                    <button
-                      onClick={handleSelectAllButton}
-                      className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
-                    >
-                      Delete
-                    </button>
-                  )}
-                  {selectedRows.length > 0 && (
-                    <button
-                      onClick={() => handleBulkDelete("")}
-                      className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
-                    >{`Delete Selected (${selectedRows.length})`}
-                    </button>
-                  )}
-                  {selectedRows.length > 0 && (
-                    <button
-                      onClick={() => handleBulkDelete("all")}
-                      className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
-                    >{`Delete All (${tableState.total})`}
-                    </button>
-                  )} */}
-
                   <button
                     onClick={handleBulkDelete}
                     className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
@@ -693,6 +671,9 @@ const AcademicResultTypeList = () => {
                         {isColumnVisible('name') && (
                           <td><span>{rowItem.name}</span></td>
                         )}
+                        {isColumnVisible('dataType') && (
+                          <td><span>{rowItem?.dataType}</span></td>
+                        )}
                         {isColumnVisible('description') && (
                           <td><span>{rowItem.description}</span></td>
                         )}
@@ -845,10 +826,7 @@ const AcademicResultTypeList = () => {
                   <button type="button" className="btn-close" onClick={cancelDelete}></button>
                 </div>
                 <div className="modal-body">
-                  {/* <p className="mb-0">Are you sure you want to delete this department?</p> */}
-                  {/* <p className="mb-0"> Are you sure you want to delete this department ({selectedRows.length})?</p> */}
                   <p className="mb-0">{deleteConfirmMessage}</p>
-
                 </div>
                 <div className="modal-footer">
                   <button
@@ -959,12 +937,16 @@ const AcademicResultTypeList = () => {
                     >
                       Cancel
                     </button>
-                    <button
-                      onClick={handleExport}
-                      type="button"
+                    <button onClick={handleExport} type="button"
                       className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
-                    >
-                      Submit
+                      disabled={loadingExport}>{loadingExport ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                          Submit...
+                        </>
+                      ) : (
+                        "Submit"
+                      )}
                     </button>
                   </div>
                 </div>

@@ -8,7 +8,7 @@ import { toast } from "react-toastify";
 import { studyMainAreaList, studyMainAreaDelete, studyMainAreaExportData } from "../../../../store/master/educationMaster/action";
 import AddImportStudyMainAreaModal from './AddImportStudyMainAreaModal';
 import AddEditStudyMainAreaModal from './AddEditStudyMainAreaModal';
-import { formatDateDDMMYYYY, formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
+import {formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 const StudyMainAreaList = () => {
   const dispatch = useDispatch();
   const [modalState, setModalState] = useState({
@@ -103,7 +103,7 @@ const StudyMainAreaList = () => {
     search: '',
     status: '',
     sortBy: 'created_at', // Field to sort by
-    sortOrder: 'desc', // 'asc' or 'desc'
+    sortOrder: 'asc', // 'asc' or 'desc'
     total: 0,
     totalPages: 0,
     currentPage: 1,
@@ -494,29 +494,6 @@ const StudyMainAreaList = () => {
                   >
                     Export
                   </button>
-                  {/* {selectedRows.length == 0 && (
-                    <button
-                      onClick={handleSelectAllButton}
-                      className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
-                    >
-                      Delete
-                    </button>
-                  )}
-                  {selectedRows.length > 0 && (
-                    <button
-                      onClick={() => handleBulkDelete("")}
-                      className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
-                    >{`Delete Selected (${selectedRows.length})`}
-                    </button>
-                  )}
-                  {selectedRows.length > 0 && (
-                    <button
-                      onClick={() => handleBulkDelete("all")}
-                      className="btn btn-sm px-3 py-1 text-white fw-medium bg-danger"
-                    >{`Delete All (${tableState.total})`}
-                    </button>
-                  )} */}
-
                   <button
                     onClick={handleBulkDelete}
                     className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
@@ -958,12 +935,16 @@ const StudyMainAreaList = () => {
                     >
                       Cancel
                     </button>
-                    <button
-                      onClick={handleExport}
-                      type="button"
+                    <button onClick={handleExport} type="button"
                       className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
-                    >
-                      Submit
+                      disabled={loadingExport}>{loadingExport ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                          Submit...
+                        </>
+                      ) : (
+                        "Submit"
+                      )}
                     </button>
                   </div>
                 </div>

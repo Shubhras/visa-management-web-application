@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch } from "react-redux";
 import { academicResultTypeAdd, academicResultTypeEdit } from '../../../../store/master/educationMaster/action';
 import { toast } from "react-toastify";
-
+import Select from "react-select";
 const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
@@ -11,12 +11,14 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
   const [formData, setFormData] = useState({
     uuid: '',
     departmentName: '',
+    dataType: '',
     description: '',
   });
 
   // Validation errors state
   const [errors, setErrors] = useState({
     departmentName: '',
+    dataType: '',
     description: '',
   });
 
@@ -26,6 +28,7 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
       setFormData({
         uuid: rowData.uuid || '',
         departmentName: rowData.name || '',
+        dataType: rowData.dataType || '',
         description: rowData.description || '',
       });
     } else {
@@ -33,6 +36,7 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
       setFormData({
         uuid: '',
         departmentName: '',
+        dataType: '',
         description: '',
       });
     }
@@ -65,7 +69,13 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
       newErrors.departmentName = 'Academic result type is required';
       isValid = false;
     }
-    
+
+    // DataType validation
+    if (!formData.dataType) {
+      newErrors.dataType = 'Data type is required';
+      isValid = false;
+    }
+
     setErrors(newErrors);
     return isValid;
   };
@@ -75,21 +85,23 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
     e.preventDefault();
 
     if (validateForm()) {
-      const sendPayload = mode === 'edit' 
+      const sendPayload = mode === 'edit'
         ? {
-            uuid: formData.uuid,
-            name: formData.departmentName,
-            description: formData.description,
-          }
+          uuid: formData.uuid,
+          name: formData.departmentName,
+          dataType: formData.dataType,
+          description: formData.description,
+        }
         : {
-            name: formData.departmentName,
-            description: formData.description,
-          };
+          name: formData.departmentName,
+          dataType: formData.dataType,
+          description: formData.description,
+        };
 
       setLoading(true);
-      
+
       const action = mode === 'edit' ? academicResultTypeEdit : academicResultTypeAdd;
-      
+
       dispatch(action(sendPayload, (response, error) => {
         setLoading(false);
         if (error) {
@@ -112,6 +124,7 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
     setFormData({
       uuid: '',
       departmentName: '',
+      dataType: '',
       description: '',
     });
     setErrors({});
@@ -172,6 +185,46 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
                   )}
                 </div>
 
+                {/* Data Type Dropdown */}
+                <div className="col-12 mb-20">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                    Data Type <span className="text-danger">*</span>
+                  </label>
+
+                  <Select
+                    options={[
+                      { value: "text", label: "Text" },
+                      { value: "numeric", label: "Numeric" },
+                    ]}
+                    value={
+                      formData.dataType
+                        ? [
+                          { value: "text", label: "Text" },
+                          { value: "numeric", label: "Numeric" },
+                        ].find((opt) => opt.value === formData.dataType)
+                        : null
+                    }
+                    onChange={(selectedOption) =>
+                      handleChange({
+                        target: {
+                          name: "dataType",
+                          value: selectedOption ? selectedOption.value : "",
+                        },
+                      })
+                    }
+                    placeholder="Select data type"
+                    isClearable
+                    isSearchable
+                    className={`custom-select-container ${errors.dataType ? "is-invalid" : ""
+                      }`}
+                    classNamePrefix="custom-select"
+                  />
+
+                  {errors.dataType && (
+                    <div className="text-danger text-sm mt-1">{errors.dataType}</div>
+                  )}
+                </div>
+
                 {/* Description */}
                 <div className="col-12 mb-20">
                   <label
@@ -206,7 +259,14 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
                     className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                     disabled={loading}
                   >
-                    {loading ? 'Saving...' : 'Save'}
+                    {loading ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        Saving...
+                      </>
+                    ) : (
+                      "Save"
+                    )}
                   </button>
                 </div>
               </div>

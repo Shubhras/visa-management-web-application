@@ -304,6 +304,7 @@ urlpatterns = [
     path('studymajorarea/delete/', StudyMajorAreaDeleteAPIView.as_view(), name='studymajorarea-delete'),
     path('studymajorarea/export/', StudyMajorAreaExportAPIView.as_view(), name='studymajorarea-export'),
     path('studymajorarea/import/', StudyMajorAreaImportAPIView.as_view(), name='studymajorarea-import'),
+    path('study-major-by-main/', StudyMajorAreaByMainUUIDAPIView.as_view(), name='study-main-by-major-uuid'),
 
     path("studyspecialisation/",StudySpecialisationListAPIView.as_view(), name='studyspecialisation-list'),
     path('studyspecialisation/create/', StudySpecialisationCreateAPIView.as_view(), name='studyspecialisation-create'),
@@ -368,12 +369,10 @@ urlpatterns = [
     path('degree-awarded-institute/', DegreeAwardedInstituteListAPIView.as_view(), name='degree_awarded_institute_list'),
     path('degree-awarded-institute/create/', DegreeAwardedInstituteCreateAPIView.as_view(), name='degree_awarded_institute_create'),
     path('degree-awarded-institute/<uuid:uuid>/retrieve/', DegreeAwardedInstituteRetrieveAPIView.as_view(), name='degree_awarded_institute_retrieve'),
-    path('degree-awarded-institute/<uuid:uuid>/update/', DegreeAwardedInstituteUpdateAPIView.as_view(), name='degree_awarded_institute_update'),
-    path('degree-awarded-institute/<uuid:uuid>/delete/', DegreeAwardedInstituteDeleteAPIView.as_view(), name='degree_awarded_institute_delete'),
-    path('degree-awarded-institute/delete/', DegreeAwardedInstituteDeleteAPIView.as_view(), name='degree_awarded_institute_delete_bulk'),
+    path('degree-awarded-institute/<uuid:uuid>/update/', DegreeAwardedInstituteUpdateAPIView.as_view(), name='degree_awarded_institute_update'),    path('degree-awarded-institute/delete/', DegreeAwardedInstituteDeleteAPIView.as_view(), name='degree_awarded_institute_delete_bulk'),
     path('degree-awarded-institute/export/', DegreeAwardedInstituteExportAPIView.as_view(), name='degree_awarded_institute_export'),
     path('degree-awarded-institute/import/', DegreeAwardedInstituteImportAPIView.as_view(), name='degree_awarded_institute_import'),
-
+    path('degrees-by-education-level/', DegreeAwardedByEducationLevelAPIView.as_view(), name='degrees-by-education-level'),
 
     path('language/create/', LanguageCreateAPIView.as_view(), name='language-create'),
     path('language/<uuid:uuid>/', LanguageRetrieveAPIView.as_view(), name='language-retrieve'),
@@ -382,8 +381,7 @@ urlpatterns = [
     path('language/', LanguageListAPIView.as_view(), name='language-list'),
     path('language/export/', LanguageExportAPIView.as_view(), name='language-export'),
     path('language/import/', LanguageImportAPIView.as_view(), name='language-import'),
-
-
+    path('entrance-test-modules/', EntranceTestModulesAPIView.as_view(), name='entrance-test-modules'),
     # ---------------- LanguageTest ---------------- #
     path('language-tests/', LanguageTestListAPIView.as_view(), name='language-test-list'),
     path('language-tests/create/', LanguageTestCreateAPIView.as_view(), name='language-test-create'),
@@ -512,6 +510,85 @@ urlpatterns = [
     path('itreturnstatus/delete/', ITReturnStatusDeleteAPIView.as_view(), name='itreturnstatus-bulk-delete'),
     path('itreturnstatus/export/', ITReturnStatusExportAPIView.as_view(), name='itreturnstatus-export'),
     path('itreturnstatus/import/', ITReturnStatusImportAPIView.as_view(), name='itreturnstatus-import'),
+
+     # ------------------ OccupationVersion ------------------ #
+    path('occupation-version/', OccupationVersionListAPIView.as_view(), name='occupation-version-list'),
+    path('occupation-version/create/', OccupationVersionCreateAPIView.as_view(), name='occupation-version-create'),
+    path('occupation-version/<uuid:uuid>/', OccupationVersionRetrieveAPIView.as_view(), name='occupation-version-retrieve'),
+    path('occupation-version/<uuid:uuid>/update/', OccupationVersionUpdateAPIView.as_view(), name='occupation-version-update'),
+    path('occupation-version/delete/', OccupationVersionDeleteAPIView.as_view(), name='occupation-version-delete'),
+    path('occupation-version/export/', OccupationVersionExportAPIView.as_view(), name='occupation-version-export'),
+    path('occupation-version/import/', OccupationVersionImportAPIView.as_view(), name='occupation-version-import'),
+
+    # ------------------ OccupationCategory ------------------ #
+    path('occupation-category/', OccupationCategoryListAPIView.as_view(), name='occupation-category-list'),
+    path('occupation-category/create/', OccupationCategoryCreateAPIView.as_view(), name='occupation-category-create'),
+    path('occupation-category/<uuid:uuid>/', OccupationCategoryRetrieveAPIView.as_view(), name='occupation-category-retrieve'),
+    path('occupation-category/<uuid:uuid>/update/', OccupationCategoryUpdateAPIView.as_view(), name='occupation-category-update'),
+    path('occupation-category/delete/', OccupationCategoryDeleteAPIView.as_view(), name='occupation-category-delete'),
+    path('occupation-category/export/', OccupationCategoryExportAPIView.as_view(), name='occupation-category-export'),
+    path('occupation-category/import/', OccupationCategoryImportAPIView.as_view(), name='occupation-category-import'),
+
+    # ------------------ OccupationLevelCode ------------------ #
+    path('occupation-level-code/', OccupationLevelCodeListAPIView.as_view(), name='occupation-level-code-list'),
+    path('occupation-level-code/create/', OccupationLevelCodeCreateAPIView.as_view(), name='occupation-level-code-create'),
+    path('occupation-level-code/<uuid:uuid>/', OccupationLevelCodeRetrieveAPIView.as_view(), name='occupation-level-code-retrieve'),
+    path('occupation-level-code/<uuid:uuid>/update/', OccupationLevelCodeUpdateAPIView.as_view(), name='occupation-level-code-update'),
+    path('occupation-level-code/delete/', OccupationLevelCodeDeleteAPIView.as_view(), name='occupation-level-code-delete'),
+    path('occupation-level-code/export/', OccupationLevelCodeExportAPIView.as_view(), name='occupation-level-code-export'),
+    path('occupation-level-code/import/', OccupationLevelCodeImportAPIView.as_view(), name='occupation-level-code-import'),
+
+    # ------------------ OccupationLevel ------------------ #
+    path('occupation-level/', OccupationLevelListAPIView.as_view(), name='occupation-level-list'),
+    path('occupation-level/create/', OccupationLevelCreateAPIView.as_view(), name='occupation-level-create'),
+    path('occupation-level/<uuid:uuid>/', OccupationLevelRetrieveAPIView.as_view(), name='occupation-level-retrieve'),
+    path('occupation-level/<uuid:uuid>/update/', OccupationLevelUpdateAPIView.as_view(), name='occupation-level-update'),
+    path('occupation-level/delete/', OccupationLevelDeleteAPIView.as_view(), name='occupation-level-delete'),
+    path('occupation-level/export/', OccupationLevelExportAPIView.as_view(), name='occupation-level-export'),
+    path('occupation-level/import/', OccupationLevelImportAPIView.as_view(), name='occupation-level-import'),
+
+    # ------------------ OccupationCode ------------------ #
+    path('occupation-code/', OccupationCodeListAPIView.as_view(), name='occupation-code-list'),
+    path('occupation-code/create/', OccupationCodeCreateAPIView.as_view(), name='occupation-code-create'),
+    path('occupation-code/<uuid:uuid>/', OccupationCodeRetrieveAPIView.as_view(), name='occupation-code-retrieve'),
+    path('occupation-code/<uuid:uuid>/update/', OccupationCodeUpdateAPIView.as_view(), name='occupation-code-update'),
+    path('occupation-code/delete/', OccupationCodeDeleteAPIView.as_view(), name='occupation-code-delete'),
+    path('occupation-code/export/', OccupationCodeExportAPIView.as_view(), name='occupation-code-export'),
+    path('occupation-code/import/', OccupationCodeImportAPIView.as_view(), name='occupation-code-import'),
+
+    # -------------------- OccupationType --------------------
+    path('occupationtype/', OccupationTypeListAPIView.as_view(), name='occupationtype-list'),
+    path('occupationtype/create/', OccupationTypeCreateAPIView.as_view(), name='occupationtype-create'),
+    path('occupationtype/<uuid:uuid>/', OccupationTypeRetrieveAPIView.as_view(), name='occupationtype-retrieve'),
+    path('occupationtype/<uuid:uuid>/update/', OccupationTypeUpdateAPIView.as_view(), name='occupationtype-update'),
+    path('occupationtype/delete/', OccupationTypeDeleteAPIView.as_view(), name='occupationtype-delete'),
+    path('occupationtype/export/', OccupationTypeExportAPIView.as_view(), name='occupationtype-export'),
+    path('occupationtype/import/', OccupationTypeImportAPIView.as_view(), name='occupationtype-import'),
+
+    # -------------------- OccupationProspect --------------------
+    path('occupationprospect/', OccupationProspectListAPIView.as_view(), name='occupationprospect-list'),
+    path('occupationprospect/create/', OccupationProspectCreateAPIView.as_view(), name='occupationprospect-create'),
+    path('occupationprospect/<uuid:uuid>/', OccupationProspectRetrieveAPIView.as_view(), name='occupationprospect-retrieve'),
+    path('occupationprospect/<uuid:uuid>/update/', OccupationProspectUpdateAPIView.as_view(), name='occupationprospect-update'),
+    path('occupationprospect/delete/', OccupationProspectDeleteAPIView.as_view(), name='occupationprospect-delete'),
+    path('occupationprospect/export/', OccupationProspectExportAPIView.as_view(), name='occupationprospect-export'),
+    path('occupationprospect/import/', OccupationProspectImportAPIView.as_view(), name='occupationprospect-import'),
+
+    path('occupation-names/',OccupationNameListAPIView.as_view(),name='occupationname-list'),
+    path('occupation-names/create/',OccupationNameCreateAPIView.as_view(),name='occupationname-create'),
+    path('occupation-names/<uuid:uuid>/',OccupationNameRetrieveAPIView.as_view(),name='occupationname-retrieve'),
+    path('occupation-names/<uuid:uuid>/update/',OccupationNameUpdateAPIView.as_view(),name='occupationname-update'),
+    path('occupation-names/<uuid:uuid>/delete/',OccupationNameDeleteAPIView.as_view(),name='occupationname-delete'),
+    path('occupation-names/export/',OccupationNameExportAPIView.as_view(),name='occupationname-delete'),
+    path('occupation-names/import/',OccupationNameImportAPIView.as_view(),name='occupationname-delete'),
+
+    path('jobprospect/', JobProspectListAPIView.as_view(), name='JobProspect-list'),
+    path('jobprospect/create/', JobProspectCreateAPIView.as_view(), name='JobProspect-create'),
+    path('jobprospect/<uuid:uuid>/', JobProspectRetrieveAPIView.as_view(), name='JobProspect-retrieve'),
+    path('jobprospect/<uuid:uuid>/update/', JobProspectUpdateAPIView.as_view(), name='JobProspect-update'),
+    path('jobprospect/delete/', JobProspectDeleteAPIView.as_view(), name='JobProspect-delete'),
+    path('jobprospect/export/', JobProspectExportAPIView.as_view(), name='JobProspect-export'),
+    path('jobprospect/import/', JobProspectImportAPIView.as_view(), name='JobProspect-import'),
 
 
     path('workrights/', WorkRightsListAPIView.as_view(), name='workrights-list'),
@@ -677,6 +754,25 @@ urlpatterns = [
     path('coursedividedin/delete/', CourseDividedInDeleteAPIView.as_view(), name='coursedividedin-delete'),
     path('coursedividedin/export/', CourseDividedInExportAPIView.as_view(), name='coursedividedin-export'),
     path('coursedividedin/import/', CourseDividedInImportAPIView.as_view(), name='coursedividedin-import'),
+
+    path('course-durations/', CourseDurationListAPIView.as_view(), name='course-duration-list'),
+    path('course-durations/create/', CourseDurationCreateAPIView.as_view(), name='course-duration-create'),
+    path('course-durations/<uuid:uuid>/', CourseDurationRetrieveAPIView.as_view(), name='course-duration-retrieve'),
+    path('course-durations/<uuid:uuid>/update/', CourseDurationUpdateAPIView.as_view(), name='course-duration-update'),
+    path('course-durations/delete/', CourseDurationDeleteAPIView.as_view(), name='course-duration-delete-bulk'),
+    path('course-durations/export/', CourseDurationExportAPIView.as_view(), name='course-duration-export'),
+    path('course-durations/import/', CourseDurationImportAPIView.as_view(), name='course-duration-import'),
+
+
+    path('course-level/', CourseLevelListAPIView.as_view(), name='course-Level-list'),
+    path('course-level/create/', CourseLevelCreateAPIView.as_view(), name='course-Level-create'),
+    path('course-level/<uuid:uuid>/',CourseLevelRetrieveAPIView.as_view(), name='course-Level-retrieve'),
+    path('course-level/<uuid:uuid>/update/', CourseLevelUpdateAPIView.as_view(), name='course-Level-update'),
+    path('course-level/delete/', CourseLevelDeleteAPIView.as_view(), name='course-Level-delete-bulk'),
+    path('course-level/export/', CourseLevelExportAPIView.as_view(), name='course-Level-export'),
+    path('course-level/import/', CourseLevelImportAPIView.as_view(), name='course-Level-import'),
+
+
 
     # ------------------ CourseStatus ------------------
     path('coursestatus/', CourseStatusListAPIView.as_view(), name='coursestatus-list'),

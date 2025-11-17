@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
 import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
+import { exportToExcelWrongData,exportToExcelDuplicate } from '../../../../helper/utils/commanHelper';
 const AddImportAcademicResultModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
@@ -86,12 +87,37 @@ const AddImportAcademicResultModal = ({ show, handleClose }) => {
                         }
                     );
                     if (response?.duplicates?.length > 0) {
-                        handleExportToExcel(response.duplicates)
+                        const prepareData = {
+                            data: response.duplicates || [],
+                            headers: ["Academic Result Type", "Academic Result"],
+                            sheetName: "AcademicResult",
+                            fileName: "AcademicResult",
+                        };
+                        exportToExcelDuplicate(
+                            prepareData.data,
+                            prepareData.headers,
+                            prepareData.sheetName,
+                            prepareData.fileName
+                        );
+                    }
+                    if (response?.skipped_rows?.length > 0) {
+                        const prepareData = {
+                            data: response.skipped_rows || [],
+                            headers: ["Academic Result Type", "Academic Result", "Reason"],
+                            sheetName: "AcademicResult",
+                            fileName: "AcademicResult",
+                        };
+                        exportToExcelWrongData(
+                            prepareData.data,
+                            prepareData.headers,
+                            prepareData.sheetName,
+                            prepareData.fileName
+                        );
                     }
                     setFile(null);
                     setSheetNames([]);
                     setSelectedSheet('');
-                    handleClose();
+                    handleClose(true);
                 } else {
                     toast.error("Something went wrong.");
                 }
@@ -99,32 +125,13 @@ const AddImportAcademicResultModal = ({ show, handleClose }) => {
         }));
     };
 
-    const handleExportToExcel = (duplicatesData) => {
-        const header = ["Academic Result"];
-        const duplicates = duplicatesData //["test1", "test3", "test3"];
-        const worksheetData = [header, ...duplicates.map((item) => [item])];
-        const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "AcademicResult");
-
-        const excelBuffer = XLSX.write(workbook, {
-            bookType: "xlsx",
-            type: "array",
-        });
-
-        const blob = new Blob([excelBuffer], {
-            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        });
-
-        saveAs(blob, `AcademicResult-Duplicate-Data.xlsx`);
-    };
     // Handle modal close
     const onClose = () => {
         setFile(null);
         setError('');
         setSheetNames([]);
         setSelectedSheet('');
-        handleClose();
+        handleClose(false);
         setLoading(false);
     };
     const handleDownloadSample = () => {
@@ -230,7 +237,14 @@ const AddImportAcademicResultModal = ({ show, handleClose }) => {
                                             disabled={loading}
                                             className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                                         >
-                                            {loading ? "Upload" : "Upload"}
+                                            {loading ? (
+                                                <>
+                                                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                    Uploading...
+                                                </>
+                                            ) : (
+                                                "Upload"
+                                            )}
                                         </button>
                                     </div>
                                 </div>

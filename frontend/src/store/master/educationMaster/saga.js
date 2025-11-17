@@ -30,6 +30,7 @@ import {
     DELETE_STUDY_MAJOR_AREA,
     EXPORT_STUDY_MAJOR_AREA,
     IMPORT_STUDY_MAJOR_AREA,
+    STUDY_MAJOR_AREA_LIST_BY_MAIN_AREA,
     ACADEMIC_RESULT_TYPE_LIST,
     ADD_ACADEMIC_RESULT_TYPE,
     EDIT_ACADEMIC_RESULT_TYPE,
@@ -89,7 +90,8 @@ import {
     EDIT_ECA_FOR,
     DELETE_ECA_FOR,
     EXPORT_ECA_FOR,
-    IMPORT_ECA_FOR
+    IMPORT_ECA_FOR,
+    ACADEMIC_RESULT_LIST_BY_ACADEMIC_TYPE
 } from "./actionType";
 
 import {
@@ -123,6 +125,7 @@ import {
     deleteStudyMajorAreaDataAPI,
     exportStudyMajorAreaDataAPI,
     importStudyMajorAreaDataAPI,
+    studyMajorAreaListByMainAreaAPI,
     getAcademicResultTypeListDataAPI,
     addAcademicResultTypeDataAPI,
     editAcademicResultTypeDataAPI,
@@ -153,6 +156,7 @@ import {
     deleteAcademicResultDataAPI,
     exportAcademicResultDataAPI,
     importAcademicResultDataAPI,
+    getAcademicResultListByAcademicTypeDataAPI,
     getDegreeAwardedInstituteListDataAPI,
     addDegreeAwardedInstituteDataAPI,
     editDegreeAwardedInstituteDataAPI,
@@ -458,6 +462,14 @@ function* studyMajorAreaImportDataSaga(action) {
         if (action.callback) action.callback(null, error);
     }
 }
+function* studyMajorAreaListByMainAreaSaga(action) {
+    try {
+        const response = yield call(studyMajorAreaListByMainAreaAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
 // Academic Result Type
 function* academicResultTypeListSaga(action) {
     try {
@@ -729,6 +741,17 @@ function* academicResultImportDataSaga(action) {
         if (action.callback) action.callback(null, error);
     }
 }
+
+function* academicResultListByAcademicTypeDataSaga(action) {
+    try {
+        const response = yield call(getAcademicResultListByAcademicTypeDataAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
+
+
 // Degree Awarded Institute
 function* degreeAwardedInstituteListSaga(action) {
     try {
@@ -1035,6 +1058,8 @@ function* educationmasterSaga() {
     yield takeEvery(DELETE_STUDY_MAJOR_AREA, studyMajorAreaDeleteSaga);
     yield takeEvery(EXPORT_STUDY_MAJOR_AREA, studyMajorAreaExportDataSaga);
     yield takeEvery(IMPORT_STUDY_MAJOR_AREA, studyMajorAreaImportDataSaga);
+    yield takeEvery(STUDY_MAJOR_AREA_LIST_BY_MAIN_AREA, studyMajorAreaListByMainAreaSaga);
+
     yield takeEvery(ACADEMIC_RESULT_TYPE_LIST, academicResultTypeListSaga);
     yield takeEvery(ADD_ACADEMIC_RESULT_TYPE, academicResultTypeAddSaga);
     yield takeEvery(EDIT_ACADEMIC_RESULT_TYPE, academicResultTypeEditSaga);
@@ -1065,6 +1090,7 @@ function* educationmasterSaga() {
     yield takeEvery(DELETE_ACADEMIC_RESULT, academicResultDeleteSaga);
     yield takeEvery(EXPORT_ACADEMIC_RESULT, academicResultExportDataSaga);
     yield takeEvery(IMPORT_ACADEMIC_RESULT, academicResultImportDataSaga);
+    yield takeEvery(ACADEMIC_RESULT_LIST_BY_ACADEMIC_TYPE, academicResultListByAcademicTypeDataSaga);
     yield takeEvery(DEGREE_AWARDED_INSTITUTE_LIST, degreeAwardedInstituteListSaga);
     yield takeEvery(ADD_DEGREE_AWARDED_INSTITUTE, degreeAwardedInstituteAddSaga);
     yield takeEvery(EDIT_DEGREE_AWARDED_INSTITUTE, degreeAwardedInstituteEditSaga);

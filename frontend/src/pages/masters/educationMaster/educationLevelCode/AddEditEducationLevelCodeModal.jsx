@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from "react-redux";
-import {educationLevelCodeAdd,educationLevelCodeEdit} from "../../../../store/master/educationMaster/action";
+import { educationLevelCodeAdd, educationLevelCodeEdit } from "../../../../store/master/educationMaster/action";
 import { toast } from "react-toastify";
 
 const AddEditEducationLevelCodeModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
@@ -65,7 +65,7 @@ const AddEditEducationLevelCodeModal = ({ show, handleClose, mode = 'add', rowDa
       newErrors.departmentName = 'Education level code is required';
       isValid = false;
     }
-    
+
     setErrors(newErrors);
     return isValid;
   };
@@ -75,21 +75,21 @@ const AddEditEducationLevelCodeModal = ({ show, handleClose, mode = 'add', rowDa
     e.preventDefault();
 
     if (validateForm()) {
-      const sendPayload = mode === 'edit' 
+      const sendPayload = mode === 'edit'
         ? {
-            uuid: formData.uuid,
-            name: formData.departmentName,
-            description: formData.description,
-          }
+          uuid: formData.uuid,
+          name: formData.departmentName,
+          description: formData.description,
+        }
         : {
-            name: formData.departmentName,
-            description: formData.description,
-          };
+          name: formData.departmentName,
+          description: formData.description,
+        };
 
       setLoading(true);
-      
+
       const action = mode === 'edit' ? educationLevelCodeEdit : educationLevelCodeAdd;
-      
+
       dispatch(action(sendPayload, (response, error) => {
         setLoading(false);
         if (error) {
@@ -206,7 +206,14 @@ const AddEditEducationLevelCodeModal = ({ show, handleClose, mode = 'add', rowDa
                     className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                     disabled={loading}
                   >
-                    {loading ? 'Saving...' : 'Save'}
+                    {loading ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        Saving...
+                      </>
+                    ) : (
+                      "Save"
+                    )}
                   </button>
                 </div>
               </div>

@@ -53,6 +53,7 @@ import {
     DELETE_LANGUAGE_TEST_RESULT,
     EXPORT_LANGUAGE_TEST_RESULT,
     IMPORT_LANGUAGE_TEST_RESULT,
+    ENTRANCE_TEST_ID_MODULE_LIST,
 } from "./actionType";
 
 // Language Name (Test)
@@ -341,6 +342,12 @@ export const entranceTestResultExportData = (data, callback) => ({
 
 export const entranceTestResultImportData = (data, callback) => ({
     type: IMPORT_ENTRANCE_TEST_RESULT,
+    data,
+    callback,
+});
+
+export const entranceTestIdModuleList = (data, callback) => ({
+    type: ENTRANCE_TEST_ID_MODULE_LIST,
     data,
     callback,
 });

@@ -24,13 +24,15 @@ const EntranceTestModuleNameList = () => {
         });
     };
     // For closing modal
-    const handleClose = () => {
+    const handleClose = (shouldRefresh = false) => {
         setModalState({
             show: false,
             mode: 'add',
             rowData: null
         });
-        fetchDepartmentList();
+        if (shouldRefresh) {
+            fetchDepartmentList();
+        }
     }
 
     // const [showEdit, setShowEdit] = useState(false);
@@ -357,9 +359,11 @@ const EntranceTestModuleNameList = () => {
         setSelectAllOrNot('');
     };
 
-    const handleCloseImport = () => {
+    const handleCloseImport = (shouldRefresh = false) => {
         setShowImport(false);
-        fetchDepartmentList();
+        if (shouldRefresh) {
+            fetchDepartmentList();
+        }
     };
 
     const handleShowImport = () => {
@@ -409,7 +413,7 @@ const EntranceTestModuleNameList = () => {
         }
         // Map frontend labels to backend field names
         const fieldMapping = {
-            "Entrance Test Name": "entrancetest_id",
+            "Entrance Test Name": "entrancetest",
             "Entrance Test Module Name": "moduleName",
             "Modified On": "updated_at",
             "Description": "description",
@@ -669,7 +673,7 @@ const EntranceTestModuleNameList = () => {
                                                     </div>
                                                 </td>
                                                 {isColumnVisible('shortname') && (
-                                                    <td><span>{rowItem.entrancetest.shortname}</span></td>
+                                                    <td><span>{rowItem?.entrancetest?.shortname}</span></td>
                                                 )}
                                                 {isColumnVisible('fullname') && (
                                                     <td><span>{rowItem.moduleName}</span></td>

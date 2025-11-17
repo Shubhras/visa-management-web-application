@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
 import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
+import { exportToExcelDuplicate } from '../../../../helper/utils/commanHelper';
 const AddImportLostReasonB2CModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
@@ -86,7 +87,18 @@ const AddImportLostReasonB2CModal = ({ show, handleClose }) => {
                         }
                     );
                     if (response?.duplicates?.length > 0) {
-                        handleExportToExcel(response.duplicates)
+                        const prepareData = {
+                            data: response.duplicates || [],
+                            headers: ["Lost Reason (B2C)"],
+                            sheetName: "LostReason(B2C)",
+                            fileName: "LostReason(B2C)",
+                        };
+                        exportToExcelDuplicate(
+                            prepareData.data,
+                            prepareData.headers,
+                            prepareData.sheetName,
+                            prepareData.fileName
+                        );
                     }
                     setFile(null);
                     setSheetNames([]);
@@ -97,25 +109,6 @@ const AddImportLostReasonB2CModal = ({ show, handleClose }) => {
                 }
             }
         }));
-    };
-    const handleExportToExcel = (duplicatesData) => {
-        const header = ["Lost Reason (B2C)"];
-        const duplicates = duplicatesData //["test1", "test3", "test3"];
-        const worksheetData = [header, ...duplicates.map((item) => [item])];
-        const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "LostReason(B2C)");
-
-        const excelBuffer = XLSX.write(workbook, {
-            bookType: "xlsx",
-            type: "array",
-        });
-
-        const blob = new Blob([excelBuffer], {
-            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        });
-
-        saveAs(blob, `LostReason(B2C)-Duplicate-Data.xlsx`);
     };
     // Handle modal close
     const onClose = () => {

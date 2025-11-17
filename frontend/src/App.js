@@ -402,6 +402,28 @@ import ModeofSalaryList from "./pages/masters/occupationMaster/modeofSalary/Mode
 import ITReturnStatusList from "./pages/masters/occupationMaster/iTReturnStatus/ITReturnStatusList";
 import OccupationTypeList from "./pages/masters/occupationMaster/occupationType/OccupationTypeList";
 import OccupationProspectList from "./pages/masters/occupationMaster/occupationProspect/OccupationProspectList";
+
+import OccupationCategoryList from "./pages/masters/occupationMaster/occupationCategory/OccupationCategoryList";
+import OccupationVersionList from "./pages/masters/occupationMaster/occupationVersion/OccupationVersionList";
+import InstituteTypeList from "./pages/masters/instituteMaster/instituteType/InstituteTypeList";
+import InstituteGroupNameList from "./pages/masters/instituteMaster/instituteGroupName/InstituteGroupNameList";
+import InstituteStatusList from "./pages/masters/instituteMaster/instituteStatus/InstituteStatusList";
+import InstitutePriorityList from "./pages/masters/instituteMaster/institutePriority/InstitutePriorityList";
+import InstituteDepartmentList from "./pages/masters/instituteMaster/instituteDepartment/InstituteDepartmentList";
+
+import BankAccountForList from "./pages/masters/instituteMaster/BankAccountFor/BankAccountForList";
+import WhenCommissionIssueList from "./pages/masters/instituteMaster/whenCommissionIssue/WhenCommissionIssueList";
+import CourseLevelCodeList from "./pages/masters/instituteMaster/courseLevelCode/CourseLevelCodeList";
+import CourseDividedInList from "./pages/masters/instituteMaster/courseDividedIn/CourseDividedInList";
+import CourseStatusList from "./pages/masters/instituteMaster/courseStatus/CourseStatusList";
+import IntakeNameList from "./pages/masters/instituteMaster/intakeName/IntakeNameList";
+import CourseStatusforIntakeList from "./pages/masters/instituteMaster/courseStatusforIntake/CourseStatusforIntakeList";
+import ScholorshipBasedOnList from "./pages/masters/instituteMaster/scholorshipBasedOn/ScholorshipBasedOnList";
+import CourseLevelList from "./pages/masters/instituteMaster/courseLevel/CourseLevelList";
+import CourseDurationList from "./pages/masters/instituteMaster/courseDuration/CourseDurationList";
+
+
+
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   // Check if user is authenticated
@@ -690,6 +712,30 @@ function App() {
         <Route path="/it-return-status" element={<ProtectedRoute><ITReturnStatusList /></ProtectedRoute>}></Route>
         <Route path="/occupation-type" element={<ProtectedRoute><OccupationTypeList /></ProtectedRoute>}></Route>
         <Route path="/occupation-prospect" element={<ProtectedRoute><OccupationProspectList /></ProtectedRoute>}></Route>
+        <Route path="/occupation-category" element={<ProtectedRoute><OccupationCategoryList /></ProtectedRoute>}></Route>
+        <Route path="/occupation-version" element={<ProtectedRoute><OccupationVersionList /></ProtectedRoute>}></Route>
+
+
+        {/*Institute Master*/}
+        <Route path="/institute-type" element={<ProtectedRoute><InstituteTypeList /></ProtectedRoute>}></Route>
+        <Route path="/institute-group-name" element={<ProtectedRoute><InstituteGroupNameList /></ProtectedRoute>}></Route>
+        <Route path="/institute-status" element={<ProtectedRoute><InstituteStatusList /></ProtectedRoute>}></Route>
+        <Route path="/institute-priority" element={<ProtectedRoute><InstitutePriorityList /></ProtectedRoute>}></Route>
+        <Route path="/institute-department" element={<ProtectedRoute><InstituteDepartmentList /></ProtectedRoute>}></Route>
+        <Route path="/bank-account-for" element={<ProtectedRoute><BankAccountForList /></ProtectedRoute>}> </Route>
+        <Route path="/when-commission-issue" element={<ProtectedRoute><WhenCommissionIssueList /></ProtectedRoute>}></Route>
+        <Route path="/course-level-code" element={<ProtectedRoute><CourseLevelCodeList /></ProtectedRoute>}></Route>
+        <Route path="/course-divided-in" element={<ProtectedRoute><CourseDividedInList /></ProtectedRoute>}></Route>
+        <Route path="/course-status" element={<ProtectedRoute><CourseStatusList /></ProtectedRoute>}></Route>
+        <Route path="/intake-name" element={<ProtectedRoute><IntakeNameList /></ProtectedRoute>}></Route>
+        <Route path="/course-status-for-intake" element={<ProtectedRoute><CourseStatusforIntakeList /></ProtectedRoute>}></Route>
+        <Route path="/scholorship-based-on" element={<ProtectedRoute><ScholorshipBasedOnList /></ProtectedRoute>}></Route>
+        <Route path="/course-level" element={<ProtectedRoute><CourseLevelList/></ProtectedRoute>}></Route>
+        <Route path="/course-duration" element={<ProtectedRoute><CourseDurationList/></ProtectedRoute>}></Route>
+
+
+
+
         {/* 404 Error Page */}
         <Route path='*' element={<ErrorPage />} />
       </Routes>

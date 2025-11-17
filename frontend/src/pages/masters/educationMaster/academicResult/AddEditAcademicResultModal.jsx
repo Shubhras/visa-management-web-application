@@ -23,44 +23,42 @@ const AddEditAcademicResultModal = ({ show, handleClose, mode = 'add', rowData =
   });
 
   useEffect(() => {
-    if (mode === 'edit' && rowData) {
-      setFormData({
-        uuid: rowData.uuid || '',
-        departmentName: rowData.Academicresult || '',
-        category: rowData.AcademicResulttype_uuid || '',
-        description: rowData.description || '',
-      });
-    } else {
-
-      setFormData({
-        uuid: '',
-        departmentName: '',
-        category: '',
-        description: '',
-      });
+    if (show) { // Only run when modal is shown
+      if (mode === 'edit' && rowData) {
+        setFormData({
+          uuid: rowData.uuid || '',
+          departmentName: rowData.Academicresult || '',
+          category: rowData.AcademicResulttype_uuid || '',
+          description: rowData.description || '',
+        });
+      } else {
+        setFormData({
+          uuid: '',
+          departmentName: '',
+          category: '',
+          description: '',
+        });
+      }
+      fetchEducationLevelList();
     }
-    fetchEducationLevelList();
   }, [mode, rowData, show]);
 
   const fetchEducationLevelList = () => {
-    setLoading(true);
+
     const params = {
       page: 1,
       limit: 2000,
       search: '',
       status: '',
-      sortBy: 'updated_at',
-      sortOrder: 'desc',
+      sortBy: 'name',
+      sortOrder: 'asc',
     };
 
     dispatch(academicResultTypeList(params, (response, error) => {
-      setLoading(false);
       if (response?.statusCode === 200 && response?.status === true) {
-
         setEducationLevelListData(response?.data || []);
-
       } else {
-
+        setEducationLevelListData([]);
       }
     }));
   };
@@ -130,7 +128,7 @@ const AddEditAcademicResultModal = ({ show, handleClose, mode = 'add', rowData =
           if (response?.statusCode === 200 && response?.status === true) {
             toast.success(response?.message);
             resetForm();
-            handleClose();
+            handleClose(true);
           } else {
             toast.error("Something went wrong.");
           }
@@ -154,7 +152,7 @@ const AddEditAcademicResultModal = ({ show, handleClose, mode = 'add', rowData =
   const onClose = () => {
     resetForm();
     setLoading(false);
-    handleClose();
+    handleClose(false);
   };
 
   // Conditional return after all hooks
@@ -190,19 +188,6 @@ const AddEditAcademicResultModal = ({ show, handleClose, mode = 'add', rowData =
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                     Academic Result Type <span className="text-danger">*</span>
                   </label>
-                  {/* <select
-                    name="category"
-                    value={formData.category}
-                    onChange={handleChange}
-                    className={`form-control form-select radius-8 ${errors.category ? 'is-invalid' : ''}`}
-                  >
-                    <option value="">Select Academic Result Type</option>
-                    {educationLevelListData.map((option) => (
-                      <option key={option.uuid} value={option.uuid}>
-                        {option.name}
-                      </option>
-                    ))}
-                  </select> */}
                   <Select
                     options={educationLevelListData.map((option) => ({
                       value: option.uuid,
@@ -292,7 +277,14 @@ const AddEditAcademicResultModal = ({ show, handleClose, mode = 'add', rowData =
                     className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                     disabled={loading}
                   >
-                    {loading ? 'Saving...' : 'Save'}
+                    {loading ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        Saving...
+                      </>
+                    ) : (
+                      "Save"
+                    )}
                   </button>
                 </div>
               </div>

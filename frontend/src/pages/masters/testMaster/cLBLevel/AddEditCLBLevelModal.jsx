@@ -98,7 +98,7 @@ const AddEditCLBLevelModal = ({ show, handleClose, mode = 'add', rowData = null 
           if (response?.statusCode === 200 && response?.status === true) {
             toast.success(response?.message);
             resetForm();
-            handleClose();
+            handleClose(true);
           } else {
             toast.error("Something went wrong.");
           }
@@ -121,7 +121,7 @@ const AddEditCLBLevelModal = ({ show, handleClose, mode = 'add', rowData = null 
   const onClose = () => {
     resetForm();
     setLoading(false);
-    handleClose();
+    handleClose(false);
   };
 
   // Conditional return after all hooks
@@ -197,16 +197,24 @@ const AddEditCLBLevelModal = ({ show, handleClose, mode = 'add', rowData = null 
                   <button
                     type="button"
                     onClick={onClose}
-                    className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-16 py-4 radius-6"
+                    className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-16 py-6 radius-6"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
+                    className="btn comman-btn-color border border-primary-600 text-md px-16 py-6 radius-6"
                     disabled={loading}
                   >
-                    {loading ? 'Saving...' : 'Save'}
+                    {/* {loading ? 'Saving...' : 'Save'} */}
+                    {loading ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2"></span>
+                        Saving...
+                      </>
+                    ) : (
+                      "Save"
+                    )}
                   </button>
                 </div>
               </div>
