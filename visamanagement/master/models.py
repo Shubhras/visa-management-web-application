@@ -1020,7 +1020,7 @@ class LanguageTestResult(models.Model):
     is_deleted = models.BooleanField(default=False)
 
     class Meta:
-        unique_together = ('language', 'language_test','module_name','clb_level','numeric_score')
+        unique_together = ('language', 'language_test','module_name','lb_level','numeric_score')
 
     def __str__(self):
         return f"{self.language_test} - {self.language} - {self.module_name}"
