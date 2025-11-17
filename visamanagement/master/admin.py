@@ -301,7 +301,6 @@ class MediumofEducationAdmin(admin.ModelAdmin):
 class ECAAwardingBodyAdmin(admin.ModelAdmin):
     list_display = ('eca_body_full_name', 'eca_body_short_name', 'country', 'valid_duration_value', 'created_at', 'updated_at')
     search_fields = ('eca_body_full_name', 'eca_body_short_name', 'country__country_name')
-    list_filter = ('country',)
 
 
 # -------------------- DegreeAwardedBy --------------------
