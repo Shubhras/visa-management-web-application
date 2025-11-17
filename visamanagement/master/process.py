@@ -259,7 +259,6 @@ class DocumentCategoryExportAPIView(APIView):
         return response
 
 
-
 class DocumentCategoryImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -481,7 +480,6 @@ class DocumentNameCreateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
-
 class DocumentNameListAPIView(APIView):
     def get(self, request):
         search = request.GET.get('search', '').strip()
@@ -512,7 +510,6 @@ class DocumentNameListAPIView(APIView):
         return paginator.get_paginated_response(serializer.data)
 
 
-
 class DocumentNameRetrieveAPIView(APIView):
     def get(self, request, uuid):
         try:
@@ -531,7 +528,6 @@ class DocumentNameRetrieveAPIView(APIView):
             "message": "Document Name retrieved successfully",
             "data": serializer.data
         }, status=status.HTTP_200_OK)
-
 
 
 class DocumentNameUpdateAPIView(APIView):
@@ -569,7 +565,6 @@ class DocumentNameUpdateAPIView(APIView):
             "status": False,
             "message": serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
-
 
 
 class DocumentNameDeleteAPIView(APIView):
@@ -617,8 +612,6 @@ class DocumentNameDeleteAPIView(APIView):
             "status": True,
             "message": f"{count} Document Name(s) deleted successfully."
         }, status=status.HTTP_200_OK)
-
-
 
 
 class DocumentNameExportAPIView(APIView):
@@ -1292,6 +1285,7 @@ class PurposeOfVisitCreateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
+
 class PurposeOfVisitListAPIView(APIView):
     def get(self, request):
         search = request.GET.get('search', '').strip()
@@ -1314,6 +1308,7 @@ class PurposeOfVisitListAPIView(APIView):
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = PurposeOfVisitSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
+
 
 
 class PurposeOfVisitRetrieveAPIView(APIView):
@@ -1370,6 +1365,7 @@ class PurposeOfVisitUpdateAPIView(APIView):
             "status": False,
             "message": serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
+
 
 class PurposeOfVisitDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -2085,6 +2081,8 @@ class DocumentsForImportAPIView(APIView):
             "duplicates": duplicates,
             "skipped_rows": skipped_rows,
         }, status=status.HTTP_200_OK)
+
+
 
 #--------------------Required Documents ----------------------------
 

@@ -323,9 +323,6 @@ class AccreditationName(models.Model):
         return self.full_name
 
 
-
-
-
 class BankAccountType(models.Model):
     id = models.AutoField(primary_key=True) 
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True) 
@@ -337,8 +334,6 @@ class BankAccountType(models.Model):
 
     def __str__(self):
         return self.name
-
-
 
 class LicenseName(models.Model):
 
@@ -375,8 +370,6 @@ class LicenseName(models.Model):
 
     def __str__(self):
         return self.full_name
-
-
 
 
 class LeadSource(models.Model):
@@ -526,9 +519,6 @@ class  EducationDuration(models.Model):
     def __str__(self):
         return self.durations 
     
-
-
-
 class Studymainarea(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
@@ -1207,17 +1197,8 @@ class ApplicantType(models.Model):
         return self.name
 
 
-class DocumentCategory(models.Model):
-    id = models.AutoField(primary_key=True)
-    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    name = models.CharField(max_length=255, unique=True)
-    description = models.TextField(blank=True, null=True)
-    is_deleted = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.name
+    
+    
 class VisaEligibilityType(models.Model):
     id = models.AutoField(primary_key=True) 
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True) 
@@ -1327,6 +1308,20 @@ class PRPossibility(models.Model):
 
     def __str__(self):
         return self.name
+    
+
+class DocumentCategory(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    name = models.CharField(max_length=255, unique=True)
+    description = models.TextField(blank=True, null=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+    
     
 class DocumentName(models.Model):
     id = models.AutoField(primary_key=True)
@@ -1458,19 +1453,6 @@ class PaymentTo(models.Model):
         return self.name
     
 
-class SpouseCanApplywithCandidate(models.Model):
-    id = models.AutoField(primary_key=True) 
-    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True) 
-    name = models.CharField(max_length=255,unique=True)
-    description = models.TextField(max_length=255,blank=True)
-    is_deleted = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.name
-    
-
 class PaymentCategory(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
@@ -1485,25 +1467,18 @@ class PaymentCategory(models.Model):
         return f"{self.payment_category} ({self.payment_to.name})"
 
 
+class SpouseCanApplywithCandidate(models.Model):
+    id = models.AutoField(primary_key=True) 
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True) 
+    name = models.CharField(max_length=255,unique=True)
+    description = models.TextField(max_length=255,blank=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
-# class CivilIdName(models.Model):
-#     id = models.AutoField(primary_key=True)
-#     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-
-#     civil_id_name = models.CharField(max_length=255)
-#     authority_full_name = models.CharField(max_length=255)
-#     authority_short_name = models.CharField(max_length=255, blank=True, null=True)
-
-#     id_valid_duration = models.CharField(max_length=100, blank=True, null=True)
-
-#     is_deleted = models.BooleanField(default=False)
-#     created_at = models.DateTimeField(default=timezone.now)
-#     updated_at = models.DateTimeField(auto_now=True)
-
-#     def __str__(self):
-#         return self.civil_id_name
-
-
+    def __str__(self):
+        return self.name
+    
 
 class CivilIdName(models.Model):
     VALID_TYPE_CHOICES = (
