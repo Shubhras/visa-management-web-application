@@ -468,6 +468,7 @@ class LanguageTestListAPIView(APIView):
             sort_by = f'-{sort_by}'
 
         queryset = LanguageTest.objects.filter(is_deleted=False)
+
         if search:
             queryset = queryset.filter(
                 Q(name__istartswith=search)
