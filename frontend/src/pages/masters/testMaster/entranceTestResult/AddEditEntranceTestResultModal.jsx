@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from "react-redux";
-import { entranceTestResultAdd, entranceTestResultEdit, entranceTestNameList, entranceTestModuleNameList,entranceTestIdModuleList } from '../../../../store/master/testMaster/action';
+import { entranceTestResultAdd, entranceTestResultEdit, entranceTestNameList, entranceTestModuleNameList, entranceTestIdModuleList } from '../../../../store/master/testMaster/action';
 import { toast } from "react-toastify";
 import Select from "react-select";
 const AddEditEntranceTestResultModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
@@ -8,7 +8,7 @@ const AddEditEntranceTestResultModal = ({ show, handleClose, mode = 'add', rowDa
     const [loading, setLoading] = useState(false);
     const [entranceTestName, setEntranceTestName] = useState([]);
     const [enteranceTestModule, setEnteranceTestModule] = useState([]);
-
+    const [moduleLoading, setModuleLoading] = useState(false);
     // Form state
     const [formData, setFormData] = useState({
         uuid: '',
@@ -36,6 +36,9 @@ const AddEditEntranceTestResultModal = ({ show, handleClose, mode = 'add', rowDa
                     fullname: rowData.moduleName_uuid || '',
                     description: rowData.description || '',
                 });
+                if (rowData?.entrancetest?.uuid) {
+                    fetchEnteranceTestModules(rowData?.entrancetest?.uuid);
+                }
             } else {
                 // Reset form when switching to add mode
                 setFormData({
@@ -67,13 +70,56 @@ const AddEditEntranceTestResultModal = ({ show, handleClose, mode = 'add', rowDa
 
             }
         }));
-        dispatch(entranceTestModuleNameList(params, (response, error) => {
-            setLoading(false);
+        // dispatch(entranceTestModuleNameList(params, (response, error) => {
+        //     setLoading(false);
+        //     if (response?.statusCode === 200 && response?.status === true) {
+        //         setEnteranceTestModule(response?.data || []);
+
+        //     }
+        // }));
+    };
+
+    const fetchEnteranceTestModules = (testId) => {
+        console.log("testId", testId);
+        const params = {
+            page: 1,
+            limit: 2000,
+            search: '',
+            status: '',
+            sortBy: 'degree_name',
+            sortOrder: 'asc',
+            entrance_test_id: testId
+        };
+        setModuleLoading(true);
+        dispatch(entranceTestIdModuleList(params, (response, error) => {
+            setModuleLoading(false);
             if (response?.statusCode === 200 && response?.status === true) {
                 setEnteranceTestModule(response?.data || []);
-
+            } else {
+                setEnteranceTestModule([]);
             }
         }));
+    };
+
+    const handleTestChange = (selectedOption) => {
+        const testId = selectedOption ? selectedOption.value : "";
+
+        setFormData(prev => ({
+            ...prev,
+            name: testId,
+            fullname: ''
+        }));
+        if (errors.fullname) {
+            setErrors(prev => ({
+                ...prev,
+                fullname: ''
+            }));
+        }
+        if (testId) {
+            fetchEnteranceTestModules(testId);
+        } else {
+            setEnteranceTestModule([]);
+        }
     };
 
 
@@ -225,14 +271,15 @@ const AddEditEntranceTestResultModal = ({ show, handleClose, mode = 'add', rowDa
                                                     .find((opt) => opt.value === formData.name)
                                                 : null
                                         }
-                                        onChange={(selectedOption) =>
-                                            handleChange({
-                                                target: {
-                                                    name: "name",
-                                                    value: selectedOption ? selectedOption.value : "",
-                                                },
-                                            })
-                                        }
+                                        // onChange={(selectedOption) =>
+                                        //     handleChange({
+                                        //         target: {
+                                        //             name: "name",
+                                        //             value: selectedOption ? selectedOption.value : "",
+                                        //         },
+                                        //     })
+                                        // }
+                                        onChange={handleTestChange}
                                         placeholder="Select entrance test name"
                                         isClearable
                                         isSearchable
@@ -273,9 +320,16 @@ const AddEditEntranceTestResultModal = ({ show, handleClose, mode = 'add', rowDa
                                                 },
                                             })
                                         }
-                                        placeholder="Select entrance test module name"
+                                        placeholder={
+                                            moduleLoading
+                                                ? "Loading modules..."
+                                                : formData.name
+                                                    ? "Select module"
+                                                    : "Please select test name first"
+                                        }
                                         isClearable
                                         isSearchable
+                                        isDisabled={!formData.name || moduleLoading}
                                         className={`custom-select-container ${errors.fullname ? "is-invalid" : ""
                                             }`}
                                         classNamePrefix="custom-select"

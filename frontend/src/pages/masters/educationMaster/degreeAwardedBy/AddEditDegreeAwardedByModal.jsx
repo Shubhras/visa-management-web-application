@@ -226,14 +226,14 @@ const AddEditDegreeAwardedByModal = ({ show, handleClose, mode = 'add', rowData 
                                     <Select
                                         options={countryListData.map((option) => ({
                                             value: option.uuid,
-                                            label: option.name,
+                                            label: option.name + " (" + option?.continent?.name + ")",
                                         }))}
                                         value={
                                             formData.countryUuid
                                                 ? countryListData
                                                     .map((option) => ({
                                                         value: option.uuid,
-                                                        label: option.name,
+                                                        label: option.name + " (" + option?.continent?.name + ")",
                                                     }))
                                                     .find((opt) => opt.value === formData.countryUuid)
                                                 : null
