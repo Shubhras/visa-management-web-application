@@ -4049,8 +4049,7 @@ class TimezoneImportAPIView(APIView):
                 # Check duplicates
                 existing = Timezone.objects.filter(
                     Timezone__iexact=tz_name,
-                    countryName=country_obj,
-                    stateName=state_obj
+                    countryName=country_obj
                 ).first()
 
                 if existing:
