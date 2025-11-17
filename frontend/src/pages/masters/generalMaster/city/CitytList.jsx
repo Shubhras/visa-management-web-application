@@ -863,7 +863,7 @@ const CityList = () => {
                                     borderRadius: '4px',
                                     fontWeight: page === tableState.currentPage ? '500' : '400',
                                     cursor: 'pointer',
-                                    fontSize: "16px"
+                                    fontSize: "14px"
                                   }}
                                 >
                                   {page}
