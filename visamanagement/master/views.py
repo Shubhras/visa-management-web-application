@@ -2701,7 +2701,7 @@ class DistrictImportAPIView(APIView):
 class DistrictByFilterAPIView(APIView):
     def get(self, request):
         country_ids = request.GET.get("country_id", "").split(',')  # multiple countries
-        state_ids = request.GET.get("state_id", "").split(',')      # multiple states
+        state_ids = request.GET.get("state_id", "").split(',')      # multiple states or 'all'
         search_term = request.GET.get("search", "")                 # search by district name
         sort_by = request.GET.get("sort_by", "districtName")        # default sort
 
@@ -2710,6 +2710,8 @@ class DistrictByFilterAPIView(APIView):
             valid_objs = []
             invalid_ids = []
             for _id in filter(None, ids):
+                if _id.lower() == 'all':  # skip validation for 'all'
+                    continue
                 try:
                     obj_uuid = uuid.UUID(_id.strip())
                     obj = model.objects.get(uuid=obj_uuid)
@@ -2728,20 +2730,23 @@ class DistrictByFilterAPIView(APIView):
             }, status=400)
 
         # Validate states (optional)
-        valid_states, invalid_states = get_valid_objects(State, state_ids)
-        if invalid_states:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": f"Invalid or non-existent state IDs: {', '.join(invalid_states)}"
-            }, status=400)
+        if 'all' in [s.lower() for s in state_ids]:  # if 'all' is sent, ignore state filter
+            valid_states = []
+        else:
+            valid_states, invalid_states = get_valid_objects(State, state_ids)
+            if invalid_states:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": f"Invalid or non-existent state IDs: {', '.join(invalid_states)}"
+                }, status=400)
 
         # Fetch districts
         districts = District.objects.filter(is_deleted=False)
 
         if valid_countries:
             districts = districts.filter(countryName__in=valid_countries)
-        if valid_states:
+        if valid_states:  # filter only if valid states are sent (skip if 'all')
             districts = districts.filter(stateName__in=valid_states)
 
         # Search filter
@@ -2769,8 +2774,6 @@ class DistrictByFilterAPIView(APIView):
         ]
 
         return paginator.get_paginated_response(data)
-
-
 
 #--------------------------city--------------------
 class CityListAPIView(APIView):
