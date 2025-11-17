@@ -602,8 +602,7 @@ class CLBLevelAdmin(admin.ModelAdmin):
 
 @admin.register(StudyLanguageBanchmark)
 class StudyLanguageBanchmarkAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'description', 'is_deleted', 'created_at', 'updated_at')
+    list_display = ('id', 'uuid','name', 'description', 'is_deleted', 'created_at', 'updated_at')
     search_fields = ('name', 'description')
     list_filter = ('is_deleted', 'created_at', 'updated_at')
     readonly_fields = ('created_at', 'updated_at')
-    
