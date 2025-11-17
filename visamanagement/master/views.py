@@ -3961,8 +3961,8 @@ class TimezoneImportAPIView(APIView):
         duplicates = []
         skipped_rows = []
 
-        required_headers = {'time zone'}
-        optional_headers = {'country', 'state', 'description'}
+        required_headers = {'time zone','country'}
+        optional_headers = {'state', 'description'}
 
         try:
             data = []
@@ -4005,6 +4005,11 @@ class TimezoneImportAPIView(APIView):
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
                 tz_name = str(row.get('time zone')).strip() if row.get('time zone') else None
+                country_name = str(row.get('country')).strip() if row.get('country') else None
+                state_name = str(row.get('state')).strip() if row.get('state') else None
+                description = str(row.get('description')).strip() if row.get('description') else ''
+
+                # Skip if timezone is missing
                 if not tz_name:
                     skipped_rows.append({
                         "Row": row_number,
@@ -4012,24 +4017,34 @@ class TimezoneImportAPIView(APIView):
                     })
                     continue
 
-                country_name = str(row.get('country')).strip() if row.get('country') else None
-                state_name = str(row.get('state')).strip() if row.get('state') else None
-                description = str(row.get('description')).strip() if row.get('description') else ''
+                # Skip if country is missing
+                if not country_name:
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Reason": "Invalid or missing country"
+                    })
+                    continue
 
-                country_obj = None
+                # Check country exists in DB
+                country_obj = Country.objects.filter(name__iexact=country_name, is_deleted=False).first()
+                if not country_obj:
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Reason": "Invalid or missing country"
+                    })
+                    continue
+
+                # Handle state if provided
                 state_obj = None
-
-                # Handle country
-                if country_name:
-                    country_obj = Country.objects.filter(name__iexact=country_name, is_deleted=False).first()
-                    if not country_obj:
-                        country_obj = Country.objects.create(name=country_name, description='', is_deleted=False)
-
-                # Handle state
                 if state_name:
                     state_obj = State.objects.filter(stateName__iexact=state_name, is_deleted=False).first()
                     if not state_obj:
-                        state_obj = State.objects.create(stateName=state_name, countryName=country_obj, description='', is_deleted=False)
+                        state_obj = State.objects.create(
+                            stateName=state_name,
+                            countryName=country_obj,
+                            description='',
+                            is_deleted=False
+                        )
 
                 # Check duplicates
                 existing = Timezone.objects.filter(
