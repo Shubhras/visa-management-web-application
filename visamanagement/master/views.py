@@ -7544,9 +7544,7 @@ class AccreditationNameListAPIView(APIView):
         queryset = AccreditationName.objects.all()
         if search:
             queryset = queryset.filter(
-                Q(full_name__istartswith=search) |
-                Q(short_name__istartswith=search) |
-                Q(description__istartswith=search)
+                Q(full_name__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -8465,11 +8463,7 @@ class LicenseNameListAPIView(APIView):
 
         if search:
             queryset = queryset.filter(
-                Q(full_name__istartswith=search) |
-                Q(short_name__istartswith=search) |
-                Q(issuing_authority__istartswith=search) |
-                Q(description__istartswith=search) |
-                Q(country__name__istartswith=search)
+                Q(full_name__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
