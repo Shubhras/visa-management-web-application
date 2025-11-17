@@ -2326,7 +2326,7 @@ class OccupationLevelExportAPIView(APIView):
                 if field == 'country' and value:
                     value = value.name
                 elif field == 'occupationversion' and value:
-                    value = value.occupationversion
+                    value = value.occupation_version
                 elif field == 'occupationcategory' and value:
                     value = value.occupationcategory
                 elif field == 'occupationlevelcode' and value:
