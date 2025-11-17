@@ -3195,14 +3195,15 @@ class CityImportAPIView(APIView):
             else:
                 return Response({'error': 'Unsupported file type. Use .xlsx or .csv'}, status=400)
 
-            # ------------------ Preload related data ------------------
-            countries = {c.name.lower(): c for c in Country.objects.all()}
+            # ------------------ Preload related data safely ------------------
+            countries = {c.name.lower(): c for c in Country.objects.all() if c is not None}
             states = {
-                (s.stateName.lower(), s.countryName.uuid): s for s in State.objects.all()
+                (s.stateName.lower(), s.countryName.uuid): s
+                for s in State.objects.all() if s.countryName is not None
             }
             districts = {
                 (d.districtName.lower(), d.stateName.uuid, d.countryName.uuid): d
-                for d in District.objects.all()
+                for d in District.objects.all() if d.stateName is not None and d.countryName is not None
             }
 
             # ------------------ Preload existing cities ------------------
@@ -3248,7 +3249,7 @@ class CityImportAPIView(APIView):
                 if not state_obj:
                     skipped_rows.append({
                         "City Name": city_name,
-                        "Reason": f"State '{state_name}' not found"
+                        "Reason": f"State '{state_name}' not found for country '{country_name}'"
                     })
                     continue
 
@@ -3256,12 +3257,12 @@ class CityImportAPIView(APIView):
                 if not district_obj:
                     skipped_rows.append({
                         "City Name": city_name,
-                        "Reason": f"District '{district_name}' not found"
+                        "Reason": f"District '{district_name}' not found for state '{state_name}'"
                     })
                     continue
 
                 # ------------------ Duplicate check ------------------
-                key = (city_name.lower(), district_obj, state_obj, country_obj)
+                key = (city_name.lower(), district_obj.uuid, state_obj.uuid, country_obj.uuid)
                 if key in existing_city_keys or key in existing_in_file:
                     duplicate_names.append({
                         "City Name": city_name,
@@ -3303,7 +3304,6 @@ class CityImportAPIView(APIView):
                 "status": False,
                 "message": str(e)
             }, status=400)
-
 
  
         
