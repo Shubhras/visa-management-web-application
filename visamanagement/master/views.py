@@ -2781,33 +2781,45 @@ class CityListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-
-        # Handle comma-separated or multiple params
-        def parse_ids(param_name):
-            raw = request.GET.get(param_name, '')  # single string like "id1,id2"
-            if not raw:
-                # fallback to list params
-                raw_list = request.GET.getlist(f"{param_name}[]") or request.GET.getlist(param_name)
-                return raw_list
-            return [x.strip() for x in raw.split(',') if x.strip()]
-
-        country_list = parse_ids('country')
-        state_list = parse_ids('state')
-        district_list = parse_ids('district')
-        city_list = parse_ids('city')
-
         sort_by = request.GET.get('sortBy', 'created_at')
         sort_order = request.GET.get('sortOrder', 'desc')
         allowed_sort_fields = ['cityName', 'created_at']
 
+        # Validate sort field
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
+        # Helper: parse comma-separated or multiple params
+        def parse_ids(param_name):
+            raw = request.GET.get(param_name, '')
+            if raw:
+                items = [x.strip() for x in raw.split(',') if x.strip()]
+            else:
+                items = request.GET.getlist(f"{param_name}[]") or request.GET.getlist(param_name)
+            return items
+
+        # Helper: filter valid UUIDs
+        def validate_uuid_list(uuid_list):
+            valid_uuids = []
+            for u in uuid_list:
+                try:
+                    valid_uuids.append(UUID(u))
+                except ValueError:
+                    pass  # skip invalid UUIDs
+            return valid_uuids
+
+        country_list = validate_uuid_list(parse_ids('country'))
+        state_list = validate_uuid_list(parse_ids('state'))
+        district_list = validate_uuid_list(parse_ids('district'))
+        city_list = validate_uuid_list(parse_ids('city'))
+
         queryset = City.objects.filter(is_deleted=False)
 
-        # Country filter including null/empty
+        # ---------------------------
+        # MULTI-SELECT FILTERS
+        # ---------------------------
         if country_list:
             queryset = queryset.filter(
                 Q(countryName__uuid__in=country_list) |
@@ -2820,7 +2832,6 @@ class CityListAPIView(APIView):
                 Q(countryName__name__exact='')
             )
 
-        # State filter including null/empty
         if state_list:
             queryset = queryset.filter(
                 Q(stateName__uuid__in=state_list) |
@@ -2833,7 +2844,6 @@ class CityListAPIView(APIView):
                 Q(stateName__stateName__exact='')
             )
 
-        # District filter including null/empty
         if district_list:
             queryset = queryset.filter(
                 Q(districtName__uuid__in=district_list) |
@@ -2846,11 +2856,12 @@ class CityListAPIView(APIView):
                 Q(districtName__districtName__exact='')
             )
 
-        # City filter
         if city_list:
             queryset = queryset.filter(uuid__in=city_list)
 
-        # Search
+        # ---------------------------
+        # TEXT SEARCH (CITY / COUNTRY / STATE / DISTRICT)
+        # ---------------------------
         if search:
             queryset = queryset.filter(
                 Q(cityName__istartswith=search) |
@@ -2859,13 +2870,17 @@ class CityListAPIView(APIView):
                 Q(districtName__districtName__istartswith=search)
             )
 
+        # Apply sorting
         queryset = queryset.order_by(sort_by)
 
+        # Pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = CitySerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
 
+
+        
 # -------------------- City -------------------- 
 class CityCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
