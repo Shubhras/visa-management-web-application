@@ -2782,10 +2782,19 @@ class CityListAPIView(APIView):
     def get(self, request):
         search = request.GET.get('search', '').strip()
 
-        country_list = request.GET.getlist('country[]') or request.GET.getlist('country')
-        state_list = request.GET.getlist('state[]') or request.GET.getlist('state')
-        district_list = request.GET.getlist('district[]') or request.GET.getlist('district')
-        city_list = request.GET.getlist('city[]') or request.GET.getlist('city')
+        # Handle comma-separated or multiple params
+        def parse_ids(param_name):
+            raw = request.GET.get(param_name, '')  # single string like "id1,id2"
+            if not raw:
+                # fallback to list params
+                raw_list = request.GET.getlist(f"{param_name}[]") or request.GET.getlist(param_name)
+                return raw_list
+            return [x.strip() for x in raw.split(',') if x.strip()]
+
+        country_list = parse_ids('country')
+        state_list = parse_ids('state')
+        district_list = parse_ids('district')
+        city_list = parse_ids('city')
 
         sort_by = request.GET.get('sortBy', 'created_at')
         sort_order = request.GET.get('sortOrder', 'desc')
@@ -2798,7 +2807,7 @@ class CityListAPIView(APIView):
 
         queryset = City.objects.filter(is_deleted=False)
 
-      
+        # Country filter including null/empty
         if country_list:
             queryset = queryset.filter(
                 Q(countryName__uuid__in=country_list) |
@@ -2811,15 +2820,37 @@ class CityListAPIView(APIView):
                 Q(countryName__name__exact='')
             )
 
+        # State filter including null/empty
         if state_list:
-            queryset = queryset.filter(stateName__uuid__in=state_list)
+            queryset = queryset.filter(
+                Q(stateName__uuid__in=state_list) |
+                Q(stateName__isnull=True) |
+                Q(stateName__stateName__exact='')
+            )
+        else:
+            queryset = queryset.filter(
+                Q(stateName__isnull=True) |
+                Q(stateName__stateName__exact='')
+            )
 
+        # District filter including null/empty
         if district_list:
-            queryset = queryset.filter(districtName__uuid__in=district_list)
+            queryset = queryset.filter(
+                Q(districtName__uuid__in=district_list) |
+                Q(districtName__isnull=True) |
+                Q(districtName__districtName__exact='')
+            )
+        else:
+            queryset = queryset.filter(
+                Q(districtName__isnull=True) |
+                Q(districtName__districtName__exact='')
+            )
 
+        # City filter
         if city_list:
             queryset = queryset.filter(uuid__in=city_list)
 
+        # Search
         if search:
             queryset = queryset.filter(
                 Q(cityName__istartswith=search) |
@@ -2834,11 +2865,6 @@ class CityListAPIView(APIView):
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = CitySerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
-
-
-
-
-
 
 # -------------------- City -------------------- 
 class CityCreateAPIView(APIView):
