@@ -1807,20 +1807,58 @@ class StateListAPIView(APIView):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'created_at')
         sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['stateName', 'stateshortName', 'updated_at']
+        allowed_sort_fields = ['stateName', 'stateshortName', 'created_at', 'updated_at']
 
+        # Validate sort field
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
+        # Helper: parse comma-separated or multiple params
+        def parse_ids(param_name):
+            raw = request.GET.get(param_name, '')
+            if raw:
+                items = [x.strip() for x in raw.split(',') if x.strip()]
+            else:
+                items = request.GET.getlist(param_name)
+            return items
+
+        # Helper: filter valid UUIDs
+        def validate_uuid_list(uuid_list):
+            valid_uuids = []
+            for u in uuid_list:
+                try:
+                    valid_uuids.append(UUID(u))
+                except ValueError:
+                    pass
+            return valid_uuids
+
+        country_list = validate_uuid_list(parse_ids('country'))
+        state_list = validate_uuid_list(parse_ids('state'))
+
         queryset = State.objects.filter(is_deleted=False)
+
+        # ---------------------------
+        # HIERARCHICAL FILTERING
+        # ---------------------------
+        if state_list:
+            queryset = queryset.filter(uuid__in=state_list)
+        elif country_list:
+            queryset = queryset.filter(countryName__uuid__in=country_list)
+
+        # ---------------------------
+        # TEXT SEARCH (STATE)
+        # ---------------------------
         if search:
             queryset = queryset.filter(
                 Q(stateName__istartswith=search)
             )
 
+        # Apply sorting
         queryset = queryset.order_by(sort_by)
+
+        # Pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = StateSerializer(result_page, many=True)
@@ -2272,6 +2310,7 @@ class StateByCountryAPIView(APIView):
 
 
 #-------------------------------------------district---------------------------------
+
 class DistrictListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -2279,20 +2318,62 @@ class DistrictListAPIView(APIView):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'created_at')
         sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['districtName', 'created_at']
+        allowed_sort_fields = ['districtName', 'created_at', 'updated_at']
 
+        # Validate sort field
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
+        # Helper: parse comma-separated or multiple params
+        def parse_ids(param_name):
+            raw = request.GET.get(param_name, '')
+            if raw:
+                items = [x.strip() for x in raw.split(',') if x.strip()]
+            else:
+                items = request.GET.getlist(param_name)
+            return items
+
+        # Helper: filter valid UUIDs
+        def validate_uuid_list(uuid_list):
+            valid_uuids = []
+            for u in uuid_list:
+                try:
+                    valid_uuids.append(UUID(u))
+                except ValueError:
+                    pass
+            return valid_uuids
+
+        country_list = validate_uuid_list(parse_ids('country'))
+        state_list = validate_uuid_list(parse_ids('state'))
+        district_list = validate_uuid_list(parse_ids('district'))
+
         queryset = District.objects.filter(is_deleted=False)
+
+        # ---------------------------
+        # HIERARCHICAL FILTERING
+        # ---------------------------
+        if district_list:
+            queryset = queryset.filter(uuid__in=district_list)
+        else:
+            if state_list:
+                queryset = queryset.filter(stateName__uuid__in=state_list)
+            if country_list:
+                queryset = queryset.filter(countryName__uuid__in=country_list)
+
+        # ---------------------------
+        # TEXT SEARCH (DISTRICT)
+        # ---------------------------
         if search:
             queryset = queryset.filter(
-                Q(districtName__istartswith=search) 
+                Q(districtName__istartswith=search)
             )
 
+        # Apply sorting
         queryset = queryset.order_by(sort_by)
+
+        # Pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = DistrictSerializer(result_page, many=True)
