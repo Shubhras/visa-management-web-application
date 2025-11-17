@@ -1393,11 +1393,11 @@ class LanguageTestResultExportAPIView(APIView):
         # Field to header mapping
         field_header_map = {
             'uuid': 'UUID',
-            'language': 'Language',
-            'language_test': 'Language Test',
-            'languagetest_module_name': 'Language Test Module Name',
+            'language': 'Language Name (Test)',
+            'language_test': 'Language Test Name',
+            'languagetest_module_name': 'Module Name',
             'lb_level': 'Language Benchmark Level',
-            'numeric_score': 'Numeric Score',
+            'numeric_score': 'Language Test Result',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'created_at': 'Created On',
@@ -1470,7 +1470,7 @@ class LanguageTestResultImportAPIView(APIView):
         format_type = file.name.split('.')[-1].lower()
         duplicate_entries, skipped_rows, imported_count = [], [], 0
 
-        required_headers = {'language', 'language test', 'language test module name', 'clb level', 'numeric score'}
+        required_headers = {'language name (test)', 'language test name', 'module name', 'language benchmark level', 'Language Test Result'}
         optional_headers = {'description'}
 
         try:
@@ -1504,14 +1504,14 @@ class LanguageTestResultImportAPIView(APIView):
                 return Response({'error': 'Unsupported file format'}, status=400)
 
             for row in reversed(data):
-                language_name = str(row.get('language')).strip()
-                language_test_name = str(row.get('language test')).strip()
+                language_name = str(row.get('language name (test)')).strip()
+                language_test_name = str(row.get('language test name')).strip()
                 module_name = str(row.get('module name')).strip()
-                clb_level_name = str(row.get('clb level')).strip()
-                numeric_score = row.get('numeric score')
+                lb_level_name = str(row.get('language benchmark level')).strip()
+                numeric_score = row.get('Language Test Result')
                 description = row.get('description', '')
 
-                if not (language_name and language_test_name and module_name and clb_level_name and numeric_score):
+                if not (language_name and language_test_name and module_name and lb_level_name and numeric_score):
                     skipped_rows.append({"row": row, "reason": "Required field(s) missing"})
                     continue
 
@@ -1519,19 +1519,19 @@ class LanguageTestResultImportAPIView(APIView):
                     language__name__iexact=language_name,
                     language_test__name__iexact=language_test_name,
                     languagetest_module_name__moduleName__iexact=module_name,
-                    clb_level__name__iexact=clb_level_name
+                    lb_level__name__iexact=lb_level_name
                 ).first()
 
                 if existing and not existing.is_deleted:
-                    duplicate_entries.append(f"{language_name} - {language_test_name} - {module_name} - {clb_level_name}")
+                    duplicate_entries.append(f"{language_name} - {language_test_name} - {module_name} - {lb_level_name}")
                     continue
 
                 language_obj = Language.objects.filter(name__iexact=language_name).first()
                 language_test_obj = LanguageTest.objects.filter(name__iexact=language_test_name).first()
                 module_obj = LanguagetestmoduleName.objects.filter(moduleName__iexact=module_name).first()
-                clb_obj = CLBLevel.objects.filter(name__iexact=clb_level_name).first()
+                lb_obj = StudyLanguageBanchmark.objects.filter(name__iexact=lb_level_name).first()
 
-                if not (language_obj and language_test_obj and module_obj and clb_obj):
+                if not (language_obj and language_test_obj and module_obj and lb_obj):
                     skipped_rows.append({"row": row, "reason": "Invalid FK reference"})
                     continue
 
@@ -1545,7 +1545,7 @@ class LanguageTestResultImportAPIView(APIView):
                         language=language_obj,
                         language_test=language_test_obj,
                         languagetest_module_name=module_obj,
-                        clb_level=clb_obj,
+                        lb_level=lb_obj,
                         numeric_score=numeric_score,
                         description=description
                     )
