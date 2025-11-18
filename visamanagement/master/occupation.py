@@ -1017,8 +1017,8 @@ class OccupationVersionCreateAPIView(APIView):
 
         # Validate country
         try:
-            country_obj = Country.objects.get(uuid=country_uuid)
-        except Country.DoesNotExist:
+            country_obj = RepresentingCountry.objects.get(uuid=country_uuid)
+        except RepresentingCountry.DoesNotExist:
             return Response({
                 "statusCode": 400,
                 "status": False,
