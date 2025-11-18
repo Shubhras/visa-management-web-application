@@ -366,12 +366,12 @@ class DegreeAwardedInstituteAdmin(admin.ModelAdmin):
 
 
 # ---------------------- Language ----------------------
-@admin.register(Language)
-class LanguageAdmin(admin.ModelAdmin):
-    list_display = ('name', 'description', 'is_deleted', 'created_at', 'updated_at')
-    search_fields = ('name',)
-    list_filter = ('is_deleted',)
-    ordering = ('name',)
+# @admin.register(Language)
+# class LanguageAdmin(admin.ModelAdmin):
+#     list_display = ('name', 'description', 'is_deleted', 'created_at', 'updated_at')
+#     search_fields = ('name',)
+#     list_filter = ('is_deleted',)
+#     ordering = ('name',)
 
 
 # ---------------------- LanguageTest ----------------------
