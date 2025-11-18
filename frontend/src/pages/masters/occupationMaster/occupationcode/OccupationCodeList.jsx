@@ -6,14 +6,14 @@ import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import { formatDateDDMMYYYYTime } from "../../../../helper/utils/commanHelper";
 import {
-  occupationLevelExportData,
-  occupationLevelList,
-  occupationLevelDelete,
+  occupationCodeExportData,
+  occupationCodeList,
+  occupationCodeDelete,
 } from "../../../../store/master/occupationMaster/action";
-import AddImportOccupationLevel from "./AddImportOccupationLevel";
-import AddEditOccupationLevel from "./AddEditOccupationLevel";
+import AddEditOccupationCode from "./AddEditOccupationCode";
+import AddImportOccupationCode from "./AddImportOccupationCode";
 
-const OccupationLevelList = () => {
+const OccupationCodeList = () => {
   const dispatch = useDispatch();
   const [modalState, setModalState] = useState({
     show: false,
@@ -38,7 +38,7 @@ const OccupationLevelList = () => {
     });
     // Only call API when data was successfully added/updated
     if (shouldRefresh) {
-      fetchOccupationLevelList();
+      fetchOccupationCodeList();
     }
   };
 
@@ -58,25 +58,19 @@ const OccupationLevelList = () => {
   const [items] = useState([
     "Country",
     "Occupation Version",
-    "Occupation Category",
-    "Occupation Level Code",
-    "Occupation Level",
+    "Occupation Code",
     "Description",
     "Modified On",
   ]);
   const [selectedItems, setSelectedItems] = useState([
     "Country",
     "Occupation Version",
-    "Occupation Category",
-    "Occupation Level Code",
-    "Occupation Level",
+    "Occupation Code",
   ]);
   const [ItemsRequired] = useState([
     "Country",
     "Occupation Version",
-    "Occupation Category",
-    "Occupation Level Code",
-    "Occupation Level",
+    "Occupation Code",
   ]);
 
   const [tableColumns] = useState([
@@ -94,24 +88,11 @@ const OccupationLevelList = () => {
       visible: true,
       required: false,
     },
+
     {
-      id: "occupationlevelcode",
-      label: "Occupation Level Code",
-      field: "occupationlevelcode",
-      visible: true,
-      required: false,
-    },
-    {
-      id: "occupationlevel",
-      label: "Occupation Level",
-      field: "occupationlevel",
-      visible: true,
-      required: false,
-    },
-    {
-      id: "occupationcategory",
-      label: "Occupation Category",
-      field: "occupationcategory",
+      id: "occupationcode",
+      label: "Occupation Code",
+      field: "occupationcode",
       visible: true,
       required: false,
     },
@@ -190,7 +171,7 @@ const OccupationLevelList = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (tableState.search !== undefined) {
-        fetchOccupationLevelList();
+        fetchOccupationCodeList();
       }
     }, 500);
 
@@ -198,7 +179,7 @@ const OccupationLevelList = () => {
   }, [tableState.search]);
 
   useEffect(() => {
-    fetchOccupationLevelList();
+    fetchOccupationCodeList();
   }, [
     tableState.page,
     tableState.limit,
@@ -207,7 +188,7 @@ const OccupationLevelList = () => {
     tableState.sortOrder,
   ]);
 
-  const fetchOccupationLevelList = () => {
+  const fetchOccupationCodeList = () => {
     setLoading(true);
     const params = {
       page: tableState.page,
@@ -219,7 +200,7 @@ const OccupationLevelList = () => {
     };
 
     dispatch(
-      occupationLevelList(params, (response, error) => {
+      occupationCodeList(params, (response, error) => {
         setLoading(false);
         if (response?.statusCode === 200 && response?.status === true) {
           const paginationData = response?.pagination || {};
@@ -389,7 +370,7 @@ const OccupationLevelList = () => {
     setDeleteId(uuid);
     setShowDeleteConfirm(true);
     setDeleteConfirmMessage(
-      `Are you sure you want to delete this occupation level?`
+      `Are you sure you want to delete this occupation code?`
     );
   };
 
@@ -400,10 +381,10 @@ const OccupationLevelList = () => {
     }
     const message =
       selectAllOrNot === "all"
-        ? `${tableState.total} all occupation level`
-        : `${selectedRows.length} selected occupation levels`;
+        ? `${tableState.total} all occupation code`
+        : `${selectedRows.length} selected occupation code`;
     setDeleteConfirmMessage(
-      `Are you sure you want to delete this occupation level (${message})?`
+      `Are you sure you want to delete this occupation code (${message})?`
     );
     setShowDeleteConfirm(true);
   };
@@ -412,11 +393,11 @@ const OccupationLevelList = () => {
     const sendPayload =
       selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
     if (!sendPayload || sendPayload.length === 0) {
-      toast.error("No occupation level selected for deletion.");
+      toast.error("No occupation code selected for deletion.");
       return;
     }
     dispatch(
-      occupationLevelDelete(sendPayload, (response, error) => {
+      occupationCodeDelete(sendPayload, (response, error) => {
         if (error) {
           toast.error(error?.response?.data?.message || "server error");
         } else {
@@ -432,7 +413,7 @@ const OccupationLevelList = () => {
             setSelectedRows([]);
             setSelectAllOrNot("");
             setDeleteId(null);
-            fetchOccupationLevelList();
+            fetchOccupationCodeList();
           } else {
             toast.error("Something went wrong.");
           }
@@ -454,7 +435,7 @@ const OccupationLevelList = () => {
     setShowImport(false);
     // Only call API when data was successfully imported
     if (shouldRefresh) {
-      fetchOccupationLevelList();
+      fetchOccupationCodeList();
     }
   };
 
@@ -503,18 +484,15 @@ const OccupationLevelList = () => {
       return;
     }
     const fieldMapping = {
-      "Country": "country",
+      Country: "country",
       "Occupation Version": "occupationversion",
-      "Occupation Level Code": "occupationlevelcode",
-      "Occupation Category": "occupationcategory",
-      "Occupation Level": "occupationlevel",
+      "Occupation Code": "occupationcode",
       "Modified On": "updated_at",
       Description: "description",
     };
     const mappedFields = selectedItems.map(
       (item) => fieldMapping[item] || item
     );
-    
     const fieldsString = mappedFields.join(",");
     const sendPayload = {
       file: "xlsx",
@@ -523,7 +501,7 @@ const OccupationLevelList = () => {
     };
     setLoadingExport(true);
     dispatch(
-      occupationLevelExportData(sendPayload, (response, error) => {
+      occupationCodeExportData(sendPayload, (response, error) => {
         if (error) {
           setLoadingExport(false);
           toast.error(error?.response?.message || "server error");
@@ -537,7 +515,7 @@ const OccupationLevelList = () => {
             const url = window.URL.createObjectURL(blob);
             const link = document.createElement("a");
             link.href = url;
-            link.download = `Occulation Level.xlsx`;
+            link.download = `Occulation Code.xlsx`;
             document.body.appendChild(link);
             link.click();
             link.remove();
@@ -620,10 +598,10 @@ const OccupationLevelList = () => {
                     value={tableState.limit}
                     onChange={(e) => handlePageLengthChange(e.target.value)}
                   >
-                    <option value={10}>10</option>
-                    <option value={25}>25</option>
-                    <option value={50}>50</option>
-                    <option value={100}>100</option>
+                    <option value={10}>Show 10</option>
+                    <option value={25}>Show 25</option>
+                    <option value={50}>Show 50</option>
+                    <option value={100}>Show 100</option>
                   </select>
                   <div className="position-relative flex-grow-1 search-filter-div">
                     <Icon
@@ -791,22 +769,12 @@ const OccupationLevelList = () => {
                         )}
                         {isColumnVisible("occupationversion") && (
                           <td>
-                            <span>{rowItem.occupationversion}</span>
+                            <span>{rowItem.occupationversion_name}</span>
                           </td>
                         )}{" "}
-                        {isColumnVisible("occupationlevelcode") && (
+                        {isColumnVisible("occupationcode") && (
                           <td>
-                            <span>{rowItem.occupationlevelcode}</span>
-                          </td>
-                        )}
-                        {isColumnVisible("occupationlevel") && (
-                          <td>
-                            <span>{rowItem.occupationlevel}</span>
-                          </td>
-                        )}
-                        {isColumnVisible("occupationcategory") && (
-                          <td>
-                            <span>{rowItem.occupationcategory}</span>
+                            <span>{rowItem.occupationcode}</span>
                           </td>
                         )}
                         {isColumnVisible("description") && (
@@ -1008,7 +976,7 @@ const OccupationLevelList = () => {
         </div>
 
         {/* Add/Edit Modal */}
-        <AddEditOccupationLevel
+        <AddEditOccupationCode
           show={modalState.show}
           handleClose={handleClose}
           mode={modalState.mode}
@@ -1017,7 +985,7 @@ const OccupationLevelList = () => {
 
         {/* Import Modal */}
         {showImport && (
-          <AddImportOccupationLevel
+          <AddImportOccupationCode
             show={showImport}
             handleClose={handleCloseImport}
           />
@@ -1194,4 +1162,4 @@ const OccupationLevelList = () => {
   );
 };
 
-export default OccupationLevelList;
+export default OccupationCodeList;

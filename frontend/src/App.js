@@ -423,6 +423,9 @@ import CourseLevelList from "./pages/masters/instituteMaster/courseLevel/CourseL
 import CourseDurationList from "./pages/masters/instituteMaster/courseDuration/CourseDurationList";
 import OccupationLevelCodeList from "./pages/masters/occupationMaster/occupationlevelcode/OccupationLevelCodeList";
 import OccupationLevelList from "./pages/masters/occupationMaster/occupationlevel/OccupationLevelList";
+import OccupationCodeList from "./pages/masters/occupationMaster/occupationcode/OccupationCodeList";
+import OccupationNameList from "./pages/masters/occupationMaster/occupationname/OccupationNameList";
+
 import { GlobalSearchProvider } from '../src/components/comman/GlobalSearchContext';
 import WorkRightsList from "./pages/masters/visaConditionsMaster/workRights/WorkRightsList";
 import WorkRightsDuringStudyList from "./pages/masters/visaConditionsMaster/workRightsDuringStudy/WorkRightsDuringStudyList";
@@ -436,6 +439,7 @@ import ChildrenCanApplywithCandidateList from "./pages/masters/visaConditionsMas
 import ChildrenVisaCategoryList from "./pages/masters/visaConditionsMaster/childrenVisaCategory/ChildrenVisaCategoryList";
 import ChildrenStudyWorkRightsList from "./pages/masters/visaConditionsMaster/childrenStudyWorkRights/ChildrenStudyWorkRightsList";
 import VisaMainCategoryList from "./pages/masters/visaConditionsMaster/visamainCategory/VisaMainCategoryList";
+
 
 
 // Protected Route Component
@@ -721,18 +725,20 @@ function App() {
           <Route path="/entrance-test-result" element={<ProtectedRoute><EntranceTestResultList /></ProtectedRoute>}></Route>
           <Route path="/language-test-result" element={<ProtectedRoute><LanguageTestResultList /></ProtectedRoute>}></Route>
 
-          {/*Occupation Master*/}
-          <Route path="/job-type" element={<ProtectedRoute><JobTypeList /></ProtectedRoute>}></Route>
-          <Route path="/mode-of-salary" element={<ProtectedRoute><ModeofSalaryList /></ProtectedRoute>}></Route>
-          <Route path="/it-return-status" element={<ProtectedRoute><ITReturnStatusList /></ProtectedRoute>}></Route>
-          <Route path="/occupation-type" element={<ProtectedRoute><OccupationTypeList /></ProtectedRoute>}></Route>
-          <Route path="/occupation-prospect" element={<ProtectedRoute><OccupationProspectList /></ProtectedRoute>}></Route>
-          <Route path="/occupation-category" element={<ProtectedRoute><OccupationCategoryList /></ProtectedRoute>}></Route>
-          <Route path="/occupation-version" element={<ProtectedRoute><OccupationVersionList /></ProtectedRoute>}></Route>
-          <Route path="/occupation-level-code" element={<ProtectedRoute><OccupationLevelCodeList /></ProtectedRoute>}></Route>
-          <Route path="/occupation-level" element={<ProtectedRoute><OccupationLevelList /></ProtectedRoute>}></Route>
 
-
+        {/*Occupation Master*/}
+        <Route path="/job-type" element={<ProtectedRoute><JobTypeList /></ProtectedRoute>}></Route>
+        <Route path="/mode-of-salary" element={<ProtectedRoute><ModeofSalaryList /></ProtectedRoute>}></Route>
+        <Route path="/it-return-status" element={<ProtectedRoute><ITReturnStatusList /></ProtectedRoute>}></Route>
+        <Route path="/occupation-type" element={<ProtectedRoute><OccupationTypeList /></ProtectedRoute>}></Route>
+        <Route path="/occupation-prospect" element={<ProtectedRoute><OccupationProspectList /></ProtectedRoute>}></Route>
+        <Route path="/occupation-category" element={<ProtectedRoute><OccupationCategoryList /></ProtectedRoute>}></Route>
+        <Route path="/occupation-version" element={<ProtectedRoute><OccupationVersionList /></ProtectedRoute>}></Route>
+        <Route path="/occupation-level-code" element={<ProtectedRoute><OccupationLevelCodeList /></ProtectedRoute>}></Route>
+        <Route path="/occupation-level" element={<ProtectedRoute><OccupationLevelList /></ProtectedRoute>}></Route>
+        <Route path="/occupation-code" element={<ProtectedRoute><OccupationCodeList /></ProtectedRoute>}></Route>
+        <Route path="/occupation-name" element={<ProtectedRoute><OccupationNameList /></ProtectedRoute>}></Route>
+        
 
           {/*Institute Master*/}
           <Route path="/institute-type" element={<ProtectedRoute><InstituteTypeList /></ProtectedRoute>}></Route>

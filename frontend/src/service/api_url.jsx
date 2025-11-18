@@ -482,6 +482,22 @@ export const DELETE_OCCUPATION_LEVEL_API = "/api/v1/master/occupation-level/";  
 export const EXPORT_OCCUPATION_LEVEL_API = "/api/v1/master/occupation-level/export/";
 export const IMPORT_OCCUPATION_LEVEL_API = "/api/v1/master/occupation-level/import/";
 
+//  Occupation Code Endpoints
+export const GET_OCCUPATION_CODE_LIST = "/api/v1/master/occupation-code/";
+export const ADD_OCCUPATION_CODE_API = "/api/v1/master/occupation-code/create/";
+export const EDIT_OCCUPATION_CODE_API = "/api/v1/master/occupation-code/";        // +uuid/update/
+export const DELETE_OCCUPATION_CODE_API = "/api/v1/master/occupation-code/";      // +delete/
+export const EXPORT_OCCUPATION_CODE_API = "/api/v1/master/occupation-code/export/";
+export const IMPORT_OCCUPATION_CODE_API = "/api/v1/master/occupation-code/import/";
+
+// Occupation Name Endpoints
+export const GET_OCCUPATION_NAME_LIST = "/api/v1/master/occupation-names/";
+export const ADD_OCCUPATION_NAME_API = "/api/v1/master/occupation-names/create/";
+export const EDIT_OCCUPATION_NAME_API = "/api/v1/master/occupation-names/";        // +uuid/update/
+export const DELETE_OCCUPATION_NAME_API = "/api/v1/master/occupation-names/";      // +delete/
+export const EXPORT_OCCUPATION_NAME_API = "/api/v1/master/occupation-names/export/";
+export const IMPORT_OCCUPATION_NAME_API = "/api/v1/master/occupation-names/import/";
+
 export const GET_COUNTRY_LIST_DEMO = "/api/v1/master/country/";
 
 
