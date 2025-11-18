@@ -1741,7 +1741,7 @@ class ChildrenVisaCategorySerializer(serializers.ModelSerializer):
 
     # Read-only field: show VisaMain name
     visamain_name = serializers.CharField(source='visamain.name', read_only=True)
-    visamain_uuid = serializers.CharField(source='visamain.uuid', read_only=True)
+    visamain_id = serializers.CharField(source='visamain.uuid', read_only=True)
 
 
     # Write-only field: accept VisaMain UUID
