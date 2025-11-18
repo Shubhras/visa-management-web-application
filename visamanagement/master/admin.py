@@ -375,12 +375,12 @@ class DegreeAwardedInstituteAdmin(admin.ModelAdmin):
 
 
 # ---------------------- LanguageTest ----------------------
-@admin.register(LanguageTest)
-class LanguageTestAdmin(admin.ModelAdmin):
-    list_display = ('name', 'fullname', 'language', 'description', 'is_deleted', 'created_at', 'updated_at')
-    search_fields = ('name', 'fullname')
-    list_filter = ('is_deleted', 'language')
-    ordering = ('name',)
+# @admin.register(LanguageTest)
+# class LanguageTestAdmin(admin.ModelAdmin):
+#     list_display = ('name', 'fullname', 'language', 'description', 'is_deleted', 'created_at', 'updated_at')
+#     search_fields = ('name', 'fullname')
+#     list_filter = ('is_deleted', 'language')
+#     ordering = ('name',)
 
 
 # ---------------------- LanguagetestmoduleName ----------------------
