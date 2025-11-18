@@ -402,15 +402,15 @@ class DegreeAwardedInstituteAdmin(admin.ModelAdmin):
 
 
 # ---------------------- LanguageTestResult ----------------------
-@admin.register(LanguageTestResult)
-class LanguageTestResultAdmin(admin.ModelAdmin):
-    list_display = (
-        'language', 'language_test', 'module_name', 'clb_level',
-        'numeric_score', 'description', 'is_deleted', 'created_at', 'updated_at'
-    )
-    search_fields = ('language__name', 'language_test__name', 'module_name__name')
-    list_filter = ('is_deleted', 'language', 'language_test', 'module_name', 'clb_level')
-    ordering = ('language',)
+# @admin.register(LanguageTestResult)
+# class LanguageTestResultAdmin(admin.ModelAdmin):
+#     list_display = (
+#         'language', 'language_test', 'module_name', 'clb_level',
+#         'numeric_score', 'description', 'is_deleted', 'created_at', 'updated_at'
+#     )
+#     search_fields = ('language__name', 'language_test__name', 'module_name__name')
+#     list_filter = ('is_deleted', 'language', 'language_test', 'module_name', 'clb_level')
+#     ordering = ('language',)
 
 
 # ---------------------- StudyLanguageBanchmark ----------------------
