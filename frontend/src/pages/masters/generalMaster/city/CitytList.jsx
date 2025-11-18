@@ -684,7 +684,28 @@ const CityList = () => {
       file: "xlsx",
       fields: fieldsString,
       uuids: selectAllOrNot === "all" ? [] : selectedRows,
+      search: tableState.search || '',
+      sort: tableState.sort,
+      country: columnFilters.countryId.length > 0 ? columnFilters.countryId : null,
+      state: columnFilters.stateId.length > 0 ? columnFilters.stateId : null,
+      district: columnFilters.districtId.length > 0 ? columnFilters.districtId : null
     };
+
+
+    //  const params = {
+    //   page: tableState.page,
+    //   limit: tableState.limit,
+    //   search: tableState.search || '',
+    //   status: tableState.status || '',
+    //   // sortBy: tableState.sortBy || '',
+    //   // sortOrder: tableState.sortOrder || '',
+    //    search: tableState.search || '',
+    //   sort: tableState.sort,
+    //   // Send country, state and district IDs
+    //   country: columnFilters.countryId.length > 0 ? columnFilters.countryId : null,
+    //   state: columnFilters.stateId.length > 0 ? columnFilters.stateId : null,
+    //   district: columnFilters.districtId.length > 0 ? columnFilters.districtId : null
+    // };
     setLoadingExport(true);
     dispatch(cityExportData(sendPayload, (response, error) => {
       if (error) {
