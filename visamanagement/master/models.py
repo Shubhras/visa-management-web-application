@@ -1272,7 +1272,7 @@ class Designation(models.Model):
     country = models.ForeignKey('RepresentingCountry',on_delete=models.SET_NULL,null=True,blank=True,related_name='designation')
     occupationversion =models.ForeignKey('OccupationVersion',on_delete=models.SET_NULL,null=True,blank=True,related_name='designation')
     occupationname =models.ForeignKey('OccupationName',on_delete=models.SET_NULL,null=True,blank=True,related_name='designation')
-    occupationcode =models.ForeignKey('OccupationCode',on_delete=models.SET_NULL,null=True,blank=True,related_name='job_prospect')
+    occupationcode =models.ForeignKey('OccupationCode',on_delete=models.SET_NULL,null=True,blank=True,related_name='designation')
     designation=models.CharField(max_length=250,blank=True, null=True)
     description =  models.TextField(max_length=255,blank=True)
     is_deleted = models.BooleanField(default=False)
