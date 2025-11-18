@@ -1710,6 +1710,8 @@ class SpouseCanApplywithCandidateSerializer(serializers.ModelSerializer):
 class SpouseVisaCategorySerializer(serializers.ModelSerializer):
 
     visamain_name = serializers.CharField(source='visamain.name', read_only=True)
+    
+    visamain_uuid = serializers.CharField(source='visamain.uuid', read_only=True)
 
     visamain_uuid = serializers.SlugRelatedField(
         slug_field='uuid',
@@ -1738,6 +1740,8 @@ class ChildrenVisaCategorySerializer(serializers.ModelSerializer):
 
     # Read-only field: show VisaMain name
     visamain_name = serializers.CharField(source='visamain.name', read_only=True)
+    visamain_uuid = serializers.CharField(source='visamain.uuid', read_only=True)
+
 
     # Write-only field: accept VisaMain UUID
     visamain_uuid = serializers.SlugRelatedField(
