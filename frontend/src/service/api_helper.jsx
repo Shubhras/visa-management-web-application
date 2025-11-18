@@ -1324,9 +1324,18 @@ export const getDistrictDataByStateAPI = (payload) => {
 export const getCityListDataAPI = (data) => {
     let customSort = "";
     if (data.sort && Array.isArray(data.sort)) {
-        customSort = data.sort.map(s => `${s.field}:${s.order}`).join(",");
+        customSort = data.sort
+            .map(s => {
+                let field = s.field;
+                // Replace field names
+                if (field === "countryId") field = "countryName";
+                if (field === "stateId") field = "stateName";
+                if (field === "districtId") field = "districtName";
+                return `${field}:${s.order}`;
+            })
+            .join(",");
     }
-    const apiUrl = `${url.GET_CITY_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&country=${data?.country}&state=${data?.state}&district=${data?.district}&customSort=customSort`;
+    const apiUrl = `${url.GET_CITY_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&country=${data?.country}&state=${data?.state}&district=${data?.district}&customSort=${customSort}`;
     return get(apiUrl);
 };
 

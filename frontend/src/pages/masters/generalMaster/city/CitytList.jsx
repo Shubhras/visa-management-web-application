@@ -2056,7 +2056,7 @@ const CityList = () => {
                     <button
                       onClick={clearAllFilters}
                       className="btn btn-sm py-1 comman-inactive-btn"
-                      title="Clear all filters"
+                      // title="Clear all filters"
                     >
                       <Icon icon="mdi:filter-off" width="16" /> Clear Filters
                     </button>
