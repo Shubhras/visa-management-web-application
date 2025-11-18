@@ -2862,47 +2862,58 @@ class CityListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['cityName', 'created_at']
 
-        # Validate sort field
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        # 📌 NEW: custom sorting flag
+        custom_sort = request.GET.get('customSort', 'false').lower() == 'true'
 
-        # Helper: parse comma-separated or multiple params
-        def parse_ids(param_name):
-            raw = request.GET.get(param_name, '')
+        # ---------------------------
+        # Parse sorting fields
+        # ---------------------------
+        sort_by_list = request.GET.getlist("sortBy")
+        sort_order_list = request.GET.getlist("sortOrder")
+
+        # Normal Sorting (fallback)
+        normal_sort_by = request.GET.get('sortBy', 'created_at')
+        normal_sort_order = request.GET.get('sortOrder', 'desc')
+
+        # Helper: parse comma-separated fields
+        if not sort_by_list:
+            raw = request.GET.get("sortBy", "")
             if raw:
-                items = [x.strip() for x in raw.split(',') if x.strip()]
-            else:
-                items = request.GET.getlist(param_name)
-            return items
+                sort_by_list = [s.strip() for s in raw.split(",")]
 
-        # Helper: filter valid UUIDs
+        if not sort_order_list:
+            raw = request.GET.get("sortOrder", "")
+            if raw:
+                sort_order_list = [s.strip() for s in raw.split(",")]
+
+        # ---------------------------
+        # Filters
+        ----------------------------
+        def parse_ids(param_name):
+            raw = request.GET.get(param_name, "")
+            if raw:
+                return [x.strip() for x in raw.split(",") if x.strip()]
+            return request.GET.getlist(param_name)
+
         def validate_uuid_list(uuid_list):
-            valid_uuids = []
+            valid = []
             for u in uuid_list:
                 try:
-                    valid_uuids.append(UUID(u))
-                except ValueError:
+                    valid.append(UUID(u))
+                except:
                     pass
-            return valid_uuids
+            return valid
 
-        country_list = validate_uuid_list(parse_ids('country'))
-        state_list = validate_uuid_list(parse_ids('state'))
-        district_list = validate_uuid_list(parse_ids('district'))
-        city_list = validate_uuid_list(parse_ids('city'))
+        country_list = validate_uuid_list(parse_ids("country"))
+        state_list = validate_uuid_list(parse_ids("state"))
+        district_list = validate_uuid_list(parse_ids("district"))
+        city_list = validate_uuid_list(parse_ids("city"))
 
         queryset = City.objects.filter(is_deleted=False)
 
-        # ---------------------------
-        # HIERARCHICAL FILTERING
-        # ---------------------------
+        # Hierarchy Filter
         if city_list:
-            # City UUID takes absolute priority
             queryset = queryset.filter(uuid__in=city_list)
         else:
             if district_list:
@@ -2912,22 +2923,49 @@ class CityListAPIView(APIView):
             if country_list:
                 queryset = queryset.filter(countryName__uuid__in=country_list)
 
-        # ---------------------------
-        # TEXT SEARCH (CITY / COUNTRY / STATE / DISTRICT)
-        # ---------------------------
+        # Search
         if search:
-            queryset = queryset.filter(
-                Q(cityName__istartswith=search) 
-            )
+            queryset = queryset.filter(Q(cityName__istartswith=search))
 
-        # Apply sorting
-        queryset = queryset.order_by(sort_by)
+        # ---------------------------
+        # CUSTOM SORTING (Excel-style)
+        # ---------------------------
+        if custom_sort and sort_by_list and sort_order_list:
+            final_sort_fields = []
+
+            for i, field in enumerate(sort_by_list):
+
+                # Protect missing orders → default asc
+                order = sort_order_list[i].lower() if i < len(sort_order_list) else "asc"
+
+                # prefix "-" for descending
+                if order == "desc":
+                    final_sort_fields.append(f"-{field}")
+                else:
+                    final_sort_fields.append(field)
+
+            queryset = queryset.order_by(*final_sort_fields)
+
+        else:
+            # ---------------------------
+            # NORMAL SORTING (fallback)
+            # ---------------------------
+            if normal_sort_order == "desc":
+                normal_sort_by = f"-{normal_sort_by}"
+
+            queryset = queryset.order_by(normal_sort_by)
 
         # Pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = CitySerializer(result_page, many=True)
+
         return paginator.get_paginated_response(serializer.data)
+
+
+
+
+        
 
 # -------------------- City -------------------- 
 class CityCreateAPIView(APIView):
