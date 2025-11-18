@@ -3,15 +3,17 @@ import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import {
   occupationCategoryList,
-  occupationLevelAdd,
+  occupationCodeList,
   occupationLevelCodeList,
-  occupationLevelEdit,
+  occupationLevelList,
+  occupationNameAdd,
+  occupationNameEdit,
   occupationVersionList,
 } from "../../../../store/master/occupationMaster/action";
 import { countryList } from "../../../../store/master/generalMasters/actions";
 import Select from "react-select";
 
-const AddEditOccupationLevel = ({
+const AddEditOccupationName = ({
   show,
   handleClose,
   mode = "add",
@@ -23,25 +25,32 @@ const AddEditOccupationLevel = ({
   const [occupationversiondata, setOccupationVersionData] = useState([]);
   const [occupationCategoryData, setOccupationCategoryData] = useState([]);
   const [occupationLevelCodeData, setOccupationLevelCodeData] = useState([]);
+  const [occupationLevelData, setOccupationLevelData] = useState([]);
+  const [occupationCodeData, setOccupationCodeData] = useState([]);
 
   // Form state
   const [formData, setFormData] = useState({
     uuid: "",
     country: "",
     occupationVersion: "",
-    occupationLevelCode: "",
-    occupationLevelName: "",
     occupationCategory: "",
+    occupationLevel: "",
+    occupationLevelCode: "",
+    occupationCode: "",
+    occupationName: "",
     description: "",
+    mainduties: "",
   });
 
   // Validation errors state
   const [errors, setErrors] = useState({
     country: "",
     occupationVersion: "",
-    occupationLevelCode: "",
     occupationCategory: "",
-    occupationLevelName: "",
+    occupationLevel: "",
+    occupationLevelCode: "",
+    occupationCode: "",
+    occupationName: "",
   });
 
   const fetchCountryList = () => {
@@ -86,6 +95,22 @@ const AddEditOccupationLevel = ({
         }
       })
     );
+    dispatch(
+      occupationLevelList(params, (response, error) => {
+        // setLoading(false);
+        if (response?.statusCode === 200 && response?.status === true) {
+          setOccupationLevelData(response?.data || []);
+        }
+      })
+    );
+    dispatch(
+      occupationCodeList(params, (response, error) => {
+        // setLoading(false);
+        if (response?.statusCode === 200 && response?.status === true) {
+          setOccupationCodeData(response?.data || []);
+        }
+      })
+    );
   };
   const customFilterOptionCountry = (option, inputValue) => {
     if (!inputValue) return true;
@@ -99,10 +124,13 @@ const AddEditOccupationLevel = ({
           uuid: rowData.uuid || "",
           country: rowData.country_uuid || "",
           occupationVersion: rowData.occupationversion_uuid || "",
-          occupationLevelCode: rowData.occupationlevelcode_uuid || "",
           occupationCategory: rowData.occupationcategory_uuid || "",
-          occupationLevelName: rowData.occupationlevel || "",
+          occupationLevel: rowData.occupationlevel_uuid || "",
+          occupationLevelCode: rowData.occupationlevelcode_uuid || "",
+          occupationCode: rowData.occupationcode_uuid || "",
+          occupationName: rowData.occupationname || "",
           description: rowData.description || "",
+          mainduties: rowData.Mainduties || "",
         });
       } else {
         // Reset form when switching to add mode
@@ -110,10 +138,13 @@ const AddEditOccupationLevel = ({
           uuid: "",
           country: "",
           occupationVersion: "",
-          occupationLevelCode: "",
           occupationCategory: "",
-          occupationLevelName: "",
+          occupationLevel: "",
+          occupationLevelCode: "",
+          occupationCode: "",
+          occupationName: "",
           description: "",
+          mainduties: "",
         });
       }
       fetchCountryList();
@@ -143,10 +174,6 @@ const AddEditOccupationLevel = ({
     let isValid = true;
 
     // Department Name validation
-    if (!formData.occupationLevelCode.trim()) {
-      newErrors.occupationLevelCode = "Occupation Level Code Name is required";
-      isValid = false;
-    }
     if (!formData.country.trim()) {
       newErrors.country = "Country is required";
       isValid = false;
@@ -155,12 +182,24 @@ const AddEditOccupationLevel = ({
       newErrors.occupationVersion = "Occupation Version is required";
       isValid = false;
     }
-    if (!formData.occupationLevelName.trim()) {
-      newErrors.occupationLevelName = "Occupation Level is required";
-      isValid = false;
-    }
     if (!formData.occupationCategory.trim()) {
       newErrors.occupationCategory = "Occupation Category is required";
+      isValid = false;
+    }
+    if (!formData.occupationLevel.trim()) {
+      newErrors.occupationLevel = "Occupation Level is required";
+      isValid = false;
+    }
+    if (!formData.occupationLevelCode.trim()) {
+      newErrors.occupationLevelCode = "Occupation Level Code is required";
+      isValid = false;
+    }
+    if (!formData.occupationCode.trim()) {
+      newErrors.occupationCode = "Occupation Code is required";
+      isValid = false;
+    }
+    if (!formData.occupationName.trim()) {
+      newErrors.occupationName = "Occupation Name is required";
       isValid = false;
     }
 
@@ -179,23 +218,29 @@ const AddEditOccupationLevel = ({
               uuid: formData.uuid,
               country_id: formData.country,
               occupationversion_id: formData.occupationVersion,
-              occupationlevelcode_id: formData.occupationLevelCode,
               occupationcategory_id: formData.occupationCategory,
-              occupationlevel: formData.occupationLevelName,
+              occupationlevel_id: formData.occupationLevel,
+              occupationlevelcode_id: formData.occupationLevelCode,
+              occupationcode_id: formData.occupationCode,
+              occupationname: formData.occupationName,
               description: formData.description,
+              Mainduties: formData.mainduties,
             }
           : {
               country_id: formData.country,
               occupationversion_id: formData.occupationVersion,
-              occupationlevelcode_id: formData.occupationLevelCode,
               occupationcategory_id: formData.occupationCategory,
-              occupationlevel: formData.occupationLevelName,
+              occupationlevel_id: formData.occupationLevel,
+              occupationlevelcode_id: formData.occupationLevelCode,
+              occupationcode_id: formData.occupationCode,
+              occupationname: formData.occupationName,
               description: formData.description,
+              Mainduties: formData.mainduties,
             };
 
       setLoading(true);
 
-      const action = mode === "edit" ? occupationLevelEdit : occupationLevelAdd;
+      const action = mode === "edit" ? occupationNameEdit : occupationNameAdd;
 
       dispatch(
         action(sendPayload, (response, error) => {
@@ -222,10 +267,13 @@ const AddEditOccupationLevel = ({
       uuid: "",
       country: "",
       occupationVersion: "",
-      occupationLevelCode: "",
       occupationCategory: "",
-      occupationLevelName: "",
+      occupationLevel: "",
+      occupationLevelCode: "",
+      occupationCode: "",
+      occupationName: "",
       description: "",
+      mainduties: "",
     });
     setErrors({});
   };
@@ -271,7 +319,7 @@ const AddEditOccupationLevel = ({
             <form onSubmit={handleSubmit}>
               <div className="row">
                 {/* Department Name */}
-                <div className="col-12 mb-20">
+                <div className="col-6 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                     Country<span className="text-danger">*</span>
                   </label>
@@ -317,7 +365,7 @@ const AddEditOccupationLevel = ({
                     </div>
                   )}
                 </div>
-                <div className="col-12 mb-20">
+                <div className="col-6 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                     Occupation Version<span className="text-danger">*</span>
                   </label>
@@ -360,7 +408,7 @@ const AddEditOccupationLevel = ({
                     </div>
                   )}
                 </div>
-                <div className="col-12 mb-20">
+                <div className="col-6 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                     Occupation Category<span className="text-danger">*</span>
                   </label>
@@ -403,7 +451,7 @@ const AddEditOccupationLevel = ({
                     </div>
                   )}
                 </div>{" "}
-                <div className="col-12 mb-20">
+                <div className="col-6 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                     Occupation Level Code<span className="text-danger">*</span>
                   </label>
@@ -447,27 +495,133 @@ const AddEditOccupationLevel = ({
                     </div>
                   )}
                 </div>{" "}
+                <div className="col-6 mb-20">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                    Occupation Level<span className="text-danger">*</span>
+                  </label>
+                  <Select
+                    options={occupationLevelData.map((option) => ({
+                      value: option.uuid,
+                      label: option.occupationlevel,
+                    }))}
+                    value={
+                      formData.occupationLevelCode
+                        ? occupationLevelData
+                            .map((option) => ({
+                              value: option.uuid,
+                              label: option.occupationlevel,
+                            }))
+                            .find(
+                              (opt) => opt.value === formData.occupationLevel
+                            )
+                        : null
+                    }
+                    onChange={(selectedOption) =>
+                      handleChange({
+                        target: {
+                          name: "occupationLevel",
+                          value: selectedOption ? selectedOption.value : "",
+                        },
+                      })
+                    }
+                    placeholder="Select Occupation Level"
+                    isClearable
+                    isSearchable
+                    className={`custom-select-container ${
+                      errors.country ? "is-invalid" : ""
+                    }`}
+                    classNamePrefix="custom-select"
+                  />
+                  {errors.occupationLevel && (
+                    <div className="text-danger text-sm mt-1">
+                      {errors.occupationLevel}
+                    </div>
+                  )}
+                </div>{" "}
+                <div className="col-6 mb-20">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                    Occupation Code<span className="text-danger">*</span>
+                  </label>
+                  <Select
+                    options={occupationCodeData.map((option) => ({
+                      value: option.uuid,
+                      label: option.occupationcode,
+                    }))}
+                    value={
+                      formData.occupationCode
+                        ? occupationCodeData
+                            .map((option) => ({
+                              value: option.uuid,
+                              label: option.occupationcode,
+                            }))
+                            .find(
+                              (opt) => opt.value === formData.occupationCode
+                            )
+                        : null
+                    }
+                    onChange={(selectedOption) =>
+                      handleChange({
+                        target: {
+                          name: "occupationCode",
+                          value: selectedOption ? selectedOption.value : "",
+                        },
+                      })
+                    }
+                    placeholder="Select Occupation Code"
+                    isClearable
+                    isSearchable
+                    className={`custom-select-container ${
+                      errors.country ? "is-invalid" : ""
+                    }`}
+                    classNamePrefix="custom-select"
+                  />
+                  {errors.occupationCode && (
+                    <div className="text-danger text-sm mt-1">
+                      {errors.occupationCode}
+                    </div>
+                  )}
+                </div>{" "}
                 <div className="col-12 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Occupation Level <span className="text-danger">*</span>
+                    Occupation Name <span className="text-danger">*</span>
                   </label>
                   <input
                     type="text"
-                    name="occupationLevelName"
-                    value={formData.occupationLevelName}
+                    name="occupationName"
+                    value={formData.occupationName}
                     onChange={handleChange}
                     className={`form-control radius-8 ${
-                      errors.occupationLevelName ? "is-invalid" : ""
+                      errors.occupationName ? "is-invalid" : ""
                     }`}
-                    placeholder="Enter Occupation Level Name"
+                    placeholder="Enter Occupation Name"
                   />
-                  {errors.occupationLevelName && (
+                  {errors.occupationName && (
                     <div className="text-danger text-sm mt-1">
-                      {errors.occupationLevelName}
+                      {errors.occupationName}
                     </div>
                   )}
                 </div>
                 {/* Description */}
+                <div className="col-12 mb-20">
+                  <label
+                    htmlFor="desc"
+                    className="form-label fw-semibold text-primary-light text-sm mb-8"
+                  >
+                    Main Duties
+                  </label>
+                  <textarea
+                    className={`form-control ${
+                      errors.mainduties ? "is-invalid" : ""
+                    }`}
+                    id="desc"
+                    name="mainduties"
+                    value={formData.mainduties}
+                    onChange={handleChange}
+                    rows={3}
+                    cols={50}
+                    placeholder="Main Duties"
+                  />
+                </div>
                 <div className="col-12 mb-20">
                   <label
                     htmlFor="desc"
@@ -525,4 +679,4 @@ const AddEditOccupationLevel = ({
   );
 };
 
-export default AddEditOccupationLevel;
+export default AddEditOccupationName;

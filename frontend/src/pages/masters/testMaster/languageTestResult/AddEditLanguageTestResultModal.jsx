@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from "react-redux";
-import { languageTestResultAdd, languageTestResultEdit, languageNameTestList, languageTestNameList, languageTestModuleNameList, languageBenchmarkLevelList } from '../../../../store/master/testMaster/action';
+import {
+    languageTestResultAdd, languageTestResultEdit, languageNameTestList, languageTestNameList, languageTestModuleNameList, languageBenchmarkLevelList,
+    languageNameTestId
+} from '../../../../store/master/testMaster/action';
 import { toast } from "react-toastify";
 import Select from "react-select";
 const AddEditLanguageTestResultModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
@@ -10,6 +13,7 @@ const AddEditLanguageTestResultModal = ({ show, handleClose, mode = 'add', rowDa
     const [languageTestName, setLanguageTestName] = useState([]);
     const [languageTestModuleName, setLanguageTestModuleName] = useState([]);
     const [languageBenchmarkLevel, setLanguageBenchmarkLevel] = useState([]);
+    const [languageTestLoading, setLanguageTestLoading] = useState(false);
 
     // Form state
     const [formData, setFormData] = useState({
@@ -36,13 +40,16 @@ const AddEditLanguageTestResultModal = ({ show, handleClose, mode = 'add', rowDa
             if (mode === 'edit' && rowData) {
                 setFormData({
                     uuid: rowData.uuid || '',
-                    languageNameTest: rowData.language.uuid || '',
-                    shortName: rowData.name || '',
-                    moduleName: rowData.moduleName || '',
-                    testResult: rowData.testResult || '',
-                    benchmarkLevel: rowData.benchmarkLevel || '',
+                    languageNameTest: rowData?.language?.uuid || '',
+                    shortName: rowData?.language_test?.uuid || '',
+                    moduleName: rowData?.module_name?.uuid || '',
+                    testResult: rowData.numeric_score || '',
+                    benchmarkLevel: rowData?.lb_level?.uuid || '',
                     description: rowData.description || '',
                 });
+                if (rowData?.language?.uuid) {
+                    fetchLanguageTestName(rowData?.language?.uuid);
+                }
             } else {
                 // Reset form when switching to add mode
                 setFormData({
@@ -76,13 +83,13 @@ const AddEditLanguageTestResultModal = ({ show, handleClose, mode = 'add', rowDa
 
             }
         }));
-        dispatch(languageTestNameList(params, (response, error) => {
-            setLoading(false);
-            if (response?.statusCode === 200 && response?.status === true) {
-                setLanguageTestName(response?.data || []);
+        // dispatch(languageTestNameList(params, (response, error) => {
+        //     setLoading(false);
+        //     if (response?.statusCode === 200 && response?.status === true) {
+        //         setLanguageTestName(response?.data || []);
 
-            }
-        }));
+        //     }
+        // }));
         dispatch(languageTestModuleNameList(params, (response, error) => {
             setLoading(false);
             if (response?.statusCode === 200 && response?.status === true) {
@@ -97,6 +104,48 @@ const AddEditLanguageTestResultModal = ({ show, handleClose, mode = 'add', rowDa
 
             }
         }));
+    };
+
+    const fetchLanguageTestName = (languageNameId) => {
+        setLanguageTestLoading(true);
+        const params = {
+            page: 1,
+            limit: 2000,
+            search: '',
+            status: '',
+            sortBy: 'name',
+            sortOrder: 'asc',
+            language_id: languageNameId
+        };
+        dispatch(languageNameTestId(params, (response, error) => {
+            setLanguageTestLoading(false);
+            if (response?.statusCode === 200 && response?.status === true) {
+                setLanguageTestName(response?.data || []);
+            } else {
+                setLanguageTestName([]);
+            }
+        }));
+    };
+
+    const handleTestChange = (selectedOption) => {
+        const languageNameId = selectedOption ? selectedOption.value : "";
+
+        setFormData(prev => ({
+            ...prev,
+            languageNameTest: languageNameId,
+            shortName: ''
+        }));
+        if (errors.shortName) {
+            setErrors(prev => ({
+                ...prev,
+                shortName: ''
+            }));
+        }
+        if (languageNameId) {
+            fetchLanguageTestName(languageNameId);
+        } else {
+            setLanguageTestName([]);
+        }
     };
 
     // Handle input changes
@@ -120,7 +169,6 @@ const AddEditLanguageTestResultModal = ({ show, handleClose, mode = 'add', rowDa
     const validateForm = () => {
         const newErrors = {};
         let isValid = true;
-
         // Department Name validation
         if (!formData.languageNameTest.trim()) {
             newErrors.languageNameTest = 'Language name(test) is required';
@@ -152,19 +200,19 @@ const AddEditLanguageTestResultModal = ({ show, handleClose, mode = 'add', rowDa
             const sendPayload = mode === 'edit'
                 ? {
                     uuid: formData.uuid,
-                    language: formData.languageNameTest,
-                    name: formData.shortName,
-                    moduleName: formData.moduleName,
-                    testResult: formData.testResult,
-                    benchmarkLevel: formData.benchmarkLevel,
+                    language_id: formData.languageNameTest,
+                    language_test_id: formData.shortName,
+                    module_name_id: formData.moduleName,
+                    numeric_score: formData.testResult,
+                    lb_level_id: formData.benchmarkLevel,
                     description: formData.description,
                 }
                 : {
-                    language: formData.languageNameTest,
-                    name: formData.shortName,
-                    moduleName: formData.moduleName,
-                    testResult: formData.testResult,
-                    benchmarkLevel: formData.benchmarkLevel,
+                    language_id: formData.languageNameTest,
+                    language_test_id: formData.shortName,
+                    module_name_id: formData.moduleName,
+                    numeric_score: formData.testResult,
+                    lb_level_id: formData.benchmarkLevel,
                     description: formData.description,
 
                 };
@@ -259,14 +307,15 @@ const AddEditLanguageTestResultModal = ({ show, handleClose, mode = 'add', rowDa
                                                     .find((opt) => opt.value === formData.languageNameTest)
                                                 : null
                                         }
-                                        onChange={(selectedOption) =>
-                                            handleChange({
-                                                target: {
-                                                    name: "languageNameTest",
-                                                    value: selectedOption ? selectedOption.value : "",
-                                                },
-                                            })
-                                        }
+                                        // onChange={(selectedOption) =>
+                                        //     handleChange({
+                                        //         target: {
+                                        //             name: "languageNameTest",
+                                        //             value: selectedOption ? selectedOption.value : "",
+                                        //         },
+                                        //     })
+                                        // }
+                                        onChange={handleTestChange}
                                         placeholder="Select language name(test)"
                                         isClearable
                                         isSearchable
@@ -307,9 +356,17 @@ const AddEditLanguageTestResultModal = ({ show, handleClose, mode = 'add', rowDa
                                                 },
                                             })
                                         }
-                                        placeholder="Select language test name"
+                                        placeholder={
+                                            languageTestLoading
+                                                ? "Loading language test name..."
+                                                : formData.languageNameTest
+                                                    ? "Select languge test name"
+                                                    : "Please select language name(test)"
+                                        }
                                         isClearable
                                         isSearchable
+                                        isDisabled={!formData.languageNameTest || languageTestLoading}
+                                        isLoading={languageTestLoading}
                                         className={`custom-select-container ${errors.shortName ? "is-invalid" : ""
                                             }`}
                                         classNamePrefix="custom-select"

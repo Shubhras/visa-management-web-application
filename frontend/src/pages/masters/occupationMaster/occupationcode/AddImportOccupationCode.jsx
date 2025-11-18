@@ -8,8 +8,11 @@ import {
   exportToExcelDuplicate,
   exportToExcelWrongData,
 } from "../../../../helper/utils/commanHelper";
-import { occupationLevelCodeImportData } from "../../../../store/master/occupationMaster/action";
-const AddImportOccupationLevel = ({ show, handleClose }) => {
+import {
+  occupationCodeImportData,
+  occupationLevelCodeImportData,
+} from "../../../../store/master/occupationMaster/action";
+const AddImportOccupationCode = ({ show, handleClose }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState(null);
@@ -70,7 +73,7 @@ const AddImportOccupationLevel = ({ show, handleClose }) => {
     }
     setLoading(true);
     dispatch(
-      occupationLevelCodeImportData(formData, (response, error) => {
+      occupationCodeImportData(formData, (response, error) => {
         setLoading(false);
         if (error) {
           toast.error(error?.response?.data?.message || "Server error");
@@ -83,9 +86,9 @@ const AddImportOccupationLevel = ({ show, handleClose }) => {
                 {response?.duplicates?.length > 0 && (
                   <div style={{ marginTop: "6px" }}>
                     <strong>
-                      Duplicate Occupation Level skipped — the duplicate
-                      data from your uploaded file has been exported into an
-                      .xlsx file.
+                      Duplicate Occupation Code skipped — the duplicate data
+                      from your uploaded file has been exported into an .xlsx
+                      file.
                     </strong>
                   </div>
                 )}
@@ -97,15 +100,9 @@ const AddImportOccupationLevel = ({ show, handleClose }) => {
             if (response?.duplicates?.length > 0) {
               const prepareData = {
                 data: response.duplicates || [],
-                headers: [
-                  "Country",
-                  "Occupation Version",
-                  "Occupation Category",
-                  "Occupation Level Code",
-                  "Occupation Level",
-                ],
-                sheetName: "Occupation Level ",
-                fileName: "Occupation Level",
+                headers: ["Country", "Occupation Version", "Occupation Code"],
+                sheetName: "Occupation Code",
+                fileName: "Occupation Code",
               };
               exportToExcelDuplicate(
                 prepareData.data,
@@ -120,13 +117,11 @@ const AddImportOccupationLevel = ({ show, handleClose }) => {
                 headers: [
                   "Country",
                   "Occupation Version",
-                  "Occupation Category",
-                  "Occupation Level Code",
-                  "Occupation Level",
+                  "Occupation Code",
                   "Reason",
                 ],
-                sheetName: "Occupation Level",
-                fileName: "Occupation Level",
+                sheetName: "Occupation Code",
+                fileName: "Occupation Code",
               };
               exportToExcelWrongData(
                 prepareData.data,
@@ -180,7 +175,7 @@ const AddImportOccupationLevel = ({ show, handleClose }) => {
           <div className="modal-content radius-16 bg-base">
             <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
               <h1 className="modal-title fs-5" id="departmentModalLabel">
-                Upload Occupation Level 
+                Upload Occupation Code
               </h1>
               <button
                 type="button"
@@ -297,29 +292,15 @@ const AddImportOccupationLevel = ({ show, handleClose }) => {
           show={showSampleExcelDownload}
           handleClose={handleCloseSampleExcelDownload}
           prepareData={{
-            downloadFileName: "Occupation Level",
+            downloadFileName: "Occupation Code",
             items: [
               "Country",
               "Occupation Version",
-              "Occupation Category",
-              "Occupation Level Code",
-              "Occupation Level",
+              "Occupation Code",
               "Description",
             ],
-            selectedItems: [
-              "Country",
-              "Occupation Version",
-              "Occupation Category",
-              "Occupation Level Code",
-              "Occupation Level",
-            ],
-            ItemsRequired: [
-              "Country",
-              "Occupation Version",
-              "Occupation Category",
-              "Occupation Level Code",
-              "Occupation Level",
-            ],
+            selectedItems: ["Country", "Occupation Version", "Occupation Code"],
+            ItemsRequired: ["Country", "Occupation Version", "Occupation Code"],
           }}
         />
       )}
@@ -327,4 +308,4 @@ const AddImportOccupationLevel = ({ show, handleClose }) => {
   );
 };
 
-export default AddImportOccupationLevel;
+export default AddImportOccupationCode;

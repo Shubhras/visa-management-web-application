@@ -60,7 +60,7 @@ const OccupationLevelList = () => {
     "Occupation Version",
     "Occupation Category",
     "Occupation Level Code",
-    "Occupation Level ",
+    "Occupation Level",
     "Description",
     "Modified On",
   ]);
@@ -69,14 +69,14 @@ const OccupationLevelList = () => {
     "Occupation Version",
     "Occupation Category",
     "Occupation Level Code",
-    "Occupation Level ",
+    "Occupation Level",
   ]);
   const [ItemsRequired] = useState([
     "Country",
     "Occupation Version",
     "Occupation Category",
     "Occupation Level Code",
-    "Occupation Level ",
+    "Occupation Level",
   ]);
 
   const [tableColumns] = useState([
@@ -103,8 +103,15 @@ const OccupationLevelList = () => {
     },
     {
       id: "occupationlevel",
-      label: "Occupation Code",
+      label: "Occupation Level",
       field: "occupationlevel",
+      visible: true,
+      required: false,
+    },
+    {
+      id: "occupationcategory",
+      label: "Occupation Category",
+      field: "occupationcategory",
       visible: true,
       required: false,
     },
@@ -381,7 +388,9 @@ const OccupationLevelList = () => {
   const handleDelete = (uuid) => {
     setDeleteId(uuid);
     setShowDeleteConfirm(true);
-    setDeleteConfirmMessage(`Are you sure you want to delete this occupation level?`);
+    setDeleteConfirmMessage(
+      `Are you sure you want to delete this occupation level?`
+    );
   };
 
   const handleBulkDelete = () => {
@@ -494,9 +503,10 @@ const OccupationLevelList = () => {
       return;
     }
     const fieldMapping = {
-      Country: "country",
+      "Country": "country",
       "Occupation Version": "occupationversion",
       "Occupation Level Code": "occupationlevelcode",
+      "Occupation Category": "occupationcategory",
       "Occupation Level": "occupationlevel",
       "Modified On": "updated_at",
       Description: "description",
@@ -504,6 +514,7 @@ const OccupationLevelList = () => {
     const mappedFields = selectedItems.map(
       (item) => fieldMapping[item] || item
     );
+    
     const fieldsString = mappedFields.join(",");
     const sendPayload = {
       file: "xlsx",
@@ -609,10 +620,10 @@ const OccupationLevelList = () => {
                     value={tableState.limit}
                     onChange={(e) => handlePageLengthChange(e.target.value)}
                   >
-                    <option value={10}>Show 10</option>
-                    <option value={25}>Show 25</option>
-                    <option value={50}>Show 50</option>
-                    <option value={100}>Show 100</option>
+                    <option value={10}>10</option>
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
                   </select>
                   <div className="position-relative flex-grow-1 search-filter-div">
                     <Icon
@@ -775,21 +786,27 @@ const OccupationLevelList = () => {
                         </td>
                         {isColumnVisible("country") && (
                           <td>
-                            <span>{rowItem.country}</span>
+                            <span>{rowItem.country_name}</span>
                           </td>
                         )}
                         {isColumnVisible("occupationversion") && (
                           <td>
-                            <span>{rowItem.occupation_version}</span>
+                            <span>{rowItem.occupationversion}</span>
                           </td>
                         )}{" "}
                         {isColumnVisible("occupationlevelcode") && (
                           <td>
                             <span>{rowItem.occupationlevelcode}</span>
                           </td>
-                        )}{isColumnVisible("occupationlevel") && (
+                        )}
+                        {isColumnVisible("occupationlevel") && (
                           <td>
                             <span>{rowItem.occupationlevel}</span>
+                          </td>
+                        )}
+                        {isColumnVisible("occupationcategory") && (
+                          <td>
+                            <span>{rowItem.occupationcategory}</span>
                           </td>
                         )}
                         {isColumnVisible("description") && (

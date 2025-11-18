@@ -1,26 +1,26 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
-// import Breadcrumb from "../../../components/Breadcrumb";
+import MasterLayout from "../../../../masterLayout/MasterLayout";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
-import {
-  countryDelete,
-  countryExportData,
-  countryList,
-} from "../../../../store/master/generalMasters/actions";
-import AddEditCountryModal from "./AddEditCountryModal";
-import AddImportCountryModal from "./AddImportCountryModal";
-import MasterLayout from "../../../../masterLayout/MasterLayout";
 import { formatDateDDMMYYYYTime } from "../../../../helper/utils/commanHelper";
+import {
+  occupationNameExportData,
+  occupationNameList,
+  occupationNameDelete,
+} from "../../../../store/master/occupationMaster/action";
+import AddEditOccupationName from "./AddEditOccupationName";
+import AddImportOccupationName from "./AddImportOccupationName";
 
-const CountryList = () => {
+const OccupationNameList = () => {
   const dispatch = useDispatch();
   const [modalState, setModalState] = useState({
     show: false,
-    mode: "add", // 'add' or 'edit'
+    mode: "add",
     rowData: null,
   });
+
   const handleShow = () => {
     setModalState({
       show: true,
@@ -28,109 +28,186 @@ const CountryList = () => {
       rowData: null,
     });
   };
-  // For closing modal
-  const handleClose = () => {
+
+  // ✅ FIXED: For closing modal - only refresh if shouldRefresh is true
+  const handleClose = (shouldRefresh = false) => {
     setModalState({
       show: false,
       mode: "add",
       rowData: null,
     });
-    fetchCountryList();
+    // Only call API when data was successfully added/updated
+    if (shouldRefresh) {
+      fetchOccupationNameList();
+    }
   };
 
-  // const [showEdit, setShowEdit] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [rowSelectData, setRowSelectData] = useState({});
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmMessage, setDeleteConfirmMessage] = useState(
-    "Are you sure you want to delete this country?"
+    "Are you sure you want to delete this occupation name?"
   );
   const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [selectAllOrNot, setSelectAllOrNot] = useState("");
-  const [countries, setCountries] = useState([]);
+  const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const items = [
-    "Country Name",
-    "Continent",
-    "Country Official Name",
-    "Country Short Name",
-    "Capital City",
-    "Currency Full Name",
-    "Currency Short Name",
-    "Currency Code",
-    "Country Calling Code",
+  const [items] = useState([
+    "Country",
+    "Occupation Version",
+    "Occupation Category",
+    "Occupation Level",
+    "Occupation Level Code",
+    "Occupation Code",
+    "Occupation Name",
     "Description",
+    "Main Duties",
     "Modified On",
-  ];
-  const [selectedItems, setSelectedItems] = useState(["Country Name","Continent"]);
-  const [ItemsRequired] = useState(["Country Name","Continent"]);
+  ]);
+  const [selectedItems, setSelectedItems] = useState([
+    "Country",
+    "Occupation Version",
+    "Occupation Category",
+    "Occupation Level",
+    "Occupation Level Code",
+    "Occupation Code",
+    "Occupation Name",
+  ]);
+  const [ItemsRequired] = useState([
+    "Country",
+    "Occupation Version",
+    "Occupation Category",
+    "Occupation Level",
+    "Occupation Level Code",
+    "Occupation Code",
+    "Occupation Name",
+  ]);
 
-  // Table columns configuration
   const [tableColumns] = useState([
-    { id: 'name', label: 'Country Name', field: 'name', visible: true, required: false },
-    { id: 'continent', label: 'Continent', field: 'continent', visible: true, required: false },
-    { id: 'officialName', label: 'Country Official Name', field: 'officialName', visible: true, required: false },
-    { id: 'shortName', label: 'Country Short Name', field: 'shortName', visible: false, required: false },
-    { id: 'capitalCity', label: 'Capital City', field: 'capitalCity', visible: false, required: false },
-    { id: 'currencyfullname', label: 'Currency Full Name', field: 'currencyfullname', visible: false, required: false },
-    { id: 'currencyshortname', label: 'Currency Short Name', field: 'currencyshortname', visible: false, required: false },
-    { id: 'currencyCode', label: 'Currency Code', field: 'currencyCode', visible: false, required: false },
-    { id: 'dialCodes', label: 'Country Calling Code', field: 'dialCodes', visible: false, required: false },
-    { id: 'description', label: 'Description', field: 'description', visible: false, required: false },
-    { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false },
+    {
+      id: "country",
+      label: "Country",
+      field: "country",
+      visible: true,
+      required: false,
+    },
+    {
+      id: "occupationversion",
+      label: "Occupation Version",
+      field: "occupationversion",
+      visible: true,
+      required: false,
+    },
+    {
+      id: "occupationcategory",
+      label: "Occupation Category",
+      field: "occupationcategory",
+      visible: true,
+      required: false,
+    },
+    {
+      id: "occupationlevel",
+      label: "Occupation Level",
+      field: "occupationlevel",
+      visible: true,
+      required: false,
+    },
+    {
+      id: "occupationlevelcode",
+      label: "Occupation Level Code",
+      field: "occupationlevelcode",
+      visible: true,
+      required: false,
+    },
+    {
+      id: "occupationcode",
+      label: "Occupation Code",
+      field: "occupationcode",
+      visible: true,
+      required: false,
+    },
+    {
+      id: "occupationname",
+      label: "Occupation name",
+      field: "occupationname",
+      visible: true,
+      required: false,
+    },
+    {
+      id: "description",
+      label: "Description",
+      field: "description",
+      visible: true,
+      required: false,
+    },
+    {
+      id: "mainduties",
+      label: "Main Duties",
+      field: "mainduties",
+      visible: true,
+      required: false,
+    },
+    {
+      id: "updated_at",
+      label: "Modified On",
+      field: "updated_at",
+      visible: true,
+      required: false,
+    },
   ]);
 
   const [visibleColumns, setVisibleColumns] = useState(
-    tableColumns.filter(col => col.visible).map(col => col.id)
+    tableColumns.filter((col) => col.visible).map((col) => col.id)
   );
   const [showColumnDropdown, setShowColumnDropdown] = useState(false);
   const columnDropdownRef = useRef(null);
-  // Column visibility toggle handler
-  const toggleColumnVisibility = (columnId) => {
-    const column = tableColumns.find(col => col.id === columnId);
-    if (column?.required) return; // Don't allow hiding required columns
 
-    setVisibleColumns(prev => {
+  const toggleColumnVisibility = (columnId) => {
+    const column = tableColumns.find((col) => col.id === columnId);
+    if (column?.required) return;
+
+    setVisibleColumns((prev) => {
       if (prev.includes(columnId)) {
-        return prev.filter(id => id !== columnId);
+        return prev.filter((id) => id !== columnId);
       } else {
         return [...prev, columnId];
       }
     });
   };
 
-  // Check if column is visible
   const isColumnVisible = (columnId) => {
     return visibleColumns.includes(columnId);
   };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (columnDropdownRef.current && !columnDropdownRef.current.contains(event.target)) {
+      if (
+        columnDropdownRef.current &&
+        !columnDropdownRef.current.contains(event.target)
+      ) {
         setShowColumnDropdown(false);
       }
     };
 
     if (showColumnDropdown) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showColumnDropdown]);
 
-  // Updated state with sorting
   const [tableState, setTableState] = useState({
     page: 1,
     limit: 25,
     search: "",
     status: "",
-    sortBy: 'created_at', // Field to sort by
-    sortOrder: 'desc', // 'asc' or 'desc'
+    sortBy: "created_at",
+    sortOrder: "desc",
     total: 0,
     totalPages: 0,
     currentPage: 1,
@@ -141,7 +218,7 @@ const CountryList = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (tableState.search !== undefined) {
-        fetchCountryList();
+        fetchOccupationNameList();
       }
     }, 500);
 
@@ -149,7 +226,7 @@ const CountryList = () => {
   }, [tableState.search]);
 
   useEffect(() => {
-    fetchCountryList();
+    fetchOccupationNameList();
   }, [
     tableState.page,
     tableState.limit,
@@ -158,7 +235,7 @@ const CountryList = () => {
     tableState.sortOrder,
   ]);
 
-  const fetchCountryList = () => {
+  const fetchOccupationNameList = () => {
     setLoading(true);
     const params = {
       page: tableState.page,
@@ -170,12 +247,12 @@ const CountryList = () => {
     };
 
     dispatch(
-      countryList(params, (response, error) => {
+      occupationNameList(params, (response, error) => {
         setLoading(false);
         if (response?.statusCode === 200 && response?.status === true) {
           const paginationData = response?.pagination || {};
 
-          setCountries(response?.data || []);
+          setDepartments(response?.data || []);
           setTableState((prev) => ({
             ...prev,
             total: paginationData.totalItems || 0,
@@ -192,7 +269,7 @@ const CountryList = () => {
             return filtered;
           });
         } else {
-          setCountries([]);
+          setDepartments([]);
           setTableState((prev) => ({
             ...prev,
             total: 0,
@@ -206,10 +283,8 @@ const CountryList = () => {
     );
   };
 
-  // Handle sorting
   const handleSort = (field) => {
     setTableState((prev) => {
-      // If clicking the same field, toggle between asc -> desc -> no sort
       if (prev.sortBy === field) {
         if (prev.sortOrder === "asc") {
           return { ...prev, sortOrder: "desc", page: 1 };
@@ -217,12 +292,10 @@ const CountryList = () => {
           return { ...prev, sortBy: "", sortOrder: "", page: 1 };
         }
       }
-      // If clicking a new field, start with asc
       return { ...prev, sortBy: field, sortOrder: "asc", page: 1 };
     });
   };
 
-  // Get sort icon for a column
   const getSortIcon = (field) => {
     if (tableState.sortBy !== field) {
       return <Icon icon="ri:sort-desc" className="sorting-th-icone" />;
@@ -257,19 +330,18 @@ const CountryList = () => {
     }));
   };
 
-  // For "Select All" button
   const handleSelectAllButton = () => {
     if (isAllSelected) {
       setSelectedRows([]);
     } else {
-      setSelectedRows(countries.map((Item) => Item.uuid));
+      setSelectedRows(departments.map((Item) => Item.uuid));
     }
   };
-  // For checkbox in table header
+
   const handleSelectAll = (e) => {
     const checked = e.target.checked;
     if (checked) {
-      setSelectedRows(countries.map((Item) => Item.uuid));
+      setSelectedRows(departments.map((Item) => Item.uuid));
     } else {
       setSelectedRows([]);
       setSelectAllOrNot("");
@@ -287,8 +359,8 @@ const CountryList = () => {
   };
 
   const isAllSelected =
-    countries.length > 0 &&
-    countries.every((Item) => selectedRows.includes(Item.uuid));
+    departments.length > 0 &&
+    departments.every((Item) => selectedRows.includes(Item.uuid));
 
   const goToPage = (page) => {
     if (page >= 1 && page <= tableState.totalPages) {
@@ -340,10 +412,13 @@ const CountryList = () => {
   const handleSelectAllOrNot = (a) => {
     setSelectAllOrNot(a);
   };
+
   const handleDelete = (uuid) => {
     setDeleteId(uuid);
     setShowDeleteConfirm(true);
-    setDeleteConfirmMessage(`Are you sure you want to delete this country?`);
+    setDeleteConfirmMessage(
+      `Are you sure you want to delete this occupation name?`
+    );
   };
 
   const handleBulkDelete = () => {
@@ -351,33 +426,31 @@ const CountryList = () => {
       toast.error("Please select at least one row to delete");
       return;
     }
-    // Choose message based on delete type
     const message =
       selectAllOrNot === "all"
-        ? `${tableState.total} all countries`
-        : `${selectedRows.length} selected countries`;
+        ? `${tableState.total} all occupation name`
+        : `${selectedRows.length} selected occupation names`;
     setDeleteConfirmMessage(
-      `Are you sure you want to delete this country (${message})?`
+      `Are you sure you want to delete this occupation name (${message})?`
     );
     setShowDeleteConfirm(true);
   };
 
   const confirmDelete = () => {
-    // const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
     const sendPayload =
       selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
     if (!sendPayload || sendPayload.length === 0) {
-      toast.error("No country selected for deletion.");
+      toast.error("No occupation name selected for deletion.");
       return;
     }
     dispatch(
-      countryDelete(sendPayload, (response, error) => {
+      occupationNameDelete(sendPayload, (response, error) => {
         if (error) {
           toast.error(error?.response?.data?.message || "server error");
         } else {
           if (response?.statusCode === 200 && response?.status === true) {
             toast.success(response?.message);
-            setCountries((prevRowItems) =>
+            setDepartments((prevRowItems) =>
               prevRowItems.filter((Item) => Item.uuid !== deleteId)
             );
             setSelectedRows((prevSelected) =>
@@ -387,7 +460,7 @@ const CountryList = () => {
             setSelectedRows([]);
             setSelectAllOrNot("");
             setDeleteId(null);
-            fetchCountryList();
+            fetchOccupationNameList();
           } else {
             toast.error("Something went wrong.");
           }
@@ -404,9 +477,13 @@ const CountryList = () => {
     setSelectAllOrNot("");
   };
 
-  const handleCloseImport = () => {
+  // ✅ FIXED: For closing import modal - only refresh if shouldRefresh is true
+  const handleCloseImport = (shouldRefresh = false) => {
     setShowImport(false);
-    fetchCountryList();
+    // Only call API when data was successfully imported
+    if (shouldRefresh) {
+      fetchOccupationNameList();
+    }
   };
 
   const handleShowImport = () => {
@@ -433,12 +510,12 @@ const CountryList = () => {
     newSelected.splice(dropIndex, 0, draggedItem);
     setSelectedItems(newSelected);
   };
+
   const handleDragOver = (e) => {
     e.preventDefault();
   };
 
   const handleCheckboxChange = (item, checked) => {
-    // prevent unchecking required items
     if (ItemsRequired.includes(item)) return;
 
     if (checked) {
@@ -449,74 +526,61 @@ const CountryList = () => {
   };
 
   const handleExport = () => {
-    if (selectedItems.length === 0) {
+    if (selectedItems.length == 0) {
       toast.error("Please select at least one field");
       return;
     }
-
-    // Map frontend display names to backend field keys
     const fieldMapping = {
-      "Country Name": "name",
-      "Continent": "continent",
-      "Country Official Name": "officialName",
-      "Country Short Name": "shortName",
-      "Capital City": "capitalCity",
-      "Currency Full Name": "currencyfullname",
-      "Currency Short Name": "currencyshortname",
-      "Currency Code": "currencyCode",
-      "Country Calling Code": "dialCodes",
-      "Description": "description",
+      Country: "country",
+      "Occupation Version": "occupationversion",
+      "Occupation Category": "occupationcategory",
+      "Occupation Level": "occupationlevel",
+      "Occupation Level Code": "occupationlevelcode",
+      "Occupation Code": "occupationcode",
+      "Occupation Name": "occupationname",
+      Description: "description",
+      "Main Duties": "mainduties",
       "Modified On": "updated_at",
     };
-
-    // Convert selected display names to backend field names
     const mappedFields = selectedItems.map(
       (item) => fieldMapping[item] || item
     );
 
-    // Convert to comma-separated list
     const fieldsString = mappedFields.join(",");
-
-    // Payload for export API
     const sendPayload = {
       file: "xlsx",
       fields: fieldsString,
       uuids: selectAllOrNot === "all" ? [] : selectedRows,
     };
-
     setLoadingExport(true);
     dispatch(
-      countryExportData(sendPayload, (response, error) => {
-        setLoadingExport(false);
-
+      occupationNameExportData(sendPayload, (response, error) => {
         if (error) {
-          toast.error(error?.response?.message || "Server error");
-          return;
-        }
-
-        if (response?.status === 200) {
-          // Create Excel file and download
-          const blob = new Blob([response.data], {
-            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-          });
-          const url = window.URL.createObjectURL(blob);
-          const link = document.createElement("a");
-          link.href = url;
-          link.download = `Country.xlsx`;
-          document.body.appendChild(link);
-          link.click();
-          link.remove();
-          window.URL.revokeObjectURL(url);
-
-          toast.success("Export successful");
-
-          // Reset UI selections
-          cancelExportTest();
-          setSelectedRows([]);
-          setSelectAllOrNot("");
-          setDeleteId(null);
+          setLoadingExport(false);
+          toast.error(error?.response?.message || "server error");
         } else {
-          toast.error("Something went wrong.");
+          setLoadingExport(false);
+          if (response?.status === 200) {
+            const blob = new Blob([response.data], {
+              type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            });
+
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = `Occulation Name.xlsx`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+            toast.success("Export successful");
+            cancelExportTest();
+            setSelectedRows([]);
+            setSelectAllOrNot("");
+            setDeleteId(null);
+          } else {
+            toast.error("Something went wrong.");
+          }
         }
       })
     );
@@ -528,11 +592,9 @@ const CountryList = () => {
   return (
     <>
       <MasterLayout>
-        {/* <Breadcrumb title="Country" subTitle="List" /> */}
         <div className="card basic-data-table main-container-data">
           <div className="card-body container-data">
             <div className="row align-items-center gy-3 gx-2 flex-wrap filter-action-btn">
-              {/* Left Section: Import / Export / Delete */}
               <div className="col-xl-6 col-lg-4 col-md-12">
                 <div className="d-flex flex-wrap align-items-center gap-2">
                   <button
@@ -555,23 +617,25 @@ const CountryList = () => {
                     Delete
                   </button>
                   {selectedRows?.length > 0 &&
-                    selectedRows?.length === countries?.length && (
+                    selectedRows?.length === departments?.length && (
                       <>
                         <button
                           onClick={() => handleSelectAllOrNot("onlySelected")}
-                          className={`btn btn-sm px-3 py-1 fw-medium ${selectAllOrNot === "onlySelected"
-                            ? "comman-btn-color"
-                            : "comman-inactive-btn"
-                            }`}
+                          className={`btn btn-sm py-1 fw-medium ${
+                            selectAllOrNot === "onlySelected"
+                              ? "comman-btn-color"
+                              : "comman-inactive-btn"
+                          }`}
                         >
                           {`Select (${selectedRows.length})`}
                         </button>
                         <button
                           onClick={() => handleSelectAllOrNot("all")}
-                          className={`btn btn-sm px-3 py-1 fw-medium ${selectAllOrNot === "all"
-                            ? "comman-btn-color"
-                            : "comman-inactive-btn"
-                            }`}
+                          className={`btn btn-sm py-1 fw-medium ${
+                            selectAllOrNot === "all"
+                              ? "comman-btn-color"
+                              : "comman-inactive-btn"
+                          }`}
                         >
                           {`Select All (${tableState.total})`}
                         </button>
@@ -580,7 +644,6 @@ const CountryList = () => {
                 </div>
               </div>
 
-              {/* Right Section: Select / Search / +Add New */}
               <div className="col-xl-6 col-lg-8 col-md-12">
                 <div className="d-flex flex-wrap align-items-center justify-content-end gap-2">
                   <select
@@ -588,10 +651,10 @@ const CountryList = () => {
                     value={tableState.limit}
                     onChange={(e) => handlePageLengthChange(e.target.value)}
                   >
-                    <option value={10}>10</option>
-                    <option value={25}>25</option>
-                    <option value={50}>50</option>
-                    <option value={100}>100</option>
+                    <option value={10}>Show 10</option>
+                    <option value={25}>Show 25</option>
+                    <option value={50}>Show 50</option>
+                    <option value={100}>Show 100</option>
                   </select>
                   <div className="position-relative flex-grow-1 search-filter-div">
                     <Icon
@@ -619,7 +682,6 @@ const CountryList = () => {
                           lineHeight: 1,
                         }}
                         onClick={() => {
-                       
                           handleSearchChange("");
                         }}
                       >
@@ -630,7 +692,8 @@ const CountryList = () => {
                   <button
                     className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
                     onClick={handleShow}
-                  >New
+                  >
+                    New
                   </button>
                 </div>
               </div>
@@ -641,42 +704,73 @@ const CountryList = () => {
               <table className="table mb-0">
                 <thead>
                   <tr>
-                    <th scope="col" className='sl-numbar-th'>
+                    <th scope="col" className="sl-numbar-th">
                       <div className="d-flex align-items-center gap-2">
-                        <input className="form-check-input" type="checkbox" checked={isAllSelected} onChange={handleSelectAll}
-                          disabled={countries.length === 0} />
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          checked={isAllSelected}
+                          onChange={handleSelectAll}
+                          disabled={departments.length === 0}
+                        />
                         <span>No.</span>
                       </div>
                     </th>
-                    {tableColumns.map((column) => (
-                      isColumnVisible(column.id) && (
-                        <th key={column.id} scope="col" className='sorting-th' onClick={() => handleSort(column.field)}
+                    {tableColumns.map(
+                      (column) =>
+                        isColumnVisible(column.id) && (
+                          <th
+                            key={column.id}
+                            scope="col"
+                            className="sorting-th"
+                            onClick={() => handleSort(column.field)}
+                          >
+                            <div className="d-flex align-items-center">
+                              {column.label}
+                              {getSortIcon(column.field)}
+                            </div>
+                          </th>
+                        )
+                    )}
+                    <th scope="col" className="action-th">
+                      <div
+                        className="position-relative table-header-hide-show"
+                        ref={columnDropdownRef}
+                      >
+                        <button
+                          className="position-relative table-header-hide-show"
+                          onClick={() =>
+                            setShowColumnDropdown(!showColumnDropdown)
+                          }
                         >
-                          <div className="d-flex align-items-center">
-                            {column.label}
-                            {getSortIcon(column.field)}
-                          </div>
-                        </th>
-                      )
-                    ))}
-                    <th scope="col" className='action-th'>
-                      <div className="position-relative table-header-hide-show" ref={columnDropdownRef}>
-                        <button className="position-relative table-header-hide-show" onClick={() =>
-                          setShowColumnDropdown(!showColumnDropdown)}
-                        >
-                          Action
-                          <Icon icon="mdi:table-column" width="20" className='icone' />
+                          Action{" "}
+                          <Icon
+                            icon="mdi:table-column"
+                            width="20"
+                            className="icone"
+                          />
                         </button>
                         {showColumnDropdown && (
                           <div className="position-absolute bg-white border rounded shadow-sm p-2 show-dropdowns-header">
                             {tableColumns.map((column) => (
-                              <div key={column.id} className="bg-white p-2 mb-2 d-flex align-items-center gap-2">
-                                <input type="checkbox" id={`column-${column.id}`} checked={isColumnVisible(column.id)} onChange={() =>
-                                  toggleColumnVisibility(column.id)}
+                              <div
+                                key={column.id}
+                                className="bg-white p-2 mb-2 d-flex align-items-center gap-2"
+                              >
+                                <input
+                                  type="checkbox"
+                                  id={`column-${column.id}`}
+                                  checked={isColumnVisible(column.id)}
+                                  onChange={() =>
+                                    toggleColumnVisibility(column.id)
+                                  }
                                   disabled={column.required}
                                   className="form-check-input"
                                 />
-                                <label htmlFor={`column-${column.id}`} className="mb-0 flex-grow-1 form-label">
+                                <label
+                                  htmlFor={`column-${column.id}`}
+                                  className="mb-0 flex-grow-1 form-label"
+                                >
                                   {column.label}
                                 </label>
                               </div>
@@ -690,67 +784,115 @@ const CountryList = () => {
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan={visibleColumns.length + 2} className='loding-data'>
+                      <td
+                        colSpan={visibleColumns.length + 2}
+                        className="loding-data"
+                      >
                         <div className="d-flex justify-content-center align-items-center gap-2">
-                          <div className="spinner-border spinner-border-sm" role="status">
+                          <div
+                            className="spinner-border spinner-border-sm"
+                            role="status"
+                          >
                             <span className="visually-hidden">Loading...</span>
                           </div>
                           Loading...
                         </div>
                       </td>
                     </tr>
-                  ) : countries.length > 0 ? (
-                    countries.map((rowItem, index) => (
+                  ) : departments.length > 0 ? (
+                    departments.map((rowItem, index) => (
                       <tr key={rowItem.uuid}>
                         <td>
                           <div className="d-flex align-items-center gap-2">
-                            <input className="form-check-input" type="checkbox" checked={selectedRows.includes(rowItem.uuid)}
+                            <input
+                              className="form-check-input"
+                              type="checkbox"
+                              checked={selectedRows.includes(rowItem.uuid)}
                               onChange={() => handleRowSelect(rowItem.uuid)}
                             />
-                            <span>{String(startIndex + index + 1).padStart(2, '0')}</span>
+                            <span>
+                              {String(startIndex + index + 1).padStart(2, "0")}
+                            </span>
                           </div>
                         </td>
-                        {isColumnVisible('name') && (
-                          <td><span>{rowItem.name}</span></td>
+                        {isColumnVisible("country") && (
+                          <td>
+                            <span>{rowItem.country_name}</span>
+                          </td>
                         )}
-                        {isColumnVisible('continent') && (
-                          <td><span>{rowItem.continent?.name}</span></td>
+                        {isColumnVisible("occupationversion") && (
+                          <td>
+                            <span>{rowItem.occupationversion}</span>
+                          </td>
                         )}
-                        {isColumnVisible('officialName') && (
-                          <td><span>{rowItem.officialName}</span></td>
+                        {isColumnVisible("occupationcategory") && (
+                          <td>
+                            <span>{rowItem.occupationcategory}</span>
+                          </td>
                         )}
-                        {isColumnVisible('shortName') && (
-                          <td><span>{rowItem.shortName}</span></td>
+                            {isColumnVisible("occupationlevel") && (
+                              <td>
+                                <span>{rowItem.occupationlevel}</span>
+                              </td>
+                            )}
+                        {isColumnVisible("occupationlevelcode") && (
+                          <td>
+                            <span>{rowItem.occupationlevelcode}</span>
+                          </td>
                         )}
-
-                        {isColumnVisible('capitalCity') && (
-                          <td><span>{rowItem.capitalCity}</span></td>
+                        
+                        {isColumnVisible("occupationcode") && (
+                          <td>
+                            <span>{rowItem.occupationcode}</span>
+                          </td>
                         )}
-                        {isColumnVisible('currencyfullname') && (
-                          <td><span>{rowItem.currencyfullname}</span></td>
+                        {isColumnVisible("occupationname") && (
+                          <td>
+                            <span>{rowItem.occupationname}</span>
+                          </td>
                         )}
-                        {isColumnVisible('currencyshortname') && (
-                          <td><span>{rowItem.currencyshortname}</span></td>
+                        {isColumnVisible("description") && (
+                          <td>
+                            <span>{rowItem.description}</span>
+                          </td>
                         )}
-                        {isColumnVisible('currencyCode') && (
-                          <td><span>{rowItem.currencyCode}</span></td>
+                        {isColumnVisible("mainduties") && (
+                          <td>
+                            <span>{rowItem.Mainduties}</span>
+                          </td>
                         )}
-                        {isColumnVisible('dialCodes') && (
-                          <td><span>{rowItem.dialCodes}</span></td>
+                        {isColumnVisible("updated_at") && (
+                          <td>
+                            <span>
+                              {formatDateDDMMYYYYTime(rowItem.updated_at)}
+                            </span>
+                          </td>
                         )}
-                        {isColumnVisible('description') && (
-                          <td><span>{rowItem.description}</span></td>
-                        )}
-                        {isColumnVisible('updated_at') && (
-                          <td><span>{formatDateDDMMYYYYTime(rowItem.updated_at)}</span></td>
-                        )}
-                        <td className='action-td'>
+                        <td className="action-td">
                           <div className="d-flex align-items-end gap-2">
-                            <Link to="#" className='edit-btn-icone' onClick={(e) => { e.preventDefault(); handleShowEdit(rowItem); }}>
-                              <Icon icon="lucide:edit" width="18" className='icone' />
+                            <Link
+                              to="#"
+                              className="edit-btn-icone"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                handleShowEdit(rowItem);
+                              }}
+                            >
+                              <Icon
+                                icon="lucide:edit"
+                                width="18"
+                                className="icone"
+                              />
                             </Link>
-                            <button onClick={() => handleDelete(rowItem.uuid)} className='delete-btn-icone'>
-                              <Icon icon="mingcute:delete-2-line" width="18" className='icone' />
+                            <button
+                              onClick={() => handleDelete(rowItem.uuid)}
+                              className="delete-btn-icone"
+                            >
+                              <Icon
+                                icon="mingcute:delete-2-line"
+                                width="18"
+                                className="icone"
+                              />
                             </button>
                           </div>
                         </td>
@@ -758,13 +900,17 @@ const CountryList = () => {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={visibleColumns.length + 2} className='no-records-found'>
+                      <td
+                        colSpan={visibleColumns.length + 2}
+                        className="no-records-found"
+                      >
                         No records found
                       </td>
                     </tr>
                   )}
                 </tbody>
               </table>
+
               {tableState.total > 0 && (
                 <div className="d-flex justify-content-between align-items-center px-4 py-3">
                   <div className="showing-total-page">
@@ -775,8 +921,9 @@ const CountryList = () => {
                   <nav>
                     <ul className="pagination mb-0" style={{ gap: "4px" }}>
                       <li
-                        className={`page-item ${!tableState.hasPrevious ? "disabled" : ""
-                          }`}
+                        className={`page-item ${
+                          !tableState.hasPrevious ? "disabled" : ""
+                        }`}
                       >
                         <button
                           className="border-0 bg-transparent"
@@ -795,8 +942,9 @@ const CountryList = () => {
                         </button>
                       </li>
                       <li
-                        className={`page-item ${!tableState.hasPrevious ? "disabled" : ""
-                          }`}
+                        className={`page-item ${
+                          !tableState.hasPrevious ? "disabled" : ""
+                        }`}
                       >
                         <button
                           className="border-0 bg-transparent"
@@ -857,8 +1005,9 @@ const CountryList = () => {
                         </li>
                       ))}
                       <li
-                        className={`page-item ${!tableState.hasNext ? "disabled" : ""
-                          }`}
+                        className={`page-item ${
+                          !tableState.hasNext ? "disabled" : ""
+                        }`}
                       >
                         <button
                           className=" border-0 bg-transparent"
@@ -877,8 +1026,9 @@ const CountryList = () => {
                         </button>
                       </li>
                       <li
-                        className={`page-item ${!tableState.hasNext ? "disabled" : ""
-                          }`}
+                        className={`page-item ${
+                          !tableState.hasNext ? "disabled" : ""
+                        }`}
                       >
                         <button
                           className="border-0 bg-transparent"
@@ -903,18 +1053,24 @@ const CountryList = () => {
             </div>
           </div>
         </div>
-        <AddEditCountryModal
+
+        {/* Add/Edit Modal */}
+        <AddEditOccupationName
           show={modalState.show}
           handleClose={handleClose}
           mode={modalState.mode}
           rowData={modalState.rowData}
         />
+
+        {/* Import Modal */}
         {showImport && (
-          <AddImportCountryModal
+          <AddImportOccupationName
             show={showImport}
             handleClose={handleCloseImport}
           />
         )}
+
+        {/* Delete Confirmation Modal */}
         {showDeleteConfirm && (
           <div className="modal fade show common-ctl-popup">
             <div className="modal-dialog modal-dialog-centered">
@@ -928,8 +1084,6 @@ const CountryList = () => {
                   ></button>
                 </div>
                 <div className="modal-body">
-                  {/* <p className="mb-0">Are you sure you want to delete this country?</p> */}
-                  {/* <p className="mb-0"> Are you sure you want to delete this country ({selectedRows.length})?</p> */}
                   <p className="mb-0">{deleteConfirmMessage}</p>
                 </div>
                 <div className="modal-footer">
@@ -952,6 +1106,8 @@ const CountryList = () => {
             </div>
           </div>
         )}
+
+        {/* Export Modal */}
         {showExportPopop && (
           <div
             className="modal fade show common-ctl-popup"
@@ -964,7 +1120,7 @@ const CountryList = () => {
             >
               <div className="modal-content radius-16 bg-base">
                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                  <h1 className="modal-title fs-5">Export Country</h1>
+                  <h1 className="modal-title fs-5">Export Department</h1>
                   <button
                     type="button"
                     className="btn-close"
@@ -991,7 +1147,7 @@ const CountryList = () => {
                               onChange={(e) =>
                                 handleCheckboxChange(item, e.target.checked)
                               }
-                              disabled={ItemsRequired.includes(item)} // 🔒 Disable required item
+                              disabled={ItemsRequired.includes(item)}
                               className="form-check-input"
                             />
                             <label
@@ -1055,19 +1211,24 @@ const CountryList = () => {
                     >
                       Cancel
                     </button>
-                     <button
+                    <button
                       onClick={handleExport}
                       type="button"
                       className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                       disabled={loadingExport}
-                    >{loadingExport ? (
-                      <>
-                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                        Submit...
-                      </>
-                    ) : (
-                      "Submit"
-                    )}
+                    >
+                      {loadingExport ? (
+                        <>
+                          <span
+                            className="spinner-border spinner-border-sm me-2"
+                            role="status"
+                            aria-hidden="true"
+                          ></span>
+                          Submit...
+                        </>
+                      ) : (
+                        "Submit"
+                      )}
                     </button>
                   </div>
                 </div>
@@ -1080,4 +1241,4 @@ const CountryList = () => {
   );
 };
 
-export default CountryList;
+export default OccupationNameList;

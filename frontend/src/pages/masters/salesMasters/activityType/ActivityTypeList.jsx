@@ -508,10 +508,10 @@ const ActivityTypeList = () => {
                     value={tableState.limit}
                     onChange={(e) => handlePageLengthChange(e.target.value)}
                   >
-                    <option value={10}>Show 10</option>
-                    <option value={25}>Show 25</option>
-                    <option value={50}>Show 50</option>
-                    <option value={100}>Show 100</option>
+                    <option value={10}>10</option>
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
                   </select>
                   <div className="position-relative flex-grow-1 search-filter-div">
                     <Icon

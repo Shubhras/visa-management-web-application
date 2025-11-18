@@ -418,11 +418,11 @@ const LanguageTestResultList = () => {
         }
         // Map frontend labels to backend field names
         const fieldMapping = {
-            "Language Name (Test)": "languageNameTest",
-            "Language Test Name": "languageTestName",
-            "Module Name": "moduleName",
-            "Language Test Result": "languageTestResult",
-            "Language Banchmark Level": "languageBenchmark",
+            "Language Name (Test)": "language",
+            "Language Test Name": "language_test",
+            "Module Name": "languagetest_module_name",
+            "Language Test Result": "numeric_score",
+            "Language Banchmark Level": "lb_level",
             "Modified On": "updated_at",
             "Description": "description",
         };
@@ -540,10 +540,10 @@ const LanguageTestResultList = () => {
                                         value={tableState.limit}
                                         onChange={(e) => handlePageLengthChange(e.target.value)}
                                     >
-                                        <option value={10}>Show 10</option>
-                                        <option value={25}>Show 25</option>
-                                        <option value={50}>Show 50</option>
-                                        <option value={100}>Show 100</option>
+                                        <option value={10}>10</option>
+                                        <option value={25}>25</option>
+                                        <option value={50}>50</option>
+                                        <option value={100}>100</option>
                                     </select>
                                     <div className="position-relative flex-grow-1 search-filter-div">
                                         <Icon
@@ -680,19 +680,19 @@ const LanguageTestResultList = () => {
                                                     </div>
                                                 </td>
                                                 {isColumnVisible('languageNameTest') && (
-                                                    <td><span>{rowItem.language.name}</span></td>
+                                                    <td><span>{rowItem?.language?.name}</span></td>
                                                 )}
                                                 {isColumnVisible('languageTestName') && (
-                                                    <td><span>{rowItem.name}</span></td>
+                                                    <td><span>{rowItem?.language_test?.name}</span></td>
                                                 )}
                                                 {isColumnVisible('moduleName') && (
-                                                    <td><span>{rowItem.moduleName}</span></td>
+                                                    <td><span>{rowItem?.module_name?.name}</span></td>
                                                 )}
                                                 {isColumnVisible('languageTestResult') && (
-                                                    <td><span>{rowItem.languageTestResult}</span></td>
+                                                    <td><span>{rowItem.numeric_score}</span></td>
                                                 )}
                                                 {isColumnVisible('languageBenchmark') && (
-                                                    <td><span>{rowItem.languageBenchmark}</span></td>
+                                                    <td><span>{rowItem?.lb_level?.name}</span></td>
                                                 )}
                                                 {isColumnVisible('description') && (
                                                     <td><span>{rowItem.description}</span></td>
