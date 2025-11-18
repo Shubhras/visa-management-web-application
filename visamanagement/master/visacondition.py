@@ -3235,7 +3235,7 @@ class ChildrenVisaCategoryDeleteAPIView(APIView):
         if ids == "all":
             qs = ChildrenVisaCategory.objects.filter(is_deleted=False)
             count = qs.count()
-            qs.update(is_deleted=True)
+            qs.delete()
             return Response({"status": True, "message": f"All {count} records deleted"})
 
         if not isinstance(ids, list):
@@ -3250,7 +3250,7 @@ class ChildrenVisaCategoryDeleteAPIView(APIView):
 
         qs = ChildrenVisaCategory.objects.filter(uuid__in=valid, is_deleted=False)
         count = qs.count()
-        qs.update(is_deleted=True)
+        qs.delete()
 
         return Response({
             "status": True,
@@ -3947,7 +3947,7 @@ class SpouseVisaCategoryDeleteAPIView(APIView):
         if ids == "all":
             qs = SpouseVisaCategory.objects.filter(is_deleted=False)
             count = qs.count()
-            qs.update(is_deleted=True)
+            qs.delete()
             return Response({"status": True, "message": f"All {count} records deleted"})
 
         if not isinstance(ids, list):
@@ -3962,7 +3962,7 @@ class SpouseVisaCategoryDeleteAPIView(APIView):
 
         qs = SpouseVisaCategory.objects.filter(uuid__in=valid, is_deleted=False)
         count = qs.count()
-        qs.update(is_deleted=True)
+        qs.delete()
 
         return Response({
             "status": True,

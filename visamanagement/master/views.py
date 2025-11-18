@@ -2961,7 +2961,7 @@ class CityListAPIView(APIView):
 
 
 
-        
+
 
 # -------------------- City -------------------- 
 class CityCreateAPIView(APIView):
@@ -3100,17 +3100,92 @@ class CityDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-
 class CityExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')
-        uuids_param = request.GET.get('uuids', '')
-        uuids = [u.strip() for u in uuids_param.split(',') if u]
 
-        # Field to header mapping
+        # ---------------------------
+        # Parse IDs & Validate UUIDs
+        # ---------------------------
+        def parse_ids(param_name):
+            raw = request.GET.get(param_name, '')
+            if raw:
+                items = [x.strip() for x in raw.split(',') if x.strip()]
+            else:
+                items = request.GET.getlist(param_name)
+            return items
+
+        def validate_uuid_list(uuid_list):
+            valid = []
+            for u in uuid_list:
+                try:
+                    valid.append(UUID(u))
+                except:
+                    pass
+            return valid
+
+        country_list = validate_uuid_list(parse_ids('country'))
+        state_list = validate_uuid_list(parse_ids('state'))
+        district_list = validate_uuid_list(parse_ids('district'))
+        city_list = validate_uuid_list(parse_ids('city'))
+
+        search = request.GET.get('search', '').strip()
+        custom_sort = request.GET.get('customSort')  
+        allowed_sort_fields = ['cityName', 'stateName', 'districtName', 'countryName', 'created_at']
+
+        # ---------------------------
+        # Base QuerySet
+        # ---------------------------
+        queryset = City.objects.filter(is_deleted=False)
+
+        # Hierarchical filtering
+        if city_list:
+            queryset = queryset.filter(uuid__in=city_list)
+        else:
+            if district_list:
+                queryset = queryset.filter(districtName__uuid__in=district_list)
+            if state_list:
+                queryset = queryset.filter(stateName__uuid__in=state_list)
+            if country_list:
+                queryset = queryset.filter(countryName__uuid__in=country_list)
+
+        # Search
+        if search:
+            queryset = queryset.filter(cityName__istartswith=search)
+
+        # Sorting
+        sort_fields = []
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field not in allowed_sort_fields:
+                        continue
+
+                    # Use Lower() for string fields
+                    if field in ['cityName', 'stateName', 'districtName', 'countryName']:
+                        f = Lower(field)
+                    else:
+                        f = F(field)
+
+                    sort_fields.append(f.asc(nulls_last=True) if order == "asc" else f.desc(nulls_last=True))
+                except ValueError:
+                    continue
+        else:
+            f = F('created_at')
+            sort_order = request.GET.get('sortOrder', 'desc')
+            sort_fields = [f.desc(nulls_last=True) if sort_order=='desc' else f.asc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # ---------------------------
+        # Field mapping & Export
+        # ---------------------------
         field_header_map = {
             'uuid': 'UUID',
             'countryName': 'Country Name',
@@ -3125,11 +3200,6 @@ class CityExportAPIView(APIView):
 
         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
-        queryset = City.objects.filter(is_deleted=False)
-        if uuids:
-            queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
-
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = 'City'
@@ -3139,7 +3209,6 @@ class CityExportAPIView(APIView):
             for field in field_list:
                 value = getattr(city, field, '')
 
-                # Handle foreign keys by name
                 if field == 'countryName' and city.countryName:
                     value = city.countryName.name
                 elif field == 'stateName' and city.stateName:
@@ -3147,10 +3216,8 @@ class CityExportAPIView(APIView):
                 elif field == 'districtName' and city.districtName:
                     value = city.districtName.districtName
 
-                # Format datetime
                 if field in ['created_at', 'updated_at'] and value:
                     value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
-                # Convert bool to int
                 if isinstance(value, bool):
                     value = int(value)
 
@@ -3172,7 +3239,6 @@ class CityExportAPIView(APIView):
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
-
 
 
 class CityImportAPIView(APIView):
