@@ -3382,9 +3382,9 @@ class ChildrenVisaCategoryImportAPIView(APIView):
 
                 if existing:
                     if not existing.is_deleted:
-                        duplicate.append({
+                        duplicates.append({
                             "row": row_num,
-                            "Children Visa Category": visa_name,
+                            "Children Visa Category": visamain_name,
                             "Reason": "Duplicate entry"
                         })
                         continue

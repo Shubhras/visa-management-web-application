@@ -1599,7 +1599,7 @@ class SpouseCanApplywithCandidate(models.Model):
 class SpouseVisaCategory(models.Model):
     id = models.AutoField(primary_key=True) 
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True) 
-    visamain=models.ForeignKey('VisaMain', on_delete=models.CASCADE, related_name='visamajor')
+    visamain=models.ForeignKey('VisaMain', on_delete=models.CASCADE, related_name='spousevisa')
     description = models.TextField(max_length=255,blank=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -1635,7 +1635,7 @@ class ChildrenCanApplywithCandidate(models.Model):
 class ChildrenVisaCategory(models.Model):
     id = models.AutoField(primary_key=True) 
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True) 
-    visamain=models.ForeignKey('VisaMain', on_delete=models.CASCADE, related_name='visamajor')
+    visamain=models.ForeignKey('VisaMain', on_delete=models.CASCADE, related_name='childrenvisa')
     description = models.TextField(max_length=255,blank=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
