@@ -2889,7 +2889,7 @@ class CityListAPIView(APIView):
 
         # ---------------------------
         # Filters
-        ----------------------------
+        # ----------------------------
         def parse_ids(param_name):
             raw = request.GET.get(param_name, "")
             if raw:
@@ -2965,7 +2965,7 @@ class CityListAPIView(APIView):
 
 
 
-        
+
 
 # -------------------- City -------------------- 
 class CityCreateAPIView(APIView):
