@@ -1221,7 +1221,7 @@ class OccupationVersionExportAPIView(APIView):
                 for field in field_list:
                     value = getattr(obj, field, '')
                     if field == 'country' and value:
-                        value = value.name  # <-- fixed here
+                        value = value.full_name  # <-- fixed here
                     elif field in ['created_at', 'updated_at'] and value:
                         value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
                     elif field in ['effect_from', 'valid_upto'] and value:
@@ -1318,8 +1318,8 @@ class OccupationVersionImportAPIView(APIView):
                     continue
 
                 try:
-                    country_obj = Country.objects.get(name__iexact=country_name).first()
-                except Country.DoesNotExist:
+                    country_obj = RepresentingCountry.objects.get(full_name__iexact=country_name).first()
+                except RepresentingCountry.DoesNotExist:
                     skipped_rows.append({'row': row_number, 'Reason': 'Country not found'})
                     continue
 
@@ -1585,7 +1585,7 @@ class OccupationCategoryExportAPIView(APIView):
             for field in field_list:
                 value = getattr(obj, field, '')
                 if field == 'country' and value:
-                        value = value.name 
+                        value = value.full_name 
                 elif field == 'occupation_version' and value:
                     value = value.occupation_version
                 elif field in ['created_at', 'updated_at'] and value:
@@ -1680,8 +1680,8 @@ class OccupationCategoryImportAPIView(APIView):
                     continue
 
                 try:
-                    country_obj = Country.objects.get(name__iexact=country_name).first()
-                except Country.DoesNotExist:
+                    country_obj = RepresentingCountry.objects.get(full_name__iexact=country_name).first()
+                except RepresentingCountry.DoesNotExist:
                     skipped_rows.append({'row': row_number, 'Reason': 'Country not found'})
                     continue
 
@@ -1951,7 +1951,7 @@ class OccupationLevelCodeExportAPIView(APIView):
             for field in field_list:
                 value = getattr(obj, field, '')
                 if field == 'country' and value:
-                    value = value.name
+                    value = value.full_name
                 elif field == 'occupation_version' and value:
                     value = value.occupation_version
                 elif field in ['created_at', 'updated_at'] and value:
@@ -2045,8 +2045,8 @@ class OccupationLevelCodeImportAPIView(APIView):
                     continue
 
                 try:
-                    country_obj = Country.objects.get(name__iexact=country_name).first()
-                except Country.DoesNotExist:
+                    country_obj = RepresentingCountry.objects.get(full_name__iexact=country_name).first()
+                except RepresentingCountry.DoesNotExist:
                     skipped_rows.append({'row': row_number, 'Reason': 'Country not found'})
                     continue
 
@@ -2324,7 +2324,7 @@ class OccupationLevelExportAPIView(APIView):
             for field in field_list:
                 value = getattr(obj, field, '')
                 if field == 'country' and value:
-                    value = value.name
+                    value = value.full_name
                 elif field == 'occupationversion' and value:
                     value = value.occupation_version
                 elif field == 'occupationcategory' and value:
@@ -2424,8 +2424,8 @@ class OccupationLevelImportAPIView(APIView):
                     continue
 
                 try:
-                    country_obj = Country.objects.get(name__iexact=country_name).first()
-                except Country.DoesNotExist:
+                    country_obj = RepresentingCountry.objects.get(full_name__iexact=country_name).first()
+                except RepresentingCountry.DoesNotExist:
                     skipped_rows.append({'row': row_number, 'Reason': 'Country not found'})
                     continue
 
@@ -2704,7 +2704,7 @@ class OccupationCodeExportAPIView(APIView):
             for field in field_list:
                 value = getattr(obj, field, '')
                 if field == 'country' and value:
-                    value = value.name
+                    value = value.full_name
                 elif field == 'occupationversion' and value:
                     value = value.occupation_version
                 elif field in ['created_at', 'updated_at'] and value:
@@ -2798,8 +2798,8 @@ class OccupationCodeImportAPIView(APIView):
                     continue
 
                 try:
-                    country_obj = Country.objects.get(name__iexact=country_name)
-                except Country.DoesNotExist:
+                    country_obj = RepresentingCountry.objects.get(full_name__iexact=country_name)
+                except RepresentingCountry.DoesNotExist:
                     skipped_rows.append({'row': row_number, 'Reason': 'Country not found'})
                     continue
 
@@ -4150,7 +4150,7 @@ class OccupationNameExportAPIView(APIView):
             for f in field_list:
                 val = getattr(obj, f, "")
                 if f == "country" and val:
-                    val = val.name
+                    val = val.full_name
                 elif f == "occupationversion" and val:
                     val = val.occupation_version
                 elif f == "occupationcategory" and val:
@@ -4254,7 +4254,7 @@ class OccupationNameImportAPIView(APIView):
                     continue
 
                 try:
-                    country_obj = Country.objects.get(name__iexact=country_name).first()
+                    country_obj = RepresentingCountry.objects.get(full_name__iexact=country_name).first()
                 except:
                     skipped.append({"row": row_num, "Reason": "Country not found"})
                     continue
@@ -5096,7 +5096,7 @@ class DesignationExportAPIView(APIView):
             for f in field_list:
                 val = getattr(obj, f, "")
                 if f == "country" and val:
-                    val = val.name
+                    val = val.full_name
                 elif f == "occupationversion" and val:
                     val = val.occupation_version
                 elif f == "occupationname" and val:
@@ -5185,7 +5185,7 @@ class DesignationImportAPIView(APIView):
                     continue
 
                 try:
-                    country_obj = RepresentingCountry.objects.get(name__iexact=country_name)
+                    country_obj = RepresentingCountry.objects.get(full_name__iexact=country_name)
                 except:
                     skipped.append({"row": row_num, "Reason": "Country not found"})
                     continue
@@ -5259,4 +5259,3 @@ class DesignationImportAPIView(APIView):
 
 
 
-        

@@ -1131,7 +1131,7 @@ class ITReturnStatus(models.Model):
 class OccupationVersion(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    country = models.ForeignKey('Country',on_delete=models.SET_NULL,null=True,blank=True,related_name='occupation_version')
+    country = models.ForeignKey('RepresentingCountry',on_delete=models.SET_NULL,null=True,blank=True,related_name='occupation_version')
     occupation_version = models.CharField(max_length=255)  
     effect_from = models.DateField(null=True, blank=True)
     valid_upto = models.DateField(null=True, blank=True)
@@ -1151,7 +1151,7 @@ class OccupationVersion(models.Model):
 class OccupationCategory(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    country = models.ForeignKey('Country',on_delete=models.SET_NULL,null=True,blank=True,related_name='occupation_category')
+    country = models.ForeignKey('RepresentingCountry',on_delete=models.SET_NULL,null=True,blank=True,related_name='occupation_category')
     occupationversion =models.ForeignKey('OccupationVersion',on_delete=models.SET_NULL,null=True,blank=True,related_name='occupation_category')
     occupationcategory =  models.TextField(max_length=255,blank=True)
     occupationcategorycode =  models.TextField(max_length=255,blank=True)
@@ -1168,7 +1168,7 @@ class OccupationCategory(models.Model):
 class OccupationLevelCode(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    country = models.ForeignKey('Country',on_delete=models.SET_NULL,null=True,blank=True,related_name='occupation_level_code')
+    country = models.ForeignKey('RepresentingCountry',on_delete=models.SET_NULL,null=True,blank=True,related_name='occupation_level_code')
     occupationversion =models.ForeignKey('OccupationVersion',on_delete=models.SET_NULL,null=True,blank=True,related_name='occupation_level_code')
     occupationlevelcode =  models.TextField(max_length=255,blank=True)
     description =  models.TextField(max_length=255,blank=True)
@@ -1184,7 +1184,7 @@ class OccupationLevelCode(models.Model):
 class OccupationLevel(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    country = models.ForeignKey('Country',on_delete=models.SET_NULL,null=True,blank=True,related_name='occupation_level')
+    country = models.ForeignKey('RepresentingCountry',on_delete=models.SET_NULL,null=True,blank=True,related_name='occupation_level')
     occupationversion =models.ForeignKey('OccupationVersion',on_delete=models.SET_NULL,null=True,blank=True,related_name='occupation_level')
     occupationcategory =models.ForeignKey('OccupationCategory',on_delete=models.SET_NULL,null=True,blank=True,related_name='occupation_level')
     occupationlevelcode =models.ForeignKey('OccupationLevelCode',on_delete=models.SET_NULL,null=True,blank=True,related_name='occupation_level')
@@ -1203,7 +1203,7 @@ class OccupationLevel(models.Model):
 class OccupationCode(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    country = models.ForeignKey('Country',on_delete=models.SET_NULL,null=True,blank=True,related_name='occupation_code')
+    country = models.ForeignKey('RepresentingCountry',on_delete=models.SET_NULL,null=True,blank=True,related_name='occupation_code')
     occupationversion =models.ForeignKey('OccupationVersion',on_delete=models.SET_NULL,null=True,blank=True,related_name='occupation_code')
     occupationcode =  models.TextField(max_length=255,blank=True)
     description =  models.TextField(max_length=255,blank=True)
@@ -1221,7 +1221,7 @@ class OccupationCode(models.Model):
 class OccupationName(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    country = models.ForeignKey('Country',on_delete=models.SET_NULL,null=True,blank=True,related_name='occupation_name')
+    country = models.ForeignKey('RepresentingCountry',on_delete=models.SET_NULL,null=True,blank=True,related_name='occupation_name')
     occupationversion =models.ForeignKey('OccupationVersion',on_delete=models.SET_NULL,null=True,blank=True,related_name='occupation_name')
     occupationcategory =models.ForeignKey('OccupationCategory',on_delete=models.SET_NULL,null=True,blank=True,related_name='occupation_name')
     occupationlevel =models.ForeignKey('OccupationLevel',on_delete=models.SET_NULL,null=True,blank=True,related_name='occupation_name')

@@ -320,68 +320,83 @@ class DegreeAwardedInstituteAdmin(admin.ModelAdmin):
 
 
 
+@admin.register(RepresentingCountry)
+class RepresentingCountryAdmin(admin.ModelAdmin):
+    list_display = ('full_name', 'short_name', 'continent', 'status', 'is_active', 'is_deleted')
+    search_fields = ('full_name', 'short_name', 'country__name')
+    list_filter = ('continent', 'status', 'is_active', 'is_deleted')
+
 @admin.register(OccupationVersion)
 class OccupationVersionAdmin(admin.ModelAdmin):
-    list_display = ('uuid', 'occupation_version', 'country', 'effect_from', 'valid_upto', 'is_deleted')
-    search_fields = ('uuid', 'occupation_version')
+    list_display = ('occupation_version', 'country', 'effect_from', 'valid_upto', 'is_deleted', 'created_at')
+    search_fields = ('occupation_version',)
     list_filter = ('country', 'is_deleted')
-    readonly_fields = ('created_at', 'updated_at')
-
 
 @admin.register(OccupationCategory)
 class OccupationCategoryAdmin(admin.ModelAdmin):
-    list_display = ('uuid', 'occupationcategory', 'occupationcategorycode', 'country', 'occupationversion', 'is_deleted')
-    search_fields = ('uuid', 'occupationcategory', 'occupationcategorycode')
+    list_display = ('occupationcategory', 'occupationversion', 'country', 'occupationcategorycode', 'is_deleted')
+    search_fields = ('occupationcategory', 'occupationcategorycode')
     list_filter = ('country', 'occupationversion', 'is_deleted')
-    readonly_fields = ('created_at', 'updated_at')
-
 
 @admin.register(OccupationLevelCode)
 class OccupationLevelCodeAdmin(admin.ModelAdmin):
-    list_display = ('uuid', 'occupationlevelcode', 'country', 'occupationversion', 'is_deleted')
-    search_fields = ('uuid', 'occupationlevelcode')
+    list_display = ('occupationlevelcode', 'occupationversion', 'country', 'is_deleted')
+    search_fields = ('occupationlevelcode',)
     list_filter = ('country', 'occupationversion', 'is_deleted')
-    readonly_fields = ('created_at', 'updated_at')
-
 
 @admin.register(OccupationLevel)
 class OccupationLevelAdmin(admin.ModelAdmin):
-    list_display = (
-        'uuid',
-        'occupationlevel',
-        'occupationcategory',
-        'occupationlevelcode',
-        'country',
-        'occupationversion',
-        'is_deleted'
-    )
-    search_fields = ('uuid', 'occupationlevel')
+    list_display = ('occupationlevel', 'occupationcategory', 'occupationlevelcode', 'occupationversion', 'country', 'is_deleted')
+    search_fields = ('occupationlevel',)
     list_filter = ('country', 'occupationversion', 'occupationcategory', 'occupationlevelcode', 'is_deleted')
-    readonly_fields = ('created_at', 'updated_at')
-
 
 @admin.register(OccupationCode)
 class OccupationCodeAdmin(admin.ModelAdmin):
-    list_display = ('uuid', 'occupationcode', 'country', 'occupationversion', 'is_deleted')
-    search_fields = ('uuid', 'occupationcode')
+    list_display = ('occupationcode', 'occupationversion', 'country', 'is_deleted')
+    search_fields = ('occupationcode',)
     list_filter = ('country', 'occupationversion', 'is_deleted')
-    readonly_fields = ('created_at', 'updated_at')
 
+@admin.register(OccupationName)
+class OccupationNameAdmin(admin.ModelAdmin):
+    list_display = ('occupationname', 'occupationcategory', 'occupationlevel', 'occupationlevelcode', 'occupationcode', 'occupationversion', 'country', 'is_deleted')
+    search_fields = ('occupationname',)
+    list_filter = ('country', 'occupationversion', 'occupationcategory', 'occupationlevel', 'occupationlevelcode', 'occupationcode', 'is_deleted')
 
 @admin.register(OccupationType)
 class OccupationTypeAdmin(admin.ModelAdmin):
-    list_display = ('uuid', 'name', 'is_deleted')
-    search_fields = ('uuid', 'name')
+    list_display = ('name', 'description', 'is_deleted', 'created_at')
+    search_fields = ('name',)
     list_filter = ('is_deleted',)
-    readonly_fields = ('created_at', 'updated_at')
-
 
 @admin.register(OccupationProspect)
 class OccupationProspectAdmin(admin.ModelAdmin):
-    list_display = ('uuid', 'name', 'is_deleted')
-    search_fields = ('uuid', 'name')
+    list_display = ('name', 'description', 'is_deleted', 'created_at')
+    search_fields = ('name',)
     list_filter = ('is_deleted',)
-    readonly_fields = ('created_at', 'updated_at')
+
+@admin.register(Designation)
+class DesignationAdmin(admin.ModelAdmin):
+    list_display = ('designation', 'occupationname', 'occupationcode', 'occupationversion', 'country', 'is_deleted')
+    search_fields = ('designation',)
+    list_filter = ('country', 'occupationversion', 'occupationname', 'occupationcode', 'is_deleted')
+
+@admin.register(JobProspect)
+class JobProspectAdmin(admin.ModelAdmin):
+    list_display = ('occupationname', 'occupationtype', 'occupationlevelcode', 'salaryamount', 'salarycurrency', 'duration', 'country', 'is_deleted')
+    search_fields = ('occupationname',)
+    list_filter = ('country', 'occupationversion', 'occupationtype', 'occupationlevelcode', 'is_deleted')
+
+@admin.register(RelatedOccupation)
+class RelatedOccupationAdmin(admin.ModelAdmin):
+    list_display = ('relatedoccupation', 'occupationname', 'occupationcode', 'occupationversion', 'country', 'is_deleted')
+    search_fields = ('relatedoccupation',)
+    list_filter = ('country', 'occupationversion', 'occupationcode', 'occupationname', 'is_deleted')
+
+@admin.register(OccupationToOccupation)
+class OccupationToOccupationAdmin(admin.ModelAdmin):
+    list_display = ('country', 'occupationname', 'occupationcode', 'occupationversion', 'comparecountry', 'compareoccupationname', 'compareoccupationcode', 'compareoccupationversion', 'is_deleted')
+    search_fields = ('country__full_name', 'comparecountry__full_name')
+    list_filter = ('country', 'comparecountry', 'occupationversion', 'compareoccupationversion', 'is_deleted')
 
 
 @admin.register(WorkRights)
