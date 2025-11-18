@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from .serializers import  *
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Q,F
 import uuid
 from rest_framework.permissions import IsAuthenticated ,AllowAny ,BasePermission 
 from django.shortcuts import get_object_or_404
@@ -2871,26 +2871,23 @@ class CityListAPIView(APIView):
 
         if custom_sort:
             sort_fields = []
-
-            # customSort format: cityName:asc,stateName:desc
             for rule in custom_sort.split(','):
                 try:
                     field, order = rule.split(':')
                     field = field.strip()
                     order = order.strip().lower()
 
-                    # validate field
                     if field not in allowed_sort_fields:
                         continue
 
-                    # apply asc/desc
-                    if order == "desc":
-                        sort_fields.append(f'-{field}')
+                    # Use Lower() for string columns to mimic Excel's case-insensitive sort
+                    if order == "asc":
+                        sort_fields.append(F(field).asc(nulls_last=True))
                     else:
-                        sort_fields.append(field)
+                        sort_fields.append(F(field).desc(nulls_last=True))
 
                 except ValueError:
-                    continue  # skip invalid rules
+                    continue
         else:
             # NORMAL SORTING
             sort_by = request.GET.get('sortBy', 'created_at')
