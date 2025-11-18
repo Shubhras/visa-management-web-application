@@ -2884,7 +2884,7 @@ class CityListAPIView(APIView):
                         continue
 
                     # apply asc/desc
-                    if order == "desc":
+                    if order == "asc":
                         sort_fields.append(f'-{field}')
                     else:
                         sort_fields.append(field)
