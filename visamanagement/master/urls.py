@@ -1022,5 +1022,13 @@ urlpatterns = [
     path('designation/import/', DesignationImportAPIView.as_view(), name='designation-import'),
 
 
+    # ---------------- CHILDREN ----------------
+    path('children-visacategory/', ChildrenVisaCategoryListAPIView.as_view()),
+    path('children-visacategory/create/', ChildrenVisaCategoryCreateAPIView.as_view()),
+    path('children-visacategory/<uuid:uuid>/', ChildrenVisaCategoryRetrieveAPIView.as_view()),
+    path('children-visacategory/<uuid:uuid>/update/', ChildrenVisaCategoryUpdateAPIView.as_view()),
+    path('children-visacategory/delete/', ChildrenVisaCategoryDeleteAPIView.as_view()),
+    path('children-visacategory/export/', ChildrenVisaCategoryExportAPIView.as_view()),
+    path('children-visacategory/import/', ChildrenVisaCategoryImportAPIView.as_view()),
 ]
 

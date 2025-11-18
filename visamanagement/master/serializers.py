@@ -1389,7 +1389,7 @@ class DesignationSerializer(serializers.ModelSerializer):
         
 class JobProspectSerializer(serializers.ModelSerializer):
     # ---------- Read-only display fields ---------- #
-    country = serializers.CharField(read_only=True, source='country.name')
+    country = serializers.CharField(read_only=True, source='country.full_name')
     occupationversion = serializers.CharField(read_only=True, source='occupationversion.occupation_version')
     occupationlevelcode = serializers.CharField(read_only=True, source='occupationlevelcode.occupationlevelcode')
     occupationtype = serializers.CharField(read_only=True, source='occupationtype.name')
@@ -1399,7 +1399,7 @@ class JobProspectSerializer(serializers.ModelSerializer):
     # ---------- Write-only UUID fields ---------- #
     country_id = serializers.SlugRelatedField(
         slug_field='uuid',
-        queryset=Country.objects.all(),
+        queryset=RepresentingCountry.objects.all(),
         source='country',
         write_only=True,
         allow_null=True,
@@ -1708,10 +1708,58 @@ class SpouseCanApplywithCandidateSerializer(serializers.ModelSerializer):
 
 
 class SpouseVisaCategorySerializer(serializers.ModelSerializer):
+
+    visamain_name = serializers.CharField(source='visamain.name', read_only=True)
+
+    visamain_uuid = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=VisaMain.objects.all(),
+        source='visamain',
+        write_only=True
+    )
+
     class Meta:
         model = SpouseVisaCategory
-        fields = '__all__'
+        fields = [
+            'id',
+            'uuid',
+            'visamain_uuid',        
+            'visamain_name',        
+            'description',
+            'is_deleted',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
 
+
+
+class ChildrenVisaCategorySerializer(serializers.ModelSerializer):
+
+    # Read-only field: show VisaMain name
+    visamain_name = serializers.CharField(source='visamain.name', read_only=True)
+
+    # Write-only field: accept VisaMain UUID
+    visamain_uuid = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=VisaMain.objects.all(),
+        source='visamain',
+        write_only=True
+    )
+
+    class Meta:
+        model = ChildrenVisaCategory
+        fields = [
+            'id',
+            'uuid',
+            'visamain_uuid',
+            'visamain_name',
+            'description',
+            'is_deleted',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
 
 class SpouseWorkRightsSerializer(serializers.ModelSerializer):
     class Meta:
@@ -1725,10 +1773,7 @@ class ChildrenCanApplywithCandidateSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class ChildrenVisaCategorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ChildrenVisaCategory
-        fields = '__all__'
+
 
 
 class ChildrenStudyWorkRightsSerializer(serializers.ModelSerializer):

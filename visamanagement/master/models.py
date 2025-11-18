@@ -1297,7 +1297,7 @@ class JobProspect(models.Model):
 
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    country = models.ForeignKey('Country',on_delete=models.SET_NULL,null=True,blank=True,related_name='job_prospect')
+    country = models.ForeignKey('RepresentingCountry',on_delete=models.SET_NULL,null=True,blank=True,related_name='job_prospect')
     occupationversion =models.ForeignKey('OccupationVersion',on_delete=models.SET_NULL,null=True,blank=True,related_name='job_prospect')
     occupationlevelcode =models.ForeignKey('OccupationLevelCode',on_delete=models.SET_NULL,null=True,blank=True,related_name='job_prospect')
     occupationtype =models.ForeignKey('OccupationType',on_delete=models.SET_NULL,null=True,blank=True,related_name='job_prospect')
@@ -1599,14 +1599,14 @@ class SpouseCanApplywithCandidate(models.Model):
 class SpouseVisaCategory(models.Model):
     id = models.AutoField(primary_key=True) 
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True) 
-    name = models.CharField(max_length=255,unique=True)
+    visamain=models.ForeignKey('VisaMain', on_delete=models.CASCADE, related_name='visamajor')
     description = models.TextField(max_length=255,blank=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.name
+        return self.visamain
 
 class SpouseWorkRights(models.Model):
     id = models.AutoField(primary_key=True) 
@@ -1635,14 +1635,14 @@ class ChildrenCanApplywithCandidate(models.Model):
 class ChildrenVisaCategory(models.Model):
     id = models.AutoField(primary_key=True) 
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True) 
-    name = models.CharField(max_length=255,unique=True)
+    visamain=models.ForeignKey('VisaMain', on_delete=models.CASCADE, related_name='visamajor')
     description = models.TextField(max_length=255,blank=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.name
+        return self.visamain
 
 
 class ChildrenStudyWorkRights(models.Model):
@@ -1953,3 +1953,6 @@ class EntranceTestAbilityGroup(models.Model):
 
     def __str__(self):
         return self.name
+
+
+
