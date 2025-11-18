@@ -426,6 +426,8 @@ import OccupationLevelList from "./pages/masters/occupationMaster/occupationleve
 import OccupationCodeList from "./pages/masters/occupationMaster/occupationcode/OccupationCodeList";
 import OccupationNameList from "./pages/masters/occupationMaster/occupationname/OccupationNameList";
 
+import { GlobalSearchProvider } from '../src/components/comman/GlobalSearchContext';
+
 
 
 // Protected Route Component
@@ -491,6 +493,7 @@ function App() {
   return (
     <BrowserRouter>
       <RouteScrollToTop />
+      <GlobalSearchProvider>
       <Routes>
         {/* Public Routes - Accessible without login */}
         <Route path='/sign-in' element={
@@ -748,6 +751,7 @@ function App() {
         {/* 404 Error Page */}
         <Route path='*' element={<ErrorPage />} />
       </Routes>
+      </GlobalSearchProvider>
     </BrowserRouter>
   );
 }

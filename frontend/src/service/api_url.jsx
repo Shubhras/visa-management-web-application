@@ -398,15 +398,16 @@ export const EDIT_ENTRANCE_TEST_RESULT_API = "/api/v1/master/entrancetestresult/
 export const DELETE_ENTRANCE_TEST_RESULT_API = "/api/v1/master/entrancetestresult/";
 export const EXPORT_ENTRANCE_TEST_RESULT_API = "/api/v1/master/entrancetestresult/export/";
 export const IMPORT_ENTRANCE_TEST_RESULT_API = "/api/v1/master/entrancetestresult/import/";
-export const GET_ENTRANCE_TEST_ID_MODULE_LIST = "/api/v1/master/entrancetestresult/";
+export const GET_ENTRANCE_TEST_ID_MODULE_LIST = "/api/v1/master/entrance-test-modules/";
 
 // Language Test Result
-export const GET_LANGUAGE_TEST_RESULT_LIST = "/api/v1/master/languagetestresult/";
-export const ADD_LANGUAGE_TEST_RESULT_API = "/api/v1/master/languagetestresult/create/";
-export const EDIT_LANGUAGE_TEST_RESULT_API = "/api/v1/master/languagetestresult/";
-export const DELETE_LANGUAGE_TEST_RESULT_API = "api/v1/master/languagetestresult/";
-export const EXPORT_LANGUAGE_TEST_RESULT_API = "api/v1/master/languagetestresult/export/";
-export const IMPORT_LANGUAGE_TEST_RESULT_API = "api/v1/master/languagetestresult/import/";
+export const GET_LANGUAGE_TEST_RESULT_LIST = "/api/v1/master/language-test-results/";
+export const ADD_LANGUAGE_TEST_RESULT_API = "/api/v1/master/language-test-results/create/";
+export const EDIT_LANGUAGE_TEST_RESULT_API = "/api/v1/master/language-test-results/";
+export const DELETE_LANGUAGE_TEST_RESULT_API = "api/v1/master/language-test-results/";
+export const EXPORT_LANGUAGE_TEST_RESULT_API = "api/v1/master/language-test-results/export/";
+export const IMPORT_LANGUAGE_TEST_RESULT_API = "api/v1/master/language-test-results/import/";
+export const GET_LANGUAGE_NAME_TEST_ID_API = "api/v1/master/language-tests-by-language/";
 
 // Job Type API Endpoints
 export const GET_JOB_TYPE_LIST = "/api/v1/master/jobtype/";
@@ -468,8 +469,8 @@ export const IMPORT_OCCUPATION_VERSION_API = "/api/v1/master/occupation-version/
 // Occupation Level Code API Endpoints
 export const GET_OCCUPATION_LEVEL_CODE_LIST = "/api/v1/master/occupation-level-code/";
 export const ADD_OCCUPATION_LEVEL_CODE = "/api/v1/master/occupation-level-code/create/";
-export const EDIT_OCCUPATION_LEVEL_CODE = "/api/v1/master/occupation-level-code/";        
-export const DELETE_OCCUPATION_LEVEL_CODE = "/api/v1/master/occupation-level-code/";      
+export const EDIT_OCCUPATION_LEVEL_CODE = "/api/v1/master/occupation-level-code/";
+export const DELETE_OCCUPATION_LEVEL_CODE = "/api/v1/master/occupation-level-code/";
 export const EXPORT_OCCUPATION_LEVEL_CODE = "/api/v1/master/occupation-level-code/export/";
 export const IMPORT_OCCUPATION_LEVEL_CODE = "/api/v1/master/occupation-level-code/import/";
 

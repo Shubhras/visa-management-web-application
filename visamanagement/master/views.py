@@ -1807,20 +1807,58 @@ class StateListAPIView(APIView):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'created_at')
         sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['stateName', 'stateshortName', 'updated_at']
+        allowed_sort_fields = ['stateName', 'stateshortName', 'created_at', 'updated_at']
 
+        # Validate sort field
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
+        # Helper: parse comma-separated or multiple params
+        def parse_ids(param_name):
+            raw = request.GET.get(param_name, '')
+            if raw:
+                items = [x.strip() for x in raw.split(',') if x.strip()]
+            else:
+                items = request.GET.getlist(param_name)
+            return items
+
+        # Helper: filter valid UUIDs
+        def validate_uuid_list(uuid_list):
+            valid_uuids = []
+            for u in uuid_list:
+                try:
+                    valid_uuids.append(UUID(u))
+                except ValueError:
+                    pass
+            return valid_uuids
+
+        country_list = validate_uuid_list(parse_ids('country'))
+        state_list = validate_uuid_list(parse_ids('state'))
+
         queryset = State.objects.filter(is_deleted=False)
+
+        # ---------------------------
+        # HIERARCHICAL FILTERING
+        # ---------------------------
+        if state_list:
+            queryset = queryset.filter(uuid__in=state_list)
+        elif country_list:
+            queryset = queryset.filter(countryName__uuid__in=country_list)
+
+        # ---------------------------
+        # TEXT SEARCH (STATE)
+        # ---------------------------
         if search:
             queryset = queryset.filter(
                 Q(stateName__istartswith=search)
             )
 
+        # Apply sorting
         queryset = queryset.order_by(sort_by)
+
+        # Pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = StateSerializer(result_page, many=True)
@@ -2196,61 +2234,71 @@ class StateImportAPIView(APIView):
 
 class StateByCountryAPIView(APIView):
     def get(self, request):
-        # Get multiple country_ids (comma-separated)
-        country_ids = request.GET.get("country_id", "").split(',')
-        search_term = request.GET.get("search", "")  # Search query parameter
-        sort_by = request.GET.get("sort_by", "stateName")  # Sort by state name by default
+        country_param = request.GET.get("country_id", "")
+        search_term = request.GET.get("search", "")
+        sort_by = request.GET.get("sort_by", "stateName")
 
-        if not country_ids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "country_id is required"
-            }, status=status.HTTP_400_BAD_REQUEST)
+        # If 'all' → return all states
+        if country_param.lower() == "all":
+            states = State.objects.all()
+        else:
+            # Get comma-separated country IDs
+            country_ids = [cid.strip() for cid in country_param.split(",") if cid.strip()]
+            
+            if not country_ids:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "country_id is required"
+                }, status=status.HTTP_400_BAD_REQUEST)
 
-        # Validate each country_id and fetch countries
-        valid_countries = []
-        invalid_countries = []
-        for country_id in country_ids:
-            try:
-                country_uuid = uuid.UUID(country_id.strip())  # Convert string to UUID
-                country = Country.objects.get(uuid=country_uuid)
-                valid_countries.append(country)
-            except (ValueError, Country.DoesNotExist):
-                invalid_countries.append(country_id)
+            # Validate country UUIDs
+            valid_countries = []
+            invalid_countries = []
 
-        if invalid_countries:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": f"Invalid or non-existent country IDs: {', '.join(invalid_countries)}"
-            }, status=status.HTTP_400_BAD_REQUEST)
+            for country_id in country_ids:
+                try:
+                    country_uuid = uuid.UUID(country_id)
+                    country = Country.objects.get(uuid=country_uuid)
+                    valid_countries.append(country)
+                except (ValueError, Country.DoesNotExist):
+                    invalid_countries.append(country_id)
 
-        # Fetch states for valid countries
-        states = State.objects.filter(countryName__in=valid_countries)
-        
-        # Search filtering
+            if invalid_countries:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": f"Invalid or non-existent country IDs: {', '.join(invalid_countries)}"
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Filter states by valid countries
+            states = State.objects.filter(countryName__in=valid_countries)
+
+        # Search
         if search_term:
             states = states.filter(stateName__icontains=search_term)
 
-        # Sorting
-        if sort_by and hasattr(State, sort_by):
-            states = states.order_by(sort_by)
+        # Sorting (safe fields)
+        allowed_sort_fields = ["stateName", "created_at", "updated_at"]
+        if sort_by not in allowed_sort_fields:
+            sort_by = "stateName"
+        states = states.order_by(sort_by)
 
         # Pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(states, request)
-        data = []
 
-        # Prepare response data with country name and state details
-        for state in result_page:
-            data.append({
+        # Response
+        data = [
+            {
                 "uuid": str(state.uuid),
                 "name": state.stateName,
                 "shortName": state.stateshortName,
                 "fullName": state.description,
-                "country": state.countryName.name  # Include country name in each state
-            })
+                "country": state.countryName.name
+            }
+            for state in result_page
+        ]
 
         return paginator.get_paginated_response(data)
 
@@ -2261,8 +2309,8 @@ class StateByCountryAPIView(APIView):
 
 
 
-
 #-------------------------------------------district---------------------------------
+
 class DistrictListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -2270,27 +2318,68 @@ class DistrictListAPIView(APIView):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'created_at')
         sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['districtName', 'created_at']
+        allowed_sort_fields = ['districtName', 'created_at', 'updated_at']
 
+        # Validate sort field
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
+        # Helper: parse comma-separated or multiple params
+        def parse_ids(param_name):
+            raw = request.GET.get(param_name, '')
+            if raw:
+                items = [x.strip() for x in raw.split(',') if x.strip()]
+            else:
+                items = request.GET.getlist(param_name)
+            return items
+
+        # Helper: filter valid UUIDs
+        def validate_uuid_list(uuid_list):
+            valid_uuids = []
+            for u in uuid_list:
+                try:
+                    valid_uuids.append(UUID(u))
+                except ValueError:
+                    pass
+            return valid_uuids
+
+        country_list = validate_uuid_list(parse_ids('country'))
+        state_list = validate_uuid_list(parse_ids('state'))
+        district_list = validate_uuid_list(parse_ids('district'))
+
         queryset = District.objects.filter(is_deleted=False)
+
+        # ---------------------------
+        # HIERARCHICAL FILTERING
+        # ---------------------------
+        if district_list:
+            queryset = queryset.filter(uuid__in=district_list)
+        else:
+            if state_list:
+                queryset = queryset.filter(stateName__uuid__in=state_list)
+            if country_list:
+                queryset = queryset.filter(countryName__uuid__in=country_list)
+
+        # ---------------------------
+        # TEXT SEARCH (DISTRICT)
+        # ---------------------------
         if search:
             queryset = queryset.filter(
-                Q(districtName__istartswith=search) 
+                Q(districtName__istartswith=search)
             )
 
+        # Apply sorting
         queryset = queryset.order_by(sort_by)
+
+        # Pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = DistrictSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
 
 
-# -------------------- Create -------------------- #
 class DistrictCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -2316,7 +2405,6 @@ class DistrictCreateAPIView(APIView):
         return Response({"statusCode": 400, "status": False, "message": errors}, status=400)
 
 
-# -------------------- Retrieve -------------------- #
 class DistrictRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -2329,7 +2417,6 @@ class DistrictRetrieveAPIView(APIView):
         return Response({"statusCode": 200, "status": True, "message": "Retrieved successfully", "data": serializer.data})
 
 
-# -------------------- Update -------------------- #
 class DistrictUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -2347,7 +2434,6 @@ class DistrictUpdateAPIView(APIView):
         return Response({"statusCode": 400, "status": False, "message": errors}, status=400)
 
 
-# -------------------- Delete -------------------- #
 class DistrictDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -2428,9 +2514,6 @@ class DistrictDeleteAPIView(APIView):
 
 
 
-
-# -------------------- Export -------------------- 
-
 class DistrictExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -2504,7 +2587,6 @@ class DistrictExportAPIView(APIView):
 
 
 
-# -------------------- Import -------------------- 
 class DistrictImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -2700,21 +2782,27 @@ class DistrictImportAPIView(APIView):
 class DistrictByFilterAPIView(APIView):
     def get(self, request):
         country_ids = request.GET.get("country_id", "").split(',')  # multiple countries
-        state_ids = request.GET.get("state_id", "").split(',')      # multiple states
+        state_ids = request.GET.get("state_id", "").split(',')      # multiple states or 'all'
         search_term = request.GET.get("search", "")                 # search by district name
-        sort_by = request.GET.get("sort_by", "districtName")        # default sort by districtName
+        sort_by = request.GET.get("sort_by", "districtName")        # default sort
 
-        # Validate countries
-        valid_countries = []
-        invalid_countries = []
-        for country_id in filter(None, country_ids):
-            try:
-                country_uuid = uuid.UUID(country_id.strip())
-                country = Country.objects.get(uuid=country_uuid)
-                valid_countries.append(country)
-            except (ValueError, Country.DoesNotExist):
-                invalid_countries.append(country_id)
+        # Helper: validate UUIDs and fetch objects
+        def get_valid_objects(model, ids):
+            valid_objs = []
+            invalid_ids = []
+            for _id in filter(None, ids):
+                if _id.lower() == 'all':  # skip validation for 'all'
+                    continue
+                try:
+                    obj_uuid = uuid.UUID(_id.strip())
+                    obj = model.objects.get(uuid=obj_uuid)
+                    valid_objs.append(obj)
+                except (ValueError, model.DoesNotExist):
+                    invalid_ids.append(_id)
+            return valid_objs, invalid_ids
 
+        # Validate countries (optional)
+        valid_countries, invalid_countries = get_valid_objects(Country, country_ids)
         if invalid_countries:
             return Response({
                 "statusCode": 400,
@@ -2722,29 +2810,24 @@ class DistrictByFilterAPIView(APIView):
                 "message": f"Invalid or non-existent country IDs: {', '.join(invalid_countries)}"
             }, status=400)
 
-        # Validate states
-        valid_states = []
-        invalid_states = []
-        for state_id in filter(None, state_ids):
-            try:
-                state_uuid = uuid.UUID(state_id.strip())
-                state = State.objects.get(uuid=state_uuid)
-                valid_states.append(state)
-            except (ValueError, State.DoesNotExist):
-                invalid_states.append(state_id)
-
-        if invalid_states:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": f"Invalid or non-existent state IDs: {', '.join(invalid_states)}"
-            }, status=400)
+        # Validate states (optional)
+        if 'all' in [s.lower() for s in state_ids]:  # if 'all' is sent, ignore state filter
+            valid_states = []
+        else:
+            valid_states, invalid_states = get_valid_objects(State, state_ids)
+            if invalid_states:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": f"Invalid or non-existent state IDs: {', '.join(invalid_states)}"
+                }, status=400)
 
         # Fetch districts
         districts = District.objects.filter(is_deleted=False)
+
         if valid_countries:
             districts = districts.filter(countryName__in=valid_countries)
-        if valid_states:
+        if valid_states:  # filter only if valid states are sent (skip if 'all')
             districts = districts.filter(stateName__in=valid_states)
 
         # Search filter
@@ -2760,19 +2843,18 @@ class DistrictByFilterAPIView(APIView):
         result_page = paginator.paginate_queryset(districts, request)
 
         # Prepare response
-        data = []
-        for district in result_page:
-            data.append({
-                "uuid": str(district.uuid),
-                "districtName": district.districtName,
-                "Country": district.countryName.name if district.countryName else None,
-                "state": district.stateName.stateName if district.stateName else None,
-                "description": district.description
-            })
+        data = [
+            {
+                "uuid": str(d.uuid),
+                "districtName": d.districtName,
+                "Country": d.countryName.name if d.countryName else None,
+                "state": d.stateName.stateName if d.stateName else None,
+                "description": d.description
+            }
+            for d in result_page
+        ]
 
         return paginator.get_paginated_response(data)
-
-
 
 #--------------------------city--------------------
 class CityListAPIView(APIView):
@@ -2780,53 +2862,68 @@ class CityListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-
-        # MULTI-SELECT SUPPORT
-        country_list = request.GET.getlist('country[]') or request.GET.getlist('country')
-        state_list = request.GET.getlist('state[]') or request.GET.getlist('state')
-        district_list = request.GET.getlist('district[]') or request.GET.getlist('district')
-        city_list = request.GET.getlist('city[]') or request.GET.getlist('city')
-
         sort_by = request.GET.get('sortBy', 'created_at')
         sort_order = request.GET.get('sortOrder', 'desc')
         allowed_sort_fields = ['cityName', 'created_at']
 
-        # Validate sortBy
+        # Validate sort field
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
+        # Helper: parse comma-separated or multiple params
+        def parse_ids(param_name):
+            raw = request.GET.get(param_name, '')
+            if raw:
+                items = [x.strip() for x in raw.split(',') if x.strip()]
+            else:
+                items = request.GET.getlist(param_name)
+            return items
+
+        # Helper: filter valid UUIDs
+        def validate_uuid_list(uuid_list):
+            valid_uuids = []
+            for u in uuid_list:
+                try:
+                    valid_uuids.append(UUID(u))
+                except ValueError:
+                    pass
+            return valid_uuids
+
+        country_list = validate_uuid_list(parse_ids('country'))
+        state_list = validate_uuid_list(parse_ids('state'))
+        district_list = validate_uuid_list(parse_ids('district'))
+        city_list = validate_uuid_list(parse_ids('city'))
+
         queryset = City.objects.filter(is_deleted=False)
 
         # ---------------------------
-        # MULTI-SELECT FILTERS
+        # HIERARCHICAL FILTERING
         # ---------------------------
-        if country_list:
-            queryset = queryset.filter(countryName__uuid__in=country_list)
-
-        if state_list:
-            queryset = queryset.filter(stateName__uuid__in=state_list)
-
-        if district_list:
-            queryset = queryset.filter(districtName__uuid__in=district_list)
-
         if city_list:
+            # City UUID takes absolute priority
             queryset = queryset.filter(uuid__in=city_list)
+        else:
+            if district_list:
+                queryset = queryset.filter(districtName__uuid__in=district_list)
+            if state_list:
+                queryset = queryset.filter(stateName__uuid__in=state_list)
+            if country_list:
+                queryset = queryset.filter(countryName__uuid__in=country_list)
 
         # ---------------------------
         # TEXT SEARCH (CITY / COUNTRY / STATE / DISTRICT)
         # ---------------------------
         if search:
             queryset = queryset.filter(
-                Q(cityName__istartswith=search) |
-                Q(countryName__name__istartswith=search) |
-                Q(stateName__stateName__istartswith=search) |
-                Q(districtName__districtName__istartswith=search)
+                Q(cityName__istartswith=search) 
             )
 
+        # Apply sorting
         queryset = queryset.order_by(sort_by)
 
+        # Pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = CitySerializer(result_page, many=True)
@@ -3098,14 +3195,15 @@ class CityImportAPIView(APIView):
             else:
                 return Response({'error': 'Unsupported file type. Use .xlsx or .csv'}, status=400)
 
-            # ------------------ Preload related data ------------------
-            countries = {c.name.lower(): c for c in Country.objects.all()}
+            # ------------------ Preload related data safely ------------------
+            countries = {c.name.lower(): c for c in Country.objects.all() if c is not None}
             states = {
-                (s.stateName.lower(), s.countryName.uuid): s for s in State.objects.all()
+                (s.stateName.lower(), s.countryName.uuid): s
+                for s in State.objects.all() if s.countryName is not None
             }
             districts = {
                 (d.districtName.lower(), d.stateName.uuid, d.countryName.uuid): d
-                for d in District.objects.all()
+                for d in District.objects.all() if d.stateName is not None and d.countryName is not None
             }
 
             # ------------------ Preload existing cities ------------------
@@ -3151,7 +3249,7 @@ class CityImportAPIView(APIView):
                 if not state_obj:
                     skipped_rows.append({
                         "City Name": city_name,
-                        "Reason": f"State '{state_name}' not found"
+                        "Reason": f"State '{state_name}' not found for country '{country_name}'"
                     })
                     continue
 
@@ -3159,7 +3257,7 @@ class CityImportAPIView(APIView):
                 if not district_obj:
                     skipped_rows.append({
                         "City Name": city_name,
-                        "Reason": f"District '{district_name}' not found"
+                        "Reason": f"District '{district_name}' not found for state '{state_name}'"
                     })
                     continue
 
@@ -3207,7 +3305,6 @@ class CityImportAPIView(APIView):
                 "message": str(e)
             }, status=400)
 
-
  
         
 #---------------------------Realtion-----------------------
@@ -3238,7 +3335,6 @@ class RelationListAPIView(APIView):
         return paginator.get_paginated_response(serializer.data)
 
 
-# -------------------- Create -------------------- #
 class RelationCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -3257,7 +3353,6 @@ class RelationCreateAPIView(APIView):
         return Response({"statusCode": 400, "status": False, "message": errors}, status=400)
 
 
-# -------------------- Retrieve -------------------- #
 class RelationRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -3270,7 +3365,6 @@ class RelationRetrieveAPIView(APIView):
         return Response({"statusCode": 200, "status": True, "message": "Retrieved successfully", "data": serializer.data})
 
 
-# -------------------- Update -------------------- #
 class RelationUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -3288,7 +3382,6 @@ class RelationUpdateAPIView(APIView):
         return Response({"statusCode": 400, "status": False, "message": errors}, status=400)
 
 
-# -------------------- Delete -------------------- #
 class RelationDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -3367,7 +3460,7 @@ class RelationDeleteAPIView(APIView):
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         }, status=status.HTTP_200_OK)
 
-# -------------------- Export -------------------- #
+#
 class RelationExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -3868,8 +3961,8 @@ class TimezoneImportAPIView(APIView):
         duplicates = []
         skipped_rows = []
 
-        required_headers = {'time zone'}
-        optional_headers = {'country', 'state', 'description'}
+        required_headers = {'time zone','country'}
+        optional_headers = {'state', 'description'}
 
         try:
             data = []
@@ -3912,6 +4005,11 @@ class TimezoneImportAPIView(APIView):
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
                 tz_name = str(row.get('time zone')).strip() if row.get('time zone') else None
+                country_name = str(row.get('country')).strip() if row.get('country') else None
+                state_name = str(row.get('state')).strip() if row.get('state') else None
+                description = str(row.get('description')).strip() if row.get('description') else ''
+
+                # Skip if timezone is missing
                 if not tz_name:
                     skipped_rows.append({
                         "Row": row_number,
@@ -3919,30 +4017,39 @@ class TimezoneImportAPIView(APIView):
                     })
                     continue
 
-                country_name = str(row.get('country')).strip() if row.get('country') else None
-                state_name = str(row.get('state')).strip() if row.get('state') else None
-                description = str(row.get('description')).strip() if row.get('description') else ''
+                # Skip if country is missing
+                if not country_name:
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Reason": "Invalid or missing country"
+                    })
+                    continue
 
-                country_obj = None
+                # Check country exists in DB
+                country_obj = Country.objects.filter(name__iexact=country_name, is_deleted=False).first()
+                if not country_obj:
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Reason": "Invalid or missing country"
+                    })
+                    continue
+
+                # Handle state if provided
                 state_obj = None
-
-                # Handle country
-                if country_name:
-                    country_obj = Country.objects.filter(name__iexact=country_name, is_deleted=False).first()
-                    if not country_obj:
-                        country_obj = Country.objects.create(name=country_name, description='', is_deleted=False)
-
-                # Handle state
                 if state_name:
                     state_obj = State.objects.filter(stateName__iexact=state_name, is_deleted=False).first()
                     if not state_obj:
-                        state_obj = State.objects.create(stateName=state_name, countryName=country_obj, description='', is_deleted=False)
+                        state_obj = State.objects.create(
+                            stateName=state_name,
+                            countryName=country_obj,
+                            description='',
+                            is_deleted=False
+                        )
 
                 # Check duplicates
                 existing = Timezone.objects.filter(
                     Timezone__iexact=tz_name,
-                    countryName=country_obj,
-                    stateName=state_obj
+                    countryName=country_obj
                 ).first()
 
                 if existing:
@@ -7436,9 +7543,7 @@ class AccreditationNameListAPIView(APIView):
         queryset = AccreditationName.objects.all()
         if search:
             queryset = queryset.filter(
-                Q(full_name__istartswith=search) |
-                Q(short_name__istartswith=search) |
-                Q(description__istartswith=search)
+                Q(full_name__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -8357,11 +8462,7 @@ class LicenseNameListAPIView(APIView):
 
         if search:
             queryset = queryset.filter(
-                Q(full_name__istartswith=search) |
-                Q(short_name__istartswith=search) |
-                Q(issuing_authority__istartswith=search) |
-                Q(description__istartswith=search) |
-                Q(country__name__istartswith=search)
+                Q(full_name__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)

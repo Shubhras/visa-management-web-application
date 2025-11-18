@@ -301,7 +301,6 @@ class MediumofEducationAdmin(admin.ModelAdmin):
 class ECAAwardingBodyAdmin(admin.ModelAdmin):
     list_display = ('eca_body_full_name', 'eca_body_short_name', 'country', 'valid_duration_value', 'created_at', 'updated_at')
     search_fields = ('eca_body_full_name', 'eca_body_short_name', 'country__country_name')
-    list_filter = ('country',)
 
 
 # -------------------- DegreeAwardedBy --------------------
@@ -566,4 +565,44 @@ class CourseStatusAdmin(admin.ModelAdmin):
     list_display = ('uuid', 'name', 'is_deleted')
     search_fields = ('uuid', 'name')
     list_filter = ('is_deleted',)
+    readonly_fields = ('created_at', 'updated_at')
+
+
+
+@admin.register(Language)
+class LanguageAdmin(admin.ModelAdmin):
+    list_display = ('id', 'uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at')
+    search_fields = ('name', 'description')
+    list_filter = ('is_deleted', 'created_at', 'updated_at')
+    ordering = ('-created_at',)
+
+@admin.register(LanguageTest)
+class LanguageTestAdmin(admin.ModelAdmin):
+    list_display = ('id', 'uuid', 'name', 'fullname', 'language', 'description', 'is_deleted', 'created_at', 'updated_at')
+    search_fields = ('name', 'fullname', 'description', 'language__name')
+    list_filter = ('is_deleted', 'created_at', 'updated_at', 'language')
+    ordering = ('-created_at',)
+
+
+
+@admin.register(LanguagetestmoduleName)
+class LanguagetestmoduleNameAdmin(admin.ModelAdmin):
+    list_display = ('id', 'uuid','name', 'description', 'is_deleted', 'created_at', 'updated_at')
+    search_fields = ('name', 'description')
+    list_filter = ('is_deleted', 'created_at', 'updated_at')
+    readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(CLBLevel)
+class CLBLevelAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'description', 'is_deleted', 'created_at', 'updated_at')
+    search_fields = ('name', 'description')
+    list_filter = ('is_deleted', 'created_at', 'updated_at')
+    readonly_fields = ('created_at', 'updated_at')
+
+@admin.register(StudyLanguageBanchmark)
+class StudyLanguageBanchmarkAdmin(admin.ModelAdmin):
+    list_display = ('id', 'uuid','name', 'description', 'is_deleted', 'created_at', 'updated_at')
+    search_fields = ('name', 'description')
+    list_filter = ('is_deleted', 'created_at', 'updated_at')
     readonly_fields = ('created_at', 'updated_at')

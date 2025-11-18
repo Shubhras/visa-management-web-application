@@ -5,7 +5,7 @@ import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
 import { timeZoneImportData } from '../../../../store/master/generalMasters/actions';
 import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
-import { exportToExcelDuplicate } from '../../../../helper/utils/commanHelper';
+import { exportToExcelDuplicate, exportToExcelWrongData } from '../../../../helper/utils/commanHelper';
 const AddImportTimeZoneModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
@@ -86,10 +86,10 @@ const AddImportTimeZoneModal = ({ show, handleClose }) => {
                             autoClose: 10000,
                         }
                     );
-                     if (response?.duplicates?.length > 0) {
+                    if (response?.duplicates?.length > 0) {
                         const prepareData = {
                             data: response.duplicates || [],
-                            headers: ["Country","Time Zone"],
+                            headers: ["Country", "Time Zone"],
                             sheetName: "TimeZone",
                             fileName: "TimeZone",
                         };
@@ -99,6 +99,22 @@ const AddImportTimeZoneModal = ({ show, handleClose }) => {
                             prepareData.sheetName,
                             prepareData.fileName
                         );
+                    }
+                    if (response?.skipped_rows?.length > 0) {
+                        const prepareData = {
+                            data: response.skipped_rows || [],
+                            headers: ["Country", "Time Zone","Reason"],
+                            sheetName: "TimeZone",
+                            fileName: "TimeZone",
+
+                        };
+                        exportToExcelWrongData(
+                            prepareData.data,
+                            prepareData.headers,
+                            prepareData.sheetName,
+                            prepareData.fileName
+                        );
+
                     }
                     setFile(null);
                     setSheetNames([]);
@@ -241,10 +257,10 @@ const AddImportTimeZoneModal = ({ show, handleClose }) => {
             </div>
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
-                    downloadFileName:"TimeZone",
-                    items: ["Country", "Time Zone","Description"],
+                    downloadFileName: "TimeZone",
+                    items: ["Country", "Time Zone", "Description"],
                     selectedItems: ["Country", "Time Zone"],
-                    ItemsRequired:["Country", "Time Zone"]
+                    ItemsRequired: ["Country", "Time Zone"]
                 }
                 } />
             )}

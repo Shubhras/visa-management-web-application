@@ -52,8 +52,7 @@ class EducationLevelCodeListAPIView(APIView):
         queryset = EducationLevelCode.objects.all()
         if search:
             queryset = queryset.filter(
-                Q(Levelcode__istartswith=search) |
-                Q(description__istartswith=search)
+                Q(Levelcode__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -445,8 +444,7 @@ class EducationLevelListAPIView(APIView):
 
         if search:
             queryset = queryset.filter(
-                Q(educationlevel__istartswith=search) |
-                Q(description__istartswith=search)  # optional: search by level_code detail
+                Q(educationlevel__istartswith=search) 
             )
 
         queryset = queryset.order_by(sort_by)
@@ -854,8 +852,7 @@ class EducationDurationListAPIView(APIView):
 
         if search:
             queryset = queryset.filter(
-                Q(educationlevel__educationlevel__istartswith=search) |
-                Q(durations__istartswith=search)
+                Q(educationlevel__educationlevel__istartswith=search)
             )
 
         queryset = queryset.order_by(f'{sort_prefix}{sort_by}')
@@ -1251,7 +1248,8 @@ class StudymainareaListAPIView(APIView):
 
         queryset = Studymainarea.objects.filter(is_deleted=False)
         if search:
-            queryset = queryset.filter(Q(name__istartswith=search) | Q(description__istartswith=search))
+            queryset = queryset.filter(Q(name__istartswith=search) 
+                                       )
 
         queryset = queryset.order_by(sort_by)
 
@@ -1624,9 +1622,7 @@ class StudyMajorAreaListAPIView(APIView):
 
         if search:
             queryset = queryset.filter(
-                Q(majorarea__istartswith=search) |
-                Q(description__istartswith=search) |
-                Q(mainarea__name__istartswith=search)
+                Q(majorarea__istartswith=search) 
             )
 
         queryset = queryset.order_by(sort_by)
@@ -2010,10 +2006,7 @@ class StudySpecialisationListAPIView(APIView):
 
         if search:
             queryset = queryset.filter(
-                Q(studyspecialisation__istartswith=search) |
-                Q(description__istartswith=search) |
-                Q(mainarea__name__istartswith=search) |
-                Q(majorarea__majorarea__istartswith=search)
+                Q(studyspecialisation__istartswith=search) 
             )
 
         queryset = queryset.order_by(sort_by)
@@ -3276,10 +3269,7 @@ class AcademicResultComparisonListAPIView(APIView):
 
         if search:
             queryset = queryset.filter(
-                Q(original_result__Academicresult__istartswith=search) |
-                Q(original_result_type__name__istartswith=search) |
-                Q(compare_result__Academicresult__istartswith=search) |
-                Q(compare_result_type__name__istartswith=search)
+                Q(original_result__Academicresult__istartswith=search) 
             )
 
         queryset = queryset.order_by(sort_by)
@@ -3504,8 +3494,7 @@ class EducationTypeListAPIView(APIView):
 
         if search:
             queryset = queryset.filter(
-                Q(educationType__istartswith=search) |
-                Q(Perticulars__istartswith=search)
+                Q(educationType__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -3827,8 +3816,7 @@ class MediumofEducationListAPIView(APIView):
 
         if search:
             queryset = queryset.filter(
-                Q(name__istartswith=search) |
-                Q(perticulars__istartswith=search)
+                Q(name__istartswith=search) 
             )
 
         queryset = queryset.order_by(sort_by)
@@ -4397,6 +4385,7 @@ class ECAForExportAPIView(APIView):
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title='ECA For  '
 
         for obj in queryset:
             row = []
@@ -4528,9 +4517,7 @@ class ECAAwardingBodyListAPIView(APIView):
         queryset = ECAAwardingBody.objects.all()
         if search:
             queryset = queryset.filter(
-                Q(eca_body_full_name__istartswith=search) |
-                Q(eca_body_short_name__istartswith=search) |
-                Q(country__name__istartswith=search)
+                Q(eca_body_full_name__istartswith=search) 
             )
 
         queryset = queryset.order_by(sort_by)
@@ -4689,7 +4676,7 @@ class ECAAwardingBodyDeleteAPIView(APIView):
         })
 
 
-# -------------------- EXPORT API --------------------
+# -------------------- EXPORT API -------------------- 
 class ECAAwardingBodyExportAPIView(APIView):
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
@@ -4701,7 +4688,7 @@ class ECAAwardingBodyExportAPIView(APIView):
             'uuid': 'UUID',
             'country': 'Country',
             'ecafor': 'ECA For',
-            'valid_duration_value': 'Valid Duration',
+            'valid_duration_value': 'ECA Valid Duration',
             'eca_body_full_name': 'ECA Body Full Name',
             'eca_body_short_name': 'ECA Body Short Name',
             'eca_valid_period': 'ECA Valid Period',
@@ -4717,7 +4704,7 @@ class ECAAwardingBodyExportAPIView(APIView):
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'ECAAwardingBody'
+        dataset.title = 'ECA Awarding Body'
 
         for eca in queryset:
             row = []
@@ -4896,11 +4883,7 @@ class DegreeAwardedByListAPIView(APIView):
         queryset = DegreeAwardedBy.objects.all()
         if search:
             queryset = queryset.filter(
-                Q(degree_name__istartswith=search) |
-                Q(description__istartswith=search) |
-                Q(country__name__istartswith=search) |
-                Q(state__name__istartswith=search) |
-                Q(education_level__name__istartswith=search)
+                Q(degree_name__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -5278,12 +5261,7 @@ class DegreeAwardedInstituteListAPIView(APIView):
         queryset = DegreeAwardedInstitute.objects.all()
         if search:
             queryset = queryset.filter(
-                Q(name__istartswith=search) |
-                Q(description__istartswith=search) |
-                Q(country__name__istartswith=search) |
-                Q(state__stateName__istartswith=search) |
-                Q(education_level__name__istartswith=search) |
-                Q(degree_awarded_by__name__istartswith=search)
+                Q(name__istartswith=search) 
             )
 
         queryset = queryset.order_by(sort_by)

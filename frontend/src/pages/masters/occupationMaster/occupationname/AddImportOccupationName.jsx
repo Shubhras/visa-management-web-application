@@ -83,9 +83,9 @@ const AddImportOccupationName = ({ show, handleClose }) => {
                 {response?.duplicates?.length > 0 && (
                   <div style={{ marginTop: "6px" }}>
                     <strong>
-                      Duplicate Occupation Level skipped — the duplicate
-                      data from your uploaded file has been exported into an
-                      .xlsx file.
+                      Duplicate Occupation Name skipped — the duplicate data
+                      from your uploaded file has been exported into an .xlsx
+                      file.
                     </strong>
                   </div>
                 )}
@@ -101,11 +101,13 @@ const AddImportOccupationName = ({ show, handleClose }) => {
                   "Country",
                   "Occupation Version",
                   "Occupation Category",
-                  "Occupation Level Code",
                   "Occupation Level",
+                  "Occupation Level Code",
+                  "Occupation Code",
+                  "Occupation Name",
                 ],
-                sheetName: "Occupation Level ",
-                fileName: "Occupation Level",
+                sheetName: "Occupation Name ",
+                fileName: "Occupation Name",
               };
               exportToExcelDuplicate(
                 prepareData.data,
@@ -121,12 +123,14 @@ const AddImportOccupationName = ({ show, handleClose }) => {
                   "Country",
                   "Occupation Version",
                   "Occupation Category",
-                  "Occupation Level Code",
                   "Occupation Level",
+                  "Occupation Level Code",
+                  "Occupation Code",
+                  "Occupation Name",
                   "Reason",
                 ],
-                sheetName: "Occupation Level",
-                fileName: "Occupation Level",
+                sheetName: "Occupation Name",
+                fileName: "Occupation Name",
               };
               exportToExcelWrongData(
                 prepareData.data,
@@ -180,7 +184,7 @@ const AddImportOccupationName = ({ show, handleClose }) => {
           <div className="modal-content radius-16 bg-base">
             <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
               <h1 className="modal-title fs-5" id="departmentModalLabel">
-                Upload Occupation Level 
+                Upload Occupation Name
               </h1>
               <button
                 type="button"
@@ -297,28 +301,35 @@ const AddImportOccupationName = ({ show, handleClose }) => {
           show={showSampleExcelDownload}
           handleClose={handleCloseSampleExcelDownload}
           prepareData={{
-            downloadFileName: "Occupation Level",
+            downloadFileName: "Occupation Name",
             items: [
               "Country",
               "Occupation Version",
               "Occupation Category",
-              "Occupation Level Code",
               "Occupation Level",
+              "Occupation Level Code",
+              "Occupation Code",
+              "Occupation Name",
               "Description",
+              "Main Duties",
             ],
             selectedItems: [
               "Country",
               "Occupation Version",
               "Occupation Category",
-              "Occupation Level Code",
               "Occupation Level",
+              "Occupation Level Code",
+              "Occupation Code",
+              "Occupation Name",
             ],
             ItemsRequired: [
               "Country",
               "Occupation Version",
               "Occupation Category",
-              "Occupation Level Code",
               "Occupation Level",
+              "Occupation Level Code",
+              "Occupation Code",
+              "Occupation Name",
             ],
           }}
         />

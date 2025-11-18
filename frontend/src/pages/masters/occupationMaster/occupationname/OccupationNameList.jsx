@@ -64,7 +64,7 @@ const OccupationNameList = () => {
     "Occupation Code",
     "Occupation Name",
     "Description",
-    "Occupation Duties",
+    "Main Duties",
     "Modified On",
   ]);
   const [selectedItems, setSelectedItems] = useState([
