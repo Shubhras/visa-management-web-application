@@ -2370,389 +2370,6 @@ class SpouseCanApplyImportAPIView(APIView):
         }, status=200)
 
 
-class SpouseVisaCategoryListAPIView(APIView):
-    def get(self, request):
-        search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
-
-        allowed_sort_fields = ['name', 'description', 'updated_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
-
-        queryset = SpouseVisaCategory.objects.filter(is_deleted=False)
-
-        if search:
-            queryset = queryset.filter(Q(name__istartswith=search))
-
-        queryset = queryset.order_by(sort_by)
-        paginator = CustomPagination()
-        result_page = paginator.paginate_queryset(queryset, request)
-        serializer = SpouseVisaCategorySerializer(result_page, many=True)
-        return paginator.get_paginated_response(serializer.data)
-
-
-# ---------------- CREATE API ----------------
-class SpouseVisaCategoryCreateAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
-
-    def post(self, request):
-        name = request.data.get("name", "").strip()
-        existing = SpouseVisaCategory.objects.filter(name__iexact=name, is_deleted=False).first()
-
-        if existing:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "SpouseVisaCategory with this name already exists."
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer = SpouseVisaCategorySerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": "SpouseVisaCategory created successfully",
-                "data": serializer.data
-            })
-        else:
-            messages = []
-            for field, msgs in serializer.errors.items():
-                messages.extend(msgs)
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": " ".join(messages)
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-
-# ---------------- RETRIEVE API ----------------
-class SpouseVisaCategoryRetrieveAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
-
-    def get(self, request, uuid):
-        try:
-            obj = SpouseVisaCategory.objects.get(uuid=uuid, is_deleted=False)
-        except SpouseVisaCategory.DoesNotExist:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "SpouseVisaCategory not found",
-                "data": None
-            }, status=status.HTTP_404_NOT_FOUND)
-
-        serializer = SpouseVisaCategorySerializer(obj)
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": "SpouseVisaCategory retrieved successfully",
-            "data": serializer.data
-        })
-
-
-# ---------------- UPDATE API ----------------
-class SpouseVisaCategoryUpdateAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
-
-    def put(self, request, uuid):
-        try:
-            obj = SpouseVisaCategory.objects.get(uuid=uuid, is_deleted=False)
-        except SpouseVisaCategory.DoesNotExist:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "SpouseVisaCategory not found",
-                "data": None
-            }, status=status.HTTP_404_NOT_FOUND)
-
-        serializer = SpouseVisaCategorySerializer(obj, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": "SpouseVisaCategory updated successfully",
-                "data": serializer.data
-            })
-        else:
-            messages = []
-            for field, msgs in serializer.errors.items():
-                messages.extend(msgs)
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": " ".join(messages),
-                "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-
-# ---------------- DELETE API ----------------
-class SpouseVisaCategoryDeleteAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
-
-    def delete(self, request, uuid=None):
-        ids = request.data.get('id', None)
-
-        if uuid:
-            try:
-                obj = SpouseVisaCategory.objects.get(uuid=uuid)
-                obj.delete()
-                return Response({
-                    "statusCode": 204,
-                    "status": True,
-                    "message": "SpouseVisaCategory permanently deleted.",
-                    "data": None
-                }, status=status.HTTP_204_NO_CONTENT)
-            except SpouseVisaCategory.DoesNotExist:
-                return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "SpouseVisaCategory not found.",
-                    "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
-
-        if ids == "all":
-            objs = SpouseVisaCategory.objects.all()
-            count = objs.count()
-            if count == 0:
-                return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "No records found to delete.",
-                    "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
-            objs.delete()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": f"All {count} records permanently deleted.",
-                "data": None
-            })
-
-        if not ids or not isinstance(ids, list):
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
-                "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        valid_uuids = []
-        invalid_uuids = []
-        for u in ids:
-            try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
-
-        if not valid_uuids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "No valid UUIDs provided.",
-                "data": {"invalid_uuids": invalid_uuids}
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        objs = SpouseVisaCategory.objects.filter(uuid__in=valid_uuids)
-        count = objs.count()
-
-        if count == 0:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "No matching records found.",
-                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=status.HTTP_404_NOT_FOUND)
-
-        objs.delete()
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"{count} record(s) permanently deleted.",
-            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        })
-
-
-class SpouseVisaCategoryExportAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
-
-    def get(self, request):
-        format_type = request.GET.get('format', 'xlsx').lower()
-        fields = request.GET.get('fields')
-        uuids_param = request.GET.get('uuids', '')
-        uuids = [u.strip() for u in uuids_param.split(',') if u]
-
-        field_header_map = {
-            'uuid': 'UUID',
-            'name': 'Spouse Visa Category',
-            'description': 'Description',
-            'is_deleted': 'Deleted',
-            'updated_at': 'Modified On',
-        }
-
-        if fields:
-            field_list = [f.strip() for f in fields.split(',')]
-        else:
-            field_list = list(field_header_map.keys())
-
-        queryset = SpouseVisaCategory.objects.filter(is_deleted=False)
-        if uuids:
-            queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
-
-        dataset = Dataset()
-        dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'SpouseVisaCategory'
-
-        for obj in queryset:
-            row = []
-            for field in field_list:
-                value = getattr(obj, field, '')
-                if field in ['created_at', 'updated_at'] and value:
-                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-                elif isinstance(value, bool):
-                    value = int(value)
-                row.append(value if value is not None else '')
-            dataset.append(row)
-
-        if format_type == 'csv':
-            file_data = dataset.export('csv')
-            content_type = 'text/csv'
-            file_name = 'spouse_visa_category.csv'
-        else:
-            file_data = io.BytesIO(dataset.export('xlsx'))
-            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'spouse_visa_category.xlsx'
-
-        response = HttpResponse(
-            file_data if format_type == 'csv' else file_data.getvalue(),
-            content_type=content_type
-        )
-        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
-        return response
-
-
-# ---------------- IMPORT API ----------------
-class SpouseVisaCategoryImportAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
-
-    def post(self, request):
-        file = request.FILES.get("file")
-        sheet_name = request.data.get("sheet_name")
-
-        if not file:
-            return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
-
-        format_type = file.name.split(".")[-1].lower()
-        duplicates = []
-        skipped_rows = []
-        required_headers = {"spouse visa category"}
-        optional_headers = {"description"}
-
-        try:
-            data = []
-
-            if format_type == "xlsx":
-                wb = openpyxl.load_workbook(file, read_only=True)
-                available_sheets = wb.sheetnames
-
-                if not sheet_name:
-                    return Response({
-                        "error": "Please provide sheet_name",
-                        "available_sheets": available_sheets,
-                    }, status=400)
-
-                if sheet_name not in available_sheets:
-                    return Response({
-                        "error": f'Sheet "{sheet_name}" not found',
-                        "available_sheets": available_sheets,
-                    }, status=400)
-
-                ws = wb[sheet_name]
-                if ws.max_row <= 1:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": f'Sheet "{sheet_name}" is empty.'
-                    }, status=400)
-
-                headers = [str(cell.value).strip().lower() if cell.value else "" for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-
-                if not required_headers.issubset(set(headers)):
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": f"Missing required headers. Required: {required_headers}, Found: {set(headers)}"
-                    }, status=400)
-
-                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
-                    if not any(row):
-                        continue
-                    row_dict = dict(zip(headers, row))
-                    row_dict["_row_number"] = idx
-                    data.append(row_dict)
-
-            elif format_type == "csv":
-                decoded_file = file.read().decode("utf-8")
-                dataset = Dataset()
-                dataset.load(decoded_file, format="csv")
-                for idx, row in enumerate(dataset.dict, start=2):
-                    row_lower = {k.strip().lower(): v for k, v in row.items()}
-                    row_lower["_row_number"] = idx
-                    if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({
-                            "statusCode": 400,
-                            "status": False,
-                            "message": f"Missing required headers. Required: {', '.join(required_headers)}. Found: {', '.join(row_lower.keys())}."
-                        }, status=400)
-                    data.append(row_lower)
-
-            else:
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "Unsupported file format. Use .xlsx or .csv",
-                }, status=400)
-
-            imported_count = 0
-            for row in reversed(data):
-                row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("spouse visa category")) if row.get("spouse visa category") else None
-                description = str(row.get("description")).strip() if row.get("description") else ""
-
-                if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing Name"})
-                    continue
-
-                existing = SpouseVisaCategory.objects.filter(name__iexact=name).first()
-                if existing:
-                    if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Spouse Visa Category": name, "Reason": "Already exists"})
-                        continue
-                    else:
-                        existing.description = description
-                        existing.is_deleted = False
-                        existing.save()
-                        imported_count += 1
-                else:
-                    SpouseVisaCategory.objects.create(name=name, description=description, is_deleted=False)
-                    imported_count += 1
-
-        except Exception as e:
-            return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
-
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
-            "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
-        }, status=200)
 
 
 class SpouseWorkRightsListAPIView(APIView):
@@ -3470,63 +3087,98 @@ class ChildrenCanApplyImportAPIView(APIView):
 
 
 class ChildrenVisaCategoryListAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
     def get(self, request):
-        search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
 
-        allowed_sort_fields = ['name', 'description', 'updated_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        search = request.GET.get("search", "").strip()
+        visamain_uuid = request.GET.get("visamain_uuid")
 
         queryset = ChildrenVisaCategory.objects.filter(is_deleted=False)
 
+        # ------------------------
+        # FILTER BY VISAMAIN UUID
+        # ------------------------
+        if visamain_uuid:
+            queryset = queryset.filter(visamain__uuid=visamain_uuid)
+
+        # ------------------------
+        # SEARCH (by visamain name or description)
+        # ------------------------
         if search:
-            queryset = queryset.filter(Q(name__istartswith=search))
+            queryset = queryset.filter(
+                Q(visamain__name__icontains=search) |
+                Q(description__icontains=search)
+            )
 
-        queryset = queryset.order_by(sort_by)
-        paginator = CustomPagination()
-        result_page = paginator.paginate_queryset(queryset, request)
-        serializer = ChildrenVisaCategorySerializer(result_page, many=True)
+        queryset = queryset.order_by("-created_at")
 
-        return paginator.get_paginated_response(serializer.data)
+        serializer = ChildrenVisaCategorySerializer(queryset, many=True)
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": "Children visa category list fetched successfully",
+            "total": queryset.count(),
+            "data": serializer.data
+        })
+
 
 
 class ChildrenVisaCategoryCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
-        name = request.data.get("name", "").strip()
-        existing = ChildrenVisaCategory.objects.filter(name__iexact=name, is_deleted=False).first()
+        data = request.data.copy()
+
+        # Validate FK: VisaMain
+        visamain_uuid = data.get("visamain_uuid")
+        if not visamain_uuid:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "visamain_uuid is required"
+            }, status=400)
+
+        try:
+            visamain_obj = VisaMain.objects.get(uuid=visamain_uuid)
+        except VisaMain.DoesNotExist:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Invalid visamain_uuid"
+            }, status=400)
+
+        # Duplicate check
+        desc = data.get("description", "").strip()
+        existing = ChildrenVisaCategory.objects.filter(
+            visamain=visamain_obj,
+            description__iexact=desc,
+            is_deleted=False
+        ).first()
 
         if existing:
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "ChildrenVisaCategory with this name already exists."
+                "message": "Category already exists"
             }, status=400)
 
-        serializer = ChildrenVisaCategorySerializer(data=request.data)
+        serializer = ChildrenVisaCategorySerializer(data=data)
         if serializer.is_valid():
             serializer.save()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "ChildrenVisaCategory created successfully",
+                "message": "Children Visa Category created successfully",
                 "data": serializer.data
             })
-        else:
-            messages = []
-            for field, msgs in serializer.errors.items():
-                messages.extend(msgs)
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": " ".join(messages)
-            }, status=400)
+
+        err = " ".join([msg for msgs in serializer.errors.values() for msg in msgs])
+        return Response({"statusCode": 400, "status": False, "message": err}, status=400)
+
+
+
 
 
 class ChildrenVisaCategoryRetrieveAPIView(APIView):
@@ -3536,20 +3188,12 @@ class ChildrenVisaCategoryRetrieveAPIView(APIView):
         try:
             obj = ChildrenVisaCategory.objects.get(uuid=uuid, is_deleted=False)
         except ChildrenVisaCategory.DoesNotExist:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "ChildrenVisaCategory not found",
-                "data": None
-            }, status=404)
+            return Response({"statusCode": 404, "status": False, "message": "Not found"}, status=404)
 
         serializer = ChildrenVisaCategorySerializer(obj)
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": "ChildrenVisaCategory retrieved successfully",
-            "data": serializer.data
-        })
+        return Response({"statusCode": 200, "status": True, "data": serializer.data})
+
+
 
 
 class ChildrenVisaCategoryUpdateAPIView(APIView):
@@ -3559,175 +3203,118 @@ class ChildrenVisaCategoryUpdateAPIView(APIView):
         try:
             obj = ChildrenVisaCategory.objects.get(uuid=uuid, is_deleted=False)
         except ChildrenVisaCategory.DoesNotExist:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "ChildrenVisaCategory not found",
-                "data": None
-            }, status=404)
+            return Response({"statusCode": 404, "status": False, "message": "Not found"}, status=404)
 
-        serializer = ChildrenVisaCategorySerializer(obj, data=request.data)
+        serializer = ChildrenVisaCategorySerializer(obj, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "ChildrenVisaCategory updated successfully",
+                "message": "Updated successfully",
                 "data": serializer.data
             })
-        else:
-            messages = []
-            for field, msgs in serializer.errors.items():
-                messages.extend(msgs)
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": " ".join(messages),
-                "data": None
-            }, status=400)
+
+        err = " ".join([msg for msgs in serializer.errors.values() for msg in msgs])
+        return Response({"statusCode": 400, "status": False, "message": err}, status=400)
+
+
+
+
 
 
 class ChildrenVisaCategoryDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
-    def delete(self, request, uuid=None):
-        ids = request.data.get('id', None)
+    def delete(self, request):
+        ids = request.data.get('id')
 
-        if uuid:
-            try:
-                obj = ChildrenVisaCategory.objects.get(uuid=uuid)
-                obj.delete()
-                return Response({
-                    "statusCode": 204,
-                    "status": True,
-                    "message": "ChildrenVisaCategory permanently deleted.",
-                    "data": None
-                }, status=204)
-            except ChildrenVisaCategory.DoesNotExist:
-                return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "ChildrenVisaCategory not found.",
-                    "data": None
-                }, status=404)
+        if not ids:
+            return Response({"status": False, "message": "Provide 'id' field"}, status=400)
 
         if ids == "all":
-            objs = ChildrenVisaCategory.objects.all()
-            count = objs.count()
-            if count == 0:
-                return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "No ChildrenVisaCategories found to delete.",
-                    "data": None
-                }, status=404)
-            objs.delete()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": f"All {count} ChildrenVisaCategories permanently deleted.",
-                "data": None
-            })
+            qs = ChildrenVisaCategory.objects.filter(is_deleted=False)
+            count = qs.count()
+            qs.delete()
+            return Response({"status": True, "message": f"All {count} records deleted"})
 
-        if not ids or not isinstance(ids, list):
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
-                "data": None
-            }, status=400)
+        if not isinstance(ids, list):
+            return Response({"status": False, "message": "Send list of UUIDs"}, status=400)
 
-        valid_uuids = []
-        invalid_uuids = []
+        valid, invalid = [], []
         for u in ids:
             try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
+                valid.append(UUID(u))
+            except:
+                invalid.append(u)
 
-        if not valid_uuids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "No valid UUIDs provided.",
-                "data": {"invalid_uuids": invalid_uuids}
-            }, status=400)
-
-        objs = ChildrenVisaCategory.objects.filter(uuid__in=valid_uuids)
-        count = objs.count()
-
-        if count == 0:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "No matching ChildrenVisaCategories found.",
-                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=404)
-
-        objs.delete()
+        qs = ChildrenVisaCategory.objects.filter(uuid__in=valid, is_deleted=False)
+        count = qs.count()
+        qs.delete()
 
         return Response({
-            "statusCode": 200,
             "status": True,
-            "message": f"{count} ChildrenVisaCategory(s) permanently deleted.",
-            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+            "message": f"{count} record(s) deleted",
+            "invalid_uuids": invalid or None
         })
+
+
 
 
 class ChildrenVisaCategoryExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
-        format_type = request.GET.get('format', 'xlsx').lower()
-        fields = request.GET.get('fields')
-        uuids_param = request.GET.get('uuids', '')
-        uuids = [u.strip() for u in uuids_param.split(',') if u]
+        format_type = request.GET.get("format", "xlsx").lower()
+        fields = request.GET.get("fields")
+        uuids = request.GET.get("uuids", "").split(",")
 
-        field_header_map = {
+        field_map = {
             'uuid': 'UUID',
-            'name': 'Children Visa Category',
+            'visamain': 'Children Visa Main',
             'description': 'Description',
             'is_deleted': 'Deleted',
-            'updated_at': 'Modified On',
+            'created_at': 'Created At',
+            'updated_at': 'Updated At',
         }
 
-        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_map.keys())
 
-        queryset = ChildrenVisaCategory.objects.filter(is_deleted=False)
+        qs = ChildrenVisaCategory.objects.filter(is_deleted=False)
         if uuids:
-            queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
+            qs = qs.filter(uuid__in=uuids)
 
         dataset = Dataset()
-        dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'ChildrenVisaCategory'
+        dataset.headers = [field_map.get(f, f) for f in field_list]
 
-        for obj in queryset:
+        for obj in qs:
             row = []
-            for field in field_list:
-                value = getattr(obj, field, '')
-                if field in ['created_at', 'updated_at'] and value:
-                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-                elif isinstance(value, bool):
-                    value = int(value)
-                row.append(value if value is not None else '')
+            for f in field_list:
+                val = getattr(obj, f, "")
+
+                if f == "visamain" and val:
+                    val = val.name
+                elif f in ["created_at", "updated_at"] and val:
+                    val = timezone.localtime(val).strftime("%d-%m-%Y %I:%M:%S %p")
+                row.append(val)
+
             dataset.append(row)
 
-        if format_type == 'csv':
-            file_data = dataset.export('csv')
-            content_type = 'text/csv'
-            file_name = 'children_visa_categories.csv'
-        else:
-            file_data = io.BytesIO(dataset.export('xlsx'))
-            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'children_visa_categories.xlsx'
+        if format_type == "csv":
+            response = HttpResponse(dataset.export("csv"), content_type="text/csv")
+            response["Content-Disposition"] = 'attachment; filename="children_visa_category.csv"'
+            return response
 
+        file_data = io.BytesIO(dataset.export("xlsx"))
         response = HttpResponse(
-            file_data if format_type == 'csv' else file_data.getvalue(),
-            content_type=content_type
+            file_data.getvalue(),
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
-        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        response["Content-Disposition"] = 'attachment; filename="children_visa_category.xlsx"'
         return response
+
+
+
 
 
 class ChildrenVisaCategoryImportAPIView(APIView):
@@ -3740,112 +3327,91 @@ class ChildrenVisaCategoryImportAPIView(APIView):
         if not file:
             return Response({"error": "No file uploaded"}, status=400)
 
-        format_type = file.name.split(".")[-1].lower()
-        duplicates = []
-        skipped_rows = []
-        required_headers = {"children visa category"}  # Adjust column name as needed
-        optional_headers = {"description"}
+        ext = file.name.split(".")[-1].lower()
+        required = {"children visa main", "description"}
+
+        parsed = []
 
         try:
-            data = []
-
-            if format_type == "xlsx":
+            if ext == "xlsx":
                 wb = openpyxl.load_workbook(file, read_only=True)
-                available_sheets = wb.sheetnames
-
-                if not sheet_name:
-                    return Response({
-                        "error": "Please provide sheet_name",
-                        "available_sheets": available_sheets,
-                    }, status=400)
-
-                if sheet_name not in available_sheets:
-                    return Response({
-                        "error": f'Sheet "{sheet_name}" not found',
-                        "available_sheets": available_sheets,
-                    }, status=400)
-
+                if sheet_name not in wb.sheetnames:
+                    return Response({"error": "Invalid sheet name"}, status=400)
                 ws = wb[sheet_name]
-                if ws.max_row <= 1:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": f'Sheet "{sheet_name}" is empty.'
-                    }, status=400)
 
-                headers = [str(cell.value).strip().lower() if cell.value else "" for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-
-                if not required_headers.issubset(set(headers)):
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": f"Missing required headers. Required: {required_headers}, Found: {set(headers)}"
-                    }, status=400)
+                headers = [str(c.value).strip().lower() for c in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required.issubset(headers):
+                    return Response({"error": f"Missing headers: {required}"})
 
                 for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
-                    if not any(row):
-                        continue
-                    row_dict = dict(zip(headers, row))
-                    row_dict["_row_number"] = idx
-                    data.append(row_dict)
+                    parsed.append((idx, dict(zip(headers, row))))
 
-            elif format_type == "csv":
-                decoded_file = file.read().decode("utf-8")
+            elif ext == "csv":
                 dataset = Dataset()
-                dataset.load(decoded_file, format="csv")
+                dataset.load(file.read().decode("utf-8"), format="csv")
+
                 for idx, row in enumerate(dataset.dict, start=2):
-                    row_lower = {k.strip().lower(): v for k, v in row.items()}
-                    row_lower["_row_number"] = idx
-                    if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({
-                            "statusCode": 400,
-                            "status": False,
-                            "message": f"Missing required headers. Required: {', '.join(required_headers)}. Found: {', '.join(row_lower.keys())}."
-                        }, status=400)
-                    data.append(row_lower)
+                    r = {k.strip().lower(): v for k, v in row.items()}
+                    parsed.append((idx, r))
 
             else:
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "Unsupported file format. Use .xlsx or .csv",
-                }, status=400)
+                return Response({"error": "Only CSV/XLSX supported"}, status=400)
 
-            imported_count = 0
-            for row in reversed(data):
-                row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("children visa category")) if row.get("children visa category") else None
-                description = str(row.get("description")).strip() if row.get("description") else ""
+            imported = 0
+            duplicates = []
+            skipped = []
 
-                if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing Visa Category name"})
+            for row_num, row in parsed:
+                visamain_name = str(row.get("children visa main")).strip()
+                desc = str(row.get("description", "")).strip()
+
+                if not (visamain_name and desc):
+                    skipped.append({"row": row_num, "Reason": "Missing required fields"})
                     continue
 
-                existing = ChildrenVisaCategory.objects.filter(name__iexact=name).first()
+                try:
+                    visamain_obj = VisaMain.objects.get(name__iexact=visamain_name)
+                except:
+                    skipped.append({"row": row_num, "Reason": "VisaMain not found"})
+                    continue
+
+                existing = ChildrenVisaCategory.objects.filter(
+                    visamain=visamain_obj,
+                    description__iexact=desc
+                ).first()
+
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Children Visa Category": name, "Reason": "Already exists"})
+                        duplicates.append({
+                            "row": row_num,
+                            "Children Visa Category": visamain_name,
+                            "Reason": "Duplicate entry"
+                        })
                         continue
                     else:
-                        existing.description = description
                         existing.is_deleted = False
                         existing.save()
-                        imported_count += 1
+                        imported += 1
                 else:
-                    ChildrenVisaCategory.objects.create(name=name, description=description, is_deleted=False)
-                    imported_count += 1
+                    ChildrenVisaCategory.objects.create(
+                        visamain=visamain_obj,
+                        description=desc,
+                        is_deleted=False
+                    )
+                    imported += 1
 
         except Exception as e:
-            return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
+            return Response({"error": str(e)}, status=400)
 
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
-            "imported_count": imported_count,
+            "imported_count": imported,
             "duplicates": duplicates,
-            "skipped_rows": skipped_rows
-        }, status=200)
+            "skipped_rows": skipped,
+            "message": "Import completed"
+        })
+
 
 
 class ChildrenStudyWorkRightsListAPIView(APIView):
@@ -4063,7 +3629,7 @@ class ChildrenStudyWorkRightsExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Children Study Work Rights',
+            'name': 'Children Study / Work Rights',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',
@@ -4078,7 +3644,7 @@ class ChildrenStudyWorkRightsExportAPIView(APIView):
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'ChildrenStudyWorkRights'
+        dataset.title = 'ChildrenStudy/WorkRights'
 
         for obj in queryset:
             row = []
@@ -4121,7 +3687,7 @@ class ChildrenStudyWorkRightsImportAPIView(APIView):
         format_type = file.name.split(".")[-1].lower()
         duplicates = []
         skipped_rows = []
-        required_headers = {"children study work rights"}  # Adjust column name
+        required_headers = {"children study / work rights"}  # Adjust column name
         optional_headers = {"description"}
 
         try:
@@ -4192,7 +3758,7 @@ class ChildrenStudyWorkRightsImportAPIView(APIView):
             imported_count = 0
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("children study work rights")) if row.get("children study work rights") else None
+                name = str(row.get("children study / work rights")) if row.get("children study / work rights") else None
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
@@ -4224,3 +3790,348 @@ class ChildrenStudyWorkRightsImportAPIView(APIView):
             "duplicates": duplicates,
             "skipped_rows": skipped_rows
         }, status=200)
+
+
+
+
+
+
+class SpouseVisaCategoryListAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        search = request.GET.get('search', '').strip()
+        visamain_uuid = request.GET.get('visamain_uuid')
+        ordering = request.GET.get('ordering', '-created_at')  # default ordering
+        page = int(request.GET.get('page', 1))
+        page_size = int(request.GET.get('page_size', 20))
+
+        qs = SpouseVisaCategory.objects.filter(is_deleted=False)
+
+        # ---------------------- FILTER BY VISA MAIN ---------------------- #
+        if visamain_uuid:
+            qs = qs.filter(visamain__uuid=visamain_uuid)
+
+        # ---------------------- SEARCH ---------------------- #
+        if search:
+            qs = qs.filter(
+                Q(visamain__name__icontains=search) |
+                Q(description__icontains=search)
+            )
+
+        # ---------------------- ORDERING ---------------------- #
+        allowed_order_fields = ['created_at', 'updated_at', 'visamain__name']
+        if ordering.replace('-', '') in allowed_order_fields:
+            qs = qs.order_by(ordering)
+        else:
+            qs = qs.order_by('-created_at')
+
+        # ---------------------- PAGINATION ---------------------- #
+        total = qs.count()
+        start = (page - 1) * page_size
+        end = start + page_size
+        qs = qs[start:end]
+
+        serializer = SpouseVisaCategorySerializer(qs, many=True)
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+            "data": serializer.data
+        })
+    
+
+class SpouseVisaCategoryCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        data = request.data.copy()
+
+        # ---------------------- FK VALIDATION ---------------------- #
+        visamain_uuid = data.get("visamain_uuid")
+        if not visamain_uuid:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Mandatory field missing: visamain_uuid"
+            }, status=400)
+
+        try:
+            visamain_obj = VisaMain.objects.get(uuid=visamain_uuid)
+        except VisaMain.DoesNotExist:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Invalid visamain UUID."
+            }, status=400)
+
+        # ---------------------- DUPLICATE CHECK ---------------------- #
+        existing = SpouseVisaCategory.objects.filter(
+            visamain=visamain_obj,
+            is_deleted=False
+        ).first()
+
+        # If the rule is → ONE category for each visamain  
+        # If multiple allowed, remove this block.
+        if existing:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Category already exists for this VisaMain."
+            }, status=400)
+
+        serializer = SpouseVisaCategorySerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "Spouse Visa Category created successfully",
+                "data": serializer.data
+            })
+
+        err_msg = " ".join([msg for msgs in serializer.errors.values() for msg in msgs])
+        return Response({"statusCode": 400, "status": False, "message": err_msg}, status=400)
+
+
+# ---------------------- RETRIEVE ---------------------- #
+class SpouseVisaCategoryRetrieveAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request, uuid):
+        try:
+            obj = SpouseVisaCategory.objects.get(uuid=uuid, is_deleted=False)
+        except SpouseVisaCategory.DoesNotExist:
+            return Response({"statusCode": 404, "status": False, "message": "Not found"}, status=404)
+
+        serializer = SpouseVisaCategorySerializer(obj)
+        return Response({"statusCode": 200, "status": True, "data": serializer.data})
+
+
+# ---------------------- UPDATE ---------------------- #
+class SpouseVisaCategoryUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def put(self, request, uuid):
+        try:
+            obj = SpouseVisaCategory.objects.get(uuid=uuid, is_deleted=False)
+        except SpouseVisaCategory.DoesNotExist:
+            return Response({"statusCode": 404, "status": False, "message": "Not found"}, status=404)
+
+        serializer = SpouseVisaCategorySerializer(obj, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "Updated successfully",
+                "data": serializer.data
+            })
+
+        err_msg = " ".join([msg for msgs in serializer.errors.values() for msg in msgs])
+        return Response({"statusCode": 400, "status": False, "message": err_msg}, status=400)
+
+
+# ---------------------- DELETE ---------------------- #
+class SpouseVisaCategoryDeleteAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def delete(self, request):
+        ids = request.data.get('id')
+
+        if not ids:
+            return Response({"status": False, "message": "Provide 'id' field"}, status=400)
+
+        if ids == "all":
+            qs = SpouseVisaCategory.objects.filter(is_deleted=False)
+            count = qs.count()
+            qs.delete()
+            return Response({"status": True, "message": f"All {count} records deleted"})
+
+        if not isinstance(ids, list):
+            return Response({"status": False, "message": "Send list of UUIDs"}, status=400)
+
+        valid, invalid = [], []
+        for u in ids:
+            try:
+                valid.append(UUID(u))
+            except:
+                invalid.append(u)
+
+        qs = SpouseVisaCategory.objects.filter(uuid__in=valid, is_deleted=False)
+        count = qs.count()
+        qs.delete()
+
+        return Response({
+            "status": True,
+            "message": f"{count} record(s) deleted",
+            "invalid_uuids": invalid if invalid else None
+        })
+
+
+# ---------------------- EXPORT ---------------------- #
+class SpouseVisaCategoryExportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        format_type = request.GET.get("format", "xlsx").lower()
+        fields = request.GET.get("fields")
+        uuids = request.GET.get("uuids", "")
+        uuids = [u for u in uuids.split(",") if u]
+
+        field_header = {
+            "uuid": "UUID",
+            "visamain_name": "Spouse Visa Category",
+            "description": "Description",
+            "is_deleted": "Deleted",
+            "created_at": "Created On",
+            "updated_at": "Updated On",
+        }
+
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header.keys())
+
+        dataset = Dataset()
+        dataset.headers = [field_header.get(f, f) for f in field_list]
+
+        qs = SpouseVisaCategory.objects.filter(is_deleted=False)
+        if uuids:
+            qs = qs.filter(uuid__in=uuids)
+
+        qs = qs.order_by('-created_at')
+
+        for obj in qs:
+            row = []
+            for f in field_list:
+                if f == "visamain_name":
+                    val = obj.visamain.name if obj.visamain else ""
+                else:
+                    val = getattr(obj, f, "")
+
+                if f in ["created_at", "updated_at"] and val:
+                    val = timezone.localtime(val, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                if isinstance(val, bool):
+                    val = int(val)
+
+                row.append(val)
+
+            dataset.append(row)
+
+        if format_type == "csv":
+            file_data = dataset.export("csv")
+            response = HttpResponse(file_data, content_type="text/csv")
+            response["Content-Disposition"] = 'attachment; filename="spouse_visa_category.csv"'
+        else:
+            file_data = io.BytesIO(dataset.export("xlsx"))
+            response = HttpResponse(
+                file_data.getvalue(),
+                content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+            response["Content-Disposition"] = 'attachment; filename="spouse_visa_category.xlsx"'
+
+        return response
+
+
+# ---------------------- IMPORT ---------------------- #
+class SpouseVisaCategoryImportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        file = request.FILES.get("file")
+        sheet_name = request.data.get("sheet_name")
+
+        if not file:
+            return Response({"error": "No file uploaded"}, status=400)
+
+        format_type = file.name.split(".")[-1].lower()
+
+        required_headers = {"spouse visa category"}
+        optional_headers = {"description"}
+
+        parsed_data = []
+
+        try:
+            if format_type == "xlsx":
+                wb = openpyxl.load_workbook(file, read_only=True)
+                if sheet_name not in wb.sheetnames:
+                    return Response({"error": "Invalid sheet_name"}, status=400)
+
+                ws = wb[sheet_name]
+                headers = [str(c.value).strip().lower() for c in next(ws.iter_rows(min_row=1, max_row=1))]
+
+                if not required_headers.issubset(headers):
+                    return Response({"error": f"Missing required headers: {required_headers}"}, status=400)
+
+                for index, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+                    parsed_data.append((index, dict(zip(headers, row))))
+
+            elif format_type == "csv":
+                dataset = Dataset()
+                dataset.load(file.read().decode("utf-8"), format="csv")
+
+                for idx, row in enumerate(dataset.dict, start=2):
+                    r = {k.strip().lower(): v for k, v in row.items()}
+                    if not required_headers.issubset(r.keys()):
+                        return Response({"error": f"Missing required headers: {required_headers}"})
+                    parsed_data.append((idx, r))
+
+            else:
+                return Response({"error": "Only xlsx/csv supported"}, status=400)
+
+            duplicate = []
+            skipped = []
+            imported = 0
+
+            # ---------------------- ROW PROCESSING ---------------------- #
+            for row_num, row in parsed_data:
+                visa_name = str(row.get("spouse visa category")).strip()
+                desc = row.get("description", "")
+
+                if not visa_name:
+                    skipped.append({"row": row_num, "Reason": "Mandatory field missing"})
+                    continue
+
+                try:
+                    visa_obj = VisaMain.objects.get(name__iexact=visa_name)
+                except:
+                    skipped.append({"row": row_num, "Reason": "Visa Main not found"})
+                    continue
+
+                # Duplicate check
+                existing = SpouseVisaCategory.objects.filter(
+                    visamain=visa_obj
+                ).first()
+
+                if existing:
+                    if not existing.is_deleted:
+                        duplicate.append({
+                            "row": row_num,
+                            "Spouse Visa Category": visa_name,
+                            "Reason": "Duplicate entry"
+                        })
+                        continue
+                    else:
+                        existing.description = desc
+                        existing.is_deleted = False
+                        existing.save()
+                        imported += 1
+                else:
+                    SpouseVisaCategory.objects.create(
+                        visamain=visa_obj,
+                        description=desc,
+                        is_deleted=False,
+                    )
+                    imported += 1
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=400)
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "imported_count": imported,
+            "duplicates": duplicate,
+            "skipped_rows": skipped,
+            "message": "Import successfully completed"
+        })
