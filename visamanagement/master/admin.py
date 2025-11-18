@@ -414,12 +414,12 @@ class LanguageTestResultAdmin(admin.ModelAdmin):
 
 
 # ---------------------- StudyLanguageBanchmark ----------------------
-@admin.register(StudyLanguageBanchmark)
-class StudyLanguageBanchmarkAdmin(admin.ModelAdmin):
-    list_display = ('name', 'description', 'is_deleted', 'created_at', 'updated_at')
-    search_fields = ('name',)
-    list_filter = ('is_deleted',)
-    ordering = ('name',)
+# @admin.register(StudyLanguageBanchmark)
+# class StudyLanguageBanchmarkAdmin(admin.ModelAdmin):
+#     list_display = ('name', 'description', 'is_deleted', 'created_at', 'updated_at')
+#     search_fields = ('name',)
+#     list_filter = ('is_deleted',)
+#     ordering = ('name',)
 
 
 # ---------------------- EntranceTestName ----------------------
