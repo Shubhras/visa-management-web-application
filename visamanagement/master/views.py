@@ -17,6 +17,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from import_export.formats.base_formats import CSV, XLSX
 from tablib import Dataset
 import openpyxl
+from django.db.models.functions import Lower
 from django.http import HttpResponse
 from uuid import UUID
 from datetime import datetime  
@@ -2880,27 +2881,26 @@ class CityListAPIView(APIView):
                     if field not in allowed_sort_fields:
                         continue
 
-                    # Use Lower() for string columns to mimic Excel's case-insensitive sort
-                    if order == "asc":
-                        sort_fields.append(F(field).asc(nulls_last=True))
+                    # Use Lower() for case-insensitive Excel-style sort
+                    if field in ['cityName', 'stateName', 'districtName', 'countryName']:
+                        f = Lower(field)
                     else:
-                        sort_fields.append(F(field).desc(nulls_last=True))
+                        f = F(field)
+
+                    if order == "asc":
+                        sort_fields.append(f.asc(nulls_last=True))
+                    else:
+                        sort_fields.append(f.desc(nulls_last=True))
 
                 except ValueError:
                     continue
         else:
-            # NORMAL SORTING
             sort_by = request.GET.get('sortBy', 'created_at')
             sort_order = request.GET.get('sortOrder', 'desc')
-
             if sort_by not in allowed_sort_fields:
                 sort_by = 'created_at'
-
-            if sort_order == 'desc':
-                sort_fields = [f'-{sort_by}']
-            else:
-                sort_fields = [sort_by]
-
+            f = F(sort_by)
+            sort_fields = [f.desc(nulls_last=True) if sort_order=='desc' else f.asc(nulls_last=True)]
         # ---------------------------
         # Helper functions
         # ---------------------------
