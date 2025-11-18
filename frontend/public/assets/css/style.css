@@ -15721,6 +15721,7 @@ td.fc-header-center {
   .dashboard-main-body {
     padding: 1.5rem;
     padding-top: 0px;
+    padding-bottom: 10px;
   }
 }
 
@@ -15768,11 +15769,30 @@ td.fc-header-center {
   padding: 0px 0px;
 }
 
-.main-container-data .container-table-div {
+/* .main-container-data .container-table-div {
   background-color: white;
   border-radius: 8px;
   overflow: hidden;
   min-height: 700px;
+} */
+/* Make the table container scrollable */
+.main-container-data .container-table-div {
+  max-height: calc(100vh - 230px);
+  min-height: calc(75vh);
+  /* Adjust based on your layout */
+  overflow-y: auto;
+  position: relative;
+  background-color: white;
+  border-radius: 8px;
+}
+
+/* Sticky table header */
+.main-container-data .container-table-div table thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: #fff;
+  /* Adjust to match your theme */
 }
 
 .main-container-data .container-table-div .loding-data {
@@ -15914,6 +15934,11 @@ td.fc-header-center {
   margin-left: 4px;
 }
 
+.basic-data-table .container-table .sorting-th-icone {
+  width: 16px;
+  color: #495057;
+  margin-left: 4px;
+}
 
 .basic-data-table .container-table .page-num-btn.active {
   background-color: #487fff;
@@ -15932,6 +15957,7 @@ td.fc-header-center {
   font-size: 14px !important;
   color: #6c757d;
 }
+
 .basic-data-table .container-data .showing-total-page {
   font-size: 14px !important;
   color: #6c757d;
@@ -16181,6 +16207,7 @@ td.fc-header-center {
   font-weight: bold;
   margin: 0;
 }
+
 .sub-header-bar .search-filter-div {
   min-width: 180px;
   max-width: 300px;
@@ -16307,6 +16334,7 @@ td.fc-header-center {
 } */
 .comman-filtter-all {
   margin-left: 5px;
+  top: -3px;
 }
 
 .comman-filtter-all .main-div-dropdown .input-search {
@@ -16366,15 +16394,18 @@ td.fc-header-center {
 .comman-filtter-all .filter-checkbox-item:hover {
   background-color: #f8f9fa;
 }
- .comman-filtter-all .select-clear-all {
+
+.comman-filtter-all .select-clear-all {
   margin-top: 10px;
   margin-bottom: 10px;
 }
+
 .comman-filtter-all .select-all-dropdown {
   max-height: 200px;
   overflow-y: auto;
   margin-top: 10px;
 }
+
 .comman-filtter-all .disabled-sort {
   pointer-events: none;
   opacity: 0.5;

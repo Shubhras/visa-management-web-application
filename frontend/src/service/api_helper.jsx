@@ -1322,7 +1322,11 @@ export const getDistrictDataByStateAPI = (payload) => {
 
 // CITY
 export const getCityListDataAPI = (data) => {
-    const apiUrl = `${url.GET_CITY_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&country=${data?.country}&state=${data?.state}&district=${data?.district}`;
+    let customSort = "";
+    if (data.sort && Array.isArray(data.sort)) {
+        customSort = data.sort.map(s => `${s.field}:${s.order}`).join(",");
+    }
+    const apiUrl = `${url.GET_CITY_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&country=${data?.country}&state=${data?.state}&district=${data?.district}&customSort=customSort`;
     return get(apiUrl);
 };
 
@@ -2039,66 +2043,66 @@ export const importOccupationLevelAPI = (payload) => {
 
 //  Occupation Code 
 export const getOccupationCodeListAPI = (data) => {
-  const apiUrl = `${url.GET_OCCUPATION_CODE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
-  return get(apiUrl);
+    const apiUrl = `${url.GET_OCCUPATION_CODE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
 };
 
 export const addOccupationCodeAPI = (payload) => {
-  const apiUrl = `${url.ADD_OCCUPATION_CODE_API}`;
-  return post(apiUrl, payload);
+    const apiUrl = `${url.ADD_OCCUPATION_CODE_API}`;
+    return post(apiUrl, payload);
 };
 
 export const editOccupationCodeAPI = (payload) => {
-  const apiUrl = `${url.EDIT_OCCUPATION_CODE_API}${payload?.uuid}/update/`;
-  return put(apiUrl, payload);
+    const apiUrl = `${url.EDIT_OCCUPATION_CODE_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
 };
 
 export const deleteOccupationCodeAPI = (payload) => {
-  const preparedData = { id: payload };
-  const apiUrl = `${url.DELETE_OCCUPATION_CODE_API}delete/`;
-  return delWithPayload(apiUrl, preparedData);
+    const preparedData = { id: payload };
+    const apiUrl = `${url.DELETE_OCCUPATION_CODE_API}delete/`;
+    return delWithPayload(apiUrl, preparedData);
 };
 
 export const exportOccupationCodeAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_OCCUPATION_CODE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
-  return getExportData(apiUrl, payload);
+    const apiUrl = `${url.EXPORT_OCCUPATION_CODE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
 };
 
 export const importOccupationCodeAPI = (payload) => {
-  const apiUrl = `${url.IMPORT_OCCUPATION_CODE_API}`;
-  return post(apiUrl, payload);
+    const apiUrl = `${url.IMPORT_OCCUPATION_CODE_API}`;
+    return post(apiUrl, payload);
 };
 
 //  Occupation Name 
 export const getOccupationNameListAPI = (data) => {
-  const apiUrl = `${url.GET_OCCUPATION_NAME_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
-  return get(apiUrl);
+    const apiUrl = `${url.GET_OCCUPATION_NAME_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
 };
 
 export const addOccupationNameAPI = (payload) => {
-  const apiUrl = `${url.ADD_OCCUPATION_NAME_API}`;
-  return post(apiUrl, payload);
+    const apiUrl = `${url.ADD_OCCUPATION_NAME_API}`;
+    return post(apiUrl, payload);
 };
 
 export const editOccupationNameAPI = (payload) => {
-  const apiUrl = `${url.EDIT_OCCUPATION_NAME_API}${payload?.uuid}/update/`;
-  return put(apiUrl, payload);
+    const apiUrl = `${url.EDIT_OCCUPATION_NAME_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
 };
 
 export const deleteOccupationNameAPI = (payload) => {
-  const preparedData = { id: payload };
-  const apiUrl = `${url.DELETE_OCCUPATION_NAME_API}delete/`;
-  return delWithPayload(apiUrl, preparedData);
+    const preparedData = { id: payload };
+    const apiUrl = `${url.DELETE_OCCUPATION_NAME_API}delete/`;
+    return delWithPayload(apiUrl, preparedData);
 };
 
 export const exportOccupationNameAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_OCCUPATION_NAME_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
-  return getExportData(apiUrl, payload);
+    const apiUrl = `${url.EXPORT_OCCUPATION_NAME_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
 };
 
 export const importOccupationNameAPI = (payload) => {
-  const apiUrl = `${url.IMPORT_OCCUPATION_NAME_API}`;
-  return post(apiUrl, payload);
+    const apiUrl = `${url.IMPORT_OCCUPATION_NAME_API}`;
+    return post(apiUrl, payload);
 };
 
 
