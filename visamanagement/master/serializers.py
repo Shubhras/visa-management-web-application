@@ -1074,8 +1074,8 @@ class OccupationLevelCodeSerializer(serializers.ModelSerializer):
     
     country_id = serializers.SlugRelatedField(
         slug_field='uuid',
-        queryset=Country.objects.all(),
-        source='RepresentingCountry',
+        queryset=RepresentingCountry.objects.all(),
+        source='country',
         write_only=True
     )
     country_uuid = serializers.UUIDField(source='country.uuid', read_only=True)
@@ -1114,8 +1114,8 @@ class OccupationLevelSerializer(serializers.ModelSerializer):
 
     country_id = serializers.SlugRelatedField(
         slug_field='uuid',
-        queryset=Country.objects.all(),
-        source='RepresentingCountry',
+        queryset=RepresentingCountry.objects.all(),
+        source='country',
         write_only=True,
         allow_null=True,
         required=False
@@ -1175,8 +1175,8 @@ class OccupationCodeSerializer(serializers.ModelSerializer):
     country_uuid=serializers.CharField(read_only=True, source='country.uuid')
     country_id = serializers.SlugRelatedField(
         slug_field='uuid',
-        queryset=Country.objects.all(),
-        source='RepresentingCountry',
+        queryset=RepresentingCountry.objects.all(),
+        source='country',
         write_only=True,
         allow_null=True,
         required=False
