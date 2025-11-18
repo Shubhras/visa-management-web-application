@@ -1,4 +1,4 @@
-from django.contrib import admin
+from django.contrib import admin # type: ignore
 from master.models import *
 
 
@@ -859,6 +859,9 @@ class PRPossibilityAdmin(admin.ModelAdmin):
 
 
 
+
+
+
 @admin.register(DocumentCategory)
 class DocumentCategoryAdmin(admin.ModelAdmin):
     list_display = (
@@ -1242,3 +1245,31 @@ class CourseStatusAdmin(admin.ModelAdmin):
     search_fields = ('uuid', 'name')
     list_filter = ('is_deleted',)
     readonly_fields = ('created_at', 'updated_at')
+    
+    
+    
+@admin.register(IntakeName)
+class IntakeNameAdmin(admin.ModelAdmin):
+    list_display = ('name', 'description', 'is_deleted', 'created_at', 'updated_at')
+    search_fields = ('name',)
+    list_filter = ('is_deleted',)
+    ordering = ('name',)
+    
+    
+@admin.register(CourseStatusIntake)
+class CourseStatusIntakeAdmin(admin.ModelAdmin):
+    list_display = ('name', 'description', 'is_deleted', 'created_at', 'updated_at')
+    search_fields = ('name',)
+    list_filter = ('is_deleted',)
+    ordering = ('name',)
+    
+    
+@admin.register(ScholorshipBasedOn)
+class ScholorshipBasedOnAdmin(admin.ModelAdmin):
+    list_display = ('name', 'description', 'is_deleted', 'created_at', 'updated_at')
+    search_fields = ('name',)
+    list_filter = ('is_deleted',)
+    ordering = ('name',)
+        
+    
+        

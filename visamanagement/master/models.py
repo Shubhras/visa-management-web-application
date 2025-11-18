@@ -1,7 +1,7 @@
 
 import uuid
-from django.db import models
-from django.utils import timezone
+from django.db import models # type: ignore
+from django.utils import timezone # type: ignore
 
 class Gender(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
