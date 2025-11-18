@@ -1711,7 +1711,7 @@ class SpouseVisaCategorySerializer(serializers.ModelSerializer):
 
     visamain_name = serializers.CharField(source='visamain.name', read_only=True)
     
-    visamain_uuid = serializers.CharField(source='visamain.uuid', read_only=True)
+    visamain_id = serializers.CharField(source='visamain.uuid', read_only=True)
 
     visamain_uuid = serializers.SlugRelatedField(
         slug_field='uuid',
@@ -1725,7 +1725,8 @@ class SpouseVisaCategorySerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'uuid',
-            'visamain_uuid',        
+            'visamain_uuid',  
+            'visamain_id',      
             'visamain_name',        
             'description',
             'is_deleted',
@@ -1756,6 +1757,7 @@ class ChildrenVisaCategorySerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'uuid',
+            'visamain_id',
             'visamain_uuid',
             'visamain_name',
             'description',
