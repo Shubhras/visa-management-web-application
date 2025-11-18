@@ -249,9 +249,7 @@ const CityList = () => {
       state: columnFilters.stateId.length > 0 ? columnFilters.stateId : null,
       district: columnFilters.districtId.length > 0 ? columnFilters.districtId : null
     };
-
-    console.log('Sending params: nagar', params);
-
+    
     dispatch(cityList(params, (response, error) => {
       setLoading(false);
       if (response?.statusCode === 200 && response?.status === true) {
