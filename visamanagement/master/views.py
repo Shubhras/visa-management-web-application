@@ -2858,51 +2858,20 @@ class DistrictByFilterAPIView(APIView):
         return paginator.get_paginated_response(data)
 
 #--------------------------city--------------------
+from django.db.models import F, Func, Value
+from django.db.models.functions import Lower, Cast
+from uuid import UUID
+
 class CityListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-
-        # -----------------------
-        # CUSTOM SORTING (Excel type)
-        # -----------------------
         custom_sort = request.GET.get('customSort')  
         allowed_sort_fields = ['cityName', 'stateName', 'districtName', 'countryName', 'created_at']
 
-        if custom_sort:
-            sort_fields = []
-            for rule in custom_sort.split(','):
-                try:
-                    field, order = rule.split(':')
-                    field = field.strip()
-                    order = order.strip().lower()
-
-                    if field not in allowed_sort_fields:
-                        continue
-
-                    # Use Lower() for case-insensitive Excel-style sort
-                    if field in ['cityName', 'stateName', 'districtName', 'countryName']:
-                        f = Lower(field)
-                    else:
-                        f = F(field)
-
-                    if order == "asc":
-                        sort_fields.append(f.asc(nulls_last=True))
-                    else:
-                        sort_fields.append(f.desc(nulls_last=True))
-
-                except ValueError:
-                    continue
-        else:
-            sort_by = request.GET.get('sortBy', 'created_at')
-            sort_order = request.GET.get('sortOrder', 'desc')
-            if sort_by not in allowed_sort_fields:
-                sort_by = 'created_at'
-            f = F(sort_by)
-            sort_fields = [f.desc(nulls_last=True) if sort_order=='desc' else f.asc(nulls_last=True)]
         # ---------------------------
-        # Helper functions
+        # Parse IDs
         # ---------------------------
         def parse_ids(param_name):
             raw = request.GET.get(param_name, '')
@@ -2921,7 +2890,6 @@ class CityListAPIView(APIView):
                     pass
             return valid
 
-        # Parse filters
         country_list = validate_uuid_list(parse_ids('country'))
         state_list = validate_uuid_list(parse_ids('state'))
         district_list = validate_uuid_list(parse_ids('district'))
@@ -2930,7 +2898,7 @@ class CityListAPIView(APIView):
         queryset = City.objects.filter(is_deleted=False)
 
         # ---------------------------
-        # Hierarchical filtering
+        # Hierarchical Filtering
         # ---------------------------
         if city_list:
             queryset = queryset.filter(uuid__in=city_list)
@@ -2943,26 +2911,52 @@ class CityListAPIView(APIView):
                 queryset = queryset.filter(countryName__uuid__in=country_list)
 
         # ---------------------------
-        # Search by city name
+        # Search
         # ---------------------------
         if search:
             queryset = queryset.filter(cityName__istartswith=search)
 
         # ---------------------------
-        # APPLY SORTING
+        # Excel-like Sorting
         # ---------------------------
+        sort_fields = []
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field not in allowed_sort_fields:
+                        continue
+
+                    # Use Lower() for case-insensitive string sort
+                    if field in ['cityName', 'stateName', 'districtName', 'countryName']:
+                        f = Lower(field)
+                    else:
+                        f = F(field)
+
+                    if order == "asc":
+                        sort_fields.append(f.asc(nulls_last=True))
+                    else:
+                        sort_fields.append(f.desc(nulls_last=True))
+
+                except ValueError:
+                    continue
+        else:
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'desc')
+            f = F(sort_by)
+            sort_fields = [f.desc(nulls_last=True) if sort_order=='desc' else f.asc(nulls_last=True)]
+
         queryset = queryset.order_by(*sort_fields)
 
+        # ---------------------------
         # Pagination
+        # ---------------------------
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = CitySerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
-
-
-
-
-
 
 # -------------------- City -------------------- 
 class CityCreateAPIView(APIView):
