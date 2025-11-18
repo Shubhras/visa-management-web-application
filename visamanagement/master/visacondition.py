@@ -3629,7 +3629,7 @@ class ChildrenStudyWorkRightsExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Children Study Work Rights',
+            'name': 'Children Study / Work Rights',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',
@@ -3644,7 +3644,7 @@ class ChildrenStudyWorkRightsExportAPIView(APIView):
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'ChildrenStudyWorkRights'
+        dataset.title = 'ChildrenStudy/WorkRights'
 
         for obj in queryset:
             row = []
@@ -3687,7 +3687,7 @@ class ChildrenStudyWorkRightsImportAPIView(APIView):
         format_type = file.name.split(".")[-1].lower()
         duplicates = []
         skipped_rows = []
-        required_headers = {"children study work rights"}  # Adjust column name
+        required_headers = {"children study / work rights"}  # Adjust column name
         optional_headers = {"description"}
 
         try:
@@ -3758,7 +3758,7 @@ class ChildrenStudyWorkRightsImportAPIView(APIView):
             imported_count = 0
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("children study work rights")) if row.get("children study work rights") else None
+                name = str(row.get("children study / work rights")) if row.get("children study / work rights") else None
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
