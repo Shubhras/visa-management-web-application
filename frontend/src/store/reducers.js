@@ -9,6 +9,7 @@ import EducationMasterReducer from "./master/educationMaster/reducer";
 import TestMasterReducer from "./master/testMaster/reducer";
 import occupationMasterReducer from "./master/occupationMaster/reducer";
 import instituteMasterReducer from "./master/instituteMaster/reducer";
+import visaConditionsMasterReducer from "./master/visaConditionsMaster/reducer";
 
 
 const rootReducer = combineReducers({
@@ -21,6 +22,7 @@ const rootReducer = combineReducers({
     TestMasterReducer,
     occupationMasterReducer,
     instituteMasterReducer,
+    visaConditionsMasterReducer,
 });
 
 export default rootReducer;
