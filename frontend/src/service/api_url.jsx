@@ -498,7 +498,30 @@ export const DELETE_OCCUPATION_NAME_API = "/api/v1/master/occupation-names/";   
 export const EXPORT_OCCUPATION_NAME_API = "/api/v1/master/occupation-names/export/";
 export const IMPORT_OCCUPATION_NAME_API = "/api/v1/master/occupation-names/import/";
 
+// Designation Endpoints
+
+export const GET_DESIGNATION_LIST = "/api/v1/master/designations/";
+export const ADD_DESIGNATION_API = "/api/v1/master/designation/create/";
+export const EDIT_DESIGNATION_API = "/api/v1/master/designation/";        // +uuid/update/
+export const DELETE_DESIGNATION_API = "/api/v1/master/designation/";      // +delete/
+export const EXPORT_DESIGNATION_API = "/api/v1/master/designation/export/";
+export const IMPORT_DESIGNATION_API = "/api/v1/master/designation/import/";
+
+// Job Prospect Endpoints
+
+export const GET_JOB_PROSPECT_LIST = "/api/v1/master/jobprospect/";
+export const ADD_JOB_PROSPECT_API = "/api/v1/master/jobprospect/create/";
+export const EDIT_JOB_PROSPECT_API = "/api/v1/master/jobprospect/";        // +uuid/update/
+export const DELETE_JOB_PROSPECT_API = "/api/v1/master/jobprospect/";      // +delete/
+export const EXPORT_JOB_PROSPECT_API = "/api/v1/master/jobprospect/export/";
+export const IMPORT_JOB_PROSPECT_API = "/api/v1/master/jobprospect/import/";
+
+
 export const GET_COUNTRY_LIST_DEMO = "/api/v1/master/country/";
+
+//representing country api Endpoint
+export const GET_REPRESENTING_COUNTRY_LIST = "/api/v1/master/representingcountry/";
+
 
 
 // Institute Type API Endpoints

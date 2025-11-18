@@ -2101,6 +2101,77 @@ export const importOccupationNameAPI = (payload) => {
   return post(apiUrl, payload);
 };
 
+//  Designation 
+export const getDesignationListAPI = (data) => {
+  const apiUrl = `${url.GET_DESIGNATION_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
+
+export const addDesignationAPI = (payload) => {
+  const apiUrl = `${url.ADD_DESIGNATION_API}`;
+  return post(apiUrl, payload);
+};
+
+export const editDesignationAPI = (payload) => {
+  const apiUrl = `${url.EDIT_DESIGNATION_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+
+export const deleteDesignationAPI = (payload) => {
+  const preparedData = { id: payload };
+  const apiUrl = `${url.DELETE_DESIGNATION_API}delete/`;
+  return delWithPayload(apiUrl, preparedData);
+};
+
+export const exportDesignationAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_DESIGNATION_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+
+export const importDesignationAPI = (payload) => {
+  const apiUrl = `${url.IMPORT_DESIGNATION_API}`;
+  return post(apiUrl, payload);
+};
+
+// Job Prospect
+export const getJobProspectListAPI = (data) => {
+  const apiUrl = `${url.GET_JOB_PROSPECT_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
+
+export const addJobProspectAPI = (payload) => {
+  const apiUrl = `${url.ADD_JOB_PROSPECT_API}`;
+  return post(apiUrl, payload);
+};
+
+export const editJobProspectAPI = (payload) => {
+  const apiUrl = `${url.EDIT_JOB_PROSPECT_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+
+export const deleteJobProspectAPI = (payload) => {
+  const preparedData = { id: payload };
+  const apiUrl = `${url.DELETE_JOB_PROSPECT_API}delete/`;
+  return delWithPayload(apiUrl, preparedData);
+};
+
+export const exportJobProspectAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_JOB_PROSPECT_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+
+export const importJobProspectAPI = (payload) => {
+  const apiUrl = `${url.IMPORT_JOB_PROSPECT_API}`;
+  return post(apiUrl, payload);
+};
+
+//Representing api
+export const getRepresentingCountryListAPI = (data) => {
+  const apiUrl = `${url.GET_REPRESENTING_COUNTRY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
+
+
 
 
 // Institute Type

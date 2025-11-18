@@ -65,6 +65,19 @@ import {
   EDIT_OCCUPATION_NAME,
   ADD_OCCUPATION_NAME,
   OCCUPATION_NAME_LIST,
+  DESIGNATION_LIST,
+  ADD_DESIGNATION,
+  EDIT_DESIGNATION,
+  DELETE_DESIGNATION,
+  EXPORT_DESIGNATION,
+  IMPORT_DESIGNATION,
+  IMPORT_JOB_PROSPECT,
+  EXPORT_JOB_PROSPECT,
+  DELETE_JOB_PROSPECT,
+  EDIT_JOB_PROSPECT,
+  ADD_JOB_PROSPECT,
+  JOB_PROSPECT_LIST,
+  REPRESENTING_COUNTRY_LIST,
 } from "./actionType";
 
 // Job Type Actions
@@ -462,6 +475,84 @@ export const occupationNameExportData = (data, callback) => ({
 
 export const occupationNameImportData = (data, callback) => ({
   type: IMPORT_OCCUPATION_NAME,
+  data,
+  callback,
+});
+
+export const designationList = (data, callback) => ({
+  type: DESIGNATION_LIST,
+  data,
+  callback,
+});
+
+export const designationAdd = (data, callback) => ({
+  type: ADD_DESIGNATION,
+  data,
+  callback,
+});
+
+export const designationEdit = (data, callback) => ({
+  type: EDIT_DESIGNATION,
+  data,
+  callback,
+});
+
+export const designationDelete = (data, callback) => ({
+  type: DELETE_DESIGNATION,
+  data,
+  callback,
+});
+
+export const designationExportData = (data, callback) => ({
+  type: EXPORT_DESIGNATION,
+  data,
+  callback,
+});
+
+export const designationImportData = (data, callback) => ({
+  type: IMPORT_DESIGNATION,
+  data,
+  callback,
+});
+
+export const jobProspectList = (data, callback) => ({
+  type: JOB_PROSPECT_LIST,
+  data,
+  callback,
+});
+
+export const jobProspectAdd = (data, callback) => ({
+  type: ADD_JOB_PROSPECT,
+  data,
+  callback,
+});
+
+export const jobProspectEdit = (data, callback) => ({
+  type: EDIT_JOB_PROSPECT,
+  data,
+  callback,
+});
+
+export const jobProspectDelete = (data, callback) => ({
+  type: DELETE_JOB_PROSPECT,
+  data,
+  callback,
+});
+
+export const jobProspectExportData = (data, callback) => ({
+  type: EXPORT_JOB_PROSPECT,
+  data,
+  callback,
+});
+
+export const jobProspectImportData = (data, callback) => ({
+  type: IMPORT_JOB_PROSPECT,
+  data,
+  callback,
+});
+
+export const representingCountryList = (data, callback) => ({
+  type: REPRESENTING_COUNTRY_LIST,
   data,
   callback,
 });

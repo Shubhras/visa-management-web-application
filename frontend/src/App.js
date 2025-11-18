@@ -427,6 +427,8 @@ import OccupationCodeList from "./pages/masters/occupationMaster/occupationcode/
 import OccupationNameList from "./pages/masters/occupationMaster/occupationname/OccupationNameList";
 
 import { GlobalSearchProvider } from '../src/components/comman/GlobalSearchContext';
+import DesignationList from "./pages/masters/occupationMaster/designation/DesignationList";
+import JobProspectList from "./pages/masters/occupationMaster/jobProspect/JobProspectList";
 
 
 
@@ -725,9 +727,9 @@ function App() {
         <Route path="/occupation-level" element={<ProtectedRoute><OccupationLevelList /></ProtectedRoute>}></Route>
         <Route path="/occupation-code" element={<ProtectedRoute><OccupationCodeList /></ProtectedRoute>}></Route>
         <Route path="/occupation-name" element={<ProtectedRoute><OccupationNameList /></ProtectedRoute>}></Route>
+        <Route path="/designation" element={<ProtectedRoute><DesignationList /></ProtectedRoute>}></Route>
+        <Route path="/job-prospect" element={<ProtectedRoute><JobProspectList /></ProtectedRoute>}></Route>
         
-
-
         {/*Institute Master*/}
         <Route path="/institute-type" element={<ProtectedRoute><InstituteTypeList /></ProtectedRoute>}></Route>
         <Route path="/institute-group-name" element={<ProtectedRoute><InstituteGroupNameList /></ProtectedRoute>}></Route>

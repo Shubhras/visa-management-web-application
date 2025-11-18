@@ -167,6 +167,9 @@ const MasterLayout = ({ children }) => {
             { name: "Occupation Level", path: "/occupation-level" },
             { name: "Occupation Code", path: "/occupation-code" },
             { name: "Occupation Name", path: "/occupation-name" },
+            { name: "Designation (Job Title)", path: "/designation" },
+            { name: "Job Prospect", path: "/job-prospect" },
+            
           ],
         },
         {

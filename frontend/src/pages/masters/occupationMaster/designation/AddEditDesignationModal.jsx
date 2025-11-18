@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
-import Select from "react-select";
+import { toast } from "react-toastify";
 import {
-  occupationCategoryAdd,
-  occupationCategoryEdit,
+  occupationCodeList,
+  occupationNameAdd,
+  occupationNameEdit,
+  occupationNameList,
   occupationVersionList,
   representingCountryList,
 } from "../../../../store/master/occupationMaster/action";
-import { toast } from "react-toastify";
+import Select from "react-select";
 
-const AddEditOccupationCategory = ({
+const AddEditDesignationModal = ({
   show,
   handleClose,
   mode = "add",
@@ -19,14 +21,17 @@ const AddEditOccupationCategory = ({
   const [loading, setLoading] = useState(false);
   const [countryData, setCountryData] = useState([]);
   const [occupationversiondata, setOccupationVersionData] = useState([]);
+  const [occupationNameData, setOccupationNameData] = useState([]);
+  const [occupationCodeData, setOccupationCodeData] = useState([]);
 
   // Form state
   const [formData, setFormData] = useState({
     uuid: "",
     country: "",
     occupationVersion: "",
-    occupationCategory: "",
-    occupationCategoryCode: "",
+    occupationName: "",
+    occupationCode: "",
+    designation: "",
     description: "",
   });
 
@@ -34,7 +39,10 @@ const AddEditOccupationCategory = ({
   const [errors, setErrors] = useState({
     country: "",
     occupationVersion: "",
-    occupationCategory: "",
+    occupationName: "",
+    occupationCode: "",
+    designation: "",
+    description: "",
   });
 
   const fetchCountryList = () => {
@@ -44,8 +52,8 @@ const AddEditOccupationCategory = ({
       limit: 2000,
       search: "",
       status: "",
-      sortBy: "updated_at",
-      sortOrder: "desc",
+      sortBy: "name",
+      sortOrder: "asc",
     };
     dispatch(
       representingCountryList(params, (response, error) => {
@@ -63,6 +71,21 @@ const AddEditOccupationCategory = ({
         }
       })
     );
+    dispatch(
+      occupationNameList(params, (response, error) => {
+        // setLoading(false);
+        if (response?.statusCode === 200 && response?.status === true) {
+          setOccupationNameData(response?.data || []);
+        }
+      })
+    );dispatch(
+      occupationCodeList(params, (response, error) => {
+        // setLoading(false);
+        if (response?.statusCode === 200 && response?.status === true) {
+          setOccupationCodeData(response?.data || []);
+        }
+      })
+    );
   };
   const customFilterOptionCountry = (option, inputValue) => {
     if (!inputValue) return true;
@@ -70,27 +93,31 @@ const AddEditOccupationCategory = ({
   };
   // Populate form data when in edit mode
   useEffect(() => {
-    if (mode === "edit" && rowData) {
-      setFormData({
-        uuid: rowData.uuid || "",
-        occupationCategory: rowData.occupationcategory || "",
-        country: rowData.country_uuid || "",
-        occupationVersion: rowData.occupation_version_uuid || "",
-        occupationCategoryCode: rowData.occupationcategorycode || "",
-        description: rowData.description || "",
-      });
-    } else {
-      // Reset form when switching to add mode
-      setFormData({
-        uuid: "",
-        country: "",
-        occupationCategory: "",
-        occupationVersion: "",
-        occupationCategoryCode: "",
-        description: "",
-      });
+    if (show) {
+      if (mode === "edit" && rowData) {
+        setFormData({
+          uuid: rowData.uuid || "",
+          country: rowData.country_uuid || "",
+          occupationVersion: rowData.occupationversion_uuid || "",
+          occupationCode: rowData.occupationcode_uuid || "",
+          occupationName: rowData.occupationname || "",
+          description: rowData.description || "",
+          designation: rowData.designation || "",
+        });
+      } else {
+        // Reset form when switching to add mode
+        setFormData({
+          uuid: "",
+          country: "",
+          occupationVersion: "",
+          occupationName: "",
+          occupationCode: "",
+          designation: "",
+          description: "",
+        });
+      }
+      fetchCountryList();
     }
-    fetchCountryList();
   }, [mode, rowData, show]);
 
   // Handle input changes
@@ -116,16 +143,24 @@ const AddEditOccupationCategory = ({
     let isValid = true;
 
     // Department Name validation
-    if (!formData.occupationCategory.trim()) {
-      newErrors.occupationCategory = "Occupation Category is required";
-      isValid = false;
-    }
     if (!formData.country.trim()) {
       newErrors.country = "Country is required";
       isValid = false;
     }
-    if (!formData.country.trim()) {
-      newErrors.country = "Country is required";
+    if (!formData.occupationVersion.trim()) {
+      newErrors.occupationVersion = "Occupation Version is required";
+      isValid = false;
+    }
+    if (!formData.designation.trim()) {
+      newErrors.designation = "Designation is required";
+      isValid = false;
+    }
+    if (!formData.occupationCode.trim()) {
+      newErrors.occupationCode = "Occupation Code is required";
+      isValid = false;
+    }
+    if (!formData.occupationName.trim()) {
+      newErrors.occupationName = "Occupation Name is required";
       isValid = false;
     }
 
@@ -142,24 +177,25 @@ const AddEditOccupationCategory = ({
         mode === "edit"
           ? {
               uuid: formData.uuid,
-              occupationcategory: formData.occupationCategory,
-              description: formData.description,
               country_id: formData.country,
-              occupation_version_id: formData.occupationVersion,
-              occupationcategorycode: formData.occupationCategoryCode,
+              occupationversion_id: formData.occupationVersion,
+              occupationcode_id: formData.occupationCode,
+              occupationname: formData.occupationName,
+              designation: formData.designation,
+              description: formData.description,
             }
           : {
-              occupationcategory: formData.occupationCategory,
-              description: formData.description,
               country_id: formData.country,
-              occupation_version_id: formData.occupationVersion,
-              occupationcategorycode: formData.occupationCategoryCode,
+              occupationversion_id: formData.occupationVersion,
+              occupationcode_id: formData.occupationCode,
+              occupationname: formData.occupationName,
+              designation: formData.designation,
+              description: formData.description,
             };
 
       setLoading(true);
 
-      const action =
-        mode === "edit" ? occupationCategoryEdit : occupationCategoryAdd;
+      const action = mode === "edit" ? occupationNameEdit : occupationNameAdd;
 
       dispatch(
         action(sendPayload, (response, error) => {
@@ -170,7 +206,7 @@ const AddEditOccupationCategory = ({
             if (response?.statusCode === 200 && response?.status === true) {
               toast.success(response?.message);
               resetForm();
-              handleClose();
+              handleClose(true);
             } else {
               toast.error("Something went wrong.");
             }
@@ -185,9 +221,10 @@ const AddEditOccupationCategory = ({
     setFormData({
       uuid: "",
       country: "",
-      occupationCategory: "",
       occupationVersion: "",
-      occupationCategoryCode: "",
+      occupationName: "",
+      occupationCode: "",
+      designation: "",
       description: "",
     });
     setErrors({});
@@ -197,7 +234,7 @@ const AddEditOccupationCategory = ({
   const onClose = () => {
     resetForm();
     setLoading(false);
-    handleClose();
+    handleClose(false);
   };
 
   // Conditional return after all hooks
@@ -219,8 +256,8 @@ const AddEditOccupationCategory = ({
           <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
             <h1 className="modal-title fs-5" id="departmentModalLabel">
               {mode === "edit"
-                ? "Edit Occupation Category"
-                : "Add Occupation Category"}
+                ? "Edit Occupation Level"
+                : "Add Occupation Level"}
             </h1>
             <button
               type="button"
@@ -234,22 +271,25 @@ const AddEditOccupationCategory = ({
             <form onSubmit={handleSubmit}>
               <div className="row">
                 {/* Department Name */}
-
-                <div className="col-12 mb-20">
+                <div className="col-6 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                     Country<span className="text-danger">*</span>
                   </label>
                   <Select
                     options={countryData.map((option) => ({
                       value: option.uuid,
-                      label: option.name,
+                      label: option.name + " (" + option?.continent?.name + ")",
                     }))}
                     value={
                       formData.country
                         ? countryData
                             .map((option) => ({
                               value: option.uuid,
-                              label: option.name,
+                              label:
+                                option.name +
+                                " (" +
+                                option?.continent?.name +
+                                ")",
                             }))
                             .find((opt) => opt.value === formData.country)
                         : null
@@ -277,8 +317,7 @@ const AddEditOccupationCategory = ({
                     </div>
                   )}
                 </div>
-
-                <div className="col-12 mb-20">
+                <div className="col-6 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                     Occupation Version<span className="text-danger">*</span>
                   </label>
@@ -321,47 +360,113 @@ const AddEditOccupationCategory = ({
                     </div>
                   )}
                 </div>
-                <div className="col-12 mb-20">
+                <div className="col-6 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Occupation Category <span className="text-danger">*</span>
+                    Occupation Code<span className="text-danger">*</span>
                   </label>
-                  <input
-                    type="text"
-                    name="occupationCategory"
-                    value={formData.occupationCategory}
-                    onChange={handleChange}
-                    className={`form-control radius-8 ${
-                      errors.occupationCategory ? "is-invalid" : ""
+                  <Select
+                    options={occupationCodeData.map((option) => ({
+                      value: option.uuid,
+                      label: option.occupationcode,
+                    }))}
+                    value={
+                      formData.occupationCode
+                        ? occupationCodeData
+                            .map((option) => ({
+                              value: option.uuid,
+                              label: option.occupationcode,
+                            }))
+                            .find(
+                              (opt) => opt.value === formData.occupationCode
+                            )
+                        : null
+                    }
+                    onChange={(selectedOption) =>
+                      handleChange({
+                        target: {
+                          name: "occupationCode",
+                          value: selectedOption ? selectedOption.value : "",
+                        },
+                      })
+                    }
+                    placeholder="Select Occupation Code"
+                    isClearable
+                    isSearchable
+                    className={`custom-select-container ${
+                      errors.country ? "is-invalid" : ""
                     }`}
-                    placeholder="Enter Occupation Category"
+                    classNamePrefix="custom-select"
                   />
-                  {errors.occupationCategory && (
+                  {errors.occupationCode && (
                     <div className="text-danger text-sm mt-1">
-                      {errors.occupationCategory}
+                      {errors.occupationCode}
                     </div>
                   )}
-                </div>
-
+                </div>{" "}
+                <div className="col-6 mb-20">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                    Occupation Name<span className="text-danger">*</span>
+                  </label>
+                  <Select
+                    options={occupationNameData.map((option) => ({
+                      value: option.uuid,
+                      label: option.occupationname,
+                    }))}
+                    value={
+                      formData.occupationName
+                        ? occupationNameData
+                            .map((option) => ({
+                              value: option.uuid,
+                              label: option.occupationname,
+                            }))
+                            .find(
+                              (opt) => opt.value === formData.occupationName
+                            )
+                        : null
+                    }
+                    onChange={(selectedOption) =>
+                      handleChange({
+                        target: {
+                          name: "occupationName",
+                          value: selectedOption ? selectedOption.value : "",
+                        },
+                      })
+                    }
+                    placeholder="Select Occupation Name"
+                    isClearable
+                    isSearchable
+                    className={`custom-select-container ${
+                      errors.country ? "is-invalid" : ""
+                    }`}
+                    classNamePrefix="custom-select"
+                  />
+                  {errors.occupationName && (
+                    <div className="text-danger text-sm mt-1">
+                      {errors.occupationName}
+                    </div>
+                  )}
+                </div>{" "}
+                {/* Description */}
                 <div className="col-12 mb-20">
                   <label
                     htmlFor="desc"
                     className="form-label fw-semibold text-primary-light text-sm mb-8"
                   >
-                    Occupation Category Code
+                    Designation
                   </label>
-                  <input
-                    className={`form-control`}
+                  <textarea
+                    className={`form-control ${
+                      errors.mainduties ? "is-invalid" : ""
+                    }`}
                     id="desc"
-                    name="occupationCategoryCode"
-                    value={formData.occupationCategoryCode}
+                    name="designation"
+                    value={formData.designation}
                     onChange={handleChange}
-                    rows={1}
+                    rows={3}
                     cols={50}
-                    placeholder="Occupation Code"
+                    placeholder="Designation Name"
                   />
                 </div>
-
-                {/* Description */}
                 <div className="col-12 mb-20">
                   <label
                     htmlFor="desc"
@@ -382,7 +487,6 @@ const AddEditOccupationCategory = ({
                     placeholder="Description"
                   />
                 </div>
-
                 {/* Buttons */}
                 <div className="d-flex align-items-center justify-content-center gap-3 mt-24">
                   <button
@@ -420,4 +524,4 @@ const AddEditOccupationCategory = ({
   );
 };
 
-export default AddEditOccupationCategory;
+export default AddEditDesignationModal;

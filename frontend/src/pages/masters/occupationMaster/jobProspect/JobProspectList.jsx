@@ -6,14 +6,14 @@ import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import { formatDateDDMMYYYYTime } from "../../../../helper/utils/commanHelper";
 import {
-  occupationNameExportData,
-  occupationNameList,
-  occupationNameDelete,
+  jobProspectExportData,
+  jobProspectList,
+  jobProspectDelete,
 } from "../../../../store/master/occupationMaster/action";
-import AddEditOccupationName from "./AddEditOccupationName";
-import AddImportOccupationName from "./AddImportOccupationName";
+import AddEditJobProspectModal from "./AddEditJobProspectModal";
+import AddImportJobProspectModal from "./AddImportJobProspectModal";
 
-const OccupationNameList = () => {
+const JobProspectList = () => {
   const dispatch = useDispatch();
   const [modalState, setModalState] = useState({
     show: false,
@@ -38,7 +38,7 @@ const OccupationNameList = () => {
     });
     // Only call API when data was successfully added/updated
     if (shouldRefresh) {
-      fetchOccupationNameList();
+      fetchJobProspectList();
     }
   };
 
@@ -47,7 +47,7 @@ const OccupationNameList = () => {
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmMessage, setDeleteConfirmMessage] = useState(
-    "Are you sure you want to delete this occupation name?"
+    "Are you sure you want to delete this job prospect?"
   );
   const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
@@ -58,32 +58,34 @@ const OccupationNameList = () => {
   const [items] = useState([
     "Country",
     "Occupation Version",
-    "Occupation Category",
-    "Occupation Level",
     "Occupation Level Code",
-    "Occupation Code",
     "Occupation Name",
+    "Occupation Code",
+    "Occupation Type",
+    "Job Prospect",
+    "Salary Currency",
+    "Salary Amount",
+    "Duration",
     "Description",
-    "Main Duties",
     "Modified On",
   ]);
   const [selectedItems, setSelectedItems] = useState([
     "Country",
     "Occupation Version",
-    "Occupation Category",
-    "Occupation Level",
     "Occupation Level Code",
-    "Occupation Code",
     "Occupation Name",
+    "Occupation Code",
+    "Occupation Type",
+    "Job Prospect",
   ]);
   const [ItemsRequired] = useState([
     "Country",
     "Occupation Version",
-    "Occupation Category",
-    "Occupation Level",
     "Occupation Level Code",
-    "Occupation Code",
     "Occupation Name",
+    "Occupation Code",
+    "Occupation Type",
+    "Job Prospect",
   ]);
 
   const [tableColumns] = useState([
@@ -101,24 +103,18 @@ const OccupationNameList = () => {
       visible: true,
       required: false,
     },
-    {
-      id: "occupationcategory",
-      label: "Occupation Category",
-      field: "occupationcategory",
-      visible: true,
-      required: false,
-    },
-    {
-      id: "occupationlevel",
-      label: "Occupation Level",
-      field: "occupationlevel",
-      visible: true,
-      required: false,
-    },
+
     {
       id: "occupationlevelcode",
       label: "Occupation Level Code",
       field: "occupationlevelcode",
+      visible: true,
+      required: false,
+    },
+    {
+      id: "occupationname",
+      label: "Occupation Name",
+      field: "occupationname",
       visible: true,
       required: false,
     },
@@ -130,23 +126,45 @@ const OccupationNameList = () => {
       required: false,
     },
     {
-      id: "occupationname",
-      label: "Occupation name",
-      field: "occupationname",
+      id: "occupationtype",
+      label: "Occupation Type",
+      field: "occupationtype",
       visible: true,
       required: false,
     },
+    {
+      id: "jobprospect",
+      label: "Job Prospect",
+      field: "jobprospect",
+      visible: true,
+      required: false,
+    },
+    {
+      id: "salarycurrency",
+      label: "Salary Currency",
+      field: "salarycurrency",
+      visible: true,
+      required: false,
+    },
+    {
+      id: "salaryamount",
+      label: "Salary Amount",
+      field: "salaryamount",
+      visible: true,
+      required: false,
+    },
+    {
+      id: "duration",
+      label: "Duration",
+      field: "duration",
+      visible: true,
+      required: false,
+    },
+
     {
       id: "description",
       label: "Description",
       field: "description",
-      visible: true,
-      required: false,
-    },
-    {
-      id: "mainduties",
-      label: "Main Duties",
-      field: "mainduties",
       visible: true,
       required: false,
     },
@@ -218,7 +236,7 @@ const OccupationNameList = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (tableState.search !== undefined) {
-        fetchOccupationNameList();
+        fetchJobProspectList();
       }
     }, 500);
 
@@ -226,7 +244,7 @@ const OccupationNameList = () => {
   }, [tableState.search]);
 
   useEffect(() => {
-    fetchOccupationNameList();
+    fetchJobProspectList();
   }, [
     tableState.page,
     tableState.limit,
@@ -235,7 +253,7 @@ const OccupationNameList = () => {
     tableState.sortOrder,
   ]);
 
-  const fetchOccupationNameList = () => {
+  const fetchJobProspectList = () => {
     setLoading(true);
     const params = {
       page: tableState.page,
@@ -247,7 +265,7 @@ const OccupationNameList = () => {
     };
 
     dispatch(
-      occupationNameList(params, (response, error) => {
+      jobProspectList(params, (response, error) => {
         setLoading(false);
         if (response?.statusCode === 200 && response?.status === true) {
           const paginationData = response?.pagination || {};
@@ -444,7 +462,7 @@ const OccupationNameList = () => {
       return;
     }
     dispatch(
-      occupationNameDelete(sendPayload, (response, error) => {
+      jobProspectDelete(sendPayload, (response, error) => {
         if (error) {
           toast.error(error?.response?.data?.message || "server error");
         } else {
@@ -460,7 +478,7 @@ const OccupationNameList = () => {
             setSelectedRows([]);
             setSelectAllOrNot("");
             setDeleteId(null);
-            fetchOccupationNameList();
+            fetchJobProspectList();
           } else {
             toast.error("Something went wrong.");
           }
@@ -482,7 +500,7 @@ const OccupationNameList = () => {
     setShowImport(false);
     // Only call API when data was successfully imported
     if (shouldRefresh) {
-      fetchOccupationNameList();
+      fetchJobProspectList();
     }
   };
 
@@ -533,13 +551,12 @@ const OccupationNameList = () => {
     const fieldMapping = {
       Country: "country",
       "Occupation Version": "occupationversion",
-      "Occupation Category": "occupationcategory",
-      "Occupation Level": "occupationlevel",
       "Occupation Level Code": "occupationlevelcode",
-      "Occupation Code": "occupationcode",
       "Occupation Name": "occupationname",
+      "Occupation Code": "occupationcode",
+      "Occupation Type": "occupationtype",
+      "Job Prospect": "jobprospect",
       Description: "description",
-      "Main Duties": "mainduties",
       "Modified On": "updated_at",
     };
     const mappedFields = selectedItems.map(
@@ -554,7 +571,7 @@ const OccupationNameList = () => {
     };
     setLoadingExport(true);
     dispatch(
-      occupationNameExportData(sendPayload, (response, error) => {
+      jobProspectExportData(sendPayload, (response, error) => {
         if (error) {
           setLoadingExport(false);
           toast.error(error?.response?.message || "server error");
@@ -830,17 +847,17 @@ const OccupationNameList = () => {
                             <span>{rowItem.occupationcategory}</span>
                           </td>
                         )}
-                            {isColumnVisible("occupationlevel") && (
-                              <td>
-                                <span>{rowItem.occupationlevel}</span>
-                              </td>
-                            )}
+                        {isColumnVisible("occupationlevel") && (
+                          <td>
+                            <span>{rowItem.occupationlevel}</span>
+                          </td>
+                        )}
                         {isColumnVisible("occupationlevelcode") && (
                           <td>
                             <span>{rowItem.occupationlevelcode}</span>
                           </td>
                         )}
-                        
+
                         {isColumnVisible("occupationcode") && (
                           <td>
                             <span>{rowItem.occupationcode}</span>
@@ -1055,7 +1072,7 @@ const OccupationNameList = () => {
         </div>
 
         {/* Add/Edit Modal */}
-        <AddEditOccupationName
+        <AddEditJobProspectModal
           show={modalState.show}
           handleClose={handleClose}
           mode={modalState.mode}
@@ -1064,7 +1081,7 @@ const OccupationNameList = () => {
 
         {/* Import Modal */}
         {showImport && (
-          <AddImportOccupationName
+          <AddImportJobProspectModal
             show={showImport}
             handleClose={handleCloseImport}
           />
@@ -1241,4 +1258,4 @@ const OccupationNameList = () => {
   );
 };
 
-export default OccupationNameList;
+export default JobProspectList;

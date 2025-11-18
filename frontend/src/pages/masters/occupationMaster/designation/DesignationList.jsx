@@ -6,14 +6,14 @@ import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import { formatDateDDMMYYYYTime } from "../../../../helper/utils/commanHelper";
 import {
-  occupationNameExportData,
-  occupationNameList,
-  occupationNameDelete,
+  designationExportData,
+  designationList,
+  designationDelete,
 } from "../../../../store/master/occupationMaster/action";
-import AddEditOccupationName from "./AddEditOccupationName";
-import AddImportOccupationName from "./AddImportOccupationName";
+import AddEditDesignationModal from "./AddEditDesignationModal";
+import AddImportDesignationModal from "./AddImportDesignationModal";
 
-const OccupationNameList = () => {
+const DesignationList = () => {
   const dispatch = useDispatch();
   const [modalState, setModalState] = useState({
     show: false,
@@ -38,7 +38,7 @@ const OccupationNameList = () => {
     });
     // Only call API when data was successfully added/updated
     if (shouldRefresh) {
-      fetchOccupationNameList();
+      fetchdDesignationList();
     }
   };
 
@@ -47,7 +47,7 @@ const OccupationNameList = () => {
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmMessage, setDeleteConfirmMessage] = useState(
-    "Are you sure you want to delete this occupation name?"
+    "Are you sure you want to delete this designatoin?"
   );
   const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
@@ -58,32 +58,25 @@ const OccupationNameList = () => {
   const [items] = useState([
     "Country",
     "Occupation Version",
-    "Occupation Category",
-    "Occupation Level",
-    "Occupation Level Code",
-    "Occupation Code",
     "Occupation Name",
+    "Occupation Code",
+    "Designation(Job Title)",
     "Description",
-    "Main Duties",
     "Modified On",
   ]);
   const [selectedItems, setSelectedItems] = useState([
     "Country",
     "Occupation Version",
-    "Occupation Category",
-    "Occupation Level",
-    "Occupation Level Code",
-    "Occupation Code",
     "Occupation Name",
+    "Occupation Code",
+    "Designation(Job Title)",
   ]);
   const [ItemsRequired] = useState([
     "Country",
     "Occupation Version",
-    "Occupation Category",
-    "Occupation Level",
-    "Occupation Level Code",
-    "Occupation Code",
     "Occupation Name",
+    "Occupation Code",
+    "Designation(Job Title)",
   ]);
 
   const [tableColumns] = useState([
@@ -102,27 +95,6 @@ const OccupationNameList = () => {
       required: false,
     },
     {
-      id: "occupationcategory",
-      label: "Occupation Category",
-      field: "occupationcategory",
-      visible: true,
-      required: false,
-    },
-    {
-      id: "occupationlevel",
-      label: "Occupation Level",
-      field: "occupationlevel",
-      visible: true,
-      required: false,
-    },
-    {
-      id: "occupationlevelcode",
-      label: "Occupation Level Code",
-      field: "occupationlevelcode",
-      visible: true,
-      required: false,
-    },
-    {
       id: "occupationcode",
       label: "Occupation Code",
       field: "occupationcode",
@@ -137,16 +109,16 @@ const OccupationNameList = () => {
       required: false,
     },
     {
-      id: "description",
-      label: "Description",
-      field: "description",
+      id: "designation",
+      label: "Designation(Job Title)",
+      field: "designation",
       visible: true,
       required: false,
     },
     {
-      id: "mainduties",
-      label: "Main Duties",
-      field: "mainduties",
+      id: "description",
+      label: "Description",
+      field: "description",
       visible: true,
       required: false,
     },
@@ -218,7 +190,7 @@ const OccupationNameList = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (tableState.search !== undefined) {
-        fetchOccupationNameList();
+        fetchdDesignationList();
       }
     }, 500);
 
@@ -226,7 +198,7 @@ const OccupationNameList = () => {
   }, [tableState.search]);
 
   useEffect(() => {
-    fetchOccupationNameList();
+    fetchdDesignationList();
   }, [
     tableState.page,
     tableState.limit,
@@ -235,7 +207,7 @@ const OccupationNameList = () => {
     tableState.sortOrder,
   ]);
 
-  const fetchOccupationNameList = () => {
+  const fetchdDesignationList = () => {
     setLoading(true);
     const params = {
       page: tableState.page,
@@ -247,7 +219,7 @@ const OccupationNameList = () => {
     };
 
     dispatch(
-      occupationNameList(params, (response, error) => {
+      designationList(params, (response, error) => {
         setLoading(false);
         if (response?.statusCode === 200 && response?.status === true) {
           const paginationData = response?.pagination || {};
@@ -417,7 +389,7 @@ const OccupationNameList = () => {
     setDeleteId(uuid);
     setShowDeleteConfirm(true);
     setDeleteConfirmMessage(
-      `Are you sure you want to delete this occupation name?`
+      `Are you sure you want to delete this designation?`
     );
   };
 
@@ -428,10 +400,10 @@ const OccupationNameList = () => {
     }
     const message =
       selectAllOrNot === "all"
-        ? `${tableState.total} all occupation name`
-        : `${selectedRows.length} selected occupation names`;
+        ? `${tableState.total} all designation`
+        : `${selectedRows.length} selected designation`;
     setDeleteConfirmMessage(
-      `Are you sure you want to delete this occupation name (${message})?`
+      `Are you sure you want to delete this designation (${message})?`
     );
     setShowDeleteConfirm(true);
   };
@@ -440,11 +412,11 @@ const OccupationNameList = () => {
     const sendPayload =
       selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
     if (!sendPayload || sendPayload.length === 0) {
-      toast.error("No occupation name selected for deletion.");
+      toast.error("No designation selected for deletion.");
       return;
     }
     dispatch(
-      occupationNameDelete(sendPayload, (response, error) => {
+      designationDelete(sendPayload, (response, error) => {
         if (error) {
           toast.error(error?.response?.data?.message || "server error");
         } else {
@@ -460,7 +432,7 @@ const OccupationNameList = () => {
             setSelectedRows([]);
             setSelectAllOrNot("");
             setDeleteId(null);
-            fetchOccupationNameList();
+            fetchdDesignationList();
           } else {
             toast.error("Something went wrong.");
           }
@@ -482,7 +454,7 @@ const OccupationNameList = () => {
     setShowImport(false);
     // Only call API when data was successfully imported
     if (shouldRefresh) {
-      fetchOccupationNameList();
+      fetchdDesignationList();
     }
   };
 
@@ -533,13 +505,10 @@ const OccupationNameList = () => {
     const fieldMapping = {
       Country: "country",
       "Occupation Version": "occupationversion",
-      "Occupation Category": "occupationcategory",
-      "Occupation Level": "occupationlevel",
-      "Occupation Level Code": "occupationlevelcode",
-      "Occupation Code": "occupationcode",
       "Occupation Name": "occupationname",
+      "Occupation Code": "occupationcode",
+      "Designation":"designation",
       Description: "description",
-      "Main Duties": "mainduties",
       "Modified On": "updated_at",
     };
     const mappedFields = selectedItems.map(
@@ -554,7 +523,7 @@ const OccupationNameList = () => {
     };
     setLoadingExport(true);
     dispatch(
-      occupationNameExportData(sendPayload, (response, error) => {
+      designationExportData(sendPayload, (response, error) => {
         if (error) {
           setLoadingExport(false);
           toast.error(error?.response?.message || "server error");
@@ -568,7 +537,7 @@ const OccupationNameList = () => {
             const url = window.URL.createObjectURL(blob);
             const link = document.createElement("a");
             link.href = url;
-            link.download = `Occulation Name.xlsx`;
+            link.download = `Designation(Job Title).xlsx`;
             document.body.appendChild(link);
             link.click();
             link.remove();
@@ -817,7 +786,7 @@ const OccupationNameList = () => {
                         </td>
                         {isColumnVisible("country") && (
                           <td>
-                            <span>{rowItem.country}</span>
+                            <span>{rowItem.country_name}</span>
                           </td>
                         )}
                         {isColumnVisible("occupationversion") && (
@@ -825,30 +794,19 @@ const OccupationNameList = () => {
                             <span>{rowItem.occupationversion}</span>
                           </td>
                         )}
-                        {isColumnVisible("occupationcategory") && (
+                        {isColumnVisible("occupationname") && (
                           <td>
-                            <span>{rowItem.occupationcategory}</span>
+                            <span>{rowItem.occupationname}</span>
                           </td>
                         )}
-                            {isColumnVisible("occupationlevel") && (
-                              <td>
-                                <span>{rowItem.occupationlevel}</span>
-                              </td>
-                            )}
-                        {isColumnVisible("occupationlevelcode") && (
-                          <td>
-                            <span>{rowItem.occupationlevelcode}</span>
-                          </td>
-                        )}
-                        
                         {isColumnVisible("occupationcode") && (
                           <td>
                             <span>{rowItem.occupationcode}</span>
                           </td>
                         )}
-                        {isColumnVisible("occupationname") && (
+                        {isColumnVisible("designation") && (
                           <td>
-                            <span>{rowItem.occupationname}</span>
+                            <span>{rowItem.designation}</span>
                           </td>
                         )}
                         {isColumnVisible("description") && (
@@ -856,11 +814,7 @@ const OccupationNameList = () => {
                             <span>{rowItem.description}</span>
                           </td>
                         )}
-                        {isColumnVisible("mainduties") && (
-                          <td>
-                            <span>{rowItem.Mainduties}</span>
-                          </td>
-                        )}
+                       
                         {isColumnVisible("updated_at") && (
                           <td>
                             <span>
@@ -1055,7 +1009,7 @@ const OccupationNameList = () => {
         </div>
 
         {/* Add/Edit Modal */}
-        <AddEditOccupationName
+        <AddEditDesignationModal
           show={modalState.show}
           handleClose={handleClose}
           mode={modalState.mode}
@@ -1064,7 +1018,7 @@ const OccupationNameList = () => {
 
         {/* Import Modal */}
         {showImport && (
-          <AddImportOccupationName
+          <AddImportDesignationModal
             show={showImport}
             handleClose={handleCloseImport}
           />
@@ -1241,4 +1195,4 @@ const OccupationNameList = () => {
   );
 };
 
-export default OccupationNameList;
+export default DesignationList;

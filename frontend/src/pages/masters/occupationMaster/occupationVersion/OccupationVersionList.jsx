@@ -661,7 +661,7 @@ const OccupationVersionList = () => {
                                                 </td>
                                                
                                                 {isColumnVisible('country') && (
-                                                    <td><span>{rowItem.country_name}</span></td>
+                                                    <td><span>{rowItem.country}</span></td>
                                                 )}
                                                 {isColumnVisible('name') && (
                                                     <td><span>{rowItem.occupation_version}</span></td>
