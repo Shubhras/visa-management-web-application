@@ -1418,8 +1418,8 @@ class OccupationCategoryCreateAPIView(APIView):
         country_obj = None
         if country_uuid:
             try:
-                country_obj = Country.objects.get(uuid=country_uuid)
-            except Country.DoesNotExist:
+                country_obj = RepresentingCountry.objects.get(uuid=country_uuid)
+            except RepresentingCountry.DoesNotExist:
                 return Response({
                     "statusCode": 400,
                     "status": False,
@@ -1789,8 +1789,8 @@ class OccupationLevelCodeCreateAPIView(APIView):
         country_obj = None
         if country_uuid:
             try:
-                country_obj = Country.objects.get(uuid=country_uuid)
-            except Country.DoesNotExist:
+                country_obj = RepresentingCountry.objects.get(uuid=country_uuid)
+            except RepresentingCountry.DoesNotExist:
                 return Response({
                     "statusCode": 400,
                     "status": False,
@@ -2153,8 +2153,8 @@ class OccupationLevelCreateAPIView(APIView):
         country_obj = None
         if country_uuid:
             try:
-                country_obj = Country.objects.get(uuid=country_uuid)
-            except Country.DoesNotExist:
+                country_obj = RepresentingCountry.objects.get(uuid=country_uuid)
+            except RepresentingCountry.DoesNotExist:
                 return Response({"statusCode": 400, "status": False, "message": "Invalid country UUID."}, status=400)
 
         occupationversion_obj = None
@@ -2555,8 +2555,8 @@ class OccupationCodeCreateAPIView(APIView):
         country_obj = None
         if country_uuid:
             try:
-                country_obj = Country.objects.get(uuid=country_uuid)
-            except Country.DoesNotExist:
+                country_obj = RepresentingCountry.objects.get(uuid=country_uuid)
+            except RepresentingCountry.DoesNotExist:
                 return Response({"statusCode": 400, "status": False, "message": "Invalid country UUID."}, status=400)
 
         occupationversion_obj = None
@@ -3965,7 +3965,7 @@ class OccupationNameCreateAPIView(APIView):
 
         # -------------------- Validate foreign keys -------------------- #
         fk_fields = {
-            "country_id": Country,
+            "country_id": RepresentingCountry,
             "occupationversion_id": OccupationVersion,
             "occupationcategory_id": OccupationCategory,
             "occupationlevel_id": OccupationLevel,
