@@ -2871,7 +2871,7 @@ class CityListAPIView(APIView):
         allowed_sort_fields = ['cityName', 'stateName', 'districtName', 'countryName', 'created_at']
 
         # ---------------------------
-        # Parse IDs
+        # Parse IDs helper
         # ---------------------------
         def parse_ids(param_name):
             raw = request.GET.get(param_name, '')
@@ -2917,36 +2917,45 @@ class CityListAPIView(APIView):
             queryset = queryset.filter(cityName__istartswith=search)
 
         # ---------------------------
-        # Excel-like Sorting
+        # Sorting
         # ---------------------------
+        sort_field_map = {
+            'cityName': 'cityName',
+            'stateName': 'stateName__stateName',
+            'districtName': 'districtName__districtName',
+            'countryName': 'countryName__name',
+            'created_at': 'created_at'
+        }
+
         sort_fields = []
+
         if custom_sort:
             for rule in custom_sort.split(','):
                 try:
                     field, order = rule.split(':')
                     field = field.strip()
                     order = order.strip().lower()
-                    if field not in allowed_sort_fields:
+                    if field not in sort_field_map:
                         continue
 
-                    # Use Lower() for case-insensitive string sort
-                    if field in ['cityName', 'stateName', 'districtName', 'countryName']:
-                        f = Lower(field)
-                    else:
-                        f = F(field)
+                    orm_field = sort_field_map[field]
 
-                    if order == "asc":
-                        sort_fields.append(f.asc(nulls_last=True))
+                    if field in ['cityName', 'stateName', 'districtName', 'countryName']:
+                        f = Lower(orm_field)
                     else:
-                        sort_fields.append(f.desc(nulls_last=True))
+                        f = F(orm_field)
+
+                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
 
                 except ValueError:
                     continue
         else:
+            # Default sorting
             sort_by = request.GET.get('sortBy', 'created_at')
             sort_order = request.GET.get('sortOrder', 'desc')
-            f = F(sort_by)
-            sort_fields = [f.desc(nulls_last=True) if sort_order=='desc' else f.asc(nulls_last=True)]
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+            f = F(orm_field)
+            sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
 
         queryset = queryset.order_by(*sort_fields)
 
@@ -2957,10 +2966,6 @@ class CityListAPIView(APIView):
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = CitySerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
-
-
-
-
 
 
 # -------------------- City -------------------- 
