@@ -384,21 +384,21 @@ class DegreeAwardedInstituteAdmin(admin.ModelAdmin):
 
 
 # ---------------------- LanguagetestmoduleName ----------------------
-@admin.register(LanguagetestmoduleName)
-class LanguagetestmoduleNameAdmin(admin.ModelAdmin):
-    list_display = ('name', 'description', 'is_deleted', 'created_at', 'updated_at')
-    search_fields = ('name',)
-    list_filter = ('is_deleted',)
-    ordering = ('name',)
+# @admin.register(LanguagetestmoduleName)
+# class LanguagetestmoduleNameAdmin(admin.ModelAdmin):
+#     list_display = ('name', 'description', 'is_deleted', 'created_at', 'updated_at')
+#     search_fields = ('name',)
+#     list_filter = ('is_deleted',)
+#     ordering = ('name',)
 
 
 # ---------------------- CLBLevel ----------------------
-@admin.register(CLBLevel)
-class CLBLevelAdmin(admin.ModelAdmin):
-    list_display = ('name', 'description', 'is_deleted', 'created_at', 'updated_at')
-    search_fields = ('name',)
-    list_filter = ('is_deleted',)
-    ordering = ('name',)
+# @admin.register(CLBLevel)
+# class CLBLevelAdmin(admin.ModelAdmin):
+#     list_display = ('name', 'description', 'is_deleted', 'created_at', 'updated_at')
+#     search_fields = ('name',)
+#     list_filter = ('is_deleted',)
+#     ordering = ('name',)
 
 
 # ---------------------- LanguageTestResult ----------------------
