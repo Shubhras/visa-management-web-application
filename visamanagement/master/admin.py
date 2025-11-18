@@ -1110,12 +1110,12 @@ class SpouseCanApplywithCandidateAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at', 'updated_at')
 
 
-@admin.register(SpouseVisaCategory)
-class SpouseVisaCategoryAdmin(admin.ModelAdmin):
-    list_display = ('uuid', 'name', 'is_deleted')
-    search_fields = ('uuid', 'name')
-    list_filter = ('is_deleted',)
-    readonly_fields = ('created_at', 'updated_at')
+# @admin.register(SpouseVisaCategory)
+# class SpouseVisaCategoryAdmin(admin.ModelAdmin):
+#     list_display = ('uuid', 'name', 'is_deleted')
+#     search_fields = ('uuid', 'name')
+#     list_filter = ('is_deleted',)
+#     readonly_fields = ('created_at', 'updated_at')
 
 
 @admin.register(SpouseWorkRights)
@@ -1134,12 +1134,12 @@ class ChildrenCanApplywithCandidateAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at', 'updated_at')
 
 
-@admin.register(ChildrenVisaCategory)
-class ChildrenVisaCategoryAdmin(admin.ModelAdmin):
-    list_display = ('uuid', 'name', 'is_deleted')
-    search_fields = ('uuid', 'name')
-    list_filter = ('is_deleted',)
-    readonly_fields = ('created_at', 'updated_at')
+# @admin.register(ChildrenVisaCategory)
+# class ChildrenVisaCategoryAdmin(admin.ModelAdmin):
+#     list_display = ('uuid', 'visamain', 'is_deleted')
+#     search_fields = ('uuid', 'name')
+#     list_filter = ('is_deleted',)
+#     readonly_fields = ('created_at', 'updated_at')
 
 
 @admin.register(ChildrenStudyWorkRights)
