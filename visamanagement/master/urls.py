@@ -1013,6 +1013,14 @@ urlpatterns = [
     path('entrance-test-ability-group/export/', EntranceTestAbilityGroupExportAPIView.as_view(), name='entrancetestabilitygroup-export'),
     path('entrance-test-ability-group/import/', EntranceTestAbilityGroupImportAPIView.as_view(), name='entrancetestabilitygroup-import'),
 
+    path('designation/', DesignationListAPIView.as_view(), name='designation-list'),
+    path('designation/create/', DesignationCreateAPIView.as_view(), name='designation-create'),
+    path('designation/<uuid:uuid>/', DesignationRetrieveAPIView.as_view(), name='designation-retrieve'),
+    path('designation/<uuid:uuid>/update/', DesignationUpdateAPIView.as_view(), name='designation-update'),
+    path('designation/delete/', DesignationDeleteAPIView.as_view(), name='designation-delete'),
+    path('designation/export/', DesignationExportAPIView.as_view(), name='designation-export'),
+    path('designation/import/', DesignationImportAPIView.as_view(), name='designation-import'),
+
 
 ]
 

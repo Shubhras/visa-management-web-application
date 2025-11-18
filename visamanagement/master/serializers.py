@@ -1316,6 +1316,76 @@ class OccupationNameSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
 
 
+
+class DesignationSerializer(serializers.ModelSerializer):
+
+    # -------------------- READ ONLY DISPLAY FIELDS -------------------- #
+    country = serializers.CharField(read_only=True, source='country.name')
+    occupationversion = serializers.CharField(read_only=True, source='occupationversion.occupation_version')
+    occupationname = serializers.CharField(read_only=True, source='occupationname.occupationname')
+    occupationcode = serializers.CharField(read_only=True, source='occupationcode.occupationcode')
+
+    country_uuid = serializers.CharField(read_only=True, source='country.uuid')
+    occupationversion_uuid = serializers.CharField(read_only=True, source='occupationversion.uuid')
+    occupationname_uuid = serializers.CharField(read_only=True, source='occupationname.uuid')
+    occupationcode_uuid = serializers.CharField(read_only=True, source='occupationcode.uuid')
+
+    # -------------------- WRITE ONLY UUID FIELDS -------------------- #
+    country_id = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=RepresentingCountry.objects.all(),
+        source='country',
+        write_only=True,
+        allow_null=True,
+        required=False
+    )
+    occupationversion_id = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=OccupationVersion.objects.all(),
+        source='occupationversion',
+        write_only=True,
+        allow_null=True,
+        required=False
+    )
+    occupationname_id = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=OccupationName.objects.all(),
+        source='occupationname',
+        write_only=True,
+        allow_null=True,
+        required=False
+    )
+    occupationcode_id = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=OccupationCode.objects.all(),
+        source='occupationcode',
+        write_only=True,
+        allow_null=True,
+        required=False
+    )
+
+    class Meta:
+        model = Designation
+        fields = [
+            'id', 'uuid',
+
+            # READ ONLY FIELDS
+            'country', 'country_uuid',
+            'occupationversion', 'occupationversion_uuid',
+            'occupationname', 'occupationname_uuid',
+            'occupationcode', 'occupationcode_uuid',
+
+            # WRITE ONLY UUID FIELDS
+            'country_id', 'occupationversion_id', 'occupationname_id', 'occupationcode_id',
+
+            # Model fields
+            'designation', 'description',
+            'is_deleted', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
+
+        
         
 class JobProspectSerializer(serializers.ModelSerializer):
     # ---------- Read-only display fields ---------- #

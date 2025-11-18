@@ -1266,7 +1266,27 @@ class OccupationProspect(models.Model):
     def __str__(self):
         return self.name
 
+class Designation(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    country = models.ForeignKey('RepresentingCountry',on_delete=models.SET_NULL,null=True,blank=True,related_name='designation')
+    occupationversion =models.ForeignKey('OccupationVersion',on_delete=models.SET_NULL,null=True,blank=True,related_name='designation')
+    occupationname =models.ForeignKey('OccupationName',on_delete=models.SET_NULL,null=True,blank=True,related_name='designation')
+    occupationcode =models.ForeignKey('OccupationCode',on_delete=models.SET_NULL,null=True,blank=True,related_name='job_prospect')
+    designation=models.CharField(max_length=250,blank=True, null=True)
+    description =  models.TextField(max_length=255,blank=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        unique_together = ('occupationname', 'country','occupationversion','occupationcode','designation')
+    def __str__(self):
+        return self.designation
+
+
+
+    
 
 class JobProspect(models.Model):
     VALID_UNIT_CHOICES = (

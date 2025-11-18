@@ -2958,6 +2958,11 @@ class CityListAPIView(APIView):
         serializer = CitySerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
 
+
+
+
+        
+
 # -------------------- City -------------------- 
 class CityCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
