@@ -29,13 +29,15 @@ const ContinentsList = () => {
     });
   };
   // For closing modal
-  const handleClose = () => {
+  const handleClose = (shouldRefresh = false) => {
     setModalState({
       show: false,
       mode: "add",
       rowData: null,
     });
-    fetchContinentsList();
+    if (shouldRefresh) {
+      fetchContinentsList();
+    }
   };
 
   // const [showEdit, setShowEdit] = useState(false);
@@ -377,9 +379,11 @@ const ContinentsList = () => {
     setSelectAllOrNot("");
   };
 
-  const handleCloseImport = () => {
+  const handleCloseImport = (shouldRefresh = false) => {
     setShowImport(false);
-    fetchContinentsList();
+    if (shouldRefresh) {
+      fetchContinentsList();
+    }
   };
 
   const handleShowImport = () => {
@@ -511,7 +515,7 @@ const ContinentsList = () => {
                   >
                     Delete
                   </button>
-                   {(selectedRows?.length > 0 && selectedRows?.length === continents?.length) && (
+                  {(selectedRows?.length > 0 && selectedRows?.length === continents?.length) && (
                     <>
                       <button
                         onClick={() => handleSelectAllOrNot("onlySelected")}
@@ -569,7 +573,7 @@ const ContinentsList = () => {
                           lineHeight: 1,
                         }}
                         onClick={() => {
-                         
+
                           handleSearchChange("");
                         }}
                       >
@@ -1000,7 +1004,7 @@ const ContinentsList = () => {
                     >
                       Cancel
                     </button>
-                     <button
+                    <button
                       onClick={handleExport}
                       type="button"
                       className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
