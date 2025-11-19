@@ -3062,6 +3062,73 @@ export const importVisaMainCategoryAPI = (payload) => {
     return post(apiUrl, payload);
 };
 
+//  Factor For
+export const getFactorForListAPI = (data) => {
+  const apiUrl = `${url.GET_FACTOR_FOR_LIST}?search=${data?.search}&page=${
+    data?.page
+  }&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
+
+export const addFactorForAPI = (payload) => {
+  const apiUrl = `${url.ADD_FACTOR_FOR_API}`;
+  return post(apiUrl, payload);
+};
+
+export const editFactorForAPI = (payload) => {
+  const apiUrl = `${url.EDIT_FACTOR_FOR_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+
+export const deleteFactorForAPI = (payload) => {
+  const preparedData = { id: payload };
+  const apiUrl = `${url.DELETE_FACTOR_FOR_API}delete/`;
+  return delWithPayload(apiUrl, preparedData);
+};
+
+export const exportFactorForAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_FACTOR_FOR_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+
+export const importFactorForAPI = (payload) => {
+  const apiUrl = `${url.IMPORT_FACTOR_FOR_API}`;
+  return post(apiUrl, payload);
+};
+
+// Age Group
+export const getAgeGroupListAPI = (data) => {
+  const apiUrl = `${url.GET_AGE_GROUP_LIST}?search=${data?.search}&page=${
+    data?.page
+  }&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
+
+export const addAgeGroupAPI = (payload) => {
+  const apiUrl = `${url.ADD_AGE_GROUP_API}`;
+  return post(apiUrl, payload);
+};
+
+export const editAgeGroupAPI = (payload) => {
+  const apiUrl = `${url.EDIT_AGE_GROUP_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+
+export const deleteAgeGroupAPI = (payload) => {
+  const preparedData = { id: payload };
+  const apiUrl = `${url.DELETE_AGE_GROUP_API}delete/`;
+  return delWithPayload(apiUrl, preparedData);
+};
+
+export const exportAgeGroupAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_AGE_GROUP_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+
+export const importAgeGroupAPI = (payload) => {
+  const apiUrl = `${url.IMPORT_AGE_GROUP_API}`;
+  return post(apiUrl, payload);
+};
 
 
 

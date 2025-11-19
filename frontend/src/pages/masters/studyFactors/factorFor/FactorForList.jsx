@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useDispatch } from "react-redux";
-import MasterLayout from "../../../masterLayout/MasterLayout";
+import MasterLayout from "../../../../masterLayout/MasterLayout";
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { Link } from 'react-router-dom';
 import { toast } from "react-toastify";
-import { departmentList, departmentDelete, departmentExportData } from '../../../store/master/actions';
-import AddImportDepartmentModal from './AddImportDepartmentModal';
-import AddEditDepartmentModal from './AddEditDepartmentModal';
-import { formatDateDDMMYYYYTime } from '../../../helper/utils/commanHelper';
-import { useGlobalSearch } from '../../../components/comman/GlobalSearchContext';
-const DepartmentList = () => {
+import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
+import { useGlobalSearch } from '../../../../components/comman/GlobalSearchContext';
+import { factorForDelete, factorForExportData, factorForList } from '../../../../store/actions';
+import AddEditFactorForModal from './AddEditFactorForModal';
+import AddImportFactorForModal from './AddImportFactorForModal';
+const FactorForList = () => {
   const { globalSearch ,setGlobalSearch} = useGlobalSearch();
   const dispatch = useDispatch();
   const [modalState, setModalState] = useState({
@@ -35,7 +35,7 @@ const DepartmentList = () => {
     });
     // Only call API when data was successfully added/updated
     if (shouldRefresh) {
-      fetchDepartmentList();
+      fetchFactorForList();
     }
   }
 
@@ -50,12 +50,12 @@ const DepartmentList = () => {
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [items] = useState(["Department", "Description", "Modified On"]);
-  const [selectedItems, setSelectedItems] = useState(["Department"]);
-  const [ItemsRequired] = useState(["Department"]);
+  const [items] = useState(["Factor For", "Description", "Modified On"]);
+  const [selectedItems, setSelectedItems] = useState(["Factor For"]);
+  const [ItemsRequired] = useState(["Factor For"]);
 
   const [tableColumns] = useState([
-    { id: 'name', label: 'Department', field: 'name', visible: true, required: false },
+    { id: 'name', label: 'Factor For', field: 'name', visible: true, required: false },
     { id: 'description', label: 'Description', field: 'description', visible: true, required: false },
     { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false },
   ]);
@@ -119,7 +119,7 @@ const DepartmentList = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (tableState.search !== undefined) {
-        fetchDepartmentList();
+        fetchFactorForList();
       }
     }, 500);
 
@@ -127,10 +127,10 @@ const DepartmentList = () => {
   }, [tableState.search]);
 
   useEffect(() => {
-    fetchDepartmentList();
+    fetchFactorForList();
   }, [tableState.page, tableState.limit, tableState.status, tableState.sortBy, tableState.sortOrder]);
 
-  const fetchDepartmentList = () => {
+  const fetchFactorForList = () => {
     setLoading(true);
     const params = {
       page: tableState.page,
@@ -141,7 +141,7 @@ const DepartmentList = () => {
       sortOrder: tableState.sortOrder || ''
     };
 
-    dispatch(departmentList(params, (response, error) => {
+    dispatch(factorForList(params, (response, error) => {
       setLoading(false);
       if (response?.statusCode === 200 && response?.status === true) {
         const paginationData = response?.pagination || {};
@@ -317,7 +317,7 @@ const DepartmentList = () => {
       toast.error("No department selected for deletion.");
       return;
     }
-    dispatch(departmentDelete(sendPayload, (response, error) => {
+    dispatch(factorForDelete(sendPayload, (response, error) => {
       if (error) {
         toast.error(error?.response?.data?.message || "server error");
       } else {
@@ -329,7 +329,7 @@ const DepartmentList = () => {
           setSelectedRows([]);
           setSelectAllOrNot('');
           setDeleteId(null);
-          fetchDepartmentList();
+          fetchFactorForList();
         } else {
           toast.error("Something went wrong.");
         }
@@ -350,7 +350,7 @@ const DepartmentList = () => {
     setShowImport(false);
     // Only call API when data was successfully imported
     if (shouldRefresh) {
-      fetchDepartmentList();
+      fetchFactorForList();
     }
   };
 
@@ -399,7 +399,7 @@ const DepartmentList = () => {
       return
     }
     const fieldMapping = {
-      "Department": "name",
+      "Factor For": "name",
       "Modified On": "updated_at",
       "Description": "description",
     };
@@ -411,7 +411,7 @@ const DepartmentList = () => {
       uuids: selectAllOrNot === "all" ? [] : selectedRows,
     };
     setLoadingExport(true);
-    dispatch(departmentExportData(sendPayload, (response, error) => {
+    dispatch(factorForExportData(sendPayload, (response, error) => {
       if (error) {
         setLoadingExport(false);
         toast.error(error?.response?.message || "server error");
@@ -425,7 +425,7 @@ const DepartmentList = () => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `Department.xlsx`;
+          link.download = `Factor For.xlsx`;
           document.body.appendChild(link);
           link.click();
           link.remove();
@@ -862,7 +862,7 @@ const DepartmentList = () => {
         </div>
 
         {/* Add/Edit Modal */}
-        <AddEditDepartmentModal
+        <AddEditFactorForModal
           show={modalState.show}
           handleClose={handleClose}
           mode={modalState.mode}
@@ -871,7 +871,7 @@ const DepartmentList = () => {
 
         {/* Import Modal */}
         {showImport && (
-          <AddImportDepartmentModal show={showImport} handleClose={handleCloseImport} />
+          <AddImportFactorForModal show={showImport} handleClose={handleCloseImport} />
         )}
 
         {/* Delete Confirmation Modal */}
@@ -1023,4 +1023,4 @@ const DepartmentList = () => {
   );
 };
 
-export default DepartmentList;
+export default FactorForList;

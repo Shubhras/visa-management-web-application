@@ -736,6 +736,21 @@ export const IMPORT_VISA_MAIN_CATEGORY_API = "/api/v1/master/visamain/import/";
 
 
 
+// Factor For – API Endpoints
+export const GET_FACTOR_FOR_LIST = "/api/v1/master/factor-for/";
+export const ADD_FACTOR_FOR_API = "/api/v1/master/factor-for/create/";
+export const EDIT_FACTOR_FOR_API = "/api/v1/master/factor-for/";        // +uuid/update/
+export const DELETE_FACTOR_FOR_API = "/api/v1/master/factor-for/";      // +delete/
+export const EXPORT_FACTOR_FOR_API = "/api/v1/master/factor-for/export/";
+export const IMPORT_FACTOR_FOR_API = "/api/v1/master/factor-for/import/";
+
+// Age Group – API Endpoints
+export const GET_AGE_GROUP_LIST = "/api/v1/master/age-group/";
+export const ADD_AGE_GROUP_API = "/api/v1/master/age-group/create/";
+export const EDIT_AGE_GROUP_API = "/api/v1/master/age-group/";      // +uuid/update/
+export const DELETE_AGE_GROUP_API = "/api/v1/master/age-group/";    // +delete/
+export const EXPORT_AGE_GROUP_API = "/api/v1/master/age-group/export/";
+export const IMPORT_AGE_GROUP_API = "/api/v1/master/age-group/import/";
 
 
 

@@ -443,6 +443,7 @@ import ChildrenVisaCategoryList from "./pages/masters/visaConditionsMaster/child
 import ChildrenStudyWorkRightsList from "./pages/masters/visaConditionsMaster/childrenStudyWorkRights/ChildrenStudyWorkRightsList";
 import VisaMainCategoryList from "./pages/masters/visaConditionsMaster/visamainCategory/VisaMainCategoryList";
 import RelatedOccupationList from "./pages/masters/occupationMaster/relatedOccupation/RelatedOccupationList";
+import FactorForList from "./pages/masters/studyFactors/factorFor/FactorForList";
 
 
 
@@ -778,6 +779,9 @@ function App() {
           <Route path="/children-visa-category" element={<ProtectedRoute><ChildrenVisaCategoryList /></ProtectedRoute>}></Route>
           <Route path="/children-study-work-rights" element={<ProtectedRoute><ChildrenStudyWorkRightsList /></ProtectedRoute>}></Route>
           <Route path="/visa-main-category" element={<ProtectedRoute><VisaMainCategoryList/></ProtectedRoute>}></Route>
+
+          {/* Study Factors Master */}
+          <Route path="/factor-for" element={<ProtectedRoute><FactorForList/></ProtectedRoute>}></Route>
 
 
 
