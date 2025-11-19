@@ -1974,7 +1974,7 @@ const MasterLayout = ({ children }) => {
             {/* Sub Header */}
             <div className="sub-header-bar d-flex align-items-center justify-content-between">
               <div className="sub-header-title">{selectedItemName}</div>
-              {["City", "Department"].includes(selectedItemName) && (
+              {["City", "Department","District","State","Country","Gender"].includes(selectedItemName) && (
                 <div className="position-relative search-filter-div">
                   <Icon
                     icon="ion:search-outline"
