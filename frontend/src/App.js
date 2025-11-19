@@ -442,6 +442,17 @@ import ChildrenCanApplywithCandidateList from "./pages/masters/visaConditionsMas
 import ChildrenVisaCategoryList from "./pages/masters/visaConditionsMaster/childrenVisaCategory/ChildrenVisaCategoryList";
 import ChildrenStudyWorkRightsList from "./pages/masters/visaConditionsMaster/childrenStudyWorkRights/ChildrenStudyWorkRightsList";
 import VisaMainCategoryList from "./pages/masters/visaConditionsMaster/visamainCategory/VisaMainCategoryList";
+import DocumentCategoryList from "./pages/masters/visaProcessMaster/documentCategory/DocumentCategoryList";
+import DocumentNameList from "./pages/masters/visaProcessMaster/documentName/DocumentNameList";
+import DocumentTypeList from "./pages/masters/visaProcessMaster/documentType/DocumentTypeList";
+import PurposeofVisitList from "./pages/masters/visaProcessMaster/purposeofVisit/PurposeofVisitList";
+import DocumentsForList from "./pages/masters/visaProcessMaster/documentsFor/DocumentsForList";
+import RequiredDocumentsList from "./pages/masters/visaProcessMaster/requiredDocuments/RequiredDocumentsList";
+import ProcessStatusNameList from "./pages/masters/visaProcessMaster/processStatusName/ProcessStatusNameList";
+import ProcessSubStatusNameList from "./pages/masters/visaProcessMaster/processSubStatusName/ProcessSubStatusName";
+import ProcessTypeList from "./pages/masters/visaProcessMaster/processType/ProcessTypeList";
+import PaymentToList from "./pages/masters/visaProcessMaster/paymentTo/PaymentToList";
+import PaymentCategoryList from "./pages/masters/visaProcessMaster/paymentCategory/PaymentCategoryList";
 
 
 
@@ -729,21 +740,21 @@ function App() {
           <Route path="/language-test-result" element={<ProtectedRoute><LanguageTestResultList /></ProtectedRoute>}></Route>
 
 
-        {/*Occupation Master*/}
-        <Route path="/job-type" element={<ProtectedRoute><JobTypeList /></ProtectedRoute>}></Route>
-        <Route path="/mode-of-salary" element={<ProtectedRoute><ModeofSalaryList /></ProtectedRoute>}></Route>
-        <Route path="/it-return-status" element={<ProtectedRoute><ITReturnStatusList /></ProtectedRoute>}></Route>
-        <Route path="/occupation-type" element={<ProtectedRoute><OccupationTypeList /></ProtectedRoute>}></Route>
-        <Route path="/occupation-prospect" element={<ProtectedRoute><OccupationProspectList /></ProtectedRoute>}></Route>
-        <Route path="/occupation-category" element={<ProtectedRoute><OccupationCategoryList /></ProtectedRoute>}></Route>
-        <Route path="/occupation-version" element={<ProtectedRoute><OccupationVersionList /></ProtectedRoute>}></Route>
-        <Route path="/occupation-level-code" element={<ProtectedRoute><OccupationLevelCodeList /></ProtectedRoute>}></Route>
-        <Route path="/occupation-level" element={<ProtectedRoute><OccupationLevelList /></ProtectedRoute>}></Route>
-        <Route path="/occupation-code" element={<ProtectedRoute><OccupationCodeList /></ProtectedRoute>}></Route>
-        <Route path="/occupation-name" element={<ProtectedRoute><OccupationNameList /></ProtectedRoute>}></Route>
-        <Route path="/designation" element={<ProtectedRoute><DesignationList /></ProtectedRoute>}></Route>
-        <Route path="/job-prospect" element={<ProtectedRoute><JobProspectList /></ProtectedRoute>}></Route>
-        
+          {/*Occupation Master*/}
+          <Route path="/job-type" element={<ProtectedRoute><JobTypeList /></ProtectedRoute>}></Route>
+          <Route path="/mode-of-salary" element={<ProtectedRoute><ModeofSalaryList /></ProtectedRoute>}></Route>
+          <Route path="/it-return-status" element={<ProtectedRoute><ITReturnStatusList /></ProtectedRoute>}></Route>
+          <Route path="/occupation-type" element={<ProtectedRoute><OccupationTypeList /></ProtectedRoute>}></Route>
+          <Route path="/occupation-prospect" element={<ProtectedRoute><OccupationProspectList /></ProtectedRoute>}></Route>
+          <Route path="/occupation-category" element={<ProtectedRoute><OccupationCategoryList /></ProtectedRoute>}></Route>
+          <Route path="/occupation-version" element={<ProtectedRoute><OccupationVersionList /></ProtectedRoute>}></Route>
+          <Route path="/occupation-level-code" element={<ProtectedRoute><OccupationLevelCodeList /></ProtectedRoute>}></Route>
+          <Route path="/occupation-level" element={<ProtectedRoute><OccupationLevelList /></ProtectedRoute>}></Route>
+          <Route path="/occupation-code" element={<ProtectedRoute><OccupationCodeList /></ProtectedRoute>}></Route>
+          <Route path="/occupation-name" element={<ProtectedRoute><OccupationNameList /></ProtectedRoute>}></Route>
+          <Route path="/designation" element={<ProtectedRoute><DesignationList /></ProtectedRoute>}></Route>
+          <Route path="/job-prospect" element={<ProtectedRoute><JobProspectList /></ProtectedRoute>}></Route>
+
 
           {/*Institute Master*/}
           <Route path="/institute-type" element={<ProtectedRoute><InstituteTypeList /></ProtectedRoute>}></Route>
@@ -775,10 +786,20 @@ function App() {
           <Route path="/children-can-apply-with-candidate" element={<ProtectedRoute><ChildrenCanApplywithCandidateList /></ProtectedRoute>}></Route>
           <Route path="/children-visa-category" element={<ProtectedRoute><ChildrenVisaCategoryList /></ProtectedRoute>}></Route>
           <Route path="/children-study-work-rights" element={<ProtectedRoute><ChildrenStudyWorkRightsList /></ProtectedRoute>}></Route>
-          <Route path="/visa-main-category" element={<ProtectedRoute><VisaMainCategoryList/></ProtectedRoute>}></Route>
->>>>>>> e71a19138fa82f2735483b9f22d87cb4b7fe9fcd
+          <Route path="/visa-main-category" element={<ProtectedRoute><VisaMainCategoryList /></ProtectedRoute>}></Route>
 
-
+          {/*Visa Process Master*/}
+          <Route path="/document-category" element={<ProtectedRoute><DocumentCategoryList /></ProtectedRoute>}></Route>
+          <Route path="/document-name" element={<ProtectedRoute><DocumentNameList /></ProtectedRoute>}></Route>
+          <Route path="/document-type" element={<ProtectedRoute><DocumentTypeList /></ProtectedRoute>}></Route>
+          <Route path="/purpose-of-visit" element={<ProtectedRoute><PurposeofVisitList /></ProtectedRoute>}></Route>
+          <Route path="/documents-for" element={<ProtectedRoute><DocumentsForList /></ProtectedRoute>}></Route>
+          <Route path="/required-documents-general" element={<ProtectedRoute><RequiredDocumentsList /></ProtectedRoute>}></Route>
+          <Route path="/process-status-name" element={<ProtectedRoute><ProcessStatusNameList /></ProtectedRoute>}></Route>
+          <Route path="/process-sub-status-name" element={<ProtectedRoute><ProcessSubStatusNameList /></ProtectedRoute>}></Route>
+          <Route path="/process-type" element={<ProtectedRoute><ProcessTypeList /></ProtectedRoute>}></Route>
+          <Route path="/payment-to" element={<ProtectedRoute><PaymentToList /></ProtectedRoute>}></Route>
+           <Route path="/payment-category" element={<ProtectedRoute><PaymentCategoryList /></ProtectedRoute>}></Route>
 
 
 

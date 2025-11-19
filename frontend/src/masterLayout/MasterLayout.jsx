@@ -169,7 +169,7 @@ const MasterLayout = ({ children }) => {
             { name: "Occupation Name", path: "/occupation-name" },
             { name: "Designation (Job Title)", path: "/designation" },
             { name: "Job Prospect", path: "/job-prospect" },
-            
+
           ],
         },
         {
@@ -211,6 +211,22 @@ const MasterLayout = ({ children }) => {
             { name: "Children Visa Category", path: "/children-visa-category" },
             { name: "Children Study / Work Rights", path: "/children-study-work-rights" },
 
+          ],
+        },
+        {
+          name: "Visa Process",
+          children: [
+            { name: "Document Category", path: "/document-category" },
+            { name: "Document Name", path: "/document-name" },
+            { name: "Document Type", path: "/document-type" },
+            { name: "Purpose of Visit", path: "/purpose-of-visit" },
+            { name: "Documents For", path: "/documents-for" },
+            { name: "Required Documents (General)", path: "/required-documents-general" },
+            { name: "Process Status Name", path: "/process-status-name" },
+            { name: "Process Sub Status Name", path: "/process-sub-status-name" },
+            { name: "Process Type", path: "/process-type" },
+            { name: "Payment To", path: "/payment-to" },
+            { name: "Payment Category", path: "/payment-category" },
           ],
         },
 

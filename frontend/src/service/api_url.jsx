@@ -726,6 +726,94 @@ export const DELETE_VISA_MAIN_CATEGORY_API = "/api/v1/master/visamain/";
 export const EXPORT_VISA_MAIN_CATEGORY_API = "/api/v1/master/visamain/export/";
 export const IMPORT_VISA_MAIN_CATEGORY_API = "/api/v1/master/visamain/import/";
 
+// Document Category
+export const GET_DOCUMENT_CATEGORY_LIST = "/api/v1/master/documentcategory/";
+export const ADD_DOCUMENT_CATEGORY_API = "/api/v1/master/documentcategory/create/";
+export const EDIT_DOCUMENT_CATEGORY_API = "/api/v1/master/documentcategory/";
+export const DELETE_DOCUMENT_CATEGORY_API = "/api/v1/master/documentcategory/";
+export const EXPORT_DOCUMENT_CATEGORY_API = "/api/v1/master/documentcategory/export/";
+export const IMPORT_DOCUMENT_CATEGORY_API = "/api/v1/master/documentcategory/import/";
+// Document Name
+export const GET_DOCUMENT_NAME_LIST = "/api/v1/master/documentname/";
+export const ADD_DOCUMENT_NAME_API = "/api/v1/master/documentname/create/";
+export const EDIT_DOCUMENT_NAME_API = "/api/v1/master/documentname/";
+export const DELETE_DOCUMENT_NAME_API = "/api/v1/master/documentname/";
+export const EXPORT_DOCUMENT_NAME_API = "/api/v1/master/documentname/export/";
+export const IMPORT_DOCUMENT_NAME_API = "/api/v1/master/documentname/import/";
+// Document Type
+export const GET_DOCUMENT_TYPE_LIST = "/api/v1/master/documenttype/";
+export const ADD_DOCUMENT_TYPE_API = "/api/v1/master/documenttype/create/";
+export const EDIT_DOCUMENT_TYPE_API = "/api/v1/master/documenttype/";
+export const DELETE_DOCUMENT_TYPE_API = "/api/v1/master/documenttype/";
+export const EXPORT_DOCUMENT_TYPE_API = "/api/v1/master/documenttype/export/";
+export const IMPORT_DOCUMENT_TYPE_API = "/api/v1/master/documenttype/import/";
+// Purpose of Visit
+export const GET_PURPOSE_OF_VISIT_LIST = "/api/v1/master/purpose-of-visit/";
+export const ADD_PURPOSE_OF_VISIT_API = "/api/v1/master/purpose-of-visit/create/";
+export const EDIT_PURPOSE_OF_VISIT_API = "/api/v1/master/purpose-of-visit/";
+export const DELETE_PURPOSE_OF_VISIT_API = "/api/v1/master/purpose-of-visit/";
+export const EXPORT_PURPOSE_OF_VISIT_API = "/api/v1/master/purpose-of-visit/export/";
+export const IMPORT_PURPOSE_OF_VISIT_API = "/api/v1/master/purpose-of-visit/import/";
+// Documents For
+export const GET_DOCUMENTS_FOR_LIST = "/api/v1/master/documentsfor/";
+export const ADD_DOCUMENTS_FOR_API = "/api/v1/master/documentsfor/create/";
+export const EDIT_DOCUMENTS_FOR_API = "/api/v1/master/documentsfor/";
+export const DELETE_DOCUMENTS_FOR_API = "/api/v1/master/documentsfor/";
+export const EXPORT_DOCUMENTS_FOR_API = "/api/v1/master/documentsfor/export/";
+export const IMPORT_DOCUMENTS_FOR_API = "/api/v1/master/documentsfor/import/";
+// Required Documents (General)
+export const GET_REQUIRED_DOCUMENT_GENERAL_LIST = "/api/v1/master/requireddocument/";
+export const ADD_REQUIRED_DOCUMENT_GENERAL_API = "/api/v1/master/requireddocument/create/";
+export const EDIT_REQUIRED_DOCUMENT_GENERAL_API = "/api/v1/master/requireddocument/";
+export const DELETE_REQUIRED_DOCUMENT_GENERAL_API = "/api/v1/master/requireddocument/";
+export const EXPORT_REQUIRED_DOCUMENT_GENERAL_API = "/api/v1/master/requireddocument/export/";
+export const IMPORT_REQUIRED_DOCUMENT_GENERAL_API = "/api/v1/master/requireddocument/import/";
+// Process Status Name
+export const GET_PROCESS_STATUS_NAME_LIST = "/api/v1/master/process-status-name/";
+export const ADD_PROCESS_STATUS_NAME_API = "/api/v1/master/process-status-name/create/";
+export const EDIT_PROCESS_STATUS_NAME_API = "/api/v1/master/process-status-name/";
+export const DELETE_PROCESS_STATUS_NAME_API = "/api/v1/master/process-status-name/";
+export const EXPORT_PROCESS_STATUS_NAME_API = "/api/v1/master/process-status-name/export/";
+export const IMPORT_PROCESS_STATUS_NAME_API = "/api/v1/master/process-status-name/import/";
+// Process Sub-Status Name
+export const GET_PROCESS_SUB_STATUS_NAME_LIST = "/api/v1/master/processsubstatusname/";
+export const ADD_PROCESS_SUB_STATUS_NAME_API = "/api/v1/master/processsubstatusname/create/";
+export const EDIT_PROCESS_SUB_STATUS_NAME_API = "/api/v1/master/processsubstatusname/";
+export const DELETE_PROCESS_SUB_STATUS_NAME_API = "/api/v1/master/processsubstatusname/";
+export const EXPORT_PROCESS_SUB_STATUS_NAME_API = "/api/v1/master/processsubstatusname/export/";
+export const IMPORT_PROCESS_SUB_STATUS_NAME_API = "/api/v1/master/processsubstatusname/import/";
+// Process Type
+export const GET_PROCESS_TYPE_LIST = "/api/v1/master/processtype/";
+export const ADD_PROCESS_TYPE_API = "/api/v1/master/processtype/create/";
+export const EDIT_PROCESS_TYPE_API = "/api/v1/master/processtype/";
+export const DELETE_PROCESS_TYPE_API = "/api/v1/master/processtype/";
+export const EXPORT_PROCESS_TYPE_API = "/api/v1/master/processtype/export/";
+export const IMPORT_PROCESS_TYPE_API = "/api/v1/master/processtype/import/";
+// Payment To
+export const GET_PAYMENT_TO_LIST = "/api/v1/master/payment-to/";
+export const ADD_PAYMENT_TO_API = "/api/v1/master/payment-to/create/";
+export const EDIT_PAYMENT_TO_API = "/api/v1/master/payment-to/";
+export const DELETE_PAYMENT_TO_API = "/api/v1/master/payment-to/";
+export const EXPORT_PAYMENT_TO_API = "/api/v1/master/payment-to/export/";
+export const IMPORT_PAYMENT_TO_API = "/api/v1/master/payment-to/import/";
+// Payment Category
+export const GET_PAYMENT_CATEGORY_LIST = "/api/v1/master/paymentcategory/";
+export const ADD_PAYMENT_CATEGORY_API = "/api/v1/master/paymentcategory/create/";
+export const EDIT_PAYMENT_CATEGORY_API = "/api/v1/master/paymentcategory/";
+export const DELETE_PAYMENT_CATEGORY_API = "/api/v1/master/paymentcategory/";
+export const EXPORT_PAYMENT_CATEGORY_API = "/api/v1/master/paymentcategory/export/";
+export const IMPORT_PAYMENT_CATEGORY_API = "/api/v1/master/paymentcategory/import/";
+
+
+
+
+
+
+
+
+
+
+
 
 
 

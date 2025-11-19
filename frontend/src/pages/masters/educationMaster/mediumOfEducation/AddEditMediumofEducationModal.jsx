@@ -25,7 +25,7 @@ const AddEditMediumofEducationModal = ({ show, handleClose, mode = 'add', rowDat
       setFormData({
         uuid: rowData.uuid || '',
         name: rowData.name || '',
-        description: rowData.Perticulars || '',
+        description: rowData.perticulars || '',
       });
     } else {
       // Reset form when switching to add mode
