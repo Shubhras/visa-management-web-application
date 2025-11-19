@@ -169,7 +169,7 @@ const MasterLayout = ({ children }) => {
             { name: "Occupation Name", path: "/occupation-name" },
             { name: "Designation (Job Title)", path: "/designation" },
             { name: "Job Prospect", path: "/job-prospect" },
-            
+
           ],
         },
         {
@@ -1966,12 +1966,13 @@ const MasterLayout = ({ children }) => {
             {/* Sub Header */}
             <div className="sub-header-bar d-flex align-items-center justify-content-between">
               <div className="sub-header-title">{selectedItemName}</div>
-              {selectedItemName === "City" && (
+              {["City", "Department"].includes(selectedItemName) && (
                 <div className="position-relative search-filter-div">
                   <Icon
                     icon="ion:search-outline"
                     className="position-absolute search-filter-icone"
                   />
+
                   <input
                     type="text"
                     className="form-control form-control-sm ps-5 search-filter-input"
@@ -1979,21 +1980,21 @@ const MasterLayout = ({ children }) => {
                     value={globalSearch}
                     onChange={(e) => setGlobalSearch(e.target.value)}
                   />
-                  {/* Clear Button (×) */}
+
                   {globalSearch && (
                     <span
                       className="position-absolute"
                       style={{
-                        right: '10px',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        cursor: 'pointer',
+                        right: "10px",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        cursor: "pointer",
                         zIndex: 999,
-                        fontSize: '20px',
-                        color: '#6c757d',
+                        fontSize: "20px",
+                        color: "#6c757d",
                         lineHeight: 1,
                       }}
-                      onClick={() => setGlobalSearch('')}
+                      onClick={() => setGlobalSearch("")}
                     >
                       ×
                     </span>
