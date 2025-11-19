@@ -2429,7 +2429,7 @@ class DistrictListAPIView(APIView):
 
 
 
-        
+
 class DistrictCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -2919,9 +2919,6 @@ class CityListAPIView(APIView):
         custom_sort = request.GET.get('customSort')  
         allowed_sort_fields = ['cityName', 'stateName', 'districtName', 'countryName', 'created_at']
 
-        # ---------------------------
-        # Parse IDs helper
-        # ---------------------------
         def parse_ids(param_name):
             raw = request.GET.get(param_name, '')
             if raw:
@@ -2946,9 +2943,7 @@ class CityListAPIView(APIView):
 
         queryset = City.objects.filter(is_deleted=False)
 
-        # ---------------------------
-        # Hierarchical Filtering
-        # ---------------------------
+     
         if city_list:
             queryset = queryset.filter(uuid__in=city_list)
         else:
@@ -2959,15 +2954,9 @@ class CityListAPIView(APIView):
             if country_list:
                 queryset = queryset.filter(countryName__uuid__in=country_list)
 
-        # ---------------------------
-        # Search
-        # ---------------------------
         if search:
             queryset = queryset.filter(cityName__istartswith=search)
 
-        # ---------------------------
-        # Sorting
-        # ---------------------------
         sort_field_map = {
             'cityName': 'cityName',
             'stateName': 'stateName__stateName',
@@ -2999,7 +2988,6 @@ class CityListAPIView(APIView):
                 except ValueError:
                     continue
         else:
-            # Default sorting
             sort_by = request.GET.get('sortBy', 'created_at')
             sort_order = request.GET.get('sortOrder', 'desc')
             orm_field = sort_field_map.get(sort_by, 'created_at')
@@ -3008,9 +2996,6 @@ class CityListAPIView(APIView):
 
         queryset = queryset.order_by(*sort_fields)
 
-        # ---------------------------
-        # Pagination
-        # ---------------------------
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = CitySerializer(result_page, many=True)
