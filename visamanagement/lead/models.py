@@ -11,11 +11,12 @@ class Applicant(models.Model):
         ("Visa & Coaching", "Visa & Coaching"),
     )
 
-    lead_datetime = models.DateTimeField()             
-    lead_id = models.CharField(max_length=50, unique=True)
+    lead_datetime = models.DateTimeField(blank=True, null=True)             
+    lead_id = models.CharField(max_length=50, unique=True,blank=True, null=True)
     lead_for = models.CharField(
         max_length=30,
-        choices=LeadForChoices
+        choices=LeadForChoices,
+        blank=True, null=True
     )
 
     test_exam_name = models.ForeignKey(                 
@@ -27,21 +28,21 @@ class Applicant(models.Model):
 
     interested_visa_categories = models.ManyToManyField(  
         VisaMain,
-        blank=True,
+        blank=True, null=True,
         related_name="interested_applicants"
     )
 
     interested_countries = models.ManyToManyField(        
         Country,
-        blank=True,
+       blank=True, null=True,
         related_name="interest_country_leads"
     )
     id = models.AutoField(primary_key=True) 
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    first_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100)
+    first_name = models.CharField(max_length=100,blank=True, null=True)
+    last_name = models.CharField(max_length=100,blank=True, null=True)
     gender = models.ForeignKey(Gender,on_delete=models.SET_NULL,null=True,related_name="citizens")
-    date_of_birth = models.DateField()
+    date_of_birth = models.DateField(blank=True, null=True)
     marital_status =models.ForeignKey(Maritalstatus,on_delete=models.SET_NULL,null=True,related_name="citizens")
     along_with = models.BooleanField(default=False)   
     country_of_citizenship = models.ForeignKey(Country,on_delete=models.SET_NULL,null=True,related_name="citizens")
@@ -49,7 +50,7 @@ class Applicant(models.Model):
     country_of_residency = models.ForeignKey(Country,on_delete=models.SET_NULL,null=True,related_name="residents")
     residency_status = models.ForeignKey(VisaName,on_delete=models.SET_NULL,null=True,related_name="residents")
     default_citizen = models.BooleanField(default=True)
-    mobile_country_code = models.CharField(max_length=10)
+    mobile_country_code = models.CharField(max_length=10,blank=True, null=True)
     mobile_number = models.CharField(max_length=20)
 
     whatsapp_country_code = models.CharField(max_length=10)
