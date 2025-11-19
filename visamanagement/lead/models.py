@@ -15,7 +15,7 @@ class Applicant(models.Model):
     lead_id = models.CharField(max_length=50, unique=True)
     lead_for = models.CharField(
         max_length=30,
-        choices=LeadForChoices.choices
+        choices=LeadForChoices
     )
 
     test_exam_name = models.ForeignKey(                 
@@ -174,7 +174,7 @@ class LanguageAbility(models.Model):
     VALID_UNIT_CHOICES = (
         ("Yes", "Yes"),
         ("No", "No"),
-        
+
     )
 
     TEST_LEVEL_CHOICES = (
