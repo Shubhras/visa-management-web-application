@@ -143,11 +143,8 @@ class WorkExperience(models.Model):
 
     designation = models.ForeignKey(Designation,on_delete=models.SET_NULL,null=True)
 
-    # job_duration = models.ForeignKey("JobDuration",on_delete=models.SET_NULL,null=True)
-
-    # experience_duration = models.ForeignKey("ExperienceDuration",on_delete=models.SET_NULL,null=True)
-    start_date = models.DateField()
-    end_date = models.DateField(null=True, blank=True)  
+    job_start_date = models.DateField()
+    job_end_date = models.DateField(null=True, blank=True)  
     years = models.IntegerField(default=0)
     months = models.IntegerField(default=0)
     monthly_salary = models.DecimalField(max_digits=12, decimal_places=2)
