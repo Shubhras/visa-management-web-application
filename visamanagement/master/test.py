@@ -1470,7 +1470,13 @@ class LanguageTestResultImportAPIView(APIView):
         format_type = file.name.split('.')[-1].lower()
         duplicate_entries, skipped_rows, imported_count = [], [], 0
 
-        required_headers = {'language name (test)', 'language test name', 'module name', 'language benchmark level', 'language test result'}
+        required_headers = {
+                'language name (test)',
+                'language test name',
+                'module name',
+                'language benchmark level',  
+                'language test result'
+            }
         optional_headers = {'description'}
 
         try:
@@ -1518,7 +1524,7 @@ class LanguageTestResultImportAPIView(APIView):
                 existing = LanguageTestResult.objects.filter(
                     language__name__iexact=language_name,
                     language_test__name__iexact=language_test_name,
-                    languagetest_module_name__moduleName__iexact=module_name,
+                    module_name__name__iexact=module_name,  
                     lb_level__name__iexact=lb_level_name
                 ).first()
 
