@@ -6,10 +6,10 @@ import { Link } from 'react-router-dom';
 import { toast } from "react-toastify";
 import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 import { useGlobalSearch } from '../../../../components/comman/GlobalSearchContext';
-import { factorForDelete, factorForExportData, factorForList } from '../../../../store/actions';
-import AddEditFactorForModal from './AddEditFactorForModal';
-import AddImportFactorForModal from './AddImportFactorForModal';
-const FactorForList = () => {
+import { backlogsGroupDelete, backlogsGroupExportData, backlogsGroupList, factorForDelete, factorForExportData, factorForList } from '../../../../store/actions';
+import AddEditBacklogsGroupModal from './AddEditBacklogsGroupModal';
+import AddImportBacklogsGroupModal from './AddImportBacklogsGroupModal';
+const BacklogsGroupList = () => {
   const { globalSearch ,setGlobalSearch} = useGlobalSearch();
   const dispatch = useDispatch();
   const [modalState, setModalState] = useState({
@@ -50,12 +50,12 @@ const FactorForList = () => {
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [items] = useState(["Factor For", "Description", "Modified On"]);
-  const [selectedItems, setSelectedItems] = useState(["Factor For"]);
-  const [ItemsRequired] = useState(["Factor For"]);
+  const [items] = useState(["Backlogs Group", "Description", "Modified On"]);
+  const [selectedItems, setSelectedItems] = useState(["Backlogs Group"]);
+  const [ItemsRequired] = useState(["Backlogs Group"]);
 
   const [tableColumns] = useState([
-    { id: 'name', label: 'Factor For', field: 'name', visible: true, required: false },
+    { id: 'name', label: 'Backlogs Group', field: 'name', visible: true, required: false },
     { id: 'description', label: 'Description', field: 'description', visible: true, required: false },
     { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false },
   ]);
@@ -141,7 +141,7 @@ const FactorForList = () => {
       sortOrder: tableState.sortOrder || ''
     };
 
-    dispatch(factorForList(params, (response, error) => {
+    dispatch(backlogsGroupList(params, (response, error) => {
       setLoading(false);
       if (response?.statusCode === 200 && response?.status === true) {
         const paginationData = response?.pagination || {};
@@ -317,7 +317,7 @@ const FactorForList = () => {
       toast.error("No department selected for deletion.");
       return;
     }
-    dispatch(factorForDelete(sendPayload, (response, error) => {
+    dispatch(backlogsGroupDelete(sendPayload, (response, error) => {
       if (error) {
         toast.error(error?.response?.data?.message || "server error");
       } else {
@@ -399,7 +399,7 @@ const FactorForList = () => {
       return
     }
     const fieldMapping = {
-      "Factor For": "name",
+      "Backlogs Group": "name",
       "Modified On": "updated_at",
       "Description": "description",
     };
@@ -411,7 +411,7 @@ const FactorForList = () => {
       uuids: selectAllOrNot === "all" ? [] : selectedRows,
     };
     setLoadingExport(true);
-    dispatch(factorForExportData(sendPayload, (response, error) => {
+    dispatch(backlogsGroupExportData(sendPayload, (response, error) => {
       if (error) {
         setLoadingExport(false);
         toast.error(error?.response?.message || "server error");
@@ -425,7 +425,7 @@ const FactorForList = () => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `Factor For.xlsx`;
+          link.download = `Backlogs Group.xlsx`;
           document.body.appendChild(link);
           link.click();
           link.remove();
@@ -862,7 +862,7 @@ const FactorForList = () => {
         </div>
 
         {/* Add/Edit Modal */}
-        <AddEditFactorForModal
+        <AddEditBacklogsGroupModal
           show={modalState.show}
           handleClose={handleClose}
           mode={modalState.mode}
@@ -871,7 +871,7 @@ const FactorForList = () => {
 
         {/* Import Modal */}
         {showImport && (
-          <AddImportFactorForModal show={showImport} handleClose={handleCloseImport} />
+          <AddImportBacklogsGroupModal show={showImport} handleClose={handleCloseImport} />
         )}
 
         {/* Delete Confirmation Modal */}
@@ -1023,4 +1023,4 @@ const FactorForList = () => {
   );
 };
 
-export default FactorForList;
+export default BacklogsGroupList;

@@ -1,13 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
-import {
-  departmentAdd,
-  departmentEdit,
-} from "../../../../store/master/actions";
 import { toast } from "react-toastify";
-import { factorForAdd, factorForEdit } from "../../../../store/actions";
+import { gapGroupAdd, gapGroupEdit } from "../../../../store/actions";
 
-const AddEditFactorForModal = ({
+const AddEditGapGroupModal = ({
   show,
   handleClose,
   mode = "add",
@@ -19,13 +15,13 @@ const AddEditFactorForModal = ({
   // Form state
   const [formData, setFormData] = useState({
     uuid: "",
-    factorForName: "",
+    gapGroupName: "",
     description: "",
   });
 
   // Validation errors state
   const [errors, setErrors] = useState({
-    factorForName: "",
+    gapGroupName: "",
     description: "",
   });
 
@@ -34,14 +30,14 @@ const AddEditFactorForModal = ({
     if (mode === "edit" && rowData) {
       setFormData({
         uuid: rowData.uuid || "",
-        factorForName: rowData.name || "",
+        gapGroupName: rowData.name || "",
         description: rowData.description || "",
       });
     } else {
       // Reset form when switching to add mode
       setFormData({
         uuid: "",
-        factorForName: "",
+        gapGroupName: "",
         description: "",
       });
     }
@@ -70,8 +66,8 @@ const AddEditFactorForModal = ({
     let isValid = true;
 
     // Department Name validation
-    if (!formData.factorForName.trim()) {
-      newErrors.factorForName = "Name is required";
+    if (!formData.gapGroupName.trim()) {
+      newErrors.gapGroupName = "Name is required";
       isValid = false;
     }
 
@@ -88,17 +84,17 @@ const AddEditFactorForModal = ({
         mode === "edit"
           ? {
               uuid: formData.uuid,
-              name: formData.factorForName,
+              name: formData.gapGroupName,
               description: formData.description,
             }
           : {
-              name: formData.factorForName,
+              name: formData.gapGroupName,
               description: formData.description,
             };
 
       setLoading(true);
 
-      const action = mode === "edit" ? factorForEdit : factorForAdd;
+      const action = mode === "edit" ? gapGroupEdit : gapGroupAdd;
 
       dispatch(
         action(sendPayload, (response, error) => {
@@ -123,7 +119,7 @@ const AddEditFactorForModal = ({
   const resetForm = () => {
     setFormData({
       uuid: "",
-      factorForName: "",
+      gapGroupName: "",
       description: "",
     });
     setErrors({});
@@ -154,7 +150,7 @@ const AddEditFactorForModal = ({
         <div className="modal-content radius-16 bg-base">
           <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
             <h1 className="modal-title fs-5" id="departmentModalLabel">
-              {mode === "edit" ? "Edit Factor For" : "Add Factor For"}
+              {mode === "edit" ? "Edit Gap Group" : "Add Gap Group"}
             </h1>
             <button
               type="button"
@@ -170,21 +166,21 @@ const AddEditFactorForModal = ({
                 {/* Department Name */}
                 <div className="col-12 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Factor For <span className="text-danger">*</span>
+                    Gap Group <span className="text-danger">*</span>
                   </label>
                   <input
                     type="text"
-                    name="factorForName"
-                    value={formData.factorForName}
+                    name="gapGroupName"
+                    value={formData.gapGroupName}
                     onChange={handleChange}
                     className={`form-control radius-8 ${
-                      errors.factorForName ? "is-invalid" : ""
+                      errors.gapGroupName ? "is-invalid" : ""
                     }`}
                     placeholder="Enter Factor For"
                   />
-                  {errors.factorForName && (
+                  {errors.gapGroupName && (
                     <div className="text-danger text-sm mt-1">
-                      {errors.factorForName}
+                      {errors.gapGroupName}
                     </div>
                   )}
                 </div>
@@ -248,4 +244,4 @@ const AddEditFactorForModal = ({
   );
 };
 
-export default AddEditFactorForModal;
+export default AddEditGapGroupModal;

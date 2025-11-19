@@ -6,10 +6,10 @@ import { Link } from 'react-router-dom';
 import { toast } from "react-toastify";
 import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 import { useGlobalSearch } from '../../../../components/comman/GlobalSearchContext';
-import { factorForDelete, factorForExportData, factorForList } from '../../../../store/actions';
-import AddEditFactorForModal from './AddEditFactorForModal';
-import AddImportFactorForModal from './AddImportFactorForModal';
-const FactorForList = () => {
+import { academicResultGroupDelete, academicResultGroupExportData, academicResultGroupList,  } from '../../../../store/actions';
+import AddEditAcademicResultGroupModal from './AddEditAcademicResultGroupModal';
+import AddImportAcademicResultGroupModal from './AddImportAcademicResultGroupList';
+const AcademicResultGroupList = () => {
   const { globalSearch ,setGlobalSearch} = useGlobalSearch();
   const dispatch = useDispatch();
   const [modalState, setModalState] = useState({
@@ -35,7 +35,7 @@ const FactorForList = () => {
     });
     // Only call API when data was successfully added/updated
     if (shouldRefresh) {
-      fetchFactorForList();
+      fetchAcademicResultGroupList();
     }
   }
 
@@ -50,12 +50,12 @@ const FactorForList = () => {
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [items] = useState(["Factor For", "Description", "Modified On"]);
-  const [selectedItems, setSelectedItems] = useState(["Factor For"]);
-  const [ItemsRequired] = useState(["Factor For"]);
+  const [items] = useState(["Academic Result Group", "Description", "Modified On"]);
+  const [selectedItems, setSelectedItems] = useState(["Academic Result Group"]);
+  const [ItemsRequired] = useState(["Academic Result Group"]);
 
   const [tableColumns] = useState([
-    { id: 'name', label: 'Factor For', field: 'name', visible: true, required: false },
+    { id: 'name', label: 'Academic Result Group', field: 'name', visible: true, required: false },
     { id: 'description', label: 'Description', field: 'description', visible: true, required: false },
     { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false },
   ]);
@@ -119,7 +119,7 @@ const FactorForList = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (tableState.search !== undefined) {
-        fetchFactorForList();
+        fetchAcademicResultGroupList();
       }
     }, 500);
 
@@ -127,10 +127,10 @@ const FactorForList = () => {
   }, [tableState.search]);
 
   useEffect(() => {
-    fetchFactorForList();
+    fetchAcademicResultGroupList();
   }, [tableState.page, tableState.limit, tableState.status, tableState.sortBy, tableState.sortOrder]);
 
-  const fetchFactorForList = () => {
+  const fetchAcademicResultGroupList = () => {
     setLoading(true);
     const params = {
       page: tableState.page,
@@ -141,7 +141,7 @@ const FactorForList = () => {
       sortOrder: tableState.sortOrder || ''
     };
 
-    dispatch(factorForList(params, (response, error) => {
+    dispatch(academicResultGroupList(params, (response, error) => {
       setLoading(false);
       if (response?.statusCode === 200 && response?.status === true) {
         const paginationData = response?.pagination || {};
@@ -314,10 +314,10 @@ const FactorForList = () => {
   const confirmDelete = () => {
     const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
     if (!sendPayload || sendPayload.length === 0) {
-      toast.error("No department selected for deletion.");
+      toast.error("No academic result group selected for deletion.");
       return;
     }
-    dispatch(factorForDelete(sendPayload, (response, error) => {
+    dispatch(academicResultGroupDelete(sendPayload, (response, error) => {
       if (error) {
         toast.error(error?.response?.data?.message || "server error");
       } else {
@@ -329,7 +329,7 @@ const FactorForList = () => {
           setSelectedRows([]);
           setSelectAllOrNot('');
           setDeleteId(null);
-          fetchFactorForList();
+          fetchAcademicResultGroupList();
         } else {
           toast.error("Something went wrong.");
         }
@@ -350,7 +350,7 @@ const FactorForList = () => {
     setShowImport(false);
     // Only call API when data was successfully imported
     if (shouldRefresh) {
-      fetchFactorForList();
+      fetchAcademicResultGroupList();
     }
   };
 
@@ -399,7 +399,7 @@ const FactorForList = () => {
       return
     }
     const fieldMapping = {
-      "Factor For": "name",
+      "Academic Result Group": "name",
       "Modified On": "updated_at",
       "Description": "description",
     };
@@ -411,7 +411,7 @@ const FactorForList = () => {
       uuids: selectAllOrNot === "all" ? [] : selectedRows,
     };
     setLoadingExport(true);
-    dispatch(factorForExportData(sendPayload, (response, error) => {
+    dispatch(academicResultGroupExportData(sendPayload, (response, error) => {
       if (error) {
         setLoadingExport(false);
         toast.error(error?.response?.message || "server error");
@@ -425,7 +425,7 @@ const FactorForList = () => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `Factor For.xlsx`;
+          link.download = `Academic Result Group.xlsx`;
           document.body.appendChild(link);
           link.click();
           link.remove();
@@ -862,7 +862,7 @@ const FactorForList = () => {
         </div>
 
         {/* Add/Edit Modal */}
-        <AddEditFactorForModal
+        <AddEditAcademicResultGroupModal
           show={modalState.show}
           handleClose={handleClose}
           mode={modalState.mode}
@@ -871,7 +871,7 @@ const FactorForList = () => {
 
         {/* Import Modal */}
         {showImport && (
-          <AddImportFactorForModal show={showImport} handleClose={handleCloseImport} />
+          <AddImportAcademicResultGroupModal show={showImport} handleClose={handleCloseImport} />
         )}
 
         {/* Delete Confirmation Modal */}
@@ -917,7 +917,7 @@ const FactorForList = () => {
             <div className="modal-dialog modal-xl modal-dialog-centered" role="document">
               <div className="modal-content radius-16 bg-base">
                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                  <h1 className="modal-title fs-5">Export Factor For</h1>
+                  <h1 className="modal-title fs-5">Export Academic Result Group</h1>
                   <button
                     type="button"
                     className="btn-close"
@@ -1023,4 +1023,4 @@ const FactorForList = () => {
   );
 };
 
-export default FactorForList;
+export default AcademicResultGroupList;

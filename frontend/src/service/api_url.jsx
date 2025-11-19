@@ -745,17 +745,36 @@ export const EXPORT_FACTOR_FOR_API = "/api/v1/master/factor-for/export/";
 export const IMPORT_FACTOR_FOR_API = "/api/v1/master/factor-for/import/";
 
 // Age Group – API Endpoints
-export const GET_AGE_GROUP_LIST = "/api/v1/master/age-group/";
-export const ADD_AGE_GROUP_API = "/api/v1/master/age-group/create/";
-export const EDIT_AGE_GROUP_API = "/api/v1/master/age-group/";      // +uuid/update/
-export const DELETE_AGE_GROUP_API = "/api/v1/master/age-group/";    // +delete/
-export const EXPORT_AGE_GROUP_API = "/api/v1/master/age-group/export/";
-export const IMPORT_AGE_GROUP_API = "/api/v1/master/age-group/import/";
+export const GET_AGE_GROUP_LIST = "/api/v1/master/age-groups/";
+export const ADD_AGE_GROUP_API = "/api/v1/master/age-groups/create/";
+export const EDIT_AGE_GROUP_API = "/api/v1/master/age-groups/";      // +uuid/update/
+export const DELETE_AGE_GROUP_API = "/api/v1/master/age-groups/";    // +delete/
+export const EXPORT_AGE_GROUP_API = "/api/v1/master/age-groups/export/";
+export const IMPORT_AGE_GROUP_API = "/api/v1/master/age-groups/import/";
 
+// Academic Result Group – API Endpoints
+export const GET_ACADEMIC_RESULT_GROUP_LIST = "/api/v1/master/academic-result-groups/";
+export const ADD_ACADEMIC_RESULT_GROUP_API = "/api/v1/master/academic-result-groups/create/";
+export const EDIT_ACADEMIC_RESULT_GROUP_API = "/api/v1/master/academic-result-groups/"; // +uuid/update/
+export const DELETE_ACADEMIC_RESULT_GROUP_API = "/api/v1/master/academic-result-groups/"; // +delete/
+export const EXPORT_ACADEMIC_RESULT_GROUP_API = "/api/v1/master/academic-result-groups/export/";
+export const IMPORT_ACADEMIC_RESULT_GROUP_API = "/api/v1/master/academic-result-groups/import/";
 
+// Backlogs Group – API Endpoints
+export const GET_BACKLOGS_GROUP_LIST = "/api/v1/master/backlogs-group/list/";
+export const ADD_BACKLOGS_GROUP_API = "/api/v1/master/backlogs-group/create/";
+export const EDIT_BACKLOGS_GROUP_API = "/api/v1/master/backlogs-group/"; // +uuid/update/
+export const DELETE_BACKLOGS_GROUP_API = "/api/v1/master/backlogs-group/"; // +delete/
+export const EXPORT_BACKLOGS_GROUP_API = "/api/v1/master/backlogs-group/export/";
+export const IMPORT_BACKLOGS_GROUP_API = "/api/v1/master/backlogs-group/import/";
 
-
-
+// GAP Group – API Endpoints
+export const GET_GAP_GROUP_LIST = "/api/v1/master/gap-group/list/";
+export const ADD_GAP_GROUP_API = "/api/v1/master/gap-group/create/";
+export const EDIT_GAP_GROUP_API = "/api/v1/master/gap-group/"; // +uuid/update/
+export const DELETE_GAP_GROUP_API = "/api/v1/master/gap-group/"; // +delete/
+export const EXPORT_GAP_GROUP_API = "/api/v1/master/gap-group/export/";
+export const IMPORT_GAP_GROUP_API = "/api/v1/master/gap-group/import/";
 
 
 

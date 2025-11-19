@@ -4,9 +4,9 @@ import { toast } from "react-toastify";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import CommanSampleExcelDownloadModal from "../../../../components/comman/CommanSampleExcelDownloadModal";
-import { factorForImportData } from "../../../../store/actions";
+import { academicResultGroupImportData } from "../../../../store/actions";
 import { exportToExcelDuplicate, exportToExcelWrongData } from "../../../../helper/utils/commanHelper";
-const AddImportFactorForModal = ({ show, handleClose }) => {
+const AddImportAcademicResultGroupModal = ({ show, handleClose }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState(null);
@@ -66,7 +66,7 @@ const AddImportFactorForModal = ({ show, handleClose }) => {
     }
     setLoading(true);
     dispatch(
-      factorForImportData(formData, (response, error) => {
+      academicResultGroupImportData(formData, (response, error) => {
         setLoading(false);
         if (error) {
           toast.error(error?.response?.data?.message || "Server error");
@@ -93,9 +93,9 @@ const AddImportFactorForModal = ({ show, handleClose }) => {
             if (response?.duplicates?.length > 0) {
               const prepareData = {
                 data: response.duplicates || [],
-                headers: ["Factor For"],
-                sheetName: "FactorFor",
-                fileName: "FactorFor",
+                 headers: ["Academic Result", "Reason"],
+                sheetName: "AcademicResultGroup",
+                fileName: "AcademicResultGroup",
               };
               exportToExcelDuplicate(
                 prepareData.data,
@@ -107,9 +107,9 @@ const AddImportFactorForModal = ({ show, handleClose }) => {
             if (response?.skipped_rows?.length > 0) {
               const prepareData = {
                 data: response.skipped_rows || [],
-                headers: ["Factor For", "Reason"],
-                sheetName: "FactorFor",
-                fileName: "FactorFor",
+                headers: ["Academic Result", "Reason"],
+                sheetName: "AcademicResultGroup",
+                fileName: "AcademicResultGroup",
               };
               exportToExcelWrongData(
                 prepareData.data,
@@ -163,7 +163,7 @@ const AddImportFactorForModal = ({ show, handleClose }) => {
           <div className="modal-content radius-16 bg-base">
             <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
               <h1 className="modal-title fs-5" id="departmentModalLabel">
-                Upload Department
+                Upload Academic Result Group
               </h1>
               <button
                 type="button"
@@ -280,10 +280,10 @@ const AddImportFactorForModal = ({ show, handleClose }) => {
           show={showSampleExcelDownload}
           handleClose={handleCloseSampleExcelDownload}
           prepareData={{
-            downloadFileName: "Factor For",
-            items: ["Factor For", "Description"],
-            selectedItems: ["Factor For"],
-            ItemsRequired: ["Factor For"],
+            downloadFileName: "Academic Result Group",
+            items: ["Academic Result", "Description"],
+            selectedItems: ["Academic Result"],
+            ItemsRequired: ["Academic Result"],
           }}
         />
       )}
@@ -291,4 +291,11 @@ const AddImportFactorForModal = ({ show, handleClose }) => {
   );
 };
 
-export default AddImportFactorForModal;
+export default AddImportAcademicResultGroupModal;
+
+
+
+
+
+
+

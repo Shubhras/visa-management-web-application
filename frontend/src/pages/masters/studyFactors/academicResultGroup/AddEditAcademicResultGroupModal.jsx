@@ -5,9 +5,12 @@ import {
   departmentEdit,
 } from "../../../../store/master/actions";
 import { toast } from "react-toastify";
-import { factorForAdd, factorForEdit } from "../../../../store/actions";
+import {
+  academicResultGroupAdd,
+  academicResultGroupEdit,
+} from "../../../../store/actions";
 
-const AddEditFactorForModal = ({
+const AddEditAcademicResultGroupModal = ({
   show,
   handleClose,
   mode = "add",
@@ -19,13 +22,13 @@ const AddEditFactorForModal = ({
   // Form state
   const [formData, setFormData] = useState({
     uuid: "",
-    factorForName: "",
+    academicResultGroupName: "",
     description: "",
   });
 
   // Validation errors state
   const [errors, setErrors] = useState({
-    factorForName: "",
+    academicResultGroupName: "",
     description: "",
   });
 
@@ -34,14 +37,14 @@ const AddEditFactorForModal = ({
     if (mode === "edit" && rowData) {
       setFormData({
         uuid: rowData.uuid || "",
-        factorForName: rowData.name || "",
+        academicResultGroupName: rowData.name || "",
         description: rowData.description || "",
       });
     } else {
       // Reset form when switching to add mode
       setFormData({
         uuid: "",
-        factorForName: "",
+        academicResultGroupName: "",
         description: "",
       });
     }
@@ -70,8 +73,8 @@ const AddEditFactorForModal = ({
     let isValid = true;
 
     // Department Name validation
-    if (!formData.factorForName.trim()) {
-      newErrors.factorForName = "Name is required";
+    if (!formData.academicResultGroupName.trim()) {
+      newErrors.academicResultGroupName = "Name is required";
       isValid = false;
     }
 
@@ -88,17 +91,18 @@ const AddEditFactorForModal = ({
         mode === "edit"
           ? {
               uuid: formData.uuid,
-              name: formData.factorForName,
+              name: formData.academicResultGroupName,
               description: formData.description,
             }
           : {
-              name: formData.factorForName,
+              name: formData.academicResultGroupName,
               description: formData.description,
             };
 
       setLoading(true);
 
-      const action = mode === "edit" ? factorForEdit : factorForAdd;
+      const action =
+        mode === "edit" ? academicResultGroupEdit : academicResultGroupAdd;
 
       dispatch(
         action(sendPayload, (response, error) => {
@@ -123,7 +127,7 @@ const AddEditFactorForModal = ({
   const resetForm = () => {
     setFormData({
       uuid: "",
-      factorForName: "",
+      academicResultGroupName: "",
       description: "",
     });
     setErrors({});
@@ -144,7 +148,7 @@ const AddEditFactorForModal = ({
       className="modal fade show common-ctl-popup"
       tabIndex={-1}
       role="dialog"
-      aria-labelledby="factorForModalLabel"
+      aria-labelledby="academicResultGroupNameModalLabel"
       aria-hidden={!show}
     >
       <div
@@ -154,7 +158,7 @@ const AddEditFactorForModal = ({
         <div className="modal-content radius-16 bg-base">
           <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
             <h1 className="modal-title fs-5" id="departmentModalLabel">
-              {mode === "edit" ? "Edit Factor For" : "Add Factor For"}
+              {mode === "edit" ? "Edit Academic Result Group" : "Add Academic Result Group"}
             </h1>
             <button
               type="button"
@@ -170,21 +174,21 @@ const AddEditFactorForModal = ({
                 {/* Department Name */}
                 <div className="col-12 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Factor For <span className="text-danger">*</span>
+                    Academic Result Group <span className="text-danger">*</span>
                   </label>
                   <input
                     type="text"
-                    name="factorForName"
-                    value={formData.factorForName}
+                    name="academicResultGroupName"
+                    value={formData.academicResultGroupName}
                     onChange={handleChange}
                     className={`form-control radius-8 ${
-                      errors.factorForName ? "is-invalid" : ""
+                      errors.academicResultGroupName ? "is-invalid" : ""
                     }`}
                     placeholder="Enter Factor For"
                   />
-                  {errors.factorForName && (
+                  {errors.academicResultGroupName && (
                     <div className="text-danger text-sm mt-1">
-                      {errors.factorForName}
+                      {errors.academicResultGroupName}
                     </div>
                   )}
                 </div>
@@ -248,4 +252,4 @@ const AddEditFactorForModal = ({
   );
 };
 
-export default AddEditFactorForModal;
+export default AddEditAcademicResultGroupModal;

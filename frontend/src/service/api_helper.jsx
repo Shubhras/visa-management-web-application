@@ -3130,6 +3130,97 @@ export const importAgeGroupAPI = (payload) => {
   return post(apiUrl, payload);
 };
 
+// ACADEMIC_RESULT_GROUP
+export const getAcademicResultGroupListAPI = (data) => {
+  const apiUrl = `${url.GET_ACADEMIC_RESULT_GROUP_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
+
+export const addAcademicResultGroupAPI = (payload) => {
+  return post(url.ADD_ACADEMIC_RESULT_GROUP_API, payload);
+};
+
+export const editAcademicResultGroupAPI = (payload) => {
+  const apiUrl = `${url.EDIT_ACADEMIC_RESULT_GROUP_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+
+export const deleteAcademicResultGroupAPI = (payload) => {
+  const preparedData = { id: payload };
+  const apiUrl = `${url.DELETE_ACADEMIC_RESULT_GROUP_API}delete/`;
+  return delWithPayload(apiUrl, preparedData);
+};
+
+export const exportAcademicResultGroupAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_ACADEMIC_RESULT_GROUP_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+
+export const importAcademicResultGroupAPI = (payload) => {
+  return post(url.IMPORT_ACADEMIC_RESULT_GROUP_API, payload);
+};
+
+// BACKLOGS_GROUP
+export const getBacklogsGroupListAPI = (data) => {
+  const apiUrl = `${url.GET_BACKLOGS_GROUP_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
+
+export const addBacklogsGroupAPI = (payload) => {
+  return post(url.ADD_BACKLOGS_GROUP_API, payload);
+};
+
+export const editBacklogsGroupAPI = (payload) => {
+  const apiUrl = `${url.EDIT_BACKLOGS_GROUP_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+
+export const deleteBacklogsGroupAPI = (payload) => {
+  const preparedData = { id: payload };
+  const apiUrl = `${url.DELETE_BACKLOGS_GROUP_API}delete/`;
+  return delWithPayload(apiUrl, preparedData);
+};
+
+export const exportBacklogsGroupAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_BACKLOGS_GROUP_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+
+export const importBacklogsGroupAPI = (payload) => {
+  return post(url.IMPORT_BACKLOGS_GROUP_API, payload);
+};
+
+// GAP_GROUP
+export const getGapGroupListAPI = (data) => {
+  const apiUrl = `${url.GET_GAP_GROUP_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
+
+export const addGapGroupAPI = (payload) => {
+  return post(url.ADD_GAP_GROUP_API, payload);
+};
+
+export const editGapGroupAPI = (payload) => {
+  const apiUrl = `${url.EDIT_GAP_GROUP_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+
+export const deleteGapGroupAPI = (payload) => {
+  const preparedData = { id: payload };
+  const apiUrl = `${url.DELETE_GAP_GROUP_API}delete/`;
+  return delWithPayload(apiUrl, preparedData);
+};
+
+export const exportGapGroupAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_GAP_GROUP_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+
+export const importGapGroupAPI = (payload) => {
+  return post(url.IMPORT_GAP_GROUP_API, payload);
+};
+
+
 
 
 

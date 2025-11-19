@@ -444,6 +444,10 @@ import ChildrenStudyWorkRightsList from "./pages/masters/visaConditionsMaster/ch
 import VisaMainCategoryList from "./pages/masters/visaConditionsMaster/visamainCategory/VisaMainCategoryList";
 import RelatedOccupationList from "./pages/masters/occupationMaster/relatedOccupation/RelatedOccupationList";
 import FactorForList from "./pages/masters/studyFactors/factorFor/FactorForList";
+import AgeGroupList from "./pages/masters/studyFactors/studyAgeGroup/AgeGroupList";
+import AcademicResultGroupList from "./pages/masters/studyFactors/academicResultGroup/AddImportAcademicResultGroupModal";
+import GapGroupList from "./pages/masters/studyFactors/gapGroup/GapGroupList";
+import BacklogsGroupList from "./pages/masters/studyFactors/backlogsGroup/BacklogsGroupList";
 
 
 
@@ -782,8 +786,10 @@ function App() {
 
           {/* Study Factors Master */}
           <Route path="/factor-for" element={<ProtectedRoute><FactorForList/></ProtectedRoute>}></Route>
-
-
+          <Route path="/age-group" element={<ProtectedRoute><AgeGroupList/></ProtectedRoute>}></Route>
+          <Route path="/academic-result-group" element={<ProtectedRoute><AcademicResultGroupList/></ProtectedRoute>}></Route>
+          <Route path="/gap-group" element={<ProtectedRoute><GapGroupList/></ProtectedRoute>}></Route>
+          <Route path="/backlogs-group" element={<ProtectedRoute><BacklogsGroupList/></ProtectedRoute>}></Route>
 
 
 
