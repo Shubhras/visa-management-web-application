@@ -10,8 +10,8 @@ import AddEditDepartmentModal from './AddEditDepartmentModal';
 import { formatDateDDMMYYYYTime } from '../../../helper/utils/commanHelper';
 import { useGlobalSearch } from '../../../components/comman/GlobalSearchContext';
 const DepartmentList = () => {
-  const { globalSearch ,setGlobalSearch} = useGlobalSearch();
   const dispatch = useDispatch();
+  const { globalSearch, setGlobalSearch } = useGlobalSearch();
   const [modalState, setModalState] = useState({
     show: false,
     mode: 'add',
@@ -199,19 +199,25 @@ const DepartmentList = () => {
     return <Icon icon="ri:sort-desc" className='sorting-th-icone' />;
   };
 
-  // // Clear all filters
+  // Clear all filters
   const clearAllFilters = () => {
     setTableState(prev => ({
       ...prev,
       page: 1,
+      limit: 25,
+      search: '',
       status: '',
       sortBy: 'created_at',
       sortOrder: 'desc',
+      total: 0,
+      totalPages: 0,
+      currentPage: 1,
+      hasNext: false,
+      hasPrevious: false
     }));
-    // Reset Global Search also
+    // Reset Global Search
     setGlobalSearch('');
   };
-
   const handlePageLengthChange = (value) => {
     setTableState(prev => ({
       ...prev,
@@ -494,11 +500,8 @@ const DepartmentList = () => {
                   )}
                   <button
                     onClick={clearAllFilters}
-                    className="btn btn-sm py-1 comman-inactive-btn"
-                  >
-                    <Icon icon="mdi:filter-off" width="16" /> Clear Filters
-                  </button>
-
+                    className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
+                  >Reset </button>
                 </div>
               </div>
 

@@ -11,8 +11,8 @@ import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 import { countryDemoList } from '../../../../store/master/companyMasters/actions';
 import { useGlobalSearch, } from '../../../../components/comman/GlobalSearchContext';
 const CityList = () => {
-  const { globalSearch ,setGlobalSearch} = useGlobalSearch();
   const dispatch = useDispatch();
+  const { globalSearch, setGlobalSearch } = useGlobalSearch();
   const [modalState, setModalState] = useState({
     show: false,
     mode: 'add',
@@ -400,24 +400,42 @@ const CityList = () => {
   };
 
   // Clear all filters
-  const clearAllFilters = () => {
+  const clearAllOnlyHeaderFilters = () => {
     setColumnFilters({
       countryId: [],
       stateId: [],
       districtId: []
     });
+  };
 
-    //RESET SORT ALSO
+  // Clear all filters
+  const clearAllFilters = () => {
+    // Reset filter dropdowns
+    setColumnFilters({
+      countryId: [],
+      stateId: [],
+      districtId: []
+    });
+    // Reset table state (sorting + pagination)
     setTableState(prev => ({
       ...prev,
       page: 1,
+      limit: 25,
+      search: '',
+      status: '',
       sort: [
-        { field: "created_at", order: "desc" }
-      ]
+        { field: "created_at", order: "desc" }   // default sort
+      ],
+      total: 0,
+      totalPages: 0,
+      currentPage: 1,
+      hasNext: false,
+      hasPrevious: false
     }));
-     // Reset Global Search also
- setGlobalSearch('');
+    // Reset global search
+    setGlobalSearch('');
   };
+
 
   // Check if any filters are active
   const hasActiveFilters = () => {
@@ -784,13 +802,15 @@ const CityList = () => {
                   )}
                   {hasActiveFilters() && (
                     <button
-                      onClick={clearAllFilters}
-                      className="btn btn-sm py-1 comman-inactive-btn"
-                    // title="Clear all filters"
-                    >
+                      onClick={clearAllOnlyHeaderFilters}
+                      className="btn btn-sm py-1 comman-inactive-btn">
                       <Icon icon="mdi:filter-off" width="16" /> Clear Filters
                     </button>
                   )}
+                  <button
+                    onClick={clearAllFilters}
+                    className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
+                  >Reset</button>
                 </div>
               </div>
 
