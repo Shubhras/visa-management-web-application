@@ -1,5 +1,6 @@
 import uuid
 from django.db import models
+from master.models import *
 
 
 
@@ -105,16 +106,16 @@ class Education(models.Model):
     backlogs = models.PositiveIntegerField(default=0)
 
     medium_of_education = models.ForeignKey("MediumOfEducation",on_delete=models.SET_NULL,null=True)
-    academic_result_type = models.ForeignKey("ResultType",on_delete=models.SET_NULL,null=True,related_name="academic_result_type")
+    academic_result_type = models.ForeignKey("AcademicResultType",on_delete=models.SET_NULL,null=True,related_name="academic_result_type")
     academic_result_value = models.CharField(max_length=20)
     education_type = models.ForeignKey("EducationType",on_delete=models.SET_NULL,null=True)
-    math_result_type = models.ForeignKey("ResultType",on_delete=models.SET_NULL,null=True,related_name="math_result_type")
+    math_result_type = models.ForeignKey("AcademicResultType",on_delete=models.SET_NULL,null=True,related_name="math_result_type")
     math_result_value = models.CharField(max_length=20, null=True, blank=True)
 
-    english_result_type = models.ForeignKey("ResultType",on_delete=models.SET_NULL,null=True,related_name="english_result_type")
+    english_result_type = models.ForeignKey("AcademicResultType",on_delete=models.SET_NULL,null=True,related_name="english_result_type")
     english_result_value = models.CharField(max_length=20, null=True, blank=True)
 
-    physics_result_type = models.ForeignKey("ResultType",on_delete=models.SET_NULL,null=True,related_name="physics_result_type")
+    physics_result_type = models.ForeignKey("AcademicResultType",on_delete=models.SET_NULL,null=True,related_name="physics_result_type")
     physics_result_value = models.CharField(max_length=20, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -151,10 +152,10 @@ class WorkExperience(models.Model):
     months = models.IntegerField(default=0)
     monthly_salary = models.DecimalField(max_digits=12, decimal_places=2)
 
-    salary_mode = models.ForeignKey("SalaryMode",on_delete=models.SET_NULL,null=True,default=None)
-    itr_status = models.ForeignKey("ITRStatus",on_delete=models.SET_NULL,null=True)
+    salary_mode = models.ForeignKey("ModeofSalary",on_delete=models.SET_NULL,null=True,default=None)
+    itr_status = models.ForeignKey("ITReturnStatus",on_delete=models.SET_NULL,null=True)
 
-    currency = models.ForeignKey("Currency",on_delete=models.SET_NULL,null=True,related_name="work_currency")
+    currency = models.ForeignKey("Country",on_delete=models.SET_NULL,null=True,related_name="work_currency")
     job_type = models.ForeignKey("JobType",on_delete=models.SET_NULL,null=True)
     salary_amount = models.DecimalField(max_digits=12,decimal_places=2,null=True,blank=True)
 
