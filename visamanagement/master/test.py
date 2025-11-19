@@ -1534,7 +1534,7 @@ class LanguageTestResultImportAPIView(APIView):
 
                 language_obj = Language.objects.filter(name__iexact=language_name).first()
                 language_test_obj = LanguageTest.objects.filter(name__iexact=language_test_name).first()
-                module_obj = LanguagetestmoduleName.objects.filter(moduleName__iexact=module_name).first()
+                module_obj = LanguagetestmoduleName.objects.filter(name__iexact=module_name).first()
                 lb_obj = StudyLanguageBanchmark.objects.filter(name__iexact=lb_level_name).first()
 
                 if not (language_obj and language_test_obj and module_obj and lb_obj):
