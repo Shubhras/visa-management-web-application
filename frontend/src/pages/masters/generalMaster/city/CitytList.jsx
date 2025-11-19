@@ -39,13 +39,15 @@ const CityList = () => {
     });
   };
 
-  const handleClose = () => {
+  const handleClose = (shouldRefresh = false) => {
     setModalState({
       show: false,
       mode: 'add',
       rowData: null
     });
-    fetchCityList();
+    if (shouldRefresh) {
+      fetchCityList();
+    }
   }
 
   const [showImport, setShowImport] = useState(false);
@@ -648,9 +650,12 @@ const CityList = () => {
     setSelectAllOrNot('');
   };
 
-  const handleCloseImport = () => {
+  const handleCloseImport = (shouldRefresh = false) => {
     setShowImport(false);
-    fetchCityList();
+    // Only call API when data was successfully imported
+    if (shouldRefresh) {
+     fetchCityList();
+    }
   };
 
   const handleShowImport = () => {

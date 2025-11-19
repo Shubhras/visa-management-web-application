@@ -547,7 +547,7 @@
 //                           lineHeight: 1
 //                         }}
 //                         onClick={() => {
-                          
+
 //                           handleSearchChange('');
 //                         }}
 //                       >
@@ -1099,7 +1099,7 @@ const DistrictList = () => {
     if (countryListData.length > 0) {
       setFilterDropdownData(prev => ({
         ...prev,
-        countryId: countryListData.map(country => ({ id: country.uuid || country.id, name: country.name || country.countryName })).sort((a,b)=>a.name.localeCompare(b.name))
+        countryId: countryListData.map(country => ({ id: country.uuid || country.id, name: country.name || country.countryName })).sort((a, b) => a.name.localeCompare(b.name))
       }));
     }
   }, [countryListData]);
@@ -1108,7 +1108,7 @@ const DistrictList = () => {
     if (stateListData.length > 0) {
       setFilterDropdownData(prev => ({
         ...prev,
-        stateId: stateListData.map(state => ({ id: state.uuid || state.id, name: state.name || state.stateName })).sort((a,b)=>a.name.localeCompare(b.name))
+        stateId: stateListData.map(state => ({ id: state.uuid || state.id, name: state.name || state.stateName })).sort((a, b) => a.name.localeCompare(b.name))
       }));
     } else {
       setFilterDropdownData(prev => ({ ...prev, stateId: [] }));
@@ -1146,13 +1146,13 @@ const DistrictList = () => {
         setSelectedRows(prev => prev.filter(rowId => data.some(r => r.uuid === rowId)));
       } else {
         setDistrictDataList([]);
-        setTableState(prev => ({ ...prev, total:0, totalPages:0, currentPage:1, hasNext:false, hasPrevious:false }));
+        setTableState(prev => ({ ...prev, total: 0, totalPages: 0, currentPage: 1, hasNext: false, hasPrevious: false }));
       }
     }));
   };
 
   const fetchCountryList = () => {
-    const params = { page:1, limit:2000, search:'', status:'', sortBy:'name', sortOrder:'asc' };
+    const params = { page: 1, limit: 2000, search: '', status: '', sortBy: 'name', sortOrder: 'asc' };
     dispatch(countryDemoList(params, (response, error) => {
       if (response?.statusCode === 200 && response?.status === true) {
         setCountryListData(response?.data || []);
@@ -1166,7 +1166,7 @@ const DistrictList = () => {
       return;
     }
     setLoading(true);
-    const params = { page:1, limit:2000, search:'', status:'', sortBy:'name', sortOrder:'asc', countryId };
+    const params = { page: 1, limit: 2000, search: '', status: '', sortBy: 'name', sortOrder: 'asc', countryId };
     dispatch(stateListByCountry(params, (response, error) => {
       setLoading(false);
       if (response?.statusCode === 200 && response?.status === true) {
@@ -1201,6 +1201,44 @@ const DistrictList = () => {
   const handleFilterClearAll = (columnField) => {
     setColumnFilters(prev => ({ ...prev, [columnField]: [] }));
   };
+
+  // Clear all filters
+  const clearAllOnlyHeaderFilters = () => {
+    setColumnFilters({
+      countryId: [],
+      stateId: [],
+      districtId: []
+    });
+  };
+
+  // Clear all filters
+  const clearAllFilters = () => {
+    // Reset filter dropdowns
+    setColumnFilters({
+      countryId: [],
+      stateId: [],
+      districtId: []
+    });
+    // Reset table state (sorting + pagination)
+    setTableState(prev => ({
+      ...prev,
+      page: 1,
+      limit: 25,
+      search: '',
+      status: '',
+      sort: [
+        { field: "created_at", order: "desc" }   // default sort
+      ],
+      total: 0,
+      totalPages: 0,
+      currentPage: 1,
+      hasNext: false,
+      hasPrevious: false
+    }));
+    // Reset global search
+    setGlobalSearch('');
+  };
+
 
   const hasActiveFilters = () => Object.values(columnFilters).some(arr => arr.length > 0);
 
@@ -1264,11 +1302,11 @@ const DistrictList = () => {
 
   const getPaginationNumbers = () => {
     const pages = []; const maxVisible = 5; const totalPages = tableState.totalPages; const currentPage = tableState.currentPage;
-    if (totalPages <= maxVisible) { for (let i=1;i<=totalPages;i++) pages.push(i); }
+    if (totalPages <= maxVisible) { for (let i = 1; i <= totalPages; i++) pages.push(i); }
     else {
-      if (currentPage <= 3) { for (let i=1;i<=4;i++) pages.push(i); pages.push('...'); pages.push(totalPages); }
-      else if (currentPage >= totalPages - 2) { pages.push(1); pages.push('...'); for (let i=totalPages-3;i<=totalPages;i++) pages.push(i); }
-      else { pages.push(1); pages.push('...'); for (let i=currentPage-1;i<=currentPage+1;i++) pages.push(i); pages.push('...'); pages.push(totalPages); }
+      if (currentPage <= 3) { for (let i = 1; i <= 4; i++) pages.push(i); pages.push('...'); pages.push(totalPages); }
+      else if (currentPage >= totalPages - 2) { pages.push(1); pages.push('...'); for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i); }
+      else { pages.push(1); pages.push('...'); for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i); pages.push('...'); pages.push(totalPages); }
     }
     return pages;
   };
@@ -1391,14 +1429,16 @@ const DistrictList = () => {
                   )}
 
                   {hasActiveFilters() && (
-                    <button onClick={() => {
-                      setColumnFilters({ countryId: [], stateId: [] });
-                      setTableState(prev => ({ ...prev, page:1, sort: [{ field: "created_at", order: "desc" }] }));
-                      setGlobalSearch('');
-                    }} className="btn btn-sm py-1 comman-inactive-btn">
+                    <button
+                      onClick={clearAllOnlyHeaderFilters}
+                      className="btn btn-sm py-1 comman-inactive-btn">
                       <Icon icon="mdi:filter-off" width="16" /> Clear Filters
                     </button>
                   )}
+                  <button
+                    onClick={clearAllFilters}
+                    className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
+                  >Reset</button>
                 </div>
               </div>
 
@@ -1476,11 +1516,11 @@ const DistrictList = () => {
                                     onClick={(e) => toggleFilterDropdown(e, column.field)} />
 
                                   {activeFilterColumn === column.field && (
-                                    <div ref={filterDropdownRef} className="position-absolute bg-white border rounded shadow-sm p-3 main-div-dropdown" onClick={(e)=>e.stopPropagation()}>
-                                      <div className={`filter-menu-item px-3 py-2 d-flex align-items-center ${tableState.sort.find(s=>s.field===column.field)?.order==="asc" ? "disabled-sort":""}`} onClick={() => applySortAsc(column.field)}>
+                                    <div ref={filterDropdownRef} className="position-absolute bg-white border rounded shadow-sm p-3 main-div-dropdown" onClick={(e) => e.stopPropagation()}>
+                                      <div className={`filter-menu-item px-3 py-2 d-flex align-items-center ${tableState.sort.find(s => s.field === column.field)?.order === "asc" ? "disabled-sort" : ""}`} onClick={() => applySortAsc(column.field)}>
                                         <Icon icon="ri:arrow-up-line" className="me-2 text-muted" width="18" /> Sort Smallest to Largest
                                       </div>
-                                      <div className={`filter-menu-item px-3 py-2 d-flex align-items-center ${tableState.sort.find(s=>s.field===column.field)?.order==="desc" ? "disabled-sort":""}`} onClick={() => applySortDesc(column.field)}>
+                                      <div className={`filter-menu-item px-3 py-2 d-flex align-items-center ${tableState.sort.find(s => s.field === column.field)?.order === "desc" ? "disabled-sort" : ""}`} onClick={() => applySortDesc(column.field)}>
                                         <Icon icon="ri:arrow-down-line" className="me-2 text-muted" width="18" /> Sort Largest to Smallest
                                       </div>
 
@@ -1623,7 +1663,7 @@ const DistrictList = () => {
                       <div className="border rounded-lg p-3 bg-gray-50 export-file-left">
                         {items.map((item, index) => (
                           <div key={index} className="bg-white border rounded p-2 mb-2 d-flex align-items-center gap-2 export-file">
-                            <input type="checkbox" id={`item-${index}`} checked={selectedItems.includes(item)} onChange={(e) => handleCheckboxChange(item, e.target.checked)} disabled={ItemsRequired.includes(item)} className="form-check-input"/>
+                            <input type="checkbox" id={`item-${index}`} checked={selectedItems.includes(item)} onChange={(e) => handleCheckboxChange(item, e.target.checked)} disabled={ItemsRequired.includes(item)} className="form-check-input" />
                             <label htmlFor={`item-${index}`} className="mb-0 flex-grow-1">{item}</label>
                           </div>
                         ))}
@@ -1634,7 +1674,7 @@ const DistrictList = () => {
                       <div className="border rounded-lg p-3 bg-blue-50 export-file-righit">
                         {selectedItems.length === 0 ? <div className="text-center text-muted py-5">No fields selected</div> :
                           selectedItems.map((item, index) => (
-                            <div key={index} draggable onDragStart={(e)=>handleDragStart(e,index)} onDrop={(e)=>handleDrop(e,index)} onDragOver={handleDragOver} className="bg-white border border-primary rounded p-2 mb-2 d-flex align-items-center gap-2 export-file" style={{ cursor: 'grab' }}>
+                            <div key={index} draggable onDragStart={(e) => handleDragStart(e, index)} onDrop={(e) => handleDrop(e, index)} onDragOver={handleDragOver} className="bg-white border border-primary rounded p-2 mb-2 d-flex align-items-center gap-2 export-file" style={{ cursor: 'grab' }}>
                               <span className="text-muted move-drop-icone">☰</span>
                               <span className="flex-grow-1">{item}</span>
                               {!ItemsRequired.includes(item) && (<button onClick={() => handleCheckboxChange(item, false)} className="btn btn-sm btn-link text-danger p-0 close-icone">×</button>)}
