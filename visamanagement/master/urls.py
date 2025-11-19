@@ -724,6 +724,28 @@ urlpatterns = [
     path('jobprospect/export/', JobProspectExportAPIView.as_view(), name='JobProspect-export'),
     path('jobprospect/import/', JobProspectImportAPIView.as_view(), name='JobProspect-import'),
 
+    path('related-occupations/', RelatedOccupationListAPIView.as_view(), name='related-occupation-list'),
+    path('related-occupations/create/', RelatedOccupationCreateAPIView.as_view(), name='related-occupation-create'),
+    path('related-occupations/<uuid:uuid>/', RelatedOccupationRetrieveAPIView.as_view(), name='related-occupation-detail'),
+    path('related-occupations/<uuid:uuid>/update/', RelatedOccupationUpdateAPIView.as_view(), name='related-occupation-update'),
+    path('related-occupations/delete/', RelatedOccupationDeleteAPIView.as_view(), name='related-occupation-delete'),
+    path('related-occupations/export/', RelatedOccupationExportAPIView.as_view(), name='related-occupation-export'),
+    
+    path('designations/', DesignationListAPIView.as_view(), name='designation-list'),
+    path('designations/create/', DesignationCreateAPIView.as_view(), name='designation-create'),
+    path('designations/<uuid:uuid>/', DesignationRetrieveAPIView.as_view(), name='designation-detail'),
+    path('designations/<uuid:uuid>/update/', DesignationUpdateAPIView.as_view(), name='designation-update'),
+    path('designations/delete/', DesignationDeleteAPIView.as_view(), name='designation-delete'),
+    path('designations/export/', DesignationExportAPIView.as_view(), name='designation-export'),
+    path('designations/import/', DesignationImportAPIView.as_view(), name='designation-import'),
+
+    path('occupation-to-occupation/', OccupationToOccupationListAPIView.as_view(), name='occupation-to-occupation-list'),
+    path('occupation-to-occupation/create/', OccupationToOccupationCreateAPIView.as_view(), name='occupation-to-occupation-create'),
+    path('occupation-to-occupation/<uuid:uuid>/', OccupationToOccupationRetrieveAPIView.as_view(), name='occupation-to-occupation-detail'),
+    path('occupation-to-occupation/<uuid:uuid>/update/', OccupationToOccupationUpdateAPIView.as_view(), name='occupation-to-occupation-update'),
+    path('occupation-to-occupation/delete/', OccupationToOccupationDeleteAPIView.as_view(), name='occupation-to-occupation-delete'),
+    path('occupation-to-occupation/export/', OccupationToOccupationExportAPIView.as_view(), name='occupation-to-occupation-export'),
+
 
     path('workrights/', WorkRightsListAPIView.as_view(), name='workrights-list'),
     path('workrights/create/', WorkRightsCreateAPIView.as_view(), name='workrights-create'),
