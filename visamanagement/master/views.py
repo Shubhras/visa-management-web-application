@@ -1806,17 +1806,11 @@ class StateListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['stateName', 'stateshortName', 'created_at', 'updated_at']
+        custom_sort = request.GET.get('customSort')
 
-        # Validate sort field
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        allowed_sort_fields = ['stateName', 'stateshortName', 'countryName', 'created_at', 'updated_at']
 
-        # Helper: parse comma-separated or multiple params
+      
         def parse_ids(param_name):
             raw = request.GET.get(param_name, '')
             if raw:
@@ -1825,41 +1819,78 @@ class StateListAPIView(APIView):
                 items = request.GET.getlist(param_name)
             return items
 
-        # Helper: filter valid UUIDs
         def validate_uuid_list(uuid_list):
-            valid_uuids = []
+            valid = []
             for u in uuid_list:
                 try:
-                    valid_uuids.append(UUID(u))
-                except ValueError:
+                    valid.append(UUID(u))
+                except:
                     pass
-            return valid_uuids
+            return valid
 
         country_list = validate_uuid_list(parse_ids('country'))
         state_list = validate_uuid_list(parse_ids('state'))
 
         queryset = State.objects.filter(is_deleted=False)
 
-        # ---------------------------
-        # HIERARCHICAL FILTERING
-        # ---------------------------
+        
         if state_list:
             queryset = queryset.filter(uuid__in=state_list)
         elif country_list:
             queryset = queryset.filter(countryName__uuid__in=country_list)
 
-        # ---------------------------
-        # TEXT SEARCH (STATE)
-        # ---------------------------
         if search:
             queryset = queryset.filter(
                 Q(stateName__istartswith=search)
             )
 
-        # Apply sorting
-        queryset = queryset.order_by(sort_by)
+        
+        sort_field_map = {
+            'stateName': 'stateName',
+            'stateshortName': 'stateshortName',
+            'countryName': 'countryName__name',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
 
+        sort_fields = []
+
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    if field in ['stateName', 'stateshortName', 'countryName']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+        else:
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'desc')
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+            f = F(orm_field)
+            sort_fields = [
+                f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)
+            ]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # ---------------------------
         # Pagination
+        # ---------------------------
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = StateSerializer(result_page, many=True)
