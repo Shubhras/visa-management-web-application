@@ -62,8 +62,8 @@ const MasterLayout = ({ children }) => {
           children: [
             { name: "Gender", path: "/gender-list" },
             { name: "Marital Status", path: "/marital-status" },
-            { name: "Continents ", path: "/continent-list" },
-            { name: "Country ", path: "/country-list" },
+            { name: "Continents", path: "/continent-list" },
+            { name: "Country", path: "/country-list" },
             { name: "State", path: "/state-list" },
             { name: "District", path: "/district-list" },
             { name: "City", path: "/city-list" },
@@ -1978,7 +1978,7 @@ const MasterLayout = ({ children }) => {
             {/* Sub Header */}
             <div className="sub-header-bar d-flex align-items-center justify-content-between">
               <div className="sub-header-title">{selectedItemName}</div>
-              {["City", "Department","District","State","Country","Gender","Factor For","Study : Age Group","Study : Academic Result Group","Study : Gap Group","Study : Backlogs Group"].includes(selectedItemName) && (
+              {["City", "Department","District","State","Country","Gender","Continents","Factor For","Study : Age Group","Study : Academic Result Group","Study : Gap Group","Study : Backlogs Group"].includes(selectedItemName) && (
                 <div className="position-relative search-filter-div">
                   <Icon
                     icon="ion:search-outline"

@@ -108,7 +108,7 @@ const AddImportContinentModal = ({ show, handleClose }) => {
             setFile(null);
             setSheetNames([]);
             setSelectedSheet("");
-            handleClose();
+            handleClose(true);
           } else {
             toast.error("Something went wrong.");
           }
@@ -123,7 +123,7 @@ const AddImportContinentModal = ({ show, handleClose }) => {
     setError("");
     setSheetNames([]);
     setSelectedSheet("");
-    handleClose();
+    handleClose(false);
     setLoading(false);
   };
 
