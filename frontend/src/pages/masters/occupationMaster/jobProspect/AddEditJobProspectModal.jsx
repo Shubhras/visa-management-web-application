@@ -2,12 +2,12 @@ import React, { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import {
+  jobProspectAdd,
+  jobProspectEdit,
   occupationCategoryList,
   occupationCodeList,
   occupationLevelCodeList,
   occupationLevelList,
-  occupationNameAdd,
-  occupationNameEdit,
   occupationProspectList,
   occupationTypeList,
   occupationVersionList,
@@ -250,7 +250,7 @@ const AddEditJobProspectModal = ({
 
       setLoading(true);
 
-      const action = mode === "edit" ? occupationNameEdit : occupationNameAdd;
+      const action = mode === "edit" ? jobProspectEdit : jobProspectAdd;
 
       dispatch(
         action(sendPayload, (response, error) => {
@@ -658,9 +658,9 @@ const AddEditJobProspectModal = ({
                       }`}
                     >
                       <option value="">Hour / Month / Year </option>
-                      <option value="Weeks">Hour</option>
-                      <option value="Months">Month</option>
-                      <option value="Years">Year</option>
+                      <option value="Hour">Hour</option>
+                      <option value="Month">Month</option>
+                      <option value="Year">Year</option>
                     </select>
                     {errors.duration && (
                       <div className="text-danger text-sm mt-1">

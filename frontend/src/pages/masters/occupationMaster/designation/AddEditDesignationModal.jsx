@@ -2,9 +2,9 @@ import React, { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import {
+  designationAdd,
+  designationEdit,
   occupationCodeList,
-  occupationNameAdd,
-  occupationNameEdit,
   occupationNameList,
   occupationVersionList,
   representingCountryList,
@@ -100,7 +100,7 @@ const AddEditDesignationModal = ({
           country: rowData.country_uuid || "",
           occupationVersion: rowData.occupationversion_uuid || "",
           occupationCode: rowData.occupationcode_uuid || "",
-          occupationName: rowData.occupationname || "",
+          occupationName: rowData.occupationname_uuid || "",
           description: rowData.description || "",
           designation: rowData.designation || "",
         });
@@ -180,7 +180,7 @@ const AddEditDesignationModal = ({
               country_id: formData.country,
               occupationversion_id: formData.occupationVersion,
               occupationcode_id: formData.occupationCode,
-              occupationname: formData.occupationName,
+              occupationname_id: formData.occupationName,
               designation: formData.designation,
               description: formData.description,
             }
@@ -188,14 +188,14 @@ const AddEditDesignationModal = ({
               country_id: formData.country,
               occupationversion_id: formData.occupationVersion,
               occupationcode_id: formData.occupationCode,
-              occupationname: formData.occupationName,
+              occupationname_id: formData.occupationName,
               designation: formData.designation,
               description: formData.description,
             };
 
       setLoading(true);
 
-      const action = mode === "edit" ? occupationNameEdit : occupationNameAdd;
+      const action = mode === "edit" ? designationEdit : designationAdd;
 
       dispatch(
         action(sendPayload, (response, error) => {

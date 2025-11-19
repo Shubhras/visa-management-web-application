@@ -1338,22 +1338,89 @@ class CountryListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['name', 'shortName', 'fullName', 'capitalCity', 'created_at']
+        custom_sort = request.GET.get('customSort')
 
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        # Allowed fields for sorting
+        allowed_sort_fields = ['name', 'shortName', 'fullName', 'capitalCity', 'created_at', 'updated_at']
+
+        # Helper to parse comma-separated or repeated params
+        def parse_ids(param_name):
+            raw = request.GET.get(param_name, '')
+            if raw:
+                items = [x.strip() for x in raw.split(',') if x.strip()]
+            else:
+                items = request.GET.getlist(param_name)
+            return items
+
+        # Helper to validate UUIDs
+        def validate_uuid_list(uuid_list):
+            valid = []
+            for u in uuid_list:
+                try:
+                    valid.append(UUID(u))
+                except:
+                    pass
+            return valid
+
+        continent_list = validate_uuid_list(parse_ids('continent'))
 
         queryset = Country.objects.filter(is_deleted=False)
-        if search:
-            queryset = queryset.filter(
-                Q(name__istartswith=search) 
-            )
 
-        queryset = queryset.order_by(sort_by)
+        # ---------------------------
+        # Filter by continent UUID
+        # ---------------------------
+        if continent_list:
+            queryset = queryset.filter(continent__uuid__in=continent_list)
+
+        # ---------------------------
+        # Search
+        # ---------------------------
+        if search:
+            queryset = queryset.filter(Q(name__istartswith=search))
+
+        # ---------------------------
+        # Sorting Logic
+        # ---------------------------
+        sort_field_map = {
+            'name': 'name',
+            'shortName': 'shortName',
+            'fullName': 'fullName',
+            'capitalCity': 'capitalCity',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+
+        sort_fields = []
+
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field not in sort_field_map:
+                        continue
+                    orm_field = sort_field_map[field]
+                    if field in ['name', 'shortName', 'fullName', 'capitalCity']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+                except ValueError:
+                    continue
+        else:
+            # Default sorting
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'desc')
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+            f = F(orm_field)
+            sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # ---------------------------
+        # Pagination
+        # ---------------------------
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = CountrySerializer(result_page, many=True)
@@ -1503,11 +1570,94 @@ class CountryExportAPIView(APIView):
 
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
-        fields = request.GET.get('fields')  # comma-separated fields
-        uuids_param = request.GET.get('uuids', '')  # comma-separated UUIDs
-        uuids = [u.strip() for u in uuids_param.split(',') if u]
+        fields = request.GET.get('fields')
+        search = request.GET.get('search', '').strip()
+        custom_sort = request.GET.get('customSort')
 
-        # --- Field to header mapping ---
+        # ---------------------------
+        # Parse IDs & Validate UUIDs
+        # ---------------------------
+        def parse_ids(param_name):
+            raw = request.GET.get(param_name, '')
+            if raw:
+                items = [x.strip() for x in raw.split(',') if x.strip()]
+            else:
+                items = request.GET.getlist(param_name)
+            return items
+
+        def validate_uuid_list(uuid_list):
+            valid = []
+            for u in uuid_list:
+                try:
+                    valid.append(UUID(u))
+                except:
+                    pass
+            return valid
+
+        continent_list = validate_uuid_list(parse_ids('continent'))
+        country_list = validate_uuid_list(parse_ids('country'))
+
+        # ---------------------------
+        # Base QuerySet
+        # ---------------------------
+        queryset = Country.objects.filter(is_deleted=False).annotate(
+            continent_name=F('continent__name')
+        )
+
+        # ---------------------------
+        # Filtering
+        # ---------------------------
+        if country_list:
+            queryset = queryset.filter(uuid__in=country_list)
+        elif continent_list:
+            queryset = queryset.filter(continent__uuid__in=continent_list)
+
+        # ---------------------------
+        # Search
+        # ---------------------------
+        if search:
+            queryset = queryset.filter(name__istartswith=search)
+
+        # ---------------------------
+        # Sorting
+        # ---------------------------
+        sort_field_map = {
+            'name': 'name',
+            'shortName': 'shortName',
+            'fullName': 'fullName',
+            'continent': 'continent_name',
+            'created_at': 'created_at'
+        }
+
+        sort_fields = []
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+                    if field in ['name', 'shortName', 'fullName', 'continent']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+                except ValueError:
+                    continue
+        else:
+            sort_order = request.GET.get('sortOrder', 'desc')
+            f = F('created_at')
+            sort_fields = [f.desc(nulls_last=True) if sort_order=='desc' else f.asc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # ---------------------------
+        # Field mapping & Export
+        # ---------------------------
         field_header_map = {
             'uuid': 'UUID',
             'name': 'Country Name',
@@ -1528,34 +1678,31 @@ class CountryExportAPIView(APIView):
             'updated_at': 'Modified On'
         }
 
-        if fields:
-            field_list = [f.strip() for f in fields.split(',')]
-        else:
-            field_list = list(field_header_map.keys())
-
-        queryset = Country.objects.filter(is_deleted=False)
-        if uuids:
-            queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = 'Country'
+
         for obj in queryset:
             row = []
             for field in field_list:
                 value = getattr(obj, field, '')
 
-                if field == 'continent' and obj.continent:
-                    value = obj.continent.name
-                elif field in ['created_at', 'updated_at'] and value:
-                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-                elif isinstance(value, bool):
+                if field == 'continent':
+                    value = getattr(obj, 'continent_name', '')
+
+                if field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
+                if isinstance(value, bool):
                     value = int(value)
 
                 row.append(value if value is not None else '')
             dataset.append(row)
 
+        # ---------------------------
+        # Export file
+        # ---------------------------
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv; charset=utf-8'
@@ -1571,6 +1718,9 @@ class CountryExportAPIView(APIView):
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
+
+
+
 
 
 class CountryImportAPIView(APIView):
@@ -1806,17 +1956,11 @@ class StateListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['stateName', 'stateshortName', 'created_at', 'updated_at']
+        custom_sort = request.GET.get('customSort')
 
-        # Validate sort field
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        allowed_sort_fields = ['stateName', 'stateshortName', 'countryName', 'created_at', 'updated_at']
 
-        # Helper: parse comma-separated or multiple params
+      
         def parse_ids(param_name):
             raw = request.GET.get(param_name, '')
             if raw:
@@ -1825,41 +1969,78 @@ class StateListAPIView(APIView):
                 items = request.GET.getlist(param_name)
             return items
 
-        # Helper: filter valid UUIDs
         def validate_uuid_list(uuid_list):
-            valid_uuids = []
+            valid = []
             for u in uuid_list:
                 try:
-                    valid_uuids.append(UUID(u))
-                except ValueError:
+                    valid.append(UUID(u))
+                except:
                     pass
-            return valid_uuids
+            return valid
 
         country_list = validate_uuid_list(parse_ids('country'))
         state_list = validate_uuid_list(parse_ids('state'))
 
         queryset = State.objects.filter(is_deleted=False)
 
-        # ---------------------------
-        # HIERARCHICAL FILTERING
-        # ---------------------------
+        
         if state_list:
             queryset = queryset.filter(uuid__in=state_list)
         elif country_list:
             queryset = queryset.filter(countryName__uuid__in=country_list)
 
-        # ---------------------------
-        # TEXT SEARCH (STATE)
-        # ---------------------------
         if search:
             queryset = queryset.filter(
                 Q(stateName__istartswith=search)
             )
 
-        # Apply sorting
-        queryset = queryset.order_by(sort_by)
+        
+        sort_field_map = {
+            'stateName': 'stateName',
+            'stateshortName': 'stateshortName',
+            'countryName': 'countryName__name',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
 
+        sort_fields = []
+
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    if field in ['stateName', 'stateshortName', 'countryName']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+        else:
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'desc')
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+            f = F(orm_field)
+            sort_fields = [
+                f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)
+            ]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # ---------------------------
         # Pagination
+        # ---------------------------
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = StateSerializer(result_page, many=True)
@@ -1999,16 +2180,102 @@ class StateExportAPIView(APIView):
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')
-        uuids_param = request.GET.get('uuids', '')
-        uuids = [u.strip() for u in uuids_param.split(',') if u]
+        search = request.GET.get('search', '').strip()
+        custom_sort = request.GET.get('customSort')
+        allowed_sort_fields = ['stateName', 'stateshortName', 'state', 'countryName', 'created_at']
 
-        # Header map for export
+        # ---------------------------
+        # Parse IDs & Validate UUIDs
+        # ---------------------------
+        def parse_ids(param_name):
+            raw = request.GET.get(param_name, '')
+            if raw:
+                items = [x.strip() for x in raw.split(',') if x.strip()]
+            else:
+                items = request.GET.getlist(param_name)
+            return items
+
+        def validate_uuid_list(uuid_list):
+            valid = []
+            for u in uuid_list:
+                try:
+                    valid.append(UUID(u))
+                except:
+                    pass
+            return valid
+
+        country_list = validate_uuid_list(parse_ids('country'))
+        state_list = validate_uuid_list(parse_ids('state'))
+
+        # ---------------------------
+        # Base QuerySet
+        # ---------------------------
+        queryset = State.objects.filter(is_deleted=False).annotate(
+            country_name=F('countryName__name')
+        )
+
+        # ---------------------------
+        # Hierarchical filtering
+        # ---------------------------
+        if state_list:
+            queryset = queryset.filter(uuid__in=state_list)
+        elif country_list:
+            queryset = queryset.filter(countryName__uuid__in=country_list)
+
+        # ---------------------------
+        # Search
+        # ---------------------------
+        if search:
+            queryset = queryset.filter(stateName__istartswith=search)
+
+        # ---------------------------
+        # Sorting
+        # ---------------------------
+        sort_field_map = {
+            'stateName': 'stateName',
+            'stateshortName': 'stateshortName',
+            'state': 'state',
+            'countryName': 'country_name',
+            'created_at': 'created_at'
+        }
+
+        sort_fields = []
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Use Lower() for string fields for case-insensitive sort
+                    if field in ['stateName', 'stateshortName', 'state', 'countryName']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+                except ValueError:
+                    continue
+        else:
+            sort_order = request.GET.get('sortOrder', 'desc')
+            f = F('created_at')
+            sort_fields = [f.desc(nulls_last=True) if sort_order=='desc' else f.asc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # ---------------------------
+        # Field mapping & Export
+        # ---------------------------
         field_header_map = {
             'uuid': 'UUID',
             'countryName': 'Country Name',
             'stateName': 'State Name',
             'stateshortName': 'State Short Name',
-            'state':'State / Territory',
+            'state': 'State / Territory',
             'description': 'Description',
             'is_active': 'Active',
             'is_deleted': 'Deleted',
@@ -2016,16 +2283,8 @@ class StateExportAPIView(APIView):
             'updated_at': 'Modified On',
         }
 
-        # Choose fields
         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
-        # Fetch queryset
-        queryset = State.objects.filter(is_deleted=False)
-        if uuids:
-            queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
-
-        # Prepare dataset
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = 'State'
@@ -2033,25 +2292,26 @@ class StateExportAPIView(APIView):
         for obj in queryset:
             row = []
             for field in field_list:
-                if field == 'country_name':
-                    value = obj.countryName.name if obj.countryName else ''
-                else:
-                    value = getattr(obj, field, '')
-                
+                value = getattr(obj, field, '')
+
+                if field == 'countryName':
+                    value = getattr(obj, 'country_name', '')
+
                 # Convert state/territory to Title Case
                 if field == 'state' and value:
-                    value = value.capitalize()  # STATE -> State, TERRITORY -> Territory
+                    value = value.capitalize()
 
-                # Format date/time fields
                 if field in ['created_at', 'updated_at'] and value:
-                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-                elif isinstance(value, bool):
+                    value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
+                if isinstance(value, bool):
                     value = int(value)
-                
+
                 row.append(value if value is not None else '')
             dataset.append(row)
 
+        # ---------------------------
         # Export file
+        # ---------------------------
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
@@ -2061,14 +2321,15 @@ class StateExportAPIView(APIView):
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'states.xlsx'
 
-        # Build response
         response = HttpResponse(
             file_data if format_type == 'csv' else file_data.getvalue(),
             content_type=content_type
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
-
+        
+        
+        
 class StateImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -2317,17 +2578,14 @@ class DistrictListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['districtName', 'created_at', 'updated_at']
+        custom_sort = request.GET.get('customSort')
 
-        # Validate sort field
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        # Allowed fields for validation
+        allowed_sort_fields = ['districtName', 'stateName', 'countryName', 'created_at', 'updated_at']
 
-        # Helper: parse comma-separated or multiple params
+        # ---------------------------
+        # Parse IDs helper
+        # ---------------------------
         def parse_ids(param_name):
             raw = request.GET.get(param_name, '')
             if raw:
@@ -2336,15 +2594,14 @@ class DistrictListAPIView(APIView):
                 items = request.GET.getlist(param_name)
             return items
 
-        # Helper: filter valid UUIDs
         def validate_uuid_list(uuid_list):
-            valid_uuids = []
+            valid = []
             for u in uuid_list:
                 try:
-                    valid_uuids.append(UUID(u))
-                except ValueError:
+                    valid.append(UUID(u))
+                except:
                     pass
-            return valid_uuids
+            return valid
 
         country_list = validate_uuid_list(parse_ids('country'))
         state_list = validate_uuid_list(parse_ids('state'))
@@ -2353,7 +2610,7 @@ class DistrictListAPIView(APIView):
         queryset = District.objects.filter(is_deleted=False)
 
         # ---------------------------
-        # HIERARCHICAL FILTERING
+        # Hierarchical Filtering
         # ---------------------------
         if district_list:
             queryset = queryset.filter(uuid__in=district_list)
@@ -2364,21 +2621,74 @@ class DistrictListAPIView(APIView):
                 queryset = queryset.filter(countryName__uuid__in=country_list)
 
         # ---------------------------
-        # TEXT SEARCH (DISTRICT)
+        # Search
         # ---------------------------
         if search:
             queryset = queryset.filter(
                 Q(districtName__istartswith=search)
             )
 
-        # Apply sorting
-        queryset = queryset.order_by(sort_by)
+        # ---------------------------
+        # Sorting Logic (same as City API)
+        # ---------------------------
+        sort_field_map = {
+            'districtName': 'districtName',
+            'stateName': 'stateName__stateName',
+            'countryName': 'countryName__name',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
 
+        sort_fields = []
+
+        if custom_sort:
+            # Example: customSort=districtName:asc,created_at:desc
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # lowercase sorting for text fields
+                    if field in ['districtName', 'stateName', 'countryName']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+        else:
+            # Fallback to default sort fields
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'desc')
+
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+            f = F(orm_field)
+
+            sort_fields = [
+                f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)
+            ]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # ---------------------------
         # Pagination
+        # ---------------------------
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = DistrictSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
+
+
+
 
 
 class DistrictCreateAPIView(APIView):
@@ -2514,17 +2824,106 @@ class DistrictDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-
 class DistrictExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')
-        uuids_param = request.GET.get('uuids', '')
-        uuids = [u.strip() for u in uuids_param.split(',') if u]
+        search = request.GET.get('search', '').strip()
+        custom_sort = request.GET.get('customSort')
+        allowed_sort_fields = ['districtName', 'stateName', 'countryName', 'created_at']
 
-        # Header map for better readability
+        # ---------------------------
+        # Parse IDs & Validate UUIDs
+        # ---------------------------
+        def parse_ids(param_name):
+            raw = request.GET.get(param_name, '')
+            if raw:
+                items = [x.strip() for x in raw.split(',') if x.strip()]
+            else:
+                items = request.GET.getlist(param_name)
+            return items
+
+        def validate_uuid_list(uuid_list):
+            valid = []
+            for u in uuid_list:
+                try:
+                    valid.append(UUID(u))
+                except:
+                    pass
+            return valid
+
+        country_list = validate_uuid_list(parse_ids('country'))
+        state_list = validate_uuid_list(parse_ids('state'))
+        district_list = validate_uuid_list(parse_ids('district'))
+
+        # ---------------------------
+        # Base QuerySet
+        # ---------------------------
+        queryset = District.objects.filter(is_deleted=False).annotate(
+            country_name=F('countryName__name'),
+            state_name=F('stateName__stateName')
+        )
+
+        # ---------------------------
+        # Hierarchical filtering
+        # ---------------------------
+        if district_list:
+            queryset = queryset.filter(uuid__in=district_list)
+        else:
+            if state_list:
+                queryset = queryset.filter(stateName__uuid__in=state_list)
+            if country_list:
+                queryset = queryset.filter(countryName__uuid__in=country_list)
+
+        # ---------------------------
+        # Search
+        # ---------------------------
+        if search:
+            queryset = queryset.filter(districtName__istartswith=search)
+
+        # ---------------------------
+        # Sorting
+        # ---------------------------
+        sort_field_map = {
+            'districtName': 'districtName',
+            'stateName': 'state_name',
+            'countryName': 'country_name',
+            'created_at': 'created_at'
+        }
+
+        sort_fields = []
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Use Lower() for string fields for case-insensitive sort
+                    if field in ['districtName', 'stateName', 'countryName']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+                except ValueError:
+                    continue
+        else:
+            sort_order = request.GET.get('sortOrder', 'desc')
+            f = F('created_at')
+            sort_fields = [f.desc(nulls_last=True) if sort_order=='desc' else f.asc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # ---------------------------
+        # Field mapping & Export
+        # ---------------------------
         field_header_map = {
             'uuid': 'UUID',
             'countryName': 'Country Name',
@@ -2533,19 +2932,11 @@ class DistrictExportAPIView(APIView):
             'description': 'Description',
             'is_deleted': 'Deleted',
             'created_at': 'Created On',
-            'updated_at': 'Modified On',
+            'updated_at': 'Modified On'
         }
 
-        # Select fields to include in export
         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
-        # Queryset with filtering and ordering
-        queryset = District.objects.filter(is_deleted=False)
-        if uuids:
-            queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
-
-        # Initialize dataset
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = 'District'
@@ -2553,21 +2944,24 @@ class DistrictExportAPIView(APIView):
         for obj in queryset:
             row = []
             for field in field_list:
-                if field == 'country_name':
-                    value = obj.countryName.name if obj.countryName else ''
-                elif field == 'state_name':
-                    value = obj.stateName.stateName if obj.stateName else ''
-                else:
-                    value = getattr(obj, field, '')
-                # Format timestamps
+                value = getattr(obj, field, '')
+
+                if field == 'countryName':
+                    value = getattr(obj, 'country_name', '')
+                elif field == 'stateName':
+                    value = getattr(obj, 'state_name', '')
+
                 if field in ['created_at', 'updated_at'] and value:
-                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-                elif isinstance(value, bool):
+                    value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
+                if isinstance(value, bool):
                     value = int(value)
+
                 row.append(value if value is not None else '')
             dataset.append(row)
 
-        # Export file based on requested format
+        # ---------------------------
+        # Export file
+        # ---------------------------
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
@@ -2577,14 +2971,12 @@ class DistrictExportAPIView(APIView):
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'districts.xlsx'
 
-        # Prepare response
         response = HttpResponse(
             file_data if format_type == 'csv' else file_data.getvalue(),
             content_type=content_type
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
-
 
 
 
@@ -2870,9 +3262,6 @@ class CityListAPIView(APIView):
         custom_sort = request.GET.get('customSort')  
         allowed_sort_fields = ['cityName', 'stateName', 'districtName', 'countryName', 'created_at']
 
-        # ---------------------------
-        # Parse IDs helper
-        # ---------------------------
         def parse_ids(param_name):
             raw = request.GET.get(param_name, '')
             if raw:
@@ -2897,9 +3286,7 @@ class CityListAPIView(APIView):
 
         queryset = City.objects.filter(is_deleted=False)
 
-        # ---------------------------
-        # Hierarchical Filtering
-        # ---------------------------
+     
         if city_list:
             queryset = queryset.filter(uuid__in=city_list)
         else:
@@ -2910,15 +3297,9 @@ class CityListAPIView(APIView):
             if country_list:
                 queryset = queryset.filter(countryName__uuid__in=country_list)
 
-        # ---------------------------
-        # Search
-        # ---------------------------
         if search:
             queryset = queryset.filter(cityName__istartswith=search)
 
-        # ---------------------------
-        # Sorting
-        # ---------------------------
         sort_field_map = {
             'cityName': 'cityName',
             'stateName': 'stateName__stateName',
@@ -2950,7 +3331,6 @@ class CityListAPIView(APIView):
                 except ValueError:
                     continue
         else:
-            # Default sorting
             sort_by = request.GET.get('sortBy', 'created_at')
             sort_order = request.GET.get('sortOrder', 'desc')
             orm_field = sort_field_map.get(sort_by, 'created_at')
@@ -2959,9 +3339,6 @@ class CityListAPIView(APIView):
 
         queryset = queryset.order_by(*sort_fields)
 
-        # ---------------------------
-        # Pagination
-        # ---------------------------
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = CitySerializer(result_page, many=True)
@@ -3265,7 +3642,7 @@ class CityExportAPIView(APIView):
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
-        
+
 class CityImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 

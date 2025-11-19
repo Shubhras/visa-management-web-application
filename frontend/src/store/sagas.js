@@ -12,10 +12,10 @@ import occupationMasterSaga from "./master/occupationMaster/saga";
 import instituteMasterSaga from "./master/instituteMaster/saga";
 import visaConditionsMasterSaga from "./master/visaConditionsMaster/saga";
 import visaProcessMasterSaga from "./master/visaProcessMaster/saga";
+import studyFactorsMasterSaga from "./master/studyFactorsMasters/saga";
 
 export default function* rootSaga() {
   yield all([
-
     fork(AuthSaga),
     fork(masterSaga),
     fork(salesMasterSaga),
@@ -27,5 +27,6 @@ export default function* rootSaga() {
     fork(instituteMasterSaga),
     fork(visaConditionsMasterSaga),
     fork(visaProcessMasterSaga),
+    fork(studyFactorsMasterSaga),
   ]);
 }

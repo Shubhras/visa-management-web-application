@@ -805,7 +805,26 @@ export const importContinentDataAPI = (payload) => {
 
 //COUNTRY
 export const getCountryListDataAPI = (data) => {
-    const apiUrl = `${url.GET_COUNTRY_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    let customSort = "";
+    if (data.sort && Array.isArray(data.sort)) {
+        // Check if only created_at exists
+        const onlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        // Remove created_at if other fields exist
+        const finalSortArray = onlyCreatedAt
+            ? data.sort
+            : data.sort.filter(s => s.field !== "created_at");
+
+        // Map fields & build customSort string
+        customSort = finalSortArray
+            .map(s => {
+                let field = s.field;
+                if (field === "continent") field = "continent";
+                return `${field}:${s.order}`;
+            })
+            .join(",");
+    }
+    const apiUrl = `${url.GET_COUNTRY_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&continent=${data?.continent}&customSort=${customSort}`;
     return get(apiUrl);
 };
 
@@ -828,7 +847,27 @@ export const deleteCountryDataAPI = (payload) => {
 };
 
 export const exportCountryDataAPI = (payload) => {
-    const apiUrl = `${url.EXPORT_COUNTRY_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    let customSort = "";
+    if (payload.sort && Array.isArray(payload.sort)) {
+        // Check if only created_at exists
+        const onlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        // Remove created_at if other fields exist
+        const finalSortArray = onlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(s => s.field !== "created_at");
+
+        // Map fields & build customSort string
+        customSort = finalSortArray
+            .map(s => {
+                let field = s.field;
+
+                if (field === "continent") field = "continent";
+                return `${field}:${s.order}`;
+            })
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_COUNTRY_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&continent=${payload?.continent}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -839,7 +878,28 @@ export const importCountryDataAPI = (payload) => {
 
 // STATE
 export const getStateListDataAPI = (data) => {
-    const apiUrl = `${url.GET_STATE_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    let customSort = "";
+    if (data.sort && Array.isArray(data.sort)) {
+        // Check if only created_at exists
+        const onlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        // Remove created_at if other fields exist
+        const finalSortArray = onlyCreatedAt
+            ? data.sort
+            : data.sort.filter(s => s.field !== "created_at");
+
+        // Map fields & build customSort string
+        customSort = finalSortArray
+            .map(s => {
+                let field = s.field;
+
+                if (field === "countryId") field = "countryName";
+                if (field === "stateId") field = "stateName";
+                return `${field}:${s.order}`;
+            })
+            .join(",");
+    }
+    const apiUrl = `${url.GET_STATE_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&country=${data?.country}&customSort=${customSort}`;
     return get(apiUrl);
 };
 
@@ -862,7 +922,28 @@ export const deleteStateDataAPI = (payload) => {
 };
 
 export const exportStateDataAPI = (payload) => {
-    const apiUrl = `${url.EXPORT_STATE_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    let customSort = "";
+    if (payload.sort && Array.isArray(payload.sort)) {
+        // Check if only created_at exists
+        const onlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        // Remove created_at if other fields exist
+        const finalSortArray = onlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(s => s.field !== "created_at");
+
+        // Map fields & build customSort string
+        customSort = finalSortArray
+            .map(s => {
+                let field = s.field;
+
+                if (field === "countryId") field = "countryName";
+                if (field === "stateId") field = "stateName";
+                return `${field}:${s.order}`;
+            })
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_STATE_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&country=${payload?.country}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -1284,7 +1365,30 @@ export const importAcademicResultToResultAPI = (payload) => {
 
 // DISTRICT
 export const getDistrictListDataAPI = (data) => {
-    const apiUrl = `${url.GET_DISTRICT_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    let customSort = "";
+    if (data.sort && Array.isArray(data.sort)) {
+        // Check if only created_at exists
+        const onlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        // Remove created_at if other fields exist
+        const finalSortArray = onlyCreatedAt
+            ? data.sort
+            : data.sort.filter(s => s.field !== "created_at");
+
+        // Map fields & build customSort string
+        customSort = finalSortArray
+            .map(s => {
+                let field = s.field;
+
+                if (field === "countryId") field = "countryName";
+                if (field === "stateId") field = "stateName";
+                if (field === "districtId") field = "districtName";
+
+                return `${field}:${s.order}`;
+            })
+            .join(",");
+    }
+    const apiUrl = `${url.GET_DISTRICT_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&country=${data?.country}&state=${data?.state}&customSort=${customSort}`;
     return get(apiUrl);
 };
 
@@ -1307,7 +1411,30 @@ export const deleteDistrictDataAPI = (payload) => {
 };
 
 export const exportDistrictDataAPI = (payload) => {
-    const apiUrl = `${url.EXPORT_DISTRICT_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    let customSort = "";
+    if (payload.sort && Array.isArray(payload.sort)) {
+        // Check if only created_at exists
+        const onlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        // Remove created_at if other fields exist
+        const finalSortArray = onlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(s => s.field !== "created_at");
+
+        // Map fields & build customSort string
+        customSort = finalSortArray
+            .map(s => {
+                let field = s.field;
+
+                if (field === "countryId") field = "countryName";
+                if (field === "stateId") field = "stateName";
+                if (field === "districtId") field = "districtName";
+
+                return `${field}:${s.order}`;
+            })
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_DISTRICT_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&country=${payload?.country}&state=${payload?.state}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -1324,13 +1451,23 @@ export const getDistrictDataByStateAPI = (payload) => {
 export const getCityListDataAPI = (data) => {
     let customSort = "";
     if (data.sort && Array.isArray(data.sort)) {
-        customSort = data.sort
+        // Check if only created_at exists
+        const onlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        // Remove created_at if other fields exist
+        const finalSortArray = onlyCreatedAt
+            ? data.sort
+            : data.sort.filter(s => s.field !== "created_at");
+
+        // Map fields & build customSort string
+        customSort = finalSortArray
             .map(s => {
                 let field = s.field;
-                // Replace field names
+
                 if (field === "countryId") field = "countryName";
                 if (field === "stateId") field = "stateName";
                 if (field === "districtId") field = "districtName";
+
                 return `${field}:${s.order}`;
             })
             .join(",");
@@ -1359,13 +1496,23 @@ export const deleteCityDataAPI = (payload) => {
 export const exportCityDataAPI = (payload) => {
     let customSort = "";
     if (payload.sort && Array.isArray(payload.sort)) {
-        customSort = payload.sort
+        // Check if only created_at exists
+        const onlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        // Remove created_at if other fields exist
+        const finalSortArray = onlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(s => s.field !== "created_at");
+
+        // Map fields & build customSort string
+        customSort = finalSortArray
             .map(s => {
                 let field = s.field;
-                // Replace field names
+
                 if (field === "countryId") field = "countryName";
                 if (field === "stateId") field = "stateName";
                 if (field === "districtId") field = "districtName";
+
                 return `${field}:${s.order}`;
             })
             .join(",");
@@ -2130,74 +2277,108 @@ export const importOccupationNameAPI = (payload) => {
 
 //  Designation 
 export const getDesignationListAPI = (data) => {
-  const apiUrl = `${url.GET_DESIGNATION_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
-  return get(apiUrl);
+    const apiUrl = `${url.GET_DESIGNATION_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
 };
 
 export const addDesignationAPI = (payload) => {
-  const apiUrl = `${url.ADD_DESIGNATION_API}`;
-  return post(apiUrl, payload);
+    const apiUrl = `${url.ADD_DESIGNATION_API}`;
+    return post(apiUrl, payload);
 };
 
 export const editDesignationAPI = (payload) => {
-  const apiUrl = `${url.EDIT_DESIGNATION_API}${payload?.uuid}/update/`;
-  return put(apiUrl, payload);
+    const apiUrl = `${url.EDIT_DESIGNATION_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
 };
 
 export const deleteDesignationAPI = (payload) => {
-  const preparedData = { id: payload };
-  const apiUrl = `${url.DELETE_DESIGNATION_API}delete/`;
-  return delWithPayload(apiUrl, preparedData);
+    const preparedData = { id: payload };
+    const apiUrl = `${url.DELETE_DESIGNATION_API}delete/`;
+    return delWithPayload(apiUrl, preparedData);
 };
 
 export const exportDesignationAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_DESIGNATION_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
-  return getExportData(apiUrl, payload);
+    const apiUrl = `${url.EXPORT_DESIGNATION_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
 };
 
 export const importDesignationAPI = (payload) => {
-  const apiUrl = `${url.IMPORT_DESIGNATION_API}`;
-  return post(apiUrl, payload);
+    const apiUrl = `${url.IMPORT_DESIGNATION_API}`;
+    return post(apiUrl, payload);
 };
 
 // Job Prospect
 export const getJobProspectListAPI = (data) => {
-  const apiUrl = `${url.GET_JOB_PROSPECT_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
-  return get(apiUrl);
+    const apiUrl = `${url.GET_JOB_PROSPECT_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
 };
 
 export const addJobProspectAPI = (payload) => {
-  const apiUrl = `${url.ADD_JOB_PROSPECT_API}`;
-  return post(apiUrl, payload);
+    const apiUrl = `${url.ADD_JOB_PROSPECT_API}`;
+    return post(apiUrl, payload);
 };
 
 export const editJobProspectAPI = (payload) => {
-  const apiUrl = `${url.EDIT_JOB_PROSPECT_API}${payload?.uuid}/update/`;
-  return put(apiUrl, payload);
+    const apiUrl = `${url.EDIT_JOB_PROSPECT_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
 };
 
 export const deleteJobProspectAPI = (payload) => {
-  const preparedData = { id: payload };
-  const apiUrl = `${url.DELETE_JOB_PROSPECT_API}delete/`;
-  return delWithPayload(apiUrl, preparedData);
+    const preparedData = { id: payload };
+    const apiUrl = `${url.DELETE_JOB_PROSPECT_API}delete/`;
+    return delWithPayload(apiUrl, preparedData);
 };
 
 export const exportJobProspectAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_JOB_PROSPECT_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
-  return getExportData(apiUrl, payload);
+    const apiUrl = `${url.EXPORT_JOB_PROSPECT_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
 };
 
 export const importJobProspectAPI = (payload) => {
-  const apiUrl = `${url.IMPORT_JOB_PROSPECT_API}`;
-  return post(apiUrl, payload);
+    const apiUrl = `${url.IMPORT_JOB_PROSPECT_API}`;
+    return post(apiUrl, payload);
 };
 
 //Representing api
 export const getRepresentingCountryListAPI = (data) => {
-  const apiUrl = `${url.GET_REPRESENTING_COUNTRY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    const apiUrl = `${url.GET_REPRESENTING_COUNTRY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+
+// Related Occupation
+export const getRelatedOccupationListAPI = (data) => {
+  const apiUrl = `${url.GET_RELATED_OCCUPATION_LIST}?search=${data?.search}&page=${
+    data?.page
+  }&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
   return get(apiUrl);
 };
 
+export const addRelatedOccupationAPI = (payload) => {
+  const apiUrl = `${url.ADD_RELATED_OCCUPATION_API}`;
+  return post(apiUrl, payload);
+};
+
+export const editRelatedOccupationAPI = (payload) => {
+  const apiUrl = `${url.EDIT_RELATED_OCCUPATION_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+
+export const deleteRelatedOccupationAPI = (payload) => {
+  const preparedData = { id: payload };
+  const apiUrl = `${url.DELETE_RELATED_OCCUPATION_API}delete/`;
+  return delWithPayload(apiUrl, preparedData);
+};
+
+export const exportRelatedOccupationAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_RELATED_OCCUPATION_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+
+export const importRelatedOccupationAPI = (payload) => {
+  const apiUrl = `${url.IMPORT_RELATED_OCCUPATION_API}`;
+  return post(apiUrl, payload);
+};
 
 
 
@@ -3028,6 +3209,7 @@ export const importVisaMainCategoryAPI = (payload) => {
     return post(apiUrl, payload);
 };
 
+
 // Document Category
 export const getDocumentCategoryListAPI = (data) => {
     const apiUrl = `${url.GET_DOCUMENT_CATEGORY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
@@ -3375,6 +3557,163 @@ export const importPaymentCategoryAPI = (payload) => {
 };
 
 
+//  Factor For
+export const getFactorForListAPI = (data) => {
+  const apiUrl = `${url.GET_FACTOR_FOR_LIST}?search=${data?.search}&page=${
+    data?.page
+  }&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
+
+export const addFactorForAPI = (payload) => {
+  const apiUrl = `${url.ADD_FACTOR_FOR_API}`;
+  return post(apiUrl, payload);
+};
+
+export const editFactorForAPI = (payload) => {
+  const apiUrl = `${url.EDIT_FACTOR_FOR_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+
+export const deleteFactorForAPI = (payload) => {
+  const preparedData = { id: payload };
+  const apiUrl = `${url.DELETE_FACTOR_FOR_API}delete/`;
+  return delWithPayload(apiUrl, preparedData);
+};
+
+export const exportFactorForAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_FACTOR_FOR_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+
+export const importFactorForAPI = (payload) => {
+  const apiUrl = `${url.IMPORT_FACTOR_FOR_API}`;
+  return post(apiUrl, payload);
+};
+
+// Age Group
+export const getAgeGroupListAPI = (data) => {
+  const apiUrl = `${url.GET_AGE_GROUP_LIST}?search=${data?.search}&page=${
+    data?.page
+  }&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
+
+export const addAgeGroupAPI = (payload) => {
+  const apiUrl = `${url.ADD_AGE_GROUP_API}`;
+  return post(apiUrl, payload);
+};
+
+export const editAgeGroupAPI = (payload) => {
+  const apiUrl = `${url.EDIT_AGE_GROUP_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+
+export const deleteAgeGroupAPI = (payload) => {
+  const preparedData = { id: payload };
+  const apiUrl = `${url.DELETE_AGE_GROUP_API}delete/`;
+  return delWithPayload(apiUrl, preparedData);
+};
+
+export const exportAgeGroupAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_AGE_GROUP_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+
+export const importAgeGroupAPI = (payload) => {
+  const apiUrl = `${url.IMPORT_AGE_GROUP_API}`;
+  return post(apiUrl, payload);
+};
+
+// ACADEMIC_RESULT_GROUP
+export const getAcademicResultGroupListAPI = (data) => {
+  const apiUrl = `${url.GET_ACADEMIC_RESULT_GROUP_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
+
+export const addAcademicResultGroupAPI = (payload) => {
+  return post(url.ADD_ACADEMIC_RESULT_GROUP_API, payload);
+};
+
+export const editAcademicResultGroupAPI = (payload) => {
+  const apiUrl = `${url.EDIT_ACADEMIC_RESULT_GROUP_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+
+export const deleteAcademicResultGroupAPI = (payload) => {
+  const preparedData = { id: payload };
+  const apiUrl = `${url.DELETE_ACADEMIC_RESULT_GROUP_API}delete/`;
+  return delWithPayload(apiUrl, preparedData);
+};
+
+export const exportAcademicResultGroupAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_ACADEMIC_RESULT_GROUP_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+
+export const importAcademicResultGroupAPI = (payload) => {
+  return post(url.IMPORT_ACADEMIC_RESULT_GROUP_API, payload);
+};
+
+// BACKLOGS_GROUP
+export const getBacklogsGroupListAPI = (data) => {
+  const apiUrl = `${url.GET_BACKLOGS_GROUP_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
+
+export const addBacklogsGroupAPI = (payload) => {
+  return post(url.ADD_BACKLOGS_GROUP_API, payload);
+};
+
+export const editBacklogsGroupAPI = (payload) => {
+  const apiUrl = `${url.EDIT_BACKLOGS_GROUP_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+
+export const deleteBacklogsGroupAPI = (payload) => {
+  const preparedData = { id: payload };
+  const apiUrl = `${url.DELETE_BACKLOGS_GROUP_API}delete/`;
+  return delWithPayload(apiUrl, preparedData);
+};
+
+export const exportBacklogsGroupAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_BACKLOGS_GROUP_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+
+export const importBacklogsGroupAPI = (payload) => {
+  return post(url.IMPORT_BACKLOGS_GROUP_API, payload);
+};
+
+// GAP_GROUP
+export const getGapGroupListAPI = (data) => {
+  const apiUrl = `${url.GET_GAP_GROUP_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
+
+export const addGapGroupAPI = (payload) => {
+  return post(url.ADD_GAP_GROUP_API, payload);
+};
+
+export const editGapGroupAPI = (payload) => {
+  const apiUrl = `${url.EDIT_GAP_GROUP_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+
+export const deleteGapGroupAPI = (payload) => {
+  const preparedData = { id: payload };
+  const apiUrl = `${url.DELETE_GAP_GROUP_API}delete/`;
+  return delWithPayload(apiUrl, preparedData);
+};
+
+export const exportGapGroupAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_GAP_GROUP_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+
+export const importGapGroupAPI = (payload) => {
+  return post(url.IMPORT_GAP_GROUP_API, payload);
+};
 
 
 

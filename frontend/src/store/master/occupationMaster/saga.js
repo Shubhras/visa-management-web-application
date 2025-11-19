@@ -79,6 +79,12 @@ import {
   EXPORT_JOB_PROSPECT,
   IMPORT_JOB_PROSPECT,
   REPRESENTING_COUNTRY_LIST,
+  IMPORT_RELATED_OCCUPATION,
+  EXPORT_RELATED_OCCUPATION,
+  DELETE_RELATED_OCCUPATION,
+  EDIT_RELATED_OCCUPATION,
+  ADD_RELATED_OCCUPATION,
+  RELATED_OCCUPATION_LIST,
 } from "./actionType";
 
 import {
@@ -161,6 +167,12 @@ import {
   exportJobProspectAPI,
   importJobProspectAPI,
   getRepresentingCountryListAPI,
+  importRelatedOccupationAPI,
+  exportRelatedOccupationAPI,
+  deleteRelatedOccupationAPI,
+  editRelatedOccupationAPI,
+  addRelatedOccupationAPI,
+  getRelatedOccupationListAPI,
 } from "../../../service/api_helper";
 
 // --- JOB TYPE SAGAS ---
@@ -882,6 +894,61 @@ function* representingCountryListSaga(action) {
   }
 }
 
+// --- RELATED OCCUPATION
+function* relatedOccupationListSaga(action) {
+  try {
+    const response = yield call(getRelatedOccupationListAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* relatedOccupationAddSaga(action) {
+  try {
+    const response = yield call(addRelatedOccupationAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* relatedOccupationEditSaga(action) {
+  try {
+    const response = yield call(editRelatedOccupationAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* relatedOccupationDeleteSaga(action) {
+  try {
+    const response = yield call(deleteRelatedOccupationAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* relatedOccupationExportSaga(action) {
+  try {
+    const response = yield call(exportRelatedOccupationAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* relatedOccupationImportSaga(action) {
+  try {
+    const response = yield call(importRelatedOccupationAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
 // Root Saga
 function* occupationMasterSaga() {
   yield takeEvery(JOB_TYPE_LIST, jobTypeListSaga);
@@ -964,5 +1031,12 @@ function* occupationMasterSaga() {
   yield takeEvery(IMPORT_JOB_PROSPECT, jobProspectImportSaga);
 
   yield takeEvery(REPRESENTING_COUNTRY_LIST, representingCountryListSaga);
+
+  yield takeEvery(RELATED_OCCUPATION_LIST, relatedOccupationListSaga);
+  yield takeEvery(ADD_RELATED_OCCUPATION, relatedOccupationAddSaga);
+  yield takeEvery(EDIT_RELATED_OCCUPATION, relatedOccupationEditSaga);
+  yield takeEvery(DELETE_RELATED_OCCUPATION, relatedOccupationDeleteSaga);
+  yield takeEvery(EXPORT_RELATED_OCCUPATION, relatedOccupationExportSaga);
+  yield takeEvery(IMPORT_RELATED_OCCUPATION, relatedOccupationImportSaga);
 }
 export default occupationMasterSaga;

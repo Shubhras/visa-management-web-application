@@ -8,7 +8,10 @@ import {
   exportToExcelDuplicate,
   exportToExcelWrongData,
 } from "../../../../helper/utils/commanHelper";
-import { occupationLevelCodeImportData } from "../../../../store/master/occupationMaster/action";
+import {
+  jobProspectImportData,
+  occupationLevelCodeImportData,
+} from "../../../../store/master/occupationMaster/action";
 const AddImportJobProspectModal = ({ show, handleClose }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
@@ -70,7 +73,7 @@ const AddImportJobProspectModal = ({ show, handleClose }) => {
     }
     setLoading(true);
     dispatch(
-      occupationLevelCodeImportData(formData, (response, error) => {
+      jobProspectImportData(formData, (response, error) => {
         setLoading(false);
         if (error) {
           toast.error(error?.response?.data?.message || "Server error");
@@ -83,7 +86,7 @@ const AddImportJobProspectModal = ({ show, handleClose }) => {
                 {response?.duplicates?.length > 0 && (
                   <div style={{ marginTop: "6px" }}>
                     <strong>
-                      Duplicate Occupation Name skipped — the duplicate data
+                      Duplicate Job Prospect skipped — the duplicate data
                       from your uploaded file has been exported into an .xlsx
                       file.
                     </strong>
@@ -100,14 +103,14 @@ const AddImportJobProspectModal = ({ show, handleClose }) => {
                 headers: [
                   "Country",
                   "Occupation Version",
-                  "Occupation Category",
-                  "Occupation Level",
                   "Occupation Level Code",
-                  "Occupation Code",
                   "Occupation Name",
+                  "Occupation Code",
+                  "Occupation Type",
+                  "Job Prospect",
                 ],
-                sheetName: "Occupation Name ",
-                fileName: "Occupation Name",
+                sheetName: "Job Prospect ",
+                fileName: "Job Prospect",
               };
               exportToExcelDuplicate(
                 prepareData.data,
@@ -122,15 +125,15 @@ const AddImportJobProspectModal = ({ show, handleClose }) => {
                 headers: [
                   "Country",
                   "Occupation Version",
-                  "Occupation Category",
-                  "Occupation Level",
                   "Occupation Level Code",
-                  "Occupation Code",
                   "Occupation Name",
+                  "Occupation Code",
+                  "Occupation Type",
+                  "Job Prospect",
                   "Reason",
                 ],
-                sheetName: "Occupation Name",
-                fileName: "Occupation Name",
+                sheetName: "Job Prospect",
+                fileName: "Job Prospect",
               };
               exportToExcelWrongData(
                 prepareData.data,
@@ -301,35 +304,37 @@ const AddImportJobProspectModal = ({ show, handleClose }) => {
           show={showSampleExcelDownload}
           handleClose={handleCloseSampleExcelDownload}
           prepareData={{
-            downloadFileName: "Occupation Name",
+            downloadFileName: "Job Prospect",
             items: [
               "Country",
               "Occupation Version",
-              "Occupation Category",
-              "Occupation Level",
               "Occupation Level Code",
-              "Occupation Code",
               "Occupation Name",
+              "Occupation Code",
+              "Occupation Type",
+              "Job Prospect",
+              "Salary Currency",
+              "Salary Amount",
+              "Duration",
               "Description",
-              "Main Duties",
             ],
             selectedItems: [
               "Country",
               "Occupation Version",
-              "Occupation Category",
-              "Occupation Level",
               "Occupation Level Code",
-              "Occupation Code",
               "Occupation Name",
+              "Occupation Code",
+              "Occupation Type",
+              "Job Prospect",
             ],
             ItemsRequired: [
               "Country",
               "Occupation Version",
-              "Occupation Category",
-              "Occupation Level",
               "Occupation Level Code",
-              "Occupation Code",
               "Occupation Name",
+              "Occupation Code",
+              "Occupation Type",
+              "Job Prospect",
             ],
           }}
         />

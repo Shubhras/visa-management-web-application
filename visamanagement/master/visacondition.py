@@ -3230,16 +3230,16 @@ class ChildrenVisaCategoryDeleteAPIView(APIView):
         ids = request.data.get('id')
 
         if not ids:
-            return Response({"status": False, "message": "Provide 'id' field"}, status=400)
+            return Response({"statusCode":400,"status": False, "message": "Provide 'id' field"}, status=400)
 
         if ids == "all":
             qs = ChildrenVisaCategory.objects.filter(is_deleted=False)
             count = qs.count()
             qs.delete()
-            return Response({"status": True, "message": f"All {count} records deleted"})
+            return Response({"statusCode":200,"status": True, "message": f"All {count} records deleted"})
 
         if not isinstance(ids, list):
-            return Response({"status": False, "message": "Send list of UUIDs"}, status=400)
+            return Response({"statusCode":400,"status": False, "message": "Send list of UUIDs"}, status=400)
 
         valid, invalid = [], []
         for u in ids:
@@ -3253,6 +3253,7 @@ class ChildrenVisaCategoryDeleteAPIView(APIView):
         qs.delete()
 
         return Response({
+            "statusCode":200,
             "status": True,
             "message": f"{count} record(s) deleted",
             "invalid_uuids": invalid or None
@@ -3942,16 +3943,16 @@ class SpouseVisaCategoryDeleteAPIView(APIView):
         ids = request.data.get('id')
 
         if not ids:
-            return Response({"status": False, "message": "Provide 'id' field"}, status=400)
+            return Response({"statusCode":400,"status": False, "message": "Provide 'id' field"}, status=400)
 
         if ids == "all":
             qs = SpouseVisaCategory.objects.filter(is_deleted=False)
             count = qs.count()
             qs.delete()
-            return Response({"status": True, "message": f"All {count} records deleted"})
+            return Response({"statusCode":200,"status": True, "message": f"All {count} records deleted"})
 
         if not isinstance(ids, list):
-            return Response({"status": False, "message": "Send list of UUIDs"}, status=400)
+            return Response({"statusCode":400,"status": False, "message": "Send list of UUIDs"}, status=400)
 
         valid, invalid = [], []
         for u in ids:
@@ -3965,6 +3966,7 @@ class SpouseVisaCategoryDeleteAPIView(APIView):
         qs.delete()
 
         return Response({
+            "statusCode":200,
             "status": True,
             "message": f"{count} record(s) deleted",
             "invalid_uuids": invalid if invalid else None

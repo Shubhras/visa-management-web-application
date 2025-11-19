@@ -9,10 +9,10 @@ import AddImportCityModal from './AddImportCityModal';
 import AddEditCityModal from './AddEditCityModal';
 import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 import { countryDemoList } from '../../../../store/master/companyMasters/actions';
-import { useGlobalSearch } from '../../../../components/comman/GlobalSearchContext';
+import { useGlobalSearch, } from '../../../../components/comman/GlobalSearchContext';
 const CityList = () => {
-  const { globalSearch } = useGlobalSearch();
   const dispatch = useDispatch();
+  const { globalSearch, setGlobalSearch } = useGlobalSearch();
   const [modalState, setModalState] = useState({
     show: false,
     mode: 'add',
@@ -39,13 +39,15 @@ const CityList = () => {
     });
   };
 
-  const handleClose = () => {
+  const handleClose = (shouldRefresh = false) => {
     setModalState({
       show: false,
       mode: 'add',
       rowData: null
     });
-    fetchCityList();
+    if (shouldRefresh) {
+      fetchCityList();
+    }
   }
 
   const [showImport, setShowImport] = useState(false);
@@ -119,7 +121,8 @@ const CityList = () => {
     search: '',
     status: '',
     sort: [
-      { field: "updated_at", order: "desc" }
+      // { field: "updated_at", order: "desc" }
+      { field: "created_at", order: "desc" }
     ],
     total: 0,
     totalPages: 0,
@@ -249,13 +252,12 @@ const CityList = () => {
       state: columnFilters.stateId.length > 0 ? columnFilters.stateId : null,
       district: columnFilters.districtId.length > 0 ? columnFilters.districtId : null
     };
-    
+
     dispatch(cityList(params, (response, error) => {
       setLoading(false);
       if (response?.statusCode === 200 && response?.status === true) {
         const paginationData = response?.pagination || {};
         const data = response?.data || [];
-
         setCityDataList(data);
 
         setTableState(prev => ({
@@ -399,16 +401,43 @@ const CityList = () => {
     }));
   };
 
-
   // Clear all filters
-  const clearAllFilters = () => {
+  const clearAllOnlyHeaderFilters = () => {
     setColumnFilters({
       countryId: [],
       stateId: [],
       districtId: []
     });
-    setTableState(prev => ({ ...prev, page: 1 }));
   };
+
+  // Clear all filters
+  const clearAllFilters = () => {
+    // Reset filter dropdowns
+    setColumnFilters({
+      countryId: [],
+      stateId: [],
+      districtId: []
+    });
+    // Reset table state (sorting + pagination)
+    setTableState(prev => ({
+      ...prev,
+      page: 1,
+      limit: 25,
+      search: '',
+      status: '',
+      sort: [
+        { field: "created_at", order: "desc" }   // default sort
+      ],
+      total: 0,
+      totalPages: 0,
+      currentPage: 1,
+      hasNext: false,
+      hasPrevious: false
+    }));
+    // Reset global search
+    setGlobalSearch('');
+  };
+
 
   // Check if any filters are active
   const hasActiveFilters = () => {
@@ -621,9 +650,12 @@ const CityList = () => {
     setSelectAllOrNot('');
   };
 
-  const handleCloseImport = () => {
+  const handleCloseImport = (shouldRefresh = false) => {
     setShowImport(false);
-    fetchCityList();
+    // Only call API when data was successfully imported
+    if (shouldRefresh) {
+     fetchCityList();
+    }
   };
 
   const handleShowImport = () => {
@@ -691,21 +723,6 @@ const CityList = () => {
       district: columnFilters.districtId.length > 0 ? columnFilters.districtId : null
     };
 
-
-    //  const params = {
-    //   page: tableState.page,
-    //   limit: tableState.limit,
-    //   search: tableState.search || '',
-    //   status: tableState.status || '',
-    //   // sortBy: tableState.sortBy || '',
-    //   // sortOrder: tableState.sortOrder || '',
-    //    search: tableState.search || '',
-    //   sort: tableState.sort,
-    //   // Send country, state and district IDs
-    //   country: columnFilters.countryId.length > 0 ? columnFilters.countryId : null,
-    //   state: columnFilters.stateId.length > 0 ? columnFilters.stateId : null,
-    //   district: columnFilters.districtId.length > 0 ? columnFilters.districtId : null
-    // };
     setLoadingExport(true);
     dispatch(cityExportData(sendPayload, (response, error) => {
       if (error) {
@@ -790,13 +807,15 @@ const CityList = () => {
                   )}
                   {hasActiveFilters() && (
                     <button
-                      onClick={clearAllFilters}
-                      className="btn btn-sm py-1 comman-inactive-btn"
-                      // title="Clear all filters"
-                    >
+                      onClick={clearAllOnlyHeaderFilters}
+                      className="btn btn-sm py-1 comman-inactive-btn">
                       <Icon icon="mdi:filter-off" width="16" /> Clear Filters
                     </button>
                   )}
+                  <button
+                    onClick={clearAllFilters}
+                    className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
+                  >Reset</button>
                 </div>
               </div>
 

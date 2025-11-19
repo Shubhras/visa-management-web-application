@@ -500,7 +500,7 @@ export const IMPORT_OCCUPATION_NAME_API = "/api/v1/master/occupation-names/impor
 
 // Designation Endpoints
 
-export const GET_DESIGNATION_LIST = "/api/v1/master/designations/";
+export const GET_DESIGNATION_LIST = "/api/v1/master/designation/";
 export const ADD_DESIGNATION_API = "/api/v1/master/designation/create/";
 export const EDIT_DESIGNATION_API = "/api/v1/master/designation/";        // +uuid/update/
 export const DELETE_DESIGNATION_API = "/api/v1/master/designation/";      // +delete/
@@ -519,9 +519,17 @@ export const IMPORT_JOB_PROSPECT_API = "/api/v1/master/jobprospect/import/";
 
 export const GET_COUNTRY_LIST_DEMO = "/api/v1/master/country/";
 
-//representing country api Endpoint
+//representing country Endpoint
 export const GET_REPRESENTING_COUNTRY_LIST = "/api/v1/master/representingcountry/";
 
+// Related Occupation API Endpoints
+
+export const GET_RELATED_OCCUPATION_LIST = "/api/v1/master/related-occupations/";
+export const ADD_RELATED_OCCUPATION_API = "/api/v1/master/related-occupations/create/";
+export const EDIT_RELATED_OCCUPATION_API = "/api/v1/master/related-occupations/";        // +uuid/update/
+export const DELETE_RELATED_OCCUPATION_API = "/api/v1/master/related-occupations/";      // +delete/
+export const EXPORT_RELATED_OCCUPATION_API = "/api/v1/master/related-occupations/export/";
+export const IMPORT_RELATED_OCCUPATION_API = "/api/v1/master/related-occupations/import/";
 
 
 // Institute Type API Endpoints
@@ -816,11 +824,45 @@ export const IMPORT_PAYMENT_CATEGORY_API = "/api/v1/master/paymentcategory/impor
 
 
 
+// Factor For – API Endpoints
+export const GET_FACTOR_FOR_LIST = "/api/v1/master/factor-for/";
+export const ADD_FACTOR_FOR_API = "/api/v1/master/factor-for/create/";
+export const EDIT_FACTOR_FOR_API = "/api/v1/master/factor-for/";        // +uuid/update/
+export const DELETE_FACTOR_FOR_API = "/api/v1/master/factor-for/";      // +delete/
+export const EXPORT_FACTOR_FOR_API = "/api/v1/master/factor-for/export/";
+export const IMPORT_FACTOR_FOR_API = "/api/v1/master/factor-for/import/";
 
+// Age Group – API Endpoints
+export const GET_AGE_GROUP_LIST = "/api/v1/master/age-groups/";
+export const ADD_AGE_GROUP_API = "/api/v1/master/age-groups/create/";
+export const EDIT_AGE_GROUP_API = "/api/v1/master/age-groups/";      // +uuid/update/
+export const DELETE_AGE_GROUP_API = "/api/v1/master/age-groups/";    // +delete/
+export const EXPORT_AGE_GROUP_API = "/api/v1/master/age-groups/export/";
+export const IMPORT_AGE_GROUP_API = "/api/v1/master/age-groups/import/";
 
+// Academic Result Group – API Endpoints
+export const GET_ACADEMIC_RESULT_GROUP_LIST = "/api/v1/master/academic-result-groups/";
+export const ADD_ACADEMIC_RESULT_GROUP_API = "/api/v1/master/academic-result-groups/create/";
+export const EDIT_ACADEMIC_RESULT_GROUP_API = "/api/v1/master/academic-result-groups/"; // +uuid/update/
+export const DELETE_ACADEMIC_RESULT_GROUP_API = "/api/v1/master/academic-result-groups/"; // +delete/
+export const EXPORT_ACADEMIC_RESULT_GROUP_API = "/api/v1/master/academic-result-groups/export/";
+export const IMPORT_ACADEMIC_RESULT_GROUP_API = "/api/v1/master/academic-result-groups/import/";
 
+// Backlogs Group – API Endpoints
+export const GET_BACKLOGS_GROUP_LIST = "/api/v1/master/backlogs-group/list/";
+export const ADD_BACKLOGS_GROUP_API = "/api/v1/master/backlogs-group/create/";
+export const EDIT_BACKLOGS_GROUP_API = "/api/v1/master/backlogs-group/"; // +uuid/update/
+export const DELETE_BACKLOGS_GROUP_API = "/api/v1/master/backlogs-group/"; // +delete/
+export const EXPORT_BACKLOGS_GROUP_API = "/api/v1/master/backlogs-group/export/";
+export const IMPORT_BACKLOGS_GROUP_API = "/api/v1/master/backlogs-group/import/";
 
-
+// GAP Group – API Endpoints
+export const GET_GAP_GROUP_LIST = "/api/v1/master/gap-group/list/";
+export const ADD_GAP_GROUP_API = "/api/v1/master/gap-group/create/";
+export const EDIT_GAP_GROUP_API = "/api/v1/master/gap-group/"; // +uuid/update/
+export const DELETE_GAP_GROUP_API = "/api/v1/master/gap-group/"; // +delete/
+export const EXPORT_GAP_GROUP_API = "/api/v1/master/gap-group/export/";
+export const IMPORT_GAP_GROUP_API = "/api/v1/master/gap-group/import/";
 
 
 

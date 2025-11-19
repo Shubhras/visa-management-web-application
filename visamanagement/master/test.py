@@ -1470,7 +1470,13 @@ class LanguageTestResultImportAPIView(APIView):
         format_type = file.name.split('.')[-1].lower()
         duplicate_entries, skipped_rows, imported_count = [], [], 0
 
-        required_headers = {'language name (test)', 'language test name', 'module name', 'language benchmark level', 'Language Test Result'}
+        required_headers = {
+                'language name (test)',
+                'language test name',
+                'module name',
+                'language benchmark level',  
+                'language test result'
+            }
         optional_headers = {'description'}
 
         try:
@@ -1508,7 +1514,7 @@ class LanguageTestResultImportAPIView(APIView):
                 language_test_name = str(row.get('language test name')).strip()
                 module_name = str(row.get('module name')).strip()
                 lb_level_name = str(row.get('language benchmark level')).strip()
-                numeric_score = row.get('Language Test Result')
+                numeric_score = row.get('language test result')
                 description = row.get('description', '')
 
                 if not (language_name and language_test_name and module_name and lb_level_name and numeric_score):
@@ -1518,7 +1524,7 @@ class LanguageTestResultImportAPIView(APIView):
                 existing = LanguageTestResult.objects.filter(
                     language__name__iexact=language_name,
                     language_test__name__iexact=language_test_name,
-                    languagetest_module_name__moduleName__iexact=module_name,
+                    module_name__name__iexact=module_name,  
                     lb_level__name__iexact=lb_level_name
                 ).first()
 
@@ -1528,7 +1534,7 @@ class LanguageTestResultImportAPIView(APIView):
 
                 language_obj = Language.objects.filter(name__iexact=language_name).first()
                 language_test_obj = LanguageTest.objects.filter(name__iexact=language_test_name).first()
-                module_obj = LanguagetestmoduleName.objects.filter(moduleName__iexact=module_name).first()
+                module_obj = LanguagetestmoduleName.objects.filter(name__iexact=module_name).first()
                 lb_obj = StudyLanguageBanchmark.objects.filter(name__iexact=lb_level_name).first()
 
                 if not (language_obj and language_test_obj and module_obj and lb_obj):

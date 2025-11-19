@@ -78,6 +78,12 @@ import {
   ADD_JOB_PROSPECT,
   JOB_PROSPECT_LIST,
   REPRESENTING_COUNTRY_LIST,
+  RELATED_OCCUPATION_LIST,
+  ADD_RELATED_OCCUPATION,
+  EDIT_RELATED_OCCUPATION,
+  DELETE_RELATED_OCCUPATION,
+  EXPORT_RELATED_OCCUPATION,
+  IMPORT_RELATED_OCCUPATION,
 } from "./actionType";
 
 // Job Type Actions
@@ -553,6 +559,43 @@ export const jobProspectImportData = (data, callback) => ({
 
 export const representingCountryList = (data, callback) => ({
   type: REPRESENTING_COUNTRY_LIST,
+  data,
+  callback,
+});
+
+
+export const relatedOccupationList = (data, callback) => ({
+  type: RELATED_OCCUPATION_LIST,
+  data,
+  callback,
+});
+
+export const relatedOccupationAdd = (data, callback) => ({
+  type: ADD_RELATED_OCCUPATION,
+  data,
+  callback,
+});
+
+export const relatedOccupationEdit = (data, callback) => ({
+  type: EDIT_RELATED_OCCUPATION,
+  data,
+  callback,
+});
+
+export const relatedOccupationDelete = (data, callback) => ({
+  type: DELETE_RELATED_OCCUPATION,
+  data,
+  callback,
+});
+
+export const relatedOccupationExportData = (data, callback) => ({
+  type: EXPORT_RELATED_OCCUPATION,
+  data,
+  callback,
+});
+
+export const relatedOccupationImportData = (data, callback) => ({
+  type: IMPORT_RELATED_OCCUPATION,
   data,
   callback,
 });

@@ -62,8 +62,8 @@ const MasterLayout = ({ children }) => {
           children: [
             { name: "Gender", path: "/gender-list" },
             { name: "Marital Status", path: "/marital-status" },
-            { name: "Continents ", path: "/continent-list" },
-            { name: "Country ", path: "/country-list" },
+            { name: "Continents", path: "/continent-list" },
+            { name: "Country", path: "/country-list" },
             { name: "State", path: "/state-list" },
             { name: "District", path: "/district-list" },
             { name: "City", path: "/city-list" },
@@ -170,6 +170,8 @@ const MasterLayout = ({ children }) => {
             { name: "Designation (Job Title)", path: "/designation" },
             { name: "Job Prospect", path: "/job-prospect" },
 
+            { name: "Related Occupation", path: "/related-occupation" },
+            
           ],
         },
         {
@@ -227,6 +229,17 @@ const MasterLayout = ({ children }) => {
             { name: "Process Type", path: "/process-type" },
             { name: "Payment To", path: "/payment-to" },
             { name: "Payment Category", path: "/payment-category" },
+          ],
+        },
+
+        {
+          name: "Study Factors",
+          children: [
+            { name: "Factor For", path: "/factor-for" },
+            { name: "Study : Age Group", path: "/age-group" },
+            { name: "Study : Academic Result Group", path: "/academic-result-group" },
+            { name: "Study : Gap Group", path: "/gap-group" },
+            { name: "Study : Backlogs Group", path: "/backlogs-group" },
           ],
         },
 
@@ -1982,12 +1995,13 @@ const MasterLayout = ({ children }) => {
             {/* Sub Header */}
             <div className="sub-header-bar d-flex align-items-center justify-content-between">
               <div className="sub-header-title">{selectedItemName}</div>
-              {selectedItemName === "City" && (
+              {["City", "Department","District","State","Country","Gender","Continents","Factor For","Study : Age Group","Study : Academic Result Group","Study : Gap Group","Study : Backlogs Group"].includes(selectedItemName) && (
                 <div className="position-relative search-filter-div">
                   <Icon
                     icon="ion:search-outline"
                     className="position-absolute search-filter-icone"
                   />
+
                   <input
                     type="text"
                     className="form-control form-control-sm ps-5 search-filter-input"
@@ -1995,21 +2009,21 @@ const MasterLayout = ({ children }) => {
                     value={globalSearch}
                     onChange={(e) => setGlobalSearch(e.target.value)}
                   />
-                  {/* Clear Button (×) */}
+
                   {globalSearch && (
                     <span
                       className="position-absolute"
                       style={{
-                        right: '10px',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        cursor: 'pointer',
+                        right: "10px",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        cursor: "pointer",
                         zIndex: 999,
-                        fontSize: '20px',
-                        color: '#6c757d',
+                        fontSize: "20px",
+                        color: "#6c757d",
                         lineHeight: 1,
                       }}
-                      onClick={() => setGlobalSearch('')}
+                      onClick={() => setGlobalSearch("")}
                     >
                       ×
                     </span>
