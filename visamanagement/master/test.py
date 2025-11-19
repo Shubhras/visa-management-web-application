@@ -1508,7 +1508,7 @@ class LanguageTestResultImportAPIView(APIView):
                 language_test_name = str(row.get('language test name')).strip()
                 module_name = str(row.get('module name')).strip()
                 lb_level_name = str(row.get('language benchmark level')).strip()
-                numeric_score = row.get('Language Test Result')
+                numeric_score = row.get('language test result')
                 description = row.get('description', '')
 
                 if not (language_name and language_test_name and module_name and lb_level_name and numeric_score):

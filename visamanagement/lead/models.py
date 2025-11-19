@@ -193,12 +193,11 @@ class LanguageAbility(models.Model):
     test_short_name = models.CharField(max_length=50, blank=True, null=True)
     test_level = models.CharField(max_length=20, choices=TEST_LEVEL_CHOICES, blank=True, null=True)
 
-    listening_score = models.CharField(max_length=20, blank=True, null=True)
-    speaking_score = models.CharField(max_length=20, blank=True, null=True)
-    reading_score = models.CharField(max_length=20, blank=True, null=True)
-    writing_score = models.CharField(max_length=20, blank=True, null=True)
-    overall_score = models.CharField(max_length=20, blank=True, null=True)
-
+    listening_score = models.ForeignKey("LanguagetestmoduleName", on_delete=models.CASCADE, related_name="language_test")
+    speaking_score = models.ForeignKey("LanguagetestmoduleName", on_delete=models.CASCADE, related_name="language_test")
+    reading_score = models.ForeignKey("LanguagetestmoduleName", on_delete=models.CASCADE, related_name="language_test")
+    writing_score = models.ForeignKey("LanguagetestmoduleName", on_delete=models.CASCADE, related_name="language_test")
+    overall_score = models.ForeignKey("LanguagetestmoduleName", on_delete=models.CASCADE, related_name="language_test                   ")
     test_date = models.DateField(blank=True, null=True)
     first_or_second_language = models.CharField(max_length=10, choices=(("First", "First"), ("Second", "Second")), default="First")
 
@@ -210,6 +209,33 @@ class LanguageAbility(models.Model):
 
 
 
+
+class EntranceTestAbility(models.Model):
+    YES_NO_CHOICES = (
+        ("Yes", "Yes"),
+        ("No", "No"),
+    )
+
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    applicant = models.ForeignKey("Applicant", on_delete=models.CASCADE, related_name="entrance_test_abilities")
+
+    appeared_test = models.CharField(max_length=10, choices=YES_NO_CHOICES, default="No")
+    entrance_test_name = models.CharField(max_length=100, blank=True, null=True)
+    entrance_test_short_name = models.CharField(max_length=50, blank=True, null=True)
+
+    module_01_score = models.ForeignKey("EntranceTestModuleName", on_delete=models.CASCADE, related_name="entrance_test")
+    module_02_score = models.ForeignKey("EntranceTestModuleName", on_delete=models.CASCADE, related_name="entrance_test")
+    module_03_score = models.ForeignKey("EntranceTestModuleName", on_delete=models.CASCADE, related_name="entrance_test")
+    total_score = models.ForeignKey("EntranceTestModuleName", on_delete=models.CASCADE, related_name="entrance_test")
+
+    test_date = models.DateField(blank=True, null=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.entrance_test_name} – {self.applicant.first_name}"
 
 
 
