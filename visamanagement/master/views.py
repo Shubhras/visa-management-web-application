@@ -1556,11 +1556,94 @@ class CountryExportAPIView(APIView):
 
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
-        fields = request.GET.get('fields')  # comma-separated fields
-        uuids_param = request.GET.get('uuids', '')  # comma-separated UUIDs
-        uuids = [u.strip() for u in uuids_param.split(',') if u]
+        fields = request.GET.get('fields')
+        search = request.GET.get('search', '').strip()
+        custom_sort = request.GET.get('customSort')
 
-        # --- Field to header mapping ---
+        # ---------------------------
+        # Parse IDs & Validate UUIDs
+        # ---------------------------
+        def parse_ids(param_name):
+            raw = request.GET.get(param_name, '')
+            if raw:
+                items = [x.strip() for x in raw.split(',') if x.strip()]
+            else:
+                items = request.GET.getlist(param_name)
+            return items
+
+        def validate_uuid_list(uuid_list):
+            valid = []
+            for u in uuid_list:
+                try:
+                    valid.append(UUID(u))
+                except:
+                    pass
+            return valid
+
+        continent_list = validate_uuid_list(parse_ids('continent'))
+        country_list = validate_uuid_list(parse_ids('country'))
+
+        # ---------------------------
+        # Base QuerySet
+        # ---------------------------
+        queryset = Country.objects.filter(is_deleted=False).annotate(
+            continent_name=F('continent__name')
+        )
+
+        # ---------------------------
+        # Filtering
+        # ---------------------------
+        if country_list:
+            queryset = queryset.filter(uuid__in=country_list)
+        elif continent_list:
+            queryset = queryset.filter(continent__uuid__in=continent_list)
+
+        # ---------------------------
+        # Search
+        # ---------------------------
+        if search:
+            queryset = queryset.filter(name__istartswith=search)
+
+        # ---------------------------
+        # Sorting
+        # ---------------------------
+        sort_field_map = {
+            'name': 'name',
+            'shortName': 'shortName',
+            'fullName': 'fullName',
+            'continent': 'continent_name',
+            'created_at': 'created_at'
+        }
+
+        sort_fields = []
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+                    if field in ['name', 'shortName', 'fullName', 'continent']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+                except ValueError:
+                    continue
+        else:
+            sort_order = request.GET.get('sortOrder', 'desc')
+            f = F('created_at')
+            sort_fields = [f.desc(nulls_last=True) if sort_order=='desc' else f.asc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # ---------------------------
+        # Field mapping & Export
+        # ---------------------------
         field_header_map = {
             'uuid': 'UUID',
             'name': 'Country Name',
@@ -1581,34 +1664,31 @@ class CountryExportAPIView(APIView):
             'updated_at': 'Modified On'
         }
 
-        if fields:
-            field_list = [f.strip() for f in fields.split(',')]
-        else:
-            field_list = list(field_header_map.keys())
-
-        queryset = Country.objects.filter(is_deleted=False)
-        if uuids:
-            queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = 'Country'
+
         for obj in queryset:
             row = []
             for field in field_list:
                 value = getattr(obj, field, '')
 
-                if field == 'continent' and obj.continent:
-                    value = obj.continent.name
-                elif field in ['created_at', 'updated_at'] and value:
-                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-                elif isinstance(value, bool):
+                if field == 'continent':
+                    value = getattr(obj, 'continent_name', '')
+
+                if field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
+                if isinstance(value, bool):
                     value = int(value)
 
                 row.append(value if value is not None else '')
             dataset.append(row)
 
+        # ---------------------------
+        # Export file
+        # ---------------------------
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv; charset=utf-8'
@@ -1626,6 +1706,9 @@ class CountryExportAPIView(APIView):
         return response
 
 
+
+
+        
 class CountryImportAPIView(APIView):
 
     def post(self, request):
