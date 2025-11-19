@@ -166,3 +166,236 @@ class WorkExperience(models.Model):
 
     def __str__(self):
         return f"{self.employer_name} – {self.designation}"
+
+
+
+
+class LanguageAbility(models.Model):
+    VALID_UNIT_CHOICES = (
+        ("Yes", "Yes"),
+        ("No", "No"),
+        
+    )
+
+    TEST_LEVEL_CHOICES = (
+        ("First", "First"),
+        ("Second", "Second"),
+    )
+
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    applicant = models.ForeignKey("Applicant", on_delete=models.CASCADE, related_name="language_abilities")
+
+    language = models.ForeignKey("Language", on_delete=models.SET_NULL, null=True)
+    consider = models.CharField(max_length=10, choices=VALID_UNIT_CHOICES, blank=True, null=True)
+
+    test_name = models.CharField(max_length=100, blank=True, null=True)
+    test_short_name = models.CharField(max_length=50, blank=True, null=True)
+    test_level = models.CharField(max_length=20, choices=TEST_LEVEL_CHOICES, blank=True, null=True)
+
+    listening_score = models.CharField(max_length=20, blank=True, null=True)
+    speaking_score = models.CharField(max_length=20, blank=True, null=True)
+    reading_score = models.CharField(max_length=20, blank=True, null=True)
+    writing_score = models.CharField(max_length=20, blank=True, null=True)
+    overall_score = models.CharField(max_length=20, blank=True, null=True)
+
+    test_date = models.DateField(blank=True, null=True)
+    first_or_second_language = models.CharField(max_length=10, choices=(("First", "First"), ("Second", "Second")), default="First")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.language} – {self.applicant.first_name}"
+
+
+
+
+
+
+class Relative(models.Model):
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+
+    applicant = models.ForeignKey("Applicant",on_delete=models.CASCADE,related_name="relatives")
+
+    applicant_type = models.ForeignKey("ApplicantType",on_delete=models.SET_NULL,null=True)
+
+    country = models.ForeignKey("Country", on_delete=models.SET_NULL, null=True)
+    state = models.ForeignKey("State", on_delete=models.SET_NULL, null=True)
+    city = models.ForeignKey("City", on_delete=models.SET_NULL, null=True)
+
+    relation = models.ForeignKey("Relation",on_delete=models.SET_NULL,null=True)
+
+    visa_category = models.ForeignKey("VisaMainCategory",on_delete=models.SET_NULL,null=True,blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.applicant}"
+
+
+
+
+
+class VisitHistory(models.Model):
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+
+    applicant = models.ForeignKey("Applicant",on_delete=models.CASCADE,related_name="visit_history")
+
+    applicant_type = models.ForeignKey("ApplicantType", on_delete=models.SET_NULL, null=True)
+
+    country = models.ForeignKey("Country", on_delete=models.SET_NULL, null=True)
+
+    visa_category = models.ForeignKey("VisaMain", on_delete=models.SET_NULL, null=True)
+
+    issue_date = models.DateField()
+    travel_from = models.DateField()
+    travel_to = models.DateField()
+
+    purpose_of_visit = models.ForeignKey("PurposeOfVisit",on_delete=models.SET_NULL,null=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.applicant}"
+
+
+
+class RefusalHistory(models.Model):
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+
+    applicant = models.ForeignKey("Applicant",on_delete=models.CASCADE,related_name="refusal_history")
+
+    applicant_type = models.ForeignKey("ApplicantType", on_delete=models.SET_NULL, null=True)
+
+    country = models.ForeignKey("Country", on_delete=models.SET_NULL, null=True)
+    visa_category = models.ForeignKey("VisaMain", on_delete=models.SET_NULL, null=True)
+
+    refusal_date = models.DateField()
+    refusal_reason = models.TextField()
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.applicant}"
+
+
+
+
+class BusinessExperience(models.Model):
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+
+    applicant = models.ForeignKey("Applicant",on_delete=models.CASCADE,related_name="business_experience")
+
+    country = models.ForeignKey("Country", on_delete=models.SET_NULL, null=True)
+    company_name = models.CharField(max_length=255)
+
+    company_type = models.ForeignKey("CompanyType", on_delete=models.SET_NULL, null=True)
+
+    share_percent = models.DecimalField(max_digits=5, decimal_places=2)   # Example: 25.50%
+
+    start_date = models.DateField()
+    end_date = models.DateField()
+
+    turnover = models.DecimalField(max_digits=12, decimal_places=2)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.applicant}"
+
+
+
+class Networth(models.Model):
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+
+    applicant = models.ForeignKey(
+        "Applicant",
+        on_delete=models.CASCADE,
+        related_name="networth"
+    )
+
+    applicant_type = models.ForeignKey("ApplicantType", on_delete=models.SET_NULL, null=True)
+
+    country = models.ForeignKey("Country", on_delete=models.SET_NULL, null=True)
+    currency = models.ForeignKey("Currency", on_delete=models.SET_NULL, null=True)
+
+    immovable_property = models.DecimalField(max_digits=12, decimal_places=2)
+    movable_property = models.DecimalField(max_digits=12, decimal_places=2)
+    liquid_amount = models.DecimalField(max_digits=12, decimal_places=2)
+
+    total_networth = models.DecimalField(max_digits=12, decimal_places=2)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.applicant}"
+
+
+
+
+class EligibilityFlags(models.Model):
+    applicant = models.OneToOneField(
+        "Applicant",
+        on_delete=models.CASCADE,
+        related_name="eligibility_flags"
+    )
+
+    trade_certificate = models.BooleanField(default=False)
+    educational_credential_assessment = models.BooleanField(default=False)
+    ita_province = models.BooleanField(default=False)
+    tech_startup_founder = models.BooleanField(default=False)
+    reside_outside_greater_city = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.applicant}"
+
+
+class documents(models.Model):
+    applicant = models.OneToOneField(
+        "Applicant",
+        on_delete=models.CASCADE,
+        related_name="documents"
+    )
+    documentcategory = models.OneToOneField(
+        "DocumentCategory",
+        on_delete=models.CASCADE,
+        related_name="documents"
+    )
+    documentname = models.OneToOneField(
+        "DocumentName",
+        on_delete=models.CASCADE,
+        related_name="documents"
+    )
+    attachment = models.FileField(upload_to='documents/')
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+
+
+class Document(models.Model):
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    category = models.ForeignKey(DocumentCategory, on_delete=models.CASCADE, related_name='documents')
+    name = models.CharField(max_length=255)
+    attachment = models.FileField(upload_to='documents/')  # File will be uploaded to MEDIA_ROOT/documents/
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
