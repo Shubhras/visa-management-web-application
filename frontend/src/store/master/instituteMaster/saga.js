@@ -1004,10 +1004,6 @@ function* courseDurationImportDataSaga(action) {
 }
 
 
-
-
-
-
 // Root Saga
 function* instituteMasterSaga() {
     yield takeEvery(INSTITUTE_TYPE_LIST, instituteTypeListSaga);

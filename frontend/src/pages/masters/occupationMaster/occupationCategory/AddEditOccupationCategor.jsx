@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { countryList } from "../../../../store/master/generalMasters/actions";
 import { useDispatch } from "react-redux";
 import Select from "react-select";
 import {
   occupationCategoryAdd,
   occupationCategoryEdit,
   occupationVersionList,
+  representingCountryList,
 } from "../../../../store/master/occupationMaster/action";
 import { toast } from "react-toastify";
 
@@ -48,7 +48,7 @@ const AddEditOccupationCategory = ({
       sortOrder: "desc",
     };
     dispatch(
-      countryList(params, (response, error) => {
+      representingCountryList(params, (response, error) => {
         // setLoading(false);
         if (response?.statusCode === 200 && response?.status === true) {
           setCountryData(response?.data || []);

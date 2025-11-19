@@ -498,7 +498,30 @@ export const DELETE_OCCUPATION_NAME_API = "/api/v1/master/occupation-names/";   
 export const EXPORT_OCCUPATION_NAME_API = "/api/v1/master/occupation-names/export/";
 export const IMPORT_OCCUPATION_NAME_API = "/api/v1/master/occupation-names/import/";
 
+// Designation Endpoints
+
+export const GET_DESIGNATION_LIST = "/api/v1/master/designations/";
+export const ADD_DESIGNATION_API = "/api/v1/master/designation/create/";
+export const EDIT_DESIGNATION_API = "/api/v1/master/designation/";        // +uuid/update/
+export const DELETE_DESIGNATION_API = "/api/v1/master/designation/";      // +delete/
+export const EXPORT_DESIGNATION_API = "/api/v1/master/designation/export/";
+export const IMPORT_DESIGNATION_API = "/api/v1/master/designation/import/";
+
+// Job Prospect Endpoints
+
+export const GET_JOB_PROSPECT_LIST = "/api/v1/master/jobprospect/";
+export const ADD_JOB_PROSPECT_API = "/api/v1/master/jobprospect/create/";
+export const EDIT_JOB_PROSPECT_API = "/api/v1/master/jobprospect/";        // +uuid/update/
+export const DELETE_JOB_PROSPECT_API = "/api/v1/master/jobprospect/";      // +delete/
+export const EXPORT_JOB_PROSPECT_API = "/api/v1/master/jobprospect/export/";
+export const IMPORT_JOB_PROSPECT_API = "/api/v1/master/jobprospect/import/";
+
+
 export const GET_COUNTRY_LIST_DEMO = "/api/v1/master/country/";
+
+//representing country api Endpoint
+export const GET_REPRESENTING_COUNTRY_LIST = "/api/v1/master/representingcountry/";
+
 
 
 // Institute Type API Endpoints
@@ -610,6 +633,104 @@ export const EDIT_COURSE_DURATION_API = "/api/v1/master/course-durations/";
 export const DELETE_COURSE_DURATION_API = "/api/v1/master/course-durations/";
 export const EXPORT_COURSE_DURATION_API = "/api/v1/master/course-durations/export/";
 export const IMPORT_COURSE_DURATION_API = "/api/v1/master/course-durations/import/";
+
+
+
+// Work Rights
+export const GET_WORK_RIGHTS_LIST = "/api/v1/master/workrights/";
+export const ADD_WORK_RIGHTS_API = "/api/v1/master/workrights/create/";
+export const EDIT_WORK_RIGHTS_API = "/api/v1/master/workrights/";
+export const DELETE_WORK_RIGHTS_API = "/api/v1/master/workrights/";
+export const EXPORT_WORK_RIGHTS_API = "/api/v1/master/workrights/export/";
+export const IMPORT_WORK_RIGHTS_API = "/api/v1/master/workrights/import/";
+// Work Rights During Study
+export const GET_WORK_RIGHTS_DURING_STUDY_LIST = "/api/v1/master/workrights-during-study/";
+export const ADD_WORK_RIGHTS_DURING_STUDY_API = "/api/v1/master/workrights-during-study/create/";
+export const EDIT_WORK_RIGHTS_DURING_STUDY_API = "/api/v1/master/workrights-during-study/";
+export const DELETE_WORK_RIGHTS_DURING_STUDY_API = "/api/v1/master/workrights-during-study/";
+export const EXPORT_WORK_RIGHTS_DURING_STUDY_API = "/api/v1/master/workrights-during-study/export/";
+export const IMPORT_WORK_RIGHTS_DURING_STUDY_API = "/api/v1/master/workrights-during-study/import/";
+
+// Work Rights During Vacation
+export const GET_WORK_RIGHTS_DURING_VACATION_LIST = "/api/v1/master/workrights-during-vacation/";
+export const ADD_WORK_RIGHTS_DURING_VACATION_API = "/api/v1/master/workrights-during-vacation/create/";
+export const EDIT_WORK_RIGHTS_DURING_VACATION_API = "/api/v1/master/workrights-during-vacation/";
+export const DELETE_WORK_RIGHTS_DURING_VACATION_API = "/api/v1/master/workrights-during-vacation/";
+export const EXPORT_WORK_RIGHTS_DURING_VACATION_API = "/api/v1/master/workrights-during-vacation/export/";
+export const IMPORT_WORK_RIGHTS_DURING_VACATION_API = "/api/v1/master/workrights-during-vacation/import/";
+// Work Rights After Study
+export const GET_WORK_RIGHTS_AFTER_STUDY_LIST = "/api/v1/master/workrights-after-study/";
+export const ADD_WORK_RIGHTS_AFTER_STUDY_API = "/api/v1/master/workrights-after-study/create/";
+export const EDIT_WORK_RIGHTS_AFTER_STUDY_API = "/api/v1/master/workrights-after-study/";
+export const DELETE_WORK_RIGHTS_AFTER_STUDY_API = "/api/v1/master/workrights-after-study/";
+export const EXPORT_WORK_RIGHTS_AFTER_STUDY_API = "/api/v1/master/workrights-after-study/export/";
+export const IMPORT_WORK_RIGHTS_AFTER_STUDY_API = "/api/v1/master/workrights-after-study/import/";
+
+// PR Possibility
+export const GET_PR_POSSIBILITY_LIST = "/api/v1/master/pr-possibility/";
+export const ADD_PR_POSSIBILITY_API = "/api/v1/master/pr-possibility/create/";
+export const EDIT_PR_POSSIBILITY_API = "/api/v1/master/pr-possibility/";
+export const DELETE_PR_POSSIBILITY_API = "/api/v1/master/pr-possibility/";
+export const EXPORT_PR_POSSIBILITY_API = "/api/v1/master/pr-possibility/export/";
+export const IMPORT_PR_POSSIBILITY_API = "/api/v1/master/pr-possibility/import/";
+
+// Spouse Apply With Candidate
+export const GET_SPOUSE_APPLY_WITH_CANDIDATE_LIST = "/api/v1/master/spouse-can-apply/";
+export const ADD_SPOUSE_APPLY_WITH_CANDIDATE_API = "/api/v1/master/spouse-can-apply/create/";
+export const EDIT_SPOUSE_APPLY_WITH_CANDIDATE_API = "/api/v1/master/spouse-can-apply/";
+export const DELETE_SPOUSE_APPLY_WITH_CANDIDATE_API = "/api/v1/master/spouse-can-apply/";
+export const EXPORT_SPOUSE_APPLY_WITH_CANDIDATE_API = "/api/v1/master/spouse-can-apply/export/";
+export const IMPORT_SPOUSE_APPLY_WITH_CANDIDATE_API = "/api/v1/master/spouse-can-apply/import/";
+// --- Spouse Visa Category ---
+export const GET_SPOUSE_VISA_CATEGORY_LIST = "/api/v1/master/spouse-visa-category/";
+export const ADD_SPOUSE_VISA_CATEGORY_API = "/api/v1/master/spouse-visa-category/create/";
+export const EDIT_SPOUSE_VISA_CATEGORY_API = "/api/v1/master/spouse-visa-category/";
+export const DELETE_SPOUSE_VISA_CATEGORY_API = "/api/v1/master/spouse-visa-category/";
+export const EXPORT_SPOUSE_VISA_CATEGORY_API = "/api/v1/master/spouse-visa-category/export/";
+export const IMPORT_SPOUSE_VISA_CATEGORY_API = "/api/v1/master/spouse-visa-category/import/";
+
+// SPOUSE WORK RIGHTS
+export const GET_SPOUSE_WORK_RIGHTS_LIST = "/api/v1/master/spouse-workrights/";
+export const ADD_SPOUSE_WORK_RIGHTS_API = "/api/v1/master/spouse-workrights/create/";
+export const EDIT_SPOUSE_WORK_RIGHTS_API = "/api/v1/master/spouse-workrights/";
+export const DELETE_SPOUSE_WORK_RIGHTS_API = "/api/v1/master/spouse-workrights/";
+export const EXPORT_SPOUSE_WORK_RIGHTS_API = "/api/v1/master/spouse-workrights/export/";
+export const IMPORT_SPOUSE_WORK_RIGHTS_API = "/api/v1/master/spouse-workrights/import/";
+// CHILDREN CAN APPLY WITH CANDIDATE
+export const GET_CHILDREN_APPLY_WITH_CANDIDATE_LIST = "/api/v1/master/children-can-apply/";
+export const ADD_CHILDREN_APPLY_WITH_CANDIDATE_API = "/api/v1/master/children-can-apply/create/";
+export const EDIT_CHILDREN_APPLY_WITH_CANDIDATE_API = "/api/v1/master/children-can-apply/";
+export const DELETE_CHILDREN_APPLY_WITH_CANDIDATE_API = "/api/v1/master/children-can-apply/";
+export const EXPORT_CHILDREN_APPLY_WITH_CANDIDATE_API = "/api/v1/master/children-can-apply/export/";
+export const IMPORT_CHILDREN_APPLY_WITH_CANDIDATE_API = "/api/v1/master/children-can-apply/import/";
+// CHILDREN VISA CATEGORY
+export const GET_CHILDREN_VISA_CATEGORY_LIST = "/api/v1/master/children-visacategory/";
+export const ADD_CHILDREN_VISA_CATEGORY_API = "/api/v1/master/children-visacategory/create/";
+export const EDIT_CHILDREN_VISA_CATEGORY_API = "/api/v1/master/children-visacategory/";
+export const DELETE_CHILDREN_VISA_CATEGORY_API = "/api/v1/master/children-visacategory/";
+export const EXPORT_CHILDREN_VISA_CATEGORY_API = "/api/v1/master/children-visacategory/export/";
+export const IMPORT_CHILDREN_VISA_CATEGORY_API = "/api/v1/master/children-visacategory/import/";
+// CHILDREN STUDY / WORK RIGHTS
+export const GET_CHILDREN_STUDY_WORK_RIGHTS_LIST = "/api/v1/master/children-study-work-rights/";
+export const ADD_CHILDREN_STUDY_WORK_RIGHTS_API = "/api/v1/master/children-study-work-rights/create/";
+export const EDIT_CHILDREN_STUDY_WORK_RIGHTS_API = "/api/v1/master/children-study-work-rights/";
+export const DELETE_CHILDREN_STUDY_WORK_RIGHTS_API = "/api/v1/master/children-study-work-rights/";
+export const EXPORT_CHILDREN_STUDY_WORK_RIGHTS_API = "/api/v1/master/children-study-work-rights/export/";
+export const IMPORT_CHILDREN_STUDY_WORK_RIGHTS_API = "/api/v1/master/children-study-work-rights/import/";
+
+// Visa Main Category 
+export const GET_VISA_MAIN_CATEGORY_LIST = "/api/v1/master/visamain/";
+export const ADD_VISA_MAIN_CATEGORY_API = "/api/v1/master/visamain/create/";
+export const EDIT_VISA_MAIN_CATEGORY_API = "/api/v1/master/visamain/";
+export const DELETE_VISA_MAIN_CATEGORY_API = "/api/v1/master/visamain/";
+export const EXPORT_VISA_MAIN_CATEGORY_API = "/api/v1/master/visamain/export/";
+export const IMPORT_VISA_MAIN_CATEGORY_API = "/api/v1/master/visamain/import/";
+
+
+
+
+
+
 
 
 

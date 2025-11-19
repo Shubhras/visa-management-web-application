@@ -167,6 +167,9 @@ const MasterLayout = ({ children }) => {
             { name: "Occupation Level", path: "/occupation-level" },
             { name: "Occupation Code", path: "/occupation-code" },
             { name: "Occupation Name", path: "/occupation-name" },
+            { name: "Designation (Job Title)", path: "/designation" },
+            { name: "Job Prospect", path: "/job-prospect" },
+            
           ],
         },
         {
@@ -192,6 +195,25 @@ const MasterLayout = ({ children }) => {
             { name: "Course Duration", path: "/course-duration" },
           ],
         },
+        {
+          name: "Visa Conditions",
+          children: [
+            { name: "Work Rights", path: "/work-rights" },
+            { name: "Work Rights During Study", path: "/work-rights-during-study" },
+            { name: "Work Rights During Vacation", path: "/work-rights-during-vacation" },
+            { name: "Work Rights After Study", path: "/work-rights-after-study" },
+            { name: "PR Possibility", path: "/pr-possibility" },
+            { name: "Spouse Can Apply with Candidate?", path: "/spouse-can-apply-with-candidate" },
+            { name: "Visa Main Category", path: "/visa-main-category" },
+            { name: "Spouse Visa Category", path: '/spouse-visa-category' },
+            { name: "Spouse Work Rights", path: "/spouse-work-rights" },
+            { name: "Children Can Apply with Candidate?", path: "/children-can-apply-with-candidate" },
+            { name: "Children Visa Category", path: "/children-visa-category" },
+            { name: "Children Study / Work Rights", path: "/children-study-work-rights" },
+
+          ],
+        },
+
 
         // { name: 'Education', path: '/' },
         // { name: 'Test', path: '/' },
