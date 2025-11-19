@@ -10,7 +10,7 @@ import AddEditDepartmentModal from './AddEditDepartmentModal';
 import { formatDateDDMMYYYYTime } from '../../../helper/utils/commanHelper';
 import { useGlobalSearch } from '../../../components/comman/GlobalSearchContext';
 const DepartmentList = () => {
-  const { globalSearch } = useGlobalSearch();
+  const { globalSearch ,setGlobalSearch} = useGlobalSearch();
   const dispatch = useDispatch();
   const [modalState, setModalState] = useState({
     show: false,
@@ -200,15 +200,17 @@ const DepartmentList = () => {
   };
 
   // // Clear all filters
-  // const clearAllFilters = () => {
-  //   setTableState(prev => ({
-  //     ...prev,
-  //     page: 1,
-  //     status: '',
-  //     sortBy: 'created_at',
-  //     sortOrder: 'desc',
-  //   }));
-  // };
+  const clearAllFilters = () => {
+    setTableState(prev => ({
+      ...prev,
+      page: 1,
+      status: '',
+      sortBy: 'created_at',
+      sortOrder: 'desc',
+    }));
+    // Reset Global Search also
+    setGlobalSearch('');
+  };
 
   const handlePageLengthChange = (value) => {
     setTableState(prev => ({
@@ -490,12 +492,12 @@ const DepartmentList = () => {
                       </button>
                     </>
                   )}
-                  {/* <button
+                  <button
                     onClick={clearAllFilters}
                     className="btn btn-sm py-1 comman-inactive-btn"
                   >
                     <Icon icon="mdi:filter-off" width="16" /> Clear Filters
-                  </button> */}
+                  </button>
 
                 </div>
               </div>

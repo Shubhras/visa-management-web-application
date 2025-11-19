@@ -9,9 +9,9 @@ import AddImportCityModal from './AddImportCityModal';
 import AddEditCityModal from './AddEditCityModal';
 import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 import { countryDemoList } from '../../../../store/master/companyMasters/actions';
-import { useGlobalSearch } from '../../../../components/comman/GlobalSearchContext';
+import { useGlobalSearch, } from '../../../../components/comman/GlobalSearchContext';
 const CityList = () => {
-  const { globalSearch } = useGlobalSearch();
+  const { globalSearch ,setGlobalSearch} = useGlobalSearch();
   const dispatch = useDispatch();
   const [modalState, setModalState] = useState({
     show: false,
@@ -412,10 +412,11 @@ const CityList = () => {
       ...prev,
       page: 1,
       sort: [
-        { field: "updated_at", order: "desc" }
+        { field: "created_at", order: "desc" }
       ]
     }));
-
+     // Reset Global Search also
+ setGlobalSearch('');
   };
 
   // Check if any filters are active
