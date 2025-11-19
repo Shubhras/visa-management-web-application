@@ -40,7 +40,6 @@ const DepartmentList = () => {
   }
 
   const [showImport, setShowImport] = useState(false);
-  const [rowSelectData, setRowSelectData] = useState({});
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this department?");
@@ -755,111 +754,6 @@ const DepartmentList = () => {
                   )}
                 </tbody>
               </table>
-
-              {/* {tableState.total > 0 && (
-                <div className="d-flex justify-content-between align-items-center px-4 py-3" >
-                  <div className='showing-total-page' >
-                    Showing {startIndex + 1} to {Math.min(startIndex + tableState.limit, tableState.total)} of {tableState.total} entries
-                  </div>
-                  <nav>
-                    <ul className="pagination mb-0" style={{ gap: '4px' }}>
-                      <li className={`page-item ${!tableState.hasPrevious ? 'disabled' : ''}`}>
-                        <button
-                          className="border-0 bg-transparent"
-                          onClick={() => goToPage(1)}
-                          disabled={!tableState.hasPrevious}
-                          style={{
-                            padding: '6px 10px',
-                            color: !tableState.hasPrevious ? '#ccc' : '#6c757d',
-                            fontSize: '18px',
-                            cursor: !tableState.hasPrevious ? 'not-allowed' : 'pointer'
-                          }}
-                        >
-                          «
-                        </button>
-                      </li>
-                      <li className={`page-item ${!tableState.hasPrevious ? 'disabled' : ''}`}>
-                        <button
-                          className="border-0 bg-transparent"
-                          onClick={() => goToPage(tableState.currentPage - 1)}
-                          disabled={!tableState.hasPrevious}
-                          style={{
-                            padding: '6px 10px',
-                            color: !tableState.hasPrevious ? '#ccc' : '#6c757d',
-                            fontSize: '18px',
-                            cursor: !tableState.hasPrevious ? 'not-allowed' : 'pointer'
-                          }}
-                        >
-                          ‹
-                        </button>
-                      </li>
-                      {getPaginationNumbers().map((page, idx) => (
-                        <li key={idx} className="page-item">
-                          {page === '...' ? (
-                            <span
-                              className="border-0 bg-transparent"
-                              style={{
-                                padding: '6px 12px',
-                                color: '#6c757d',
-                                cursor: 'default'
-                              }}
-                            >
-                              ...
-                            </span>
-                          ) : (
-                            <button
-                              className="border-0 "
-                              onClick={() => goToPage(page)}
-                              style={{
-                                padding: '6px 12px',
-                                minWidth: '36px',
-                                backgroundColor: page === tableState.currentPage ? '#5a6c5b' : 'transparent',
-                                color: page === tableState.currentPage ? '#fff' : '#6c757d',
-                                borderRadius: '4px',
-                                fontWeight: page === tableState.currentPage ? '500' : '400',
-                                cursor: 'pointer',
-                                fontSize: "16px"
-                              }}
-                            >
-                              {page}
-                            </button>
-                          )}
-                        </li>
-                      ))}
-                      <li className={`page-item ${!tableState.hasNext ? 'disabled' : ''}`}>
-                        <button
-                          className=" border-0 bg-transparent"
-                          onClick={() => goToPage(tableState.currentPage + 1)}
-                          disabled={!tableState.hasNext}
-                          style={{
-                            padding: '6px 10px',
-                            color: !tableState.hasNext ? '#ccc' : '#6c757d',
-                            fontSize: '18px',
-                            cursor: !tableState.hasNext ? 'not-allowed' : 'pointer'
-                          }}
-                        >
-                          ›
-                        </button>
-                      </li>
-                      <li className={`page-item ${!tableState.hasNext ? 'disabled' : ''}`}>
-                        <button
-                          className="border-0 bg-transparent"
-                          onClick={() => goToPage(tableState.totalPages)}
-                          disabled={!tableState.hasNext}
-                          style={{
-                            padding: '6px 10px',
-                            color: !tableState.hasNext ? '#ccc' : '#6c757d',
-                            fontSize: '18px',
-                            cursor: !tableState.hasNext ? 'not-allowed' : 'pointer'
-                          }}
-                        >
-                          »
-                        </button>
-                      </li>
-                    </ul>
-                  </nav>
-                </div>
-              )} */}
             </div>
           </div>
         </div>

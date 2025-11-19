@@ -62,7 +62,7 @@ const MasterLayout = ({ children }) => {
           children: [
             { name: "Gender", path: "/gender-list" },
             { name: "Marital Status", path: "/marital-status" },
-            { name: "Continents ", path: "/continent-list" },
+            { name: "Continents", path: "/continent-list" },
             { name: "Country", path: "/country-list" },
             { name: "State", path: "/state-list" },
             { name: "District", path: "/district-list" },
