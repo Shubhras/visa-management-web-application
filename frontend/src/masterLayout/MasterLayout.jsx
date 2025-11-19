@@ -169,6 +169,7 @@ const MasterLayout = ({ children }) => {
             { name: "Occupation Name", path: "/occupation-name" },
             { name: "Designation (Job Title)", path: "/designation" },
             { name: "Job Prospect", path: "/job-prospect" },
+            { name: "Related Occupation", path: "/related-occupation" },
             
           ],
         },

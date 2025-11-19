@@ -442,6 +442,7 @@ import ChildrenCanApplywithCandidateList from "./pages/masters/visaConditionsMas
 import ChildrenVisaCategoryList from "./pages/masters/visaConditionsMaster/childrenVisaCategory/ChildrenVisaCategoryList";
 import ChildrenStudyWorkRightsList from "./pages/masters/visaConditionsMaster/childrenStudyWorkRights/ChildrenStudyWorkRightsList";
 import VisaMainCategoryList from "./pages/masters/visaConditionsMaster/visamainCategory/VisaMainCategoryList";
+import RelatedOccupationList from "./pages/masters/occupationMaster/relatedOccupation/RelatedOccupationList";
 
 
 
@@ -743,6 +744,7 @@ function App() {
         <Route path="/occupation-name" element={<ProtectedRoute><OccupationNameList /></ProtectedRoute>}></Route>
         <Route path="/designation" element={<ProtectedRoute><DesignationList /></ProtectedRoute>}></Route>
         <Route path="/job-prospect" element={<ProtectedRoute><JobProspectList /></ProtectedRoute>}></Route>
+        <Route path="/related-occupation" element={<ProtectedRoute>< RelatedOccupationList/></ProtectedRoute>}></Route>
         
 
           {/*Institute Master*/}
@@ -776,7 +778,6 @@ function App() {
           <Route path="/children-visa-category" element={<ProtectedRoute><ChildrenVisaCategoryList /></ProtectedRoute>}></Route>
           <Route path="/children-study-work-rights" element={<ProtectedRoute><ChildrenStudyWorkRightsList /></ProtectedRoute>}></Route>
           <Route path="/visa-main-category" element={<ProtectedRoute><VisaMainCategoryList/></ProtectedRoute>}></Route>
->>>>>>> e71a19138fa82f2735483b9f22d87cb4b7fe9fcd
 
 
 

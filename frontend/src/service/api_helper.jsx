@@ -2199,6 +2199,40 @@ export const getRepresentingCountryListAPI = (data) => {
 };
 
 
+// Related Occupation
+export const getRelatedOccupationListAPI = (data) => {
+  const apiUrl = `${url.GET_RELATED_OCCUPATION_LIST}?search=${data?.search}&page=${
+    data?.page
+  }&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
+
+export const addRelatedOccupationAPI = (payload) => {
+  const apiUrl = `${url.ADD_RELATED_OCCUPATION_API}`;
+  return post(apiUrl, payload);
+};
+
+export const editRelatedOccupationAPI = (payload) => {
+  const apiUrl = `${url.EDIT_RELATED_OCCUPATION_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+
+export const deleteRelatedOccupationAPI = (payload) => {
+  const preparedData = { id: payload };
+  const apiUrl = `${url.DELETE_RELATED_OCCUPATION_API}delete/`;
+  return delWithPayload(apiUrl, preparedData);
+};
+
+export const exportRelatedOccupationAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_RELATED_OCCUPATION_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+
+export const importRelatedOccupationAPI = (payload) => {
+  const apiUrl = `${url.IMPORT_RELATED_OCCUPATION_API}`;
+  return post(apiUrl, payload);
+};
+
 
 
 // Institute Type

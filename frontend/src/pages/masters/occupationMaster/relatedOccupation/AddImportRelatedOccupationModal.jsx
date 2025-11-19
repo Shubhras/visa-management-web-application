@@ -10,9 +10,9 @@ import {
 } from "../../../../helper/utils/commanHelper";
 import {
   jobProspectImportData,
-  occupationLevelCodeImportData,
+  relatedOccupationImportData,
 } from "../../../../store/master/occupationMaster/action";
-const AddImportJobProspectModal = ({ show, handleClose }) => {
+const AddImportRelatedOccupationModal = ({ show, handleClose }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState(null);
@@ -73,7 +73,7 @@ const AddImportJobProspectModal = ({ show, handleClose }) => {
     }
     setLoading(true);
     dispatch(
-      jobProspectImportData(formData, (response, error) => {
+      relatedOccupationImportData(formData, (response, error) => {
         setLoading(false);
         if (error) {
           toast.error(error?.response?.data?.message || "Server error");
@@ -86,9 +86,8 @@ const AddImportJobProspectModal = ({ show, handleClose }) => {
                 {response?.duplicates?.length > 0 && (
                   <div style={{ marginTop: "6px" }}>
                     <strong>
-                      Duplicate Job Prospect skipped — the duplicate data
-                      from your uploaded file has been exported into an .xlsx
-                      file.
+                      Duplicate Job Prospect skipped — the duplicate data from
+                      your uploaded file has been exported into an .xlsx file.
                     </strong>
                   </div>
                 )}
@@ -103,14 +102,13 @@ const AddImportJobProspectModal = ({ show, handleClose }) => {
                 headers: [
                   "Country",
                   "Occupation Version",
-                  "Occupation Level Code",
                   "Occupation Name",
                   "Occupation Code",
-                  "Occupation Type",
+                  "Related Occupation Code",
                   "Job Prospect",
                 ],
-                sheetName: "Job Prospect ",
-                fileName: "Job Prospect",
+                sheetName: "Related Occupation",
+                fileName: "Related Occupation",
               };
               exportToExcelDuplicate(
                 prepareData.data,
@@ -125,15 +123,13 @@ const AddImportJobProspectModal = ({ show, handleClose }) => {
                 headers: [
                   "Country",
                   "Occupation Version",
-                  "Occupation Level Code",
                   "Occupation Name",
                   "Occupation Code",
-                  "Occupation Type",
-                  "Job Prospect",
+                  "Related Occupation Code",
                   "Reason",
                 ],
-                sheetName: "Job Prospect",
-                fileName: "Job Prospect",
+                sheetName: "Related Occupation",
+                fileName: "Related Occupation",
               };
               exportToExcelWrongData(
                 prepareData.data,
@@ -177,7 +173,7 @@ const AddImportJobProspectModal = ({ show, handleClose }) => {
         className="modal fade show common-ctl-popup"
         tabIndex={-1}
         role="dialog"
-        aria-labelledby="OccupationLevelModalLabel"
+        aria-labelledby="RelatedOccupationModalLabel"
         aria-hidden={!show}
       >
         <div
@@ -187,7 +183,7 @@ const AddImportJobProspectModal = ({ show, handleClose }) => {
           <div className="modal-content radius-16 bg-base">
             <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
               <h1 className="modal-title fs-5" id="departmentModalLabel">
-                Upload Occupation Name
+                Upload Related Occupation
               </h1>
               <button
                 type="button"
@@ -304,37 +300,28 @@ const AddImportJobProspectModal = ({ show, handleClose }) => {
           show={showSampleExcelDownload}
           handleClose={handleCloseSampleExcelDownload}
           prepareData={{
-            downloadFileName: "Job Prospect",
+            downloadFileName: "Related Occupation",
             items: [
               "Country",
               "Occupation Version",
-              "Occupation Level Code",
               "Occupation Name",
               "Occupation Code",
-              "Occupation Type",
-              "Job Prospect",
-              "Salary Currency",
-              "Salary Amount",
-              "Duration",
+              "Related Occupation Code",
               "Description",
             ],
             selectedItems: [
               "Country",
               "Occupation Version",
-              "Occupation Level Code",
               "Occupation Name",
               "Occupation Code",
-              "Occupation Type",
-              "Job Prospect",
+              "Related Occupation Code",
             ],
             ItemsRequired: [
               "Country",
               "Occupation Version",
-              "Occupation Level Code",
               "Occupation Name",
               "Occupation Code",
-              "Occupation Type",
-              "Job Prospect",
+              "Related Occupation Code",
             ],
           }}
         />
@@ -343,4 +330,4 @@ const AddImportJobProspectModal = ({ show, handleClose }) => {
   );
 };
 
-export default AddImportJobProspectModal;
+export default AddImportRelatedOccupationModal;

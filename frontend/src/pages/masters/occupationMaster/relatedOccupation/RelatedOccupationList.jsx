@@ -6,14 +6,14 @@ import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import { formatDateDDMMYYYYTime } from "../../../../helper/utils/commanHelper";
 import {
-  designationExportData,
-  designationList,
-  designationDelete,
+  relatedOccupationExportData,
+  relatedOccupationList,
+  relatedOccupationDelete,
 } from "../../../../store/master/occupationMaster/action";
-import AddEditDesignationModal from "./AddEditDesignationModal";
-import AddImportDesignationModal from "./AddImportDesignationModal";
+import AddEditRelatedOccupationModal from "./AddEditRelatedOccupationModal";
+import AddImportRelatedOccupationModal from "./AddImportRelatedOccupationModal";
 
-const DesignationList = () => {
+const RelatedOccupationList = () => {
   const dispatch = useDispatch();
   const [modalState, setModalState] = useState({
     show: false,
@@ -38,7 +38,7 @@ const DesignationList = () => {
     });
     // Only call API when data was successfully added/updated
     if (shouldRefresh) {
-      fetchdDesignationList();
+      fetchJobProspectList();
     }
   };
 
@@ -47,7 +47,7 @@ const DesignationList = () => {
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmMessage, setDeleteConfirmMessage] = useState(
-    "Are you sure you want to delete this designatoin?"
+    "Are you sure you want to delete this related occupation?"
   );
   const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
@@ -60,7 +60,7 @@ const DesignationList = () => {
     "Occupation Version",
     "Occupation Name",
     "Occupation Code",
-    "Designation(Job Title)",
+    "Related Occupation Code",
     "Description",
     "Modified On",
   ]);
@@ -69,14 +69,14 @@ const DesignationList = () => {
     "Occupation Version",
     "Occupation Name",
     "Occupation Code",
-    "Designation(Job Title)",
+    "Related Occupation Code",
   ]);
   const [ItemsRequired] = useState([
     "Country",
     "Occupation Version",
     "Occupation Name",
     "Occupation Code",
-    "Designation(Job Title)",
+    "Related Occupation Code",
   ]);
 
   const [tableColumns] = useState([
@@ -95,6 +95,13 @@ const DesignationList = () => {
       required: false,
     },
     {
+      id: "occupationname",
+      label: "Occupation Name",
+      field: "occupationname",
+      visible: true,
+      required: false,
+    },
+    {
       id: "occupationcode",
       label: "Occupation Code",
       field: "occupationcode",
@@ -102,16 +109,9 @@ const DesignationList = () => {
       required: false,
     },
     {
-      id: "occupationname",
-      label: "Occupation name",
-      field: "occupationname",
-      visible: true,
-      required: false,
-    },
-    {
-      id: "designation",
-      label: "Designation(Job Title)",
-      field: "designation",
+      id: "relatedoccupationcode",
+      label: "Related Occupation Code",
+      field: "relatedoccupationcode",
       visible: true,
       required: false,
     },
@@ -119,7 +119,7 @@ const DesignationList = () => {
       id: "description",
       label: "Description",
       field: "description",
-      visible: false,
+      visible: true,
       required: false,
     },
     {
@@ -190,7 +190,7 @@ const DesignationList = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (tableState.search !== undefined) {
-        fetchdDesignationList();
+        fetchJobProspectList();
       }
     }, 500);
 
@@ -198,7 +198,7 @@ const DesignationList = () => {
   }, [tableState.search]);
 
   useEffect(() => {
-    fetchdDesignationList();
+    fetchJobProspectList();
   }, [
     tableState.page,
     tableState.limit,
@@ -207,7 +207,7 @@ const DesignationList = () => {
     tableState.sortOrder,
   ]);
 
-  const fetchdDesignationList = () => {
+  const fetchJobProspectList = () => {
     setLoading(true);
     const params = {
       page: tableState.page,
@@ -219,7 +219,7 @@ const DesignationList = () => {
     };
 
     dispatch(
-      designationList(params, (response, error) => {
+      relatedOccupationList(params, (response, error) => {
         setLoading(false);
         if (response?.statusCode === 200 && response?.status === true) {
           const paginationData = response?.pagination || {};
@@ -389,7 +389,7 @@ const DesignationList = () => {
     setDeleteId(uuid);
     setShowDeleteConfirm(true);
     setDeleteConfirmMessage(
-      `Are you sure you want to delete this designation?`
+      `Are you sure you want to delete this related occupation?`
     );
   };
 
@@ -400,10 +400,10 @@ const DesignationList = () => {
     }
     const message =
       selectAllOrNot === "all"
-        ? `${tableState.total} all designation`
-        : `${selectedRows.length} selected designation`;
+        ? `${tableState.total} all related occupation`
+        : `${selectedRows.length} selected related occupation`;
     setDeleteConfirmMessage(
-      `Are you sure you want to delete this designation (${message})?`
+      `Are you sure you want to delete this related occupation (${message})?`
     );
     setShowDeleteConfirm(true);
   };
@@ -412,16 +412,15 @@ const DesignationList = () => {
     const sendPayload =
       selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
     if (!sendPayload || sendPayload.length === 0) {
-      toast.error("No designation selected for deletion.");
+      toast.error("No related occupation selected for deletion.");
       return;
     }
     dispatch(
-      designationDelete(sendPayload, (response, error) => {
-        console.log("response",response);
+      relatedOccupationDelete(sendPayload, (response, error) => {
         if (error) {
           toast.error(error?.response?.data?.message || "server error");
         } else {
-          if (response?.status === true) {
+          if (response?.statusCode === 200 && response?.status === true) {
             toast.success(response?.message);
             setDepartments((prevRowItems) =>
               prevRowItems.filter((Item) => Item.uuid !== deleteId)
@@ -433,7 +432,7 @@ const DesignationList = () => {
             setSelectedRows([]);
             setSelectAllOrNot("");
             setDeleteId(null);
-            fetchdDesignationList();
+            fetchJobProspectList();
           } else {
             toast.error("Something went wrong.");
           }
@@ -455,7 +454,7 @@ const DesignationList = () => {
     setShowImport(false);
     // Only call API when data was successfully imported
     if (shouldRefresh) {
-      fetchdDesignationList();
+      fetchJobProspectList();
     }
   };
 
@@ -508,7 +507,7 @@ const DesignationList = () => {
       "Occupation Version": "occupationversion",
       "Occupation Name": "occupationname",
       "Occupation Code": "occupationcode",
-      "Designation(Job Title)":"designation",
+      "Related Occupation Code": "relatedoccupationcode",
       Description: "description",
       "Modified On": "updated_at",
     };
@@ -524,7 +523,7 @@ const DesignationList = () => {
     };
     setLoadingExport(true);
     dispatch(
-      designationExportData(sendPayload, (response, error) => {
+      relatedOccupationExportData(sendPayload, (response, error) => {
         if (error) {
           setLoadingExport(false);
           toast.error(error?.response?.message || "server error");
@@ -538,7 +537,7 @@ const DesignationList = () => {
             const url = window.URL.createObjectURL(blob);
             const link = document.createElement("a");
             link.href = url;
-            link.download = `Designation(Job Title).xlsx`;
+            link.download = `Related Occupation.xlsx`;
             document.body.appendChild(link);
             link.click();
             link.remove();
@@ -805,9 +804,9 @@ const DesignationList = () => {
                             <span>{rowItem.occupationcode}</span>
                           </td>
                         )}
-                        {isColumnVisible("designation") && (
+                        {isColumnVisible("relatedoccupationcode") && (
                           <td>
-                            <span>{rowItem.designation}</span>
+                            <span>{rowItem.relatedoccupationcode}</span>
                           </td>
                         )}
                         {isColumnVisible("description") && (
@@ -815,7 +814,6 @@ const DesignationList = () => {
                             <span>{rowItem.description}</span>
                           </td>
                         )}
-                       
                         {isColumnVisible("updated_at") && (
                           <td>
                             <span>
@@ -1010,7 +1008,7 @@ const DesignationList = () => {
         </div>
 
         {/* Add/Edit Modal */}
-        <AddEditDesignationModal
+        <AddEditRelatedOccupationModal
           show={modalState.show}
           handleClose={handleClose}
           mode={modalState.mode}
@@ -1019,7 +1017,7 @@ const DesignationList = () => {
 
         {/* Import Modal */}
         {showImport && (
-          <AddImportDesignationModal
+          <AddImportRelatedOccupationModal
             show={showImport}
             handleClose={handleCloseImport}
           />
@@ -1196,4 +1194,4 @@ const DesignationList = () => {
   );
 };
 
-export default DesignationList;
+export default RelatedOccupationList;

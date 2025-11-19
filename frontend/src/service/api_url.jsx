@@ -500,7 +500,7 @@ export const IMPORT_OCCUPATION_NAME_API = "/api/v1/master/occupation-names/impor
 
 // Designation Endpoints
 
-export const GET_DESIGNATION_LIST = "/api/v1/master/designations/";
+export const GET_DESIGNATION_LIST = "/api/v1/master/designation/";
 export const ADD_DESIGNATION_API = "/api/v1/master/designation/create/";
 export const EDIT_DESIGNATION_API = "/api/v1/master/designation/";        // +uuid/update/
 export const DELETE_DESIGNATION_API = "/api/v1/master/designation/";      // +delete/
@@ -519,9 +519,17 @@ export const IMPORT_JOB_PROSPECT_API = "/api/v1/master/jobprospect/import/";
 
 export const GET_COUNTRY_LIST_DEMO = "/api/v1/master/country/";
 
-//representing country api Endpoint
+//representing country Endpoint
 export const GET_REPRESENTING_COUNTRY_LIST = "/api/v1/master/representingcountry/";
 
+// Related Occupation API Endpoints
+
+export const GET_RELATED_OCCUPATION_LIST = "/api/v1/master/related-occupations/";
+export const ADD_RELATED_OCCUPATION_API = "/api/v1/master/related-occupations/create/";
+export const EDIT_RELATED_OCCUPATION_API = "/api/v1/master/related-occupations/";        // +uuid/update/
+export const DELETE_RELATED_OCCUPATION_API = "/api/v1/master/related-occupations/";      // +delete/
+export const EXPORT_RELATED_OCCUPATION_API = "/api/v1/master/related-occupations/export/";
+export const IMPORT_RELATED_OCCUPATION_API = "/api/v1/master/related-occupations/import/";
 
 
 // Institute Type API Endpoints

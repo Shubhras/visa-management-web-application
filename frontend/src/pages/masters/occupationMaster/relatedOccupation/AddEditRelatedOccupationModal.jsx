@@ -2,20 +2,21 @@ import React, { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import {
-  jobProspectAdd,
-  jobProspectEdit,
   occupationCategoryList,
   occupationCodeList,
   occupationLevelCodeList,
   occupationLevelList,
+  occupationNameList,
   occupationProspectList,
   occupationTypeList,
   occupationVersionList,
+  relatedOccupationAdd,
+  relatedOccupationEdit,
   representingCountryList,
 } from "../../../../store/master/occupationMaster/action";
 import Select from "react-select";
 
-const AddEditJobProspectModal = ({
+const AddEditRelatedOccupationModal = ({
   show,
   handleClose,
   mode = "add",
@@ -31,20 +32,16 @@ const AddEditJobProspectModal = ({
   const [occupationCodeData, setOccupationCodeData] = useState([]);
   const [occupationTypeData, setOccupationTypeData] = useState([]);
   const [jobProspectData, setJobProspectData] = useState([]);
+  const [occupationNameData, setOccupationNameData] = useState([]);
 
   // Form state
   const [formData, setFormData] = useState({
     uuid: "",
     country: "",
     occupationVersion: "",
-    occupationLevelCode: "",
     occupationName: "",
     occupationCode: "",
-    occupationType: "",
-    jobProspect: "",
-    salaryCurrency: "",
-    salaryAmount: "",
-    duration: "",
+    relatedOccupationCode: "",
     description: "",
   });
 
@@ -52,11 +49,9 @@ const AddEditJobProspectModal = ({
   const [errors, setErrors] = useState({
     country: "",
     occupationVersion: "",
-    occupationLevelCode: "",
     occupationName: "",
     occupationCode: "",
-    occupationType: "",
-    jobProspect: "",
+    relatedOccupationCode: "",
   });
 
   const fetchCountryList = () => {
@@ -86,10 +81,10 @@ const AddEditJobProspectModal = ({
       })
     );
     dispatch(
-      occupationLevelCodeList(params, (response, error) => {
+      occupationNameList(params, (response, error) => {
         // setLoading(false);
         if (response?.statusCode === 200 && response?.status === true) {
-          setOccupationLevelCodeData(response?.data || []);
+          setOccupationNameData(response?.data || []);
         }
       })
     );
@@ -98,22 +93,6 @@ const AddEditJobProspectModal = ({
         // setLoading(false);
         if (response?.statusCode === 200 && response?.status === true) {
           setOccupationCodeData(response?.data || []);
-        }
-      })
-    );
-    dispatch(
-      occupationTypeList(params, (response, error) => {
-        // setLoading(false);
-        if (response?.statusCode === 200 && response?.status === true) {
-          setOccupationTypeData(response?.data || []);
-        }
-      })
-    );
-    dispatch(
-      occupationProspectList(params, (response, error) => {
-        // setLoading(false);
-        if (response?.statusCode === 200 && response?.status === true) {
-          setJobProspectData(response?.data || []);
         }
       })
     );
@@ -188,10 +167,6 @@ const AddEditJobProspectModal = ({
       newErrors.occupationVersion = "Occupation Version is required";
       isValid = false;
     }
-    if (!formData.occupationLevelCode.trim()) {
-      newErrors.occupationLevelCode = "Occupation Level Code is required";
-      isValid = false;
-    }
     if (!formData.occupationCode.trim()) {
       newErrors.occupationCode = "Occupation Code is required";
       isValid = false;
@@ -200,12 +175,9 @@ const AddEditJobProspectModal = ({
       newErrors.occupationName = "Occupation Name is required";
       isValid = false;
     }
-    if (!formData.occupationType.trim()) {
-      newErrors.occupationType = "Occupation Type is required";
-      isValid = false;
-    }
-    if (!formData.jobProspect.trim()) {
-      newErrors.jobProspect = "Job Prospect is required";
+
+    if (!formData.relatedOccupationCode.trim()) {
+      newErrors.relatedOccupationCode = "Related Occupatind Code is required";
       isValid = false;
     }
 
@@ -224,33 +196,24 @@ const AddEditJobProspectModal = ({
               uuid: formData.uuid,
               country_id: formData.country,
               occupationversion_id: formData.occupationVersion,
-              occupationlevelcode_id: formData.occupationLevelCode,
-              occupationtype_id: formData.occupationType,
-              occupationprospect_id: formData.jobProspect,
               occupationcode_id: formData.occupationCode,
               occupationname: formData.occupationName,
-              salarycurrency: formData.salaryCurrency,
-              salaryamount: formData.salaryAmount,
-              duration: formData.duration,
+              relatedOccupationCode: formData.relatedOccupationCode,
               description: formData.description,
             }
           : {
               country_id: formData.country,
               occupationversion_id: formData.occupationVersion,
-              occupationlevelcode_id: formData.occupationLevelCode,
-              occupationtype_id: formData.occupationType,
-              occupationprospect_id: formData.jobProspect,
               occupationcode_id: formData.occupationCode,
               occupationname: formData.occupationName,
-              salarycurrency: formData.salaryCurrency,
-              salaryamount: formData.salaryAmount,
-              duration: formData.duration,
+              relatedOccupationCode: formData.relatedOccupationCode,
               description: formData.description,
             };
 
       setLoading(true);
 
-      const action = mode === "edit" ? jobProspectEdit : jobProspectAdd;
+      const action =
+        mode === "edit" ? relatedOccupationEdit : relatedOccupationAdd;
 
       dispatch(
         action(sendPayload, (response, error) => {
@@ -277,13 +240,10 @@ const AddEditJobProspectModal = ({
       uuid: "",
       country: "",
       occupationVersion: "",
-      occupationCategory: "",
-      occupationLevel: "",
-      occupationLevelCode: "",
-      occupationCode: "",
       occupationName: "",
+      occupationCode: "",
+      relatedOccupationCode: "",
       description: "",
-      mainduties: "",
     });
     setErrors({});
   };
@@ -420,34 +380,34 @@ const AddEditJobProspectModal = ({
                 </div>
                 <div className="col-6 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Occupation Type<span className="text-danger">*</span>
+                    Occupation Name<span className="text-danger">*</span>
                   </label>
                   <Select
-                    options={occupationTypeData.map((option) => ({
+                    options={occupationNameData.map((option) => ({
                       value: option.uuid,
-                      label: option.name,
+                      label: option.occupationname,
                     }))}
                     value={
-                      formData.occupationType
-                        ? occupationTypeData
+                      formData.occupationName
+                        ? occupationNameData
                             .map((option) => ({
                               value: option.uuid,
-                              label: option.name,
+                              label: option.occupationname,
                             }))
                             .find(
-                              (opt) => opt.value === formData.occupationType
+                              (opt) => opt.value === formData.occupationName
                             )
                         : null
                     }
                     onChange={(selectedOption) =>
                       handleChange({
                         target: {
-                          name: "occupationType",
+                          name: "occupationName",
                           value: selectedOption ? selectedOption.value : "",
                         },
                       })
                     }
-                    placeholder="Select Occupation Type"
+                    placeholder="Select Occupation Name"
                     isClearable
                     isSearchable
                     className={`custom-select-container ${
@@ -455,94 +415,9 @@ const AddEditJobProspectModal = ({
                     }`}
                     classNamePrefix="custom-select"
                   />
-                  {errors.occupationType && (
+                  {errors.occupationName && (
                     <div className="text-danger text-sm mt-1">
-                      {errors.occupationType}
-                    </div>
-                  )}
-                </div>
-                <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Occupation Level Code<span className="text-danger">*</span>
-                  </label>
-                  <Select
-                    options={occupationLevelCodeData.map((option) => ({
-                      value: option.uuid,
-                      label: option.occupationlevelcode,
-                    }))}
-                    value={
-                      formData.occupationLevelCode
-                        ? occupationLevelCodeData
-                            .map((option) => ({
-                              value: option.uuid,
-                              label: option.occupationlevelcode,
-                            }))
-                            .find(
-                              (opt) =>
-                                opt.value === formData.occupationLevelCode
-                            )
-                        : null
-                    }
-                    onChange={(selectedOption) =>
-                      handleChange({
-                        target: {
-                          name: "occupationLevelCode",
-                          value: selectedOption ? selectedOption.value : "",
-                        },
-                      })
-                    }
-                    placeholder="Select Occupation Level Code"
-                    isClearable
-                    isSearchable
-                    className={`custom-select-container ${
-                      errors.country ? "is-invalid" : ""
-                    }`}
-                    classNamePrefix="custom-select"
-                  />
-                  {errors.occupationLevelCode && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.occupationLevelCode}
-                    </div>
-                  )}
-                </div>{" "}
-                <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Job Prespect<span className="text-danger">*</span>
-                  </label>
-                  <Select
-                    options={jobProspectData.map((option) => ({
-                      value: option.uuid,
-                      label: option.name,
-                    }))}
-                    value={
-                      formData.jobProspect
-                        ? jobProspectData
-                            .map((option) => ({
-                              value: option.uuid,
-                              label: option.name,
-                            }))
-                            .find((opt) => opt.value === formData.jobProspect)
-                        : null
-                    }
-                    onChange={(selectedOption) =>
-                      handleChange({
-                        target: {
-                          name: "jobProspect",
-                          value: selectedOption ? selectedOption.value : "",
-                        },
-                      })
-                    }
-                    placeholder="Select Job Prospect"
-                    isClearable
-                    isSearchable
-                    className={`custom-select-container ${
-                      errors.country ? "is-invalid" : ""
-                    }`}
-                    classNamePrefix="custom-select"
-                  />
-                  {errors.jobProspect && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.jobProspect}
+                      {errors.occupationName}
                     </div>
                   )}
                 </div>{" "}
@@ -591,84 +466,26 @@ const AddEditJobProspectModal = ({
                 </div>{" "}
                 <div className="col-12 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Occupation Name <span className="text-danger">*</span>
+                    Related Occupation Code
+                    <span className="text-danger">*</span>
                   </label>
                   <input
                     type="text"
-                    name="occupationName"
-                    value={formData.occupationName}
+                    name="relatedOccupationCode"
+                    value={formData.relatedOccupationCode}
                     onChange={handleChange}
                     className={`form-control radius-8 ${
-                      errors.occupationName ? "is-invalid" : ""
+                      errors.relatedOccupationCode ? "is-invalid" : ""
                     }`}
-                    placeholder="Enter Occupation Name"
+                    placeholder="Enter Related Occupation Code"
                   />
-                  {errors.occupationName && (
+                  {errors.relatedOccupationCode && (
                     <div className="text-danger text-sm mt-1">
-                      {errors.occupationName}
+                      {errors.relatedOccupationCode}
                     </div>
                   )}
                 </div>
                 {/* Description */}
-                <div className="row mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Average Salary
-                  </label>
-                  <div className="col-3">
-                    <input
-                      type="text"
-                      name="salaryCurrency"
-                      value={formData.salaryCurrency}
-                      onChange={handleChange}
-                      className={`form-control radius-8 ${
-                        errors.salaryCurrency ? "is-invalid" : ""
-                      }`}
-                      placeholder="Curency"
-                    />
-                    {errors.salaryCurrency && (
-                      <div className="text-danger text-sm mt-1">
-                        {errors.salaryCurrency}
-                      </div>
-                    )}
-                  </div>
-                  <div className="col-3">
-                    <input
-                      type="number"
-                      name="salaryAmount"
-                      value={formData.salaryAmount}
-                      onChange={handleChange}
-                      className={`form-control radius-8 ${
-                        errors.salaryAmount ? "is-invalid" : ""
-                      }`}
-                      placeholder="Amount"
-                    />
-                    {errors.salaryAmount && (
-                      <div className="text-danger text-sm mt-1">
-                        {errors.salaryAmount}
-                      </div>
-                    )}
-                  </div>
-                  <div className="col-6">
-                    <select
-                      name="duration"
-                      value={formData.duration || ""}
-                      onChange={handleChange}
-                      className={`form-control form-select radius-8 ${
-                        errors.duration ? "is-invalid" : ""
-                      }`}
-                    >
-                      <option value="">Hour / Month / Year </option>
-                      <option value="Hour">Hour</option>
-                      <option value="Month">Month</option>
-                      <option value="Year">Year</option>
-                    </select>
-                    {errors.duration && (
-                      <div className="text-danger text-sm mt-1">
-                        {errors.duration}
-                      </div>
-                    )}
-                  </div>
-                </div>
                 <div className="col-12 mb-20">
                   <label
                     htmlFor="desc"
@@ -726,4 +543,4 @@ const AddEditJobProspectModal = ({
   );
 };
 
-export default AddEditJobProspectModal;
+export default AddEditRelatedOccupationModal;
