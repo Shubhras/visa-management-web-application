@@ -2083,16 +2083,102 @@ class StateExportAPIView(APIView):
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')
-        uuids_param = request.GET.get('uuids', '')
-        uuids = [u.strip() for u in uuids_param.split(',') if u]
+        search = request.GET.get('search', '').strip()
+        custom_sort = request.GET.get('customSort')
+        allowed_sort_fields = ['stateName', 'stateshortName', 'state', 'countryName', 'created_at']
 
-        # Header map for export
+        # ---------------------------
+        # Parse IDs & Validate UUIDs
+        # ---------------------------
+        def parse_ids(param_name):
+            raw = request.GET.get(param_name, '')
+            if raw:
+                items = [x.strip() for x in raw.split(',') if x.strip()]
+            else:
+                items = request.GET.getlist(param_name)
+            return items
+
+        def validate_uuid_list(uuid_list):
+            valid = []
+            for u in uuid_list:
+                try:
+                    valid.append(UUID(u))
+                except:
+                    pass
+            return valid
+
+        country_list = validate_uuid_list(parse_ids('country'))
+        state_list = validate_uuid_list(parse_ids('state'))
+
+        # ---------------------------
+        # Base QuerySet
+        # ---------------------------
+        queryset = State.objects.filter(is_deleted=False).annotate(
+            country_name=F('countryName__name')
+        )
+
+        # ---------------------------
+        # Hierarchical filtering
+        # ---------------------------
+        if state_list:
+            queryset = queryset.filter(uuid__in=state_list)
+        elif country_list:
+            queryset = queryset.filter(countryName__uuid__in=country_list)
+
+        # ---------------------------
+        # Search
+        # ---------------------------
+        if search:
+            queryset = queryset.filter(stateName__istartswith=search)
+
+        # ---------------------------
+        # Sorting
+        # ---------------------------
+        sort_field_map = {
+            'stateName': 'stateName',
+            'stateshortName': 'stateshortName',
+            'state': 'state',
+            'countryName': 'country_name',
+            'created_at': 'created_at'
+        }
+
+        sort_fields = []
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Use Lower() for string fields for case-insensitive sort
+                    if field in ['stateName', 'stateshortName', 'state', 'countryName']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+                except ValueError:
+                    continue
+        else:
+            sort_order = request.GET.get('sortOrder', 'desc')
+            f = F('created_at')
+            sort_fields = [f.desc(nulls_last=True) if sort_order=='desc' else f.asc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # ---------------------------
+        # Field mapping & Export
+        # ---------------------------
         field_header_map = {
             'uuid': 'UUID',
             'countryName': 'Country Name',
             'stateName': 'State Name',
             'stateshortName': 'State Short Name',
-            'state':'State / Territory',
+            'state': 'State / Territory',
             'description': 'Description',
             'is_active': 'Active',
             'is_deleted': 'Deleted',
@@ -2100,16 +2186,8 @@ class StateExportAPIView(APIView):
             'updated_at': 'Modified On',
         }
 
-        # Choose fields
         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
-        # Fetch queryset
-        queryset = State.objects.filter(is_deleted=False)
-        if uuids:
-            queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
-
-        # Prepare dataset
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = 'State'
@@ -2117,25 +2195,26 @@ class StateExportAPIView(APIView):
         for obj in queryset:
             row = []
             for field in field_list:
-                if field == 'country_name':
-                    value = obj.countryName.name if obj.countryName else ''
-                else:
-                    value = getattr(obj, field, '')
-                
+                value = getattr(obj, field, '')
+
+                if field == 'countryName':
+                    value = getattr(obj, 'country_name', '')
+
                 # Convert state/territory to Title Case
                 if field == 'state' and value:
-                    value = value.capitalize()  # STATE -> State, TERRITORY -> Territory
+                    value = value.capitalize()
 
-                # Format date/time fields
                 if field in ['created_at', 'updated_at'] and value:
-                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-                elif isinstance(value, bool):
+                    value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
+                if isinstance(value, bool):
                     value = int(value)
-                
+
                 row.append(value if value is not None else '')
             dataset.append(row)
 
+        # ---------------------------
         # Export file
+        # ---------------------------
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
@@ -2145,14 +2224,15 @@ class StateExportAPIView(APIView):
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'states.xlsx'
 
-        # Build response
         response = HttpResponse(
             file_data if format_type == 'csv' else file_data.getvalue(),
             content_type=content_type
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
-
+        
+        
+        
 class StateImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
