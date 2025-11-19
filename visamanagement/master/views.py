@@ -1340,18 +1340,43 @@ class CountryListAPIView(APIView):
         search = request.GET.get('search', '').strip()
         custom_sort = request.GET.get('customSort')
 
-        # Allowed fields for validation
+        # Allowed fields for sorting
         allowed_sort_fields = ['name', 'shortName', 'fullName', 'capitalCity', 'created_at', 'updated_at']
 
+        # Helper to parse comma-separated or repeated params
+        def parse_ids(param_name):
+            raw = request.GET.get(param_name, '')
+            if raw:
+                items = [x.strip() for x in raw.split(',') if x.strip()]
+            else:
+                items = request.GET.getlist(param_name)
+            return items
+
+        # Helper to validate UUIDs
+        def validate_uuid_list(uuid_list):
+            valid = []
+            for u in uuid_list:
+                try:
+                    valid.append(UUID(u))
+                except:
+                    pass
+            return valid
+
+        continent_list = validate_uuid_list(parse_ids('continent'))
+
         queryset = Country.objects.filter(is_deleted=False)
+
+        # ---------------------------
+        # Filter by continent UUID
+        # ---------------------------
+        if continent_list:
+            queryset = queryset.filter(continent__uuid__in=continent_list)
 
         # ---------------------------
         # Search
         # ---------------------------
         if search:
-            queryset = queryset.filter(
-                Q(name__istartswith=search)
-            )
+            queryset = queryset.filter(Q(name__istartswith=search))
 
         # ---------------------------
         # Sorting Logic
@@ -1373,20 +1398,14 @@ class CountryListAPIView(APIView):
                     field, order = rule.split(':')
                     field = field.strip()
                     order = order.strip().lower()
-
                     if field not in sort_field_map:
                         continue
-
                     orm_field = sort_field_map[field]
-
                     if field in ['name', 'shortName', 'fullName', 'capitalCity']:
                         f = Lower(orm_field)
                     else:
                         f = F(orm_field)
-
-                    sort_fields.append(
-                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
-                    )
+                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
                 except ValueError:
                     continue
         else:
@@ -1395,9 +1414,7 @@ class CountryListAPIView(APIView):
             sort_order = request.GET.get('sortOrder', 'desc')
             orm_field = sort_field_map.get(sort_by, 'created_at')
             f = F(orm_field)
-            sort_fields = [
-                f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)
-            ]
+            sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
 
         queryset = queryset.order_by(*sort_fields)
 
@@ -1408,9 +1425,6 @@ class CountryListAPIView(APIView):
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = CountrySerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
-
-
-
 
 class CountryCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -1708,7 +1722,7 @@ class CountryExportAPIView(APIView):
 
 
 
-        
+
 class CountryImportAPIView(APIView):
 
     def post(self, request):
