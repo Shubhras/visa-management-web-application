@@ -951,7 +951,7 @@ export const exportCountryDataAPI = (payload) => {
             })
             .join(",");
     }
-    const apiUrl = `${url.EXPORT_COUNTRY_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&continent=${payload?.continent}&customSort=${customSort}`;
+    const apiUrl = `${url.EXPORT_COUNTRY_LIST_API}?fields=${payload?.fields}&country=${payload?.uuids}&continent=${payload?.continent}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -1027,7 +1027,8 @@ export const exportStateDataAPI = (payload) => {
             })
             .join(",");
     }
-    const apiUrl = `${url.EXPORT_STATE_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&country=${payload?.country}&customSort=${customSort}`;
+    //const apiUrl = `${url.EXPORT_STATE_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&country=${payload?.country}&customSort=${customSort}`;
+        const apiUrl = `${url.EXPORT_STATE_LIST_API}?fields=${payload?.fields}&state=${payload?.uuids}&country=${payload?.country}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -1616,7 +1617,7 @@ export const exportDistrictDataAPI = (payload) => {
             })
             .join(",");
     }
-    const apiUrl = `${url.EXPORT_DISTRICT_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&country=${payload?.country}&state=${payload?.state}&customSort=${customSort}`;
+    const apiUrl = `${url.EXPORT_DISTRICT_LIST_API}?fields=${payload?.fields}&district=${payload?.uuids}&country=${payload?.country}&state=${payload?.state}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -1699,7 +1700,7 @@ export const exportCityDataAPI = (payload) => {
             })
             .join(",");
     }
-    const apiUrl = `${url.EXPORT_CITY_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&country=${payload?.country}&state=${payload?.state}&district=${payload?.district}&customSort=${customSort}`;
+    const apiUrl = `${url.EXPORT_CITY_LIST_API}?fields=${payload?.fields}&city=${payload?.uuids}&country=${payload?.country}&state=${payload?.state}&district=${payload?.district}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
