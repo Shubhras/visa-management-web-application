@@ -3404,7 +3404,6 @@ class DistrictByFilterAPIView(APIView):
         search_term = request.GET.get("search", "")                 # search by district name
         sort_by = request.GET.get("sort_by", "districtName")        # default sort
 
-        # Helper: validate UUIDs and fetch objects
         def get_valid_objects(model, ids):
             valid_objs = []
             invalid_ids = []
@@ -3419,7 +3418,6 @@ class DistrictByFilterAPIView(APIView):
                     invalid_ids.append(_id)
             return valid_objs, invalid_ids
 
-        # Validate countries (optional)
         valid_countries, invalid_countries = get_valid_objects(Country, country_ids)
         if invalid_countries:
             return Response({
@@ -3428,7 +3426,6 @@ class DistrictByFilterAPIView(APIView):
                 "message": f"Invalid or non-existent country IDs: {', '.join(invalid_countries)}"
             }, status=400)
 
-        # Validate states (optional)
         if 'all' in [s.lower() for s in state_ids]:  # if 'all' is sent, ignore state filter
             valid_states = []
         else:
@@ -3440,27 +3437,22 @@ class DistrictByFilterAPIView(APIView):
                     "message": f"Invalid or non-existent state IDs: {', '.join(invalid_states)}"
                 }, status=400)
 
-        # Fetch districts
         districts = District.objects.filter(is_deleted=False)
 
         if valid_countries:
             districts = districts.filter(countryName__in=valid_countries)
-        if valid_states:  # filter only if valid states are sent (skip if 'all')
+        if valid_states:  
             districts = districts.filter(stateName__in=valid_states)
 
-        # Search filter
         if search_term:
             districts = districts.filter(districtName__icontains=search_term)
 
-        # Sorting
         if sort_by and hasattr(District, sort_by):
             districts = districts.order_by(sort_by)
 
-        # Pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(districts, request)
 
-        # Prepare response
         data = [
             {
                 "uuid": str(d.uuid),
@@ -4344,10 +4336,6 @@ class RelationExportAPIView(APIView):
         return response
 
 
-
-
-        
-# -------------------- Import -------------------- #
 class RelationImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -4583,13 +4571,6 @@ class TimezoneListAPIView(APIView):
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = TimezoneSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
-
-
-
-
-
-
-
 
 
 class TimezoneCreateAPIView(APIView):
@@ -5050,41 +5031,86 @@ class CivilIdNameCreateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
  
  
+
 class CivilIdNameListAPIView(APIView):
     def get(self, request):
         search = request.GET.get("search", "").strip()
-        sort_by = request.GET.get("sortBy", "created_at")
-        sort_order = request.GET.get("sortOrder", "desc")
- 
+        custom_sort = request.GET.get("customSort")
+
         allowed_sort_fields = [
             "civil_id_name",
             "authority_full_name",
             "authority_short_name",
             "created_at",
+            "updated_at",
         ]
- 
-        if sort_by not in allowed_sort_fields:
-            sort_by = "created_at"
- 
-        if sort_order == "desc":
-            sort_by = f"-{sort_by}"
- 
+
         queryset = CivilIdName.objects.filter(is_deleted=False)
- 
+
+        # Search filter
         if search:
             queryset = queryset.filter(
-                Q(civil_id_name__istartswith=search) 
+                Q(civil_id_name__istartswith=search)
             )
- 
-        queryset = queryset.order_by(sort_by)
- 
+
+        # Sorting fields mapping
+        sort_field_map = {
+            "civil_id_name": "civil_id_name",
+            "authority_full_name": "authority_full_name",
+            "authority_short_name": "authority_short_name",
+            "created_at": "created_at",
+            "updated_at": "updated_at",
+        }
+
+        sort_fields = []
+
+        # --------------------------
+        # CUSTOM SORT LOGIC
+        # --------------------------
+        if custom_sort:
+            for rule in custom_sort.split(","):
+                try:
+                    field, order = rule.split(":")
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive for string fields
+                    if field in ["civil_id_name", "authority_full_name", "authority_short_name"]:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == "asc" else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+
+        else:
+            # Fallback sorting
+            sort_by = request.GET.get("sortBy", "created_at")
+            sort_order = request.GET.get("sortOrder", "desc")
+
+            orm_field = sort_field_map.get(sort_by, "created_at")
+            f = F(orm_field)
+
+            sort_fields = [
+                f.asc(nulls_last=True) if sort_order == "asc" else f.desc(nulls_last=True)
+            ]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # Pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
- 
+
         serializer = CivilIdNameSerializer(result_page, many=True)
- 
         return paginator.get_paginated_response(serializer.data)
- 
  
 class CivilIdNameRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -5210,16 +5236,18 @@ class CivilIdNameDeleteAPIView(APIView):
  
  
  
- 
- 
 class CivilIdNameExportAPIView(APIView):
+    """
+    Export CivilIdName data to CSV or XLSX with custom sorting.
+    """
     permission_classes = []  # Add IsAuthenticated if required
- 
+
     def get(self, request):
         format_type = request.GET.get("format", "xlsx").lower()
         fields = request.GET.get("fields")
         uuids_param = request.GET.get("uuids", "")
- 
+        custom_sort = request.GET.get("customSort")  # e.g., civil_id_name:asc,created_at:desc
+
         # Convert UUID strings to Python UUID objects
         uuids = []
         invalid_uuids = []
@@ -5228,65 +5256,111 @@ class CivilIdNameExportAPIView(APIView):
                 uuids.append(UUID(u))
             except ValueError:
                 invalid_uuids.append(u)
- 
+
+        # Field to header mapping
         field_header_map = {
             "uuid": "UUID",
             "civil_id_name": "Civil ID Name",
             "authority_full_name": "Authority Full Name",
             "authority_short_name": "Authority Short Name",
             "valid_type": "Civil ID Valid Upto",
-            "valid_date":"Civil ID Valid Date",
+            "valid_date": "Civil ID Valid Date",
             "valid_duration_value": "Civil ID Valid Duration Value",
             "valid_duration_unit": "Civil ID Valid Duration Unit",
             "description": "Description",
             "created_at": "Created On",
             "updated_at": "Modified On",
         }
- 
+
+        # Determine fields to export
         field_list = [f.strip() for f in fields.split(",")] if fields else list(field_header_map.keys())
- 
+
+        # Fetch queryset
         queryset = CivilIdName.objects.all()
- 
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
- 
-        queryset = queryset.order_by("-created_at")
- 
+
+        # -------- Custom Sorting ----------
+        sort_field_map = {
+            "civil_id_name": "civil_id_name",
+            "authority_full_name": "authority_full_name",
+            "authority_short_name": "authority_short_name",
+            "valid_type": "valid_type",
+            "valid_date": "valid_date",
+            "valid_duration_value": "valid_duration_value",
+            "valid_duration_unit": "valid_duration_unit",
+            "created_at": "created_at",
+            "updated_at": "updated_at",
+        }
+
+        sort_fields = []
+
+        if custom_sort:
+            for rule in custom_sort.split(","):
+                try:
+                    field, order = rule.split(":")
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sorting for string fields
+                    if field in ["civil_id_name", "authority_full_name", "authority_short_name", "description"]:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(f.asc(nulls_last=True) if order == "asc" else f.desc(nulls_last=True))
+
+                except ValueError:
+                    continue
+        else:
+            # Default sort by created_at desc
+            sort_order = request.GET.get("sortOrder", "desc")
+            f = F("created_at")
+            sort_fields = [f.desc(nulls_last=True) if sort_order == "desc" else f.asc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
         # Handle empty queryset
         if not queryset.exists():
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "No Civil ID records found for export"
-            }, status=404)
- 
+            return Response(
+                {
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No Civil ID records found for export",
+                },
+                status=404,
+            )
+
+        # -------- Prepare dataset ----------
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = "CivilIdName"
- 
+
         for obj in queryset:
             row = []
             for field in field_list:
                 value = getattr(obj, field, "")
- 
+
                 # display choice labels
                 if field == "valid_type" and obj.valid_type:
                     value = obj.get_valid_type_display()
-                
- 
                 if field == "valid_duration_unit" and obj.valid_duration_unit:
                     value = obj.get_valid_duration_unit_display()
- 
+
                 # Format date
                 if field in ["created_at", "updated_at"] and value:
                     value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
-                
                 if field == "valid_date" and value:
                     value = value.strftime("%d-%m-%Y")
- 
+
                 row.append(value if value is not None else "")
             dataset.append(row)
- 
+
+        # -------- Export file ----------
         if format_type == "csv":
             file_data = dataset.export("csv")
             content_type = "text/csv"
@@ -5295,14 +5369,17 @@ class CivilIdNameExportAPIView(APIView):
             file_data = io.BytesIO(dataset.export("xlsx"))
             content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             file_name = "civil_id_names.xlsx"
- 
+
+        # -------- Return response ----------
         response = HttpResponse(
             file_data if format_type == "csv" else file_data.getvalue(),
-            content_type=content_type
+            content_type=content_type,
         )
         response["Content-Disposition"] = f'attachment; filename="{file_name}"'
         return response
- 
+
+
+        
  
 class CivilIdNameImportAPIView(APIView):
     def post(self, request):
