@@ -28,7 +28,9 @@ const [searchAllowedModules] = useState([
   "Study : Gap Group",
   "Study : Backlogs Group",
   "Marital Status",
-  "Time Zone"
+  "Time Zone",
+  "Relation",
+  "Civil ID Name"
 ]);
   // Global Search State - Har page pe same rahega
   const { globalSearch, setGlobalSearch } = useGlobalSearch();
