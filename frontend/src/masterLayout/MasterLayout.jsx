@@ -14,21 +14,28 @@ const MasterLayout = ({ children }) => {
   const [selectedItemName, setSelectedItemName] = useState("Dashboard");
   const [openSubmenu, setOpenSubmenu] = useState(null);
   const [openChildMenu, setOpenChildMenu] = useState(null);
-const [searchAllowedModules] = useState([
-  "City",
-  "Department",
-  "District",
-  "State",
-  "Country",
-  "Gender",
-  "Continents",
-  "Factor For",
-  "Study : Age Group",
-  "Study : Academic Result Group",
-  "Study : Gap Group",
-  "Study : Backlogs Group",
-  "Marital Status"
-]);
+  const [searchAllowedModules] = useState([
+    "City",
+    "Department",
+    "District",
+    "State",
+    "Country",
+    "Gender",
+    "Continents",
+    "Factor For",
+    "Study : Age Group",
+    "Study : Academic Result Group",
+    "Study : Gap Group",
+    "Study : Backlogs Group",
+    "Marital Status",
+    "Representing Country",
+    "Visa Major Category",
+    "Applicant Type",
+    "Visa Eligibility Type",
+    "Visa Status",
+    "Possibility Level",
+    "Visa Name"
+  ]);
   // Global Search State - Har page pe same rahega
   const { globalSearch, setGlobalSearch } = useGlobalSearch();
   const menuItems = [
@@ -261,6 +268,13 @@ const [searchAllowedModules] = useState([
           name: "Visa",
           children: [
             { name: "Representing Country", path: "/representing-country" },
+            { name: "Visa Main Category", path: "/visa-main-category" },
+            { name: "Visa Major Category", path: "/visa-major-category" },
+            { name: "Applicant Type", path: "/applicant-type" },
+            { name: "Visa Eligibility Type", path: "/visa-eligibility-type" },
+            { name: "Visa Status", path: "/visa-status" },
+            { name: "Possibility Level", path: "/possibility-level" },
+            { name: "Visa Name", path: "/visa-name" }
 
           ],
         },
@@ -2017,7 +2031,7 @@ const [searchAllowedModules] = useState([
             {/* Sub Header */}
             <div className="sub-header-bar d-flex align-items-center justify-content-between">
               <div className="sub-header-title">{selectedItemName}</div>
-             {searchAllowedModules.indexOf(selectedItemName) !== -1 && (
+              {searchAllowedModules.indexOf(selectedItemName) !== -1 && (
                 <div className="position-relative search-filter-div">
                   <Icon
                     icon="ion:search-outline"

@@ -4,20 +4,19 @@ import MasterLayout from "../../../../masterLayout/MasterLayout";
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { Link } from 'react-router-dom';
 import { toast } from "react-toastify";
-import { representingCountryData, representingCountryDelete, representingCountryExportData } from "../../../../store/master/visaMaster/action"
-import AddImportRepresentingCountryModal from './AddImportRepresentingCountryModal';
-import AddEditRepresentingCountryModal from './AddEditRepresentingCountryModal';
+import AddImportVisaStatusModal from './AddImportVisaStatusModal';
+import AddEditVisaStatusModal from './AddEditVisaStatusModal';
+import { visaStatusList, visaStatusDelete, visaStatusExportData } from '../../../../store/master/visaMaster/action';
 import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 import { useGlobalSearch } from '../../../../components/comman/GlobalSearchContext';
-const RepresentingCountryList = () => {
+const VisaStatusList = () => {
     const dispatch = useDispatch();
     const { globalSearch, setGlobalSearch } = useGlobalSearch();
     const [modalState, setModalState] = useState({
         show: false,
-        mode: 'add',
+        mode: 'add', // 'add' or 'edit'
         rowData: null
     })
-
     const handleShow = () => {
         setModalState({
             show: true,
@@ -25,111 +24,36 @@ const RepresentingCountryList = () => {
             rowData: null
         });
     };
+    // For closing modal
     const handleClose = (shouldRefresh = false) => {
         setModalState({
             show: false,
             mode: 'add',
             rowData: null
         });
-        // Only call API when data was successfully added/updated
         if (shouldRefresh) {
             fetchDepartmentList();
         }
     }
 
+    // const [showEdit, setShowEdit] = useState(false);
     const [showImport, setShowImport] = useState(false);
     const [selectedRows, setSelectedRows] = useState([]);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-    const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this Representing Country?");
+    const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this Visa Status?");
     const [showExportPopop, setShowExportPopop] = useState(false);
     const [deleteId, setDeleteId] = useState(null);
     const [selectAllOrNot, setSelectAllOrNot] = useState('');
     const [departments, setDepartments] = useState([]);
     const [loading, setLoading] = useState(false);
     const [loadingExport, setLoadingExport] = useState(false);
-    const [items] = useState([
-        "Country Name",
-        "Country Official Name",
-        "Country Short Name",
-        "Continent",
-        "Capital City",
-        "Calling Code",
-        "Currency Full Name",
-        "Currency Short Name",
-        "Currency Code",
-        "No. of States",
-        "No. of Territories",
-        "Total Stats & Territories",
-        "Independence Day",
-        "Government Type",
-        "Official Language",
-        "Land Area (Sq. Km)",
-        "Water Area (Sq. Km)",
-        "Total Area (Sq. Km)",
-        "Population",
-        "Religions",
-        "Monthly Living Cost",
-        "Largest State",
-        "Smallest State",
-        "Major Cities",
-        "National Animal",
-        "National Bird",
-        "National Flower",
-        "Unemployment",
-        "Skilled Shortages",
-        "Border Countries & Oceans",
-        "National Flag",
-        "Country Map",
-        "Modified On",
-        "Description"
-    ]);
-    const [selectedItems, setSelectedItems] = useState(["Country Name", "Country Official Name", "Country Short Name", "Continent", "Capital City", "Calling Code", "Currency Full Name", "Currency Short Name"]);
-    const [ItemsRequired] = useState(["Country Name", "Country Official Name", "Country Short Name", "Continent", "Capital City", "Calling Code", "Currency Full Name", "Currency Short Name"]);
+    const [items] = useState(["Visa Status", "Description", "Modified On"]);
+    const [selectedItems, setSelectedItems] = useState(["Visa Status"]);
+    const [ItemsRequired] = useState(["Visa Status"]);
 
+    // Table columns configuration
     const [tableColumns] = useState([
-        { id: 'country_name', label: 'Country Name', field: 'country_name', visible: true, required: false },
-        { id: 'official_name', label: 'Country Official Name', field: 'official_name', visible: true, required: false },
-        { id: 'short_name', label: 'Country Short Name', field: 'short_name', visible: true, required: false },
-
-        { id: 'continent', label: 'Continent', field: 'continent', visible: true, required: false },
-        { id: 'capital_city', label: 'Capital City', field: 'capital_city', visible: true, required: false },
-        { id: 'calling_code', label: 'Calling Code', field: 'calling_code', visible: true, required: false },
-
-        { id: 'currency_full_name', label: 'Currency Full Name', field: 'currency_full_name', visible: true, required: false },
-        { id: 'currency_short_name', label: 'Currency Short Name', field: 'currency_short_name', visible: true, required: false },
-        { id: 'currency_code', label: 'Currency Code', field: 'currency_code', visible: true, required: false },
-
-        { id: 'no_of_states', label: 'No. of States', field: 'no_of_states', visible: true, required: false },
-        { id: 'no_of_territories', label: 'No. of Territories', field: 'no_of_territories', visible: true, required: false },
-        { id: 'total_states_territories', label: 'Total States & Territories', field: 'total_states_territories', visible: true, required: false },
-
-        { id: 'independence_day', label: 'Independence Day', field: 'independence_day', visible: true, required: false },
-        { id: 'government_type', label: 'Government Type', field: 'government_type', visible: true, required: false },
-        { id: 'official_language', label: 'Official Language', field: 'official_language', visible: true, required: false },
-
-        { id: 'land_area', label: 'Land Area (Sq. Km)', field: 'land_area', visible: true, required: false },
-        { id: 'water_area', label: 'Water Area (Sq. Km)', field: 'water_area', visible: true, required: false },
-        { id: 'total_area', label: 'Total Area (Sq. Km)', field: 'total_area', visible: true, required: false },
-
-        { id: 'population', label: 'Population', field: 'population', visible: true, required: false },
-        { id: 'religions', label: 'Religions', field: 'religions', visible: true, required: false },
-        { id: 'monthly_living_cost', label: 'Monthly Living Cost', field: 'monthly_living_cost', visible: true, required: false },
-
-        { id: 'largest_state', label: 'Largest State', field: 'largest_state', visible: true, required: false },
-        { id: 'smallest_state', label: 'Smallest State', field: 'smallest_state', visible: true, required: false },
-        { id: 'major_cities', label: 'Major Cities', field: 'major_cities', visible: true, required: false },
-
-        { id: 'national_animal', label: 'National Animal', field: 'national_animal', visible: true, required: false },
-        { id: 'national_bird', label: 'National Bird', field: 'national_bird', visible: true, required: false },
-        { id: 'national_flower', label: 'National Flower', field: 'national_flower', visible: true, required: false },
-
-        { id: 'unemployment', label: 'Unemployment', field: 'unemployment', visible: true, required: false },
-        { id: 'skilled_shortages', label: 'Skilled Shortages', field: 'skilled_shortages', visible: true, required: false },
-        { id: 'border_countries', label: 'Border Countries & Oceans', field: 'border_countries', visible: true, required: false },
-
-        { id: 'national_flag', label: 'National Flag', field: 'national_flag', visible: true, required: false },
-        { id: 'country_map', label: 'Country Map', field: 'country_map', visible: true, required: false },
-
+        { id: 'name', label: 'Visa Status', field: 'name', visible: true, required: false },
         { id: 'description', label: 'Description', field: 'description', visible: true, required: false },
         { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false },
     ]);
@@ -139,10 +63,10 @@ const RepresentingCountryList = () => {
     );
     const [showColumnDropdown, setShowColumnDropdown] = useState(false);
     const columnDropdownRef = useRef(null);
-
+    // Column visibility toggle handler
     const toggleColumnVisibility = (columnId) => {
         const column = tableColumns.find(col => col.id === columnId);
-        if (column?.required) return;
+        if (column?.required) return; // Don't allow hiding required columns
 
         setVisibleColumns(prev => {
             if (prev.includes(columnId)) {
@@ -153,6 +77,7 @@ const RepresentingCountryList = () => {
         });
     };
 
+    // Check if column is visible
     const isColumnVisible = (columnId) => {
         return visibleColumns.includes(columnId);
     };
@@ -163,46 +88,46 @@ const RepresentingCountryList = () => {
                 setShowColumnDropdown(false);
             }
         };
-
         if (showColumnDropdown) {
             document.addEventListener('mousedown', handleClickOutside);
         }
-
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, [showColumnDropdown]);
-
+    // Updated state with sorting
     const [tableState, setTableState] = useState({
         page: 1,
         limit: 25,
         search: '',
         status: '',
-        sortBy: 'created_at',
-        sortOrder: 'desc',
+        sortBy: '', // Field to sort by
+        sortOrder: '', // 'asc' or 'desc'
+        sort: [
+            { field: "created_at", order: "desc" }
+        ],
         total: 0,
         totalPages: 0,
         currentPage: 1,
         hasNext: false,
         hasPrevious: false
     });
+
     useEffect(() => {
         setTableState(prev => ({ ...prev, search: globalSearch, page: 1 }));
     }, [globalSearch]);
-
     useEffect(() => {
         const timer = setTimeout(() => {
             if (tableState.search !== undefined) {
                 fetchDepartmentList();
             }
         }, 500);
-
         return () => clearTimeout(timer);
     }, [tableState.search]);
 
     useEffect(() => {
         fetchDepartmentList();
-    }, [tableState.page, tableState.limit, tableState.status, tableState.sortBy, tableState.sortOrder]);
+    }, [tableState.page, tableState.limit, tableState.status, tableState.sort]);
 
     const fetchDepartmentList = () => {
         setLoading(true);
@@ -212,10 +137,11 @@ const RepresentingCountryList = () => {
             search: tableState.search || '',
             status: tableState.status || '',
             sortBy: tableState.sortBy || '',
-            sortOrder: tableState.sortOrder || ''
+            sortOrder: tableState.sortOrder || '',
+            sort: tableState.sort,
         };
 
-        dispatch(representingCountryData(params, (response, error) => {
+        dispatch(visaStatusList(params, (response, error) => {
             setLoading(false);
             if (response?.statusCode === 200 && response?.status === true) {
                 const paginationData = response?.pagination || {};
@@ -229,7 +155,6 @@ const RepresentingCountryList = () => {
                     hasNext: paginationData.nextPage || false,
                     hasPrevious: paginationData.previousPage || false
                 }));
-
                 setSelectedRows(prev => {
                     const filtered = prev.filter(rowId =>
                         response?.data.some(rowItems => rowItems.uuid === rowId)
@@ -250,27 +175,36 @@ const RepresentingCountryList = () => {
         }));
     };
 
+    // Handle sorting
     const handleSort = (field) => {
         setTableState(prev => {
-            if (prev.sortBy === field) {
-                if (prev.sortOrder === 'asc') {
-                    return { ...prev, sortOrder: 'desc', page: 1 };
-                } else if (prev.sortOrder === 'desc') {
-                    return { ...prev, sortBy: '', sortOrder: '', page: 1 };
+            let newSort = [...prev.sort];
+            const existingIndex = newSort.findIndex(s => s.field === field);
+            if (existingIndex === -1) {
+                newSort.push({ field, order: "asc" });
+            }
+            else {
+                const existing = newSort[existingIndex];
+                if (existing.order === "asc") {
+                    newSort[existingIndex].order = "desc";
+                }
+                else if (existing.order === "desc") {
+                    newSort.splice(existingIndex, 1);
                 }
             }
-            return { ...prev, sortBy: field, sortOrder: 'asc', page: 1 };
+            return { ...prev, sort: newSort, page: 1 };
         });
     };
 
     const getSortIcon = (field) => {
-        if (tableState.sortBy !== field) {
+        const sortObj = tableState.sort.find(s => s.field === field);
+        if (!sortObj) {
             return <Icon icon="ri:menu-line" className="sorting-th-icone" />;
         }
-        if (tableState.sortOrder === 'asc') {
-            return <Icon icon="ri:sort-asc" className='sorting-th-icone' />;
+        if (sortObj.order === "asc") {
+            return <Icon icon="ri:sort-asc" className="sorting-th-icone" />;
         }
-        return <Icon icon="ri:sort-desc" className='sorting-th-icone' />;
+        return <Icon icon="ri:sort-desc" className="sorting-th-icone" />;
     };
 
     // Clear all filters
@@ -281,8 +215,11 @@ const RepresentingCountryList = () => {
             limit: 25,
             search: '',
             status: '',
-            sortBy: 'created_at',
-            sortOrder: 'desc',
+            sortBy: '',
+            sortOrder: '',
+            sort: [
+                { field: "created_at", order: "desc" }   // default sort
+            ],
             total: 0,
             totalPages: 0,
             currentPage: 1,
@@ -292,6 +229,7 @@ const RepresentingCountryList = () => {
         // Reset Global Search
         setGlobalSearch('');
     };
+
     const handlePageLengthChange = (value) => {
         setTableState(prev => ({
             ...prev,
@@ -300,7 +238,7 @@ const RepresentingCountryList = () => {
         }));
     };
 
-
+    // For checkbox in table header
     const handleSelectAll = (e) => {
         const checked = e.target.checked;
         if (checked) {
@@ -338,7 +276,6 @@ const RepresentingCountryList = () => {
         const maxVisible = 5;
         const totalPages = tableState.totalPages;
         const currentPage = tableState.currentPage;
-
         if (totalPages <= maxVisible) {
             for (let i = 1; i <= totalPages; i++) {
                 pages.push(i);
@@ -370,15 +307,13 @@ const RepresentingCountryList = () => {
             rowData: rowData
         });
     };
-
     const handleSelectAllOrNot = (a) => {
         setSelectAllOrNot(a);
     }
-
     const handleDelete = (uuid) => {
         setDeleteId(uuid);
         setShowDeleteConfirm(true);
-        setDeleteConfirmMessage(`Are you sure you want to delete this Representing Country?`);
+        setDeleteConfirmMessage(`Are you sure you want to delete this Visa Status?`);
     };
 
     const handleBulkDelete = () => {
@@ -386,18 +321,19 @@ const RepresentingCountryList = () => {
             toast.error("Please select at least one row to delete");
             return;
         }
-        const message = selectAllOrNot === "all" ? `${tableState.total} all Representing Country` : `${selectedRows.length} selected Representing Country`;
-        setDeleteConfirmMessage(`Are you sure you want to delete this Representing Country (${message})?`);
+        // Choose message based on delete type
+        const message = selectAllOrNot === "all" ? `${tableState.total} all Visa Status` : `${selectedRows.length} selected Visa Status`;
+        setDeleteConfirmMessage(`Are you sure you want to delete this Visa Status (${message})?`);
         setShowDeleteConfirm(true);
     };
 
     const confirmDelete = () => {
         const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
         if (!sendPayload || sendPayload.length === 0) {
-            toast.error("No Representing Country selected for deletion.");
+            toast.error("No Visa Status selected for deletion.");
             return;
         }
-        dispatch(representingCountryDelete(sendPayload, (response, error) => {
+        dispatch(visaStatusDelete(sendPayload, (response, error) => {
             if (error) {
                 toast.error(error?.response?.data?.message || "server error");
             } else {
@@ -427,7 +363,6 @@ const RepresentingCountryList = () => {
 
     const handleCloseImport = (shouldRefresh = false) => {
         setShowImport(false);
-        // Only call API when data was successfully imported
         if (shouldRefresh) {
             fetchDepartmentList();
         }
@@ -457,12 +392,12 @@ const RepresentingCountryList = () => {
         newSelected.splice(dropIndex, 0, draggedItem);
         setSelectedItems(newSelected);
     };
-
     const handleDragOver = (e) => {
         e.preventDefault();
     };
 
     const handleCheckboxChange = (item, checked) => {
+        // prevent unchecking required items
         if (ItemsRequired.includes(item)) return;
 
         if (checked) {
@@ -477,63 +412,25 @@ const RepresentingCountryList = () => {
             toast.error("Please select at least one field");
             return
         }
+        // Map frontend labels to Gender field names
         const fieldMapping = {
-            "Country Name": "country_name",
-            "Country Official Name": "official_name",
-            "Country Short Name": "short_name",
-
-            "Continent": "continent",
-            "Capital City": "capital_city",
-            "Calling Code": "calling_code",
-
-            "Currency Full Name": "currency_full_name",
-            "Currency Short Name": "currency_short_name",
-            "Currency Code": "currency_code",
-
-            "No. of States": "no_of_states",
-            "No. of Territories": "no_of_territories",
-            "Total States & Territories": "total_states_territories",
-
-            "Independence Day": "independence_day",
-            "Government Type": "government_type",
-            "Official Language": "official_language",
-
-            "Land Area (Sq. Km)": "land_area",
-            "Water Area (Sq. Km)": "water_area",
-            "Total Area (Sq. Km)": "total_area",
-
-            "Population": "population",
-            "Religions": "religions",
-            "Monthly Living Cost": "monthly_living_cost",
-
-            "Largest State": "largest_state",
-            "Smallest State": "smallest_state",
-            "Major Cities": "major_cities",
-
-            "National Animal": "national_animal",
-            "National Bird": "national_bird",
-            "National Flower": "national_flower",
-
-            "Unemployment": "unemployment",
-            "Skilled Shortages": "skilled_shortages",
-            "Border Countries & Oceans": "border_countries",
-
-            "National Flag": "national_flag",
-            "Country Map": "country_map",
-
+            "Visa Status": "name",
+            "Modified On": "updated_at",
             "Description": "description",
-            "Modified On": "updated_at"
         };
-
+        // Convert selectedItems to Gender field names
         const mappedFields = selectedItems.map((item) => fieldMapping[item] || item);
+        // Convert to comma-separated string
         const fieldsString = mappedFields.join(",");
         const sendPayload = {
             file: "xlsx",
             fields: fieldsString,
             uuids: selectAllOrNot === "all" ? [] : selectedRows,
+            sort: tableState.sort,
         };
+
         setLoadingExport(true);
-        dispatch(representingCountryExportData(sendPayload, (response, error) => {
+        dispatch(visaStatusExportData(sendPayload, (response, error) => {
             if (error) {
                 setLoadingExport(false);
                 toast.error(error?.response?.message || "server error");
@@ -543,11 +440,10 @@ const RepresentingCountryList = () => {
                     const blob = new Blob([response.data], {
                         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                     });
-
                     const url = window.URL.createObjectURL(blob);
                     const link = document.createElement('a');
                     link.href = url;
-                    link.download = `RepresentingCountry.xlsx`;
+                    link.download = `VisaStatus.xlsx`;
                     document.body.appendChild(link);
                     link.click();
                     link.remove();
@@ -565,14 +461,13 @@ const RepresentingCountryList = () => {
     };
 
     const startIndex = (tableState.currentPage - 1) * tableState.limit;
-    const statusOptions = ['All', 'Active', 'Inactive'];
-
     return (
         <>
             <MasterLayout>
                 <div className="card basic-data-table main-container-data">
                     <div className="card-body container-data">
                         <div className="row align-items-center gy-3 gx-2 flex-wrap filter-action-btn">
+                            {/* Left Section: Import / Export / Delete */}
                             <div className="col-xl-6 col-lg-4 col-md-12">
                                 <div className="d-flex flex-wrap align-items-center gap-2">
                                     <button
@@ -620,7 +515,7 @@ const RepresentingCountryList = () => {
                                     >Reset </button>
                                 </div>
                             </div>
-
+                            {/* Right Section: Select / Search / +Add New */}
                             <div className="col-xl-6 col-lg-8 col-md-12">
                                 <div className="d-flex flex-wrap align-items-center justify-content-end gap-2">
                                     <select
@@ -766,17 +661,11 @@ const RepresentingCountryList = () => {
                                                     key={column.id}
                                                     scope="col"
                                                     className='sorting-th'
+                                                    onClick={() => handleSort(column.field)}
                                                 >
-                                                    <div className="d-flex align-items-center justify-content-between position-relative">
-                                                        <div
-                                                            className="d-flex align-items-center flex-grow-1"
-                                                            onClick={() => handleSort(column.field)}
-                                                            style={{ cursor: 'pointer' }}
-                                                        >
-                                                            {column.label}
-                                                            {getSortIcon(column.field)}
-
-                                                        </div>
+                                                    <div className="d-flex align-items-center">
+                                                        {column.label}
+                                                        {getSortIcon(column.field)}
                                                     </div>
                                                 </th>
                                             )
@@ -841,127 +730,14 @@ const RepresentingCountryList = () => {
                                                         <span>{String(startIndex + index + 1).padStart(2, '0')}</span>
                                                     </div>
                                                 </td>
-                                                {isColumnVisible('country_name') && (
-                                                    <td><span>{rowItem.country_name}</span></td>
-                                                )}
-                                                {isColumnVisible('official_name') && (
-                                                    <td><span>{rowItem.official_name}</span></td>
-                                                )}
-                                                {isColumnVisible('short_name') && (
-                                                    <td><span>{rowItem.short_name}</span></td>
-                                                )}
-                                                {isColumnVisible('continent') && (
-                                                    <td><span>{rowItem.continent}</span></td>
-                                                )}
-                                                {isColumnVisible('capital_city') && (
-                                                    <td><span>{rowItem.capital_city}</span></td>
-                                                )}
-                                                {isColumnVisible('calling_code') && (
-                                                    <td><span>{rowItem.calling_code}</span></td>
-                                                )}
-                                                {isColumnVisible('currency_full_name') && (
-                                                    <td><span>{rowItem.currency_full_name}</span></td>
-                                                )}
-                                                {isColumnVisible('currency_short_name') && (
-                                                    <td><span>{rowItem.currency_short_name}</span></td>
-                                                )}
-                                                {isColumnVisible('currency_code') && (
-                                                    <td><span>{rowItem.currency_code}</span></td>
-                                                )}
-                                                {isColumnVisible('no_of_states') && (
-                                                    <td><span>{rowItem.no_of_states}</span></td>
-                                                )}
-                                                {isColumnVisible('no_of_territories') && (
-                                                    <td><span>{rowItem.no_of_territories}</span></td>
-                                                )}
-                                                {isColumnVisible('total_states_territories') && (
-                                                    <td><span>{rowItem.total_states_territories}</span></td>
-                                                )}
-                                                {isColumnVisible('independence_day') && (
-                                                    <td><span>{rowItem.independence_day}</span></td>
-                                                )}
-                                                {isColumnVisible('government_type') && (
-                                                    <td><span>{rowItem.government_type}</span></td>
-                                                )}
-                                                {isColumnVisible('official_language') && (
-                                                    <td><span>{rowItem.official_language}</span></td>
-                                                )}
-                                                {isColumnVisible('land_area') && (
-                                                    <td><span>{rowItem.land_area}</span></td>
-                                                )}
-                                                {isColumnVisible('water_area') && (
-                                                    <td><span>{rowItem.water_area}</span></td>
-                                                )}
-                                                {isColumnVisible('total_area') && (
-                                                    <td><span>{rowItem.total_area}</span></td>
-                                                )}
-                                                {isColumnVisible('population') && (
-                                                    <td><span>{rowItem.population}</span></td>
-                                                )}
-                                                {isColumnVisible('religions') && (
-                                                    <td><span>{rowItem.religions}</span></td>
-                                                )}
-                                                {isColumnVisible('monthly_living_cost') && (
-                                                    <td><span>{rowItem.monthly_living_cost}</span></td>
-                                                )}
-                                                {isColumnVisible('largest_state') && (
-                                                    <td><span>{rowItem.largest_state}</span></td>
-                                                )}
-                                                {isColumnVisible('smallest_state') && (
-                                                    <td><span>{rowItem.smallest_state}</span></td>
-                                                )}
-                                                {isColumnVisible('major_cities') && (
-                                                    <td><span>{rowItem.major_cities}</span></td>
-                                                )}
-                                                {isColumnVisible('national_animal') && (
-                                                    <td><span>{rowItem.national_animal}</span></td>
-                                                )}
-                                                {isColumnVisible('national_bird') && (
-                                                    <td><span>{rowItem.national_bird}</span></td>
-                                                )}
-                                                {isColumnVisible('national_flower') && (
-                                                    <td><span>{rowItem.national_flower}</span></td>
-                                                )}
-                                                {isColumnVisible('unemployment') && (
-                                                    <td><span>{rowItem.unemployment}</span></td>
-                                                )}
-                                                {isColumnVisible('skilled_shortages') && (
-                                                    <td><span>{rowItem.skilled_shortages}</span></td>
-                                                )}
-                                                {isColumnVisible('border_countries') && (
-                                                    <td><span>{rowItem.border_countries}</span></td>
-                                                )}
-                                                {isColumnVisible('national_flag') && (
-                                                    <td>
-                                                        {rowItem?.national_flag ? (
-                                                            <img
-                                                                src={rowItem?.national_flag}
-                                                                alt="National Flag"
-                                                                style={{ width: '50px', height: '30px', objectFit: 'cover' }}
-                                                            />
-                                                        ) : (
-                                                            <span>No Flag</span>
-                                                        )}
-                                                    </td>
-                                                )}
-                                                {isColumnVisible('country_map') && (
-                                                    <td>
-                                                        {rowItem?.country_map ? (
-                                                            <img
-                                                                src={rowItem?.country_map}
-                                                                alt="Country Map"
-                                                                style={{ width: '50px', height: '30px', objectFit: 'cover' }}
-                                                            />
-                                                        ) : (
-                                                            <span>No Map</span>
-                                                        )}
-                                                    </td>
-                                                )}
-                                                {isColumnVisible('updated_at') && (
-                                                    <td><span>{formatDateDDMMYYYYTime(rowItem.updated_at)}</span></td>
+                                                {isColumnVisible('name') && (
+                                                    <td><span>{rowItem.name}</span></td>
                                                 )}
                                                 {isColumnVisible('description') && (
                                                     <td><span>{rowItem.description}</span></td>
+                                                )}
+                                                {isColumnVisible('updated_at') && (
+                                                    <td><span>{formatDateDDMMYYYYTime(rowItem.updated_at)}</span></td>
                                                 )}
                                                 <td className='action-td'>
                                                     <div className="d-flex align-items-end gap-2">
@@ -984,24 +760,18 @@ const RepresentingCountryList = () => {
                                     )}
                                 </tbody>
                             </table>
+
                         </div>
                     </div>
                 </div>
-
-                {/* Add/Edit Modal */}
-                <AddEditRepresentingCountryModal
+                <AddEditVisaStatusModal
                     show={modalState.show}
                     handleClose={handleClose}
                     mode={modalState.mode}
                     rowData={modalState.rowData}
                 />
-
-                {/* Import Modal */}
                 {showImport && (
-                    <AddImportRepresentingCountryModal show={showImport} handleClose={handleCloseImport} />
-                )}
-
-                {/* Delete Confirmation Modal */}
+                    <AddImportVisaStatusModal show={showImport} handleClose={handleCloseImport} />)}
                 {showDeleteConfirm && (
                     <div className="modal fade show common-ctl-popup">
                         <div className="modal-dialog modal-dialog-centered">
@@ -1012,6 +782,7 @@ const RepresentingCountryList = () => {
                                 </div>
                                 <div className="modal-body">
                                     <p className="mb-0">{deleteConfirmMessage}</p>
+
                                 </div>
                                 <div className="modal-footer">
                                     <button
@@ -1033,8 +804,6 @@ const RepresentingCountryList = () => {
                         </div>
                     </div>
                 )}
-
-                {/* Export Modal */}
                 {showExportPopop && (
                     <div
                         className="modal fade show common-ctl-popup"
@@ -1044,7 +813,7 @@ const RepresentingCountryList = () => {
                         <div className="modal-dialog modal-xl modal-dialog-centered" role="document">
                             <div className="modal-content radius-16 bg-base">
                                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                                    <h1 className="modal-title fs-5">Export Representing Country</h1>
+                                    <h1 className="modal-title fs-5">Export Visa Status</h1>
                                     <button
                                         type="button"
                                         className="btn-close"
@@ -1067,7 +836,7 @@ const RepresentingCountryList = () => {
                                                             id={`item-${index}`}
                                                             checked={selectedItems.includes(item)}
                                                             onChange={(e) => handleCheckboxChange(item, e.target.checked)}
-                                                            disabled={ItemsRequired.includes(item)}
+                                                            disabled={ItemsRequired.includes(item)} // 🔒 Disable required item
                                                             className="form-check-input"
                                                         />
                                                         <label htmlFor={`item-${index}`} className="mb-0 flex-grow-1">
@@ -1129,15 +898,14 @@ const RepresentingCountryList = () => {
                                             type="button"
                                             className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                                             disabled={loadingExport}
-                                        >
-                                            {loadingExport ? (
-                                                <>
-                                                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                                    Submit...
-                                                </>
-                                            ) : (
-                                                "Submit"
-                                            )}
+                                        >{loadingExport ? (
+                                            <>
+                                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                Submit...
+                                            </>
+                                        ) : (
+                                            "Submit"
+                                        )}
                                         </button>
                                     </div>
                                 </div>
@@ -1150,4 +918,4 @@ const RepresentingCountryList = () => {
     );
 };
 
-export default RepresentingCountryList;
+export default VisaStatusList;

@@ -425,7 +425,21 @@ export const importBankAccountTypeDataAPI = (payload) => {
 
 // GENDER
 export const getGenderListDataAPI = (data) => {
-    const apiUrl = `${url.GET_GENDER_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        // Case 1: Only created_at is present → keep it
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        // Case 2: More fields exist → remove created_at
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        // Map fields into customSort string
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.GET_GENDER_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
     return get(apiUrl);
 };
 
@@ -448,7 +462,21 @@ export const deleteGenderDataAPI = (payload) => {
 };
 
 export const exportGenderDataAPI = (payload) => {
-    const apiUrl = `${url.EXPORT_GENDER_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        // Case 1: Only created_at is present → keep it
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        // Case 2: More fields exist → remove created_at
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        // Map fields into customSort string
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_GENDER_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -460,7 +488,21 @@ export const importGenderDataAPI = (payload) => {
 
 // MARITAL STATUS
 export const getMaritalStatusListDataAPI = (data) => {
-    const apiUrl = `${url.GET_MARITAL_STATUS_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        // Case 1: Only created_at is present → keep it
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        // Case 2: More fields exist → remove created_at
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        // Map fields into customSort string
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.GET_MARITAL_STATUS_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
     return get(apiUrl);
 };
 
@@ -483,7 +525,21 @@ export const deleteMaritalStatusDataAPI = (payload) => {
 };
 
 export const exportMaritalStatusDataAPI = (payload) => {
-    const apiUrl = `${url.EXPORT_MARITAL_STATUS_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        // Case 1: Only created_at is present → keep it
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        // Case 2: More fields exist → remove created_at
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        // Map fields into customSort string
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_MARITAL_STATUS_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -3710,6 +3766,7 @@ export const exportGapGroupAPI = (payload) => {
 
 export const importGapGroupAPI = (payload) => {
     return post(url.IMPORT_GAP_GROUP_API, payload);
+
 };
 
 // Representing Country
@@ -3738,7 +3795,201 @@ export const exportRepresentingCountryAPI = (payload) => {
 export const importRepresentingCountryAPI = (payload) => {
     const apiUrl = `${url.IMPORT_REPRESENTING_COUNTRY_API}`;
     return post(apiUrl, payload);
+
 };
+// Visa Major Category
+export const getVisaMajorCategoryListAPI = (data) => {
+    const apiUrl = `${url.GET_VISA_MAJOR_CATEGORY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+// Add
+export const addVisaMajorCategoryAPI = (payload) => {
+    return post(url.ADD_VISA_MAJOR_CATEGORY_API, payload);
+};
+
+// Edit
+export const editVisaMajorCategoryAPI = (payload) => {
+    return put(`${url.EDIT_VISA_MAJOR_CATEGORY_API}${payload?.uuid}/update/`, payload);
+};
+
+// Delete
+export const deleteVisaMajorCategoryAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    return delWithPayload(`${url.DELETE_VISA_MAJOR_CATEGORY_API}delete/`, prepareDATA);
+};
+
+// Export
+export const exportVisaMajorCategoryAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_VISA_MAJOR_CATEGORY_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+// Import
+export const importVisaMajorCategoryAPI = (payload) => {
+    return post(url.IMPORT_VISA_MAJOR_CATEGORY_API, payload);
+};
+// Applicant Type
+export const getApplicantTypeListAPI = (data) => {
+    const apiUrl = `${url.GET_APPLICANT_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addApplicantTypeAPI = (payload) => {
+    const apiUrl = `${url.ADD_APPLICANT_TYPE_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editApplicantTypeAPI = (payload) => {
+    const apiUrl = `${url.EDIT_APPLICANT_TYPE_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteApplicantTypeAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_APPLICANT_TYPE_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportApplicantTypeAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_APPLICANT_TYPE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importApplicantTypeAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_APPLICANT_TYPE_API}`;
+    return post(apiUrl, payload);
+};
+// VISA ELIGIBILITY TYPE
+export const getVisaEligibilityTypeListAPI = (data) => {
+    const apiUrl = `${url.GET_VISA_ELIGIBILITY_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addVisaEligibilityTypeAPI = (payload) => {
+    const apiUrl = `${url.ADD_VISA_ELIGIBILITY_TYPE_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editVisaEligibilityTypeAPI = (payload) => {
+    const apiUrl = `${url.EDIT_VISA_ELIGIBILITY_TYPE_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteVisaEligibilityTypeAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_VISA_ELIGIBILITY_TYPE_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportVisaEligibilityTypeAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_VISA_ELIGIBILITY_TYPE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importVisaEligibilityTypeAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_VISA_ELIGIBILITY_TYPE_API}`;
+    return post(apiUrl, payload);
+};
+// VISA STATUS
+export const getVisaStatusListAPI = (data) => {
+    const apiUrl = `${url.GET_VISA_STATUS_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addVisaStatusAPI = (payload) => {
+    const apiUrl = `${url.ADD_VISA_STATUS_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editVisaStatusAPI = (payload) => {
+    const apiUrl = `${url.EDIT_VISA_STATUS_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteVisaStatusAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_VISA_STATUS_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportVisaStatusAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_VISA_STATUS_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importVisaStatusAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_VISA_STATUS_API}`;
+    return post(apiUrl, payload);
+};
+// POSSIBILITY LEVEL
+export const getPossibilityLevelListAPI = (data) => {
+    const apiUrl = `${url.GET_POSSIBILITY_LEVEL_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addPossibilityLevelAPI = (payload) => {
+    const apiUrl = `${url.ADD_POSSIBILITY_LEVEL_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editPossibilityLevelAPI = (payload) => {
+    const apiUrl = `${url.EDIT_POSSIBILITY_LEVEL_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deletePossibilityLevelAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_POSSIBILITY_LEVEL_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportPossibilityLevelAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_POSSIBILITY_LEVEL_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importPossibilityLevelAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_POSSIBILITY_LEVEL_API}`;
+    return post(apiUrl, payload);
+};
+
+// ---------------- VISA NAME ----------------
+export const getVisaNameListAPI = (data) => {
+    const apiUrl = `${url.GET_VISA_NAME_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addVisaNameAPI = (payload) => {
+    const apiUrl = `${url.ADD_VISA_NAME_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editVisaNameAPI = (payload) => {
+    const apiUrl = `${url.EDIT_VISA_NAME_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteVisaNameAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_VISA_NAME_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportVisaNameAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_VISA_NAME_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importVisaNameAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_VISA_NAME_API}`;
+    return post(apiUrl, payload);
+};
+
+
+
+
+
 
 
 

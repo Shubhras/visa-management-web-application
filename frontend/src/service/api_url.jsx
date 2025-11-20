@@ -819,16 +819,21 @@ export const DELETE_REPRESENTING_COUNTRY_API = "/api/v1/master/representingcount
 export const EXPORT_REPRESENTING_COUNTRY_API = "/api/v1/master/representingcountry/export/";
 export const IMPORT_REPRESENTING_COUNTRY_API = "/api/v1/master/representingcountry/import/";
 
+// Visa Major Category
+export const GET_VISA_MAJOR_CATEGORY_LIST = "/api/v1/master/visamajor/";
+export const ADD_VISA_MAJOR_CATEGORY_API = "/api/v1/master/visamajor/create/";
+export const EDIT_VISA_MAJOR_CATEGORY_API = "/api/v1/master/visamajor/";
+export const DELETE_VISA_MAJOR_CATEGORY_API = "/api/v1/master/visamajor/";
+export const EXPORT_VISA_MAJOR_CATEGORY_API = "/api/v1/master/visamajor/export/";
+export const IMPORT_VISA_MAJOR_CATEGORY_API = "/api/v1/master/visamajor/import/";
 
-
-
-
-
-
-
-
-
-
+// Applicant Type
+export const GET_APPLICANT_TYPE_LIST = "/api/v1/master/applicanttype/";
+export const ADD_APPLICANT_TYPE_API = "/api/v1/master/applicanttype/create/";
+export const EDIT_APPLICANT_TYPE_API = "/api/v1/master/applicanttype/";
+export const DELETE_APPLICANT_TYPE_API = "/api/v1/master/applicanttype/";
+export const EXPORT_APPLICANT_TYPE_API = "/api/v1/master/applicanttype/export/";
+export const IMPORT_APPLICANT_TYPE_API = "/api/v1/master/applicanttype/import/";
 
 
 
@@ -871,6 +876,43 @@ export const EDIT_GAP_GROUP_API = "/api/v1/master/gap-group/"; // +uuid/update/
 export const DELETE_GAP_GROUP_API = "/api/v1/master/gap-group/"; // +delete/
 export const EXPORT_GAP_GROUP_API = "/api/v1/master/gap-group/export/";
 export const IMPORT_GAP_GROUP_API = "/api/v1/master/gap-group/import/";
+
+// VISA ELIGIBILITY TYPE
+export const GET_VISA_ELIGIBILITY_TYPE_LIST = "/api/v1/master/visa-eligibility-type/";
+export const ADD_VISA_ELIGIBILITY_TYPE_API = "/api/v1/master/visa-eligibility-type/create/";
+export const EDIT_VISA_ELIGIBILITY_TYPE_API = "/api/v1/master/visa-eligibility-type/";
+export const DELETE_VISA_ELIGIBILITY_TYPE_API = "/api/v1/master/visa-eligibility-type/";
+export const EXPORT_VISA_ELIGIBILITY_TYPE_API = "/api/v1/master/visa-eligibility-type/export/";
+export const IMPORT_VISA_ELIGIBILITY_TYPE_API = "/api/v1/master/visa-eligibility-type/import/";
+
+// VISA STATUS
+export const GET_VISA_STATUS_LIST = "/api/v1/master/visa-status/";
+export const ADD_VISA_STATUS_API = "/api/v1/master/visa-status/create/";
+export const EDIT_VISA_STATUS_API = "/api/v1/master/visa-status/";
+export const DELETE_VISA_STATUS_API = "/api/v1/master/visa-status/";
+export const EXPORT_VISA_STATUS_API = "/api/v1/master/visa-status/export/";
+export const IMPORT_VISA_STATUS_API = "/api/v1/master/visa-status/import/";
+
+// POSSIBILITY LEVEL
+export const GET_POSSIBILITY_LEVEL_LIST = "/api/v1/master/possibility-level/";
+export const ADD_POSSIBILITY_LEVEL_API = "/api/v1/master/possibility-level/create/";
+export const EDIT_POSSIBILITY_LEVEL_API = "/api/v1/master/possibility-level/";
+export const DELETE_POSSIBILITY_LEVEL_API = "/api/v1/master/possibility-level/";
+export const EXPORT_POSSIBILITY_LEVEL_API = "/api/v1/master/possibility-level/export/";
+export const IMPORT_POSSIBILITY_LEVEL_API = "/api/v1/master/possibility-level/import/";
+
+// ---------------- VISA NAME ----------------
+export const GET_VISA_NAME_LIST = "/api/v1/master/visaname/";
+export const ADD_VISA_NAME_API = "/api/v1/master/visaname/create/";
+export const EDIT_VISA_NAME_API = "/api/v1/master/visaname/";
+export const DELETE_VISA_NAME_API = "/api/v1/master/visaname/";
+export const EXPORT_VISA_NAME_API = "/api/v1/master/visaname/export/";
+export const IMPORT_VISA_NAME_API = "/api/v1/master/visaname/import/";
+
+
+
+
+
 
 
 

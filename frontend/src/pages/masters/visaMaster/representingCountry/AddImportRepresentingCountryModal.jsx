@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
 import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
-import { exportToExcelDuplicate } from '../../../../helper/utils/commanHelper';
+import { exportToExcelDuplicate, exportToExcelWrongData } from '../../../../helper/utils/commanHelper';
 const AddImportRepresentingCountryModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
@@ -78,7 +78,7 @@ const AddImportRepresentingCountryModal = ({ show, handleClose }) => {
                             <div>{response?.message}</div>
                             {response?.duplicates?.length > 0 && (
                                 <div style={{ marginTop: '6px' }}>
-                                    <strong>Duplicate departments skipped — the duplicate data from your uploaded file has been exported into an .xlsx file.</strong>
+                                    <strong>Duplicate Representing Countrys skipped — the duplicate data from your uploaded file has been exported into an .xlsx file.</strong>
                                 </div>
                             )}
                         </div>,
@@ -86,14 +86,28 @@ const AddImportRepresentingCountryModal = ({ show, handleClose }) => {
                             autoClose: 10000,
                         }
                     );
-                     if (response?.duplicates?.length > 0) {
+                    if (response?.duplicates?.length > 0) {
                         const prepareData = {
                             data: response.duplicates || [],
-                            headers: ["Department"],
-                            sheetName: "Department",
-                            fileName: "Department",
+                            headers: ["Country Name", "Country Official Name", "Country Short Name", "Continent", "Capital City", "Calling Code", "Currency Full Name", "Currency Short Name"],
+                            sheetName: "RepresentingCountry",
+                            fileName: "RepresentingCountry",
                         };
                         exportToExcelDuplicate(
+                            prepareData.data,
+                            prepareData.headers,
+                            prepareData.sheetName,
+                            prepareData.fileName
+                        );
+                    }
+                    if (response?.skipped_rows?.length > 0) {
+                        const prepareData = {
+                            data: response.skipped_rows || [],
+                            headers: ["Country Name", "Country Official Name", "Country Short Name", "Continent", "Capital City", "Calling Code", "Currency Full Name", "Currency Short Name"],
+                            sheetName: "RepresentingCountry",
+                            fileName: "RepresentingCountry",
+                        };
+                        exportToExcelWrongData(
                             prepareData.data,
                             prepareData.headers,
                             prepareData.sheetName,
@@ -141,7 +155,7 @@ const AddImportRepresentingCountryModal = ({ show, handleClose }) => {
                     <div className="modal-content radius-16 bg-base">
                         <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
                             <h1 className="modal-title fs-5" id="departmentModalLabel">
-                                Upload Department
+                                Upload Representing Country
                             </h1>
                             <button
                                 type="button"
@@ -245,10 +259,43 @@ const AddImportRepresentingCountryModal = ({ show, handleClose }) => {
             </div>
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
-                    downloadFileName: "Department",
-                    items: ["Department", "Description"],
-                    selectedItems: ["Department"],
-                    ItemsRequired: ["Department"]
+                    downloadFileName: "RepresentingCountry",
+                    items: ["Country Name",
+                        "Country Official Name",
+                        "Country Short Name",
+                        "Continent",
+                        "Capital City",
+                        "Calling Code",
+                        "Currency Full Name",
+                        "Currency Short Name",
+                        "Currency Code",
+                        "No. of States",
+                        "No. of Territories",
+                        "Total Stats & Territories",
+                        "Independence Day",
+                        "Government Type",
+                        "Official Language",
+                        "Land Area (Sq. Km)",
+                        "Water Area (Sq. Km)",
+                        "Total Area (Sq. Km)",
+                        "Population",
+                        "Religions",
+                        "Monthly Living Cost",
+                        "Largest State",
+                        "Smallest State",
+                        "Major Cities",
+                        "National Animal",
+                        "National Bird",
+                        "National Flower",
+                        "Unemployment",
+                        "Skilled Shortages",
+                        "Border Countries & Oceans",
+                        "National Flag",
+                        "Country Map",
+                        "Modified On",
+                        "Description"],
+                    selectedItems: ["Country Name", "Country Official Name", "Country Short Name", "Continent", "Capital City", "Calling Code", "Currency Full Name", "Currency Short Name"],
+                    ItemsRequired: ["Country Name", "Country Official Name", "Country Short Name", "Continent", "Capital City", "Calling Code", "Currency Full Name", "Currency Short Name"]
                 }
                 } />
             )}

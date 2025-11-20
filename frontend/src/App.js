@@ -461,6 +461,12 @@ import AcademicResultGroupList from "./pages/masters/studyFactors/academicResult
 import GapGroupList from "./pages/masters/studyFactors/gapGroup/GapGroupList";
 import BacklogsGroupList from "./pages/masters/studyFactors/backlogsGroup/BacklogsGroupList";
 import RepresentingCountryList from "./pages/masters/visaMaster/representingCountry/RepresentingCountryList";
+import VisaMajorCategoryList from "./pages/masters/visaMaster/visaMajorCategory/VisaMajorCategoryList";
+import ApplicantTypeList from "./pages/masters/visaMaster/applicantType/ApplicantTypeList";
+import VisaEligibilityTypeList from "./pages/masters/visaMaster/visaEligibilityType/VisaEligibilityTypeList";
+import VisaStatusList from "./pages/masters/visaMaster/visaStatus/VisaStatusList";
+import PossibilityLevelList from "./pages/masters/visaMaster/possibilityLevel/PossibilityLevelList";
+import VisaNameList from "./pages/masters/visaMaster/visaName/VisaNameList";
 
 
 
@@ -823,7 +829,14 @@ function App() {
 
 
           {/* Visa Master */}
-          <Route path="/representing-country" element={<ProtectedRoute><RepresentingCountryList/></ProtectedRoute>}></Route>
+          <Route path="/representing-country" element={<ProtectedRoute><RepresentingCountryList /></ProtectedRoute>}></Route>
+          <Route path="/visa-major-category" element={<ProtectedRoute><VisaMajorCategoryList /></ProtectedRoute>}></Route>
+          <Route path="/applicant-type" element={<ProtectedRoute><ApplicantTypeList /></ProtectedRoute>}></Route>
+          <Route path="/visa-eligibility-type" element={<ProtectedRoute><VisaEligibilityTypeList /></ProtectedRoute>}></Route>
+          <Route path="/visa-status" element={<ProtectedRoute><VisaStatusList /></ProtectedRoute>}></Route>
+          <Route path="/possibility-level" element={<ProtectedRoute><PossibilityLevelList /></ProtectedRoute>}></Route>
+          <Route path="/visa-name" element={<ProtectedRoute><VisaNameList /></ProtectedRoute>}></Route>
+
 
           {/* 404 Error Page */}
           <Route path='*' element={<ErrorPage />} />

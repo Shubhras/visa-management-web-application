@@ -3,10 +3,10 @@ import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
-import { accreditationNameImportData } from '../../../../store/master/companyMasters/actions';
 import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
-import { exportToExcelWrongData ,exportToExcelDuplicate} from '../../../../helper/utils/commanHelper';
-const AddImportAccrediationNameModal = ({ show, handleClose }) => {
+import { visaMajorCategoryImportData } from '../../../../store/master/visaMaster/action';
+import { exportToExcelDuplicate, exportToExcelWrongData } from '../../../../helper/utils/commanHelper';
+const AddImportVisaMajorCategoryModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
     const [file, setFile] = useState(null);
@@ -66,7 +66,7 @@ const AddImportAccrediationNameModal = ({ show, handleClose }) => {
             formData.append('sheet_name', selectedSheet);
         }
         setLoading(true);
-        dispatch(accreditationNameImportData(formData, (response, error) => {
+        dispatch(visaMajorCategoryImportData(formData, (response, error) => {
             setLoading(false);
             if (error) {
                 toast.error(error?.response?.data?.message || "Server error");
@@ -78,7 +78,7 @@ const AddImportAccrediationNameModal = ({ show, handleClose }) => {
                             <div>{response?.message}</div>
                             {response?.duplicates?.length > 0 && (
                                 <div style={{ marginTop: '6px' }}>
-                                    <strong>Duplicate accrediation name skipped — the duplicate data from your uploaded file has been exported into an .xlsx file.</strong>
+                                    <strong>Duplicate Visa Major Category skipped — the duplicate data from your uploaded file has been exported into an .xlsx file.</strong>
                                 </div>
                             )}
                         </div>,
@@ -89,9 +89,9 @@ const AddImportAccrediationNameModal = ({ show, handleClose }) => {
                     if (response?.duplicates?.length > 0) {
                         const prepareData = {
                             data: response.duplicates || [],
-                            headers: ["Accreditation Category", "Accreditation Full Name"],
-                            sheetName: "AccreditationName",
-                            fileName: "AccreditationName",
+                            headers: ["Country", "Visa Main Category", "Visa Major Category"],
+                            sheetName: "VisaMajorCategory",
+                            fileName: "VisaMajorCategory",
                         };
                         exportToExcelDuplicate(
                             prepareData.data,
@@ -103,9 +103,9 @@ const AddImportAccrediationNameModal = ({ show, handleClose }) => {
                     if (response?.skipped_rows?.length > 0) {
                         const prepareData = {
                             data: response.skipped_rows || [],
-                            headers: ["Accreditation Category", "Accreditation Full Name", "Reason"],
-                            sheetName: "AccreditationName",
-                            fileName: "AccreditationName",
+                            headers: ["Country", "Visa Main Category", "Visa Major Category", "Reason"],
+                            sheetName: "VisaMajorCategory",
+                            fileName: "VisaMajorCategory",
                         };
                         exportToExcelWrongData(
                             prepareData.data,
@@ -114,11 +114,10 @@ const AddImportAccrediationNameModal = ({ show, handleClose }) => {
                             prepareData.fileName
                         );
                     }
-
                     setFile(null);
                     setSheetNames([]);
                     setSelectedSheet('');
-                    handleClose();
+                    handleClose(true);
                 } else {
                     toast.error("Something went wrong.");
                 }
@@ -132,7 +131,7 @@ const AddImportAccrediationNameModal = ({ show, handleClose }) => {
         setError('');
         setSheetNames([]);
         setSelectedSheet('');
-        handleClose();
+        handleClose(false);
         setLoading(false);
     };
     const handleDownloadSample = () => {
@@ -149,14 +148,14 @@ const AddImportAccrediationNameModal = ({ show, handleClose }) => {
                 className="modal fade show common-ctl-popup"
                 tabIndex={-1}
                 role="dialog"
-                aria-labelledby="license-nameModalLabel"
+                aria-labelledby="GenderModalLabel"
                 aria-hidden={!show}
             >
                 <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
                     <div className="modal-content radius-16 bg-base">
                         <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                            <h1 className="modal-title fs-5" id="license-nameModalLabel">
-                                Upload Accreditation Name
+                            <h1 className="modal-title fs-5" id="GenderModalLabel">
+                                Upload Visa Major Category
                             </h1>
                             <button
                                 type="button"
@@ -256,10 +255,10 @@ const AddImportAccrediationNameModal = ({ show, handleClose }) => {
             </div>
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
-                    downloadFileName: "AccreditationName",
-                    items: ["Accreditation Category", "Accreditation Full Name", "Accreditation Short Name", "Accreditation Issuing Authority Name", "Accreditation Valid Upto", "Description"],
-                    selectedItems: [ "Accreditation Category", "Accreditation Full Name"],
-                    ItemsRequired: ["Accreditation Category", "Accreditation Full Name"],
+                    downloadFileName: "VisaMajorCategory",
+                    items: ["Country", "Visa Main Category", "Visa Major Category", "Description"],
+                    selectedItems: ["Country", "Visa Main Category", "Visa Major Category"],
+                    ItemsRequired: ["Country", "Visa Main Category", "Visa Major Category"]
                 }
                 } />
             )}
@@ -267,4 +266,4 @@ const AddImportAccrediationNameModal = ({ show, handleClose }) => {
     );
 };
 
-export default AddImportAccrediationNameModal;
+export default AddImportVisaMajorCategoryModal;
