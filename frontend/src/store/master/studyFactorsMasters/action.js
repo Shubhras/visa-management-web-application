@@ -1,6 +1,7 @@
 import {
     ACADEMIC_RESULT_GROUP_LIST,
     ADD_ACADEMIC_RESULT_GROUP,
+  ADD_AGE,
   ADD_AGE_GROUP,
   ADD_BACKLOGS_GROUP,
   ADD_ENTRANCE_TEST_ABILITY_GROUP,
@@ -8,8 +9,10 @@ import {
   ADD_GAP_GROUP,
   ADD_LANGUAGE_ABILITY_GROUP,
   AGE_GROUP_LIST,
+  AGE_LIST,
   BACKLOGS_GROUP_LIST,
   DELETE_ACADEMIC_RESULT_GROUP,
+  DELETE_AGE,
   DELETE_AGE_GROUP,
   DELETE_BACKLOGS_GROUP,
   DELETE_ENTRANCE_TEST_ABILITY_GROUP,
@@ -17,6 +20,7 @@ import {
   DELETE_GAP_GROUP,
   DELETE_LANGUAGE_ABILITY_GROUP,
   EDIT_ACADEMIC_RESULT_GROUP,
+  EDIT_AGE,
   EDIT_AGE_GROUP,
   EDIT_BACKLOGS_GROUP,
   EDIT_ENTRANCE_TEST_ABILITY_GROUP,
@@ -25,6 +29,7 @@ import {
   EDIT_LANGUAGE_ABILITY_GROUP,
   ENTRANCE_TEST_ABILITY_GROUP_LIST,
   EXPORT_ACADEMIC_RESULT_GROUP,
+  EXPORT_AGE,
   EXPORT_AGE_GROUP,
   EXPORT_BACKLOGS_GROUP,
   EXPORT_ENTRANCE_TEST_ABILITY_GROUP,
@@ -34,6 +39,7 @@ import {
   FACTOR_FOR_LIST,
   GAP_GROUP_LIST,
   IMPORT_ACADEMIC_RESULT_GROUP,
+  IMPORT_AGE,
   IMPORT_AGE_GROUP,
   IMPORT_BACKLOGS_GROUP,
   IMPORT_ENTRANCE_TEST_ABILITY_GROUP,
@@ -294,6 +300,42 @@ export const entranceTestAbilityGroupExportData = (data, callback) => ({
 
 export const entranceTestAbilityGroupImportData = (data, callback) => ({
   type: IMPORT_ENTRANCE_TEST_ABILITY_GROUP,
+  data,
+  callback,
+});
+
+export const ageList = (data, callback) => ({
+  type: AGE_LIST,
+  data,
+  callback,
+});
+
+export const ageAdd = (data, callback) => ({
+  type: ADD_AGE,
+  data,
+  callback,
+});
+
+export const ageEdit = (data, callback) => ({
+  type: EDIT_AGE,
+  data,
+  callback,
+});
+
+export const ageDelete = (data, callback) => ({
+  type: DELETE_AGE,
+  data,
+  callback,
+});
+
+export const ageExportData = (data, callback) => ({
+  type: EXPORT_AGE,
+  data,
+  callback,
+});
+
+export const ageImportData = (data, callback) => ({
+  type: IMPORT_AGE,
   data,
   callback,
 });

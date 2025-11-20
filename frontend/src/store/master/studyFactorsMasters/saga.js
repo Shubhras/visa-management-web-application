@@ -1,6 +1,7 @@
 import { call, takeEvery } from "redux-saga/effects";
 import {
     addAcademicResultGroupAPI,
+  addAgeAPI,
   addAgeGroupAPI,
   addBacklogsGroupAPI,
   addEntranceTestAbilityGroupAPI,
@@ -8,6 +9,7 @@ import {
   addGapGroupAPI,
   addLanguageAbilityGroupAPI,
   deleteAcademicResultGroupAPI,
+  deleteAgeAPI,
   deleteAgeGroupAPI,
   deleteBacklogsGroupAPI,
   deleteEntranceTestAbilityGroupAPI,
@@ -15,6 +17,7 @@ import {
   deleteGapGroupAPI,
   deleteLanguageAbilityGroupAPI,
   editAcademicResultGroupAPI,
+  editAgeAPI,
   editAgeGroupAPI,
   editBacklogsGroupAPI,
   editEntranceTestAbilityGroupAPI,
@@ -22,6 +25,7 @@ import {
   editGapGroupAPI,
   editLanguageAbilityGroupAPI,
   exportAcademicResultGroupAPI,
+  exportAgeAPI,
   exportAgeGroupAPI,
   exportBacklogsGroupAPI,
   exportEntranceTestAbilityGroupAPI,
@@ -30,12 +34,14 @@ import {
   exportLanguageAbilityGroupAPI,
   getAcademicResultGroupListAPI,
   getAgeGroupListAPI,
+  getAgeListAPI,
   getBacklogsGroupListAPI,
   getEntranceTestAbilityGroupListAPI,
   getFactorForListAPI,
   getGapGroupListAPI,
   getLanguageAbilityGroupListAPI,
   importAcademicResultGroupAPI,
+  importAgeAPI,
   importAgeGroupAPI,
   importBacklogsGroupAPI,
   importEntranceTestAbilityGroupAPI,
@@ -46,6 +52,7 @@ import {
 import {
     ACADEMIC_RESULT_GROUP_LIST,
   ADD_ACADEMIC_RESULT_GROUP,
+  ADD_AGE,
   ADD_AGE_GROUP,
   ADD_BACKLOGS_GROUP,
   ADD_ENTRANCE_TEST_ABILITY_GROUP,
@@ -53,8 +60,10 @@ import {
   ADD_GAP_GROUP,
   ADD_LANGUAGE_ABILITY_GROUP,
   AGE_GROUP_LIST,
+  AGE_LIST,
   BACKLOGS_GROUP_LIST,
   DELETE_ACADEMIC_RESULT_GROUP,
+  DELETE_AGE,
   DELETE_AGE_GROUP,
   DELETE_BACKLOGS_GROUP,
   DELETE_ENTRANCE_TEST_ABILITY_GROUP,
@@ -62,6 +71,7 @@ import {
   DELETE_GAP_GROUP,
   DELETE_LANGUAGE_ABILITY_GROUP,
   EDIT_ACADEMIC_RESULT_GROUP,
+  EDIT_AGE,
   EDIT_AGE_GROUP,
   EDIT_BACKLOGS_GROUP,
   EDIT_ENTRANCE_TEST_ABILITY_GROUP,
@@ -70,6 +80,7 @@ import {
   EDIT_LANGUAGE_ABILITY_GROUP,
   ENTRANCE_TEST_ABILITY_GROUP_LIST,
   EXPORT_ACADEMIC_RESULT_GROUP,
+  EXPORT_AGE,
   EXPORT_AGE_GROUP,
   EXPORT_BACKLOGS_GROUP,
   EXPORT_ENTRANCE_TEST_ABILITY_GROUP,
@@ -79,6 +90,7 @@ import {
   FACTOR_FOR_LIST,
   GAP_GROUP_LIST,
   IMPORT_ACADEMIC_RESULT_GROUP,
+  IMPORT_AGE,
   IMPORT_AGE_GROUP,
   IMPORT_BACKLOGS_GROUP,
   IMPORT_ENTRANCE_TEST_ABILITY_GROUP,
@@ -470,6 +482,61 @@ function* entranceTestAbilityGroupImportSaga(action) {
   }
 }
 
+// Age – Sagas
+function* ageListSaga(action) {
+  try {
+    const response = yield call(getAgeListAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* ageAddSaga(action) {
+  try {
+    const response = yield call(addAgeAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* ageEditSaga(action) {
+  try {
+    const response = yield call(editAgeAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* ageDeleteSaga(action) {
+  try {
+    const response = yield call(deleteAgeAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* ageExportSaga(action) {
+  try {
+    const response = yield call(exportAgeAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* ageImportSaga(action) {
+  try {
+    const response = yield call(importAgeAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
 function* studyFactorsMasterSaga() {
   yield takeEvery(FACTOR_FOR_LIST, factorForListSaga);
   yield takeEvery(ADD_FACTOR_FOR, factorForAddSaga);
@@ -513,6 +580,11 @@ function* studyFactorsMasterSaga() {
   yield takeEvery(DELETE_ENTRANCE_TEST_ABILITY_GROUP, entranceTestAbilityGroupDeleteSaga);
   yield takeEvery(EXPORT_ENTRANCE_TEST_ABILITY_GROUP, entranceTestAbilityGroupExportSaga);
   yield takeEvery(IMPORT_ENTRANCE_TEST_ABILITY_GROUP, entranceTestAbilityGroupImportSaga);
-
+  yield takeEvery(AGE_LIST, ageListSaga);
+  yield takeEvery(ADD_AGE, ageAddSaga);
+  yield takeEvery(EDIT_AGE, ageEditSaga);
+  yield takeEvery(DELETE_AGE, ageDeleteSaga);
+  yield takeEvery(EXPORT_AGE, ageExportSaga);
+  yield takeEvery(IMPORT_AGE, ageImportSaga);
 }
 export default studyFactorsMasterSaga;

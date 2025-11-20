@@ -14,7 +14,24 @@ const MasterLayout = ({ children }) => {
   const [selectedItemName, setSelectedItemName] = useState("Dashboard");
   const [openSubmenu, setOpenSubmenu] = useState(null);
   const [openChildMenu, setOpenChildMenu] = useState(null);
-
+const [searchAllowedModules] = useState([
+  "City",
+  "Department",
+  "District",
+  "State",
+  "Country",
+  "Gender",
+  "Continents",
+  "Factor For",
+  "Study : Age Group",
+  "Study : Academic Result Group",
+  "Study : Gap Group",
+  "Study : Backlogs Group",
+  "Study : Language Ability Group",
+  "Study : Entrance Test Ability Group",
+  "Study Factor : Age",
+  "Marital Status"
+]);
   // Global Search State - Har page pe same rahega
   const { globalSearch, setGlobalSearch } = useGlobalSearch();
   const menuItems = [
@@ -109,7 +126,7 @@ const MasterLayout = ({ children }) => {
             { name: "Education Level Code", path: "/education-level-code" },
             { name: "Education Level", path: "/education-level" },
             { name: "Study Main Area", path: "/study-main-area" },
-            { name: "Education Duration", path: "/education-duration" },
+            // { name: "Education Duration", path: "/education-duration" },
             { name: "Study Major Area", path: "/study-major-area" },
             { name: "Academic Result Type", path: "/academic-result-type" },
             { name: "Education Type", path: "/education-type" },
@@ -169,6 +186,7 @@ const MasterLayout = ({ children }) => {
             { name: "Occupation Name", path: "/occupation-name" },
             { name: "Designation (Job Title)", path: "/designation" },
             { name: "Job Prospect", path: "/job-prospect" },
+
             { name: "Related Occupation", path: "/related-occupation" },
             
           ],
@@ -214,6 +232,22 @@ const MasterLayout = ({ children }) => {
 
           ],
         },
+        {
+          name: "Visa Process",
+          children: [
+            { name: "Document Category", path: "/document-category" },
+            { name: "Document Name", path: "/document-name" },
+            { name: "Document Type", path: "/document-type" },
+            { name: "Purpose of Visit", path: "/purpose-of-visit" },
+            { name: "Documents For", path: "/documents-for" },
+            { name: "Required Documents (General)", path: "/required-documents-general" },
+            { name: "Process Status Name", path: "/process-status-name" },
+            { name: "Process Sub Status Name", path: "/process-sub-status-name" },
+            { name: "Process Type", path: "/process-type" },
+            { name: "Payment To", path: "/payment-to" },
+            { name: "Payment Category", path: "/payment-category" },
+          ],
+        },
 
         {
           name: "Study Factors",
@@ -225,6 +259,7 @@ const MasterLayout = ({ children }) => {
             { name: "Study : Backlogs Group", path: "/backlogs-group" },
             { name: "Study : Language Ability Group", path: "/language-ability-group" },
             { name: "Study : Entrance Test Ability Group", path: "/entrance-test-ability-group" },
+            { name: "Study Factor : Age", path: "/age" },
           ],
         },
 
@@ -1980,7 +2015,7 @@ const MasterLayout = ({ children }) => {
             {/* Sub Header */}
             <div className="sub-header-bar d-flex align-items-center justify-content-between">
               <div className="sub-header-title">{selectedItemName}</div>
-              {["City", "Department","District","State","Country","Gender","Continents","Factor For","Study : Age Group","Study : Academic Result Group","Study : Gap Group","Study : Backlogs Group","Study : Language Ability Group","Study : Entrance Test Ability Group"].includes(selectedItemName) && (
+             {searchAllowedModules.indexOf(selectedItemName) !== -1 && (
                 <div className="position-relative search-filter-div">
                   <Icon
                     icon="ion:search-outline"

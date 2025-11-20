@@ -22,6 +22,7 @@ const AddEditEducationLevelModal = ({ show, handleClose, mode = 'add', rowData =
   const [errors, setErrors] = useState({
     name: '',
     category: '',
+    durations: '',
     description: '',
   });
 
@@ -34,6 +35,7 @@ const AddEditEducationLevelModal = ({ show, handleClose, mode = 'add', rowData =
         uuid: rowData.uuid || '',
         name: rowData.educationlevel || '',
         category: rowData.level_code || '',
+        durations: rowData.durations || '',
         description: rowData.description || '',
       });
     } else {
@@ -42,6 +44,7 @@ const AddEditEducationLevelModal = ({ show, handleClose, mode = 'add', rowData =
         uuid: '',
         name: '',
         category: '',
+        durations: '',
         description: '',
       });
     }
@@ -104,6 +107,10 @@ const AddEditEducationLevelModal = ({ show, handleClose, mode = 'add', rowData =
       newErrors.category = 'Education level code is required';
       isValid = false;
     }
+    if (!formData.durations.trim()) {
+      newErrors.durations = 'Education duration (months) is required';
+      isValid = false;
+    }
 
     setErrors(newErrors);
     return isValid;
@@ -119,11 +126,13 @@ const AddEditEducationLevelModal = ({ show, handleClose, mode = 'add', rowData =
           uuid: formData.uuid,
           educationlevel: formData.name,
           level_code: formData.category,
+          durations: formData.durations,
           description: formData.description,
         }
         : {
           educationlevel: formData.name,
           level_code: formData.category,
+          durations: formData.durations,
           description: formData.description,
         };
 
@@ -154,6 +163,7 @@ const AddEditEducationLevelModal = ({ show, handleClose, mode = 'add', rowData =
       uuid: '',
       name: '',
       category: '',
+      durations: '',
       description: '',
     });
     setErrors({});
@@ -251,6 +261,24 @@ const AddEditEducationLevelModal = ({ show, handleClose, mode = 'add', rowData =
                   {errors.name && (
                     <div className="text-danger text-sm mt-1">
                       {errors.name}
+                    </div>
+                  )}
+                </div>
+                <div className="col-12 mb-20">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                    Education Duration (Months) <span className="text-danger">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    name="durations"
+                    value={formData.durations}
+                    onChange={handleChange}
+                    className={`form-control radius-8 ${errors.durations ? 'is-invalid' : ''}`}
+                    placeholder="Enter education duration (months)"
+                  />
+                  {errors.durations && (
+                    <div className="text-danger text-sm mt-1">
+                      {errors.durations}
                     </div>
                   )}
                 </div>

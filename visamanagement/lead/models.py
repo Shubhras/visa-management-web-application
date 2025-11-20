@@ -53,7 +53,7 @@ class Applicant(models.Model):
     mobile_country_code = models.CharField(max_length=10,blank=True, null=True)
     mobile_number = models.CharField(max_length=20)
 
-    whatsapp_country_code = models.CharField(max_length=10)
+    whatsapp_country_code = models.CharField(max_length=10,null=True, blank=True)
     whatsapp_number = models.CharField(max_length=20)
     email = models.EmailField()
     address_line_1 = models.CharField(max_length=200)
@@ -65,7 +65,7 @@ class Applicant(models.Model):
     district = models.ForeignKey(District,on_delete=models.SET_NULL,null=True,related_name="applicant_district")
     city = models.ForeignKey(City,on_delete=models.SET_NULL,null=True,related_name="applicant_city")
     village = models.CharField(max_length=150, null=True, blank=True)
-    pin_zip = models.CharField(max_length=10)
+    pin_zip = models.CharField(max_length=10,null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

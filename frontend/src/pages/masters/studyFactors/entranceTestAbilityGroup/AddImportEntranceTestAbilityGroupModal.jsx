@@ -4,7 +4,7 @@ import { toast } from "react-toastify";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import CommanSampleExcelDownloadModal from "../../../../components/comman/CommanSampleExcelDownloadModal";
-import { factorForImportData, gapGroupImportData } from "../../../../store/actions";
+import { entranceTestAbilityGroupImportData } from "../../../../store/actions";
 import { exportToExcelDuplicate, exportToExcelWrongData } from "../../../../helper/utils/commanHelper";
 const AddImportEntranceTestAbilityGroupModal = ({ show, handleClose }) => {
   const dispatch = useDispatch();
@@ -66,7 +66,7 @@ const AddImportEntranceTestAbilityGroupModal = ({ show, handleClose }) => {
     }
     setLoading(true);
     dispatch(
-      gapGroupImportData(formData, (response, error) => {
+      entranceTestAbilityGroupImportData(formData, (response, error) => {
         setLoading(false);
         if (error) {
           toast.error(error?.response?.data?.message || "Server error");
@@ -93,9 +93,9 @@ const AddImportEntranceTestAbilityGroupModal = ({ show, handleClose }) => {
             if (response?.duplicates?.length > 0) {
               const prepareData = {
                 data: response.duplicates || [],
-                headers: ["Gap Group"],
-                sheetName: "GapGroup",
-                fileName: "GapGroup",
+                headers: ["Entrance Test Ability Group"],
+                sheetName: "Entrance Test Ability Group",
+                fileName: "Entrance Test Ability Group",
               };
               exportToExcelDuplicate(
                 prepareData.data,
@@ -107,9 +107,9 @@ const AddImportEntranceTestAbilityGroupModal = ({ show, handleClose }) => {
             if (response?.skipped_rows?.length > 0) {
               const prepareData = {
                 data: response.skipped_rows || [],
-                headers: ["Gap Group", "Reason"],
-                sheetName: "GapGroup",
-                fileName: "GapGroup",
+                headers: ["Entrance Test Ability Group", "Reason"],
+                sheetName: "Entrance Test Ability Group",
+                fileName: "Entrance Test Ability GroupGapGroup",
               };
               exportToExcelWrongData(
                 prepareData.data,
@@ -163,7 +163,7 @@ const AddImportEntranceTestAbilityGroupModal = ({ show, handleClose }) => {
           <div className="modal-content radius-16 bg-base">
             <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
               <h1 className="modal-title fs-5" id="departmentModalLabel">
-                Upload Gap Group
+                Upload Entrance Test Ability Group
               </h1>
               <button
                 type="button"
@@ -280,10 +280,10 @@ const AddImportEntranceTestAbilityGroupModal = ({ show, handleClose }) => {
           show={showSampleExcelDownload}
           handleClose={handleCloseSampleExcelDownload}
           prepareData={{
-            downloadFileName: "Gap Group",
-            items: ["Gap Group", "Description"],
-            selectedItems: ["Gap Group"],
-            ItemsRequired: ["Gap Group"],
+            downloadFileName: "Entrance Test Ability Group",
+            items: ["Entrance Test Ability Group", "Description"],
+            selectedItems: ["Entrance Test Ability Group"],
+            ItemsRequired: ["Entrance Test Ability Group"],
           }}
         />
       )}

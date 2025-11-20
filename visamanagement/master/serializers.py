@@ -342,9 +342,6 @@ class AccreditationCategorySerializer(serializers.ModelSerializer):
 
 
 class AccreditationNameSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(source='country.name', read_only=True)
-    category_name = serializers.CharField(source='category.name', read_only=True)
-    
     validtype_display = serializers.CharField(source='get_valid_type_display', read_only=True)  # shows "State"/"Territory"
 
     validunit_display = serializers.CharField(source='get_valid_duration_unit_display', read_only=True)  # shows "State"/"Territory"
@@ -352,7 +349,7 @@ class AccreditationNameSerializer(serializers.ModelSerializer):
     class Meta:
         model = AccreditationName
         fields = [
-            'uuid', 'country', 'name', 'category', 'category_name',
+            'uuid','category', 'category_name',
             'valid_type',
             'valid_date',
             'validtype_display',
@@ -472,7 +469,8 @@ class EducationLevelSerializer(serializers.ModelSerializer):
             'uuid', 
             'level_code', 
             'level_code_detail',
-            'educationlevel', 
+            'educationlevel',
+            '   ' 
             'description', 
             'is_deleted',
             'created_at', 

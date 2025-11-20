@@ -45,21 +45,21 @@ const AccrediationNameList = () => {
   const [accrediationNameData, setAccrediationNameData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [items] = useState(["Country", "Accrediation Category", "Accrediation Full Name", "Accrediation Short Name", "Accrediation Issuing Authority Name", "Accrediation Valid Upto", "Description", "Modified On"]);
-  const [selectedItems, setSelectedItems] = useState(["Country","Accrediation Category", "Accrediation Full Name"]);
-  const [ItemsRequired] = useState(["Country", "Accrediation Category", "Accrediation Full Name"]);
+  const [items] = useState(["Country", "Accreditation Category", "Accreditation Full Name", "Accreditation Short Name", "Accreditation Issuing Authority Name", "Accreditation Valid Upto", "Description", "Modified On"]);
+  const [selectedItems, setSelectedItems] = useState(["Country","Accreditation Category", "Accreditation Full Name"]);
+  const [ItemsRequired] = useState(["Country", "Accreditation Category", "Accreditation Full Name"]);
 
   // Table columns configuration
   const [tableColumns] = useState([
     { id: 'country_name', label: 'Country', field: 'country_name', visible: true, required: false },
-    { id: 'category_name', label: 'Accrediation Category', field: 'category_name', visible: true, required: false },
-    { id: 'full_name', label: 'Accrediation Full Name', field: 'full_name', visible: true, required: false },
-    { id: 'short_name', label: 'Accrediation Short Name', field: 'short_name', visible: false, required: false },
-    { id: 'issuing_authority', label: 'Accrediation Issuing Authority Name', field: 'issuing_authority', visible: false, required: false },
-    { id: 'valid_type', label: 'Accrediation Valid Upto', field: 'valid_type', visible: false, required: false },
-    { id: 'valid_date', label: 'Accrediation Valid Date', field: 'valid_date', visible: false, required: false },
-    { id: 'valid_duration_value', label: 'Accrediation Valid Duration Value', field: 'valid_duration_value', visible: false, required: false },
-    { id: 'valid_duration_unit', label: 'Accrediation Valid Duration Unit', field: 'valid_duration_unit', visible: false, required: false },
+    { id: 'category_name', label: 'Accreditation Category', field: 'category_name', visible: true, required: false },
+    { id: 'full_name', label: 'Accreditation Full Name', field: 'full_name', visible: true, required: false },
+    { id: 'short_name', label: 'Accreditation Short Name', field: 'short_name', visible: false, required: false },
+    { id: 'issuing_authority', label: 'Accreditation Issuing Authority Name', field: 'issuing_authority', visible: false, required: false },
+    { id: 'valid_type', label: 'Accreditation Valid Upto', field: 'valid_type', visible: false, required: false },
+    { id: 'valid_date', label: 'Accreditation Valid Date', field: 'valid_date', visible: false, required: false },
+    { id: 'valid_duration_value', label: 'Accreditation Valid Duration Value', field: 'valid_duration_value', visible: false, required: false },
+    { id: 'valid_duration_unit', label: 'Accreditation Valid Duration Unit', field: 'valid_duration_unit', visible: false, required: false },
     { id: 'description', label: 'Description', field: 'description', visible: true, required: false },
     { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false },
   ]);
@@ -416,14 +416,14 @@ const AccrediationNameList = () => {
     // Map frontend labels to backend field names
     const fieldMapping = {
       "Country": "country",
-      "Accrediation Category": "category",
-      "Accrediation Full Name": "full_name",
-      "Accrediation Short Name": "short_name",
-      "Accrediation Issuing Authority Name": "issuing_authority",
-      "Accrediation Valid Upto": "valid_type",
-      "Accrediation Valid Duration Value": "valid_duration_value",
-      "Accrediation Valid Duration Unit": "valid_duration_unit",
-      "Accrediation Valid Date": "valid_date",
+      "Accreditation Category": "category",
+      "Accreditation Full Name": "full_name",
+      "Accreditation Short Name": "short_name",
+      "Accreditation Issuing Authority Name": "issuing_authority",
+      "Accreditation Valid Upto": "valid_type",
+      "Accreditation Valid Duration Value": "valid_duration_value",
+      "Accreditation Valid Duration Unit": "valid_duration_unit",
+      "Accreditation Valid Date": "valid_date",
       "Modified On": "updated_at",
       "Description": "description",
     };
@@ -457,7 +457,7 @@ const AccrediationNameList = () => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `AccrediationName.xlsx`;
+          link.download = `AccreditationName.xlsx`;
           document.body.appendChild(link);
           link.click();
           link.remove();
@@ -480,7 +480,7 @@ const AccrediationNameList = () => {
   return (
     <>
       <MasterLayout>
-        {/* <Breadcrumb title="Accrediation Name" subTitle="List" /> */}
+        {/* <Breadcrumb title="Accreditation Name" subTitle="List" /> */}
         <div className="card basic-data-table main-container-data">
           <div className="card-body container-data">
             <div className="row align-items-center gy-3 gx-2 flex-wrap filter-action-btn">
@@ -890,7 +890,7 @@ const AccrediationNameList = () => {
             <div className="modal-dialog modal-xl modal-dialog-centered" role="document">
               <div className="modal-content radius-16 bg-base">
                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                  <h1 className="modal-title fs-5">Export Accrediation Name</h1>
+                  <h1 className="modal-title fs-5">Export Accreditation Name</h1>
                   <button
                     type="button"
                     className="btn-close"

@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 import { toast } from "react-toastify";
 import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 import { useGlobalSearch } from '../../../../components/comman/GlobalSearchContext';
-import {  gapGroupDelete, gapGroupExportData, gapGroupList } from '../../../../store/actions';
+import {  entranceTestAbilityGroupDelete, entranceTestAbilityGroupExportData, entranceTestAbilityGroupList} from '../../../../store/actions';
 import AddEditEntranceTestAbilityGroupModal from './AddEditEntranceTestAbilityGroupModal';
 import AddImportEntranceTestAbilityGroupModal from './AddImportEntranceTestAbilityGroupModal';
 const EntranceTestAbilityGroupList = () => {
@@ -35,7 +35,7 @@ const EntranceTestAbilityGroupList = () => {
     });
     // Only call API when data was successfully added/updated
     if (shouldRefresh) {
-      fetchFactorForList();
+      fetchEntranceTestAbilityGroupList();
     }
   }
 
@@ -43,19 +43,19 @@ const EntranceTestAbilityGroupList = () => {
   const [rowSelectData, setRowSelectData] = useState({});
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this department?");
+  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this entrance test ability group?");
   const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [selectAllOrNot, setSelectAllOrNot] = useState('');
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [items] = useState(["Gap Group", "Description", "Modified On"]);
-  const [selectedItems, setSelectedItems] = useState(["Gap Group"]);
-  const [ItemsRequired] = useState(["Gap Group"]);
+  const [items] = useState(["Entrance Test Ability Group", "Description", "Modified On"]);
+  const [selectedItems, setSelectedItems] = useState(["Entrance Test Ability Group"]);
+  const [ItemsRequired] = useState(["Entrance Test Ability Group"]);
 
   const [tableColumns] = useState([
-    { id: 'name', label: 'Gap Group', field: 'name', visible: true, required: false },
+    { id: 'name', label: 'Entrance Test Ability Group', field: 'name', visible: true, required: false },
     { id: 'description', label: 'Description', field: 'description', visible: true, required: false },
     { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false },
   ]);
@@ -119,7 +119,7 @@ const EntranceTestAbilityGroupList = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (tableState.search !== undefined) {
-        fetchFactorForList();
+        fetchEntranceTestAbilityGroupList();
       }
     }, 500);
 
@@ -127,10 +127,10 @@ const EntranceTestAbilityGroupList = () => {
   }, [tableState.search]);
 
   useEffect(() => {
-    fetchFactorForList();
+    fetchEntranceTestAbilityGroupList();
   }, [tableState.page, tableState.limit, tableState.status, tableState.sortBy, tableState.sortOrder]);
 
-  const fetchFactorForList = () => {
+  const fetchEntranceTestAbilityGroupList = () => {
     setLoading(true);
     const params = {
       page: tableState.page,
@@ -141,7 +141,7 @@ const EntranceTestAbilityGroupList = () => {
       sortOrder: tableState.sortOrder || ''
     };
 
-    dispatch(gapGroupList(params, (response, error) => {
+    dispatch(entranceTestAbilityGroupList(params, (response, error) => {
       setLoading(false);
       if (response?.statusCode === 200 && response?.status === true) {
         const paginationData = response?.pagination || {};
@@ -298,7 +298,7 @@ const EntranceTestAbilityGroupList = () => {
   const handleDelete = (uuid) => {
     setDeleteId(uuid);
     setShowDeleteConfirm(true);
-    setDeleteConfirmMessage(`Are you sure you want to delete this department?`);
+    setDeleteConfirmMessage(`Are you sure you want to delete this entrance test ability group?`);
   };
 
   const handleBulkDelete = () => {
@@ -306,18 +306,18 @@ const EntranceTestAbilityGroupList = () => {
       toast.error("Please select at least one row to delete");
       return;
     }
-    const message = selectAllOrNot === "all" ? `${tableState.total} all departments` : `${selectedRows.length} selected departments`;
-    setDeleteConfirmMessage(`Are you sure you want to delete this department (${message})?`);
+    const message = selectAllOrNot === "all" ? `${tableState.total} all entrance test ability groups` : `${selectedRows.length} selected entrance test ability groups`;
+    setDeleteConfirmMessage(`Are you sure you want to delete this entrance test ability group (${message})?`);
     setShowDeleteConfirm(true);
   };
 
   const confirmDelete = () => {
     const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
     if (!sendPayload || sendPayload.length === 0) {
-      toast.error("No department selected for deletion.");
+      toast.error("No entrance test ability group selected for deletion.");
       return;
     }
-    dispatch(gapGroupDelete(sendPayload, (response, error) => {
+    dispatch(entranceTestAbilityGroupDelete(sendPayload, (response, error) => {
       if (error) {
         toast.error(error?.response?.data?.message || "server error");
       } else {
@@ -329,7 +329,7 @@ const EntranceTestAbilityGroupList = () => {
           setSelectedRows([]);
           setSelectAllOrNot('');
           setDeleteId(null);
-          fetchFactorForList();
+          fetchEntranceTestAbilityGroupList();
         } else {
           toast.error("Something went wrong.");
         }
@@ -350,7 +350,7 @@ const EntranceTestAbilityGroupList = () => {
     setShowImport(false);
     // Only call API when data was successfully imported
     if (shouldRefresh) {
-      fetchFactorForList();
+      fetchEntranceTestAbilityGroupList();
     }
   };
 
@@ -399,7 +399,7 @@ const EntranceTestAbilityGroupList = () => {
       return
     }
     const fieldMapping = {
-      "Gap Group": "name",
+      "Entrance Test Ability Group": "name",
       "Modified On": "updated_at",
       "Description": "description",
     };
@@ -411,7 +411,7 @@ const EntranceTestAbilityGroupList = () => {
       uuids: selectAllOrNot === "all" ? [] : selectedRows,
     };
     setLoadingExport(true);
-    dispatch(gapGroupExportData(sendPayload, (response, error) => {
+    dispatch(entranceTestAbilityGroupExportData(sendPayload, (response, error) => {
       if (error) {
         setLoadingExport(false);
         toast.error(error?.response?.message || "server error");
@@ -425,7 +425,7 @@ const EntranceTestAbilityGroupList = () => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `Gap Group.xlsx`;
+          link.download = `Entrance Test Ability Group.xlsx`;
           document.body.appendChild(link);
           link.click();
           link.remove();

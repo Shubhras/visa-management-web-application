@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
-import { gapGroupAdd, gapGroupEdit } from "../../../../store/actions";
+import { entranceTestAbilityGroupAdd, entranceTestAbilityGroupEdit, gapGroupAdd, gapGroupEdit } from "../../../../store/actions";
 
 const AddEditEntranceTestAbilityGroupModal = ({
   show,
@@ -15,13 +15,13 @@ const AddEditEntranceTestAbilityGroupModal = ({
   // Form state
   const [formData, setFormData] = useState({
     uuid: "",
-    gapGroupName: "",
+    entranceTestAbilityGroupName: "",
     description: "",
   });
 
   // Validation errors state
   const [errors, setErrors] = useState({
-    gapGroupName: "",
+    entranceTestAbilityGroupName: "",
     description: "",
   });
 
@@ -30,14 +30,14 @@ const AddEditEntranceTestAbilityGroupModal = ({
     if (mode === "edit" && rowData) {
       setFormData({
         uuid: rowData.uuid || "",
-        gapGroupName: rowData.name || "",
+        entranceTestAbilityGroupName: rowData.name || "",
         description: rowData.description || "",
       });
     } else {
       // Reset form when switching to add mode
       setFormData({
         uuid: "",
-        gapGroupName: "",
+        entranceTestAbilityGroupName: "",
         description: "",
       });
     }
@@ -66,8 +66,8 @@ const AddEditEntranceTestAbilityGroupModal = ({
     let isValid = true;
 
     // Department Name validation
-    if (!formData.gapGroupName.trim()) {
-      newErrors.gapGroupName = "Name is required";
+    if (!formData.entranceTestAbilityGroupName.trim()) {
+      newErrors.entranceTestAbilityGroupName = "Name is required";
       isValid = false;
     }
 
@@ -84,17 +84,17 @@ const AddEditEntranceTestAbilityGroupModal = ({
         mode === "edit"
           ? {
               uuid: formData.uuid,
-              name: formData.gapGroupName,
+              name: formData.entranceTestAbilityGroupName,
               description: formData.description,
             }
           : {
-              name: formData.gapGroupName,
+              name: formData.entranceTestAbilityGroupName,
               description: formData.description,
             };
 
       setLoading(true);
 
-      const action = mode === "edit" ? gapGroupEdit : gapGroupAdd;
+      const action = mode === "edit" ? entranceTestAbilityGroupEdit : entranceTestAbilityGroupAdd;
 
       dispatch(
         action(sendPayload, (response, error) => {
@@ -119,7 +119,7 @@ const AddEditEntranceTestAbilityGroupModal = ({
   const resetForm = () => {
     setFormData({
       uuid: "",
-      gapGroupName: "",
+      entranceTestAbilityGroupName: "",
       description: "",
     });
     setErrors({});
@@ -150,7 +150,7 @@ const AddEditEntranceTestAbilityGroupModal = ({
         <div className="modal-content radius-16 bg-base">
           <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
             <h1 className="modal-title fs-5" id="departmentModalLabel">
-              {mode === "edit" ? "Edit Gap Group" : "Add Gap Group"}
+              {mode === "edit" ? "Edit Entrance Test Ability Group" : "Add Entrance Test Ability Group"}
             </h1>
             <button
               type="button"
@@ -166,21 +166,21 @@ const AddEditEntranceTestAbilityGroupModal = ({
                 {/* Department Name */}
                 <div className="col-12 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Gap Group <span className="text-danger">*</span>
+                    Entrance Test Ability Group <span className="text-danger">*</span>
                   </label>
                   <input
                     type="text"
-                    name="gapGroupName"
-                    value={formData.gapGroupName}
+                    name="entranceTestAbilityGroupName"
+                    value={formData.entranceTestAbilityGroupName}
                     onChange={handleChange}
                     className={`form-control radius-8 ${
-                      errors.gapGroupName ? "is-invalid" : ""
+                      errors.entranceTestAbilityGroupName ? "is-invalid" : ""
                     }`}
                     placeholder="Enter Factor For"
                   />
-                  {errors.gapGroupName && (
+                  {errors.entranceTestAbilityGroupName && (
                     <div className="text-danger text-sm mt-1">
-                      {errors.gapGroupName}
+                      {errors.entranceTestAbilityGroupName}
                     </div>
                   )}
                 </div>
