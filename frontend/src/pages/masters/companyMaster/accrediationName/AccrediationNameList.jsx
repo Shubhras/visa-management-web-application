@@ -45,13 +45,13 @@ const AccrediationNameList = () => {
   const [accrediationNameData, setAccrediationNameData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [items] = useState(["Country", "Accreditation Category", "Accreditation Full Name", "Accreditation Short Name", "Accreditation Issuing Authority Name", "Accreditation Valid Upto", "Description", "Modified On"]);
-  const [selectedItems, setSelectedItems] = useState(["Country","Accreditation Category", "Accreditation Full Name"]);
-  const [ItemsRequired] = useState(["Country", "Accreditation Category", "Accreditation Full Name"]);
+  const [items] = useState(["Accreditation Category", "Accreditation Full Name", "Accreditation Short Name", "Accreditation Issuing Authority Name", "Accreditation Valid Upto", "Description", "Modified On"]);
+  const [selectedItems, setSelectedItems] = useState(["Accreditation Category", "Accreditation Full Name"]);
+  const [ItemsRequired] = useState(["Accreditation Category", "Accreditation Full Name"]);
 
   // Table columns configuration
   const [tableColumns] = useState([
-    { id: 'country_name', label: 'Country', field: 'country_name', visible: true, required: false },
+    // { id: 'country_name', label: 'Country', field: 'country_name', visible: true, required: false },
     { id: 'category_name', label: 'Accreditation Category', field: 'category_name', visible: true, required: false },
     { id: 'full_name', label: 'Accreditation Full Name', field: 'full_name', visible: true, required: false },
     { id: 'short_name', label: 'Accreditation Short Name', field: 'short_name', visible: false, required: false },
@@ -415,7 +415,7 @@ const AccrediationNameList = () => {
     }
     // Map frontend labels to backend field names
     const fieldMapping = {
-      "Country": "country",
+      // "Country": "country",
       "Accreditation Category": "category",
       "Accreditation Full Name": "full_name",
       "Accreditation Short Name": "short_name",
@@ -672,9 +672,9 @@ const AccrediationNameList = () => {
                             <span>{String(startIndex + index + 1).padStart(2, '0')}</span>
                           </div>
                         </td>
-                        {isColumnVisible('country_name') && (
+                        {/* {isColumnVisible('country_name') && (
                           <td><span>{rowItem.country_name}</span> </td>
-                        )}
+                        )} */}
                         {isColumnVisible('category_name') && (
                           <td><span>{rowItem.category_name}</span></td>
                         )}
