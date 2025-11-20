@@ -4758,6 +4758,8 @@ class TimezoneDeleteAPIView(APIView):
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         }, status=status.HTTP_200_OK)
 
+
+        
 class TimezoneExportAPIView(APIView):
     """
     Export Timezone with custom sorting.
@@ -4792,10 +4794,10 @@ class TimezoneExportAPIView(APIView):
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
 
-        # -------- Sort Field Mapping ----------
+        # -------- Sort Field Mapping (with related fields) ----------
         sort_field_map = {
-            'countryName': 'countryName',
-            'stateName': 'stateName',
+            'countryName': 'countryName__name',
+            'stateName': 'stateName__stateName',
             'Timezone': 'Timezone',
             'description': 'description',
             'created_at': 'created_at',
@@ -4848,6 +4850,12 @@ class TimezoneExportAPIView(APIView):
             row = []
             for field in field_list:
                 value = getattr(tz, field, '')
+
+                # For related fields, get the actual name
+                if field == 'countryName' and tz.countryName:
+                    value = tz.countryName.name
+                if field == 'stateName' and tz.stateName:
+                    value = tz.stateName.stateName
 
                 if field in ['created_at', 'updated_at'] and value:
                     value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
