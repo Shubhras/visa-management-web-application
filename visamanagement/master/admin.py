@@ -146,7 +146,6 @@ class AccreditationNameAdmin(admin.ModelAdmin):
     list_display = (
         'full_name',
         'short_name',
-        'country',
         'category',
         'issuing_authority',
         'valid_type',
