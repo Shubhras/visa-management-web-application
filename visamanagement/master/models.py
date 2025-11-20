@@ -886,7 +886,7 @@ class ProcessSubStatusName(models.Model):
 
 
     class Meta:
-        unique_together =('country','visa_main_category','process_status_name','process_status_name')
+        unique_together =('country','visa_main_category','process_status_name','process_sub_status_name')
 
     def __str__(self):
         return f"{self.country} - {self.visa_main_category} - {self.process_status_name} - {self.process_sub_status_name}"
