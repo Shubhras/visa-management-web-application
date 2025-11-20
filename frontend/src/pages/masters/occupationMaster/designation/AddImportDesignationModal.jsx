@@ -8,7 +8,7 @@ import {
   exportToExcelDuplicate,
   exportToExcelWrongData,
 } from "../../../../helper/utils/commanHelper";
-import { occupationLevelCodeImportData } from "../../../../store/master/occupationMaster/action";
+import { designationImportData } from "../../../../store/master/occupationMaster/action";
 const AddImportDesignationModal = ({ show, handleClose }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
@@ -70,7 +70,7 @@ const AddImportDesignationModal = ({ show, handleClose }) => {
     }
     setLoading(true);
     dispatch(
-      occupationLevelCodeImportData(formData, (response, error) => {
+    designationImportData(formData, (response, error) => {
         setLoading(false);
         if (error) {
           toast.error(error?.response?.data?.message || "Server error");
@@ -83,7 +83,7 @@ const AddImportDesignationModal = ({ show, handleClose }) => {
                 {response?.duplicates?.length > 0 && (
                   <div style={{ marginTop: "6px" }}>
                     <strong>
-                      Duplicate Occupation Name skipped — the duplicate data
+                      Duplicate Designation name skipped — the duplicate data
                       from your uploaded file has been exported into an .xlsx
                       file.
                     </strong>
@@ -297,7 +297,7 @@ const AddImportDesignationModal = ({ show, handleClose }) => {
           show={showSampleExcelDownload}
           handleClose={handleCloseSampleExcelDownload}
           prepareData={{
-            downloadFileName: "Occupation Name",
+            downloadFileName: "Designation(Job Title)",
             items: [
               "Country",
               "Occupation Version",

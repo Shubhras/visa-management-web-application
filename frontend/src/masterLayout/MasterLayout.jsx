@@ -62,7 +62,7 @@ const MasterLayout = ({ children }) => {
           children: [
             { name: "Gender", path: "/gender-list" },
             { name: "Marital Status", path: "/marital-status" },
-            { name: "Continents ", path: "/continent-list" },
+            { name: "Continents", path: "/continent-list" },
             { name: "Country", path: "/country-list" },
             { name: "State", path: "/state-list" },
             { name: "District", path: "/district-list" },
@@ -170,6 +170,8 @@ const MasterLayout = ({ children }) => {
             { name: "Designation (Job Title)", path: "/designation" },
             { name: "Job Prospect", path: "/job-prospect" },
 
+            { name: "Related Occupation", path: "/related-occupation" },
+            
           ],
         },
         {
@@ -211,6 +213,33 @@ const MasterLayout = ({ children }) => {
             { name: "Children Visa Category", path: "/children-visa-category" },
             { name: "Children Study / Work Rights", path: "/children-study-work-rights" },
 
+          ],
+        },
+        {
+          name: "Visa Process",
+          children: [
+            { name: "Document Category", path: "/document-category" },
+            { name: "Document Name", path: "/document-name" },
+            { name: "Document Type", path: "/document-type" },
+            { name: "Purpose of Visit", path: "/purpose-of-visit" },
+            { name: "Documents For", path: "/documents-for" },
+            { name: "Required Documents (General)", path: "/required-documents-general" },
+            { name: "Process Status Name", path: "/process-status-name" },
+            { name: "Process Sub Status Name", path: "/process-sub-status-name" },
+            { name: "Process Type", path: "/process-type" },
+            { name: "Payment To", path: "/payment-to" },
+            { name: "Payment Category", path: "/payment-category" },
+          ],
+        },
+
+        {
+          name: "Study Factors",
+          children: [
+            { name: "Factor For", path: "/factor-for" },
+            { name: "Study : Age Group", path: "/age-group" },
+            { name: "Study : Academic Result Group", path: "/academic-result-group" },
+            { name: "Study : Gap Group", path: "/gap-group" },
+            { name: "Study : Backlogs Group", path: "/backlogs-group" },
           ],
         },
 
@@ -1966,7 +1995,7 @@ const MasterLayout = ({ children }) => {
             {/* Sub Header */}
             <div className="sub-header-bar d-flex align-items-center justify-content-between">
               <div className="sub-header-title">{selectedItemName}</div>
-              {["City", "Department","District","State","Country","Gender","Continents"].includes(selectedItemName) && (
+              {["City", "Department","District","State","Country","Gender","Continents","Factor For","Study : Age Group","Study : Academic Result Group","Study : Gap Group","Study : Backlogs Group"].includes(selectedItemName) && (
                 <div className="position-relative search-filter-div">
                   <Icon
                     icon="ion:search-outline"

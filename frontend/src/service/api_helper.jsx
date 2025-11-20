@@ -2346,6 +2346,40 @@ export const getRepresentingCountryListAPI = (data) => {
 };
 
 
+// Related Occupation
+export const getRelatedOccupationListAPI = (data) => {
+  const apiUrl = `${url.GET_RELATED_OCCUPATION_LIST}?search=${data?.search}&page=${
+    data?.page
+  }&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
+
+export const addRelatedOccupationAPI = (payload) => {
+  const apiUrl = `${url.ADD_RELATED_OCCUPATION_API}`;
+  return post(apiUrl, payload);
+};
+
+export const editRelatedOccupationAPI = (payload) => {
+  const apiUrl = `${url.EDIT_RELATED_OCCUPATION_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+
+export const deleteRelatedOccupationAPI = (payload) => {
+  const preparedData = { id: payload };
+  const apiUrl = `${url.DELETE_RELATED_OCCUPATION_API}delete/`;
+  return delWithPayload(apiUrl, preparedData);
+};
+
+export const exportRelatedOccupationAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_RELATED_OCCUPATION_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+
+export const importRelatedOccupationAPI = (payload) => {
+  const apiUrl = `${url.IMPORT_RELATED_OCCUPATION_API}`;
+  return post(apiUrl, payload);
+};
+
 
 
 // Institute Type
@@ -3174,6 +3208,513 @@ export const importVisaMainCategoryAPI = (payload) => {
     const apiUrl = `${url.IMPORT_VISA_MAIN_CATEGORY_API}`;
     return post(apiUrl, payload);
 };
+
+
+// Document Category
+export const getDocumentCategoryListAPI = (data) => {
+    const apiUrl = `${url.GET_DOCUMENT_CATEGORY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addDocumentCategoryAPI = (payload) => {
+    const apiUrl = `${url.ADD_DOCUMENT_CATEGORY_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editDocumentCategoryAPI = (payload) => {
+    const apiUrl = `${url.EDIT_DOCUMENT_CATEGORY_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteDocumentCategoryAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_DOCUMENT_CATEGORY_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportDocumentCategoryAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_DOCUMENT_CATEGORY_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importDocumentCategoryAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_DOCUMENT_CATEGORY_API}`;
+    return post(apiUrl, payload);
+};
+
+// Document Name
+export const getDocumentNameListAPI = (data) => {
+    const apiUrl = `${url.GET_DOCUMENT_NAME_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addDocumentNameAPI = (payload) => {
+    const apiUrl = `${url.ADD_DOCUMENT_NAME_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editDocumentNameAPI = (payload) => {
+    const apiUrl = `${url.EDIT_DOCUMENT_NAME_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteDocumentNameAPI = (payload) => {
+    const prepareDATA = {
+        id: payload,
+    };
+    const apiUrl = `${url.DELETE_DOCUMENT_NAME_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportDocumentNameAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_DOCUMENT_NAME_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importDocumentNameAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_DOCUMENT_NAME_API}`;
+    return post(apiUrl, payload);
+};
+// Document Type
+export const getDocumentTypeListAPI = (data) => {
+    const apiUrl = `${url.GET_DOCUMENT_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addDocumentTypeAPI = (payload) => {
+    const apiUrl = `${url.ADD_DOCUMENT_TYPE_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editDocumentTypeAPI = (payload) => {
+    const apiUrl = `${url.EDIT_DOCUMENT_TYPE_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteDocumentTypeAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_DOCUMENT_TYPE_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportDocumentTypeAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_DOCUMENT_TYPE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importDocumentTypeAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_DOCUMENT_TYPE_API}`;
+    return post(apiUrl, payload);
+};
+// Purpose of Visit
+export const getPurposeOfVisitListAPI = (data) => {
+    const apiUrl = `${url.GET_PURPOSE_OF_VISIT_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addPurposeOfVisitAPI = (payload) => {
+    const apiUrl = `${url.ADD_PURPOSE_OF_VISIT_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editPurposeOfVisitAPI = (payload) => {
+    const apiUrl = `${url.EDIT_PURPOSE_OF_VISIT_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deletePurposeOfVisitAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_PURPOSE_OF_VISIT_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportPurposeOfVisitAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_PURPOSE_OF_VISIT_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importPurposeOfVisitAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_PURPOSE_OF_VISIT_API}`;
+    return post(apiUrl, payload);
+};
+// Documents For
+export const getDocumentsForListAPI = (data) => {
+    const apiUrl = `${url.GET_DOCUMENTS_FOR_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addDocumentsForAPI = (payload) => {
+    const apiUrl = `${url.ADD_DOCUMENTS_FOR_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editDocumentsForAPI = (payload) => {
+    const apiUrl = `${url.EDIT_DOCUMENTS_FOR_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteDocumentsForAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_DOCUMENTS_FOR_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportDocumentsForAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_DOCUMENTS_FOR_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importDocumentsForAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_DOCUMENTS_FOR_API}`;
+    return post(apiUrl, payload);
+};
+// Required Documents (General)
+export const getRequiredDocumentGeneralListAPI = (data) => {
+    const apiUrl = `${url.GET_REQUIRED_DOCUMENT_GENERAL_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addRequiredDocumentGeneralAPI = (payload) => {
+    const apiUrl = `${url.ADD_REQUIRED_DOCUMENT_GENERAL_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editRequiredDocumentGeneralAPI = (payload) => {
+    const apiUrl = `${url.EDIT_REQUIRED_DOCUMENT_GENERAL_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteRequiredDocumentGeneralAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_REQUIRED_DOCUMENT_GENERAL_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportRequiredDocumentGeneralAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_REQUIRED_DOCUMENT_GENERAL_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importRequiredDocumentGeneralAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_REQUIRED_DOCUMENT_GENERAL_API}`;
+    return post(apiUrl, payload);
+};
+
+// Process Status Name
+export const getProcessStatusNameListAPI = (data) => {
+    const apiUrl = `${url.GET_PROCESS_STATUS_NAME_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addProcessStatusNameAPI = (payload) => {
+    const apiUrl = `${url.ADD_PROCESS_STATUS_NAME_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editProcessStatusNameAPI = (payload) => {
+    const apiUrl = `${url.EDIT_PROCESS_STATUS_NAME_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteProcessStatusNameAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_PROCESS_STATUS_NAME_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportProcessStatusNameAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_PROCESS_STATUS_NAME_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importProcessStatusNameAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_PROCESS_STATUS_NAME_API}`;
+    return post(apiUrl, payload);
+};
+// Process Sub-Status Name
+export const getProcessSubStatusNameListAPI = (data) => {
+    const apiUrl = `${url.GET_PROCESS_SUB_STATUS_NAME_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addProcessSubStatusNameAPI = (payload) => {
+    const apiUrl = `${url.ADD_PROCESS_SUB_STATUS_NAME_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editProcessSubStatusNameAPI = (payload) => {
+    const apiUrl = `${url.EDIT_PROCESS_SUB_STATUS_NAME_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteProcessSubStatusNameAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_PROCESS_SUB_STATUS_NAME_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportProcessSubStatusNameAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_PROCESS_SUB_STATUS_NAME_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importProcessSubStatusNameAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_PROCESS_SUB_STATUS_NAME_API}`;
+    return post(apiUrl, payload);
+};
+// Process Type
+export const getProcessTypeListAPI = (data) => {
+    const apiUrl = `${url.GET_PROCESS_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addProcessTypeAPI = (payload) => {
+    const apiUrl = `${url.ADD_PROCESS_TYPE_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editProcessTypeAPI = (payload) => {
+    const apiUrl = `${url.EDIT_PROCESS_TYPE_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteProcessTypeAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_PROCESS_TYPE_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportProcessTypeAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_PROCESS_TYPE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importProcessTypeAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_PROCESS_TYPE_API}`;
+    return post(apiUrl, payload);
+};
+// Payment To
+export const getPaymentToListAPI = (data) => {
+    const apiUrl = `${url.GET_PAYMENT_TO_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addPaymentToAPI = (payload) => {
+    const apiUrl = `${url.ADD_PAYMENT_TO_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editPaymentToAPI = (payload) => {
+    const apiUrl = `${url.EDIT_PAYMENT_TO_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deletePaymentToAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_PAYMENT_TO_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportPaymentToAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_PAYMENT_TO_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importPaymentToAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_PAYMENT_TO_API}`;
+    return post(apiUrl, payload);
+};
+// Payment Category
+export const getPaymentCategoryListAPI = (data) => {
+    const apiUrl = `${url.GET_PAYMENT_CATEGORY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addPaymentCategoryAPI = (payload) => {
+    const apiUrl = `${url.ADD_PAYMENT_CATEGORY_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editPaymentCategoryAPI = (payload) => {
+    const apiUrl = `${url.EDIT_PAYMENT_CATEGORY_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deletePaymentCategoryAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_PAYMENT_CATEGORY_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportPaymentCategoryAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_PAYMENT_CATEGORY_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importPaymentCategoryAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_PAYMENT_CATEGORY_API}`;
+    return post(apiUrl, payload);
+};
+
+
+//  Factor For
+export const getFactorForListAPI = (data) => {
+  const apiUrl = `${url.GET_FACTOR_FOR_LIST}?search=${data?.search}&page=${
+    data?.page
+  }&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
+
+export const addFactorForAPI = (payload) => {
+  const apiUrl = `${url.ADD_FACTOR_FOR_API}`;
+  return post(apiUrl, payload);
+};
+
+export const editFactorForAPI = (payload) => {
+  const apiUrl = `${url.EDIT_FACTOR_FOR_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+
+export const deleteFactorForAPI = (payload) => {
+  const preparedData = { id: payload };
+  const apiUrl = `${url.DELETE_FACTOR_FOR_API}delete/`;
+  return delWithPayload(apiUrl, preparedData);
+};
+
+export const exportFactorForAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_FACTOR_FOR_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+
+export const importFactorForAPI = (payload) => {
+  const apiUrl = `${url.IMPORT_FACTOR_FOR_API}`;
+  return post(apiUrl, payload);
+};
+
+// Age Group
+export const getAgeGroupListAPI = (data) => {
+  const apiUrl = `${url.GET_AGE_GROUP_LIST}?search=${data?.search}&page=${
+    data?.page
+  }&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
+
+export const addAgeGroupAPI = (payload) => {
+  const apiUrl = `${url.ADD_AGE_GROUP_API}`;
+  return post(apiUrl, payload);
+};
+
+export const editAgeGroupAPI = (payload) => {
+  const apiUrl = `${url.EDIT_AGE_GROUP_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+
+export const deleteAgeGroupAPI = (payload) => {
+  const preparedData = { id: payload };
+  const apiUrl = `${url.DELETE_AGE_GROUP_API}delete/`;
+  return delWithPayload(apiUrl, preparedData);
+};
+
+export const exportAgeGroupAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_AGE_GROUP_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+
+export const importAgeGroupAPI = (payload) => {
+  const apiUrl = `${url.IMPORT_AGE_GROUP_API}`;
+  return post(apiUrl, payload);
+};
+
+// ACADEMIC_RESULT_GROUP
+export const getAcademicResultGroupListAPI = (data) => {
+  const apiUrl = `${url.GET_ACADEMIC_RESULT_GROUP_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
+
+export const addAcademicResultGroupAPI = (payload) => {
+  return post(url.ADD_ACADEMIC_RESULT_GROUP_API, payload);
+};
+
+export const editAcademicResultGroupAPI = (payload) => {
+  const apiUrl = `${url.EDIT_ACADEMIC_RESULT_GROUP_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+
+export const deleteAcademicResultGroupAPI = (payload) => {
+  const preparedData = { id: payload };
+  const apiUrl = `${url.DELETE_ACADEMIC_RESULT_GROUP_API}delete/`;
+  return delWithPayload(apiUrl, preparedData);
+};
+
+export const exportAcademicResultGroupAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_ACADEMIC_RESULT_GROUP_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+
+export const importAcademicResultGroupAPI = (payload) => {
+  return post(url.IMPORT_ACADEMIC_RESULT_GROUP_API, payload);
+};
+
+// BACKLOGS_GROUP
+export const getBacklogsGroupListAPI = (data) => {
+  const apiUrl = `${url.GET_BACKLOGS_GROUP_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
+
+export const addBacklogsGroupAPI = (payload) => {
+  return post(url.ADD_BACKLOGS_GROUP_API, payload);
+};
+
+export const editBacklogsGroupAPI = (payload) => {
+  const apiUrl = `${url.EDIT_BACKLOGS_GROUP_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+
+export const deleteBacklogsGroupAPI = (payload) => {
+  const preparedData = { id: payload };
+  const apiUrl = `${url.DELETE_BACKLOGS_GROUP_API}delete/`;
+  return delWithPayload(apiUrl, preparedData);
+};
+
+export const exportBacklogsGroupAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_BACKLOGS_GROUP_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+
+export const importBacklogsGroupAPI = (payload) => {
+  return post(url.IMPORT_BACKLOGS_GROUP_API, payload);
+};
+
+// GAP_GROUP
+export const getGapGroupListAPI = (data) => {
+  const apiUrl = `${url.GET_GAP_GROUP_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
+
+export const addGapGroupAPI = (payload) => {
+  return post(url.ADD_GAP_GROUP_API, payload);
+};
+
+export const editGapGroupAPI = (payload) => {
+  const apiUrl = `${url.EDIT_GAP_GROUP_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+
+export const deleteGapGroupAPI = (payload) => {
+  const preparedData = { id: payload };
+  const apiUrl = `${url.DELETE_GAP_GROUP_API}delete/`;
+  return delWithPayload(apiUrl, preparedData);
+};
+
+export const exportGapGroupAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_GAP_GROUP_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+
+export const importGapGroupAPI = (payload) => {
+  return post(url.IMPORT_GAP_GROUP_API, payload);
+};
+
 
 
 

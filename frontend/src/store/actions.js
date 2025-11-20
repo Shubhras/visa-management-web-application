@@ -11,5 +11,6 @@ export * from "./master/testMaster/action";
 export * from "./master/occupationMaster/action";
 export * from "./master/instituteMaster/action";
 export * from "./master/visaConditionsMaster/action";
- 
+export * from "./master/visaProcessMaster/action";
+export * from "./master/studyFactorsMasters/action";
 

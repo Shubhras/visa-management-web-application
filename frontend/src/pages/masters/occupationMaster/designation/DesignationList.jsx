@@ -119,7 +119,7 @@ const DesignationList = () => {
       id: "description",
       label: "Description",
       field: "description",
-      visible: true,
+      visible: false,
       required: false,
     },
     {
@@ -417,10 +417,11 @@ const DesignationList = () => {
     }
     dispatch(
       designationDelete(sendPayload, (response, error) => {
+        console.log("response",response);
         if (error) {
           toast.error(error?.response?.data?.message || "server error");
         } else {
-          if (response?.statusCode === 200 && response?.status === true) {
+          if (response?.status === true) {
             toast.success(response?.message);
             setDepartments((prevRowItems) =>
               prevRowItems.filter((Item) => Item.uuid !== deleteId)
@@ -507,7 +508,7 @@ const DesignationList = () => {
       "Occupation Version": "occupationversion",
       "Occupation Name": "occupationname",
       "Occupation Code": "occupationcode",
-      "Designation":"designation",
+      "Designation(Job Title)":"designation",
       Description: "description",
       "Modified On": "updated_at",
     };
@@ -786,7 +787,7 @@ const DesignationList = () => {
                         </td>
                         {isColumnVisible("country") && (
                           <td>
-                            <span>{rowItem.country_name}</span>
+                            <span>{rowItem.country}</span>
                           </td>
                         )}
                         {isColumnVisible("occupationversion") && (
