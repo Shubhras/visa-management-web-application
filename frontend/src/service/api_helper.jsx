@@ -1043,7 +1043,22 @@ export const getStateDataByCountryAPI = (data) => {
 
 // CIVIL_ID_NAME
 export const getCivilIdNameListDataAPI = (data) => {
-    const apiUrl = `${url.GET_CIVIL_ID_NAME_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+
+    let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        // Case 1: Only created_at is present → keep it
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        // Case 2: More fields exist → remove created_at
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        // Map fields into customSort string
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.GET_CIVIL_ID_NAME_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
     return get(apiUrl);
 };
 
@@ -1066,7 +1081,21 @@ export const deleteCivilIdNameDataAPI = (payload) => {
 };
 
 export const exportCivilIdNameDataAPI = (payload) => {
-    const apiUrl = `${url.EXPORT_CIVIL_ID_NAME_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        // Case 1: Only created_at is present → keep it
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        // Case 2: More fields exist → remove created_at
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        // Map fields into customSort string
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_CIVIL_ID_NAME_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
