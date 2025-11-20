@@ -497,7 +497,8 @@ class EducationLevel(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ('level_code', 'educationlevel','durations')
+        pass
+
 
     def __str__(self):
         return self.educationlevel

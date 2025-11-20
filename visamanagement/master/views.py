@@ -129,32 +129,72 @@ class AdminLogoutView(APIView):
 
 
 class GenderListAPIView(APIView):
+    permission_classes = [IsAuthenticated]  # Add IsAdminUser if needed
+
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'asc')
-
-        allowed_sort_fields = ['name', 'description', 'created_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        custom_sort = request.GET.get('customSort')
+        
+        allowed_sort_fields = ['name', 'description', 'created_at', 'updated_at']
 
         queryset = Gender.objects.filter(is_deleted=False)
 
+        # Search filter
         if search:
-            queryset = queryset.filter(
-                Q(name__istartswith=search)
-            )
+            queryset = queryset.filter(Q(name__istartswith=search))
 
-        queryset = queryset.order_by(sort_by)
+        # Sorting
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
 
+        sort_fields = []
+
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sorting for string fields
+                    if field in ['name', 'description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+        else:
+            # fallback sorting
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'asc')
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+            f = F(orm_field)
+            sort_fields = [f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # Pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = GenderSerializer(result_page, many=True)
 
         return paginator.get_paginated_response(serializer.data)
+
+
+
 
 
 class GenderCreateAPIView(APIView):
@@ -346,12 +386,15 @@ class GenderDeleteAPIView(APIView):
 
 class GenderExportAPIView(APIView):
     """
-    Export Gender data to CSV or XLSX.
+    Export Gender data to CSV or XLSX with custom sorting.
     """
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')  # comma-separated
-        uuids_param = request.GET.get('uuids', '')  # comma-separated UUIDs
+        uuids_param = request.GET.get('uuids', '')  # comma-separated
+        custom_sort = request.GET.get('customSort')  # e.g., name:asc,created_at:desc
 
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
@@ -362,32 +405,67 @@ class GenderExportAPIView(APIView):
             'description': 'Description',
             'is_active': 'Active',
             'is_deleted': 'Deleted',
+            'created_at': 'Created On',
             'updated_at': 'Modified On',
         }
 
         # --- Determine export fields ---
-        if fields:
-            field_list = [f.strip() for f in fields.split(',')]
-        else:
-            field_list = list(field_header_map.keys())
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
         # --- Fetch queryset ---
         queryset = Gender.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
+
+        # --- Custom sorting logic ---
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'is_active': 'is_active',
+            'is_deleted': 'is_deleted',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+
+        sort_fields = []
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field not in sort_field_map:
+                        continue
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sorting for string fields
+                    if field in ['name', 'description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+                except ValueError:
+                    continue
+        else:
+            # Default sorting
+            sort_order = request.GET.get('sortOrder', 'desc')
+            f = F('created_at')
+            sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
 
         # --- Prepare dataset ---
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title="Gender"
+        dataset.title = "Gender"
 
         for gender in queryset:
             row = []
             for field in field_list:
                 value = getattr(gender, field, '')
                 if field in ['created_at', 'updated_at'] and value:
-                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                    value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
                     value = int(value)
                 row.append(value if value is not None else '')
@@ -411,6 +489,9 @@ class GenderExportAPIView(APIView):
         return response
 
 
+
+
+        
 class GenderImportAPIView(APIView):
     """
     Import Gender data from CSV or XLSX with skip and duplicate tracking.
@@ -540,31 +621,63 @@ class GenderImportAPIView(APIView):
 
 
 #-------------------------------maritalstatus--------------------------------
+
 class MaritalstatusListAPIView(APIView):
     def get(self, request):
         try:
             search = request.GET.get('search', '').strip()
-            sort_by = request.GET.get('sortBy', 'created_at')
-            sort_order = request.GET.get('sortOrder', 'asc')
+            custom_sort = request.GET.get('customSort')  # e.g., text:asc,created_at:desc
 
-            # Allowed fields to sort
-            allowed_sort_fields = ['text', 'description', 'created_at']
-            if sort_by not in allowed_sort_fields:
-                sort_by = 'created_at'
-            if sort_order == 'desc':
-                sort_by = f'-{sort_by}'
+            allowed_sort_fields = ['name', 'description', 'created_at', 'updated_at']
 
-            # Filter out deleted entries
             queryset = Maritalstatus.objects.filter(is_deleted=False)
 
-            # Apply search filter
+            # Search filter
             if search:
-                queryset = queryset.filter(
-                    Q(name__istartswith=search)
-                )
+                queryset = queryset.filter(Q(text__istartswith=search))
 
-            # Apply ordering
-            queryset = queryset.order_by(sort_by)
+            # Sorting logic
+            sort_field_map = {
+                'name': 'name',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+            }
+
+            sort_fields = []
+
+            if custom_sort:
+                for rule in custom_sort.split(','):
+                    try:
+                        field, order = rule.split(':')
+                        field = field.strip()
+                        order = order.strip().lower()
+
+                        if field not in sort_field_map:
+                            continue
+
+                        orm_field = sort_field_map[field]
+
+                        # Case-insensitive sorting for string fields
+                        if field in ['text', 'description']:
+                            f = Lower(orm_field)
+                        else:
+                            f = F(orm_field)
+
+                        sort_fields.append(
+                            f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                        )
+                    except ValueError:
+                        continue
+            else:
+                # fallback sorting
+                sort_by = request.GET.get('sortBy', 'created_at')
+                sort_order = request.GET.get('sortOrder', 'asc')
+                orm_field = sort_field_map.get(sort_by, 'created_at')
+                f = F(orm_field)
+                sort_fields = [f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)]
+
+            queryset = queryset.order_by(*sort_fields)
 
             # Pagination
             paginator = CustomPagination()
@@ -580,6 +693,8 @@ class MaritalstatusListAPIView(APIView):
                 "message": str(e),
                 "data": None
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 
 
 class MaritalstatusCreateAPIView(APIView):
@@ -770,55 +885,92 @@ class MaritalstatusDeleteAPIView(APIView):
 
 class MaritalstatusExportAPIView(APIView):
     """
-    Export Maritalstatus data to CSV or XLSX.
+    Export Maritalstatus data to CSV or XLSX with custom sorting.
     """
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')  # comma-separated
         uuids_param = request.GET.get('uuids', '')  # comma-separated UUIDs
+        custom_sort = request.GET.get('customSort')  # e.g., name:asc,created_at:desc
 
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
-        # Field to header mapping
+        # --- Field to header mapping ---
         field_header_map = {
             'uuid': 'UUID',
             'name': 'Marital Status',
             'description': 'Description',
             'is_active': 'Active',
             'is_deleted': 'Deleted',
+            'created_at': 'Created On',
             'updated_at': 'Modified On',
         }
 
-        # Determine export fields
-        if fields:
-            field_list = [f.strip() for f in fields.split(',')]
-        else:
-            field_list = list(field_header_map.keys())
+        # --- Determine export fields ---
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
-        # Fetch queryset
+        # --- Fetch queryset ---
         queryset = Maritalstatus.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
 
+        # --- Custom sorting logic ---
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'is_active': 'is_active',
+            'is_deleted': 'is_deleted',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
 
-        # Prepare dataset
+        sort_fields = []
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field not in sort_field_map:
+                        continue
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sorting for string fields
+                    if field in ['name', 'description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+                except ValueError:
+                    continue
+        else:
+            # Default sorting by created_at
+            sort_order = request.GET.get('sortOrder', 'desc')
+            f = F('created_at')
+            sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # --- Prepare dataset ---
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title="MaritalStatus"
+        dataset.title = "MaritalStatus"
 
         for item in queryset:
             row = []
             for field in field_list:
                 value = getattr(item, field, '')
                 if field in ['created_at', 'updated_at'] and value:
-                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                    value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
                     value = int(value)
                 row.append(value if value is not None else '')
             dataset.append(row)
 
-        # Export file
+        # --- Export file ---
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
@@ -834,6 +986,7 @@ class MaritalstatusExportAPIView(APIView):
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
+    
 
 class MaritalstatusImportAPIView(APIView):
     """
@@ -973,27 +1126,65 @@ class ContinentListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['name', 'description', 'updated_at']
-
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        custom_sort = request.GET.get('customSort')
+        
+        allowed_sort_fields = ['name', 'description', 'created_at', 'updated_at']
 
         queryset = Continents.objects.filter(is_deleted=False)
-        if search:
-            queryset = queryset.filter(
-                Q(name__istartswith=search) 
-            )
 
-        queryset = queryset.order_by(sort_by)
+        # Search filter
+        if search:
+            queryset = queryset.filter(Q(name__istartswith=search))
+
+        # Sorting
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+
+        sort_fields = []
+
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sorting for string fields
+                    if field in ['name', 'description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+        else:
+            # fallback sorting
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'desc')
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+            f = F(orm_field)
+            sort_fields = [f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # Pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = ContinentSerializer(result_page, many=True)
-        return paginator.get_paginated_response(serializer.data)
 
+        return paginator.get_paginated_response(serializer.data)
 
 class ContinentCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -1332,18 +1523,24 @@ class ContinentImportAPIView(APIView):
 
 #-------------------------------------------country---------------------------------
 
-
 class CountryListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        custom_sort = request.GET.get('customSort')
+        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_order = request.GET.get('sortOrder', 'desc')  
 
-        # Allowed fields for sorting
         allowed_sort_fields = ['name', 'shortName', 'fullName', 'capitalCity', 'created_at', 'updated_at']
+        if sort_by not in allowed_sort_fields:
+            sort_by = 'created_at'
 
-        # Helper to parse comma-separated or repeated params
+
+        if sort_order.lower() == 'desc':
+            sort_by = f'-{sort_by}'
+
+        queryset = Country.objects.filter(is_deleted=False)
+
         def parse_ids(param_name):
             raw = request.GET.get(param_name, '')
             if raw:
@@ -1352,7 +1549,6 @@ class CountryListAPIView(APIView):
                 items = request.GET.getlist(param_name)
             return items
 
-        # Helper to validate UUIDs
         def validate_uuid_list(uuid_list):
             valid = []
             for u in uuid_list:
@@ -1363,68 +1559,24 @@ class CountryListAPIView(APIView):
             return valid
 
         continent_list = validate_uuid_list(parse_ids('continent'))
-
-        queryset = Country.objects.filter(is_deleted=False)
-
-        # ---------------------------
-        # Filter by continent UUID
-        # ---------------------------
         if continent_list:
             queryset = queryset.filter(continent__uuid__in=continent_list)
 
-        # ---------------------------
-        # Search
-        # ---------------------------
+ 
         if search:
             queryset = queryset.filter(Q(name__istartswith=search))
 
-        # ---------------------------
-        # Sorting Logic
-        # ---------------------------
-        sort_field_map = {
-            'name': 'name',
-            'shortName': 'shortName',
-            'fullName': 'fullName',
-            'capitalCity': 'capitalCity',
-            'created_at': 'created_at',
-            'updated_at': 'updated_at',
-        }
 
-        sort_fields = []
+        queryset = queryset.order_by(sort_by)
 
-        if custom_sort:
-            for rule in custom_sort.split(','):
-                try:
-                    field, order = rule.split(':')
-                    field = field.strip()
-                    order = order.strip().lower()
-                    if field not in sort_field_map:
-                        continue
-                    orm_field = sort_field_map[field]
-                    if field in ['name', 'shortName', 'fullName', 'capitalCity']:
-                        f = Lower(orm_field)
-                    else:
-                        f = F(orm_field)
-                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
-                except ValueError:
-                    continue
-        else:
-            # Default sorting
-            sort_by = request.GET.get('sortBy', 'created_at')
-            sort_order = request.GET.get('sortOrder', 'desc')
-            orm_field = sort_field_map.get(sort_by, 'created_at')
-            f = F(orm_field)
-            sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
 
-        queryset = queryset.order_by(*sort_fields)
-
-        # ---------------------------
-        # Pagination
-        # ---------------------------
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = CountrySerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
+
+
+
 
 class CountryCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -2045,6 +2197,15 @@ class StateListAPIView(APIView):
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = StateSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
+
+
+
+
+
+
+
+
+
 
 
 class StateCreateAPIView(APIView):

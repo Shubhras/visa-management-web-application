@@ -9,7 +9,6 @@ import AddEditGenderModal from './AddEditGenderModal';
 import { genderList, genderDelete, genderExportData } from '../../../../store/master/generalMasters/actions';
 import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 import { useGlobalSearch } from '../../../../components/comman/GlobalSearchContext';
-
 const GenderList = () => {
   const dispatch = useDispatch();
   const { globalSearch, setGlobalSearch } = useGlobalSearch();
@@ -89,11 +88,9 @@ const GenderList = () => {
         setShowColumnDropdown(false);
       }
     };
-
     if (showColumnDropdown) {
       document.addEventListener('mousedown', handleClickOutside);
     }
-
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
@@ -104,8 +101,11 @@ const GenderList = () => {
     limit: 25,
     search: '',
     status: '',
-    sortBy: 'created_at', // Field to sort by
-    sortOrder: 'desc', // 'asc' or 'desc'
+    sortBy: '', // Field to sort by
+    sortOrder: '', // 'asc' or 'desc'
+    sort: [
+      { field: "created_at", order: "desc" }
+    ],
     total: 0,
     totalPages: 0,
     currentPage: 1,
@@ -122,13 +122,12 @@ const GenderList = () => {
         fetchDepartmentList();
       }
     }, 500);
-
     return () => clearTimeout(timer);
   }, [tableState.search]);
 
   useEffect(() => {
     fetchDepartmentList();
-  }, [tableState.page, tableState.limit, tableState.status, tableState.sortBy, tableState.sortOrder]);
+  }, [tableState.page, tableState.limit, tableState.status, tableState.sort]);
 
   const fetchDepartmentList = () => {
     setLoading(true);
@@ -138,7 +137,8 @@ const GenderList = () => {
       search: tableState.search || '',
       status: tableState.status || '',
       sortBy: tableState.sortBy || '',
-      sortOrder: tableState.sortOrder || ''
+      sortOrder: tableState.sortOrder || '',
+      sort: tableState.sort,
     };
 
     dispatch(genderList(params, (response, error) => {
@@ -178,25 +178,33 @@ const GenderList = () => {
   // Handle sorting
   const handleSort = (field) => {
     setTableState(prev => {
-      if (prev.sortBy === field) {
-        if (prev.sortOrder === 'asc') {
-          return { ...prev, sortOrder: 'desc', page: 1 };
-        } else if (prev.sortOrder === 'desc') {
-          return { ...prev, sortBy: '', sortOrder: '', page: 1 };
+      let newSort = [...prev.sort];
+      const existingIndex = newSort.findIndex(s => s.field === field);
+      if (existingIndex === -1) {
+        newSort.push({ field, order: "asc" });
+      }
+      else {
+        const existing = newSort[existingIndex];
+        if (existing.order === "asc") {
+          newSort[existingIndex].order = "desc";
+        }
+        else if (existing.order === "desc") {
+          newSort.splice(existingIndex, 1);
         }
       }
-      return { ...prev, sortBy: field, sortOrder: 'asc', page: 1 };
+      return { ...prev, sort: newSort, page: 1 };
     });
   };
 
   const getSortIcon = (field) => {
-    if (tableState.sortBy !== field) {
+    const sortObj = tableState.sort.find(s => s.field === field);
+    if (!sortObj) {
       return <Icon icon="ri:menu-line" className="sorting-th-icone" />;
     }
-    if (tableState.sortOrder === 'asc') {
-      return <Icon icon="ri:sort-asc" className='sorting-th-icone' />;
+    if (sortObj.order === "asc") {
+      return <Icon icon="ri:sort-asc" className="sorting-th-icone" />;
     }
-    return <Icon icon="ri:sort-desc" className='sorting-th-icone' />;
+    return <Icon icon="ri:sort-desc" className="sorting-th-icone" />;
   };
 
   // Clear all filters
@@ -207,8 +215,11 @@ const GenderList = () => {
       limit: 25,
       search: '',
       status: '',
-      sortBy: 'created_at',
-      sortOrder: 'desc',
+      sortBy: '',
+      sortOrder: '',
+      sort: [
+        { field: "created_at", order: "desc" }   // default sort
+      ],
       total: 0,
       totalPages: 0,
       currentPage: 1,
@@ -218,23 +229,7 @@ const GenderList = () => {
     // Reset Global Search
     setGlobalSearch('');
   };
-
-  const handleSearchChange = (value) => {
-    setTableState(prev => ({
-      ...prev,
-      search: value,
-      page: 1
-    }));
-  };
-
-  const handleStatusChange = (value) => {
-    setTableState(prev => ({
-      ...prev,
-      status: value === 'All' ? '' : value,
-      page: 1
-    }));
-  };
-
+ 
   const handlePageLengthChange = (value) => {
     setTableState(prev => ({
       ...prev,
@@ -243,14 +238,6 @@ const GenderList = () => {
     }));
   };
 
-  // For "Select All" button
-  const handleSelectAllButton = () => {
-    if (isAllSelected) {
-      setSelectedRows([]);
-    } else {
-      setSelectedRows(departments.map(Item => Item.uuid));
-    }
-  };
   // For checkbox in table header
   const handleSelectAll = (e) => {
     const checked = e.target.checked;
@@ -289,7 +276,6 @@ const GenderList = () => {
     const maxVisible = 5;
     const totalPages = tableState.totalPages;
     const currentPage = tableState.currentPage;
-
     if (totalPages <= maxVisible) {
       for (let i = 1; i <= totalPages; i++) {
         pages.push(i);
@@ -342,7 +328,6 @@ const GenderList = () => {
   };
 
   const confirmDelete = () => {
-    // const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
     const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
     if (!sendPayload || sendPayload.length === 0) {
       toast.error("No gender selected for deletion.");
@@ -395,7 +380,6 @@ const GenderList = () => {
     setShowExportPopop(false);
   };
 
-
   const handleDragStart = (e, index) => {
     e.dataTransfer.setData("dragIndex", index);
   };
@@ -442,6 +426,7 @@ const GenderList = () => {
       file: "xlsx",
       fields: fieldsString,
       uuids: selectAllOrNot === "all" ? [] : selectedRows,
+      sort: tableState.sort,
     };
 
     setLoadingExport(true);
@@ -455,7 +440,6 @@ const GenderList = () => {
           const blob = new Blob([response.data], {
             type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
           });
-
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
@@ -477,14 +461,9 @@ const GenderList = () => {
   };
 
   const startIndex = (tableState.currentPage - 1) * tableState.limit;
-  const statusOptions = ['All', 'Active', 'Inactive'];
-
-
-
   return (
     <>
       <MasterLayout>
-        {/* <Breadcrumb title="Department" subTitle="List" /> */}
         <div className="card basic-data-table main-container-data">
           <div className="card-body container-data">
             <div className="row align-items-center gy-3 gx-2 flex-wrap filter-action-btn">
@@ -536,7 +515,6 @@ const GenderList = () => {
                   >Reset </button>
                 </div>
               </div>
-
               {/* Right Section: Select / Search / +Add New */}
               <div className="col-xl-6 col-lg-8 col-md-12">
                 <div className="d-flex flex-wrap align-items-center justify-content-end gap-2">

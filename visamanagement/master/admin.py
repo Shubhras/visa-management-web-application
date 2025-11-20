@@ -146,7 +146,6 @@ class AccreditationNameAdmin(admin.ModelAdmin):
     list_display = (
         'full_name',
         'short_name',
-        'country',
         'category',
         'issuing_authority',
         'valid_type',
@@ -162,12 +161,10 @@ class AccreditationNameAdmin(admin.ModelAdmin):
         'full_name',
         'short_name',
         'issuing_authority',
-        'country__name',
         'category__name',
     )
 
     list_filter = (
-        'country',
         'category',
         'valid_type',
         'valid_duration_unit',
