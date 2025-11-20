@@ -109,7 +109,7 @@ const MasterLayout = ({ children }) => {
             { name: "Education Level Code", path: "/education-level-code" },
             { name: "Education Level", path: "/education-level" },
             { name: "Study Main Area", path: "/study-main-area" },
-            { name: "Education Duration", path: "/education-duration" },
+            // { name: "Education Duration", path: "/education-duration" },
             { name: "Study Major Area", path: "/study-major-area" },
             { name: "Academic Result Type", path: "/academic-result-type" },
             { name: "Education Type", path: "/education-type" },

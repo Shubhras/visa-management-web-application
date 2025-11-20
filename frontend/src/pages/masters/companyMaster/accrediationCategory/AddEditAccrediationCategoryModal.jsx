@@ -61,7 +61,7 @@ const AddEditAccrediationCategoryModal = ({ show, handleClose, mode = 'add', row
     const newErrors = {};
     let isValid = true;
 
-    // Accrediation Category Name validation
+    // Accreditation Category Name validation
     if (!formData.name.trim()) {
       newErrors.name = 'Name is required';
       isValid = false;
@@ -133,14 +133,14 @@ const AddEditAccrediationCategoryModal = ({ show, handleClose, mode = 'add', row
       className="modal fade show common-ctl-popup"
       tabIndex={-1}
       role="dialog"
-      aria-labelledby="AccrediationCategoryModalLabel"
+      aria-labelledby="AccreditationCategoryModalLabel"
       aria-hidden={!show}
     >
       <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
         <div className="modal-content radius-16 bg-base">
           <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-            <h1 className="modal-title fs-5" id="AccrediationCategoryModalLabel">
-              {mode === 'edit' ? 'Edit Accrediation Category' : 'Add Accrediation Category'}
+            <h1 className="modal-title fs-5" id="AccreditationCategoryModalLabel">
+              {mode === 'edit' ? 'Edit Accreditation Category' : 'Add Accreditation Category'}
             </h1>
             <button
               type="button"
@@ -153,10 +153,10 @@ const AddEditAccrediationCategoryModal = ({ show, handleClose, mode = 'add', row
           <div className="modal-body p-24">
             <form onSubmit={handleSubmit}>
               <div className="row">
-                {/* Accrediation Category  */}
+                {/* Accreditation Category  */}
                 <div className="col-12 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Accrediation Category <span className="text-danger">*</span>
+                    Accreditation Category <span className="text-danger">*</span>
                   </label>
                   <input
                     type="text"
