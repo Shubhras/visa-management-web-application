@@ -382,8 +382,6 @@ class GenderDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-
-
 class GenderExportAPIView(APIView):
     """
     Export Gender data to CSV or XLSX with custom sorting.
@@ -1117,6 +1115,8 @@ class MaritalstatusImportAPIView(APIView):
 
 
 #-------------------------------continents--------------------------------
+
+
 class ContinentListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -1197,7 +1197,6 @@ class ContinentCreateAPIView(APIView):
             return Response({"statusCode": 200, "status": True, "message": "Continent created successfully", "data": serializer.data})
         errors = " ".join([msg for msgs in serializer.errors.values() for msg in msgs])
         return Response({"statusCode": 400, "status": False, "message": errors}, status=400)
-
 
 
 class ContinentRetrieveAPIView(APIView):
@@ -1321,7 +1320,6 @@ class ContinentDeleteAPIView(APIView):
 
 
 
-
 class ContinentExportAPIView(APIView):
     """
     Export Continents data to CSV or XLSX with custom sorting.
@@ -1427,8 +1425,6 @@ class ContinentExportAPIView(APIView):
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
-
-
 
 
 class ContinentImportAPIView(APIView):
@@ -5233,8 +5229,7 @@ class CivilIdNameDeleteAPIView(APIView):
             "message": f"{count} Civil ID(s) deleted",
             "data": {"invalid_uuids": invalid} if invalid else None
         })
- 
- 
+
  
 class CivilIdNameExportAPIView(APIView):
     """
@@ -5379,8 +5374,6 @@ class CivilIdNameExportAPIView(APIView):
         return response
 
 
-        
- 
 class CivilIdNameImportAPIView(APIView):
     def post(self, request):
         file = request.FILES.get("file")
