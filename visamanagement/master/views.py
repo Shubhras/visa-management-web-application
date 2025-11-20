@@ -135,7 +135,7 @@ class GenderListAPIView(APIView):
         search = request.GET.get('search', '').strip()
         custom_sort = request.GET.get('customSort')
         
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'created_at', 'updated_at']
 
         queryset = Gender.objects.filter(is_deleted=False)
 
@@ -148,6 +148,7 @@ class GenderListAPIView(APIView):
             'name': 'name',
             'description': 'description',
             'created_at': 'created_at',
+            'updated_at': 'updated_at',
         }
 
         sort_fields = []
