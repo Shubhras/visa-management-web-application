@@ -17,7 +17,7 @@ import { useGlobalSearch } from "../../../../components/comman/GlobalSearchConte
 
 const ContinentsList = () => {
   const dispatch = useDispatch();
-   const { globalSearch, setGlobalSearch } = useGlobalSearch();
+  const { globalSearch, setGlobalSearch } = useGlobalSearch();
   const [modalState, setModalState] = useState({
     show: false,
     mode: "add", // 'add' or 'edit'
@@ -110,19 +110,23 @@ const ContinentsList = () => {
   const [tableState, setTableState] = useState({
     page: 1,
     limit: 25,
-    search: "",
-    status: "",
-    sortBy: 'created_at', // Field to sort by
-    sortOrder: 'desc', // 'asc' or 'desc'
+    search: '',
+    status: '',
+    sortBy: '', // Field to sort by
+    sortOrder: '', // 'asc' or 'desc'
+    sort: [
+      { field: "created_at", order: "desc" }
+    ],
     total: 0,
     totalPages: 0,
     currentPage: 1,
     hasNext: false,
-    hasPrevious: false,
+    hasPrevious: false
   });
-    useEffect(() => {
-      setTableState(prev => ({ ...prev, search: globalSearch, page: 1 }));
-    }, [globalSearch]);
+
+  useEffect(() => {
+    setTableState(prev => ({ ...prev, search: globalSearch, page: 1 }));
+  }, [globalSearch]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -136,13 +140,7 @@ const ContinentsList = () => {
 
   useEffect(() => {
     fetchContinentsList();
-  }, [
-    tableState.page,
-    tableState.limit,
-    tableState.status,
-    tableState.sortBy,
-    tableState.sortOrder,
-  ]);
+  }, [tableState.page, tableState.limit, tableState.status, tableState.sort]);
 
   const fetchContinentsList = () => {
     setLoading(true);
@@ -153,6 +151,7 @@ const ContinentsList = () => {
       status: tableState.status || "",
       sortBy: tableState.sortBy || "",
       sortOrder: tableState.sortOrder || "",
+      sort: tableState.sort,
     };
 
     dispatch(
@@ -170,6 +169,12 @@ const ContinentsList = () => {
             hasNext: paginationData.nextPage || false,
             hasPrevious: paginationData.previousPage || false,
           }));
+          setSelectedRows(prev => {
+            const filtered = prev.filter(rowId =>
+              response?.data.some(rowItems => rowItems.uuid === rowId)
+            );
+            return filtered;
+          });
         } else {
           setContinents([]);
           setTableState((prev) => ({
@@ -185,48 +190,60 @@ const ContinentsList = () => {
     );
   };
 
-   const handleSort = (field) => {
-      setTableState(prev => {
-        if (prev.sortBy === field) {
-          if (prev.sortOrder === 'asc') {
-            return { ...prev, sortOrder: 'desc', page: 1 };
-          } else if (prev.sortOrder === 'desc') {
-            return { ...prev, sortBy: '', sortOrder: '', page: 1 };
-          }
+  // Handle sorting
+  const handleSort = (field) => {
+    setTableState(prev => {
+      let newSort = [...prev.sort];
+      const existingIndex = newSort.findIndex(s => s.field === field);
+      if (existingIndex === -1) {
+        newSort.push({ field, order: "asc" });
+      }
+      else {
+        const existing = newSort[existingIndex];
+        if (existing.order === "asc") {
+          newSort[existingIndex].order = "desc";
         }
-        return { ...prev, sortBy: field, sortOrder: 'asc', page: 1 };
-      });
-    };
-  
-    const getSortIcon = (field) => {
-      if (tableState.sortBy !== field) {
-        return <Icon icon="ri:menu-line" className="sorting-th-icone" />;
+        else if (existing.order === "desc") {
+          newSort.splice(existingIndex, 1);
+        }
       }
-      if (tableState.sortOrder === 'asc') {
-        return <Icon icon="ri:sort-asc" className='sorting-th-icone' />;
-      }
-      return <Icon icon="ri:sort-desc" className='sorting-th-icone' />;
-    };
-  
-    // Clear all filters
-    const clearAllFilters = () => {
-      setTableState(prev => ({
-        ...prev,
-        page: 1,
-        limit: 25,
-        search: '',
-        status: '',
-        sortBy: 'created_at',
-        sortOrder: 'desc',
-        total: 0,
-        totalPages: 0,
-        currentPage: 1,
-        hasNext: false,
-        hasPrevious: false
-      }));
-      // Reset Global Search
-      setGlobalSearch('');
-    };
+      return { ...prev, sort: newSort, page: 1 };
+    });
+  };
+
+  const getSortIcon = (field) => {
+    const sortObj = tableState.sort.find(s => s.field === field);
+    if (!sortObj) {
+      return <Icon icon="ri:menu-line" className="sorting-th-icone" />;
+    }
+    if (sortObj.order === "asc") {
+      return <Icon icon="ri:sort-asc" className="sorting-th-icone" />;
+    }
+    return <Icon icon="ri:sort-desc" className="sorting-th-icone" />;
+  };
+  // Clear all filters
+  const clearAllFilters = () => {
+    setTableState(prev => ({
+      ...prev,
+      page: 1,
+      limit: 25,
+      search: '',
+      status: '',
+      sortBy: '',
+      sortOrder: '',
+      sort: [
+        { field: "created_at", order: "desc" }   // default sort
+      ],
+      total: 0,
+      totalPages: 0,
+      currentPage: 1,
+      hasNext: false,
+      hasPrevious: false
+    }));
+    // Reset Global Search
+    setGlobalSearch('');
+  };
+
   const handlePageLengthChange = (value) => {
     setTableState((prev) => ({
       ...prev,
@@ -235,14 +252,6 @@ const ContinentsList = () => {
     }));
   };
 
-  // For "Select All" button
-  const handleSelectAllButton = () => {
-    if (isAllSelected) {
-      setSelectedRows([]);
-    } else {
-      setSelectedRows(continents.map((Item) => Item.uuid));
-    }
-  };
   // For checkbox in table header
   const handleSelectAll = (e) => {
     const checked = e.target.checked;
@@ -449,6 +458,7 @@ const ContinentsList = () => {
       file: "xlsx",
       fields: fieldsString,
       uuids: selectAllOrNot === "all" ? [] : selectedRows,
+      sort: tableState.sort,
     };
     setLoadingExport(true);
     dispatch(
@@ -538,7 +548,7 @@ const ContinentsList = () => {
                       </button>
                     </>
                   )}
-                   <button
+                  <button
                     onClick={clearAllFilters}
                     className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
                   >Reset </button>

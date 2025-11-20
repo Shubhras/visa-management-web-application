@@ -229,7 +229,7 @@ const GenderList = () => {
     // Reset Global Search
     setGlobalSearch('');
   };
- 
+
   const handlePageLengthChange = (value) => {
     setTableState(prev => ({
       ...prev,
@@ -426,6 +426,7 @@ const GenderList = () => {
       file: "xlsx",
       fields: fieldsString,
       uuids: selectAllOrNot === "all" ? [] : selectedRows,
+      search: tableState.search || '',
       sort: tableState.sort,
     };
 

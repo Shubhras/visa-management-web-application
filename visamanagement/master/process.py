@@ -1,39 +1,31 @@
-from django.shortcuts import render
-from  .models  import *
+from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
-from .serializers import  *
-from django.core.paginator import Paginator
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from django.db.models import Q
-import uuid
-from rest_framework.permissions import IsAuthenticated ,AllowAny ,BasePermission 
-from django.shortcuts import get_object_or_404
-from .pagination import  *
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.exceptions import ValidationError
-from rest_framework_simplejwt.exceptions import TokenError  
-from rest_framework_simplejwt.authentication import JWTAuthentication
-from import_export.formats.base_formats import CSV, XLSX
-from tablib import Dataset
-import openpyxl
-from django.http import HttpResponse
 from uuid import UUID
-from datetime import datetime  
-from django.db import IntegrityError,transaction
-import csv
+import datetime
+import openpyxl
+from tablib import Dataset
+from django.http import HttpResponse
+from .models import *
+from .serializers import *
+from .pagination import *
 import io
 import pytz
 from django.utils import timezone
-import unicodedata
+from tablib import Dataset
+from rest_framework import status
+
+from .serializers import DocumentNameSerializer
+
+
+
 
 india_tz = pytz.timezone('Asia/Kolkata')
 
-class IsAdminUser(BasePermission):
-    def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and request.user.is_superuser)
-    
-    
+#----------------Document Category----------------
+
 
 class DocumentCategoryCreateAPIView(APIView):
     def post(self, request):
@@ -60,6 +52,7 @@ class DocumentCategoryCreateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
+
 class DocumentCategoryListAPIView(APIView):
     def get(self, request):
         search = request.GET.get('search', '').strip()
@@ -77,7 +70,7 @@ class DocumentCategoryListAPIView(APIView):
 
         if search:
             queryset = queryset.filter(
-                Q(name__icontains=search) | Q(description__icontains=search)
+                Q(name__istartswith=search)     
             )
 
         queryset = queryset.order_by(sort_by)
@@ -488,6 +481,36 @@ class DocumentNameCreateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
+# class DocumentNameListAPIView(APIView):
+#     def get(self, request):
+#         search = request.GET.get('search', '').strip()
+#         category_id = request.GET.get('category_id')
+#         sort_by = request.GET.get('sortBy', 'created_at')
+#         sort_order = request.GET.get('sortOrder', 'desc')
+
+#         allowed_sort_fields = ['document_name', 'created_at']
+#         if sort_by not in allowed_sort_fields:
+#             sort_by = 'created_at'
+#         if sort_order == 'desc':
+#             sort_by = f'-{sort_by}'
+
+#         queryset = DocumentName.objects.filter(is_deleted=False)
+#         if category_id:
+#             queryset = queryset.filter(document_category_id=category_id)
+#         if search:
+#             queryset = queryset.filter(
+#                 Q(document_name__icontains=search) |
+#                 Q(description__icontains=search) |
+#                 Q(document_category__name__icontains=search)
+#             )
+
+#         queryset = queryset.order_by(sort_by)
+#         paginator = CustomPagination()
+#         result_page = paginator.paginate_queryset(queryset, request)
+#         serializer = DocumentNameSerializer(result_page, many=True)
+#         return paginator.get_paginated_response(serializer.data)
+
+
 class DocumentNameListAPIView(APIView):
     def get(self, request):
         search = request.GET.get('search', '').strip()
@@ -498,24 +521,29 @@ class DocumentNameListAPIView(APIView):
         allowed_sort_fields = ['document_name', 'created_at']
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
+
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
         queryset = DocumentName.objects.filter(is_deleted=False)
+
         if category_id:
             queryset = queryset.filter(document_category_id=category_id)
+
+
         if search:
             queryset = queryset.filter(
-                Q(document_name__icontains=search) |
-                Q(description__icontains=search) |
-                Q(document_category__name__icontains=search)
+                Q(document_name__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
+
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
+
         serializer = DocumentNameSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
+
 
 
 class DocumentNameRetrieveAPIView(APIView):
@@ -892,7 +920,7 @@ class DocumentTypeListAPIView(APIView):
 
         if search:
             queryset = queryset.filter(
-                Q(name__icontains=search) | Q(description__icontains=search)
+                Q(name__istartswith=search)
             )
 
         queryset = queryset.order_by(sort_by)
@@ -1294,29 +1322,62 @@ class PurposeOfVisitCreateAPIView(APIView):
 
 
 
+# class PurposeOfVisitListAPIView(APIView):
+#     def get(self, request):
+#         search = request.GET.get('search', '').strip()
+#         sort_by = request.GET.get('sortBy', 'created_at')
+#         sort_order = request.GET.get('sortOrder', 'desc')
+
+#         allowed_sort_fields = ['name', 'description', 'created_at']
+#         if sort_by not in allowed_sort_fields:
+#             sort_by = 'created_at'
+
+#         if sort_order == 'desc':
+#             sort_by = f'-{sort_by}'
+
+#         queryset = PurposeOfVisit.objects.filter(is_deleted=False)
+#         if search:
+#             queryset = queryset.filter(Q(name__icontains=search) | Q(description__icontains=search))
+#         queryset = queryset.order_by(sort_by)
+
+#         paginator = CustomPagination()
+#         result_page = paginator.paginate_queryset(queryset, request)
+#         serializer = PurposeOfVisitSerializer(result_page, many=True)
+#         return paginator.get_paginated_response(serializer.data)
+
 class PurposeOfVisitListAPIView(APIView):
+
     def get(self, request):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'created_at')
         sort_order = request.GET.get('sortOrder', 'desc')
 
+        # Allowed sorting fields
         allowed_sort_fields = ['name', 'description', 'created_at']
+
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
 
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
+        # Base Query
         queryset = PurposeOfVisit.objects.filter(is_deleted=False)
+
+        # STRICT search → ONLY name, using istartswith
         if search:
-            queryset = queryset.filter(Q(name__icontains=search) | Q(description__icontains=search))
+            queryset = queryset.filter(
+                Q(name__istartswith=search)
+            )
+
         queryset = queryset.order_by(sort_by)
 
+        # Pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
+
         serializer = PurposeOfVisitSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
-
 
 
 class PurposeOfVisitRetrieveAPIView(APIView):
@@ -1375,56 +1436,55 @@ class PurposeOfVisitUpdateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
+
 class PurposeOfVisitDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request):
-        uuids = request.data.get("uuids", None)
+        ids = request.data.get('uuids', None)
 
-        # --- Validate input ---
-        if not uuids:
+        if not ids:
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Please provide 'uuids' (single UUID, list of UUIDs, or 'all')."
+                "message": "Please provide 'id' (UUID list or 'all')."
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # --- Delete all records ---
-        if uuids == "all":
-            items = PurposeOfVisit.objects.filter(is_deleted=False)
-            count = items.count()
+        # Delete All
+        if ids == "all":
+            visits = PurposeOfVisit.objects.filter(is_deleted=False)
+            count = visits.count()
 
             if count == 0:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "No Purpose of Visit records found to delete."
+                    "message": "No Purpose Of Visit records found to delete."
                 }, status=status.HTTP_404_NOT_FOUND)
 
-            items.update(is_deleted=True)
+            visits.update(is_deleted=True)
+
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} Purpose of Visit records deleted successfully."
+                "message": f"All {count} Purpose Of Visit records deleted successfully."
             }, status=status.HTTP_200_OK)
 
-        # --- Normalize single UUID to list ---
-        if isinstance(uuids, str):
-            uuids = [uuids]
-
-        if not isinstance(uuids, list):
+        # Check must be list
+        if not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Please provide a list of UUIDs, a single UUID, or 'all'."
+                "message": "Provide list of UUIDs in 'id' field or 'all'."
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # --- Validate UUID formats ---
         valid_uuids, invalid_uuids = [], []
-        for u in uuids:
+
+        # Validate UUIDs
+        for u in ids:
             try:
                 valid_uuids.append(UUID(u))
-            except (ValueError, TypeError):
+            except ValueError:
                 invalid_uuids.append(u)
 
         if not valid_uuids:
@@ -1435,23 +1495,23 @@ class PurposeOfVisitDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids}
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # --- Soft delete valid records ---
-        items = PurposeOfVisit.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = items.count()
+        visits = PurposeOfVisit.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+        count = visits.count()
 
         if count == 0:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "No matching Purpose of Visit records found."
+                "message": "No matching Purpose Of Visit records found."
             }, status=status.HTTP_404_NOT_FOUND)
 
-        items.update(is_deleted=True)
+        # Hard delete — same as your reference
+        visits.delete()
 
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f"{count} Purpose of Visit record(s) deleted successfully.",
+            "message": f"{count} Purpose Of Visit record(s) deleted successfully.",
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         }, status=status.HTTP_200_OK)
 
@@ -1722,29 +1782,62 @@ class DocumentsForCreateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
+# class DocumentsForListAPIView(APIView):
+#     def get(self, request):
+#         search = request.GET.get("search", "").strip()
+#         sort_by = request.GET.get("sortBy", "created_at")
+#         sort_order = request.GET.get("sortOrder", "desc")
+
+#         allowed_sort_fields = ["name", "description", "created_at"]
+#         if sort_by not in allowed_sort_fields:
+#             sort_by = "created_at"
+
+#         if sort_order == "desc":
+#             sort_by = f"-{sort_by}"
+
+#         queryset = DocumentsFor.objects.filter(is_deleted=False)
+
+#         if search:
+#             queryset = queryset.filter(Q(name__icontains=search) | Q(description__icontains=search))
+
+#         queryset = queryset.order_by(sort_by)
+
+#         paginator = CustomPagination()
+#         result_page = paginator.paginate_queryset(queryset, request)
+#         serializer = DocumentsForSerializer(result_page, many=True)
+#         return paginator.get_paginated_response(serializer.data)
+
 class DocumentsForListAPIView(APIView):
     def get(self, request):
-        search = request.GET.get("search", "").strip()
-        sort_by = request.GET.get("sortBy", "created_at")
-        sort_order = request.GET.get("sortOrder", "desc")
+        search = request.GET.get('search', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_order = request.GET.get('sortOrder', 'desc')
 
-        allowed_sort_fields = ["name", "description", "created_at"]
+        # Allowed sort fields – description removed because you said API
+        # must filter only by document_for column (name).
+        allowed_sort_fields = ['name', 'updated_at']
         if sort_by not in allowed_sort_fields:
-            sort_by = "created_at"
+            sort_by = 'created_at'
 
-        if sort_order == "desc":
-            sort_by = f"-{sort_by}"
+        # Apply descending order for 'desc'
+        if sort_order == 'desc':
+            sort_by = f'-{sort_by}'
 
         queryset = DocumentsFor.objects.filter(is_deleted=False)
 
+        # Search only on name (document_for column)
         if search:
-            queryset = queryset.filter(Q(name__icontains=search) | Q(description__icontains=search))
+            queryset = queryset.filter(
+                Q(name__istartswith=search)
+            )
 
+        # Apply dynamic ordering
         queryset = queryset.order_by(sort_by)
 
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = DocumentsForSerializer(result_page, many=True)
+
         return paginator.get_paginated_response(serializer.data)
 
 
@@ -1811,41 +1904,62 @@ class DocumentsForUpdateAPIView(APIView):
 class DocumentsForDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
-    def delete(self, request):
-        ids = request.data.get("uuids")
+    def delete(self, request, uuid=None):
+        ids = request.data.get('id', None)
 
-        if not ids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Please provide 'id' (UUID list or 'all')."
-            }, status=status.HTTP_400_BAD_REQUEST)
+        # -------- Single delete via URL param --------
+        if uuid:
+            try:
+                record = DocumentsFor.objects.get(uuid=uuid)
+                record.delete()
+                return Response({
+                    "statusCode": 204,
+                    "status": True,
+                    "message": "Documents For permanently deleted.",
+                    "data": None
+                }, status=status.HTTP_204_NO_CONTENT)
+            except DocumentsFor.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "Documents For not found.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
 
+        # -------- Delete ALL --------
         if ids == "all":
-            records = DocumentsFor.objects.filter(is_deleted=False)
+            records = DocumentsFor.objects.all()
             count = records.count()
+
             if count == 0:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "No records found to delete."
+                    "message": "No Documents For records found to delete.",
+                    "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
-            records.update(is_deleted=True)
+
+            records.delete()
+
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} Documents For deleted successfully."
+                "message": f"All {count} Documents For record(s) permanently deleted.",
+                "data": None
             }, status=status.HTTP_200_OK)
 
-        if not isinstance(ids, list):
+        # -------- Validate list of UUIDs --------
+        if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Provide list of UUIDs in 'id' field or 'all'."
+                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+                "data": None
             }, status=status.HTTP_400_BAD_REQUEST)
 
         valid_uuids = []
         invalid_uuids = []
+
         for u in ids:
             try:
                 valid_uuids.append(UUID(u))
@@ -1860,21 +1974,24 @@ class DocumentsForDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids}
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        records = DocumentsFor.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+        # -------- Bulk delete --------
+        records = DocumentsFor.objects.filter(uuid__in=valid_uuids)
         count = records.count()
 
         if count == 0:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "No matching Documents For found."
+                "message": "No matching Documents For records found.",
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
             }, status=status.HTTP_404_NOT_FOUND)
 
         records.delete()
+
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f"{count} Documents For deleted successfully.",
+            "message": f"{count} Documents For record(s) permanently deleted.",
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         }, status=status.HTTP_200_OK)
 
@@ -4320,3 +4437,6 @@ class PaymentCategoryImportAPIView(APIView):
             "duplicates": duplicates,
             "skipped_rows": skipped_rows,
         }, status=200)
+
+
+

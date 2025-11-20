@@ -2,6 +2,7 @@ from django.urls import path
 from .views import *
 from .test import *
 from .visamaster import *
+from .process import*
 from .visacondition import *
 from .institutemasters import *
 from .occupation import  *
@@ -106,6 +107,7 @@ urlpatterns = [
     path('timezones/export/', TimezoneExportAPIView.as_view(), name='timezone-export'),
     path('timezones/import/', TimezoneImportAPIView.as_view(), name='timezone-import'),
 
+
     path('departments/', DepartmentListAPIView.as_view(), name='department-list'),
     path('departments/create/', DepartmentCreateAPIView.as_view(), name='department-create'),
     path('departments/<uuid:uuid>/', DepartmentRetrieveAPIView.as_view(), name='department-detail'),
@@ -113,6 +115,7 @@ urlpatterns = [
     path('departments/delete/', DepartmentDeleteAPIView.as_view(), name='department-delete'),
     path('departments/export/', DepartmentExportAPIView.as_view(), name='department-export'),
     path('departments/import/', DepartmentImportAPIView.as_view(), name='department-import'),
+
 
     path('employeetype/',EmployeeTypeListAPIView.as_view(), name='employeetype-list'),
     path('employeetype/create/', EmployeeTypeCreateAPIView.as_view(), name='employeetype-create'),
@@ -322,7 +325,18 @@ urlpatterns = [
     path('academicresulttype/export/', AcademicResultTypeExportAPIView.as_view(), name='academicresulttype-export'),
     path('academicresulttype/import/', AcademicResultTypeImportAPIView.as_view(), name='academicresulttype-import'),
 
-    path('academicresult/', AcademicResultListAPIView.as_view(), name='academicresult-create'),
+
+    #Education Type
+    path('education-type/', EducationTypeListAPIView.as_view(), name='education-type-list'),
+    path('education-type/create/', EducationTypeCreateAPIView.as_view(), name='education-type-create'),
+    path('education-type/<uuid:uuid>/', EducationTypeRetrieveAPIView.as_view(), name='education-type-detail'),
+    path('education-type/update/<uuid:uuid>/', EducationTypeUpdateAPIView.as_view(), name='education-type-update'),
+    path('education-type/delete/', EducationTypeDeleteAPIView.as_view(), name='education-type-delete'),
+    path('education-type/export/', EducationTypeExportAPIView.as_view(), name='education-type-export'),
+    path('education-type/import/', EducationTypeImportAPIView.as_view(), name='education-type-import'),
+
+
+    path('academicresult/', AcademicResultListAPIView.as_view(), name='academicresult-list'),
     path('academicresult/create/', AcademicResultCreateAPIView.as_view(), name='academicresult-create'),
     path('academicresult/<uuid:uuid>/', AcademicResultRetrieveAPIView.as_view(), name='academicresult-retrieve'),
     path('academicresult/<uuid:uuid>/update/', AcademicResultUpdateAPIView.as_view(), name='academicresult-update'),
@@ -1052,5 +1066,61 @@ urlpatterns = [
     path('children-visacategory/delete/', ChildrenVisaCategoryDeleteAPIView.as_view()),
     path('children-visacategory/export/', ChildrenVisaCategoryExportAPIView.as_view()),
     path('children-visacategory/import/', ChildrenVisaCategoryImportAPIView.as_view()),
+
+    
+    path('study-factor-age/create/', StudyFactorAgeCreateAPIView.as_view(),name='age-create'),
+    path('study-factor-age/list/', StudyFactorAgeListAPIView.as_view(),name='age-list'),
+    path('study-factor-age/<uuid:uuid>/', StudyFactorAgeRetrieveAPIView.as_view(),name='age-retrieve'),
+    path('study-factor-age/<uuid:uuid>/update/', StudyFactorAgeUpdateAPIView.as_view(),name='age-update'),
+    path('study-factor-age/<uuid:uuid>/delete/', StudyFactorAgeDeleteAPIView.as_view(),name='age-delete'),
+    path('study-factor-age/export/', StudyFactorAgeExportAPIView.as_view(),name='age-export'),
+    path('study-factor-age/import/', StudyFactorAgeImportAPIView.as_view(),name='age-import'),
+
+
+
+    path('academic-result/list/', StudyFactorAcademicResultListAPIView.as_view(), name='academic-result-list'),
+    path('academic-result/create/', StudyFactorAcademicResultCreateAPIView.as_view(), name='academic-result-create'),
+    path('academic-result/detail/<uuid:uuid>/', StudyFactorAcademicResultRetrieveAPIView.as_view(), name='academic-result-retrieve'),
+    path('academic-result/<uuid:uuid>/update/', StudyFactorAcademicResultUpdateAPIView.as_view(), name='academic-result-update'),
+    path('academic-result/<uuid:uuid>/delete/', StudyFactorAcademicResultDeleteAPIView.as_view(), name='academic-result-delete'),
+    path('academic-result/<uuid:uuid>/export/', StudyFactorAcademicResultExportAPIView.as_view(), name='academic-result-export'),
+    path('academic-result/<uuid:uuid>/import/', StudyFactorAcademicResultImportAPIView.as_view(), name='academic-result-import'),
+    
+
+
+
+    path('study-factor-backlogs/list/',StudyFactorBacklogsListAPIView.as_view(),name="study_factor_backlogs_list"),
+    path('study-factor-backlogs/create/',StudyFactorBacklogsCreateAPIView.as_view(),name="study_factor_backlogs_create"),
+    path('study-factor-backlogs/<uuid:uuid>/',StudyFactorBacklogsRetrieveAPIView.as_view(),name="study_factor_backlogs_retrieve"),
+    path('study-factor-backlogs/delete/', StudyFactorBacklogsDeleteAPIView.as_view(), name="study_factor_backlogs_delete_bulk"),
+    path('study-factor-backlogs/export/', StudyFactorBacklogsExportAPIView.as_view(), name="study_factor_backlogs_export"),
+    path('study-factor-backlogs/import/', StudyFactorBacklogsImportAPIView.as_view(), name="study_factor_backlogs_import"),
+
+
+    path('study-factor-gap/list/', StudyFactorGAPListAPIView.as_view(), name="study_factor_gap_list"),
+    path('study-factor-gap/create/', StudyFactorGAPCreateAPIView.as_view(), name="study_factor_gap_create"),
+    path('study-factor-gap/<uuid:uuid>/', StudyFactorGAPRetrieveAPIView.as_view(), name="study_factor_gap_retrieve"),
+    path('study-factor-gap/update/<uuid:uuid>/', StudyFactorGAPUpdateAPIView.as_view(), name="study_factor_gap_update"),
+    path('study-factor-gap/delete/<uuid:uuid>/', StudyFactorGAPDeleteAPIView.as_view(), name="study_factor_gap_delete"),
+    path('study-factor-gap/export/', StudyFactorGAPExportAPIView.as_view(), name="study_factor_gap_export"),
+    path('study-factor-gap/import/', StudyFactorGAPImportAPIView.as_view(), name="study_factor_gap_import"),
+
+    path('study-factor-language-ability/', StudyFactorLanguageAbilityListAPIView.as_view()),
+    path('study-factor-language-ability/create/', StudyFactorLanguageAbilityCreateAPIView.as_view()),
+    path('study-factor-language-ability/<uuid:uuid>/', StudyFactorLanguageAbilityRetrieveAPIView.as_view()),
+    path('study-factor-language-ability/<uuid:uuid>/update/', StudyFactorLanguageAbilityUpdateAPIView.as_view()),
+    path('study-factor-language-ability/delete/', StudyFactorLanguageAbilityDeleteAPIView.as_view()),
+    path('study-factor-language-ability/export/', StudyFactorLanguageAbilityExportAPIView.as_view(), name='studyfactor-languageability-export'),
+    path('study-factor-language-ability/import/', StudyFactorLanguageAbilityImportAPIView.as_view(), name='studyfactor-languageability-import'),
+
+
+    path('study-factor-entrance-test-ability/', StudyFactorEntranceTestAbilityListAPIView.as_view()),
+    path('study-factor-entrance-test-ability/create/', StudyFactorEntranceTestAbilityCreateAPIView.as_view()),
+    path('study-factor-entrance-test-ability/<uuid:uuid>/', StudyFactorEntranceTestAbilityRetrieveAPIView.as_view()),
+    path('study-factor-entrance-test-ability/update/<uuid:uuid>/', StudyFactorEntranceTestAbilityUpdateAPIView.as_view()),
+    path('study-factor-entrance-test-ability/delete/', StudyFactorEntranceTestAbilityDeleteAPIView.as_view()),
+    path('study-factor-entrance-test-ability/export/', StudyFactorEntranceTestAbilityExportAPIView.as_view()),
+    path('study-factor-entrance-test-ability/import/', StudyFactorEntranceTestAbilityImportAPIView.as_view()),
+
 ]
 
