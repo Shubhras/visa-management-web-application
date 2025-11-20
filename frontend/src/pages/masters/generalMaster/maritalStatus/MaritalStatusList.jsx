@@ -12,7 +12,7 @@ import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 import { useGlobalSearch } from '../../../../components/comman/GlobalSearchContext';
 const MaritalStatusList = () => {
   const dispatch = useDispatch();
-    const { globalSearch, setGlobalSearch } = useGlobalSearch();
+  const { globalSearch, setGlobalSearch } = useGlobalSearch();
   const [modalState, setModalState] = useState({
     show: false,
     mode: 'add', // 'add' or 'edit'
@@ -106,8 +106,11 @@ const MaritalStatusList = () => {
     limit: 25,
     search: '',
     status: '',
-    sortBy: 'created_at', // Field to sort by
-    sortOrder: 'desc', // 'asc' or 'desc'
+    sortBy: '', // Field to sort by
+    sortOrder: '', // 'asc' or 'desc'
+    sort: [
+      { field: "created_at", order: "desc" }
+    ],
     total: 0,
     totalPages: 0,
     currentPage: 1,
@@ -115,9 +118,9 @@ const MaritalStatusList = () => {
     hasPrevious: false
   });
 
-    useEffect(() => {
-      setTableState(prev => ({ ...prev, search: globalSearch, page: 1 }));
-    }, [globalSearch]);
+  useEffect(() => {
+    setTableState(prev => ({ ...prev, search: globalSearch, page: 1 }));
+  }, [globalSearch]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -131,7 +134,7 @@ const MaritalStatusList = () => {
 
   useEffect(() => {
     fetchMaritalStatusList();
-  }, [tableState.page, tableState.limit, tableState.status, tableState.sortBy, tableState.sortOrder]);
+  }, [tableState.page, tableState.limit, tableState.status, tableState.sort]);
 
   const fetchMaritalStatusList = () => {
     setLoading(true);
@@ -141,14 +144,14 @@ const MaritalStatusList = () => {
       search: tableState.search || '',
       status: tableState.status || '',
       sortBy: tableState.sortBy || '',
-      sortOrder: tableState.sortOrder || ''
+      sortOrder: tableState.sortOrder || '',
+      sort: tableState.sort,
     };
 
     dispatch(maritalStatusList(params, (response, error) => {
       setLoading(false);
       if (response?.statusCode === 200 && response?.status === true) {
         const paginationData = response?.pagination || {};
-
         setDepartments(response?.data || []);
         setTableState(prev => ({
           ...prev,
@@ -177,49 +180,60 @@ const MaritalStatusList = () => {
       }
     }));
   };
+  // Handle sorting
   const handleSort = (field) => {
     setTableState(prev => {
-      if (prev.sortBy === field) {
-        if (prev.sortOrder === 'asc') {
-          return { ...prev, sortOrder: 'desc', page: 1 };
-        } else if (prev.sortOrder === 'desc') {
-          return { ...prev, sortBy: '', sortOrder: '', page: 1 };
+      let newSort = [...prev.sort];
+      const existingIndex = newSort.findIndex(s => s.field === field);
+      if (existingIndex === -1) {
+        newSort.push({ field, order: "asc" });
+      }
+      else {
+        const existing = newSort[existingIndex];
+        if (existing.order === "asc") {
+          newSort[existingIndex].order = "desc";
+        }
+        else if (existing.order === "desc") {
+          newSort.splice(existingIndex, 1);
         }
       }
-      return { ...prev, sortBy: field, sortOrder: 'asc', page: 1 };
+      return { ...prev, sort: newSort, page: 1 };
     });
   };
-   const getSortIcon = (field) => {
-     if (tableState.sortBy !== field) {
-       return <Icon icon="ri:menu-line" className="sorting-th-icone" />;
-     }
-     if (tableState.sortOrder === 'asc') {
-       return <Icon icon="ri:sort-asc" className='sorting-th-icone' />;
-     }
-     return <Icon icon="ri:sort-desc" className='sorting-th-icone' />;
-   };
- 
-   // Clear all filters
-   const clearAllFilters = () => {
-     setTableState(prev => ({
-       ...prev,
-       page: 1,
-       limit: 25,
-       search: '',
-       status: '',
-       sortBy: 'created_at',
-       sortOrder: 'desc',
-       total: 0,
-       totalPages: 0,
-       currentPage: 1,
-       hasNext: false,
-       hasPrevious: false
-     }));
-     // Reset Global Search
-     setGlobalSearch('');
-   };
 
+  const getSortIcon = (field) => {
+    const sortObj = tableState.sort.find(s => s.field === field);
+    if (!sortObj) {
+      return <Icon icon="ri:menu-line" className="sorting-th-icone" />;
+    }
+    if (sortObj.order === "asc") {
+      return <Icon icon="ri:sort-asc" className="sorting-th-icone" />;
+    }
+    return <Icon icon="ri:sort-desc" className="sorting-th-icone" />;
+  };
 
+  // Clear all filters
+  const clearAllFilters = () => {
+    setTableState(prev => ({
+      ...prev,
+      page: 1,
+      limit: 25,
+      search: '',
+      status: '',
+      sortBy: '',
+      sortOrder: '',
+      sort: [
+        { field: "created_at", order: "desc" }   // default sort
+      ],
+      total: 0,
+      totalPages: 0,
+      currentPage: 1,
+      hasNext: false,
+      hasPrevious: false
+    }));
+    // Reset Global Search
+    setGlobalSearch('');
+  };
   const handlePageLengthChange = (value) => {
     setTableState(prev => ({
       ...prev,
@@ -228,14 +242,6 @@ const MaritalStatusList = () => {
     }));
   };
 
-  // For "Select All" button
-  const handleSelectAllButton = () => {
-    if (isAllSelected) {
-      setSelectedRows([]);
-    } else {
-      setSelectedRows(departments.map(Item => Item.uuid));
-    }
-  };
   // For checkbox in table header
   const handleSelectAll = (e) => {
     const checked = e.target.checked;
@@ -427,6 +433,7 @@ const MaritalStatusList = () => {
       file: "xlsx",
       fields: fieldsString,
       uuids: selectAllOrNot === "all" ? [] : selectedRows,
+      sort: tableState.sort,
     };
 
     setLoadingExport(true);
@@ -474,7 +481,7 @@ const MaritalStatusList = () => {
               {/* Left Section: Import / Export / Delete */}
               <div className="col-xl-6 col-lg-4 col-md-12">
                 <div className="d-flex flex-wrap align-items-center gap-2">
-                   <button
+                  <button
                     className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
                     onClick={handleShow}
                   >New</button>
@@ -523,7 +530,7 @@ const MaritalStatusList = () => {
               {/* Right Section: Select / Search / +Add New */}
               <div className="col-xl-6 col-lg-8 col-md-12">
                 <div className="d-flex flex-wrap align-items-center justify-content-end gap-2">
-                   <select
+                  <select
                     className="form-select form-select-sm select-page-filter"
                     value={tableState.limit}
                     onChange={(e) => handlePageLengthChange(e.target.value)}
