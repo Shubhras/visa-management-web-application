@@ -2407,7 +2407,6 @@ class StateExportAPIView(APIView):
         fields = request.GET.get('fields')
         search = request.GET.get('search', '').strip()
         custom_sort = request.GET.get('customSort')
-        allowed_sort_fields = ['stateName', 'stateshortName', 'state', 'countryName', 'created_at']
 
         # ---------------------------
         # Parse IDs & Validate UUIDs
@@ -2433,7 +2432,7 @@ class StateExportAPIView(APIView):
         state_list = validate_uuid_list(parse_ids('state'))
 
         # ---------------------------
-        # Base QuerySet
+        # Base QuerySet with annotation
         # ---------------------------
         queryset = State.objects.filter(is_deleted=False).annotate(
             country_name=F('countryName__name')
@@ -2475,8 +2474,7 @@ class StateExportAPIView(APIView):
                         continue
 
                     orm_field = sort_field_map[field]
-
-                    # Use Lower() for string fields for case-insensitive sort
+                    # Case-insensitive for string fields
                     if field in ['stateName', 'stateshortName', 'state', 'countryName']:
                         f = Lower(orm_field)
                     else:
@@ -2488,7 +2486,7 @@ class StateExportAPIView(APIView):
         else:
             sort_order = request.GET.get('sortOrder', 'desc')
             f = F('created_at')
-            sort_fields = [f.desc(nulls_last=True) if sort_order=='desc' else f.asc(nulls_last=True)]
+            sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
 
         queryset = queryset.order_by(*sort_fields)
 
@@ -2539,7 +2537,7 @@ class StateExportAPIView(APIView):
         # ---------------------------
         if format_type == 'csv':
             file_data = dataset.export('csv')
-            content_type = 'text/csv'
+            content_type = 'text/csv; charset=utf-8'
             file_name = 'states.csv'
         else:
             file_data = io.BytesIO(dataset.export('xlsx'))
@@ -2552,7 +2550,9 @@ class StateExportAPIView(APIView):
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
-          
+
+
+
         
 class StateImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
