@@ -20,7 +20,8 @@ import openpyxl
 from django.http import HttpResponse
 from uuid import UUID
 from datetime import datetime  
-from django.db import IntegrityError,transaction
+from django.db import IntegrityError, transaction
+from django.db import DatabaseError
 import csv
 import io
 import pytz
@@ -2789,31 +2790,117 @@ class StudyFactorAgeListAPIView(APIView):
 class StudyFactorAgeCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
+    @transaction.atomic
     def post(self, request):
-        factor_for = request.data.get("factor_for")
-        study_age_group = request.data.get("study_age_group")
-        min_age = request.data.get("minimum_age_months")
-        max_age = request.data.get("maximum_age_months")
+        try:
+            data = request.data
 
-        # Check duplicates
-        existing = StudyFactorAge.objects.filter(
-            factor_for_id=factor_for,
-            study_age_group_id=study_age_group,
-            minimum_age_months=min_age,
-            maximum_age_months=max_age,
-            is_deleted=False
-        ).first()
+            # Required fields validation
+            factor_for_uuid = data.get("factor_for")
+            age_group_uuid = data.get("study_age_group")
+            min_age = data.get("minimum_age_months")
+            max_age = data.get("maximum_age_months")
+            country_uuids = data.get("country", [])
+            course_level_uuids = data.get("course_level", [])
 
-        if existing:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Age entry already exists with these details."
-            }, status=400)
+            missing_fields = []
+            if not factor_for_uuid:
+                missing_fields.append("factor_for")
+            if not age_group_uuid:
+                missing_fields.append("study_age_group")
+            if min_age is None:
+                missing_fields.append("minimum_age_months")
+            if max_age is None:
+                missing_fields.append("maximum_age_months")
 
-        serializer = StudyFactorAgeSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
+            if missing_fields:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": f"Missing required fields: {', '.join(missing_fields)}"
+                }, status=400)
+
+            # Convert ages safely
+            try:
+                min_age = int(min_age)
+                max_age = int(max_age)
+            except ValueError:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "minimum_age_months and maximum_age_months must be integers."
+                }, status=400)
+
+            # Fetch FK using UUIDs
+            try:
+                factor_for = FactorFor.objects.get(uuid=factor_for_uuid, is_deleted=False)
+            except FactorFor.DoesNotExist:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Invalid factor_for UUID"
+                }, status=400)
+
+            try:
+                age_group = AgeGroup.objects.get(uuid=age_group_uuid, is_deleted=False)
+            except AgeGroup.DoesNotExist:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Invalid study_age_group UUID"
+                }, status=400)
+
+            # Duplicate check
+            if StudyFactorAge.objects.filter(
+                factor_for=factor_for,
+                study_age_group=age_group,
+                minimum_age_months=min_age,
+                maximum_age_months=max_age,
+                is_deleted=False
+            ).exists():
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Age entry already exists with these details."
+                }, status=400)
+
+            # Atomic transaction begins
+            with transaction.atomic():
+
+                obj = StudyFactorAge.objects.create(
+                    factor_for=factor_for,
+                    study_age_group=age_group,
+                    minimum_age_months=min_age,
+                    maximum_age_months=max_age,
+                    description=data.get("description", "")
+                )
+
+                # Assign Countries
+                if country_uuids:
+                    valid_countries = Country.objects.filter(uuid__in=country_uuids)
+                    if valid_countries.count() != len(country_uuids):
+                        return Response({
+                            "statusCode": 400,
+                            "status": False,
+                            "message": "One or more country UUIDs are invalid."
+                        }, status=400)
+                    obj.country.set(valid_countries)
+
+                # Assign Course Levels
+                if course_level_uuids:
+                    valid_levels = CourseLevel.objects.filter(uuid__in=course_level_uuids)
+                    if valid_levels.count() != len(course_level_uuids):
+                        return Response({
+                            "statusCode": 400,
+                            "status": False,
+                            "message": "One or more course_level UUIDs are invalid."
+                        }, status=400)
+                    obj.course_level.set(valid_levels)
+
+                obj.save()
+
+            # Final response
+            serializer = StudyFactorAgeSerializer(obj)
 
             return Response({
                 "statusCode": 200,
@@ -2822,15 +2909,14 @@ class StudyFactorAgeCreateAPIView(APIView):
                 "data": serializer.data
             })
 
-        messages = []
-        for field, msgs in serializer.errors.items():
-            messages.extend(msgs)
-
-        return Response({
-            "statusCode": 400,
-            "status": False,
-            "message": " ".join(messages)
-        }, status=400)
+        except Exception as e:
+            # Debug-friendly but safe
+            return Response({
+                "statusCode": 500,
+                "status": False,
+                "message": "Internal server error",
+                "error": str(e)  
+            }, status=500)
 
 
 # -------------------- Age Retrieve API --------------------
@@ -2838,32 +2924,116 @@ class StudyFactorAgeCreateAPIView(APIView):
 class StudyFactorAgeRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
-    def get(self, request, uuid):
+    def get(self, request):
         try:
-            obj = StudyFactorAge.objects.get(uuid=uuid, is_deleted=False)
-        except StudyFactorAge.DoesNotExist:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "Age entry not found",
-                "data": None
-            }, status=404)
+            search = request.GET.get('search', '').strip()
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'desc')
 
-        serializer = StudyFactorAgeSerializer(obj)
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": "Age retrieved successfully",
-            "data": serializer.data
-        })
+            # Allowed sort fields
+            allowed_sort_fields = [
+                'minimum_age_months',
+                'maximum_age_months',
+                'created_at',
+                'updated_at',
+            ]
+
+            # Validate sortBy
+            if sort_by not in allowed_sort_fields:
+                sort_by = 'created_at'
+
+            # Apply desc/asc
+            if sort_order == 'desc':
+                sort_by = f'-{sort_by}'
+
+            # Base queryset
+            queryset = StudyFactorAge.objects.filter(is_deleted=False)
+
+            # Search
+            if search:
+                queryset = queryset.filter(
+                    Q(study_age_group__name__icontains=search) |
+                    Q(factor_for__name__icontains=search)
+                )
+
+            # Sorting
+            queryset = queryset.order_by(sort_by)
+
+            # Pagination
+            paginator = CustomPagination()
+            paginated_queryset = paginator.paginate_queryset(queryset, request)
+
+            # Serialization
+            serializer = StudyFactorAgeSerializer(paginated_queryset, many=True)
+
+            return paginator.get_paginated_response(serializer.data)
+
+        except ValidationError as ve:
+            return Response({
+                "status": False,
+                "message": "Validation error",
+                "error": str(ve),
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        except DatabaseError as db_err:
+            return Response({
+                "status": False,
+                "message": "Database error occurred",
+                "error": str(db_err),
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        except Exception as e:
+            # Catch-all for unexpected issues
+            return Response({
+                "status": False,
+                "message": "Something went wrong",
+                "error": str(e),
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # -------------------- Age Update API--------------------
 
+# class StudyFactorAgeUpdateAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def put(self, request, uuid):
+#         try:
+#             obj = StudyFactorAge.objects.get(uuid=uuid, is_deleted=False)
+#         except StudyFactorAge.DoesNotExist:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "Age entry not found",
+#                 "data": None
+#             }, status=404)
+
+#         serializer = StudyFactorAgeSerializer(obj, data=request.data)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": "Age updated successfully",
+#                 "data": serializer.data
+#             })
+
+#         messages = []
+#         for field, msgs in serializer.errors.items():
+#             messages.extend(msgs)
+
+#         return Response({
+#             "statusCode": 400,
+#             "status": False,
+#             "message": " ".join(messages),
+#             "data": None
+#         }, status=400)
+
 class StudyFactorAgeUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
-    def put(self, request, uuid):
+    @transaction.atomic
+    def patch(self, request, uuid):
+        # Fetch object
         try:
             obj = StudyFactorAge.objects.get(uuid=uuid, is_deleted=False)
         except StudyFactorAge.DoesNotExist:
@@ -2874,9 +3044,21 @@ class StudyFactorAgeUpdateAPIView(APIView):
                 "data": None
             }, status=404)
 
-        serializer = StudyFactorAgeSerializer(obj, data=request.data)
+        # Partial update
+        serializer = StudyFactorAgeSerializer(obj, data=request.data, partial=True)
+
         if serializer.is_valid():
-            serializer.save()
+            try:
+                serializer.save()  # atomic
+            except Exception as e:
+                transaction.set_rollback(True)
+                return Response({
+                    "statusCode": 500,
+                    "status": False,
+                    "message": f"Update failed: {str(e)}",
+                    "data": None
+                }, status=500)
+
             return Response({
                 "statusCode": 200,
                 "status": True,
@@ -2884,17 +3066,18 @@ class StudyFactorAgeUpdateAPIView(APIView):
                 "data": serializer.data
             })
 
-        messages = []
+        # Flatten validation errors
+        errors = []
         for field, msgs in serializer.errors.items():
-            messages.extend(msgs)
+            errors.extend(msgs)
 
         return Response({
             "statusCode": 400,
             "status": False,
-            "message": " ".join(messages),
+            "message": " ".join(errors),
             "data": None
         }, status=400)
-
+    
 # -------------------- Age Delete API --------------------
 
 class StudyFactorAgeDeleteAPIView(APIView):

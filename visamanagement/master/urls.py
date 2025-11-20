@@ -1066,6 +1066,8 @@ urlpatterns = [
     path('children-visacategory/delete/', ChildrenVisaCategoryDeleteAPIView.as_view()),
     path('children-visacategory/export/', ChildrenVisaCategoryExportAPIView.as_view()),
     path('children-visacategory/import/', ChildrenVisaCategoryImportAPIView.as_view()),
+
+    
     path('study-factor-age/create/', StudyFactorAgeCreateAPIView.as_view(),name='age-create'),
     path('study-factor-age/list/', StudyFactorAgeListAPIView.as_view(),name='age-list'),
     path('study-factor-age/<uuid:uuid>/', StudyFactorAgeRetrieveAPIView.as_view(),name='age-retrieve'),

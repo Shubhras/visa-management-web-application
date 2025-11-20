@@ -30,7 +30,7 @@ class ContinentsAdmin(admin.ModelAdmin):
 
 @admin.register(Country)
 class CountryAdmin(admin.ModelAdmin):
-    list_display = ('name', 'continent', 'capitalCity', 'currencyCode', 'status', 'is_active', 'is_deleted')
+    list_display = ('uuid', 'name', 'continent', 'capitalCity', 'currencyCode', 'status', 'is_active', 'is_deleted')
     search_fields = ('name', 'capitalCity', 'currencyCode')
     list_filter = ('continent', 'is_active', 'is_deleted', 'status')
     ordering = ('name',)
@@ -363,60 +363,60 @@ class DegreeAwardedInstituteAdmin(admin.ModelAdmin):
 
 
 # ---------------------- Language ----------------------
-@admin.register(Language)
-class LanguageAdmin(admin.ModelAdmin):
-    list_display = ('uuid','name', 'description', 'is_deleted', 'created_at', 'updated_at')
-    search_fields = ('name',)
-    list_filter = ('is_deleted',)
-    ordering = ('name',)
+# @admin.register(Language)
+# class LanguageAdmin(admin.ModelAdmin):
+#     list_display = ('name', 'description', 'is_deleted', 'created_at', 'updated_at')
+#     search_fields = ('name',)
+#     list_filter = ('is_deleted',)
+#     ordering = ('name',)
 
 
 # ---------------------- LanguageTest ----------------------
-@admin.register(LanguageTest)
-class LanguageTestAdmin(admin.ModelAdmin):
-    list_display = ('uuid','name', 'fullname', 'language', 'description', 'is_deleted', 'created_at', 'updated_at')
-    search_fields = ('name', 'fullname')
-    list_filter = ('is_deleted', 'language')
-    ordering = ('name',)
+# @admin.register(LanguageTest)
+# class LanguageTestAdmin(admin.ModelAdmin):
+#     list_display = ('name', 'fullname', 'language', 'description', 'is_deleted', 'created_at', 'updated_at')
+#     search_fields = ('name', 'fullname')
+#     list_filter = ('is_deleted', 'language')
+#     ordering = ('name',)
 
 
 # ---------------------- LanguagetestmoduleName ----------------------
-@admin.register(LanguagetestmoduleName)
-class LanguagetestmoduleNameAdmin(admin.ModelAdmin):
-    list_display = ('uuid','name', 'description', 'is_deleted', 'created_at', 'updated_at')
-    search_fields = ('name',)
-    list_filter = ('is_deleted',)
-    ordering = ('name',)
+# @admin.register(LanguagetestmoduleName)
+# class LanguagetestmoduleNameAdmin(admin.ModelAdmin):
+#     list_display = ('name', 'description', 'is_deleted', 'created_at', 'updated_at')
+#     search_fields = ('name',)
+#     list_filter = ('is_deleted',)
+#     ordering = ('name',)
 
 
 # ---------------------- CLBLevel ----------------------
-@admin.register(CLBLevel)
-class CLBLevelAdmin(admin.ModelAdmin):
-    list_display = ('name', 'description', 'is_deleted', 'created_at', 'updated_at')
-    search_fields = ('name',)
-    list_filter = ('is_deleted',)
-    ordering = ('name',)
+# @admin.register(CLBLevel)
+# class CLBLevelAdmin(admin.ModelAdmin):
+#     list_display = ('name', 'description', 'is_deleted', 'created_at', 'updated_at')
+#     search_fields = ('name',)
+#     list_filter = ('is_deleted',)
+#     ordering = ('name',)
 
 
 # ---------------------- LanguageTestResult ----------------------
-@admin.register(LanguageTestResult)
-class LanguageTestResultAdmin(admin.ModelAdmin):
-    list_display = ('uuid',
-        'language', 'language_test', 'module_name', 'lb_level',
-        'numeric_score', 'description', 'is_deleted', 'created_at', 'updated_at'
-    )
-    search_fields = ('language__name', 'language_test__name', 'module_name__name')
-    list_filter = ('is_deleted', 'language', 'language_test', 'module_name', 'lb_level')
-    ordering = ('language',)
+# @admin.register(LanguageTestResult)
+# class LanguageTestResultAdmin(admin.ModelAdmin):
+#     list_display = (
+#         'language', 'language_test', 'module_name', 'clb_level',
+#         'numeric_score', 'description', 'is_deleted', 'created_at', 'updated_at'
+#     )
+#     search_fields = ('language__name', 'language_test__name', 'module_name__name')
+#     list_filter = ('is_deleted', 'language', 'language_test', 'module_name', 'clb_level')
+#     ordering = ('language',)
 
 
 # ---------------------- StudyLanguageBanchmark ----------------------
-@admin.register(StudyLanguageBanchmark)
-class StudyLanguageBanchmarkAdmin(admin.ModelAdmin):
-    list_display = ('uuid','name', 'description', 'is_deleted', 'created_at', 'updated_at')
-    search_fields = ('name',)
-    list_filter = ('is_deleted',)
-    ordering = ('name',)
+# @admin.register(StudyLanguageBanchmark)
+# class StudyLanguageBanchmarkAdmin(admin.ModelAdmin):
+#     list_display = ('name', 'description', 'is_deleted', 'created_at', 'updated_at')
+#     search_fields = ('name',)
+#     list_filter = ('is_deleted',)
+#     ordering = ('name',)
 
 
 # ---------------------- EntranceTestName ----------------------
@@ -1344,33 +1344,6 @@ class AgeGroupAdmin(admin.ModelAdmin):
     readonly_fields = ('uuid', 'created_at', 'updated_at')
 
 
-@admin.register(StudyLanguageBanchmark)
-class StudyLanguageBanchmarkAdmin(admin.ModelAdmin):
-    list_display = ('id', 'uuid','name', 'description', 'is_deleted', 'created_at', 'updated_at')
-    search_fields = ('name', 'description')
-    list_filter = ('is_deleted', 'created_at', 'updated_at')
-    readonly_fields = ('created_at', 'updated_at')
-
-
-
-@admin.register(FactorFor)
-class FactorForAdmin(admin.ModelAdmin):
-    list_display = ('id', 'uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at')
-    list_filter = ('is_deleted', 'created_at', 'updated_at')
-    search_fields = ('name', 'description')
-    readonly_fields = ('uuid', 'created_at', 'updated_at')
-    
-    
-
-@admin.register(AgeGroup)
-class AgeGroupAdmin(admin.ModelAdmin):
-    list_display = ('id', 'uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at')
-    list_filter = ('is_deleted', 'created_at', 'updated_at')
-    search_fields = ('name', 'description')
-    readonly_fields = ('uuid', 'created_at', 'updated_at')
-
-
-
 
 @admin.register(StudyFactorAcademicResult)
 class StudyFactorAcademicResultAdmin(admin.ModelAdmin):
@@ -1449,3 +1422,36 @@ class StudyFactorEntranceTestAbilityAdmin(admin.ModelAdmin):
         'entrance_test_name'
     )
 
+
+@admin.register(StudyFactorAge)
+class StudyFactorAgeAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "uuid",
+        "factor_for",
+        "study_age_group",
+        "minimum_age_months",
+        "maximum_age_months",
+        "is_deleted",
+        "created_at",
+    )
+    
+    list_filter = (
+        "factor_for",
+        "study_age_group",
+        "country",
+        "course_level",
+        "is_deleted",
+        "created_at",
+    )
+    
+    search_fields = (
+        "uuid",
+        "study_age_group__name",
+        "factor_for__name",
+        "description",
+    )
+    
+    filter_horizontal = ("country", "course_level")
+
+    readonly_fields = ("uuid", "created_at", "updated_at")

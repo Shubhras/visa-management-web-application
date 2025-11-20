@@ -2767,8 +2767,21 @@ class PaymentCategorySerializer(serializers.ModelSerializer):
 
 
 
-
 class StudyFactorAgeSerializer(serializers.ModelSerializer):
+    # Write-only for input
+    factor_for = serializers.UUIDField(required=False, write_only=True)
+    study_age_group = serializers.UUIDField(required=False, write_only=True)
+
+    country = serializers.ListField(child=serializers.UUIDField(), write_only=True, required=False)
+    course_level = serializers.ListField(child=serializers.UUIDField(), write_only=True, required=False)
+
+    # Read-only for response
+    factor_for_uuid = serializers.SerializerMethodField()
+    study_age_group_uuid = serializers.SerializerMethodField()
+    country_list_uuid = serializers.SerializerMethodField()
+    course_level_list_uuid = serializers.SerializerMethodField()
+
+    # Names
     factor_for_name = serializers.CharField(source='factor_for.name', read_only=True)
     study_age_group_name = serializers.CharField(source='study_age_group.name', read_only=True)
     country_names = serializers.SerializerMethodField()
@@ -2778,14 +2791,38 @@ class StudyFactorAgeSerializer(serializers.ModelSerializer):
         model = StudyFactorAge
         fields = [
             'id', 'uuid',
-            'factor_for', 'factor_for_name',
-            'study_age_group', 'study_age_group_name',
+
+            # UUID response
+            'factor_for_uuid', 'factor_for_name',
+            'study_age_group_uuid', 'study_age_group_name',
+
+            # Input fields
+            'factor_for', 'study_age_group',
+
             'minimum_age_months', 'maximum_age_months',
-            'country', 'country_names',
-            'course_level', 'course_level_names',
-            'description',
-            'is_deleted', 'created_at', 'updated_at'
+
+            # M2M read response
+            'country_list_uuid', 'country_names',
+            'course_level_list_uuid', 'course_level_names',
+
+            # M2M input
+            'country', 'course_level',
+
+            'description', 'is_deleted', 'created_at', 'updated_at'
         ]
+
+    # Return UUIDs in response
+    def get_factor_for_uuid(self, obj):
+        return str(obj.factor_for.uuid)
+
+    def get_study_age_group_uuid(self, obj):
+        return str(obj.study_age_group.uuid)
+
+    def get_country_list_uuid(self, obj):
+        return [str(c.uuid) for c in obj.country.all()]
+
+    def get_course_level_list_uuid(self, obj):
+        return [str(cl.uuid) for cl in obj.course_level.all()]
 
     def get_country_names(self, obj):
         return [c.name for c in obj.country.all()]
@@ -2793,7 +2830,21 @@ class StudyFactorAgeSerializer(serializers.ModelSerializer):
     def get_course_level_names(self, obj):
         return [cl.name for cl in obj.course_level.all()]
 
+    def update(self, instance, validated_data):
 
+        if 'factor_for' in validated_data:
+            instance.factor_for = FactorFor.objects.get(uuid=validated_data.pop('factor_for'))
+
+        if 'study_age_group' in validated_data:
+            instance.study_age_group = AgeGroup.objects.get(uuid=validated_data.pop('study_age_group'))
+
+        if 'country' in validated_data:
+            instance.country.set(Country.objects.filter(uuid__in=validated_data.pop('country')))
+
+        if 'course_level' in validated_data:
+            instance.course_level.set(CourseLevel.objects.filter(uuid__in=validated_data.pop('course_level')))
+
+        return super().update(instance, validated_data)
 
 
 class StudyFactorAcademicResultSerializer(serializers.ModelSerializer):
