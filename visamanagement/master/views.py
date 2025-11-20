@@ -3056,7 +3056,6 @@ class DistrictExportAPIView(APIView):
         fields = request.GET.get('fields')
         search = request.GET.get('search', '').strip()
         custom_sort = request.GET.get('customSort')
-        allowed_sort_fields = ['districtName', 'stateName', 'countryName', 'created_at']
 
         # ---------------------------
         # Parse IDs & Validate UUIDs
@@ -3083,7 +3082,7 @@ class DistrictExportAPIView(APIView):
         district_list = validate_uuid_list(parse_ids('district'))
 
         # ---------------------------
-        # Base QuerySet
+        # Base QuerySet with annotation
         # ---------------------------
         queryset = District.objects.filter(is_deleted=False).annotate(
             country_name=F('countryName__name'),
@@ -3129,7 +3128,7 @@ class DistrictExportAPIView(APIView):
 
                     orm_field = sort_field_map[field]
 
-                    # Use Lower() for string fields for case-insensitive sort
+                    # Case-insensitive sort for string fields
                     if field in ['districtName', 'stateName', 'countryName']:
                         f = Lower(orm_field)
                     else:
@@ -3141,7 +3140,7 @@ class DistrictExportAPIView(APIView):
         else:
             sort_order = request.GET.get('sortOrder', 'desc')
             f = F('created_at')
-            sort_fields = [f.desc(nulls_last=True) if sort_order=='desc' else f.asc(nulls_last=True)]
+            sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
 
         queryset = queryset.order_by(*sort_fields)
 
@@ -3188,7 +3187,7 @@ class DistrictExportAPIView(APIView):
         # ---------------------------
         if format_type == 'csv':
             file_data = dataset.export('csv')
-            content_type = 'text/csv'
+            content_type = 'text/csv; charset=utf-8'
             file_name = 'districts.csv'
         else:
             file_data = io.BytesIO(dataset.export('xlsx'))
@@ -3203,6 +3202,8 @@ class DistrictExportAPIView(APIView):
         return response
 
 
+
+        
 
 class DistrictImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
