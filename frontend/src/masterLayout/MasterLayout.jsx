@@ -14,7 +14,21 @@ const MasterLayout = ({ children }) => {
   const [selectedItemName, setSelectedItemName] = useState("Dashboard");
   const [openSubmenu, setOpenSubmenu] = useState(null);
   const [openChildMenu, setOpenChildMenu] = useState(null);
-
+const [searchAllowedModules] = useState([
+  "City",
+  "Department",
+  "District",
+  "State",
+  "Country",
+  "Gender",
+  "Continents",
+  "Factor For",
+  "Study : Age Group",
+  "Study : Academic Result Group",
+  "Study : Gap Group",
+  "Study : Backlogs Group",
+  "Marital Status"
+]);
   // Global Search State - Har page pe same rahega
   const { globalSearch, setGlobalSearch } = useGlobalSearch();
   const menuItems = [
@@ -1995,7 +2009,7 @@ const MasterLayout = ({ children }) => {
             {/* Sub Header */}
             <div className="sub-header-bar d-flex align-items-center justify-content-between">
               <div className="sub-header-title">{selectedItemName}</div>
-              {["City", "Department","District","State","Country","Gender","Continents","Factor For","Study : Age Group","Study : Academic Result Group","Study : Gap Group","Study : Backlogs Group"].includes(selectedItemName) && (
+             {searchAllowedModules.indexOf(selectedItemName) !== -1 && (
                 <div className="position-relative search-filter-div">
                   <Icon
                     icon="ion:search-outline"
