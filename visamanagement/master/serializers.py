@@ -1931,14 +1931,9 @@ class CivilIdNameSerializer(serializers.ModelSerializer):
     valid_type_detail = serializers.SerializerMethodField()
     valid_duration_unit_detail = serializers.SerializerMethodField()
 
-    valid_type = serializers.ChoiceField(
-        choices=CivilIdName.VALID_TYPE_CHOICES,
-        required=False
-    )
-    valid_duration_unit = serializers.ChoiceField(
-        choices=CivilIdName.VALID_UNIT_CHOICES,
-        required=False
-    )
+    # Use CharField instead of ChoiceField
+    valid_type = serializers.CharField(required=False, allow_blank=True)
+    valid_duration_unit = serializers.CharField(required=False, allow_blank=True)
 
     class Meta:
         model = CivilIdName
@@ -1965,21 +1960,19 @@ class CivilIdNameSerializer(serializers.ModelSerializer):
     def get_valid_duration_unit_detail(self, obj):
         return obj.get_valid_duration_unit_display() if obj.valid_duration_unit else None
 
-    # Handle lowercase or spaced inputs
     def validate_valid_type(self, value):
         if value:
-            value = value.strip().title()  # "permanent" -> "Permanent"
+            value = value.strip().title()  # e.g., "permanent" -> "Permanent"
             if value not in dict(CivilIdName.VALID_TYPE_CHOICES):
-                raise serializers.ValidationError("Invalid valid_type choice")
+                raise serializers.ValidationError(f"{value} is not a valid choice")
         return value
 
     def validate_valid_duration_unit(self, value):
         if value:
-            value = value.strip().title()  # "months" -> "Months"
+            value = value.strip().title()
             if value not in dict(CivilIdName.VALID_UNIT_CHOICES):
-                raise serializers.ValidationError("Invalid valid_duration_unit choice")
+                raise serializers.ValidationError(f"{value} is not a valid choice")
         return value
-
 
 class VisaEligibilityTypeSerializer(serializers.ModelSerializer):
     class Meta:
