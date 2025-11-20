@@ -2348,36 +2348,35 @@ export const getRepresentingCountryListAPI = (data) => {
 
 // Related Occupation
 export const getRelatedOccupationListAPI = (data) => {
-  const apiUrl = `${url.GET_RELATED_OCCUPATION_LIST}?search=${data?.search}&page=${
-    data?.page
-  }&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
-  return get(apiUrl);
+    const apiUrl = `${url.GET_RELATED_OCCUPATION_LIST}?search=${data?.search}&page=${data?.page
+        }&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
 };
 
 export const addRelatedOccupationAPI = (payload) => {
-  const apiUrl = `${url.ADD_RELATED_OCCUPATION_API}`;
-  return post(apiUrl, payload);
+    const apiUrl = `${url.ADD_RELATED_OCCUPATION_API}`;
+    return post(apiUrl, payload);
 };
 
 export const editRelatedOccupationAPI = (payload) => {
-  const apiUrl = `${url.EDIT_RELATED_OCCUPATION_API}${payload?.uuid}/update/`;
-  return put(apiUrl, payload);
+    const apiUrl = `${url.EDIT_RELATED_OCCUPATION_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
 };
 
 export const deleteRelatedOccupationAPI = (payload) => {
-  const preparedData = { id: payload };
-  const apiUrl = `${url.DELETE_RELATED_OCCUPATION_API}delete/`;
-  return delWithPayload(apiUrl, preparedData);
+    const preparedData = { id: payload };
+    const apiUrl = `${url.DELETE_RELATED_OCCUPATION_API}delete/`;
+    return delWithPayload(apiUrl, preparedData);
 };
 
 export const exportRelatedOccupationAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_RELATED_OCCUPATION_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
-  return getExportData(apiUrl, payload);
+    const apiUrl = `${url.EXPORT_RELATED_OCCUPATION_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
 };
 
 export const importRelatedOccupationAPI = (payload) => {
-  const apiUrl = `${url.IMPORT_RELATED_OCCUPATION_API}`;
-  return post(apiUrl, payload);
+    const apiUrl = `${url.IMPORT_RELATED_OCCUPATION_API}`;
+    return post(apiUrl, payload);
 };
 
 
@@ -3559,161 +3558,188 @@ export const importPaymentCategoryAPI = (payload) => {
 
 //  Factor For
 export const getFactorForListAPI = (data) => {
-  const apiUrl = `${url.GET_FACTOR_FOR_LIST}?search=${data?.search}&page=${
-    data?.page
-  }&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
-  return get(apiUrl);
+    const apiUrl = `${url.GET_FACTOR_FOR_LIST}?search=${data?.search}&page=${data?.page
+        }&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
 };
 
 export const addFactorForAPI = (payload) => {
-  const apiUrl = `${url.ADD_FACTOR_FOR_API}`;
-  return post(apiUrl, payload);
+    const apiUrl = `${url.ADD_FACTOR_FOR_API}`;
+    return post(apiUrl, payload);
 };
 
 export const editFactorForAPI = (payload) => {
-  const apiUrl = `${url.EDIT_FACTOR_FOR_API}${payload?.uuid}/update/`;
-  return put(apiUrl, payload);
+    const apiUrl = `${url.EDIT_FACTOR_FOR_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
 };
 
 export const deleteFactorForAPI = (payload) => {
-  const preparedData = { id: payload };
-  const apiUrl = `${url.DELETE_FACTOR_FOR_API}delete/`;
-  return delWithPayload(apiUrl, preparedData);
+    const preparedData = { id: payload };
+    const apiUrl = `${url.DELETE_FACTOR_FOR_API}delete/`;
+    return delWithPayload(apiUrl, preparedData);
 };
 
 export const exportFactorForAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_FACTOR_FOR_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
-  return getExportData(apiUrl, payload);
+    const apiUrl = `${url.EXPORT_FACTOR_FOR_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
 };
 
 export const importFactorForAPI = (payload) => {
-  const apiUrl = `${url.IMPORT_FACTOR_FOR_API}`;
-  return post(apiUrl, payload);
+    const apiUrl = `${url.IMPORT_FACTOR_FOR_API}`;
+    return post(apiUrl, payload);
 };
 
 // Age Group
 export const getAgeGroupListAPI = (data) => {
-  const apiUrl = `${url.GET_AGE_GROUP_LIST}?search=${data?.search}&page=${
-    data?.page
-  }&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
-  return get(apiUrl);
+    const apiUrl = `${url.GET_AGE_GROUP_LIST}?search=${data?.search}&page=${data?.page
+        }&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
 };
 
 export const addAgeGroupAPI = (payload) => {
-  const apiUrl = `${url.ADD_AGE_GROUP_API}`;
-  return post(apiUrl, payload);
+    const apiUrl = `${url.ADD_AGE_GROUP_API}`;
+    return post(apiUrl, payload);
 };
 
 export const editAgeGroupAPI = (payload) => {
-  const apiUrl = `${url.EDIT_AGE_GROUP_API}${payload?.uuid}/update/`;
-  return put(apiUrl, payload);
+    const apiUrl = `${url.EDIT_AGE_GROUP_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
 };
 
 export const deleteAgeGroupAPI = (payload) => {
-  const preparedData = { id: payload };
-  const apiUrl = `${url.DELETE_AGE_GROUP_API}delete/`;
-  return delWithPayload(apiUrl, preparedData);
+    const preparedData = { id: payload };
+    const apiUrl = `${url.DELETE_AGE_GROUP_API}delete/`;
+    return delWithPayload(apiUrl, preparedData);
 };
 
 export const exportAgeGroupAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_AGE_GROUP_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
-  return getExportData(apiUrl, payload);
+    const apiUrl = `${url.EXPORT_AGE_GROUP_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
 };
 
 export const importAgeGroupAPI = (payload) => {
-  const apiUrl = `${url.IMPORT_AGE_GROUP_API}`;
-  return post(apiUrl, payload);
+    const apiUrl = `${url.IMPORT_AGE_GROUP_API}`;
+    return post(apiUrl, payload);
 };
 
 // ACADEMIC_RESULT_GROUP
 export const getAcademicResultGroupListAPI = (data) => {
-  const apiUrl = `${url.GET_ACADEMIC_RESULT_GROUP_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
-  return get(apiUrl);
+    const apiUrl = `${url.GET_ACADEMIC_RESULT_GROUP_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
 };
 
 export const addAcademicResultGroupAPI = (payload) => {
-  return post(url.ADD_ACADEMIC_RESULT_GROUP_API, payload);
+    return post(url.ADD_ACADEMIC_RESULT_GROUP_API, payload);
 };
 
 export const editAcademicResultGroupAPI = (payload) => {
-  const apiUrl = `${url.EDIT_ACADEMIC_RESULT_GROUP_API}${payload?.uuid}/update/`;
-  return put(apiUrl, payload);
+    const apiUrl = `${url.EDIT_ACADEMIC_RESULT_GROUP_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
 };
 
 export const deleteAcademicResultGroupAPI = (payload) => {
-  const preparedData = { id: payload };
-  const apiUrl = `${url.DELETE_ACADEMIC_RESULT_GROUP_API}delete/`;
-  return delWithPayload(apiUrl, preparedData);
+    const preparedData = { id: payload };
+    const apiUrl = `${url.DELETE_ACADEMIC_RESULT_GROUP_API}delete/`;
+    return delWithPayload(apiUrl, preparedData);
 };
 
 export const exportAcademicResultGroupAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_ACADEMIC_RESULT_GROUP_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
-  return getExportData(apiUrl, payload);
+    const apiUrl = `${url.EXPORT_ACADEMIC_RESULT_GROUP_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
 };
 
 export const importAcademicResultGroupAPI = (payload) => {
-  return post(url.IMPORT_ACADEMIC_RESULT_GROUP_API, payload);
+    return post(url.IMPORT_ACADEMIC_RESULT_GROUP_API, payload);
 };
 
 // BACKLOGS_GROUP
 export const getBacklogsGroupListAPI = (data) => {
-  const apiUrl = `${url.GET_BACKLOGS_GROUP_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
-  return get(apiUrl);
+    const apiUrl = `${url.GET_BACKLOGS_GROUP_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
 };
 
 export const addBacklogsGroupAPI = (payload) => {
-  return post(url.ADD_BACKLOGS_GROUP_API, payload);
+    return post(url.ADD_BACKLOGS_GROUP_API, payload);
 };
 
 export const editBacklogsGroupAPI = (payload) => {
-  const apiUrl = `${url.EDIT_BACKLOGS_GROUP_API}${payload?.uuid}/update/`;
-  return put(apiUrl, payload);
+    const apiUrl = `${url.EDIT_BACKLOGS_GROUP_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
 };
 
 export const deleteBacklogsGroupAPI = (payload) => {
-  const preparedData = { id: payload };
-  const apiUrl = `${url.DELETE_BACKLOGS_GROUP_API}delete/`;
-  return delWithPayload(apiUrl, preparedData);
+    const preparedData = { id: payload };
+    const apiUrl = `${url.DELETE_BACKLOGS_GROUP_API}delete/`;
+    return delWithPayload(apiUrl, preparedData);
 };
 
 export const exportBacklogsGroupAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_BACKLOGS_GROUP_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
-  return getExportData(apiUrl, payload);
+    const apiUrl = `${url.EXPORT_BACKLOGS_GROUP_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
 };
 
 export const importBacklogsGroupAPI = (payload) => {
-  return post(url.IMPORT_BACKLOGS_GROUP_API, payload);
+    return post(url.IMPORT_BACKLOGS_GROUP_API, payload);
 };
 
 // GAP_GROUP
 export const getGapGroupListAPI = (data) => {
-  const apiUrl = `${url.GET_GAP_GROUP_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
-  return get(apiUrl);
+    const apiUrl = `${url.GET_GAP_GROUP_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
 };
 
 export const addGapGroupAPI = (payload) => {
-  return post(url.ADD_GAP_GROUP_API, payload);
+    return post(url.ADD_GAP_GROUP_API, payload);
 };
 
 export const editGapGroupAPI = (payload) => {
-  const apiUrl = `${url.EDIT_GAP_GROUP_API}${payload?.uuid}/update/`;
-  return put(apiUrl, payload);
+    const apiUrl = `${url.EDIT_GAP_GROUP_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
 };
 
 export const deleteGapGroupAPI = (payload) => {
-  const preparedData = { id: payload };
-  const apiUrl = `${url.DELETE_GAP_GROUP_API}delete/`;
-  return delWithPayload(apiUrl, preparedData);
+    const preparedData = { id: payload };
+    const apiUrl = `${url.DELETE_GAP_GROUP_API}delete/`;
+    return delWithPayload(apiUrl, preparedData);
 };
 
 export const exportGapGroupAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_GAP_GROUP_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
-  return getExportData(apiUrl, payload);
+    const apiUrl = `${url.EXPORT_GAP_GROUP_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
 };
 
 export const importGapGroupAPI = (payload) => {
-  return post(url.IMPORT_GAP_GROUP_API, payload);
+    return post(url.IMPORT_GAP_GROUP_API, payload);
 };
+
+// Representing Country
+
+export const addRepresentingCountryAPI = (payload) => {
+    const apiUrl = `${url.ADD_REPRESENTING_COUNTRY_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editRepresentingCountryAPI = (payload) => {
+    const apiUrl = `${url.EDIT_REPRESENTING_COUNTRY_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteRepresentingCountryAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_REPRESENTING_COUNTRY_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportRepresentingCountryAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_REPRESENTING_COUNTRY_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importRepresentingCountryAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_REPRESENTING_COUNTRY_API}`;
+    return post(apiUrl, payload);
+};
+
 
 
 

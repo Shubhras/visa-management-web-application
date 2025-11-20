@@ -812,6 +812,14 @@ export const DELETE_PAYMENT_CATEGORY_API = "/api/v1/master/paymentcategory/";
 export const EXPORT_PAYMENT_CATEGORY_API = "/api/v1/master/paymentcategory/export/";
 export const IMPORT_PAYMENT_CATEGORY_API = "/api/v1/master/paymentcategory/import/";
 
+// Representing Country
+export const ADD_REPRESENTING_COUNTRY_API = "/api/v1/master/representingcountry/create/";
+export const EDIT_REPRESENTING_COUNTRY_API = "/api/v1/master/representingcountry/";
+export const DELETE_REPRESENTING_COUNTRY_API = "/api/v1/master/representingcountry/";
+export const EXPORT_REPRESENTING_COUNTRY_API = "/api/v1/master/representingcountry/export/";
+export const IMPORT_REPRESENTING_COUNTRY_API = "/api/v1/master/representingcountry/import/";
+
+
 
 
 
