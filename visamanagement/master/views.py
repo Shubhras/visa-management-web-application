@@ -1327,6 +1327,9 @@ class ContinentDeleteAPIView(APIView):
 
 
 class ContinentExportAPIView(APIView):
+    """
+    Export Continents data to CSV or XLSX with custom sorting.
+    """
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
@@ -1334,6 +1337,8 @@ class ContinentExportAPIView(APIView):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')  # comma-separated fields
         uuids_param = request.GET.get('uuids', '')  # comma-separated UUIDs
+        custom_sort = request.GET.get('customSort')  # e.g., name:asc,created_at:desc
+
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
         # --- Field to header mapping ---
@@ -1348,16 +1353,50 @@ class ContinentExportAPIView(APIView):
         }
 
         # --- Determine which fields to export ---
-        if fields:
-            field_list = [f.strip() for f in fields.split(',')]
-        else:
-            field_list = list(field_header_map.keys())
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
         # --- Fetch queryset ---
         queryset = Continents.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
+
+        # --- Custom sorting logic ---
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'is_active': 'is_active',
+            'is_deleted': 'is_deleted',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+
+        sort_fields = []
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field not in sort_field_map:
+                        continue
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sorting for string fields
+                    if field in ['name', 'description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+                except ValueError:
+                    continue
+        else:
+            # Default sorting by created_at
+            sort_order = request.GET.get('sortOrder', 'desc')
+            f = F('created_at')
+            sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
 
         # --- Prepare dataset ---
         dataset = Dataset()
@@ -1368,13 +1407,10 @@ class ContinentExportAPIView(APIView):
             row = []
             for field in field_list:
                 value = getattr(obj, field, '')
-
                 if field in ['created_at', 'updated_at'] and value:
-                    # Convert UTC to IST
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
                     value = int(value)
-
                 row.append(value if value is not None else '')
             dataset.append(row)
 
@@ -1395,7 +1431,6 @@ class ContinentExportAPIView(APIView):
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
-
 
 
 
@@ -1523,24 +1558,19 @@ class ContinentImportAPIView(APIView):
 
 #-------------------------------------------country---------------------------------
 
+
 class CountryListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')  
+        custom_sort = request.GET.get('customSort')
 
         allowed_sort_fields = ['name', 'shortName', 'fullName', 'capitalCity', 'created_at', 'updated_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-
-
-        if sort_order.lower() == 'desc':
-            sort_by = f'-{sort_by}'
 
         queryset = Country.objects.filter(is_deleted=False)
 
+        # UUID filtering
         def parse_ids(param_name):
             raw = request.GET.get(param_name, '')
             if raw:
@@ -1562,18 +1592,61 @@ class CountryListAPIView(APIView):
         if continent_list:
             queryset = queryset.filter(continent__uuid__in=continent_list)
 
- 
+        # Search filter
         if search:
             queryset = queryset.filter(Q(name__istartswith=search))
 
+        # Sorting
+        sort_field_map = {
+            'name': 'name',
+            'shortName': 'shortName',
+            'fullName': 'fullName',
+            'capitalCity': 'capitalCity',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
 
-        queryset = queryset.order_by(sort_by)
+        sort_fields = []
 
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
 
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive for string fields
+                    if field in ['name', 'shortName', 'fullName', 'capitalCity']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+        else:
+            # fallback sorting
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'desc')
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+            f = F(orm_field)
+            sort_fields = [f.asc(nulls_last=True) if sort_order.lower() == 'asc' else f.desc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # Pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = CountrySerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
+
 
 
 
@@ -1608,6 +1681,8 @@ class CountryCreateAPIView(APIView):
             })
         errors = " ".join([msg for msgs in serializer.errors.values() for msg in msgs])
         return Response({"statusCode": 400, "status": False, "message": errors}, status=400)
+
+
 
 class CountryRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
