@@ -89,9 +89,9 @@ const AddImportAgeModal = ({ show, handleClose }) => {
                     if (response?.duplicates?.length > 0) {
                         const prepareData = {
                             data: response.duplicates || [],
-                            headers: ["Country Name", "State Name","State / Territory"],
-                            sheetName: "State",
-                            fileName: "State",
+                            headers: ["Factor For", "Study Age Group", "Minimum Age","Maximum Age","Country", "Course Level",],
+                            sheetName: "Study Age Group",
+                            fileName: "Study Age Group",
                         };
                         exportToExcelDuplicate(
                             prepareData.data,
@@ -103,9 +103,9 @@ const AddImportAgeModal = ({ show, handleClose }) => {
                      if (response?.skipped_rows?.length > 0) {
                         const prepareData = {
                             data: response.skipped_rows || [],
-                            headers: ["Country Name", "State Name","State / Territory","Reason"],
-                            sheetName: "State",
-                            fileName: "State",
+                            headers: ["Factor For", "Study Age Group", "Minimum Age","Maximum Age","Country", "Course Level","Reason"],
+                            sheetName: "Study Age Group",
+                            fileName: "Study Age Group",
                         };
                         exportToExcelWrongData(
                             prepareData.data,
@@ -155,7 +155,7 @@ const AddImportAgeModal = ({ show, handleClose }) => {
                     <div className="modal-content radius-16 bg-base">
                         <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
                             <h1 className="modal-title fs-5" id="StateModalLabel">
-                                Upload State
+                                Upload Study Age Group
                             </h1>
                             <button
                                 type="button"
@@ -255,10 +255,10 @@ const AddImportAgeModal = ({ show, handleClose }) => {
             </div>
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
-                    downloadFileName: "State",
-                    items: ["Country Name", "State Name", "State Short Name", "State / Territory", "Description"],
-                    selectedItems: ["Country Name", "State Name", "State / Territory"],
-                    ItemsRequired: ["Country Name", "State Name", "State / Territory"]
+                    downloadFileName: "Study Age Group",
+                    items: ["Factor For", "Study Age Group", "Minimum Age","Maximum Age","Country", "Course Level", "Description", "Modified On"],
+                    selectedItems: ["Factor For", "Study Age Group", "Minimum Age","Maximum Age","Country", "Course Level"],
+                    ItemsRequired: ["Factor For", "Study Age Group", "Minimum Age","Maximum Age","Country", "Course Level"]
                 }
                 } />
             )}

@@ -58,19 +58,19 @@ const AgeList = () => {
   const [stateListData, setStateListData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [items] = useState(["Country","FactorFor", "Study Age Group", "Minimum Age","Maximum Age", "Course Level", "Description", "Modified On"]);
+  const [items] = useState(["Factor For", "Study Age Group", "Minimum Age","Maximum Age","Country", "Course Level", "Description", "Modified On"]);
   const [selectedItems, setSelectedItems] = useState(["Country Name", "State Name", "State / Territory"]);
   const [ItemsRequired] = useState(["Country Name", "State Name", "State / Territory"]);
   const [countryListData, setCountryListData] = useState([]);
   // Table columns configuration
   const [tableColumns] = useState([
-    { id: 'countryName', label: 'Country', field: 'countryId', visible: true, required: false, filterable: true },
-    { id: 'factorForName', label: 'Factor For', field: 'factorForName', visible: true, required: false, filterable: false },
-    { id: 'studyAgeGroup', label: 'Study Age Group', field: 'studyAgeGroup', visible: true, required: false, filterable: false },
-    { id: 'minimumAge', label: 'Minimum Age', field: 'minimumAge', visible: false, required: false, filterable: false },
-    { id: 'maximumAge', label: 'Maximum Age', field: 'maximumAge', visible: false, required: false, filterable: false },
-    { id: 'courseLevel', label: 'Course Level', field: 'courseLevel', visible: false, required: false, filterable: false },
-    { id: 'description', label: 'Description', field: 'description', visible: false, required: false, filterable: false },
+      { id: 'factorForName', label: 'Factor For', field: 'factorForName', visible: true, required: false, filterable: false },
+      { id: 'studyAgeGroup', label: 'Study Age Group', field: 'studyAgeGroup', visible: true, required: false, filterable: false },
+      { id: 'minimumAge', label: 'Minimum Age', field: 'minimumAge', visible: true, required: false, filterable: false },
+      { id: 'maximumAge', label: 'Maximum Age', field: 'maximumAge', visible: true, required: false, filterable: false },
+      { id: 'countryName', label: 'Country', field: 'countryId', visible: true, required: false, filterable: true },
+    { id: 'courseLevel', label: 'Course Level', field: 'courseLevel', visible: true, required: false, filterable: false },
+    { id: 'description', label: 'Description', field: 'description', visible: true, required: false, filterable: false },
     { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false, filterable: false },
   ]);
 
@@ -1047,19 +1047,25 @@ const AgeList = () => {
                             <span>{String(startIndex + index + 1).padStart(2, '0')}</span>
                           </div>
                         </td>
-                        {isColumnVisible('countryName') && (
-                          <td><span>{rowItem.countryName}</span></td>
+                        {isColumnVisible('factorForName') && (
+                          <td><span>{rowItem.factorForName}</span></td>
                         )}
 
-                        {isColumnVisible('stateName') && (
-                          <td><span>{rowItem.stateName}</span></td>
+                        {isColumnVisible('studyAgeGroup') && (
+                          <td><span>{rowItem.studyAgeGroup}</span></td>
                         )}
-                        {isColumnVisible('stateshortName') && (
-                          <td><span>{rowItem.stateshortName}</span></td>
+                        {isColumnVisible('minimumAge') && (
+                          <td><span>{rowItem.minimumAge}</span></td>
                         )}
-                        {isColumnVisible('state_display') && (
-                          <td><span>{rowItem.state_display}</span></td>
+                        {isColumnVisible('maximumAge') && (
+                          <td><span>{rowItem.maximumAge}</span></td>
+                        )} {isColumnVisible('countryName') && (
+                          <td><span>{rowItem.countryName}</span></td>
                         )}
+                        {isColumnVisible('courseLevel') && (
+                          <td><span>{rowItem.courseLevel}</span></td>
+                        )}
+
                         {isColumnVisible('description') && (
                           <td><span>{rowItem.description}</span></td>
                         )}

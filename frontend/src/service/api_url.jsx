@@ -882,12 +882,12 @@ export const EXPORT_ENTRANCE_TEST_ABILITY_GROUP_API = "/api/v1/master/entrance-t
 export const IMPORT_ENTRANCE_TEST_ABILITY_GROUP_API = "/api/v1/master/entrance-test-ability-group/import/";
 
 // Age – API Endpoints
-export const GET_AGE_LIST = "/api/v1/master/age/list/";
-export const ADD_AGE_API = "/api/v1/master/age/create/";
-export const EDIT_AGE_API = "/api/v1/master/age/";      // +uuid/update/
-export const DELETE_AGE_API = "/api/v1/master/age/";    // +delete/
-export const EXPORT_AGE_API = "/api/v1/master/age/export/";
-export const IMPORT_AGE_API = "/api/v1/master/age/import/";
+export const GET_AGE_LIST = "/api/v1/master/study-factor-age/list/";
+export const ADD_AGE_API = "/api/v1/master/study-factor-age/create/";
+export const EDIT_AGE_API = "/api/v1/master/study-factor-age/";      // +uuid/update/
+export const DELETE_AGE_API = "/api/v1/master/study-factor-age/";    // +delete/
+export const EXPORT_AGE_API = "/api/v1/master/study-factor-age/export/";
+export const IMPORT_AGE_API = "/api/v1/master/study-factor-age/import/";
 
 
 

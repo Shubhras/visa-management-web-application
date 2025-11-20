@@ -2,31 +2,36 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import Select from "react-select";
-import { stateAdd, stateEdit } from '../../../../store/master/generalMasters/actions';
 import { countryDemoList } from '../../../../store/master/companyMasters/actions';
+import { ageAdd, ageEdit, ageGroupList, factorForList } from '../../../../store/actions';
 
 const AddEditAgeModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const [countryListData, setCountryListData] = useState([]);
+  const [factorForData, setFactorForData] = useState([]);
+  const [ageGroupData, setAgeGroupData] = useState([]);
 
   // Form state
   const [formData, setFormData] = useState({
     uuid: '',
-    country: '',
-    name: '',
-    short_name: '',
-    stateTerritory: 'State',
+    factorForName: '',
+    studyAgeGroup:"",
+    minimumAge: '',
+    maximumAge: '',
+    countryName: '',
+    courseLevel:"",
     description: '',
   });
 
   // Validation errors state
   const [errors, setErrors] = useState({
-    country: '',
-    name: '',
-    short_name: '',
-    stateTerritory: 'State',
-    description: '',
+    factorForName: '',
+    studyAgeGroup:"",
+    minimumAge: '',
+    maximumAge: '',
+    countryName: '',
+    courseLevel:"",
   });
 
   // Populate form data when in edit mode
@@ -34,10 +39,12 @@ const AddEditAgeModal = ({ show, handleClose, mode = 'add', rowData = null }) =>
     if (mode === 'edit' && rowData) {
       setFormData({
         uuid: rowData.uuid || '',
-        country: rowData.country_id || '',
-        name: rowData.stateName || '',
-        short_name: rowData.stateshortName || '',
-        stateTerritory: rowData.state_display || '',//formData.state === "STATE" ? "State" : "Territory" || '',
+        factorForName: rowData.factorForName || '',
+        studyAgeGroup: rowData.studyAgeGroup || '',
+        minimumAge: rowData.minimumAge || '',
+        maximumAge: rowData.maximumAge || '',//formData.state === "STATE" ? "State" : "Territory" || '',
+        countryName: rowData.countryName || '',
+        courseLevel: rowData.courseLevel || '',
         description: rowData.description || '',
       });
     } else {
@@ -63,6 +70,16 @@ const AddEditAgeModal = ({ show, handleClose, mode = 'add', rowData = null }) =>
       if (response?.statusCode === 200 && response?.status === true) {
         setCountryListData(response?.data || []);
       }
+    }));dispatch(factorForList(params, (response, error) => {
+      setLoading(false);
+      if (response?.statusCode === 200 && response?.status === true) {
+        setFactorForData(response?.data || []);
+      }
+    }));dispatch(ageGroupList(params, (response, error) => {
+      setLoading(false);
+      if (response?.statusCode === 200 && response?.status === true) {
+        setAgeGroupData(response?.data || []);
+      }
     }));
   };
 
@@ -84,16 +101,17 @@ const AddEditAgeModal = ({ show, handleClose, mode = 'add', rowData = null }) =>
   };
 
   // Handle Select changes for Country
-  const handleSelectChange = (selectedOption) => {
-    setFormData((prev) => ({
-      ...prev,
-      country: selectedOption ? selectedOption.value : ""
-    }));
-    if (errors.country) {
-      setErrors((prev) => ({ ...prev, country: "" }));
-    }
-  };
+//   const handleSelectChange = (selectedOption) => {
+//     setFormData((prev) => ({
+//       ...prev,
+//       country: selectedOption ? selectedOption.value : ""
+//     }));
+//     if (errors.country) {
+//       setErrors((prev) => ({ ...prev, country: "" }));
+//     }
+//   };
   // Custom filter function for search from start
+  
   const customFilterOption = (option, inputValue) => {
     if (!inputValue) return true;
     return option.label.toLowerCase().startsWith(inputValue.toLowerCase());
@@ -104,20 +122,36 @@ const AddEditAgeModal = ({ show, handleClose, mode = 'add', rowData = null }) =>
     let isValid = true;
 
     // Country validation
-    if (!formData.country.trim()) {
-      newErrors.country = 'Country is required';
+    if (!formData.countryName.trim()) {
+      newErrors.countryName = 'Country is required';
       isValid = false;
     }
 
     // State name validation
-    if (!formData.name.trim()) {
-      newErrors.name = 'State name is required';
+    if (!formData.factorForName.trim()) {
+      newErrors.factorForName = 'Factor For name is required';
       isValid = false;
     }
 
 
-    if (!formData.stateTerritory.trim()) {
-      newErrors.stateTerritory = 'State/Territory is required';
+    if (!formData.studyAgeGroup.trim()) {
+      newErrors.studyAgeGroup = 'Study Age Group is required';
+      isValid = false;
+    }
+    
+    if (!formData.minimumAge.trim()) {
+      newErrors.minimumAge = 'Minimum Age is required';
+      isValid = false;
+    }
+
+    // State name validation
+    if (!formData.maximumAge.trim()) {
+      newErrors.maximumAge = 'Maximum Age is required';
+      isValid = false;
+    }
+
+    if (!formData.courseLevel.trim()) {
+      newErrors.courseLevel = 'Course Level is required';
       isValid = false;
     }
 
@@ -133,23 +167,26 @@ const AddEditAgeModal = ({ show, handleClose, mode = 'add', rowData = null }) =>
       const sendPayload = mode === 'edit'
         ? {
           uuid: formData.uuid,
-          country_id: formData.country,
-          stateName: formData.name.trim(),
-          stateshortName: formData.short_name.trim(),
-          //state: formData.stateTerritory.trim() === "State" ? "STATE" : "TERRITORY",
-          state: formData.stateTerritory?.toUpperCase() || '',
+          factorForName: formData.factorForName,
+          studyAgeGroup: formData.studyAgeGroup,
+          minimumAge: formData.minimumAge,
+          maximumAge: formData.maximumAge,
+          countryName: formData.countryName,
+          courseLevel: formData.courseLevel,
           description: formData.description.trim(),
         }
         : {
-          country_id: formData.country,
-          stateName: formData.name.trim(),
-          stateshortName: formData.short_name.trim(),
-          state: formData.stateTerritory?.toUpperCase() || '',
+         factorForName: formData.factorForName,
+          studyAgeGroup: formData.studyAgeGroup,
+          minimumAge: formData.minimumAge,
+          maximumAge: formData.maximumAge,
+          countryName: formData.countryName,
+          courseLevel: formData.courseLevel,
           description: formData.description.trim(),
         };
 
       setLoading(true);
-      const action = mode === 'edit' ? stateEdit : stateAdd;
+      const action = mode === 'edit' ? ageEdit : ageAdd;
 
       dispatch(action(sendPayload, (response, error) => {
         setLoading(false);
@@ -169,12 +206,14 @@ const AddEditAgeModal = ({ show, handleClose, mode = 'add', rowData = null }) =>
   // Reset form
   const resetForm = () => {
     setFormData({
-      uuid: '',
-      country: '',
-      name: '',
-      short_name: '',
-      stateTerritory: 'State',
-      description: '',
+       uuid: '',
+    factorForName: '',
+    studyAgeGroup:"",
+    minimumAge: '',
+    maximumAge: '',
+    countryName: '',
+    courseLevel:"",
+    description: '',
     });
     setErrors({});
   };
@@ -201,7 +240,7 @@ const AddEditAgeModal = ({ show, handleClose, mode = 'add', rowData = null }) =>
         <div className="modal-content radius-16 bg-base">
           <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
             <h1 className="modal-title fs-5" id="AddEditStateModalLabel">
-              {mode === 'edit' ? 'Edit State' : 'Add State'}
+              {mode === 'edit' ? 'Edit Age' : 'Add Age'}
             </h1>
             <button type="button" className="btn-close" onClick={onClose} aria-label="Close" />
           </div>
@@ -210,7 +249,7 @@ const AddEditAgeModal = ({ show, handleClose, mode = 'add', rowData = null }) =>
             <form onSubmit={handleSubmit}>
               <div className="row">
                 {/* Country Dropdown */}
-                <div className="col-12 mb-20">
+                {/* <div className="col-12 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                     Country Name <span className="text-danger">*</span>
                   </label>
@@ -229,7 +268,14 @@ const AddEditAgeModal = ({ show, handleClose, mode = 'add', rowData = null }) =>
                           .find((opt) => opt.value === formData.country)
                         : null
                     }
-                    onChange={handleSelectChange}
+                    onChange={(selectedOption) =>
+                      handleChange({
+                        target: {
+                          name: "occupationVersion",
+                          value: selectedOption ? selectedOption.value : "",
+                        },
+                      })
+                    }
                     filterOption={customFilterOption}
                     placeholder="Select Country"
                     isClearable
@@ -243,73 +289,161 @@ const AddEditAgeModal = ({ show, handleClose, mode = 'add', rowData = null }) =>
                       {errors.country}
                     </div>
                   )}
-                </div>
+                </div> */}
 
-                {/* State Name */}
-                <div className="col-12 mb-20">
+                 <div className="col-6 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    State Name <span className="text-danger">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    className={`form-control radius-8 ${errors.name ? 'is-invalid' : ''}`}
-                    placeholder="Enter state name"
-                  />
-                  {errors.name && (
-                    <div className="text-danger text-sm mt-1">{errors.name}</div>
-                  )}
-                </div>
-
-                {/* State Short Name */}
-                <div className="col-12 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    State Short Name
-                  </label>
-                  <input
-                    type="text"
-                    name="short_name"
-                    value={formData.short_name}
-                    onChange={handleChange}
-                    className="form-control radius-8"
-                    placeholder="Enter short name"
-                  />
-                </div>
-                <div className="col-12 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    State / Territory <span className="text-danger">*</span>
+                    Factor For <span className="text-danger">*</span>
                   </label>
                   <Select
-                    options={[
-                      { value: "State", label: "State" },
-                      { value: "Territory", label: "Territory" },
-                    ]}
-                    value={[
-                      { value: "State", label: "State" },
-                      { value: "Territory", label: "Territory" },
-                    ].find((opt) => opt.value === (formData.stateTerritory || "State"))}
-                    onChange={(selectedOption) =>
+                    options={factorForData.map((option) => ({
+                      value: option.uuid,
+                      label: option.name ,
+                    }))}
+                    value={
+                      formData.factorForName
+                        ? factorForData
+                          .map((option) => ({
+                            value: option.uuid,
+                            label: option.name ,
+                          }))
+                          .find((opt) => opt.value === formData.factorForName)
+                        : null
+                    }
+                   onChange={(selectedOption) =>
                       handleChange({
                         target: {
-                          name: "stateTerritory",
+                          name: "factorForName",
                           value: selectedOption ? selectedOption.value : "",
                         },
                       })
                     }
-                    placeholder="State / Territory"
+                    filterOption={customFilterOption}
+                    placeholder="Select Factor For"
                     isClearable
                     isSearchable
-                    className={`custom-select-container ${errors.stateTerritory ? "is-invalid" : ""
+                    className={`custom-select-container ${errors.factorForName ? "is-invalid" : ""
                       }`}
                     classNamePrefix="custom-select"
                   />
-
-                  {errors.stateTerritory && (
-                    <div className="text-danger text-sm mt-1">{errors.stateTerritory}</div>
+                  {errors.factorForName && (
+                    <div className="text-danger text-sm mt-1">
+                      {errors.factorForName}
+                    </div>
                   )}
                 </div>
+
+               <div className="col-6 mb-20">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                    Study Age Group <span className="text-danger">*</span>
+                  </label>
+                  <Select
+                    options={ageGroupData.map((option) => ({
+                      value: option.uuid,
+                      label: option.name ,
+                    }))}
+                    value={
+                      formData.studyAgeGroup
+                        ? ageGroupData
+                          .map((option) => ({
+                            value: option.uuid,
+                            label: option.name ,
+                          }))
+                          .find((opt) => opt.value === formData.studyAgeGroup)
+                        : null
+                    }
+                    onChange={(selectedOption) =>
+                      handleChange({
+                        target: {
+                          name: "studyAgeGroup",
+                          value: selectedOption ? selectedOption.value : "",
+                        },
+                      })
+                    }
+                    filterOption={customFilterOption}
+                    placeholder="Select Study Age Group"
+                    isClearable
+                    isSearchable
+                    className={`custom-select-container ${errors.studyAgeGroup ? "is-invalid" : ""
+                      }`}
+                    classNamePrefix="custom-select"
+                  />
+                  {errors.studyAgeGroup && (
+                    <div className="text-danger text-sm mt-1">
+                      {errors.studyAgeGroup}
+                    </div>
+                  )}
+                </div>
+
+                {/* State Name */}
+                <div className="col-6 mb-20">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                    Minimum Age <span className="text-danger">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    name="minimumAge"
+                    value={formData.minimumAge}
+                    onChange={handleChange}
+                    className={`form-control radius-8 ${errors.minimumAge ? 'is-invalid' : ''}`}
+                    placeholder="Enter Minimum Age"
+                  />
+                  {errors.minimumAge && (
+                    <div className="text-danger text-sm mt-1">{errors.minimumAge}</div>
+                  )}
+                </div>
+                <div className="col-6 mb-20">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                    Maximum Age <span className="text-danger">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    name="maximumAge"
+                    value={formData.maximumAge}
+                    onChange={handleChange}
+                    className={`form-control radius-8 ${errors.maximumAge ? 'is-invalid' : ''}`}
+                    placeholder="Enter Maximum Age"
+                  />
+                  {errors.maximumAge && (
+                    <div className="text-danger text-sm mt-1">{errors.maximumAge}</div>
+                  )}
+                </div>
+
+                {/* State Short Name */}
+                <div className="col-6 mb-20">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                    Country Name <span className="text-danger">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="countryName"
+                    value={formData.countryName}
+                    onChange={handleChange}
+                    className={`form-control radius-8 ${errors.countryName ? 'is-invalid' : ''}`}
+                    placeholder="Enter short name"
+                  />
+                  {errors.countryName && (
+                    <div className="text-danger text-sm mt-1">{errors.countryName}</div>
+                  )}
+                </div>
+                
+                <div className="col-6 mb-20">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                    Course Level <span className="text-danger">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="courseLevel"
+                    value={formData.courseLevel}
+                    onChange={handleChange}
+                    className={`form-control radius-8 ${errors.courseLevel ? 'is-invalid' : ''}`}
+                    placeholder="Enter short name"
+                  />
+                  {errors.courseLevel && (
+                    <div className="text-danger text-sm mt-1">{errors.courseLevel}</div>
+                  )}
+                </div>
+
                 {/* Description */}
                 <div className="col-12 mb-20">
                   <label htmlFor="desc" className="form-label fw-semibold text-primary-light text-sm mb-8">
