@@ -1319,7 +1319,6 @@ class ContinentDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-
 class ContinentExportAPIView(APIView):
     """
     Export Continents data to CSV or XLSX with custom sorting.
@@ -1940,6 +1939,10 @@ class CountryExportAPIView(APIView):
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
+
+
+
+
 class CountryImportAPIView(APIView):
 
     def post(self, request):
@@ -1963,6 +1966,7 @@ class CountryImportAPIView(APIView):
             data = []
             headers = []
 
+            # ---------------- XLSX Import ----------------
             if format_type == 'xlsx':
                 import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
@@ -1994,6 +1998,7 @@ class CountryImportAPIView(APIView):
                         continue
                     data.append(dict(zip(headers, row)))
 
+            # ---------------- CSV Import ----------------
             elif format_type == 'csv':
                 
                 decoded_file = file.read().decode('utf-8')
@@ -2014,6 +2019,7 @@ class CountryImportAPIView(APIView):
                     'error': 'Unsupported file format. Use .xlsx or .csv'
                 }, status=400)
 
+            # ---------------- Data Processing ----------------
             imported_count = 0
             for row in reversed(data):
                 country_name = str(row.get('country name')).strip() if row.get('country name') else None
@@ -5737,6 +5743,38 @@ class DepartmentCreateAPIView(APIView):
                 "status": False,
                 "message": message_text,
             }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DepartmentListAPIView(APIView):
+    def get(self, request):
+        search = request.GET.get('search', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_order = request.GET.get('sortOrder', 'desc')  
+
+        allowed_sort_fields = ['name', 'description', 'updated_at']
+        if sort_by not in allowed_sort_fields:
+            sort_by = 'created_at'
+
+        # Apply descending order for 'desc'
+        if sort_order == 'desc':
+            sort_by = f'-{sort_by}'
+
+        queryset = Department.objects.filter(is_deleted=False)
+
+        if search:
+            queryset = queryset.filter(
+                Q(name__istartswith=search)
+            )
+
+        # Apply dynamic ordering
+        queryset = queryset.order_by(sort_by)
+
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = DepartmentSerializer(result_page, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
+
 
 class DepartmentRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
