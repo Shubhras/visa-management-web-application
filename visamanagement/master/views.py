@@ -1319,7 +1319,6 @@ class ContinentDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-
 class ContinentExportAPIView(APIView):
     """
     Export Continents data to CSV or XLSX with custom sorting.
@@ -1554,7 +1553,6 @@ class ContinentImportAPIView(APIView):
 
 #-------------------------------------------country---------------------------------
 
-
 class CountryListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -1562,11 +1560,17 @@ class CountryListAPIView(APIView):
         search = request.GET.get('search', '').strip()
         custom_sort = request.GET.get('customSort')
 
-        allowed_sort_fields = ['name', 'shortName', 'fullName', 'capitalCity', 'created_at', 'updated_at']
+        # All allowed fields for sorting
+        allowed_sort_fields = [
+            'uuid', 'name', 'continent', 'shortName', 'fullName', 'officialName', 'capitalCity',
+            'dialCodes', 'currencyfullname', 'currencyshortname', 'description', 'currencyCode',
+            'status', 'created_at', 'updated_at', 'is_active', 'is_deleted'
+        ]
 
         queryset = Country.objects.filter(is_deleted=False)
 
-        # UUID filtering
+        # ---------------------------
+        # UUID filtering helper
         def parse_ids(param_name):
             raw = request.GET.get(param_name, '')
             if raw:
@@ -1592,15 +1596,9 @@ class CountryListAPIView(APIView):
         if search:
             queryset = queryset.filter(Q(name__istartswith=search))
 
+        # ---------------------------
         # Sorting
-        sort_field_map = {
-            'name': 'name',
-            'shortName': 'shortName',
-            'fullName': 'fullName',
-            'capitalCity': 'capitalCity',
-            'created_at': 'created_at',
-            'updated_at': 'updated_at',
-        }
+        sort_field_map = {field: field for field in allowed_sort_fields}
 
         sort_fields = []
 
@@ -1616,8 +1614,8 @@ class CountryListAPIView(APIView):
 
                     orm_field = sort_field_map[field]
 
-                    # Case-insensitive for string fields
-                    if field in ['name', 'shortName', 'fullName', 'capitalCity']:
+                    # Use Lower for string fields for case-insensitive sorting
+                    if field in ['name', 'shortName', 'fullName', 'officialName', 'capitalCity', 'currencyfullname', 'currencyshortname', 'currencyCode', 'description']:
                         f = Lower(orm_field)
                     else:
                         f = F(orm_field)
@@ -1636,11 +1634,12 @@ class CountryListAPIView(APIView):
 
         queryset = queryset.order_by(*sort_fields)
 
-        
+        # ---------------------------
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = CountrySerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
+
 
 
 
@@ -1785,6 +1784,7 @@ class CountryDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+
 class CountryExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -1818,14 +1818,14 @@ class CountryExportAPIView(APIView):
         country_list = validate_uuid_list(parse_ids('country'))
 
         # ---------------------------
-        # Base QuerySet
+        # Base QuerySet with annotation
         # ---------------------------
         queryset = Country.objects.filter(is_deleted=False).annotate(
             continent_name=F('continent__name')
         )
 
         # ---------------------------
-        # Filtering
+        # Hierarchical filtering
         # ---------------------------
         if country_list:
             queryset = queryset.filter(uuid__in=country_list)
@@ -1841,12 +1841,25 @@ class CountryExportAPIView(APIView):
         # ---------------------------
         # Sorting
         # ---------------------------
+        # Map all fields for sorting
         sort_field_map = {
+            'uuid': 'uuid',
             'name': 'name',
             'shortName': 'shortName',
             'fullName': 'fullName',
+            'officialName': 'officialName',
+            'capitalCity': 'capitalCity',
+            'dialCodes': 'dialCodes',
+            'currencyfullname': 'currencyfullname',
+            'currencyshortname': 'currencyshortname',
+            'currencyCode': 'currencyCode',
+            'description': 'description',
+            'status': 'status',
+            'is_active': 'is_active',
+            'is_deleted': 'is_deleted',
             'continent': 'continent_name',
-            'created_at': 'created_at'
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
         }
 
         sort_fields = []
@@ -1860,7 +1873,9 @@ class CountryExportAPIView(APIView):
                         continue
 
                     orm_field = sort_field_map[field]
-                    if field in ['name', 'shortName', 'fullName', 'continent']:
+
+                    # Case-insensitive sorting for string fields
+                    if field in ['name', 'shortName', 'fullName', 'officialName', 'capitalCity', 'currencyfullname', 'currencyshortname', 'currencyCode', 'description', 'continent']:
                         f = Lower(orm_field)
                     else:
                         f = F(orm_field)
@@ -1871,7 +1886,7 @@ class CountryExportAPIView(APIView):
         else:
             sort_order = request.GET.get('sortOrder', 'desc')
             f = F('created_at')
-            sort_fields = [f.desc(nulls_last=True) if sort_order=='desc' else f.asc(nulls_last=True)]
+            sort_fields = [f.desc(nulls_last=True) if sort_order.lower() == 'desc' else f.asc(nulls_last=True)]
 
         queryset = queryset.order_by(*sort_fields)
 
@@ -1883,14 +1898,14 @@ class CountryExportAPIView(APIView):
             'name': 'Country Name',
             'continent': 'Continent',
             'shortName': 'Country Short Name',
-            'fullName': 'Country Official Name',
+            'fullName': 'Country Full Name',
             'officialName': 'Country Official Name',
             'capitalCity': 'Capital City',
             'dialCodes': 'Country Calling Code',
-            'currencyfullname':'Currency Full Name',
-            'currencyshortname':'Currency Short Name',
+            'currencyfullname': 'Currency Full Name',
+            'currencyshortname': 'Currency Short Name',
             'currencyCode': 'Currency Code',
-            'description':'Description',
+            'description': 'Description',
             'status': 'Status',
             'is_active': 'Active',
             'is_deleted': 'Deleted',
@@ -1939,9 +1954,7 @@ class CountryExportAPIView(APIView):
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
-
-
-
+        
 
 class CountryImportAPIView(APIView):
 
@@ -1966,6 +1979,7 @@ class CountryImportAPIView(APIView):
             data = []
             headers = []
 
+            # ---------------- XLSX Import ----------------
             if format_type == 'xlsx':
                 import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
@@ -1997,6 +2011,7 @@ class CountryImportAPIView(APIView):
                         continue
                     data.append(dict(zip(headers, row)))
 
+            # ---------------- CSV Import ----------------
             elif format_type == 'csv':
                 
                 decoded_file = file.read().decode('utf-8')
@@ -2017,6 +2032,7 @@ class CountryImportAPIView(APIView):
                     'error': 'Unsupported file format. Use .xlsx or .csv'
                 }, status=400)
 
+            # ---------------- Data Processing ----------------
             imported_count = 0
             for row in reversed(data):
                 country_name = str(row.get('country name')).strip() if row.get('country name') else None
@@ -2404,7 +2420,6 @@ class StateExportAPIView(APIView):
         fields = request.GET.get('fields')
         search = request.GET.get('search', '').strip()
         custom_sort = request.GET.get('customSort')
-        allowed_sort_fields = ['stateName', 'stateshortName', 'state', 'countryName', 'created_at']
 
         # ---------------------------
         # Parse IDs & Validate UUIDs
@@ -2430,7 +2445,7 @@ class StateExportAPIView(APIView):
         state_list = validate_uuid_list(parse_ids('state'))
 
         # ---------------------------
-        # Base QuerySet
+        # Base QuerySet with annotation
         # ---------------------------
         queryset = State.objects.filter(is_deleted=False).annotate(
             country_name=F('countryName__name')
@@ -2472,8 +2487,7 @@ class StateExportAPIView(APIView):
                         continue
 
                     orm_field = sort_field_map[field]
-
-                    # Use Lower() for string fields for case-insensitive sort
+                    # Case-insensitive for string fields
                     if field in ['stateName', 'stateshortName', 'state', 'countryName']:
                         f = Lower(orm_field)
                     else:
@@ -2485,7 +2499,7 @@ class StateExportAPIView(APIView):
         else:
             sort_order = request.GET.get('sortOrder', 'desc')
             f = F('created_at')
-            sort_fields = [f.desc(nulls_last=True) if sort_order=='desc' else f.asc(nulls_last=True)]
+            sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
 
         queryset = queryset.order_by(*sort_fields)
 
@@ -2536,7 +2550,7 @@ class StateExportAPIView(APIView):
         # ---------------------------
         if format_type == 'csv':
             file_data = dataset.export('csv')
-            content_type = 'text/csv'
+            content_type = 'text/csv; charset=utf-8'
             file_name = 'states.csv'
         else:
             file_data = io.BytesIO(dataset.export('xlsx'))
@@ -2549,7 +2563,9 @@ class StateExportAPIView(APIView):
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
-          
+
+
+
         
 class StateImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -3053,7 +3069,6 @@ class DistrictExportAPIView(APIView):
         fields = request.GET.get('fields')
         search = request.GET.get('search', '').strip()
         custom_sort = request.GET.get('customSort')
-        allowed_sort_fields = ['districtName', 'stateName', 'countryName', 'created_at']
 
         # ---------------------------
         # Parse IDs & Validate UUIDs
@@ -3080,7 +3095,7 @@ class DistrictExportAPIView(APIView):
         district_list = validate_uuid_list(parse_ids('district'))
 
         # ---------------------------
-        # Base QuerySet
+        # Base QuerySet with annotation
         # ---------------------------
         queryset = District.objects.filter(is_deleted=False).annotate(
             country_name=F('countryName__name'),
@@ -3126,7 +3141,7 @@ class DistrictExportAPIView(APIView):
 
                     orm_field = sort_field_map[field]
 
-                    # Use Lower() for string fields for case-insensitive sort
+                    # Case-insensitive sort for string fields
                     if field in ['districtName', 'stateName', 'countryName']:
                         f = Lower(orm_field)
                     else:
@@ -3138,7 +3153,7 @@ class DistrictExportAPIView(APIView):
         else:
             sort_order = request.GET.get('sortOrder', 'desc')
             f = F('created_at')
-            sort_fields = [f.desc(nulls_last=True) if sort_order=='desc' else f.asc(nulls_last=True)]
+            sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
 
         queryset = queryset.order_by(*sort_fields)
 
@@ -3185,7 +3200,7 @@ class DistrictExportAPIView(APIView):
         # ---------------------------
         if format_type == 'csv':
             file_data = dataset.export('csv')
-            content_type = 'text/csv'
+            content_type = 'text/csv; charset=utf-8'
             file_name = 'districts.csv'
         else:
             file_data = io.BytesIO(dataset.export('xlsx'))
@@ -3198,6 +3213,8 @@ class DistrictExportAPIView(APIView):
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
+
+
 
 
 
@@ -4759,7 +4776,7 @@ class TimezoneDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-        
+
 class TimezoneExportAPIView(APIView):
     """
     Export Timezone with custom sorting.
@@ -5740,6 +5757,38 @@ class DepartmentCreateAPIView(APIView):
                 "status": False,
                 "message": message_text,
             }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DepartmentListAPIView(APIView):
+    def get(self, request):
+        search = request.GET.get('search', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_order = request.GET.get('sortOrder', 'desc')  
+
+        allowed_sort_fields = ['name', 'description', 'updated_at']
+        if sort_by not in allowed_sort_fields:
+            sort_by = 'created_at'
+
+        # Apply descending order for 'desc'
+        if sort_order == 'desc':
+            sort_by = f'-{sort_by}'
+
+        queryset = Department.objects.filter(is_deleted=False)
+
+        if search:
+            queryset = queryset.filter(
+                Q(name__istartswith=search)
+            )
+
+        # Apply dynamic ordering
+        queryset = queryset.order_by(sort_by)
+
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = DepartmentSerializer(result_page, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
+
 
 class DepartmentRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]

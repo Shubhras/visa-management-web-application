@@ -28,13 +28,13 @@ class Applicant(models.Model):
 
     interested_visa_categories = models.ManyToManyField(  
         VisaMain,
-        blank=True, null=True,
+        blank=True,
         related_name="interested_applicants"
     )
 
     interested_countries = models.ManyToManyField(        
         Country,
-       blank=True, null=True,
+       blank=True,
         related_name="interest_country_leads"
     )
     id = models.AutoField(primary_key=True) 
