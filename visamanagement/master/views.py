@@ -628,7 +628,7 @@ class MaritalstatusListAPIView(APIView):
             search = request.GET.get('search', '').strip()
             custom_sort = request.GET.get('customSort')  # e.g., text:asc,created_at:desc
 
-            allowed_sort_fields = ['text', 'description', 'created_at']
+            allowed_sort_fields = ['name', 'description', 'created_at', 'updated_at']
 
             queryset = Maritalstatus.objects.filter(is_deleted=False)
 
@@ -638,9 +638,10 @@ class MaritalstatusListAPIView(APIView):
 
             # Sorting logic
             sort_field_map = {
-                'text': 'text',
-                'description': 'description',
-                'created_at': 'created_at',
+                'name': 'name',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
             }
 
             sort_fields = []
@@ -1087,27 +1088,65 @@ class ContinentListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['name', 'description', 'updated_at']
-
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        custom_sort = request.GET.get('customSort')
+        
+        allowed_sort_fields = ['name', 'description', 'created_at', 'updated_at']
 
         queryset = Continents.objects.filter(is_deleted=False)
-        if search:
-            queryset = queryset.filter(
-                Q(name__istartswith=search) 
-            )
 
-        queryset = queryset.order_by(sort_by)
+        # Search filter
+        if search:
+            queryset = queryset.filter(Q(name__istartswith=search))
+
+        # Sorting
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+
+        sort_fields = []
+
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sorting for string fields
+                    if field in ['name', 'description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+        else:
+            # fallback sorting
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'desc')
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+            f = F(orm_field)
+            sort_fields = [f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # Pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = ContinentSerializer(result_page, many=True)
-        return paginator.get_paginated_response(serializer.data)
 
+        return paginator.get_paginated_response(serializer.data)
 
 class ContinentCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
