@@ -1818,14 +1818,14 @@ class CountryExportAPIView(APIView):
         country_list = validate_uuid_list(parse_ids('country'))
 
         # ---------------------------
-        # Base QuerySet
+        # Base QuerySet with annotation
         # ---------------------------
         queryset = Country.objects.filter(is_deleted=False).annotate(
             continent_name=F('continent__name')
         )
 
         # ---------------------------
-        # Filtering
+        # Hierarchical filtering
         # ---------------------------
         if country_list:
             queryset = queryset.filter(uuid__in=country_list)
@@ -1860,6 +1860,7 @@ class CountryExportAPIView(APIView):
                         continue
 
                     orm_field = sort_field_map[field]
+
                     if field in ['name', 'shortName', 'fullName', 'continent']:
                         f = Lower(orm_field)
                     else:
@@ -1871,7 +1872,7 @@ class CountryExportAPIView(APIView):
         else:
             sort_order = request.GET.get('sortOrder', 'desc')
             f = F('created_at')
-            sort_fields = [f.desc(nulls_last=True) if sort_order=='desc' else f.asc(nulls_last=True)]
+            sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
 
         queryset = queryset.order_by(*sort_fields)
 
@@ -1887,10 +1888,10 @@ class CountryExportAPIView(APIView):
             'officialName': 'Country Official Name',
             'capitalCity': 'Capital City',
             'dialCodes': 'Country Calling Code',
-            'currencyfullname':'Currency Full Name',
-            'currencyshortname':'Currency Short Name',
+            'currencyfullname': 'Currency Full Name',
+            'currencyshortname': 'Currency Short Name',
             'currencyCode': 'Currency Code',
-            'description':'Description',
+            'description': 'Description',
             'status': 'Status',
             'is_active': 'Active',
             'is_deleted': 'Deleted',
@@ -1938,10 +1939,6 @@ class CountryExportAPIView(APIView):
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
-
-
-
-
 
 class CountryImportAPIView(APIView):
 
@@ -4759,7 +4756,7 @@ class TimezoneDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-        
+
 class TimezoneExportAPIView(APIView):
     """
     Export Timezone with custom sorting.
