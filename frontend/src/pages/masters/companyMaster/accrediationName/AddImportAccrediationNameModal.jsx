@@ -89,7 +89,7 @@ const AddImportAccrediationNameModal = ({ show, handleClose }) => {
                     if (response?.duplicates?.length > 0) {
                         const prepareData = {
                             data: response.duplicates || [],
-                            headers: ["Country", "Accreditation Category", "Accreditation Full Name"],
+                            headers: ["Accreditation Category", "Accreditation Full Name"],
                             sheetName: "AccreditationName",
                             fileName: "AccreditationName",
                         };
@@ -103,7 +103,7 @@ const AddImportAccrediationNameModal = ({ show, handleClose }) => {
                     if (response?.skipped_rows?.length > 0) {
                         const prepareData = {
                             data: response.skipped_rows || [],
-                            headers: ["Country", "Accreditation Category", "Accreditation Full Name", "Reason"],
+                            headers: ["Accreditation Category", "Accreditation Full Name", "Reason"],
                             sheetName: "AccreditationName",
                             fileName: "AccreditationName",
                         };
@@ -257,9 +257,9 @@ const AddImportAccrediationNameModal = ({ show, handleClose }) => {
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
                     downloadFileName: "AccreditationName",
-                    items: ["Country", "Accreditation Category", "Accreditation Full Name", "Accreditation Short Name", "Accreditation Issuing Authority Name", "Accreditation Valid Upto", "Description"],
-                    selectedItems: ["Country", "Accreditation Category", "Accreditation Full Name"],
-                    ItemsRequired: ["Country", "Accreditation Category", "Accreditation Full Name"],
+                    items: ["Accreditation Category", "Accreditation Full Name", "Accreditation Short Name", "Accreditation Issuing Authority Name", "Accreditation Valid Upto", "Description"],
+                    selectedItems: [ "Accreditation Category", "Accreditation Full Name"],
+                    ItemsRequired: ["Accreditation Category", "Accreditation Full Name"],
                 }
                 } />
             )}

@@ -168,7 +168,7 @@ const AddEditCountryModal = ({
         } else if (response?.statusCode === 200 && response?.status === true) {
           toast.success(response?.message || "Country saved successfully");
           resetForm();
-          handleClose();
+          handleClose(true);
         } else {
           toast.error("Something went wrong while saving.");
         }
@@ -184,7 +184,7 @@ const AddEditCountryModal = ({
   const onClose = () => {
     resetForm();
     setLoading(false);
-    handleClose();
+    handleClose(false);
   };
 
   if (!show) return null;
