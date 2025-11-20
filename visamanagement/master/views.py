@@ -4503,21 +4503,45 @@ class TimezoneListAPIView(APIView):
         search = request.GET.get('search', '').strip()
         custom_sort = request.GET.get('customSort')
 
-        # Allowed sorting fields
-        allowed_sort_fields = ['Timezone', 'description', 'created_at', 'updated_at']
+        # Parse UUIDs for filtering
+        def parse_ids(param_name):
+            raw = request.GET.get(param_name, '')
+            if raw:
+                items = [x.strip() for x in raw.split(',') if x.strip()]
+            else:
+                items = request.GET.getlist(param_name)
+            return items
+
+        def validate_uuid_list(uuid_list):
+            valid = []
+            for u in uuid_list:
+                try:
+                    valid.append(UUID(u))
+                except:
+                    pass
+            return valid
+
+        country_list = validate_uuid_list(parse_ids('country'))
+        state_list = validate_uuid_list(parse_ids('state'))
 
         queryset = Timezone.objects.filter(is_deleted=False)
 
+        # Filter by country/state
+        if country_list:
+            queryset = queryset.filter(countryName__uuid__in=country_list)
+        if state_list:
+            queryset = queryset.filter(stateName__uuid__in=state_list)
+
         # Search filter
         if search:
-            queryset = queryset.filter(
-                Q(Timezone__istartswith=search)
-            )
+            queryset = queryset.filter(Q(Timezone__istartswith=search))
 
-        # Sorting mapping
+        # Sorting mapping including related fields
         sort_field_map = {
             'Timezone': 'Timezone',
             'description': 'description',
+            'countryName': 'countryName__name',
+            'stateName': 'stateName__stateName',
             'created_at': 'created_at',
             'updated_at': 'updated_at',
         }
@@ -4525,40 +4549,33 @@ class TimezoneListAPIView(APIView):
         sort_fields = []
 
         if custom_sort:
-            # Example: ?customSort=Timezone:asc,updated_at:desc
+            # Example: ?customSort=countryName:asc,stateName:desc
             for rule in custom_sort.split(','):
                 try:
                     field, order = rule.split(':')
                     field = field.strip()
                     order = order.strip().lower()
-
                     if field not in sort_field_map:
                         continue
 
                     orm_field = sort_field_map[field]
 
                     # Case-insensitive sorting for string fields
-                    if field in ['Timezone', 'description']:
+                    if field in ['Timezone', 'description', 'countryName', 'stateName']:
                         f = Lower(orm_field)
                     else:
                         f = F(orm_field)
 
-                    sort_fields.append(
-                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
-                    )
+                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
                 except ValueError:
                     continue
         else:
             # Fallback sorting
             sort_by = request.GET.get('sortBy', 'created_at')
             sort_order = request.GET.get('sortOrder', 'asc')
-
             orm_field = sort_field_map.get(sort_by, 'created_at')
             f = F(orm_field)
-
-            sort_fields = [
-                f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)
-            ]
+            sort_fields = [f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)]
 
         queryset = queryset.order_by(*sort_fields)
 
@@ -4567,6 +4584,7 @@ class TimezoneListAPIView(APIView):
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = TimezoneSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
+
 
 
 class TimezoneCreateAPIView(APIView):
@@ -4740,6 +4758,8 @@ class TimezoneDeleteAPIView(APIView):
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         }, status=status.HTTP_200_OK)
 
+
+        
 class TimezoneExportAPIView(APIView):
     """
     Export Timezone with custom sorting.
@@ -4774,10 +4794,10 @@ class TimezoneExportAPIView(APIView):
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
 
-        # -------- Sort Field Mapping ----------
+        # -------- Sort Field Mapping (with related fields) ----------
         sort_field_map = {
-            'countryName': 'countryName',
-            'stateName': 'stateName',
+            'countryName': 'countryName__name',
+            'stateName': 'stateName__stateName',
             'Timezone': 'Timezone',
             'description': 'description',
             'created_at': 'created_at',
@@ -4830,6 +4850,12 @@ class TimezoneExportAPIView(APIView):
             row = []
             for field in field_list:
                 value = getattr(tz, field, '')
+
+                # For related fields, get the actual name
+                if field == 'countryName' and tz.countryName:
+                    value = tz.countryName.name
+                if field == 'stateName' and tz.stateName:
+                    value = tz.stateName.stateName
 
                 if field in ['created_at', 'updated_at'] and value:
                     value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
