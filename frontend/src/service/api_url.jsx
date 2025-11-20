@@ -777,6 +777,21 @@ export const EXPORT_GAP_GROUP_API = "/api/v1/master/gap-group/export/";
 export const IMPORT_GAP_GROUP_API = "/api/v1/master/gap-group/import/";
 
 
+// Language Ability Group – API Endpoints
+export const GET_LANGUAGE_ABILITY_GROUP_LIST = "/api/v1/master/language-ability-group/list/";
+export const ADD_LANGUAGE_ABILITY_GROUP_API = "/api/v1/master/language-ability-group/create/";
+export const EDIT_LANGUAGE_ABILITY_GROUP_API = "/api/v1/master/language-ability-group/";      // +uuid/update/
+export const DELETE_LANGUAGE_ABILITY_GROUP_API = "/api/v1/master/language-ability-group/";    // +delete/
+export const EXPORT_LANGUAGE_ABILITY_GROUP_API = "/api/v1/master/language-ability-group/export/";
+export const IMPORT_LANGUAGE_ABILITY_GROUP_API = "/api/v1/master/language-ability-group/import/";
+
+// Entrance Test Ability Group – API Endpoints
+export const GET_ENTRANCE_TEST_ABILITY_GROUP_LIST = "/api/v1/master/entrance-test-ability-group/list/";
+export const ADD_ENTRANCE_TEST_ABILITY_GROUP_API = "/api/v1/master/entrance-test-ability-group/create/";
+export const EDIT_ENTRANCE_TEST_ABILITY_GROUP_API = "/api/v1/master/entrance-test-ability-group/";     // +uuid/update/
+export const DELETE_ENTRANCE_TEST_ABILITY_GROUP_API = "/api/v1/master/entrance-test-ability-group/";   // +delete/
+export const EXPORT_ENTRANCE_TEST_ABILITY_GROUP_API = "/api/v1/master/entrance-test-ability-group/export/";
+export const IMPORT_ENTRANCE_TEST_ABILITY_GROUP_API = "/api/v1/master/entrance-test-ability-group/import/";
 
 
 

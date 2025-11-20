@@ -3367,7 +3367,66 @@ export const importGapGroupAPI = (payload) => {
   return post(url.IMPORT_GAP_GROUP_API, payload);
 };
 
+// Language Ability Group
+export const getLanguageAbilityGroupListAPI = (data) => {
+  const apiUrl = `${url.GET_LANGUAGE_ABILITY_GROUP_LIST}?search=${data?.search}&page=${
+    data?.page
+  }&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
 
+export const addLanguageAbilityGroupAPI = (payload) => {
+  return post(url.ADD_LANGUAGE_ABILITY_GROUP_API, payload);
+};
+
+export const editLanguageAbilityGroupAPI = (payload) => {
+  const apiUrl = `${url.EDIT_LANGUAGE_ABILITY_GROUP_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+
+export const deleteLanguageAbilityGroupAPI = (payload) => {
+  const apiUrl = `${url.DELETE_LANGUAGE_ABILITY_GROUP_API}delete/`;
+  return delWithPayload(apiUrl, { id: payload });
+};
+
+export const exportLanguageAbilityGroupAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_LANGUAGE_ABILITY_GROUP_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+
+export const importLanguageAbilityGroupAPI = (payload) => {
+  return post(url.IMPORT_LANGUAGE_ABILITY_GROUP_API, payload);
+};
+
+export const getEntranceTestAbilityGroupListAPI = (data) => {
+  const apiUrl = `${url.GET_ENTRANCE_TEST_ABILITY_GROUP_LIST}?search=${data?.search}&page=${
+    data?.page
+  }&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
+
+export const addEntranceTestAbilityGroupAPI = (payload) => {
+  return post(url.ADD_ENTRANCE_TEST_ABILITY_GROUP_API, payload);
+};
+
+export const editEntranceTestAbilityGroupAPI = (payload) => {
+  const apiUrl = `${url.EDIT_ENTRANCE_TEST_ABILITY_GROUP_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+
+export const deleteEntranceTestAbilityGroupAPI = (payload) => {
+  const apiUrl = `${url.DELETE_ENTRANCE_TEST_ABILITY_GROUP_API}delete/`;
+  return delWithPayload(apiUrl, { id: payload });
+};
+
+export const exportEntranceTestAbilityGroupAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_ENTRANCE_TEST_ABILITY_GROUP_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+
+export const importEntranceTestAbilityGroupAPI = (payload) => {
+  return post(url.IMPORT_ENTRANCE_TEST_ABILITY_GROUP_API, payload);
+};
 
 
 

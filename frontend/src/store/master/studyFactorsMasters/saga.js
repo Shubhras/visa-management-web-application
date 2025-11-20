@@ -3,65 +3,89 @@ import {
     addAcademicResultGroupAPI,
   addAgeGroupAPI,
   addBacklogsGroupAPI,
+  addEntranceTestAbilityGroupAPI,
   addFactorForAPI,
   addGapGroupAPI,
+  addLanguageAbilityGroupAPI,
   deleteAcademicResultGroupAPI,
   deleteAgeGroupAPI,
   deleteBacklogsGroupAPI,
+  deleteEntranceTestAbilityGroupAPI,
   deleteFactorForAPI,
   deleteGapGroupAPI,
+  deleteLanguageAbilityGroupAPI,
   editAcademicResultGroupAPI,
   editAgeGroupAPI,
   editBacklogsGroupAPI,
+  editEntranceTestAbilityGroupAPI,
   editFactorForAPI,
   editGapGroupAPI,
+  editLanguageAbilityGroupAPI,
   exportAcademicResultGroupAPI,
   exportAgeGroupAPI,
   exportBacklogsGroupAPI,
+  exportEntranceTestAbilityGroupAPI,
   exportFactorForAPI,
   exportGapGroupAPI,
+  exportLanguageAbilityGroupAPI,
   getAcademicResultGroupListAPI,
   getAgeGroupListAPI,
   getBacklogsGroupListAPI,
+  getEntranceTestAbilityGroupListAPI,
   getFactorForListAPI,
   getGapGroupListAPI,
+  getLanguageAbilityGroupListAPI,
   importAcademicResultGroupAPI,
   importAgeGroupAPI,
   importBacklogsGroupAPI,
+  importEntranceTestAbilityGroupAPI,
   importFactorForAPI,
   importGapGroupAPI,
+  importLanguageAbilityGroupAPI,
 } from "../../../service/api_helper";
 import {
     ACADEMIC_RESULT_GROUP_LIST,
   ADD_ACADEMIC_RESULT_GROUP,
   ADD_AGE_GROUP,
   ADD_BACKLOGS_GROUP,
+  ADD_ENTRANCE_TEST_ABILITY_GROUP,
   ADD_FACTOR_FOR,
   ADD_GAP_GROUP,
+  ADD_LANGUAGE_ABILITY_GROUP,
   AGE_GROUP_LIST,
   BACKLOGS_GROUP_LIST,
   DELETE_ACADEMIC_RESULT_GROUP,
   DELETE_AGE_GROUP,
   DELETE_BACKLOGS_GROUP,
+  DELETE_ENTRANCE_TEST_ABILITY_GROUP,
   DELETE_FACTOR_FOR,
   DELETE_GAP_GROUP,
+  DELETE_LANGUAGE_ABILITY_GROUP,
   EDIT_ACADEMIC_RESULT_GROUP,
   EDIT_AGE_GROUP,
   EDIT_BACKLOGS_GROUP,
+  EDIT_ENTRANCE_TEST_ABILITY_GROUP,
   EDIT_FACTOR_FOR,
   EDIT_GAP_GROUP,
+  EDIT_LANGUAGE_ABILITY_GROUP,
+  ENTRANCE_TEST_ABILITY_GROUP_LIST,
   EXPORT_ACADEMIC_RESULT_GROUP,
   EXPORT_AGE_GROUP,
   EXPORT_BACKLOGS_GROUP,
+  EXPORT_ENTRANCE_TEST_ABILITY_GROUP,
   EXPORT_FACTOR_FOR,
   EXPORT_GAP_GROUP,
+  EXPORT_LANGUAGE_ABILITY_GROUP,
   FACTOR_FOR_LIST,
   GAP_GROUP_LIST,
   IMPORT_ACADEMIC_RESULT_GROUP,
   IMPORT_AGE_GROUP,
   IMPORT_BACKLOGS_GROUP,
+  IMPORT_ENTRANCE_TEST_ABILITY_GROUP,
   IMPORT_FACTOR_FOR,
   IMPORT_GAP_GROUP,
+  IMPORT_LANGUAGE_ABILITY_GROUP,
+  LANGUAGE_ABILITY_GROUP_LIST,
 } from "./actionType";
 
 //Factor For
@@ -336,6 +360,116 @@ function* gapGroupImportSaga(action) {
   }
 }
 
+// Language Ability Group Sagas
+function* languageAbilityGroupListSaga(action) {
+  try {
+    const response = yield call(getLanguageAbilityGroupListAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* languageAbilityGroupAddSaga(action) {
+  try {
+    const response = yield call(addLanguageAbilityGroupAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* languageAbilityGroupEditSaga(action) {
+  try {
+    const response = yield call(editLanguageAbilityGroupAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* languageAbilityGroupDeleteSaga(action) {
+  try {
+    const response = yield call(deleteLanguageAbilityGroupAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* languageAbilityGroupExportSaga(action) {
+  try {
+    const response = yield call(exportLanguageAbilityGroupAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* languageAbilityGroupImportSaga(action) {
+  try {
+    const response = yield call(importLanguageAbilityGroupAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+// Entrance Test Ability Group Sagas
+function* entranceTestAbilityGroupListSaga(action) {
+  try {
+    const response = yield call(getEntranceTestAbilityGroupListAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* entranceTestAbilityGroupAddSaga(action) {
+  try {
+    const response = yield call(addEntranceTestAbilityGroupAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* entranceTestAbilityGroupEditSaga(action) {
+  try {
+    const response = yield call(editEntranceTestAbilityGroupAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* entranceTestAbilityGroupDeleteSaga(action) {
+  try {
+    const response = yield call(deleteEntranceTestAbilityGroupAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* entranceTestAbilityGroupExportSaga(action) {
+  try {
+    const response = yield call(exportEntranceTestAbilityGroupAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* entranceTestAbilityGroupImportSaga(action) {
+  try {
+    const response = yield call(importEntranceTestAbilityGroupAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
 function* studyFactorsMasterSaga() {
   yield takeEvery(FACTOR_FOR_LIST, factorForListSaga);
   yield takeEvery(ADD_FACTOR_FOR, factorForAddSaga);
@@ -367,5 +501,18 @@ function* studyFactorsMasterSaga() {
   yield takeEvery(DELETE_GAP_GROUP, gapGroupDeleteSaga);
   yield takeEvery(EXPORT_GAP_GROUP, gapGroupExportSaga);
   yield takeEvery(IMPORT_GAP_GROUP, gapGroupImportSaga);
+  yield takeEvery(LANGUAGE_ABILITY_GROUP_LIST, languageAbilityGroupListSaga);
+  yield takeEvery(ADD_LANGUAGE_ABILITY_GROUP, languageAbilityGroupAddSaga);
+  yield takeEvery(EDIT_LANGUAGE_ABILITY_GROUP, languageAbilityGroupEditSaga);
+  yield takeEvery(DELETE_LANGUAGE_ABILITY_GROUP, languageAbilityGroupDeleteSaga);
+  yield takeEvery(EXPORT_LANGUAGE_ABILITY_GROUP, languageAbilityGroupExportSaga);
+  yield takeEvery(IMPORT_LANGUAGE_ABILITY_GROUP, languageAbilityGroupImportSaga);
+  yield takeEvery(ENTRANCE_TEST_ABILITY_GROUP_LIST, entranceTestAbilityGroupListSaga);
+  yield takeEvery(ADD_ENTRANCE_TEST_ABILITY_GROUP, entranceTestAbilityGroupAddSaga);
+  yield takeEvery(EDIT_ENTRANCE_TEST_ABILITY_GROUP, entranceTestAbilityGroupEditSaga);
+  yield takeEvery(DELETE_ENTRANCE_TEST_ABILITY_GROUP, entranceTestAbilityGroupDeleteSaga);
+  yield takeEvery(EXPORT_ENTRANCE_TEST_ABILITY_GROUP, entranceTestAbilityGroupExportSaga);
+  yield takeEvery(IMPORT_ENTRANCE_TEST_ABILITY_GROUP, entranceTestAbilityGroupImportSaga);
+
 }
 export default studyFactorsMasterSaga;

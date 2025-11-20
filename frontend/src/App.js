@@ -448,6 +448,8 @@ import AgeGroupList from "./pages/masters/studyFactors/studyAgeGroup/AgeGroupLis
 import AcademicResultGroupList from "./pages/masters/studyFactors/academicResultGroup/AddImportAcademicResultGroupModal";
 import GapGroupList from "./pages/masters/studyFactors/gapGroup/GapGroupList";
 import BacklogsGroupList from "./pages/masters/studyFactors/backlogsGroup/BacklogsGroupList";
+import EntranceTestAbilityGroupList from "./pages/masters/studyFactors/entranceTestAbilityGroup/EntranceTestAbilityGroupList";
+import LanguageAbilityGroupList from "./pages/masters/studyFactors/languageAbilityGroup/LanguageAbilityGroupList";
 
 
 
@@ -790,8 +792,8 @@ function App() {
           <Route path="/academic-result-group" element={<ProtectedRoute><AcademicResultGroupList/></ProtectedRoute>}></Route>
           <Route path="/gap-group" element={<ProtectedRoute><GapGroupList/></ProtectedRoute>}></Route>
           <Route path="/backlogs-group" element={<ProtectedRoute><BacklogsGroupList/></ProtectedRoute>}></Route>
-
-
+          <Route path="/language-ability-group" element={<ProtectedRoute><LanguageAbilityGroupList/></ProtectedRoute>}></Route>
+          <Route path="/entrance-test-ability-group" element={<ProtectedRoute><EntranceTestAbilityGroupList/></ProtectedRoute>}></Route>
 
           {/* 404 Error Page */}
           <Route path='*' element={<ErrorPage />} />

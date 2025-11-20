@@ -3,32 +3,44 @@ import {
     ADD_ACADEMIC_RESULT_GROUP,
   ADD_AGE_GROUP,
   ADD_BACKLOGS_GROUP,
+  ADD_ENTRANCE_TEST_ABILITY_GROUP,
   ADD_FACTOR_FOR,
   ADD_GAP_GROUP,
+  ADD_LANGUAGE_ABILITY_GROUP,
   AGE_GROUP_LIST,
   BACKLOGS_GROUP_LIST,
   DELETE_ACADEMIC_RESULT_GROUP,
   DELETE_AGE_GROUP,
   DELETE_BACKLOGS_GROUP,
+  DELETE_ENTRANCE_TEST_ABILITY_GROUP,
   DELETE_FACTOR_FOR,
   DELETE_GAP_GROUP,
+  DELETE_LANGUAGE_ABILITY_GROUP,
   EDIT_ACADEMIC_RESULT_GROUP,
   EDIT_AGE_GROUP,
   EDIT_BACKLOGS_GROUP,
+  EDIT_ENTRANCE_TEST_ABILITY_GROUP,
   EDIT_FACTOR_FOR,
   EDIT_GAP_GROUP,
+  EDIT_LANGUAGE_ABILITY_GROUP,
+  ENTRANCE_TEST_ABILITY_GROUP_LIST,
   EXPORT_ACADEMIC_RESULT_GROUP,
   EXPORT_AGE_GROUP,
   EXPORT_BACKLOGS_GROUP,
+  EXPORT_ENTRANCE_TEST_ABILITY_GROUP,
   EXPORT_FACTOR_FOR,
   EXPORT_GAP_GROUP,
+  EXPORT_LANGUAGE_ABILITY_GROUP,
   FACTOR_FOR_LIST,
   GAP_GROUP_LIST,
   IMPORT_ACADEMIC_RESULT_GROUP,
   IMPORT_AGE_GROUP,
   IMPORT_BACKLOGS_GROUP,
+  IMPORT_ENTRANCE_TEST_ABILITY_GROUP,
   IMPORT_FACTOR_FOR,
   IMPORT_GAP_GROUP,
+  IMPORT_LANGUAGE_ABILITY_GROUP,
+  LANGUAGE_ABILITY_GROUP_LIST,
 } from "./actionType";
 
 // FACTOR_FOR
@@ -213,5 +225,78 @@ export const gapGroupImportData = (data, callback) => ({
   data,
   callback,
 });
+
+export const languageAbilityGroupList = (data, callback) => ({
+  type: LANGUAGE_ABILITY_GROUP_LIST,
+  data,
+  callback,
+});
+
+export const languageAbilityGroupAdd = (data, callback) => ({
+  type: ADD_LANGUAGE_ABILITY_GROUP,
+  data,
+  callback,
+});
+
+export const languageAbilityGroupEdit = (data, callback) => ({
+  type: EDIT_LANGUAGE_ABILITY_GROUP,
+  data,
+  callback,
+});
+
+export const languageAbilityGroupDelete = (data, callback) => ({
+  type: DELETE_LANGUAGE_ABILITY_GROUP,
+  data,
+  callback,
+});
+
+export const languageAbilityGroupExportData = (data, callback) => ({
+  type: EXPORT_LANGUAGE_ABILITY_GROUP,
+  data,
+  callback,
+});
+
+export const languageAbilityGroupImportData = (data, callback) => ({
+  type: IMPORT_LANGUAGE_ABILITY_GROUP,
+  data,
+  callback,
+});
+
+export const entranceTestAbilityGroupList = (data, callback) => ({
+  type: ENTRANCE_TEST_ABILITY_GROUP_LIST,
+  data,
+  callback,
+});
+
+export const entranceTestAbilityGroupAdd = (data, callback) => ({
+  type: ADD_ENTRANCE_TEST_ABILITY_GROUP,
+  data,
+  callback,
+});
+
+export const entranceTestAbilityGroupEdit = (data, callback) => ({
+  type: EDIT_ENTRANCE_TEST_ABILITY_GROUP,
+  data,
+  callback,
+});
+
+export const entranceTestAbilityGroupDelete = (data, callback) => ({
+  type: DELETE_ENTRANCE_TEST_ABILITY_GROUP,
+  data,
+  callback,
+});
+
+export const entranceTestAbilityGroupExportData = (data, callback) => ({
+  type: EXPORT_ENTRANCE_TEST_ABILITY_GROUP,
+  data,
+  callback,
+});
+
+export const entranceTestAbilityGroupImportData = (data, callback) => ({
+  type: IMPORT_ENTRANCE_TEST_ABILITY_GROUP,
+  data,
+  callback,
+});
+
 
 
