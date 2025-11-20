@@ -728,13 +728,13 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
 
     // Category validation
     if (!formData.category) {
-      newErrors.category = 'Accrediation category is required';
+      newErrors.category = 'Accreditation category is required';
       isValid = false;
     }
 
     // Full Name validation
     if (!formData.full_name.trim()) {
-      newErrors.full_name = 'Accrediation full name is required';
+      newErrors.full_name = 'Accreditation full name is required';
       isValid = false;
     }
 
@@ -847,14 +847,14 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
       className="modal fade show common-ctl-popup"
       tabIndex={-1}
       role="dialog"
-      aria-labelledby="AccrediationNameModalLabel"
+      aria-labelledby="AccreditationNameModalLabel"
       aria-hidden={!show}
     >
       <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
         <div className="modal-content radius-16 bg-base">
           <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-            <h1 className="modal-title fs-5" id="AccrediationNameModalLabel">
-              {mode === 'edit' ? 'Edit Accrediation Name' : 'Add Accrediation Name'}
+            <h1 className="modal-title fs-5" id="AccreditationNameModalLabel">
+              {mode === 'edit' ? 'Edit Accreditation Name' : 'Add Accreditation Name'}
             </h1>
             <button
               type="button"
@@ -906,7 +906,7 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
                 {/* Category */}
                 <div className="col-12 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Accrediation Category <span className="text-danger">*</span>
+                    Accreditation Category <span className="text-danger">*</span>
                   </label>
                   <Select
                     options={acccrediationCategoryListData.map((option) => ({
@@ -925,7 +925,7 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
                     }
                     onChange={handleCategorySelectChange}
                     filterOption={customFilterOptionCategory}
-                    placeholder="Select Accrediation Category"
+                    placeholder="Select accreditation category"
                     isClearable
                     isSearchable
                     className={`custom-select-container ${errors.category ? "is-invalid" : ""
@@ -939,10 +939,10 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
                   )}
                 </div>
 
-                {/* Accrediation Full Name */}
+                {/* Accreditation Full Name */}
                 <div className="col-12 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Accrediation Full Name <span className="text-danger">*</span>
+                    Accreditation Full Name <span className="text-danger">*</span>
                   </label>
                   <input
                     type="text"
@@ -959,10 +959,10 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
                   )}
                 </div>
 
-                {/* Accrediation Short Name */}
+                {/* Accreditation Short Name */}
                 <div className="col-12 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Accrediation Short Name
+                    Accreditation Short Name
                   </label>
                   <input
                     type="text"
@@ -977,7 +977,7 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
                 {/* Issuing Authority */}
                 <div className="col-12 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Accrediation Issuing Authority Name
+                    Accreditation Issuing Authority Name
                   </label>
                   <input
                     type="text"
@@ -992,7 +992,7 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
                 {/* Valid Upto */}
                 <div className="col-12 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Accrediation Valid Upto
+                    Accreditation Valid Upto
                   </label>
                   <div className="row g-2">
                     {/* Type Dropdown */}

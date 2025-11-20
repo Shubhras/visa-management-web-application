@@ -90,7 +90,7 @@ const AddImportEducationLevelModal = ({ show, handleClose }) => {
                     if (response?.duplicates?.length > 0) {
                         const prepareData = {
                             data: response.duplicates || [],
-                            headers: ["Education Level Code","Education Level"],
+                            headers: ["Education Level Code","Education Level","Education Duration (Months)"],
                             sheetName: "EducationLevel",
                             fileName: "EducationLevel",
                         };
@@ -104,7 +104,7 @@ const AddImportEducationLevelModal = ({ show, handleClose }) => {
                     if (response?.skipped_rows?.length > 0) {
                         const prepareData = {
                             data: response.skipped_rows || [],
-                            headers: ["Education Level Code","Education Level", "Reason"],
+                            headers: ["Education Level Code","Education Level","Education Duration (Months)", "Reason"],
                             sheetName: "EducationLevel",
                             fileName: "EducationLevel",
                         };
@@ -257,9 +257,9 @@ const AddImportEducationLevelModal = ({ show, handleClose }) => {
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
                     downloadFileName: "EducationLevel",
-                    items: ["Education Level", "Education Level Code", "Description"],
-                    selectedItems: ["Education Level", "Education Level Code"],
-                    ItemsRequired: ["Education Level", "Education Level Code"]
+                    items: ["Education Level", "Education Level Code", "Education Duration (Months)","Description"],
+                    selectedItems: ["Education Level", "Education Level Code","Education Duration (Months)"],
+                    ItemsRequired: ["Education Level", "Education Level Code","Education Duration (Months)"]
                 }
                 } />
             )}

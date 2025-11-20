@@ -89,9 +89,9 @@ const AddImportAccrediationCategoryModal = ({ show, handleClose }) => {
                     if (response?.duplicates?.length > 0) {
                         const prepareData = {
                             data: response.duplicates || [],
-                            headers: ["Accrediation Category"],
-                            sheetName: "AccrediationCategory",
-                            fileName: "AccrediationCategory",
+                            headers: ["Accreditation Category"],
+                            sheetName: "AccreditationCategory",
+                            fileName: "AccreditationCategory",
                         };
                         exportToExcelDuplicate(
                             prepareData.data,
@@ -133,14 +133,14 @@ const AddImportAccrediationCategoryModal = ({ show, handleClose }) => {
                 className="modal fade show common-ctl-popup"
                 tabIndex={-1}
                 role="dialog"
-                aria-labelledby="AccrediationCategoryModalLabel"
+                aria-labelledby="AccreditationCategoryModalLabel"
                 aria-hidden={!show}
             >
                 <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
                     <div className="modal-content radius-16 bg-base">
                         <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                            <h1 className="modal-title fs-5" id="AccrediationCategoryModalLabel">
-                                Upload Accrediation Category
+                            <h1 className="modal-title fs-5" id="AccreditationCategoryModalLabel">
+                                Upload Accreditation Category
                             </h1>
                             <button
                                 type="button"
@@ -240,10 +240,10 @@ const AddImportAccrediationCategoryModal = ({ show, handleClose }) => {
             </div>
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
-                    downloadFileName: "AccrediationCategory",
-                    items: ["Accrediation Category", "Description"],
-                    selectedItems: ["Accrediation Category"],
-                    ItemsRequired: ["Accrediation Category"]
+                    downloadFileName: "AccreditationCategory",
+                    items: ["Accreditation Category", "Description"],
+                    selectedItems: ["Accreditation Category"],
+                    ItemsRequired: ["Accreditation Category"]
                 }
                 } />
             )}
