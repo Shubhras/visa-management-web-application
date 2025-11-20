@@ -299,7 +299,6 @@ class AccreditationName(models.Model):
         ("Years", "Years"),
     )
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    country = models.ForeignKey("Country", on_delete=models.SET_NULL, related_name="accreditation_names", blank=True, null=True)
     category = models.ForeignKey(AccreditationCategory, on_delete=models.SET_NULL, related_name="accreditation_names", blank=True, null=True)
     full_name = models.CharField(max_length=255)
     short_name = models.CharField(max_length=255, null=True,blank=True)
@@ -315,7 +314,7 @@ class AccreditationName(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['full_name', 'country', 'category'], name='unique_fullname_per_country_category')
+            models.UniqueConstraint(fields=['full_name', 'category'], name='unique_fullname_per_country_category')
         ]
 
     def __str__(self):
@@ -491,13 +490,14 @@ class EducationLevel(models.Model):
         null=True
     )
     educationlevel= models.CharField(max_length=255,blank=True)
+    durations=models.IntegerField(null=True,blank=True,unique=True)
     description = models.TextField(max_length=255,blank=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ('level_code', 'educationlevel')
+        unique_together = ('level_code', 'educationlevel','durations')
 
     def __str__(self):
         return self.educationlevel

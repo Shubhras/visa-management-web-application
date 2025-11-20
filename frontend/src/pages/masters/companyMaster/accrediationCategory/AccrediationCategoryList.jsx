@@ -45,13 +45,13 @@ const AccrediationCategoryList = () => {
   const [accrediationCategoryData, setAccrediationCategoryData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [items] = useState(["Accrediation Category", "Description", "Modified On"]);
-  const [selectedItems, setSelectedItems] = useState(["Accrediation Category"]);
-  const [ItemsRequired] = useState(["Accrediation Category"]);
+  const [items] = useState(["Accreditation Category", "Description", "Modified On"]);
+  const [selectedItems, setSelectedItems] = useState(["Accreditation Category"]);
+  const [ItemsRequired] = useState(["Accreditation Category"]);
 
   // Table columns configuration
   const [tableColumns] = useState([
-    { id: 'name', label: 'Accrediation Category', field: 'name', visible: true, required: false },
+    { id: 'name', label: 'Accreditation Category', field: 'name', visible: true, required: false },
     { id: 'description', label: 'Description', field: 'description', visible: true, required: false },
     { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false },
   ]);
@@ -407,7 +407,7 @@ const AccrediationCategoryList = () => {
     }
     // Map frontend labels to backend field names
     const fieldMapping = {
-      "Accrediation Category": "name",
+      "Accreditation Category": "name",
       "Modified On": "updated_at",
       "Description": "description",
     };
@@ -435,7 +435,7 @@ const AccrediationCategoryList = () => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `AccrediationCategory.xlsx`;
+          link.download = `AccreditationCategory.xlsx`;
           document.body.appendChild(link);
           link.click();
           link.remove();
@@ -459,7 +459,7 @@ const AccrediationCategoryList = () => {
   return (
     <>
       <MasterLayout>
-        {/* <Breadcrumb title="Accrediation Category" subTitle="List" /> */}
+        {/* <Breadcrumb title="Accreditation Category" subTitle="List" /> */}
         <div className="card basic-data-table main-container-data">
           <div className="card-body container-data">
             <div className="row align-items-center gy-3 gx-2 flex-wrap filter-action-btn">
@@ -837,7 +837,7 @@ const AccrediationCategoryList = () => {
             <div className="modal-dialog modal-xl modal-dialog-centered" role="document">
               <div className="modal-content radius-16 bg-base">
                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                  <h1 className="modal-title fs-5">Export Accrediation Category</h1>
+                  <h1 className="modal-title fs-5">Export Accreditation Category</h1>
                   <button
                     type="button"
                     className="btn-close"
