@@ -1640,6 +1640,9 @@ class CountryListAPIView(APIView):
         serializer = CountrySerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
 
+
+
+
 class CountryCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -1781,6 +1784,7 @@ class CountryDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+
 class CountryExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -1837,12 +1841,25 @@ class CountryExportAPIView(APIView):
         # ---------------------------
         # Sorting
         # ---------------------------
+        # Map all fields for sorting
         sort_field_map = {
+            'uuid': 'uuid',
             'name': 'name',
             'shortName': 'shortName',
             'fullName': 'fullName',
+            'officialName': 'officialName',
+            'capitalCity': 'capitalCity',
+            'dialCodes': 'dialCodes',
+            'currencyfullname': 'currencyfullname',
+            'currencyshortname': 'currencyshortname',
+            'currencyCode': 'currencyCode',
+            'description': 'description',
+            'status': 'status',
+            'is_active': 'is_active',
+            'is_deleted': 'is_deleted',
             'continent': 'continent_name',
-            'created_at': 'created_at'
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
         }
 
         sort_fields = []
@@ -1857,7 +1874,8 @@ class CountryExportAPIView(APIView):
 
                     orm_field = sort_field_map[field]
 
-                    if field in ['name', 'shortName', 'fullName', 'continent']:
+                    # Case-insensitive sorting for string fields
+                    if field in ['name', 'shortName', 'fullName', 'officialName', 'capitalCity', 'currencyfullname', 'currencyshortname', 'currencyCode', 'description', 'continent']:
                         f = Lower(orm_field)
                     else:
                         f = F(orm_field)
@@ -1868,7 +1886,7 @@ class CountryExportAPIView(APIView):
         else:
             sort_order = request.GET.get('sortOrder', 'desc')
             f = F('created_at')
-            sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
+            sort_fields = [f.desc(nulls_last=True) if sort_order.lower() == 'desc' else f.asc(nulls_last=True)]
 
         queryset = queryset.order_by(*sort_fields)
 
@@ -1880,7 +1898,7 @@ class CountryExportAPIView(APIView):
             'name': 'Country Name',
             'continent': 'Continent',
             'shortName': 'Country Short Name',
-            'fullName': 'Country Official Name',
+            'fullName': 'Country Full Name',
             'officialName': 'Country Official Name',
             'capitalCity': 'Capital City',
             'dialCodes': 'Country Calling Code',
@@ -1936,9 +1954,7 @@ class CountryExportAPIView(APIView):
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
-
-
-
+        
 
 class CountryImportAPIView(APIView):
 
