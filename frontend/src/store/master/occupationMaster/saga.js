@@ -42,6 +42,30 @@ import {
   DELETE_OCCUPATION_VERSION,
   EXPORT_OCCUPATION_VERSION,
   IMPORT_OCCUPATION_VERSION,
+  OCCUPATION_LEVEL_CODE_LIST,
+  ADD_OCCUPATION_LEVEL_CODE,
+  EDIT_OCCUPATION_LEVEL_CODE,
+  DELETE_OCCUPATION_LEVEL_CODE,
+  EXPORT_OCCUPATION_LEVEL_CODE,
+  IMPORT_OCCUPATION_LEVEL_CODE,
+  OCCUPATION_LEVEL_LIST,
+  ADD_OCCUPATION_LEVEL,
+  EDIT_OCCUPATION_LEVEL,
+  DELETE_OCCUPATION_LEVEL,
+  EXPORT_OCCUPATION_LEVEL,
+  IMPORT_OCCUPATION_LEVEL,
+  OCCUPATION_CODE_LIST,
+  ADD_OCCUPATION_CODE,
+  EDIT_OCCUPATION_CODE,
+  DELETE_OCCUPATION_CODE,
+  EXPORT_OCCUPATION_CODE,
+  IMPORT_OCCUPATION_CODE,
+  OCCUPATION_NAME_LIST,
+  ADD_OCCUPATION_NAME,
+  EDIT_OCCUPATION_NAME,
+  DELETE_OCCUPATION_NAME,
+  EXPORT_OCCUPATION_NAME,
+  IMPORT_OCCUPATION_NAME,
 } from "./actionType";
 
 import {
@@ -87,6 +111,30 @@ import {
   deleteOccupationCategoryDataAPI,
   exportOccupationCategoryDataAPI,
   importOccupationCategoryDataAPI,
+  importOccupationLevelCodeAPI,
+  exportOccupationLevelCodeAPI,
+  deleteOccupationLevelCodeAPI,
+  editOccupationLevelCodeAPI,
+  addOccupationLevelCodeAPI,
+  getOccupationLevelCodeListAPI,
+  importOccupationLevelAPI,
+  exportOccupationLevelAPI,
+  deleteOccupationLevelAPI,
+  editOccupationLevelAPI,
+  addOccupationLevelAPI,
+  getOccupationLevelListAPI,
+  getOccupationCodeListAPI,
+  addOccupationCodeAPI,
+  editOccupationCodeAPI,
+  deleteOccupationCodeAPI,
+  exportOccupationCodeAPI,
+  importOccupationCodeAPI,
+  getOccupationNameListAPI,
+  addOccupationNameAPI,
+  editOccupationNameAPI,
+  deleteOccupationNameAPI,
+  exportOccupationNameAPI,
+  importOccupationNameAPI,
 } from "../../../service/api_helper";
 
 // --- JOB TYPE SAGAS ---
@@ -468,6 +516,226 @@ function* occupationCategoryImportDataSaga(action) {
   }
 }
 
+// --- OCCUPATION LEVEL CODE SAGAS ---
+function* occupationLevelCodeListSaga(action) {
+  try {
+    const response = yield call(getOccupationLevelCodeListAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* occupationLevelCodeAddSaga(action) {
+  try {
+    const response = yield call(addOccupationLevelCodeAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* occupationLevelCodeEditSaga(action) {
+  try {
+    const response = yield call(editOccupationLevelCodeAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* occupationLevelCodeDeleteSaga(action) {
+  try {
+    const response = yield call(deleteOccupationLevelCodeAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* occupationLevelCodeExportSaga(action) {
+  try {
+    const response = yield call(exportOccupationLevelCodeAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+function* occupationLevelCodeImportSaga(action) {
+  try {
+    const response = yield call(importOccupationLevelCodeAPI, action?.data);
+    if (action.callback) action.callback(response);
+  } catch (error) {
+    if (action.callback) action.callback(null, error);
+  }
+}
+
+// --- OCCUPATION LEVEL SAGAS ---
+function* occupationLevelListSaga(action) {
+  try {
+    const response = yield call(getOccupationLevelListAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* occupationLevelAddSaga(action) {
+  try {
+    const response = yield call(addOccupationLevelAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* occupationLevelEditSaga(action) {
+  try {
+    const response = yield call(editOccupationLevelAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* occupationLevelDeleteSaga(action) {
+  try {
+    const response = yield call(deleteOccupationLevelAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* occupationLevelExportDataSaga(action) {
+  try {
+    const response = yield call(exportOccupationLevelAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* occupationLevelImportDataSaga(action) {
+  try {
+    const response = yield call(importOccupationLevelAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+// --- OCCUPATION CODE
+function* occupationCodeListSaga(action) {
+  try {
+    const response = yield call(getOccupationCodeListAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* occupationCodeAddSaga(action) {
+  try {
+    const response = yield call(addOccupationCodeAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* occupationCodeEditSaga(action) {
+  try {
+    const response = yield call(editOccupationCodeAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* occupationCodeDeleteSaga(action) {
+  try {
+    const response = yield call(deleteOccupationCodeAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* occupationCodeExportSaga(action) {
+  try {
+    const response = yield call(exportOccupationCodeAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* occupationCodeImportSaga(action) {
+  try {
+    const response = yield call(importOccupationCodeAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+// --- OCCUPATION NAME
+function* occupationNameListSaga(action) {
+  try {
+    const response = yield call(getOccupationNameListAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* occupationNameAddSaga(action) {
+  try {
+    const response = yield call(addOccupationNameAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* occupationNameEditSaga(action) {
+  try {
+    const response = yield call(editOccupationNameAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* occupationNameDeleteSaga(action) {
+  try {
+    const response = yield call(deleteOccupationNameAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* occupationNameExportSaga(action) {
+  try {
+    const response = yield call(exportOccupationNameAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* occupationNameImportSaga(action) {
+  try {
+    const response = yield call(importOccupationNameAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
 // Root Saga
 function* occupationMasterSaga() {
   yield takeEvery(JOB_TYPE_LIST, jobTypeListSaga);
@@ -512,6 +780,29 @@ function* occupationMasterSaga() {
   yield takeEvery(DELETE_OCCUPATION_VERSION, occupationVersionDeleteSaga);
   yield takeEvery(EXPORT_OCCUPATION_VERSION, occupationVersionExportDataSaga);
   yield takeEvery(IMPORT_OCCUPATION_VERSION, occupationVersionImportDataSaga);
-
+  yield takeEvery(OCCUPATION_LEVEL_CODE_LIST, occupationLevelCodeListSaga);
+  yield takeEvery(ADD_OCCUPATION_LEVEL_CODE, occupationLevelCodeAddSaga);
+  yield takeEvery(EDIT_OCCUPATION_LEVEL_CODE, occupationLevelCodeEditSaga);
+  yield takeEvery(DELETE_OCCUPATION_LEVEL_CODE, occupationLevelCodeDeleteSaga);
+  yield takeEvery(EXPORT_OCCUPATION_LEVEL_CODE, occupationLevelCodeExportSaga);
+  yield takeEvery(IMPORT_OCCUPATION_LEVEL_CODE, occupationLevelCodeImportSaga);
+  yield takeEvery(OCCUPATION_LEVEL_LIST, occupationLevelListSaga);
+  yield takeEvery(ADD_OCCUPATION_LEVEL, occupationLevelAddSaga);
+  yield takeEvery(EDIT_OCCUPATION_LEVEL, occupationLevelEditSaga);
+  yield takeEvery(DELETE_OCCUPATION_LEVEL, occupationLevelDeleteSaga);
+  yield takeEvery(EXPORT_OCCUPATION_LEVEL, occupationLevelExportDataSaga);
+  yield takeEvery(IMPORT_OCCUPATION_LEVEL, occupationLevelImportDataSaga);
+  yield takeEvery(OCCUPATION_CODE_LIST, occupationCodeListSaga);
+  yield takeEvery(ADD_OCCUPATION_CODE, occupationCodeAddSaga);
+  yield takeEvery(EDIT_OCCUPATION_CODE, occupationCodeEditSaga);
+  yield takeEvery(DELETE_OCCUPATION_CODE, occupationCodeDeleteSaga);
+  yield takeEvery(EXPORT_OCCUPATION_CODE, occupationCodeExportSaga);
+  yield takeEvery(IMPORT_OCCUPATION_CODE, occupationCodeImportSaga);
+  yield takeEvery(OCCUPATION_NAME_LIST, occupationNameListSaga);
+  yield takeEvery(ADD_OCCUPATION_NAME, occupationNameAddSaga);
+  yield takeEvery(EDIT_OCCUPATION_NAME, occupationNameEditSaga);
+  yield takeEvery(DELETE_OCCUPATION_NAME, occupationNameDeleteSaga);
+  yield takeEvery(EXPORT_OCCUPATION_NAME, occupationNameExportSaga);
+  yield takeEvery(IMPORT_OCCUPATION_NAME, occupationNameImportSaga);
 }
 export default occupationMasterSaga;

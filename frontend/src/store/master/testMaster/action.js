@@ -54,6 +54,7 @@ import {
     EXPORT_LANGUAGE_TEST_RESULT,
     IMPORT_LANGUAGE_TEST_RESULT,
     ENTRANCE_TEST_ID_MODULE_LIST,
+    Language_NAME_TEST_ID,
 } from "./actionType";
 
 // Language Name (Test)
@@ -388,6 +389,11 @@ export const languageTestResultImportData = (data, callback) => ({
     data,
     callback,
 });
+export const languageNameTestId = (data, callback) => ({
+    type: Language_NAME_TEST_ID,
+    data,
+    callback
+})
 
 
 

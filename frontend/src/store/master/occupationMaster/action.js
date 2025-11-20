@@ -41,6 +41,30 @@ import {
   DELETE_OCCUPATION_VERSION,
   EXPORT_OCCUPATION_VERSION,
   IMPORT_OCCUPATION_VERSION,
+  OCCUPATION_LEVEL_CODE_LIST,
+  ADD_OCCUPATION_LEVEL_CODE,
+  EDIT_OCCUPATION_LEVEL_CODE,
+  DELETE_OCCUPATION_LEVEL_CODE,
+  EXPORT_OCCUPATION_LEVEL_CODE,
+  IMPORT_OCCUPATION_LEVEL_CODE,
+  OCCUPATION_LEVEL_LIST,
+  ADD_OCCUPATION_LEVEL,
+  EDIT_OCCUPATION_LEVEL,
+  DELETE_OCCUPATION_LEVEL,
+  EXPORT_OCCUPATION_LEVEL,
+  IMPORT_OCCUPATION_LEVEL,
+  OCCUPATION_CODE_LIST,
+  ADD_OCCUPATION_CODE,
+  EDIT_OCCUPATION_CODE,
+  DELETE_OCCUPATION_CODE,
+  EXPORT_OCCUPATION_CODE,
+  IMPORT_OCCUPATION_CODE,
+  IMPORT_OCCUPATION_NAME,
+  EXPORT_OCCUPATION_NAME,
+  DELETE_OCCUPATION_NAME,
+  EDIT_OCCUPATION_NAME,
+  ADD_OCCUPATION_NAME,
+  OCCUPATION_NAME_LIST,
 } from "./actionType";
 
 // Job Type Actions
@@ -297,3 +321,148 @@ export const occupationCategoryImportData = (data, callback) => ({
   data,
   callback,
 });
+
+export const occupationLevelCodeList = (data, callback) => ({
+  type: OCCUPATION_LEVEL_CODE_LIST,
+  data,
+  callback,
+});
+
+export const occupationLevelCodeAdd = (data, callback) => ({
+  type: ADD_OCCUPATION_LEVEL_CODE,
+  data,
+  callback,
+});
+
+export const occupationLevelCodeEdit = (data, callback) => ({
+  type: EDIT_OCCUPATION_LEVEL_CODE,
+  data,
+  callback,
+});
+
+export const occupationLevelCodeDelete = (data, callback) => ({
+  type: DELETE_OCCUPATION_LEVEL_CODE,
+  data,
+  callback,
+});
+
+export const occupationLevelCodeExportData = (data, callback) => ({
+  type: EXPORT_OCCUPATION_LEVEL_CODE,
+  data,
+  callback,
+});
+
+export const occupationLevelCodeImportData = (data, callback) => ({
+  type: IMPORT_OCCUPATION_LEVEL_CODE,
+  data,
+  callback,
+});
+
+export const occupationLevelList = (data, callback) => ({
+  type: OCCUPATION_LEVEL_LIST,
+  data,
+  callback,
+});
+
+export const occupationLevelAdd = (data, callback) => ({
+  type: ADD_OCCUPATION_LEVEL,
+  data,
+  callback,
+});
+
+export const occupationLevelEdit = (data, callback) => ({
+  type: EDIT_OCCUPATION_LEVEL,
+  data,
+  callback,
+});
+
+export const occupationLevelDelete = (data, callback) => ({
+  type: DELETE_OCCUPATION_LEVEL,
+  data,
+  callback,
+});
+
+export const occupationLevelExportData = (data, callback) => ({
+  type: EXPORT_OCCUPATION_LEVEL,
+  data,
+  callback,
+});
+
+export const occupationLevelImportData = (data, callback) => ({
+  type: IMPORT_OCCUPATION_LEVEL,
+  data,
+  callback,
+});
+
+export const occupationCodeList = (data, callback) => ({
+  type: OCCUPATION_CODE_LIST,
+  data,
+  callback,
+});
+
+export const occupationCodeAdd = (data, callback) => ({
+  type: ADD_OCCUPATION_CODE,
+  data,
+  callback,
+});
+
+export const occupationCodeEdit = (data, callback) => ({
+  type: EDIT_OCCUPATION_CODE,
+  data,
+  callback,
+});
+
+export const occupationCodeDelete = (data, callback) => ({
+  type: DELETE_OCCUPATION_CODE,
+  data,
+  callback,
+});
+
+export const occupationCodeExportData = (data, callback) => ({
+  type: EXPORT_OCCUPATION_CODE,
+  data,
+  callback,
+});
+
+export const occupationCodeImportData = (data, callback) => ({
+  type: IMPORT_OCCUPATION_CODE,
+  data,
+  callback,
+});
+
+export const occupationNameList = (data, callback) => ({
+  type: OCCUPATION_NAME_LIST,
+  data,
+  callback,
+});
+
+export const occupationNameAdd = (data, callback) => ({
+  type: ADD_OCCUPATION_NAME,
+  data,
+  callback,
+});
+
+export const occupationNameEdit = (data, callback) => ({
+  type: EDIT_OCCUPATION_NAME,
+  data,
+  callback,
+});
+
+export const occupationNameDelete = (data, callback) => ({
+  type: DELETE_OCCUPATION_NAME,
+  data,
+  callback,
+});
+
+export const occupationNameExportData = (data, callback) => ({
+  type: EXPORT_OCCUPATION_NAME,
+  data,
+  callback,
+});
+
+export const occupationNameImportData = (data, callback) => ({
+  type: IMPORT_OCCUPATION_NAME,
+  data,
+  callback,
+});
+

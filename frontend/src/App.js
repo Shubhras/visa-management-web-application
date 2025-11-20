@@ -421,6 +421,12 @@ import CourseStatusforIntakeList from "./pages/masters/instituteMaster/courseSta
 import ScholorshipBasedOnList from "./pages/masters/instituteMaster/scholorshipBasedOn/ScholorshipBasedOnList";
 import CourseLevelList from "./pages/masters/instituteMaster/courseLevel/CourseLevelList";
 import CourseDurationList from "./pages/masters/instituteMaster/courseDuration/CourseDurationList";
+import OccupationLevelCodeList from "./pages/masters/occupationMaster/occupationlevelcode/OccupationLevelCodeList";
+import OccupationLevelList from "./pages/masters/occupationMaster/occupationlevel/OccupationLevelList";
+import OccupationCodeList from "./pages/masters/occupationMaster/occupationcode/OccupationCodeList";
+import OccupationNameList from "./pages/masters/occupationMaster/occupationname/OccupationNameList";
+
+import { GlobalSearchProvider } from '../src/components/comman/GlobalSearchContext';
 
 
 
@@ -487,6 +493,7 @@ function App() {
   return (
     <BrowserRouter>
       <RouteScrollToTop />
+      <GlobalSearchProvider>
       <Routes>
         {/* Public Routes - Accessible without login */}
         <Route path='/sign-in' element={
@@ -714,6 +721,11 @@ function App() {
         <Route path="/occupation-prospect" element={<ProtectedRoute><OccupationProspectList /></ProtectedRoute>}></Route>
         <Route path="/occupation-category" element={<ProtectedRoute><OccupationCategoryList /></ProtectedRoute>}></Route>
         <Route path="/occupation-version" element={<ProtectedRoute><OccupationVersionList /></ProtectedRoute>}></Route>
+        <Route path="/occupation-level-code" element={<ProtectedRoute><OccupationLevelCodeList /></ProtectedRoute>}></Route>
+        <Route path="/occupation-level" element={<ProtectedRoute><OccupationLevelList /></ProtectedRoute>}></Route>
+        <Route path="/occupation-code" element={<ProtectedRoute><OccupationCodeList /></ProtectedRoute>}></Route>
+        <Route path="/occupation-name" element={<ProtectedRoute><OccupationNameList /></ProtectedRoute>}></Route>
+        
 
 
         {/*Institute Master*/}
@@ -739,6 +751,7 @@ function App() {
         {/* 404 Error Page */}
         <Route path='*' element={<ErrorPage />} />
       </Routes>
+      </GlobalSearchProvider>
     </BrowserRouter>
   );
 }

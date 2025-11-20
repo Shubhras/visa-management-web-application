@@ -6,6 +6,9 @@ from .process import*
 from .visacondition import *
 from .institutemasters import *
 from .occupation import  *
+from .educationmaster import *
+from .process import  *
+from .studyfactor  import *
 
 urlpatterns = [
 
@@ -341,6 +344,16 @@ urlpatterns = [
     path('academicresult/export/', AcademicResultExportAPIView.as_view(), name='academicresult-export'),
     path('academicresult/import/', AcademicResultImportAPIView.as_view(), name='academicresult-import'),    
 
+   
+    
+    path('academic-result-comparison/', AcademicResultComparisonListAPIView.as_view(), name='academic-result-comparison-list'),
+    path('academic-result-comparison/create/', AcademicResultComparisonCreateAPIView.as_view(), name='academic-result-comparison-create'),
+    path('academic-result-comparison/<uuid:uuid>/', AcademicResultComparisonRetrieveAPIView.as_view(), name='academic-result-comparison-retrieve'),
+    path('academic-result-comparison/<uuid:uuid>/update/', AcademicResultComparisonUpdateAPIView.as_view(), name='academic-result-comparison-update'),
+    path('academic-result-comparison/delete/', AcademicResultComparisonDeleteAPIView.as_view(), name='academic-result-comparison-delete'),
+    path('academic-result-comparison/export/', AcademicResultComparisonExportAPIView.as_view(), name='academic-result-comparison-export'),
+
+
     path('mediumeducation/',MediumofEducationListAPIView.as_view(), name='educationlevel-list'),
     path('mediumeducation/create/', MediumofEducationCreateAPIView.as_view(), name='mediumeducation-create'),
     path('mediumeducation/<uuid:uuid>/', MediumofEducationRetrieveAPIView.as_view(), name='mediumeducation-retrieve'),
@@ -349,6 +362,23 @@ urlpatterns = [
     path('mediumeducation/export/', MediumofEducationExportAPIView.as_view(), name='educationlevel-export'),
     path('mediumeducation/import/',MediumofEducationImportAPIView.as_view(), name='educationlevel-import'),
 
+    path('eca-for/',ECAForListAPIView.as_view(), name='ecs-for-list'),
+    path('eca-for/create/',ECAForCreateAPIView.as_view(), name='ecs-for-create'),
+    path('eca-for/<uuid:uuid>/',ECAForRetrieveAPIView.as_view(), name='ecs-for-retrieve'),
+    path('eca-for/<uuid:uuid>/update/',ECAForUpdateAPIView.as_view(), name='ecs-for-update'),
+    path('eca-for/delete/',ECAForDeleteAPIView.as_view(), name='ecs-for-delete-multiple'),
+    path('eca-for/export/',ECAForExportAPIView.as_view(), name='ecs-for-export'),
+    path('eca-for/import/',ECAForImportAPIView.as_view(), name='ecs-for-import'),
+
+    path('language-test-results/', LanguageTestResultListAPIView.as_view(), name='language_test_result_list'),
+    path('language-test-results/create/', LanguageTestResultCreateAPIView.as_view(), name='language_test_result_create'),
+    path('language-test-results/<uuid:uuid>/', LanguageTestResultRetrieveAPIView.as_view(), name='language_test_result_retrieve'),
+    path('language-test-results/<uuid:uuid>/update/', LanguageTestResultUpdateAPIView.as_view(), name='language_test_result_update'),
+    path('language-test-results/delete/', LanguageTestResultDeleteAPIView.as_view(), name='language_test_result_delete'),
+    path('language-test-results/import/', LanguageTestResultImportAPIView.as_view(), name='language_test_result_import'),
+    path('language-test-results/export/', LanguageTestResultExportAPIView.as_view(), name='language_test_result_export'),
+
+   
     path('eca-awarding-bodies/', ECAAwardingBodyListAPIView.as_view(), name='eca-awarding-body-list'),
     path('eca-awarding-bodies/create/', ECAAwardingBodyCreateAPIView.as_view(), name='eca-awarding-body-create'),
     path('eca-awarding-bodies/<uuid:uuid>/', ECAAwardingBodyRetrieveAPIView.as_view(), name='eca-awarding-body-retrieve'),
@@ -381,6 +411,7 @@ urlpatterns = [
     path('language/', LanguageListAPIView.as_view(), name='language-list'),
     path('language/export/', LanguageExportAPIView.as_view(), name='language-export'),
     path('language/import/', LanguageImportAPIView.as_view(), name='language-import'),
+    path('language-tests-by-language/', LanguageTestsAPIView.as_view(), name='language-tests'),
     path('entrance-test-modules/', EntranceTestModulesAPIView.as_view(), name='entrance-test-modules'),
     # ---------------- LanguageTest ---------------- #
     path('language-tests/', LanguageTestListAPIView.as_view(), name='language-test-list'),
@@ -443,6 +474,97 @@ urlpatterns = [
     path('entrancetestresult/export/', EntranceTestResultExportAPIView.as_view(), name='entrancetestresult-export'),
     path('entrancetestresult/import/', EntranceTestResultImportAPIView.as_view(), name='entrancetestresult-import'),
 
+   #----------------------- process.py------------------
+    path("documentcategory/create/", DocumentCategoryCreateAPIView.as_view(), name='DocumentCategory-create'),
+    path("documentcategory/", DocumentCategoryListAPIView.as_view(), name='DocumentCategory-list'),
+    path("documentcategory/<uuid:uuid>/", DocumentCategoryRetrieveAPIView.as_view(), name='DocumentCategory-detail'),
+    path("documentcategory/<uuid:uuid>/update/", DocumentCategoryUpdateAPIView.as_view(), name='DocumentCategory-update'),
+    path("documentcategory/delete/", DocumentCategoryDeleteAPIView.as_view(), name='DocumentCategory-delete'),
+    path("documentcategory/export/", DocumentCategoryExportAPIView.as_view(), name='DocumentCategory-export'),
+    path("documentcategory/import/", DocumentCategoryImportAPIView.as_view(), name='DocumentCategory-import'),
+
+    path('documenttype/create/', DocumentTypeCreateAPIView.as_view(), name='document_type_create'),
+    path('documenttype/', DocumentTypeListAPIView.as_view(), name='document_type_list'),
+    path('documenttype/<uuid:uuid>/', DocumentTypeRetrieveAPIView.as_view(), name='document_type_retrieve'),
+    path('documenttype/<uuid:uuid>/update/', DocumentTypeUpdateAPIView.as_view(), name='document_type_update'),
+    path('documenttype/delete/', DocumentTypeDeleteAPIView.as_view(), name='document_type_delete'),
+    path('documenttype/export/', DocumentTypeExportAPIView.as_view(), name='document-type-export'),
+    path('documenttype/import/', DocumentTypeImportAPIView.as_view(), name='document-type-import'),
+
+    path('documentname/create/',DocumentNameCreateAPIView.as_view(), name='document_name_create'),
+    path('documentname/', DocumentNameListAPIView.as_view(), name='document_name_list'),
+    path('documentname/<uuid:uuid>/', DocumentNameRetrieveAPIView.as_view(), name='document_name_retrieve'),
+    path('documentname/<uuid:uuid>/update/', DocumentNameUpdateAPIView.as_view(), name='document_name_update'),
+    path('documentname/delete/', DocumentNameDeleteAPIView.as_view(), name='document_name_delete'),
+    path('documentname/export/', DocumentNameExportAPIView.as_view(), name='document_name_export'),
+    path('documentname/import/', DocumentNameImportAPIView.as_view(), name='document_name_import'),
+
+    path('purpose-of-visit/create/',PurposeOfVisitCreateAPIView.as_view(), name='purpose_create'),
+    path('purpose-of-visit/', PurposeOfVisitListAPIView.as_view(), name='purpose_list'),
+    path('purpose-of-visit/<uuid:uuid>/', PurposeOfVisitRetrieveAPIView.as_view(), name='purpose_retrieve'),
+    path('purpose-of-visit/<uuid:uuid>/update/', PurposeOfVisitUpdateAPIView.as_view(), name='purpose_update'),
+    path('purpose-of-visit/delete/', PurposeOfVisitDeleteAPIView.as_view(), name='purpose_delete'),
+    path('purpose-of-visit/export/', PurposeOfVisitExportAPIView.as_view(), name='purpose_export'),
+    path('purpose-of-visit/import/', PurposeOfVisitImportAPIView.as_view(), name='purpose_import'),
+
+
+    path("documentsfor/", DocumentsForListAPIView.as_view(), name='DocumentsFor-list'),
+    path("documentsfor/create/", DocumentsForCreateAPIView.as_view(), name='DocumentsFor-create'),
+    path("documentsfor/<uuid:uuid>/", DocumentsForRetrieveAPIView.as_view(), name='DocumentsFor-detail'),
+    path("documentsfor/<uuid:uuid>/update/", DocumentsForUpdateAPIView.as_view(), name='DocumentsFor-update'),
+    path("documentsfor/delete/", DocumentsForDeleteAPIView.as_view(), name='DocumentsFor-delete'),
+    path("documentsfor/export/", DocumentsForExportAPIView.as_view(), name='DocumentsFor-export'),
+    path("documentsfor/import/", DocumentsForImportAPIView.as_view(), name='DocumentsFor-import'),
+
+
+    path('requireddocument/create/', RequiredDocumentCreateAPIView.as_view(), name='required_document_create'),
+    path('requireddocument/', RequiredDocumentListAPIView.as_view(), name='required_document_list'),
+    path('requireddocument/<uuid:uuid>/', RequiredDocumentRetrieveAPIView.as_view(), name='required_document_retrieve'),
+    path('requireddocument/<uuid:uuid>/update/', RequiredDocumentUpdateAPIView.as_view(), name='required_document_update'),
+    path('requireddocument/delete/', RequiredDocumentDeleteAPIView.as_view(), name='required_document_delete'),
+    path('requireddocument/export/', RequiredDocumentExportAPIView.as_view(), name='required_document_export'),
+    path('requireddocument/import/', RequiredDocumentImportAPIView.as_view(), name='required_document_import'),
+
+    path('process-status-name/create/', ProcessStatusCreateAPIView.as_view(), name='process_status_create'),
+    path('process-status-name/', ProcessStatusListAPIView.as_view(), name='process_status_list'),
+    path('process-status-name/<uuid:uuid>/', ProcessStatusRetrieveAPIView.as_view(), name='process_status_retrieve'),
+    path('process-status-name/<uuid:uuid>/update/', ProcessStatusUpdateAPIView.as_view(), name='process_status_update'),
+    path('process-status-name/delete/', ProcessStatusDeleteAPIView.as_view(), name='process_status_delete'),
+    path('process-status-name/export/', ProcessStatusExportAPIView.as_view(), name='process_status_export'),
+    path('process-status-name/import/', ProcessStatusImportAPIView.as_view(), name='process_status_import'),
+
+    path('process-substatus-name/create/', ProcessSubStatusCreateAPIView.as_view(), name='process_sub_status_create'),
+    path('process-substatus-name/', ProcessSubStatusListAPIView.as_view(), name='process_sub_status_list'),
+    path('process-substatus-name/<uuid:uuid>/', ProcessSubStatusRetrieveAPIView.as_view(), name='process_sub_status_retrieve'),
+    path('process-substatus-name/<uuid:uuid>/update/', ProcessSubStatusUpdateAPIView.as_view(), name='process_sub_status_update'),
+    path('process-substatus-name/delete/', ProcessSubStatusDeleteAPIView.as_view(), name='process_sub_status_delete'),
+    path('process-substatus-name/export/', ProcessSubStatusExportAPIView.as_view(), name='process_sub_status_export'),
+    path('process-substatus-name/import/', ProcessSubStatusImportAPIView.as_view(), name='process_sub_status_import'),
+
+    path("process-type/create/", ProcessTypeCreateAPIView.as_view(), name="process_type_create"),
+    path("process-type/", ProcessTypeListAPIView.as_view(), name="process_type_list"),
+    path("process-type/<uuid:uuid>/", ProcessTypeRetrieveAPIView.as_view(), name="process_type_retrieve"),
+    path("process-type/<uuid:uuid>/update/", ProcessTypeUpdateAPIView.as_view(), name="process_type_update"),
+    path("process-type/delete/", ProcessTypeDeleteAPIView.as_view(), name="process_type_delete"),
+    path("process-type/export/", ProcessTypeExportAPIView.as_view(), name="process_type_export"),
+    path("process-type/import/", ProcessTypeImportAPIView.as_view(), name="process_type_import"),
+
+    path("payment-to/create/", PaymentToCreateAPIView.as_view(), name="payment_to_create"),
+    path("payment-to/", PaymentToListAPIView.as_view(), name="payment_to_list"),
+    path("payment-to/<uuid:uuid>/", PaymentToRetrieveAPIView.as_view(), name="payment_to_retrieve"),
+    path("payment-to/<uuid:uuid>/update/", PaymentToUpdateAPIView.as_view(), name="payment_to_update"),
+    path("payment-to/delete/", PaymentToDeleteAPIView.as_view(), name="payment_to_delete"),
+    path("payment-to/export/", PaymentToExportAPIView.as_view(), name="payment_to_export"),
+    path("payment-to/import/", PaymentToImportAPIView.as_view(), name="payment_to_import"),
+
+    path("paymentcategory/create/", PaymentCategoryCreateAPIView.as_view(), name="payment_category_create"),
+    path("paymentcategory/", PaymentCategoryListAPIView.as_view(), name="payment_category_list"),
+    path("paymentcategory/<uuid:uuid>/", PaymentCategoryRetrieveAPIView.as_view(), name="payment_category_retrieve"),
+    path("paymentcategory/<uuid:uuid>/update/", PaymentCategoryUpdateAPIView.as_view(), name="payment_category_update"),
+    path("paymentcategory/delete/", PaymentCategoryDeleteAPIView.as_view(), name="payment_category_delete"),
+    path("paymentcategory/export/", PaymentCategoryExportAPIView.as_view(), name="payment_category_export"),
+    path("paymentcategory/import/", PaymentCategoryImportAPIView.as_view(), name="payment_category_import"),
+
 
     path('representingcountry/', RepresentingCountryListAPIView.as_view(), name='representingcountry-list'),
     path('representingcountry/create/', RepresentingCountryCreateAPIView.as_view(), name='representingcountry-create'),
@@ -475,6 +597,32 @@ urlpatterns = [
     path('visaname/delete/', VisaNameDeleteAPIView.as_view(), name='visaname-delete'),
     path('visaname/export/', VisaNameExportAPIView.as_view(), name='visaname-export'),
     path('visaname/import/', VisaNameImportAPIView.as_view(), name='visaname-import'),
+
+    path('visa-status/', VisaStatusListAPIView.as_view(), name='visastatus-list'),
+    path('visa-status/create/', VisaStatusCreateAPIView.as_view(), name='visastatus-create'),
+    path('visa-status/<uuid:uuid>/', VisaStatusRetrieveAPIView.as_view(), name='visastatus-retrieve'),
+    path('visa-status/<uuid:uuid>/update/', VisaStatusUpdateAPIView.as_view(), name='visastatus-update'),
+    path('visa-status/delete/', VisaStatusDeleteAPIView.as_view(), name='visastatus-delete'),
+    path('visa-status/export/', VisaStatusExportAPIView.as_view(), name='visastatus-export'),
+    path('visa-status/import/', VisaStatusImportAPIView.as_view(), name='visastatus-import'),
+
+
+    path('visa-eligibility-type/', VisaEligibilityTypeListAPIView.as_view(), name='visaeligibility-list'),
+    path('visa-eligibility-type/create/', VisaEligibilityTypeCreateAPIView.as_view(), name='visaeligibility-create'),
+    path('visa-eligibility-type/<uuid:uuid>/', VisaEligibilityTypeRetrieveAPIView.as_view(), name='visaeligibility-retrieve'),
+    path('visa-eligibility-type/<uuid:uuid>/update/', VisaEligibilityTypeUpdateAPIView.as_view(), name='visaeligibility-update'),
+    path('visa-eligibility-type/delete/', VisaEligibilityTypeDeleteAPIView.as_view(), name='visaeligibility-delete-multiple'),
+    path('visa-eligibility-type/export/', VisaEligibilityTypeExportAPIView.as_view(), name='visaeligibility-export'),
+    path('visa-eligibility-type/import/', VisaEligibilityTypeImportAPIView.as_view(), name='visaeligibility-import'),
+    
+    path('possibility-level/', PossibilityLevelListAPIView.as_view(), name='possibilitylevel-list'),
+    path('possibility-level/create/', PossibilityLevelCreateAPIView.as_view(), name='possibilitylevel-create'),
+    path('possibility-level/<uuid:uuid>/', PossibilityLevelRetrieveAPIView.as_view(), name='possibilitylevel-retrieve'),
+    path('possibility-level/<uuid:uuid>/update/', PossibilityLevelUpdateAPIView.as_view(), name='possibilitylevel-update'),
+    path('possibility-level/<uuid:uuid>/delete/', PossibilityLevelDeleteAPIView.as_view(), name='possibilitylevel-delete'),
+    path('possibility-level/delete/', PossibilityLevelDeleteAPIView.as_view(), name='possibilitylevel-delete-multiple'),
+    path('possibility-level/export/', PossibilityLevelExportAPIView.as_view(), name='possibilitylevel-export'),
+    path('possibility-level/import/', PossibilityLevelImportAPIView.as_view(), name='possibilitylevel-import'),
 
     path('applicanttype/', ApplicantTypeListAPIView.as_view(), name='applicanttype-list'),
     path('applicanttype/create/', ApplicantTypeCreateAPIView.as_view(), name='applicanttype-create'),
@@ -810,108 +958,129 @@ urlpatterns = [
     path('scholorshipbasedon/export/', ScholorshipBasedOnExportAPIView.as_view(), name='scholorshipbasedon-export'),
     path('scholorshipbasedon/import/', ScholorshipBasedOnImportAPIView.as_view(), name='scholorshipbasedon-import'),
 
-    #-------------- Process Master-----------------
-    path("documentcategory/create/", DocumentCategoryCreateAPIView.as_view(), name='DocumentCategory-create'),
-    path("documentcategory/", DocumentCategoryListAPIView.as_view(), name='DocumentCategory-list'),
-    path("documentcategory/<uuid:uuid>/", DocumentCategoryRetrieveAPIView.as_view(), name='DocumentCategory-detail'),
-    path("documentcategory/<uuid:uuid>/update/", DocumentCategoryUpdateAPIView.as_view(), name='DocumentCategory-update'),
-    path("documentcategory/delete/", DocumentCategoryDeleteAPIView.as_view(), name='DocumentCategory-delete'),
-    path("documentcategory/export/", DocumentCategoryExportAPIView.as_view(), name='DocumentCategory-export'),
-    path("documentcategory/import/", DocumentCategoryImportAPIView.as_view(), name='DocumentCategory-import'),
+    #----------------------study-Factor------------------------
+    path('factor-for/', FactorForListAPIView.as_view(), name='factorfor-list'),
+    path('factor-for/create/', FactorForCreateAPIView.as_view(), name='factorfor-create'),
+    path('factor-for/<uuid:uuid>/', FactorForRetrieveAPIView.as_view(), name='factorfor-retrieve'),
+    path('factor-for/<uuid:uuid>/update/', FactorForUpdateAPIView.as_view(), name='factorfor-update'),
+    path('factor-for/delete/', FactorForDeleteAPIView.as_view(), name='factorfor-delete'),
+    path('factor-for/<uuid:uuid>/delete/', FactorForDeleteAPIView.as_view(), name='factorfor-delete-single'),
+    path('factor-for/export/', FactorForExportAPIView.as_view(), name='factorfor-export'),
+    path('factor-for/import/', FactorForImportAPIView.as_view(), name='factorfor-import'),
 
-    path('documenttype/create/', DocumentTypeCreateAPIView.as_view(), name='document_type_create'),
-    path('documenttype/', DocumentTypeListAPIView.as_view(), name='document_type_list'),
-    path('documenttype/<uuid:uuid>/', DocumentTypeRetrieveAPIView.as_view(), name='document_type_retrieve'),
-    path('documenttype/<uuid:uuid>/update/', DocumentTypeUpdateAPIView.as_view(), name='document_type_update'),
-    path('documenttype/delete/', DocumentTypeDeleteAPIView.as_view(), name='document_type_delete'),
-    path('documenttype/export/', DocumentTypeExportAPIView.as_view(), name='document-type-export'),
-    path('documenttype/import/', DocumentTypeImportAPIView.as_view(), name='document-type-import'),
-
-    path('documentname/create/',DocumentNameCreateAPIView.as_view(), name='document_name_create'),
-    path('documentname/', DocumentNameListAPIView.as_view(), name='document_name_list'),
-    path('documentname/<uuid:uuid>/', DocumentNameRetrieveAPIView.as_view(), name='document_name_retrieve'),
-    path('documentname/<uuid:uuid>/update/', DocumentNameUpdateAPIView.as_view(), name='document_name_update'),
-    path('documentname/delete/', DocumentNameDeleteAPIView.as_view(), name='document_name_delete'),
-    path('documentname/export/', DocumentNameExportAPIView.as_view(), name='document_name_export'),
-    path('documentname/import/', DocumentNameImportAPIView.as_view(), name='document_name_import'),
-
-    path('purpose-of-visit/create/',PurposeOfVisitCreateAPIView.as_view(), name='purpose_create'),
-    path('purpose-of-visit/', PurposeOfVisitListAPIView.as_view(), name='purpose_list'),
-    path('purpose-of-visit/<uuid:uuid>/', PurposeOfVisitRetrieveAPIView.as_view(), name='purpose_retrieve'),
-    path('purpose-of-visit/<uuid:uuid>/update/', PurposeOfVisitUpdateAPIView.as_view(), name='purpose_update'),
-    path('purpose-of-visit/delete/', PurposeOfVisitDeleteAPIView.as_view(), name='purpose_delete'),
-    path('purpose-of-visit/export/', PurposeOfVisitExportAPIView.as_view(), name='purpose_export'),
-    path('purpose-of-visit/import/', PurposeOfVisitImportAPIView.as_view(), name='purpose_import'),
+    path('age-groups/', AgeGroupListAPIView.as_view(), name='agegroup-list'),
+    path('age-groups/create/', AgeGroupCreateAPIView.as_view(), name='agegroup-create'),
+    path('age-groups/<uuid:uuid>/', AgeGroupRetrieveAPIView.as_view(), name='agegroup-retrieve'),
+    path('age-groups/<uuid:uuid>/update/', AgeGroupUpdateAPIView.as_view(), name='agegroup-update'),
+    path('age-groups/delete/', AgeGroupDeleteAPIView.as_view(), name='agegroup-delete'),
+    path('age-groups/<uuid:uuid>/delete/', AgeGroupDeleteAPIView.as_view(), name='agegroup-delete-single'),
+    path('age-groups/export/', AgeGroupExportAPIView.as_view(), name='agegroup-export'),
+    path('age-groups/import/', AgeGroupImportAPIView.as_view(), name='agegroup-import'),
 
 
-    path("documentsfor/", DocumentsForListAPIView.as_view(), name='DocumentsFor-list'),
-    path("documentsfor/create/", DocumentsForCreateAPIView.as_view(), name='DocumentsFor-create'),
-    path("documentsfor/<uuid:uuid>/", DocumentsForRetrieveAPIView.as_view(), name='DocumentsFor-detail'),
-    path("documentsfor/<uuid:uuid>/update/", DocumentsForUpdateAPIView.as_view(), name='DocumentsFor-update'),
-    path("documentsfor/delete/", DocumentsForDeleteAPIView.as_view(), name='DocumentsFor-delete'),
-    path("documentsfor/export/", DocumentsForExportAPIView.as_view(), name='DocumentsFor-export'),
-    path("documentsfor/import/", DocumentsForImportAPIView.as_view(), name='DocumentsFor-import'),
+    path('academic-result-groups/', AcademicResultGroupListAPIView.as_view(), name='academicresultgroup-list'),
+    path('academic-result-groups/create/', AcademicResultGroupCreateAPIView.as_view(), name='academicresultgroup-create'),
+    path('academic-result-groups/<uuid:uuid>/', AcademicResultGroupRetrieveAPIView.as_view(), name='academicresultgroup-retrieve'),
+    path('academic-result-groups/<uuid:uuid>/update/', AcademicResultGroupUpdateAPIView.as_view(), name='academicresultgroup-update'),
+    path('academic-result-groups/delete/', AcademicResultGroupDeleteAPIView.as_view(), name='academicresultgroup-delete'),
+    path('academic-result-groups/export/', AcademicResultGroupExportAPIView.as_view(), name='academicresultgroup-export'),
+    path('academic-result-groups/import/', AcademicResultGroupImportAPIView.as_view(), name='academicresultgroup-import'),
 
 
-    path('requireddocument/create/', RequiredDocumentCreateAPIView.as_view(), name='required_document_create'),
-    path('requireddocument/', RequiredDocumentListAPIView.as_view(), name='required_document_list'),
-    path('requireddocument/<uuid:uuid>/', RequiredDocumentRetrieveAPIView.as_view(), name='required_document_retrieve'),
-    path('requireddocument/<uuid:uuid>/update/', RequiredDocumentUpdateAPIView.as_view(), name='required_document_update'),
-    path('requireddocument/delete/', RequiredDocumentDeleteAPIView.as_view(), name='required_document_delete'),
-    path('requireddocument/export/', RequiredDocumentExportAPIView.as_view(), name='required_document_export'),
-    path('requireddocument/import/', RequiredDocumentImportAPIView.as_view(), name='required_document_import'),
 
-    path('process-status-name/create/', ProcessStatusCreateAPIView.as_view(), name='process_status_create'),
-    path('process-status-name/', ProcessStatusListAPIView.as_view(), name='process_status_list'),
-    path('process-status-name/<uuid:uuid>/', ProcessStatusRetrieveAPIView.as_view(), name='process_status_retrieve'),
-    path('process-status-name/<uuid:uuid>/update/', ProcessStatusUpdateAPIView.as_view(), name='process_status_update'),
-    path('process-status-name/delete/', ProcessStatusDeleteAPIView.as_view(), name='process_status_delete'),
-    path('process-status-name/export/', ProcessStatusExportAPIView.as_view(), name='process_status_export'),
-    path('process-status-name/import/', ProcessStatusImportAPIView.as_view(), name='process_status_import'),
+    path('backlogs-group/list/', BacklogsGroupListAPIView.as_view(), name='backlogsgroup-list'),
+    path('backlogs-group/create/', BacklogsGroupCreateAPIView.as_view(), name='backlogsgroup-create'),
+    path('backlogs-group/<uuid:uuid>/', BacklogsGroupRetrieveAPIView.as_view(), name='backlogsgroup-retrieve'),
+    path('backlogs-group/<uuid:uuid>/update/', BacklogsGroupUpdateAPIView.as_view(), name='backlogsgroup-update'),
+    path('backlogs-group/delete/', BacklogsGroupDeleteAPIView.as_view(), name='backlogsgroup-delete'),
+    path('backlogs-group/<uuid:uuid>/delete/', BacklogsGroupDeleteAPIView.as_view(), name='backlogsgroup-delete-single'),
+    path('backlogs-group/export/', BacklogsGroupExportAPIView.as_view(), name='backlogsgroup-export'),
+    path('backlogs-group/import/', BacklogsGroupImportAPIView.as_view(), name='backlogsgroup-import'),
 
-    path('process-substatus-name/create/', ProcessSubStatusCreateAPIView.as_view(), name='process_sub_status_create'),
-    path('process-substatus-name/', ProcessSubStatusListAPIView.as_view(), name='process_sub_status_list'),
-    path('process-substatus-name/<uuid:uuid>/', ProcessSubStatusRetrieveAPIView.as_view(), name='process_sub_status_retrieve'),
-    path('process-substatus-name/<uuid:uuid>/update/', ProcessSubStatusUpdateAPIView.as_view(), name='process_sub_status_update'),
-    path('process-substatus-name/delete/', ProcessSubStatusDeleteAPIView.as_view(), name='process_sub_status_delete'),
-    path('process-substatus-name/export/', ProcessSubStatusExportAPIView.as_view(), name='process_sub_status_export'),
-    path('process-substatus-name/import/', ProcessSubStatusImportAPIView.as_view(), name='process_sub_status_import'),
+    # ---------------- GAPGroup ----------------
+    path('gap-group/list/', GAPGroupListAPIView.as_view(), name='gapgroup-list'),
+    path('gap-group/create/', GAPGroupCreateAPIView.as_view(), name='gapgroup-create'),
+    path('gap-group/<uuid:uuid>/', GAPGroupRetrieveAPIView.as_view(), name='gapgroup-retrieve'),
+    path('gap-group/<uuid:uuid>/update/', GAPGroupUpdateAPIView.as_view(), name='gapgroup-update'),
+    path('gap-group/delete/', GAPGroupDeleteAPIView.as_view(), name='gapgroup-delete'),
+    path('gap-group/<uuid:uuid>/delete/', GAPGroupDeleteAPIView.as_view(), name='gapgroup-delete-single'),
+    path('gap-group/export/', GAPGroupExportAPIView.as_view(), name='gapgroup-export'),
+    path('gap-group/import/', GAPGroupImportAPIView.as_view(), name='gapgroup-import'),
 
-    path("process-type/create/", ProcessTypeCreateAPIView.as_view(), name="process_type_create"),
-    path("process-type/", ProcessTypeListAPIView.as_view(), name="process_type_list"),
-    path("process-type/<uuid:uuid>/", ProcessTypeRetrieveAPIView.as_view(), name="process_type_retrieve"),
-    path("process-type/<uuid:uuid>/update/", ProcessTypeUpdateAPIView.as_view(), name="process_type_update"),
-    path("process-type/delete/", ProcessTypeDeleteAPIView.as_view(), name="process_type_delete"),
-    path("process-type/export/", ProcessTypeExportAPIView.as_view(), name="process_type_export"),
-    path("process-type/import/", ProcessTypeImportAPIView.as_view(), name="process_type_import"),
+    # ---------------- LanguageAbilityGroup ----------------
+    path('language-ability-group/list/', LanguageAbilityGroupListAPIView.as_view(), name='languageabilitygroup-list'),
+    path('language-ability-group/create/', LanguageAbilityGroupCreateAPIView.as_view(), name='languageabilitygroup-create'),
+    path('language-ability-group/<uuid:uuid>/', LanguageAbilityGroupRetrieveAPIView.as_view(), name='languageabilitygroup-retrieve'),
+    path('language-ability-group/<uuid:uuid>/update/', LanguageAbilityGroupUpdateAPIView.as_view(), name='languageabilitygroup-update'),
+    path('language-ability-group/delete/', LanguageAbilityGroupDeleteAPIView.as_view(), name='languageabilitygroup-delete'),
+    path('language-ability-group/<uuid:uuid>/delete/', LanguageAbilityGroupDeleteAPIView.as_view(), name='languageabilitygroup-delete-single'),
+    path('language-ability-group/export/', LanguageAbilityGroupExportAPIView.as_view(), name='languageabilitygroup-export'),
+    path('language-ability-group/import/', LanguageAbilityGroupImportAPIView.as_view(), name='languageabilitygroup-import'),
 
-    path("payment-to/create/", PaymentToCreateAPIView.as_view(), name="payment_to_create"),
-    path("payment-to/", PaymentToListAPIView.as_view(), name="payment_to_list"),
-    path("payment-to/<uuid:uuid>/", PaymentToRetrieveAPIView.as_view(), name="payment_to_retrieve"),
-    path("payment-to/<uuid:uuid>/update/", PaymentToUpdateAPIView.as_view(), name="payment_to_update"),
-    path("payment-to/delete/", PaymentToDeleteAPIView.as_view(), name="payment_to_delete"),
-    path("payment-to/export/", PaymentToExportAPIView.as_view(), name="payment_to_export"),
-    path("payment-to/import/", PaymentToImportAPIView.as_view(), name="payment_to_import"),
-
-    path("paymentcategory/create/", PaymentCategoryCreateAPIView.as_view(), name="payment_category_create"),
-    path("paymentcategory/", PaymentCategoryListAPIView.as_view(), name="payment_category_list"),
-    path("paymentcategory/<uuid:uuid>/", PaymentCategoryRetrieveAPIView.as_view(), name="payment_category_retrieve"),
-    path("paymentcategory/<uuid:uuid>/update/", PaymentCategoryUpdateAPIView.as_view(), name="payment_category_update"),
-    path("paymentcategory/delete/", PaymentCategoryDeleteAPIView.as_view(), name="payment_category_delete"),
-    path("paymentcategory/export/", PaymentCategoryExportAPIView.as_view(), name="payment_category_export"),
-    path("paymentcategory/import/", PaymentCategoryImportAPIView.as_view(), name="payment_category_import"),
+    # ---------------- EntranceTestAbilityGroup ----------------
+    path('entrance-test-ability-group/list/', EntranceTestAbilityGroupListAPIView.as_view(), name='entrancetestabilitygroup-list'),
+    path('entrance-test-ability-group/create/', EntranceTestAbilityGroupCreateAPIView.as_view(), name='entrancetestabilitygroup-create'),
+    path('entrance-test-ability-group/<uuid:uuid>/', EntranceTestAbilityGroupRetrieveAPIView.as_view(), name='entrancetestabilitygroup-retrieve'),
+    path('entrance-test-ability-group/<uuid:uuid>/update/', EntranceTestAbilityGroupUpdateAPIView.as_view(), name='entrancetestabilitygroup-update'),
+    path('entrance-test-ability-group/delete/', EntranceTestAbilityGroupDeleteAPIView.as_view(), name='entrancetestabilitygroup-delete'),
+    path('entrance-test-ability-group/<uuid:uuid>/delete/', EntranceTestAbilityGroupDeleteAPIView.as_view(), name='entrancetestabilitygroup-delete-single'),
+    path('entrance-test-ability-group/export/', EntranceTestAbilityGroupExportAPIView.as_view(), name='entrancetestabilitygroup-export'),
+    path('entrance-test-ability-group/import/', EntranceTestAbilityGroupImportAPIView.as_view(), name='entrancetestabilitygroup-import'),
 
 
-    #Civil ID Name
+    path('study-factor-age/create/', StudyFactorAgeCreateAPIView.as_view(),name='age-create'),
+    path('study-factor-age/list/', StudyFactorAgeListAPIView.as_view(),name='age-list'),
+    path('study-factor-age/<uuid:uuid>/', StudyFactorAgeRetrieveAPIView.as_view(),name='age-retrieve'),
+    path('study-factor-age/<uuid:uuid>/update/', StudyFactorAgeUpdateAPIView.as_view(),name='age-update'),
+    path('study-factor-age/<uuid:uuid>/delete/', StudyFactorAgeDeleteAPIView.as_view(),name='age-delete'),
+    path('study-factor-age/export/', StudyFactorAgeExportAPIView.as_view(),name='age-export'),
+    path('study-factor-age/import/', StudyFactorAgeImportAPIView.as_view(),name='age-import'),
 
-    path("civilidname/create/", CivilIdNameCreateAPIView.as_view(), name="civil_id_name_create"),
-    path("civilidname/", CivilIdNameListAPIView.as_view(), name="civil_id_name_list"),
-    path("civilidname/<uuid:uuid>/", CivilIdNameRetrieveAPIView.as_view(), name="civil_id_name_retrieve"),
-    path("civilidname/<uuid:uuid>/update/", CivilIdNameUpdateAPIView.as_view(), name="civil_id_name_update"),
-    path("civilidname/<uuid:uuid>/delete/",CivilIdNameDeleteAPIView.as_view(),name="civil_id_name_delete_single"),
-    path("civilidname/export/", CivilIdNameExportAPIView.as_view(), name="civil_id_name_export"),
-    path("civilidname/import/", CivilIdNameImportAPIView.as_view(), name="civil_id_name_import"),
 
+
+    path('academic-result/list/', StudyFactorAcademicResultListAPIView.as_view(), name='academic-result-list'),
+    path('academic-result/create/', StudyFactorAcademicResultCreateAPIView.as_view(), name='academic-result-create'),
+    path('academic-result/detail/<uuid:uuid>/', StudyFactorAcademicResultRetrieveAPIView.as_view(), name='academic-result-retrieve'),
+    path('academic-result/<uuid:uuid>/update/', StudyFactorAcademicResultUpdateAPIView.as_view(), name='academic-result-update'),
+    path('academic-result/<uuid:uuid>/delete/', StudyFactorAcademicResultDeleteAPIView.as_view(), name='academic-result-delete'),
+    path('academic-result/<uuid:uuid>/export/', StudyFactorAcademicResultExportAPIView.as_view(), name='academic-result-export'),
+    path('academic-result/<uuid:uuid>/import/', StudyFactorAcademicResultImportAPIView.as_view(), name='academic-result-import'),
+    
+
+
+
+    path('study-factor-backlogs/list/',StudyFactorBacklogsListAPIView.as_view(),name="study_factor_backlogs_list"),
+    path('study-factor-backlogs/create/',StudyFactorBacklogsCreateAPIView.as_view(),name="study_factor_backlogs_create"),
+    path('study-factor-backlogs/<uuid:uuid>/',StudyFactorBacklogsRetrieveAPIView.as_view(),name="study_factor_backlogs_retrieve"),
+    path('study-factor-backlogs/delete/', StudyFactorBacklogsDeleteAPIView.as_view(), name="study_factor_backlogs_delete_bulk"),
+    path('study-factor-backlogs/export/', StudyFactorBacklogsExportAPIView.as_view(), name="study_factor_backlogs_export"),
+    path('study-factor-backlogs/import/', StudyFactorBacklogsImportAPIView.as_view(), name="study_factor_backlogs_import"),
+
+
+    path('study-factor-gap/list/', StudyFactorGAPListAPIView.as_view(), name="study_factor_gap_list"),
+    path('study-factor-gap/create/', StudyFactorGAPCreateAPIView.as_view(), name="study_factor_gap_create"),
+    path('study-factor-gap/<uuid:uuid>/', StudyFactorGAPRetrieveAPIView.as_view(), name="study_factor_gap_retrieve"),
+    path('study-factor-gap/update/<uuid:uuid>/', StudyFactorGAPUpdateAPIView.as_view(), name="study_factor_gap_update"),
+    path('study-factor-gap/delete/<uuid:uuid>/', StudyFactorGAPDeleteAPIView.as_view(), name="study_factor_gap_delete"),
+    path('study-factor-gap/export/', StudyFactorGAPExportAPIView.as_view(), name="study_factor_gap_export"),
+    path('study-factor-gap/import/', StudyFactorGAPImportAPIView.as_view(), name="study_factor_gap_import"),
+
+    path('study-factor-language-ability/', StudyFactorLanguageAbilityListAPIView.as_view()),
+    path('study-factor-language-ability/create/', StudyFactorLanguageAbilityCreateAPIView.as_view()),
+    path('study-factor-language-ability/<uuid:uuid>/', StudyFactorLanguageAbilityRetrieveAPIView.as_view()),
+    path('study-factor-language-ability/<uuid:uuid>/update/', StudyFactorLanguageAbilityUpdateAPIView.as_view()),
+    path('study-factor-language-ability/delete/', StudyFactorLanguageAbilityDeleteAPIView.as_view()),
+    path('study-factor-language-ability/export/', StudyFactorLanguageAbilityExportAPIView.as_view(), name='studyfactor-languageability-export'),
+    path('study-factor-language-ability/import/', StudyFactorLanguageAbilityImportAPIView.as_view(), name='studyfactor-languageability-import'),
+
+
+    path('study-factor-entrance-test-ability/', StudyFactorEntranceTestAbilityListAPIView.as_view()),
+    path('study-factor-entrance-test-ability/create/', StudyFactorEntranceTestAbilityCreateAPIView.as_view()),
+    path('study-factor-entrance-test-ability/<uuid:uuid>/', StudyFactorEntranceTestAbilityRetrieveAPIView.as_view()),
+    path('study-factor-entrance-test-ability/update/<uuid:uuid>/', StudyFactorEntranceTestAbilityUpdateAPIView.as_view()),
+    path('study-factor-entrance-test-ability/delete/', StudyFactorEntranceTestAbilityDeleteAPIView.as_view()),
+    path('study-factor-entrance-test-ability/export/', StudyFactorEntranceTestAbilityExportAPIView.as_view()),
+    path('study-factor-entrance-test-ability/import/', StudyFactorEntranceTestAbilityImportAPIView.as_view()),
 
 ]
 

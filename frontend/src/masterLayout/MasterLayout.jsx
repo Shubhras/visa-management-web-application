@@ -5,6 +5,7 @@ import ThemeToggleButton from "../helper/ThemeToggleButton";
 // import Header from "./Header";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { useGlobalSearch } from '../components/comman/GlobalSearchContext';
 const MasterLayout = ({ children }) => {
   const navigate = useNavigate();
   let [sidebarActive, seSidebarActive] = useState(false);
@@ -13,6 +14,9 @@ const MasterLayout = ({ children }) => {
   const [selectedItemName, setSelectedItemName] = useState("Dashboard");
   const [openSubmenu, setOpenSubmenu] = useState(null);
   const [openChildMenu, setOpenChildMenu] = useState(null);
+
+  // Global Search State - Har page pe same rahega
+  const { globalSearch, setGlobalSearch } = useGlobalSearch();
   const menuItems = [
     {
       name: "Dashboard",
@@ -159,27 +163,34 @@ const MasterLayout = ({ children }) => {
             { name: "Occupation Prospect", path: "/occupation-prospect" },
             { name: "Occupation Category", path: "/occupation-category" },
             { name: "Occupation Version", path: "/occupation-version" },
+            { name: "Occupation Level Code", path: "/occupation-level-code" },
+            { name: "Occupation Level", path: "/occupation-level" },
+            { name: "Occupation Code", path: "/occupation-code" },
+            { name: "Occupation Name", path: "/occupation-name" },
           ],
         },
         {
           name: "Institute",
           children: [
-            { name: 'Institute Type', path: '/institute-type' },
-            { name: 'Institute Group Name', path: '/institute-group-name' },
-            { name: "Institute Status", path: '/institute-status' },
-            { name: "Institute Priority", path: '/institute-priority' },
-            { name: "Institute Department", path: '/institute-department' },
-            { name: "Bank Account For", path: '/bank-account-for' },
-            { name: "When Commission Issue", path: '/when-commission-issue' },
-            { name: "Course Level Code", path: '/course-level-code' },
-            { name: 'Course Divided In', path: '/course-divided-in' },
-            { name: 'Course Status', path: '/course-status' },
-            { name: 'Intake Name', path: '/intake-name' },
-            { name: 'Course Status for Intake', path: '/course-status-for-intake' },
-            { name: 'Scholorship Based On', path: '/scholorship-based-on' },
-            { name: 'Course Level', path: '/course-level' },
-            { name: 'Course Duration', path: '/course-duration' },
-          ]
+            { name: "Institute Type", path: "/institute-type" },
+            { name: "Institute Group Name", path: "/institute-group-name" },
+            { name: "Institute Status", path: "/institute-status" },
+            { name: "Institute Priority", path: "/institute-priority" },
+            { name: "Institute Department", path: "/institute-department" },
+            { name: "Bank Account For", path: "/bank-account-for" },
+            { name: "When Commission Issue", path: "/when-commission-issue" },
+            { name: "Course Level Code", path: "/course-level-code" },
+            { name: "Course Divided In", path: "/course-divided-in" },
+            { name: "Course Status", path: "/course-status" },
+            { name: "Intake Name", path: "/intake-name" },
+            {
+              name: "Course Status for Intake",
+              path: "/course-status-for-intake",
+            },
+            { name: "Scholorship Based On", path: "/scholorship-based-on" },
+            { name: "Course Level", path: "/course-level" },
+            { name: "Course Duration", path: "/course-duration" },
+          ],
         },
 
         // { name: 'Education', path: '/' },
@@ -204,6 +215,12 @@ const MasterLayout = ({ children }) => {
     },
   ];
 
+  // // Global search clear karne ka function
+  // const handleGlobalSearchChange = (value) => {
+  //   setGlobalSearch(value);
+  //   // Yaha aap chahe to Redux dispatch kar sakte ho ya context use kar sakte ho
+  //   // Abhi ke liye sirf UI clear ho raha hai
+  // };
   const handleMenuClick = (item, parent = null, grandParent = null) => {
     if (item.children && item.children.length > 0) {
       return;
@@ -224,6 +241,16 @@ const MasterLayout = ({ children }) => {
     // // 3. Navigate to login page
     navigate("/sign-in");
   };
+
+  // // Page title set karne ke liye (optional improvement)
+  // useEffect(() => {
+  //   const path = location.pathname;
+  //   if (path === "/") setSelectedItemName("Dashboard");
+  //   else if (path.includes("city-list")) setSelectedItemName("City");
+  //   else if (path.includes("country-list")) setSelectedItemName("Country");
+  //   // ... aur baki pages ke liye add kar sakte ho
+  //   else setSelectedItemName("Dashboard");
+  // }, [location.pathname]);
 
   useEffect(() => {
     // Current path के basis पर menu item ढूंढो
@@ -1915,8 +1942,43 @@ const MasterLayout = ({ children }) => {
             </div>
 
             {/* Sub Header */}
-            <div className="sub-header-bar">
+            <div className="sub-header-bar d-flex align-items-center justify-content-between">
               <div className="sub-header-title">{selectedItemName}</div>
+              {selectedItemName === "City" && (
+                <div className="position-relative search-filter-div">
+                  <Icon
+                    icon="ion:search-outline"
+                    className="position-absolute search-filter-icone"
+                  />
+                  <input
+                    type="text"
+                    className="form-control form-control-sm ps-5 search-filter-input"
+                    placeholder="Search..."
+                    value={globalSearch}
+                    onChange={(e) => setGlobalSearch(e.target.value)}
+                  />
+                  {/* Clear Button (×) */}
+                  {globalSearch && (
+                    <span
+                      className="position-absolute"
+                      style={{
+                        right: '10px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        cursor: 'pointer',
+                        zIndex: 999,
+                        fontSize: '20px',
+                        color: '#6c757d',
+                        lineHeight: 1,
+                      }}
+                      onClick={() => setGlobalSearch('')}
+                    >
+                      ×
+                    </span>
+                  )}
+                </div>
+              )}
+
             </div>
           </div>
         </div>

@@ -640,6 +640,21 @@ class MediumofEducation(models.Model):
         return self.name
 
 
+
+class ECAFor(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    name= models.CharField(max_length=255,unique=True)
+    description = models.TextField(max_length=255,blank=True,null=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+
+
 class ECAAwardingBody(models.Model):
     VALID_UNIT_CHOICES = (
         ("Months", "Months"),
@@ -647,15 +662,9 @@ class ECAAwardingBody(models.Model):
         ("Years", "Years"),
     )
 
-    selection_choices=[
-            ('Student', 'Student'), 
-            ('Immigration', 'Immigration')
-             ]
-    
-
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     country = models.ForeignKey("Country", on_delete=models.SET_NULL, related_name="ECAAwarding_body", blank=True, null=True)
-    selection_type = models.CharField(max_length=250,choices=selection_choices,blank=True, null=True)
+    ecafor=models.ForeignKey("ECAFor", on_delete=models.SET_NULL, related_name="ECAAwarding_body", blank=True, null=True)
     valid_duration_value = models.IntegerField(blank=True, null=True)
     eca_body_full_name = models.CharField(max_length=255,blank=True, null=True)
     description = models.TextField(blank=True, null=True)
@@ -665,7 +674,7 @@ class ECAAwardingBody(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ('country','eca_body_full_name')
+        unique_together = ('country','ecafor','eca_body_full_name')
 
 
     
@@ -673,6 +682,21 @@ class ECAAwardingBody(models.Model):
         return f"{self.eca_body_full_name} ({self.eca_body_short_name}) - {self.country}"
 
 
+class AcademicResultComparison(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    original_result_type = models.ForeignKey(AcademicResultType, on_delete=models.CASCADE, related_name='original_comparisons')
+    original_result = models.ForeignKey(AcademicResult, on_delete=models.CASCADE, related_name='original_comparisons')
+    compare_result_type = models.ForeignKey(AcademicResultType, on_delete=models.CASCADE, related_name='compare_comparisons')
+    compare_result = models.ForeignKey(AcademicResult, on_delete=models.CASCADE, related_name='compare_comparisons')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('original_result_type','compare_result_type','compare_result')
+
+    def __str__(self):
+        return f"{self.original_result} vs {self.compare_result}"
 
 class DegreeAwardedBy(models.Model):
     id = models.AutoField(primary_key=True)
@@ -711,6 +735,205 @@ class DegreeAwardedInstitute(models.Model):
     def __str__(self):
         return f"{self.name}"
 
+class DocumentCategory(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    name = models.CharField(max_length=255, unique=True)
+    description = models.TextField(blank=True, null=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+    class Meta:
+        unique_together = ('name', 'is_deleted')
+
+
+    def __str__(self):
+        return self.name
+    
+    
+class DocumentName(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    document_category = models.ForeignKey(DocumentCategory,on_delete=models.CASCADE,related_name='document_names')
+    document_name = models.CharField(max_length=255)
+    description = models.CharField(max_length=500, blank=True, null=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+    class Meta:
+        unique_together = ('document_category', 'document_name')
+
+
+    def __str__(self):
+        return self.document_name
+
+
+class DocumentType(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    name = models.CharField(max_length=255, unique=True)
+    description = models.TextField(blank=True, null=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+    def __str__(self):
+        return self.name    
+    
+
+class PurposeOfVisit(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    name = models.CharField(max_length=255, unique=True)
+    description = models.TextField(blank=True, null=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+    
+
+    def __str__(self):
+        return self.name    
+    
+
+class DocumentsFor(models.Model):
+    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=255, unique=True, verbose_name="Documents For")
+    description = models.TextField(blank=True, null=True, verbose_name="Description")
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+
+
+    def __str__(self):
+        return self.name
+
+
+
+class RequiredDocument(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    country = models.ForeignKey('Country', on_delete=models.CASCADE, related_name='required_documents')
+    visa_main_category = models.ForeignKey('master.VisaMain', on_delete=models.CASCADE, related_name='required_documents')
+    visa_major_category = models.ForeignKey('master.VisaMajor', on_delete=models.CASCADE, related_name='required_documents')
+    visa_name = models.ForeignKey('VisaName', on_delete=models.CASCADE, related_name='required_documents')
+    document_category = models.ForeignKey('DocumentCategory', on_delete=models.CASCADE, related_name='required_documents')
+    document_name = models.ForeignKey('DocumentName', on_delete=models.CASCADE, related_name='required_documents')
+    description = models.CharField(max_length=500, blank=True, null=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+    class Meta:
+        unique_together = ('country','visa_main_category','visa_major_category','visa_name','document_category','document_name')
+    
+
+    def __str__(self):
+        return f"{self.country} - {self.visa_name} - {self.document_name}"
+
+
+
+class ProcessStatusName(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    country = models.ForeignKey('Country', on_delete=models.CASCADE, related_name='process_statuses')
+    visa_main_category = models.ForeignKey('master.VisaMain', on_delete=models.CASCADE, related_name='process_statuses')
+    process_status_name = models.CharField(max_length=500, blank=True, null=True)
+    description = models.CharField(max_length=500, blank=True, null=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+    class Meta:
+        unique_together = ('country','process_status_name','visa_main_category')
+
+    def __str__(self):
+        return f"{self.country} - {self.visa_main_category} - {self.process_status_name}"
+
+
+
+class ProcessSubStatusName(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    country = models.ForeignKey('Country', on_delete=models.CASCADE, related_name='process_sub_statuses')
+    visa_main_category = models.ForeignKey('master.VisaMain', on_delete=models.CASCADE, related_name='process_sub_statuses')
+    process_status_name = models.ForeignKey('ProcessStatusName', on_delete=models.CASCADE, related_name='process_sub_statuses')
+    process_sub_status_name = models.CharField(max_length=255)
+    description = models.CharField(max_length=500, blank=True, null=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+    class Meta:
+        unique_together =('country','visa_main_category','process_status_name','process_status_name')
+
+    def __str__(self):
+        return f"{self.country} - {self.visa_main_category} - {self.process_status_name} - {self.process_sub_status_name}"
+
+
+class ProcessType(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    name = models.CharField(max_length=255, unique=True)
+    description = models.TextField(blank=True, null=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+  
+
+    def __str__(self):
+        return self.name
+
+
+
+class PaymentTo(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    name = models.CharField(max_length=255, unique=True)
+    description = models.TextField(blank=True, null=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+    
+    def __str__(self):
+        return self.name
+    
+
+class PaymentCategory(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    payment_to = models.ForeignKey(PaymentTo, on_delete=models.CASCADE, related_name="payment_categories")
+    payment_category = models.CharField(max_length=255, unique=True)
+    description = models.TextField(blank=True, null=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+    class Meta:
+        unique_together =('payment_to','payment_category')
+
+    def __str__(self):
+        return f"{self.payment_category} ({self.payment_to.name})"
+
+
+
+    
 class  Language(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
@@ -734,6 +957,12 @@ class  LanguageTest(models.Model):
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('language', 'name')
+
+
+
 
     def __str__(self):
         return self.name
@@ -773,16 +1002,20 @@ class LanguageTestResult(models.Model):
     language = models.ForeignKey('Language',on_delete=models.SET_NULL,null=True,blank=True,related_name='test_results')
     language_test = models.ForeignKey('LanguageTest',on_delete=models.SET_NULL,null=True,blank=True,related_name='results')
     module_name = models.ForeignKey('LanguagetestmoduleName',  on_delete=models.SET_NULL,null=True,blank=True,related_name='test_results')
-    clb_level = models.ForeignKey('CLBLevel', on_delete=models.SET_NULL,null=True,blank=True,related_name='language_test_results'    )
+    lb_level = models.ForeignKey('StudyLanguageBanchmark', on_delete=models.SET_NULL,null=True,blank=True,related_name='language_test_results')
 
     numeric_score = models.DecimalField(max_digits=4, decimal_places=1, null=True, blank=True)
-    description =  models.TextField(max_length=255,blank=True)
+    description =  models.TextField(max_length=255,null=True,blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_deleted = models.BooleanField(default=False)
 
+    class Meta:
+        unique_together = ('language', 'language_test','module_name','lb_level','numeric_score')
+
     def __str__(self):
         return f"{self.language_test} - {self.language} - {self.module_name}"
+
 
 
 class StudyLanguageBanchmark(models.Model):
@@ -821,6 +1054,9 @@ class EntranceTestModuleName(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        unique_together = ('entrancetest', 'moduleName')
+
     def __str__(self):
         return self.moduleName
 
@@ -836,7 +1072,8 @@ class EntranceTestResult(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-
+    class Meta:
+        unique_together = ('entrancetest', 'moduleName','testresult')
 
     def __str__(self):
         return self.testresult
@@ -1137,6 +1374,7 @@ class RepresentingCountry(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+
     def __str__(self):
         return self.full_name
     
@@ -1156,12 +1394,16 @@ class VisaMain(models.Model):
 class VisaMajor(models.Model):
     id = models.AutoField(primary_key=True) 
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True) 
+    country=models.ForeignKey('RepresentingCountry', on_delete=models.CASCADE, related_name='visamajor',null=True,blank=True)
     visamain=models.ForeignKey('VisaMain', on_delete=models.CASCADE, related_name='visamajor')
-    name = models.CharField(max_length=255,unique=True)
+    name = models.CharField(max_length=255)
     description = models.TextField(max_length=255,blank=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ('country','visamain','name')
 
     def __str__(self):
         return self.name
@@ -1172,12 +1414,15 @@ class VisaName(models.Model):
     country=models.ForeignKey('RepresentingCountry', on_delete=models.CASCADE, related_name='visaname')
     visamain=models.ForeignKey('VisaMain', on_delete=models.CASCADE, related_name='visaname')
     visamajor=models.ForeignKey('VisaMajor', on_delete=models.CASCADE, related_name='visaname')
-    full_name = models.CharField(max_length=255,unique=True)
+    full_name = models.CharField(max_length=255)
     short_name=models.CharField(max_length=255,blank=True)
     description = models.TextField(max_length=255,blank=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('visamain','visamajor','full_name','country')
 
     def __str__(self):
         return self.full_name
@@ -1238,9 +1483,6 @@ class PossibilityLevel(models.Model):
 
     def __str__(self):
         return self.name
-
-
-
 
 
 
@@ -1310,161 +1552,6 @@ class PRPossibility(models.Model):
         return self.name
     
 
-class DocumentCategory(models.Model):
-    id = models.AutoField(primary_key=True)
-    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    name = models.CharField(max_length=255, unique=True)
-    description = models.TextField(blank=True, null=True)
-    is_deleted = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.name
-    
-    
-class DocumentName(models.Model):
-    id = models.AutoField(primary_key=True)
-    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    document_category = models.ForeignKey(DocumentCategory,on_delete=models.CASCADE,related_name='document_names')
-    document_name = models.CharField(max_length=255)
-    description = models.CharField(max_length=500, blank=True, null=True)
-    is_deleted = models.BooleanField(default=False)
-    created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.document_name
-
-class DocumentType(models.Model):
-    id = models.AutoField(primary_key=True)
-    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    name = models.CharField(max_length=255, unique=True)
-    description = models.TextField(blank=True, null=True)
-    is_deleted = models.BooleanField(default=False)
-    created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.name    
-    
-
-class PurposeOfVisit(models.Model):
-    id = models.AutoField(primary_key=True)
-    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    name = models.CharField(max_length=255, unique=True)
-    description = models.TextField(blank=True, null=True)
-    is_deleted = models.BooleanField(default=False)
-    created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.name    
-    
-
-class DocumentsFor(models.Model):
-    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=255, unique=True, verbose_name="Documents For")
-    description = models.TextField(blank=True, null=True, verbose_name="Description")
-    is_deleted = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-
-    def __str__(self):
-        return self.name
-
-
-
-class RequiredDocument(models.Model):
-    id = models.AutoField(primary_key=True)
-    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    country = models.ForeignKey('Country', on_delete=models.CASCADE, related_name='required_documents')
-    visa_main_category = models.ForeignKey('master.VisaMain', on_delete=models.CASCADE, related_name='required_documents')
-    visa_major_category = models.ForeignKey('master.VisaMajor', on_delete=models.CASCADE, related_name='required_documents')
-    visa_name = models.ForeignKey('VisaName', on_delete=models.CASCADE, related_name='required_documents')
-    document_category = models.ForeignKey('DocumentCategory', on_delete=models.CASCADE, related_name='required_documents')
-    document_name = models.ForeignKey('DocumentName', on_delete=models.CASCADE, related_name='required_documents')
-    description = models.CharField(max_length=500, blank=True, null=True)
-    is_deleted = models.BooleanField(default=False)
-    created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return f"{self.country} - {self.visa_name} - {self.document_name}"
-
-
-
-class ProcessStatusName(models.Model):
-    id = models.AutoField(primary_key=True)
-    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    country = models.ForeignKey('Country', on_delete=models.CASCADE, related_name='process_statuses')
-    visa_main_category = models.ForeignKey('master.VisaMain', on_delete=models.CASCADE, related_name='process_statuses')
-    process_status_name = models.CharField(max_length=500, blank=True, null=True)
-    description = models.CharField(max_length=500, blank=True, null=True)
-    is_deleted = models.BooleanField(default=False)
-    created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return f"{self.country} - {self.visa_main_category} - {self.process_status_name}"
-
-
-
-class ProcessSubStatusName(models.Model):
-    id = models.AutoField(primary_key=True)
-    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    country = models.ForeignKey('Country', on_delete=models.CASCADE, related_name='process_sub_statuses')
-    visa_main_category = models.ForeignKey('master.VisaMain', on_delete=models.CASCADE, related_name='process_sub_statuses')
-    process_status_name = models.ForeignKey('ProcessStatusName', on_delete=models.CASCADE, related_name='process_sub_statuses')
-    process_sub_status_name = models.CharField(max_length=255)
-    description = models.CharField(max_length=500, blank=True, null=True)
-    is_deleted = models.BooleanField(default=False)
-    created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return f"{self.country} - {self.visa_main_category} - {self.process_status_name} - {self.process_sub_status_name}"
-
-
-class ProcessType(models.Model):
-    id = models.AutoField(primary_key=True)
-    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    name = models.CharField(max_length=255, unique=True)
-    description = models.TextField(blank=True, null=True)
-    is_deleted = models.BooleanField(default=False)
-    created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.name
-
-
-class PaymentTo(models.Model):
-    id = models.AutoField(primary_key=True)
-    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    name = models.CharField(max_length=255, unique=True)
-    description = models.TextField(blank=True, null=True)
-    is_deleted = models.BooleanField(default=False)
-    created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    def __str__(self):
-        return self.name
-    
-
-class PaymentCategory(models.Model):
-    id = models.AutoField(primary_key=True)
-    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    payment_to = models.ForeignKey(PaymentTo, on_delete=models.CASCADE, related_name="payment_categories")
-    payment_category = models.CharField(max_length=255, unique=True)
-    description = models.TextField(blank=True, null=True)
-    is_deleted = models.BooleanField(default=False)
-    created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return f"{self.payment_category} ({self.payment_to.name})"
 
 
 class SpouseCanApplywithCandidate(models.Model):
@@ -1651,7 +1738,7 @@ class WhenCommissionIssue(models.Model):
     id = models.AutoField(primary_key=True) 
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True) 
     name = models.CharField(max_length=255,unique=True)
-    description = models.TextField(max_length=255,blank=True)
+    description = models.TextField(max_length=255,null=True,blank=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -1663,7 +1750,7 @@ class CourseLevelCode(models.Model):
     id = models.AutoField(primary_key=True) 
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True) 
     name = models.CharField(max_length=255,unique=True)
-    description = models.TextField(max_length=255,blank=True)
+    description = models.TextField(max_length=255,null=True,blank=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -1678,7 +1765,7 @@ class CourseLevel(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True) 
     courselevelcode=models.ForeignKey(CourseLevelCode,on_delete=models.SET_NULL,related_name="course_level", blank=True, null=True)
     name = models.CharField(max_length=255,unique=True)
-    description = models.TextField(max_length=255,blank=True)
+    description = models.TextField(max_length=255,null=True,blank=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -1701,10 +1788,13 @@ class CourseDuration(models.Model):
     courselevel=models.ForeignKey(CourseLevel,on_delete=models.SET_NULL,related_name="course_duration", blank=True, null=True)
     valid_duration_value = models.IntegerField(blank=True, null=True)
     valid_duration_unit = models.CharField(max_length=20, choices=VALID_UNIT_CHOICES, blank=True, null=True)
-    description = models.TextField(max_length=255,blank=True)
+    description = models.TextField(max_length=255,null=True,blank=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('courselevel', 'valid_duration_value')
 
     def __str__(self):
         return self.valid_duration_value
@@ -1714,7 +1804,7 @@ class CourseDividedIn(models.Model):
     id = models.AutoField(primary_key=True) 
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True) 
     name = models.CharField(max_length=255,unique=True)
-    description = models.TextField(max_length=255,blank=True)
+    description = models.TextField(max_length=255,null=True,blank=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -1726,7 +1816,7 @@ class CourseStatus(models.Model):
     id = models.AutoField(primary_key=True) 
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True) 
     name = models.CharField(max_length=255,unique=True)
-    description = models.TextField(max_length=255,blank=True)
+    description = models.TextField(max_length=255,null=True,blank=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -1738,7 +1828,7 @@ class IntakeName(models.Model):
     id = models.AutoField(primary_key=True) 
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True) 
     name = models.CharField(max_length=255,unique=True)
-    description = models.TextField(max_length=255,blank=True)
+    description = models.TextField(max_length=255,null=True,blank=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -1751,7 +1841,7 @@ class CourseStatusIntake(models.Model):
     id = models.AutoField(primary_key=True) 
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True) 
     name = models.CharField(max_length=255,unique=True)
-    description = models.TextField(max_length=255,blank=True)
+    description = models.TextField(max_length=255,null=True,blank=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -1763,10 +1853,236 @@ class ScholorshipBasedOn(models.Model):
     id = models.AutoField(primary_key=True) 
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True) 
     name = models.CharField(max_length=255,unique=True)
-    description = models.TextField(max_length=255,blank=True)
+    description = models.TextField(max_length=255,null=True,blank=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.name
+
+
+
+class FactorFor(models.Model):
+    id = models.AutoField(primary_key=True) 
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True) 
+    name = models.CharField(max_length=255,unique=True)
+    description = models.TextField(max_length=255,null=True,blank=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+    
+
+
+class AgeGroup(models.Model):
+    id = models.AutoField(primary_key=True) 
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True) 
+    name = models.CharField(max_length=255,unique=True)
+    description = models.TextField(max_length=255,null=True,blank=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+
+class AcademicResultGroup(models.Model):
+    id = models.AutoField(primary_key=True) 
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True) 
+    name = models.CharField(max_length=255,unique=True)
+    description = models.TextField(max_length=255,null=True,blank=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+class BacklogsGroup(models.Model):
+    id = models.AutoField(primary_key=True) 
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True) 
+    name = models.CharField(max_length=255,unique=True)
+    description = models.TextField(max_length=255,null=True,blank=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+    
+
+
+class GAPGroup(models.Model):
+    id = models.AutoField(primary_key=True) 
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True) 
+    name = models.CharField(max_length=255,unique=True)
+    description = models.TextField(max_length=255,null=True,blank=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+
+
+class LanguageAbilityGroup(models.Model):
+    id = models.AutoField(primary_key=True) 
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True) 
+    name = models.CharField(max_length=255,unique=True)
+    description = models.TextField(max_length=255,null=True,blank=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+class EntranceTestAbilityGroup(models.Model):
+    id = models.AutoField(primary_key=True) 
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True) 
+    name = models.CharField(max_length=255,unique=True)
+    description = models.TextField(max_length=255,null=True,blank=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+    
+    
+
+class StudyFactorAge(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    factor_for = models.ForeignKey(FactorFor, on_delete=models.CASCADE, related_name="ages")
+    study_age_group = models.ForeignKey(AgeGroup, on_delete=models.CASCADE, related_name="ages")
+    minimum_age_months = models.PositiveIntegerField()
+    maximum_age_months = models.PositiveIntegerField()
+    country = models.ManyToManyField(Country, related_name="age_countries")
+    course_level = models.ManyToManyField(CourseLevel, related_name="age_course_levels")
+    description = models.TextField(max_length=255,null=True, blank=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+    def __str__(self):
+        return f"{self.study_age_group.name} Age"
+    
+    
+    
+    
+    
+class StudyFactorAcademicResult(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    factor_for = models.ForeignKey(FactorFor, on_delete=models.CASCADE, related_name="academic_results")
+    academic_result_group = models.ForeignKey(AcademicResultGroup, on_delete=models.CASCADE, related_name="academic_results")
+    minimum_academic_result_required = models.ForeignKey(AcademicResultType, on_delete=models.CASCADE, related_name="academic_result_types")
+    description = models.TextField(max_length=255,null=True, blank=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.academic_result_group.name} - Academic Result"
+    
+
+
+
+
+class StudyFactorBacklogs(models.Model):
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+
+    factor_for = models.ForeignKey("master.FactorFor", on_delete=models.CASCADE, related_name="study_backlogs")
+    backlog_group = models.ForeignKey("master.BacklogsGroup", on_delete=models.CASCADE, related_name="study_backlogs")
+
+    backlog_accepted = models.BooleanField(default=False)
+    max_backlogs = models.PositiveIntegerField(default=0)
+
+    description = models.TextField(blank=True, null=True)
+
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+
+    def __str__(self):
+        return f"{self.factor_for.name} - {self.backlog_group.name}"
+    
+    
+    
+
+class StudyFactorGAP(models.Model):
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    factor_for = models.ForeignKey("FactorFor", on_delete=models.CASCADE)
+    gap_group = models.ForeignKey("GapGroup", on_delete=models.CASCADE)
+
+    maximum_gap_accepted = models.PositiveIntegerField(default=0)
+
+    countries = models.ManyToManyField("Country")               # Multiple
+    institute_types = models.ManyToManyField("InstituteType")   # Multiple
+    course_levels = models.ManyToManyField("CourseLevel")       # Multiple
+
+    description = models.TextField(blank=True, null=True)
+
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.factor_for} - GAP Rule"
+    
+    
+
+class StudyFactorLanguageAbility(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+
+    factor_for = models.ForeignKey(FactorFor, on_delete=models.CASCADE)
+    language_ability_group = models.ForeignKey(LanguageAbilityGroup, on_delete=models.CASCADE)
+    language_test_name = models.ForeignKey('LanguageTest', on_delete=models.CASCADE)
+    module_name = models.ForeignKey('LanguagetestmoduleName', on_delete=models.CASCADE)
+
+    minimum_overall_score = models.ForeignKey(LanguageTestResult, on_delete=models.CASCADE, related_name='overall_scores')
+    not_less_than = models.ForeignKey(LanguageTestResult, on_delete=models.CASCADE, related_name='not_less_than_scores')
+
+    in_no_of_modules = models.IntegerField(default=0)
+    description = models.TextField(blank=True, null=True)
+
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.factor_for.name} - {self.language_test_name.name}"
+    
+    
+    
+    
+class StudyFactorEntranceTestAbility(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+
+    factor_for = models.ForeignKey(FactorFor, on_delete=models.CASCADE)
+    entrance_test_ability_group = models.ForeignKey('EntranceTestAbilityGroup', on_delete=models.CASCADE)
+    entrance_test_name = models.ForeignKey('EntranceTestName', on_delete=models.CASCADE)
+
+    minimum_score_required = models.ForeignKey('EntranceTestResult', on_delete=models.CASCADE)
+
+    description = models.TextField(blank=True, null=True)
+
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.factor_for.name} - {self.entrance_test_name.name}"
+    
+   

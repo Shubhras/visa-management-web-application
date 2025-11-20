@@ -8,6 +8,7 @@ const AddEditECAAwardingBodyModal = ({ show, handleClose, mode = 'add', rowData 
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const [countryListData, setCountryListData] = useState([]);
+  const [ecaForData, setEcaForData] = useState([]);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -69,22 +70,31 @@ const AddEditECAAwardingBodyModal = ({ show, handleClose, mode = 'add', rowData 
   }, [mode, rowData, show]);
 
   const fetchStudyList = () => {
-    setLoading(true);
+    // setLoading(true);
     const params = {
       page: 1,
       limit: 2000,
       search: '',
       status: '',
-      sortBy: 'updated_at',
-      sortOrder: 'desc',
+      sortBy: 'name',
+      sortOrder: 'asc',
     };
     dispatch(countryList(params, (response, error) => {
-      setLoading(false);
+      // setLoading(false);
       if (response?.statusCode === 200 && response?.status === true) {
         setCountryListData(response?.data || []);
-
       }
     }));
+    dispatch(ecaForList(params, (response, error) => {
+      if (response?.statusCode === 200 && response?.status === true) {
+        setEcaForData(response?.data || []);
+
+      }
+    }))
+  };
+  const customFilterOptionCountry = (option, inputValue) => {
+    if (!inputValue) return true;
+    return option.label.toLowerCase().startsWith(inputValue.toLowerCase());
   };
 
   // Handle input changes
@@ -145,20 +155,20 @@ const AddEditECAAwardingBodyModal = ({ show, handleClose, mode = 'add', rowData 
         ? {
           uuid: formData.uuid,
           country: formData.countryUuid,
-          selection_type: formData.ecaFor,
+          ecafor: formData.ecaFor,
           eca_body_full_name: formData.fullName,
           eca_body_short_name: formData.shortName,
           eca_valid_period: formattedValidPeriod,
-          // validPeriodType: formData.validPeriodType,
+          valid_duration_value: formData.validPeriod,
           description: formData.description,
         }
         : {
           country: formData.countryUuid,
-          selection_type: formData.ecaFor,
+          ecafor: formData.ecaFor,
           eca_body_full_name: formData.fullName,
           eca_body_short_name: formData.shortName,
           eca_valid_period: formattedValidPeriod,
-          // validPeriodType: formData.validPeriodType,
+          valid_duration_value: formData.validPeriod,
           description: formData.description,
 
         };
@@ -242,14 +252,14 @@ const AddEditECAAwardingBodyModal = ({ show, handleClose, mode = 'add', rowData 
                   <Select
                     options={countryListData.map((option) => ({
                       value: option.uuid,
-                      label: option.name,
+                      label: option.name + " (" + option?.continent?.name + ")",
                     }))}
                     value={
                       formData.countryUuid
                         ? countryListData
                           .map((option) => ({
                             value: option.uuid,
-                            label: option.name,
+                            label: option.name + " (" + option?.continent?.name + ")",
                           }))
                           .find((opt) => opt.value === formData.countryUuid)
                         : null
@@ -263,6 +273,7 @@ const AddEditECAAwardingBodyModal = ({ show, handleClose, mode = 'add', rowData 
                       })
                     }
                     placeholder="Select country"
+                    filterOption={customFilterOptionCountry}
                     isClearable
                     isSearchable
                     className={`custom-select-container ${errors.countryUuid ? "is-invalid" : ""
@@ -279,13 +290,35 @@ const AddEditECAAwardingBodyModal = ({ show, handleClose, mode = 'add', rowData 
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                     ECA For <span className="text-danger">*</span>
                   </label>
-                  <input
-                    type="text"
-                    name="ecaFor"
-                    value={formData.ecaFor}
-                    onChange={handleChange}
-                    className={`form-control radius-8 ${errors.ecaFor ? 'is-invalid' : ''}`}
-                    placeholder="Enter ECA For"
+                  <Select
+                    options={ecaForData.map((option) => ({
+                      value: option.uuid,
+                      label: option.name,
+                    }))}
+                    value={
+                      formData.ecaFor
+                        ? ecaForData
+                          .map((option) => ({
+                            value: option.uuid,
+                            label: option.name,
+                          }))
+                          .find((opt) => opt.value === formData.ecaFor)
+                        : null
+                    }
+                    onChange={(selectedOption) =>
+                      handleChange({
+                        target: {
+                          name: "ecaFor",
+                          value: selectedOption ? selectedOption.value : "",
+                        },
+                      })
+                    }
+                    placeholder="Select ECA For"
+                    isClearable
+                    isSearchable
+                    className={`custom-select-container ${errors.ecaFor ? "is-invalid" : ""
+                      }`}
+                    classNamePrefix="custom-select"
                   />
                   {errors.ecaFor && (
                     <div className="text-danger text-sm mt-1">

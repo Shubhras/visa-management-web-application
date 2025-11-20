@@ -1,22 +1,36 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useDispatch } from "react-redux";
 import MasterLayout from "../../../../masterLayout/MasterLayout";
-// import Breadcrumb from "../../../components/Breadcrumb";
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { Link } from 'react-router-dom';
 import { toast } from "react-toastify";
-import { cityList, cityDelete, cityExportData } from '../../../../store/master/generalMasters/actions';
+import { cityList, cityDelete, cityExportData, stateListByCountry, districtListByState } from '../../../../store/master/generalMasters/actions';
 import AddImportCityModal from './AddImportCityModal';
 import AddEditCityModal from './AddEditCityModal';
 import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
-
+import { countryDemoList } from '../../../../store/master/companyMasters/actions';
+import { useGlobalSearch } from '../../../../components/comman/GlobalSearchContext';
 const CityList = () => {
+  const { globalSearch } = useGlobalSearch();
   const dispatch = useDispatch();
   const [modalState, setModalState] = useState({
     show: false,
-    mode: 'add', // 'add' or 'edit'
+    mode: 'add',
     rowData: null
   })
+
+  // Excel-style column filters - Now storing country , state and district IDs
+  const [columnFilters, setColumnFilters] = useState({
+    countryId: [], // Country filter
+    stateId: [], // State filter
+    districtId: [] // District filter
+  });
+
+  const [activeFilterColumn, setActiveFilterColumn] = useState(null);
+  const [filterDropdownData, setFilterDropdownData] = useState({});
+  const [filterSearchTerms, setFilterSearchTerms] = useState({});
+  const filterDropdownRef = useRef(null);
+
   const handleShow = () => {
     setModalState({
       show: true,
@@ -24,7 +38,7 @@ const CityList = () => {
       rowData: null
     });
   };
-  // For closing modal
+
   const handleClose = () => {
     setModalState({
       show: false,
@@ -34,9 +48,7 @@ const CityList = () => {
     fetchCityList();
   }
 
-  // const [showEdit, setShowEdit] = useState(false);
   const [showImport, setShowImport] = useState(false);
-  const [rowSelectData, setRowSelectData] = useState({});
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this city?");
@@ -49,15 +61,16 @@ const CityList = () => {
   const [items] = useState(["Country Name", "State Name", "District Name", "City Name", "Description", "Modified On"]);
   const [selectedItems, setSelectedItems] = useState(["Country Name", "City Name"]);
   const [ItemsRequired] = useState(["Country Name", "City Name"]);
-
-  // Table columns configuration
+  const [countryListData, setCountryListData] = useState([]);
+  const [stateListData, setStateListData] = useState([]);
+  const [districtListData, setDistrictListData] = useState([]);
   const [tableColumns] = useState([
-    { id: 'countryName', label: 'Country Name', field: 'countryName', visible: true, required: false },
-    { id: 'stateName', label: 'State Name', field: 'stateName', visible: true, required: false },
-    { id: 'districtName', label: 'District Name ', field: 'districtName', visible: true, required: false },
-    { id: 'cityName', label: 'City Name', field: 'cityName', visible: true, required: false },
-    { id: 'description', label: 'Description', field: 'description', visible: false, required: false },
-    { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false },
+    { id: 'countryName', label: 'Country Name', field: 'countryId', visible: true, required: false, filterable: true },
+    { id: 'stateName', label: 'State Name', field: 'stateId', visible: true, required: false, filterable: true },
+    { id: 'districtName', label: 'District Name ', field: 'districtId', visible: true, required: false, filterable: true },
+    { id: 'cityName', label: 'City Name', field: 'cityName', visible: true, required: false, filterable: false },
+    { id: 'description', label: 'Description', field: 'description', visible: false, required: false, filterable: false },
+    { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false, filterable: false },
   ]);
 
   const [visibleColumns, setVisibleColumns] = useState(
@@ -65,10 +78,10 @@ const CityList = () => {
   );
   const [showColumnDropdown, setShowColumnDropdown] = useState(false);
   const columnDropdownRef = useRef(null);
-  // Column visibility toggle handler
+
   const toggleColumnVisibility = (columnId) => {
     const column = tableColumns.find(col => col.id === columnId);
-    if (column?.required) return; // Don't allow hiding required columns
+    if (column?.required) return;
 
     setVisibleColumns(prev => {
       if (prev.includes(columnId)) {
@@ -79,40 +92,81 @@ const CityList = () => {
     });
   };
 
-  // Check if column is visible
   const isColumnVisible = (columnId) => {
     return visibleColumns.includes(columnId);
   };
 
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (columnDropdownRef.current && !columnDropdownRef.current.contains(event.target)) {
         setShowColumnDropdown(false);
       }
+      if (filterDropdownRef.current && !filterDropdownRef.current.contains(event.target)) {
+        setActiveFilterColumn(null);
+      }
     };
 
-    if (showColumnDropdown) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
+    document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showColumnDropdown]);
-  // Updated state with sorting
+  }, []);
+
   const [tableState, setTableState] = useState({
     page: 1,
     limit: 25,
     search: '',
     status: '',
-    sortBy: 'created_at', // Field to sort by
-    sortOrder: 'desc', // 'asc' or 'desc'
+    sortBy: 'created_at',
+    sortOrder: 'desc',
     total: 0,
     totalPages: 0,
     currentPage: 1,
     hasNext: false,
     hasPrevious: false
   });
+
+  useEffect(() => {
+    setTableState(prev => ({ ...prev, search: globalSearch, page: 1 }));
+  }, [globalSearch]);
+
+
+  useEffect(() => {
+    fetchCountryList();
+    fetchStateList('all');
+    fetchDistrictList('all');
+  }, []);
+
+  // When country filter changes, update state list
+  useEffect(() => {
+    if (columnFilters.countryId.length > 0) {
+      // Fetch states for selected countries
+      const countryIds = columnFilters.countryId.join(',');
+      fetchStateList(countryIds);
+    } else {
+      // If no country selected, fetch all states
+      fetchStateList('all');
+    }
+
+    // Clear state and district filter when country changes
+    setColumnFilters(prev => ({ ...prev, stateId: [], districtId: [] }));
+
+  }, [columnFilters.countryId]);
+
+  // When state filter changes, update district list
+  useEffect(() => {
+    if (columnFilters.stateId.length > 0) {
+      // Fetch districts for selected states
+      const stateIds = columnFilters.stateId.join(',');
+      fetchDistrictList(stateIds);
+    } else {
+      // If no state selected, fetch all districts
+      fetchDistrictList('all');
+    }
+    // Clear district filter when state changes
+    setColumnFilters(prev => ({ ...prev, districtId: [] }));
+  }, [columnFilters.stateId]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -126,7 +180,59 @@ const CityList = () => {
 
   useEffect(() => {
     fetchCityList();
-  }, [tableState.page, tableState.limit, tableState.status, tableState.sortBy, tableState.sortOrder]);
+  }, [tableState.page, tableState.limit, tableState.status, tableState.sortBy, tableState.sortOrder, columnFilters]);
+
+  // Prepare country and state filter options
+  useEffect(() => {
+    if (countryListData.length > 0) {
+      // Create filter options with country names from countryListData
+      setFilterDropdownData(prev => ({
+        ...prev,
+        countryId: countryListData.map(country => ({
+          id: country.uuid || country.id,
+          name: country.name || country.countryName
+        })).sort((a, b) => a.name.localeCompare(b.name))
+      }));
+    }
+  }, [countryListData]);
+
+  useEffect(() => {
+    if (stateListData.length > 0) {
+      // Create filter options with state names from stateListData
+      setFilterDropdownData(prev => ({
+        ...prev,
+        stateId: stateListData.map(state => ({
+          id: state.uuid || state.id,
+          name: state.name || state.stateName
+        })).sort((a, b) => a.name.localeCompare(b.name))
+      }));
+    } else {
+      // Clear state options if no data
+      setFilterDropdownData(prev => ({
+        ...prev,
+        stateId: []
+      }));
+    }
+  }, [stateListData]);
+
+  // Prepare district filter options
+
+  useEffect(() => {
+    if (districtListData.length > 0) {
+      setFilterDropdownData(prev => ({
+        ...prev,
+        districtId: districtListData.map(district => ({
+          id: district.uuid || district.id,
+          name: district.districtName || district.name
+        })).sort((a, b) => a.name.localeCompare(b.name))
+      }));
+    } else {
+      setFilterDropdownData(prev => ({
+        ...prev,
+        districtId: []
+      }));
+    }
+  }, [districtListData]);
 
   const fetchCityList = () => {
     setLoading(true);
@@ -136,15 +242,23 @@ const CityList = () => {
       search: tableState.search || '',
       status: tableState.status || '',
       sortBy: tableState.sortBy || '',
-      sortOrder: tableState.sortOrder || ''
+      sortOrder: tableState.sortOrder || '',
+      // Send country, state and district IDs
+      country: columnFilters.countryId.length > 0 ? columnFilters.countryId : null,
+      state: columnFilters.stateId.length > 0 ? columnFilters.stateId : null,
+      district: columnFilters.districtId.length > 0 ? columnFilters.districtId : null
     };
+
+    console.log('Sending params:', { country: columnFilters.countryId, state: columnFilters.stateId, district: columnFilters.districtId });
 
     dispatch(cityList(params, (response, error) => {
       setLoading(false);
       if (response?.statusCode === 200 && response?.status === true) {
         const paginationData = response?.pagination || {};
+        const data = response?.data || [];
 
-        setCityDataList(response?.data || []);
+        setCityDataList(data);
+
         setTableState(prev => ({
           ...prev,
           total: paginationData.totalItems || 0,
@@ -156,7 +270,7 @@ const CityList = () => {
 
         setSelectedRows(prev => {
           const filtered = prev.filter(rowId =>
-            response?.data.some(rowItems => rowItems.uuid === rowId)
+            data.some(rowItems => rowItems.uuid === rowId)
           );
           return filtered;
         });
@@ -174,10 +288,155 @@ const CityList = () => {
     }));
   };
 
-  // Handle sorting
+  const fetchCountryList = () => {
+    const params = {
+      page: 1,
+      limit: 2000,
+      search: '',
+      status: '',
+      sortBy: 'name',
+      sortOrder: 'asc',
+    };
+
+    dispatch(countryDemoList(params, (response, error) => {
+      if (response?.statusCode === 200 && response?.status === true) {
+        setCountryListData(response?.data || []);
+      }
+    }));
+  };
+
+  const fetchStateList = (countryId) => {
+    if (!countryId) {
+      setStateListData([]);
+      return;
+    }
+
+    setLoading(true);
+    const params = {
+      page: 1,
+      limit: 2000,
+      search: '',
+      status: '',
+      sortBy: 'name',
+      sortOrder: 'asc',
+      countryId: countryId
+    };
+
+    dispatch(stateListByCountry(params, (response, error) => {
+      setLoading(false);
+      if (response?.statusCode === 200 && response?.status === true) {
+        setStateListData(response?.data || []);
+      } else {
+        setStateListData([]);
+      }
+    }));
+  };
+
+  const fetchDistrictList = (stateId) => {
+    if (!stateId) {
+      setDistrictListData([]);
+      return;
+    }
+    const params = {
+      page: 1,
+      limit: 2000,
+      search: '',
+      status: '',
+      sortBy: 'districtName',
+      sortOrder: 'asc',
+      countryId: '',
+      stateId: stateId
+    };
+    dispatch(districtListByState(params, (response, error) => {
+      if (response?.statusCode === 200 && response?.status === true) {
+        setDistrictListData(response?.data || []);
+      } else {
+        setDistrictListData([]);
+      }
+    }));
+
+  };
+  // Toggle filter dropdown for a column
+  const toggleFilterDropdown = (e, columnField) => {
+    e.stopPropagation();
+    setActiveFilterColumn(activeFilterColumn === columnField ? null : columnField);
+    setFilterSearchTerms(prev => ({ ...prev, [columnField]: '' }));
+  };
+
+  // Handle filter checkbox change - now handles both IDs and regular values
+  const handleFilterCheckboxChange = (columnField, value, checked) => {
+    console.log('Filter change:', columnField, value, checked);
+    setColumnFilters(prev => {
+      const currentFilters = prev[columnField] || [];
+      let newFilters;
+
+      if (checked) {
+        newFilters = [...currentFilters, value];
+      } else {
+        newFilters = currentFilters.filter(v => v !== value);
+      }
+
+      return { ...prev, [columnField]: newFilters };
+    });
+  };
+
+  // Select all in filter
+  const handleFilterSelectAll = (columnField) => {
+    const searchTerm = filterSearchTerms[columnField] || '';
+
+    // For country, state and district filter, select IDs
+    const availableOptions = (filterDropdownData[columnField] || [])
+      .filter(option => option.name.toLowerCase().includes(searchTerm.toLowerCase()))
+      .map(option => option.id);
+
+    setColumnFilters(prev => ({
+      ...prev,
+      [columnField]: availableOptions
+    }));
+  };
+
+  // Clear all in filter
+  const handleFilterClearAll = (columnField) => {
+    setColumnFilters(prev => ({
+      ...prev,
+      [columnField]: []
+    }));
+  };
+
+  // Apply filter and close dropdown
+  const applyColumnFilter = (columnField) => {
+    setActiveFilterColumn(null);
+    setTableState(prev => ({ ...prev, page: 1 }));
+  };
+
+  // Clear all filters
+  const clearAllFilters = () => {
+    setColumnFilters({
+      countryId: [],
+      stateId: [],
+      districtId: []
+    });
+    setTableState(prev => ({ ...prev, page: 1 }));
+  };
+
+  // Check if any filters are active
+  const hasActiveFilters = () => {
+    return Object.values(columnFilters).some(filters => filters.length > 0);
+  };
+
+  // Get filtered options based on search term
+  const getFilteredOptions = (columnField) => {
+    const searchTerm = filterSearchTerms[columnField] || '';
+    const options = filterDropdownData[columnField] || [];
+
+    // For country, state and district filter, filter by name
+    return options.filter(option =>
+      option.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  };
+
   const handleSort = (field) => {
     setTableState(prev => {
-      // If clicking the same field, toggle between asc -> desc -> no sort
       if (prev.sortBy === field) {
         if (prev.sortOrder === 'asc') {
           return { ...prev, sortOrder: 'desc', page: 1 };
@@ -185,34 +444,26 @@ const CityList = () => {
           return { ...prev, sortBy: '', sortOrder: '', page: 1 };
         }
       }
-      // If clicking a new field, start with asc
       return { ...prev, sortBy: field, sortOrder: 'asc', page: 1 };
     });
   };
 
-  // Get sort icon for a column
   const getSortIcon = (field) => {
-    if (tableState.sortBy !== field) {
-      return <Icon icon="ri:sort-desc" className='sorting-th-icone' />;
+    if (tableState.sortBy == field) {
+      if (tableState.sortOrder === 'asc') {
+        return <Icon icon="ri:sort-asc" className='sorting-th-icone' />;
+      }
+      if (tableState.sortOrder === 'desc') {
+        return <Icon icon="ri:sort-desc" className='sorting-th-icone' />;
+      }
     }
-    if (tableState.sortOrder === 'asc') {
-      return <Icon icon="ri:sort-asc" className='sorting-th-icone' />;
-    }
-    return <Icon icon="ri:sort-desc" className='sorting-th-icone' />;
+    return ''
   };
 
   const handleSearchChange = (value) => {
     setTableState(prev => ({
       ...prev,
       search: value,
-      page: 1
-    }));
-  };
-
-  const handleStatusChange = (value) => {
-    setTableState(prev => ({
-      ...prev,
-      status: value === 'All' ? '' : value,
       page: 1
     }));
   };
@@ -225,15 +476,6 @@ const CityList = () => {
     }));
   };
 
-  // For "Select All" button
-  const handleSelectAllButton = () => {
-    if (isAllSelected) {
-      setSelectedRows([]);
-    } else {
-      setSelectedRows(cityDataList.map(Item => Item.uuid));
-    }
-  };
-  // For checkbox in table header
   const handleSelectAll = (e) => {
     const checked = e.target.checked;
     if (checked) {
@@ -307,6 +549,7 @@ const CityList = () => {
   const handleSelectAllOrNot = (a) => {
     setSelectAllOrNot(a);
   }
+
   const handleDelete = (uuid) => {
     setDeleteId(uuid);
     setShowDeleteConfirm(true);
@@ -318,14 +561,12 @@ const CityList = () => {
       toast.error("Please select at least one row to delete");
       return;
     }
-    // Choose message based on delete type
     const message = selectAllOrNot === "all" ? `${tableState.total} all city` : `${selectedRows.length} selected city`;
     setDeleteConfirmMessage(`Are you sure you want to delete this city (${message})?`);
     setShowDeleteConfirm(true);
   };
 
   const confirmDelete = () => {
-    // const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
     const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
     if (!sendPayload || sendPayload.length === 0) {
       toast.error("No city selected for deletion.");
@@ -337,8 +578,6 @@ const CityList = () => {
       } else {
         if (response?.statusCode === 200 && response?.status === true) {
           toast.success(response?.message);
-          setCityDataList(prevRowItems => prevRowItems.filter(Item => Item.uuid !== deleteId));
-          setSelectedRows(prevSelected => prevSelected.filter(rowId => rowId !== deleteId));
           setShowDeleteConfirm(false);
           setSelectedRows([]);
           setSelectAllOrNot('');
@@ -376,7 +615,6 @@ const CityList = () => {
     setShowExportPopop(false);
   };
 
-
   const handleDragStart = (e, index) => {
     e.dataTransfer.setData("dragIndex", index);
   };
@@ -389,12 +627,12 @@ const CityList = () => {
     newSelected.splice(dropIndex, 0, draggedItem);
     setSelectedItems(newSelected);
   };
+
   const handleDragOver = (e) => {
     e.preventDefault();
   };
 
   const handleCheckboxChange = (item, checked) => {
-    // prevent unchecking required items
     if (ItemsRequired.includes(item)) return;
 
     if (checked) {
@@ -409,7 +647,6 @@ const CityList = () => {
       toast.error("Please select at least one field");
       return
     }
-    // Map frontend labels to backend field names
     const fieldMapping = {
       "Country Name": "countryName",
       "State Name": "stateName",
@@ -418,9 +655,7 @@ const CityList = () => {
       "Modified On": "updated_at",
       "Description": "description",
     };
-    // Convert selectedItems to backend field names
     const mappedFields = selectedItems.map((item) => fieldMapping[item] || item);
-    // Convert to comma-separated string
     const fieldsString = mappedFields.join(",");
     const sendPayload = {
       file: "xlsx",
@@ -460,18 +695,19 @@ const CityList = () => {
   };
 
   const startIndex = (tableState.currentPage - 1) * tableState.limit;
-  const statusOptions = ['All', 'Active', 'Inactive'];
 
   return (
     <>
       <MasterLayout>
-        {/* <Breadcrumb title="TimeZone" subTitle="List" /> */}
         <div className="card basic-data-table main-container-data">
           <div className="card-body container-data">
             <div className="row align-items-center gy-3 gx-2 flex-wrap filter-action-btn">
-              {/* Left Section: Import / Export / Delete */}
               <div className="col-xl-6 col-lg-4 col-md-12">
                 <div className="d-flex flex-wrap align-items-center gap-2">
+                  <button
+                    className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
+                    onClick={handleShow}
+                  >New</button>
                   <button
                     className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
                     onClick={handleShowImport}
@@ -491,6 +727,7 @@ const CityList = () => {
                   >
                     Delete
                   </button>
+
                   {(selectedRows?.length > 0 && selectedRows?.length === cityDataList?.length) && (
                     <>
                       <button
@@ -507,23 +744,21 @@ const CityList = () => {
                       </button>
                     </>
                   )}
+                  {hasActiveFilters() && (
+                    <button
+                      onClick={clearAllFilters}
+                      className="btn btn-sm py-1 comman-inactive-btn"
+                      title="Clear all filters"
+                    >
+                      <Icon icon="mdi:filter-off" width="16" /> Clear Filters
+                    </button>
+                  )}
                 </div>
               </div>
 
-              {/* Right Section: Select / Search / +Add New */}
               <div className="col-xl-6 col-lg-8 col-md-12">
                 <div className="d-flex flex-wrap align-items-center justify-content-end gap-2">
-                  <select
-                    className="form-select form-select-sm select-page-filter"
-                    value={tableState.limit}
-                    onChange={(e) => handlePageLengthChange(e.target.value)}
-                  >
-                    <option value={10}>Show 10</option>
-                    <option value={25}>Show 25</option>
-                    <option value={50}>Show 50</option>
-                    <option value={100}>Show 100</option>
-                  </select>
-                  <div className="position-relative flex-grow-1 search-filter-div">
+                  {/* <div className="position-relative flex-grow-1 search-filter-div">
                     <Icon
                       icon="ion:search-outline"
                       className="position-absolute search-filter-icone"
@@ -548,24 +783,134 @@ const CityList = () => {
                           color: '#6c757d',
                           lineHeight: 1
                         }}
-                        onClick={() => {
-
-                          handleSearchChange('');
-                        }}
+                        onClick={() => handleSearchChange('')}
                       >
                         ×
                       </span>
                     )}
-                  </div>
-                  <button
-                    className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
-                    onClick={handleShow}
-                  >New</button>
+                  </div> */}
+                  <select
+                    className="form-select form-select-sm select-page-filter"
+                    value={tableState.limit}
+                    onChange={(e) => handlePageLengthChange(e.target.value)}
+                  >
+                    <option value={10}>10</option>
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                  </select>
+                  {tableState.total > 0 && (
+                    <div className="d-flex justify-content-between align-items-center px-4 py-0">
+                      <div className="showing-total-page">
+                         {startIndex + 1}-{" "}
+                        {Math.min(startIndex + tableState.limit, tableState.total)}{" "}
+                        of {tableState.total}
+                      </div>
+                      <nav>
+                        <ul className="pagination mb-0 gap-4px">
+                          <li className={`page-item ${!tableState.hasPrevious ? 'disabled' : ''}`}>
+                            <button
+                              className="border-0 bg-transparent"
+                              onClick={() => goToPage(1)}
+                              disabled={!tableState.hasPrevious}
+                              style={{
+                                padding: '0px 8px',
+                                color: !tableState.hasPrevious ? '#ccc' : '#6c757d',
+                                fontSize: '18px',
+                                cursor: !tableState.hasPrevious ? 'not-allowed' : 'pointer'
+                              }}
+                            >
+                              «
+                            </button>
+                          </li>
+                          <li className={`page-item ${!tableState.hasPrevious ? 'disabled' : ''}`}>
+                            <button
+                              className="border-0 bg-transparent"
+                              onClick={() => goToPage(tableState.currentPage - 1)}
+                              disabled={!tableState.hasPrevious}
+                              style={{
+                                padding: '0px 8px',
+                                color: !tableState.hasPrevious ? '#ccc' : '#6c757d',
+                                fontSize: '18px',
+                                cursor: !tableState.hasPrevious ? 'not-allowed' : 'pointer'
+                              }}
+                            >
+                              ‹
+                            </button>
+                          </li>
+                          {getPaginationNumbers().map((page, idx) => (
+                            <li key={idx} className="page-item">
+                              {page === '...' ? (
+                                <span
+                                  className="border-0 bg-transparent"
+                                  style={{
+                                    padding: '0px 10px',
+                                    color: '#6c757d',
+                                    cursor: 'default'
+                                  }}
+                                >
+                                  ...
+                                </span>
+                              ) : (
+                                <button
+                                  className="border-0"
+                                  onClick={() => goToPage(page)}
+                                  style={{
+                                    padding: '0px 10px',
+                                    minWidth: '30px',
+                                    backgroundColor: page === tableState.currentPage ? '#5a6c5b' : 'transparent',
+                                    color: page === tableState.currentPage ? '#fff' : '#6c757d',
+                                    borderRadius: '4px',
+                                    fontWeight: page === tableState.currentPage ? '500' : '400',
+                                    cursor: 'pointer',
+                                    fontSize: "14px"
+                                  }}
+                                >
+                                  {page}
+                                </button>
+                              )}
+                            </li>
+                          ))}
+                          <li className={`page-item ${!tableState.hasNext ? 'disabled' : ''}`}>
+                            <button
+                              className="border-0 bg-transparent"
+                              onClick={() => goToPage(tableState.currentPage + 1)}
+                              disabled={!tableState.hasNext}
+                              style={{
+                                padding: '0px 8px',
+                                color: !tableState.hasNext ? '#ccc' : '#6c757d',
+                                fontSize: '18px',
+                                cursor: !tableState.hasNext ? 'not-allowed' : 'pointer'
+                              }}
+                            >
+                              ›
+                            </button>
+                          </li>
+                          <li className={`page-item ${!tableState.hasNext ? 'disabled' : ''}`}>
+                            <button
+                              className="border-0 bg-transparent"
+                              onClick={() => goToPage(tableState.totalPages)}
+                              disabled={!tableState.hasNext}
+                              style={{
+                                padding: '0px 8px',
+                                color: !tableState.hasNext ? '#ccc' : '#6c757d',
+                                fontSize: '18px',
+                                cursor: !tableState.hasNext ? 'not-allowed' : 'pointer'
+                              }}
+                            >
+                              »
+                            </button>
+                          </li>
+                        </ul>
+                      </nav>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
           </div>
-          <div className="card-body pt-0 container-table" >
+
+          <div className="card-body pt-0 container-table">
             <div className='container-table-div'>
               <table className="table mb-0">
                 <thead>
@@ -588,11 +933,125 @@ const CityList = () => {
                           key={column.id}
                           scope="col"
                           className='sorting-th'
-                          onClick={() => handleSort(column.field)}
                         >
-                          <div className="d-flex align-items-center">
-                            {column.label}
-                            {getSortIcon(column.field)}
+                          <div className="d-flex align-items-center justify-content-between position-relative">
+                            <div
+                              className="d-flex align-items-center flex-grow-1"
+                              onClick={() => handleSort(column.field)}
+                              style={{ cursor: 'pointer' }}
+                            >
+                              {column.label}
+                              {getSortIcon(column.field)}
+
+                              {column.filterable && (
+                                <div className="position-relative comman-filtter-all">
+                                  <Icon
+                                    icon={columnFilters[column.field]?.length > 0 ? "mdi:filter" : "mdi:filter-outline"}
+                                    width="18"
+                                    className={`ms-2 ${columnFilters[column.field]?.length > 0 ? 'comman-btn-color' : ''}`}
+                                    style={{ cursor: 'pointer' }}
+                                    onClick={(e) => toggleFilterDropdown(e, column.field)}
+                                  />
+
+                                  {activeFilterColumn === column.field && (
+                                    <div
+                                      ref={filterDropdownRef}
+                                      className="position-absolute bg-white border rounded shadow-sm p-3 main-div-dropdown"
+
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      {/* Sort Options */}
+                                      <div className={`filter-menu-item px-3 py-2 d-flex align-items-center ${tableState.sortBy === column.field && tableState.sortOrder === 'asc'
+                                        ? 'disabled-sort'
+                                        : ''
+                                        }`}
+                                        onClick={() => { handleSort(column.field); setTableState(prev => ({ ...prev, sortOrder: 'asc' })); }}>
+                                        <Icon icon="ri:arrow-up-line" className="me-2 text-muted" width="18" />
+                                        Sort Smallest to Largest
+                                      </div>
+                                      <div className={`filter-menu-item px-3 py-2 d-flex align-items-center mb-10 ${tableState.sortBy === column.field && tableState.sortOrder === 'desc'
+                                        ? 'disabled-sort'
+                                        : ''
+                                        }`}
+                                        onClick={() => { handleSort(column.field); setTableState(prev => ({ ...prev, sortOrder: 'desc' })); }}>
+                                        <Icon icon="ri:arrow-down-line" className="me-2 text-muted" width="18" />
+                                        Sort Largest to Smallest
+                                      </div>
+                                      <div className="mb-2 ">
+                                        <input
+                                          type="text"
+                                          className="form-control form-control-sm input-search"
+                                          placeholder="Search..."
+                                          value={filterSearchTerms[column.field] || ''}
+                                          onChange={(e) => setFilterSearchTerms(prev => ({
+                                            ...prev,
+                                            [column.field]: e.target.value
+                                          }))}
+                                        />
+                                      </div>
+
+                                      <div className="gap-2 mb-2 select-clear-all" >
+                                        <button
+                                          className="btn btn-sm py-1 btn-primary flex-grow-1 comman-btn-color mr-10"
+                                          onClick={() => handleFilterSelectAll(column.field)}>
+                                          Select All
+                                        </button>
+                                        <button
+                                          className="btn btn-sm py-1 btn-secondary flex-grow-1"
+                                          onClick={() => handleFilterClearAll(column.field)}
+                                        >
+                                          Clear All
+                                        </button>
+                                      </div>
+
+                                      <div className='select-all-dropdown' >
+                                        {/* Country and State filter - show names but store IDs */}
+                                        {getFilteredOptions(column.field).length > 0 ? (
+                                          getFilteredOptions(column.field).map((option, idx) => (
+                                            <>
+                                              <div
+                                                key={idx}
+                                                className="bg-white rounded p-2 mb-2 d-flex align-items-center gap-2 form-check-div"
+                                              >
+                                                <input
+                                                  type="checkbox"
+                                                  id={`filter-${column.field}-${idx}`}
+                                                  checked={columnFilters[column.field]?.includes(option.id)}
+                                                  onChange={(e) => handleFilterCheckboxChange(
+                                                    column.field,
+                                                    option.id,
+                                                    e.target.checked
+                                                  )}
+                                                  className="form-check-input"
+                                                />
+                                                <label htmlFor={`item-${idx}`} className="mb-0 flex-grow-1 form-check-label">
+                                                  {option.name}
+                                                </label>
+                                              </div>
+                                            </>
+
+                                          ))
+                                        ) : (
+                                          <div className="no-records-found">
+                                            No options available
+                                          </div>
+                                        )}
+                                      </div>
+
+                                      <div className="d-flex gap-2 mt-2 pt-2 border-top justify-content-end">
+                                        <button
+                                          className="btn btn-sm  py-1 btn-secondary flex-grow-1  mt-10"
+                                          onClick={() => setActiveFilterColumn(null)}
+                                          style={{ maxWidth: "80px" }} >
+                                          Cancel
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+
                           </div>
                         </th>
                       )
@@ -696,111 +1155,6 @@ const CityList = () => {
                   )}
                 </tbody>
               </table>
-
-              {tableState.total > 0 && (
-                <div className="d-flex justify-content-between align-items-center px-4 py-3" >
-                  <div className='showing-total-page' >
-                    Showing {startIndex + 1} to {Math.min(startIndex + tableState.limit, tableState.total)} of {tableState.total} entries
-                  </div>
-                  <nav>
-                    <ul className="pagination mb-0" style={{ gap: '4px' }}>
-                      <li className={`page-item ${!tableState.hasPrevious ? 'disabled' : ''}`}>
-                        <button
-                          className="border-0 bg-transparent"
-                          onClick={() => goToPage(1)}
-                          disabled={!tableState.hasPrevious}
-                          style={{
-                            padding: '6px 10px',
-                            color: !tableState.hasPrevious ? '#ccc' : '#6c757d',
-                            fontSize: '18px',
-                            cursor: !tableState.hasPrevious ? 'not-allowed' : 'pointer'
-                          }}
-                        >
-                          «
-                        </button>
-                      </li>
-                      <li className={`page-item ${!tableState.hasPrevious ? 'disabled' : ''}`}>
-                        <button
-                          className="border-0 bg-transparent"
-                          onClick={() => goToPage(tableState.currentPage - 1)}
-                          disabled={!tableState.hasPrevious}
-                          style={{
-                            padding: '6px 10px',
-                            color: !tableState.hasPrevious ? '#ccc' : '#6c757d',
-                            fontSize: '18px',
-                            cursor: !tableState.hasPrevious ? 'not-allowed' : 'pointer'
-                          }}
-                        >
-                          ‹
-                        </button>
-                      </li>
-                      {getPaginationNumbers().map((page, idx) => (
-                        <li key={idx} className="page-item">
-                          {page === '...' ? (
-                            <span
-                              className="border-0 bg-transparent"
-                              style={{
-                                padding: '6px 12px',
-                                color: '#6c757d',
-                                cursor: 'default'
-                              }}
-                            >
-                              ...
-                            </span>
-                          ) : (
-                            <button
-                              className="border-0 "
-                              onClick={() => goToPage(page)}
-                              style={{
-                                padding: '6px 12px',
-                                minWidth: '36px',
-                                backgroundColor: page === tableState.currentPage ? '#5a6c5b' : 'transparent',
-                                color: page === tableState.currentPage ? '#fff' : '#6c757d',
-                                borderRadius: '4px',
-                                fontWeight: page === tableState.currentPage ? '500' : '400',
-                                cursor: 'pointer',
-                                fontSize: "16px"
-                              }}
-                            >
-                              {page}
-                            </button>
-                          )}
-                        </li>
-                      ))}
-                      <li className={`page-item ${!tableState.hasNext ? 'disabled' : ''}`}>
-                        <button
-                          className=" border-0 bg-transparent"
-                          onClick={() => goToPage(tableState.currentPage + 1)}
-                          disabled={!tableState.hasNext}
-                          style={{
-                            padding: '6px 10px',
-                            color: !tableState.hasNext ? '#ccc' : '#6c757d',
-                            fontSize: '18px',
-                            cursor: !tableState.hasNext ? 'not-allowed' : 'pointer'
-                          }}
-                        >
-                          ›
-                        </button>
-                      </li>
-                      <li className={`page-item ${!tableState.hasNext ? 'disabled' : ''}`}>
-                        <button
-                          className="border-0 bg-transparent"
-                          onClick={() => goToPage(tableState.totalPages)}
-                          disabled={!tableState.hasNext}
-                          style={{
-                            padding: '6px 10px',
-                            color: !tableState.hasNext ? '#ccc' : '#6c757d',
-                            fontSize: '18px',
-                            cursor: !tableState.hasNext ? 'not-allowed' : 'pointer'
-                          }}
-                        >
-                          »
-                        </button>
-                      </li>
-                    </ul>
-                  </nav>
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -811,7 +1165,8 @@ const CityList = () => {
           rowData={modalState.rowData}
         />
         {showImport && (
-          <AddImportCityModal show={showImport} handleClose={handleCloseImport} />)}
+          <AddImportCityModal show={showImport} handleClose={handleCloseImport} />
+        )}
         {showDeleteConfirm && (
           <div className="modal fade show common-ctl-popup">
             <div className="modal-dialog modal-dialog-centered">
@@ -844,11 +1199,7 @@ const CityList = () => {
           </div>
         )}
         {showExportPopop && (
-          <div
-            className="modal fade show common-ctl-popup"
-            tabIndex={-1}
-            role="dialog"
-          >
+          <div className="modal fade show common-ctl-popup" tabIndex={-1} role="dialog">
             <div className="modal-dialog modal-xl modal-dialog-centered" role="document">
               <div className="modal-content radius-16 bg-base">
                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
@@ -864,7 +1215,7 @@ const CityList = () => {
                   <div className="row">
                     <div className="col-12 col-md-6">
                       <h3 className="text-sm font-semibold mb-3 text-gray-700">Available fields</h3>
-                      <div className="border rounded-lg p-3 bg-gray-50 export-file-left" >
+                      <div className="border rounded-lg p-3 bg-gray-50 export-file-left">
                         {items.map((item, index) => (
                           <div
                             key={index}
@@ -875,7 +1226,7 @@ const CityList = () => {
                               id={`item-${index}`}
                               checked={selectedItems.includes(item)}
                               onChange={(e) => handleCheckboxChange(item, e.target.checked)}
-                              disabled={ItemsRequired.includes(item)} // 🔒 Disable required item
+                              disabled={ItemsRequired.includes(item)}
                               className="form-check-input"
                             />
                             <label htmlFor={`item-${index}`} className="mb-0 flex-grow-1">
@@ -889,7 +1240,7 @@ const CityList = () => {
                       <h3 className="text-sm font-semibold mb-3 text-gray-700">
                         Selected fields ({selectedItems.length})
                       </h3>
-                      <div className="border rounded-lg p-3 bg-blue-50 export-file-righit" >
+                      <div className="border rounded-lg p-3 bg-blue-50 export-file-righit">
                         {selectedItems.length === 0 ? (
                           <div className="text-center text-muted py-5">
                             No fields selected
@@ -937,14 +1288,15 @@ const CityList = () => {
                       type="button"
                       className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                       disabled={loadingExport}
-                    >{loadingExport ? (
-                      <>
-                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                        Submit...
-                      </>
-                    ) : (
-                      "Submit"
-                    )}
+                    >
+                      {loadingExport ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                          Submit...
+                        </>
+                      ) : (
+                        "Submit"
+                      )}
                     </button>
                   </div>
                 </div>
@@ -957,4 +1309,4 @@ const CityList = () => {
   );
 };
 
-export default CityList;
+export default CityList
