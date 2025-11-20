@@ -1553,7 +1553,6 @@ class ContinentImportAPIView(APIView):
 
 #-------------------------------------------country---------------------------------
 
-
 class CountryListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -1561,11 +1560,17 @@ class CountryListAPIView(APIView):
         search = request.GET.get('search', '').strip()
         custom_sort = request.GET.get('customSort')
 
-        allowed_sort_fields = ['name', 'shortName', 'fullName', 'capitalCity', 'created_at', 'updated_at']
+        # All allowed fields for sorting
+        allowed_sort_fields = [
+            'uuid', 'name', 'continent', 'shortName', 'fullName', 'officialName', 'capitalCity',
+            'dialCodes', 'currencyfullname', 'currencyshortname', 'description', 'currencyCode',
+            'status', 'created_at', 'updated_at', 'is_active', 'is_deleted'
+        ]
 
         queryset = Country.objects.filter(is_deleted=False)
 
-        # UUID filtering
+        # ---------------------------
+        # UUID filtering helper
         def parse_ids(param_name):
             raw = request.GET.get(param_name, '')
             if raw:
@@ -1591,15 +1596,9 @@ class CountryListAPIView(APIView):
         if search:
             queryset = queryset.filter(Q(name__istartswith=search))
 
+        # ---------------------------
         # Sorting
-        sort_field_map = {
-            'name': 'name',
-            'shortName': 'shortName',
-            'fullName': 'fullName',
-            'capitalCity': 'capitalCity',
-            'created_at': 'created_at',
-            'updated_at': 'updated_at',
-        }
+        sort_field_map = {field: field for field in allowed_sort_fields}
 
         sort_fields = []
 
@@ -1615,8 +1614,8 @@ class CountryListAPIView(APIView):
 
                     orm_field = sort_field_map[field]
 
-                    # Case-insensitive for string fields
-                    if field in ['name', 'shortName', 'fullName', 'capitalCity']:
+                    # Use Lower for string fields for case-insensitive sorting
+                    if field in ['name', 'shortName', 'fullName', 'officialName', 'capitalCity', 'currencyfullname', 'currencyshortname', 'currencyCode', 'description']:
                         f = Lower(orm_field)
                     else:
                         f = F(orm_field)
@@ -1635,13 +1634,11 @@ class CountryListAPIView(APIView):
 
         queryset = queryset.order_by(*sort_fields)
 
-        
+        # ---------------------------
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = CountrySerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
-
-
 
 class CountryCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -3203,7 +3200,7 @@ class DistrictExportAPIView(APIView):
 
 
 
-        
+
 
 class DistrictImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
