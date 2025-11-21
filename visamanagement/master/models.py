@@ -1589,11 +1589,13 @@ class SpouseCanApplywithCandidate(models.Model):
 class CivilIdName(models.Model):
     VALID_TYPE_CHOICES = (
         ("Permanent", "Permanent"),
-        ("Valid Up To", "Valid Up To"),
+        ("Valid Upto", "Valid Upto"),
+        ("Date","Date")
     )
-
+ 
     VALID_UNIT_CHOICES = (
         ("Months", "Months"),
+        ("Weeks","Weeks"),
         ("Years", "Years"),
     )
 
