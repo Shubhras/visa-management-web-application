@@ -393,6 +393,8 @@ class GenderExportAPIView(APIView):
         fields = request.GET.get('fields')  # comma-separated
         uuids_param = request.GET.get('uuids', '')  # comma-separated
         custom_sort = request.GET.get('customSort')  # e.g., name:asc,created_at:desc
+        search = request.GET.get('search', '').strip()
+
 
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
@@ -414,6 +416,10 @@ class GenderExportAPIView(APIView):
         queryset = Gender.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
+        
+        if search:
+            queryset = queryset.filter(name__istartswith=search)
+
 
         # --- Custom sorting logic ---
         sort_field_map = {
@@ -630,7 +636,7 @@ class MaritalstatusListAPIView(APIView):
 
             # Search filter
             if search:
-                queryset = queryset.filter(Q(text__istartswith=search))
+                queryset = queryset.filter(Q(name__istartswith=search))
 
             # Sorting logic
             sort_field_map = {
@@ -888,6 +894,7 @@ class MaritalstatusExportAPIView(APIView):
         fields = request.GET.get('fields')  # comma-separated
         uuids_param = request.GET.get('uuids', '')  # comma-separated UUIDs
         custom_sort = request.GET.get('customSort')  # e.g., name:asc,created_at:desc
+        search = request.GET.get('search', '').strip()
 
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
@@ -909,6 +916,10 @@ class MaritalstatusExportAPIView(APIView):
         queryset = Maritalstatus.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
+
+        if search:
+            queryset = queryset.filter(name__istartswith=search)
+    
 
         # --- Custom sorting logic ---
         sort_field_map = {
@@ -1331,6 +1342,7 @@ class ContinentExportAPIView(APIView):
         fields = request.GET.get('fields')  # comma-separated fields
         uuids_param = request.GET.get('uuids', '')  # comma-separated UUIDs
         custom_sort = request.GET.get('customSort')  # e.g., name:asc,created_at:desc
+        search = request.GET.get('search', '').strip()
 
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
@@ -1352,6 +1364,10 @@ class ContinentExportAPIView(APIView):
         queryset = Continents.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
+
+        if search:
+            queryset = queryset.filter(name__istartswith=search)
+        
 
         # --- Custom sorting logic ---
         sort_field_map = {
@@ -1954,7 +1970,7 @@ class CountryExportAPIView(APIView):
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
-        
+
 
 class CountryImportAPIView(APIView):
 
@@ -4246,7 +4262,7 @@ class RelationExportAPIView(APIView):
         fields = request.GET.get('fields')  # comma-separated fields
         uuids_param = request.GET.get('uuids', '')
         custom_sort = request.GET.get('customSort')  # e.g., name:asc,created_at:desc
-
+        search = request.GET.get('search', '').strip()
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
         # --- Field to header mapping ---
@@ -4266,6 +4282,10 @@ class RelationExportAPIView(APIView):
         queryset = Relation.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
+
+        if search:
+            queryset = queryset.filter(name__istartswith=search)
+            
 
         # --- Custom sorting logic ---
         sort_field_map = {
@@ -4507,17 +4527,26 @@ class RelationImportAPIView(APIView):
 
 
 
-
-
-
-
 #-----------------------TimeZone---------------
+
+
+class LowerNoSpace(Func):
+    """
+    Custom database function: removes spaces and lowercases the value.
+    Usage: LowerNoSpace(F('field_name'))
+    """
+    function = 'REPLACE'
+    template = "LOWER(REPLACE(%(expressions)s, ' ', ''))"
+
 
 class TimezoneListAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
+        search = search.replace(' ', '+')
+        
+
         custom_sort = request.GET.get('customSort')
 
         # Parse UUIDs for filtering
@@ -4550,8 +4579,17 @@ class TimezoneListAPIView(APIView):
             queryset = queryset.filter(stateName__uuid__in=state_list)
 
         # Search filter
+
         if search:
-            queryset = queryset.filter(Q(Timezone__istartswith=search))
+            normalized_search = search.replace(' ', '').lower()
+            queryset = queryset.annotate(
+                tz_normalized=LowerNoSpace(F('Timezone'))
+            ).filter(tz_normalized__icontains=normalized_search)
+
+
+        # if search:
+        #     queryset = queryset.filter(Timezone__icontains=search)
+
 
         # Sorting mapping including related fields
         sort_field_map = {
@@ -4609,13 +4647,14 @@ class TimezoneCreateAPIView(APIView):
 
     def post(self, request):
         timezone_name = request.data.get("timezone", "").strip()
+        country_id = request.data.get("country_id") 
 
-        existing = Timezone.objects.filter(Timezone__iexact=timezone_name, is_deleted=False).first()
+        existing = Timezone.objects.filter(Timezone__iexact=timezone_name, countryName=country_id,is_deleted=False).first()
         if existing:
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Timezone with this name already exists."
+                "message": "This timezone already exists for the selected country."
             }, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = TimezoneSerializer(data=request.data)
@@ -4788,6 +4827,7 @@ class TimezoneExportAPIView(APIView):
         fields = request.GET.get('fields')
         uuids_param = request.GET.get('uuids', '')
         custom_sort = request.GET.get('customSort')  # e.g., countryName:asc,Timezone:desc
+        search = request.GET.get('search', '').strip()
 
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
@@ -4810,6 +4850,16 @@ class TimezoneExportAPIView(APIView):
         queryset = Timezone.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
+
+
+        search = search.replace(' ', '+')     
+        if search:
+            normalized_search = search.replace(' ', '').lower()
+            queryset = queryset.annotate(
+                tz_normalized=LowerNoSpace(F('Timezone'))
+            ).filter(tz_normalized__icontains=normalized_search)
+
+            
 
         # -------- Sort Field Mapping (with related fields) ----------
         sort_field_map = {
@@ -4966,6 +5016,7 @@ class TimezoneImportAPIView(APIView):
                 if not tz_name:
                     skipped_rows.append({
                         "Row": row_number,
+                        "Country": country_name,
                         "Reason": "Missing time zone"
                     })
                     continue
@@ -4974,6 +5025,7 @@ class TimezoneImportAPIView(APIView):
                 if not country_name:
                     skipped_rows.append({
                         "Row": row_number,
+                         "Country": "",
                         "Reason": "Invalid or missing country"
                     })
                     continue
@@ -4983,6 +5035,8 @@ class TimezoneImportAPIView(APIView):
                 if not country_obj:
                     skipped_rows.append({
                         "Row": row_number,
+                         "Country": country_name,
+                        "Time Zone": tz_name,
                         "Reason": "Invalid or missing country"
                     })
                     continue
@@ -5009,7 +5063,8 @@ class TimezoneImportAPIView(APIView):
                     if not existing.is_deleted:
                         duplicates.append({
                             "Row": row_number,
-                            "Timezone": tz_name,
+                            "Time Zone": tz_name,
+                            "Country": country_name,
                             "Reason": "Already exists in database"
                         })
                         continue
@@ -5285,6 +5340,7 @@ class CivilIdNameExportAPIView(APIView):
         fields = request.GET.get("fields")
         uuids_param = request.GET.get("uuids", "")
         custom_sort = request.GET.get("customSort")  # e.g., civil_id_name:asc,created_at:desc
+        search = request.GET.get('search', '').strip()
 
         # Convert UUID strings to Python UUID objects
         uuids = []
@@ -5317,6 +5373,10 @@ class CivilIdNameExportAPIView(APIView):
         queryset = CivilIdName.objects.all()
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
+
+        if search:
+            queryset = queryset.filter(name__istartswith=search)
+            
 
         # -------- Custom Sorting ----------
         sort_field_map = {
