@@ -194,7 +194,7 @@ const AddEditDistrictModal = ({ show, handleClose, mode = 'add', rowData = null 
         }
         : {
           country_id: formData.country,
-          state_id: formData.state || '', // Ensure empty string if no state
+          state_id: formData.state || null, // Ensure empty string if no state
           districtName: formData.name,
           description: formData.description,
         };

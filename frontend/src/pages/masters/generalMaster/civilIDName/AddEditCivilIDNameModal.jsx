@@ -136,28 +136,52 @@ const AddEditCivilIDNameModal = ({ show, handleClose, mode = 'add', rowData = nu
     e.preventDefault();
 
     if (validateForm()) {
-      const sendPayload = mode === 'edit'
+      // const sendPayload = mode === 'edit'
+      //   ? {
+      //     uuid: formData.uuid,
+      //     civil_id_name: formData.name,
+      //     authority_full_name: formData.full_name || null,
+      //     authority_short_name: formData.short_name || null,
+      //     valid_date: formData.valid_upto || null,
+      //     valid_type: formData.valid_upto_type || null,
+      //     valid_duration_value: formData.valid_upto_numeric || null,
+      //     valid_duration_unit: formData.valid_upto_unit ? formData.valid_upto_unit : null,
+      //     description: formData.description || null,
+      //   }
+      //   : {
+      //     civil_id_name: formData.name,
+      //     authority_full_name: formData.full_name || null,
+      //     authority_short_name: formData.short_name || null,
+      //     valid_date: formData.valid_upto || null,
+      //     valid_type: formData.valid_upto_type || null,
+      //     valid_duration_value: formData.valid_upto_numeric || null,
+      //     valid_duration_unit: formData.valid_upto_unit ? formData.valid_upto_unit : null,
+      //     description: formData.description || null,
+      //   };
+
+       const sendPayload = mode === 'edit'
         ? {
           uuid: formData.uuid,
           civil_id_name: formData.name,
-          authority_full_name: formData.full_name || null,
-          authority_short_name: formData.short_name || null,
-          valid_date: formData.valid_upto || null,
-          valid_type: formData.valid_upto_type || null,
+          authority_full_name: formData.full_name || "",
+          authority_short_name: formData.short_name || "",
+          valid_date: formData.valid_upto || "",
+          valid_type: formData.valid_upto_type || "",
           valid_duration_value: formData.valid_upto_numeric || null,
-          valid_duration_unit: formData.valid_upto_unit ? formData.valid_upto_unit : null,
+          valid_duration_unit: formData.valid_upto_unit ? formData.valid_upto_unit : "",
           description: formData.description || null,
         }
         : {
           civil_id_name: formData.name,
-          authority_full_name: formData.full_name || null,
-          authority_short_name: formData.short_name || null,
-          valid_date: formData.valid_upto || null,
-          valid_type: formData.valid_upto_type || null,
+          authority_full_name: formData.full_name || "",
+          authority_short_name: formData.short_name || "",
+          valid_date: formData.valid_upto || "",
+          valid_type: formData.valid_upto_type || "",
           valid_duration_value: formData.valid_upto_numeric || null,
-          valid_duration_unit: formData.valid_upto_unit ? formData.valid_upto_unit : null,
-          description: formData.description || null,
+          valid_duration_unit: formData.valid_upto_unit ? formData.valid_upto_unit : "",
+          description: formData.description || "",
         };
+
 
       setLoading(true);
 
