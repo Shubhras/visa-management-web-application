@@ -1601,7 +1601,7 @@ class CivilIdName(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 
     civil_id_name = models.CharField(max_length=255)
-    authority_full_name = models.CharField(max_length=255)
+    authority_full_name = models.CharField(max_length=255, blank=True, null=True)
     authority_short_name = models.CharField(max_length=255, blank=True, null=True)
 
     valid_type = models.CharField(max_length=20, choices=VALID_TYPE_CHOICES)
