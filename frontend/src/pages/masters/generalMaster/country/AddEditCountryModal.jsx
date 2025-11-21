@@ -68,8 +68,8 @@ const AddEditCountryModal = ({
       limit: 2000,
       search: "",
       status: "",
-      sortBy: "updated_at",
-      sortOrder: "desc",
+      sortBy: "name",
+      sortOrder: "asc",
     };
 
     setLoading(true);
@@ -105,6 +105,11 @@ const AddEditCountryModal = ({
         }
       })
     );
+  };
+  // Custom filter function for search from start
+  const customFilterOption = (option, inputValue) => {
+    if (!inputValue) return true;
+    return option.label.toLowerCase().startsWith(inputValue.toLowerCase());
   };
 
   const handleChange = (e) => {
@@ -260,6 +265,7 @@ const AddEditCountryModal = ({
                         : null
                     }
                     onChange={handleSelectChange}
+                    filterOption={customFilterOption}
                     placeholder="Select Continent"
                     isClearable
                     isSearchable

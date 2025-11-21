@@ -646,22 +646,22 @@ export const deleteMaritalStatusDataAPI = (payload) => {
 };
 
 export const exportMaritalStatusDataAPI = (payload) => {
-  let customSort = "";
-  if (Array.isArray(payload?.sort)) {
-    // Case 1: Only created_at is present → keep it
-    const isOnlyCreatedAt =
-      payload.sort.length === 1 && payload.sort[0].field === "created_at";
-    // Case 2: More fields exist → remove created_at
-    const finalSortArray = isOnlyCreatedAt
-      ? payload.sort
-      : payload.sort.filter((item) => item.field !== "created_at");
-    // Map fields into customSort string
-    customSort = finalSortArray
-      .map((item) => `${item.field}:${item.order}`)
-      .join(",");
-  }
-  const apiUrl = `${url.EXPORT_MARITAL_STATUS_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
-  return getExportData(apiUrl, payload);
+    let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        // Case 1: Only created_at is present → keep it
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        // Case 2: More fields exist → remove created_at
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        // Map fields into customSort string
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_MARITAL_STATUS_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+    return getExportData(apiUrl, payload);
 };
 
 export const importMaritalStatusDataAPI = (payload) => {
@@ -930,8 +930,22 @@ export const importAccreditationNameDataAPI = (payload) => {
 
 //education level code
 export const getEducationLevelCodeListDataAPI = (data) => {
-  const apiUrl = `${url.GET_EDUCATION_LEVEL_CODE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
-  return get(apiUrl);
+    let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        // Case 1: Only created_at is present → keep it
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        // Case 2: More fields exist → remove created_at
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        // Map fields into customSort string
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.GET_EDUCATION_LEVEL_CODE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
+    return get(apiUrl);
 };
 
 export const addEducationLevelCodeDataAPI = (payload) => {
@@ -953,8 +967,22 @@ export const deleteEducationLevelCodeDataAPI = (payload) => {
 };
 
 export const exportEducationLevelCodeDataAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_EDUCATION_LEVEL_CODE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
-  return getExportData(apiUrl, payload);
+    let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        // Case 1: Only created_at is present → keep it
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        // Case 2: More fields exist → remove created_at
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        // Map fields into customSort string
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_EDUCATION_LEVEL_CODE_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+    return getExportData(apiUrl, payload);
 };
 
 export const importEducationLevelCodeDataAPI = (payload) => {
@@ -964,8 +992,22 @@ export const importEducationLevelCodeDataAPI = (payload) => {
 
 // EDUCATION_LEVEL
 export const getEducationLevelListDataAPI = (data) => {
-  const apiUrl = `${url.GET_EDUCATION_LEVEL_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
-  return get(apiUrl);
+    let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        // Case 1: Only created_at is present → keep it
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        // Case 2: More fields exist → remove created_at
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        // Map fields into customSort string
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.GET_EDUCATION_LEVEL_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
+    return get(apiUrl);
 };
 
 export const addEducationLevelDataAPI = (payload) => {
@@ -987,8 +1029,22 @@ export const deleteEducationLevelDataAPI = (payload) => {
 };
 
 export const exportEducationLevelDataAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_EDUCATION_LEVEL_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
-  return getExportData(apiUrl, payload);
+    let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        // Case 1: Only created_at is present → keep it
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        // Case 2: More fields exist → remove created_at
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        // Map fields into customSort string
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_EDUCATION_LEVEL_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+    return getExportData(apiUrl, payload);
 };
 
 export const importEducationLevelDataAPI = (payload) => {
@@ -998,8 +1054,22 @@ export const importEducationLevelDataAPI = (payload) => {
 
 //Study main area
 export const getStudyMainAreaListDataAPI = (data) => {
-  const apiUrl = `${url.GET_STUDY_MAIN_AREA_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
-  return get(apiUrl);
+    let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        // Case 1: Only created_at is present → keep it
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        // Case 2: More fields exist → remove created_at
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        // Map fields into customSort string
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.GET_STUDY_MAIN_AREA_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
+    return get(apiUrl);
 };
 
 export const addStudyMainAreaDataAPI = (payload) => {
@@ -1021,8 +1091,22 @@ export const deleteStudyMainAreaDataAPI = (payload) => {
 };
 
 export const exportStudyMainAreaDataAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_STUDY_MAIN_AREA_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
-  return getExportData(apiUrl, payload);
+    let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        // Case 1: Only created_at is present → keep it
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        // Case 2: More fields exist → remove created_at
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        // Map fields into customSort string
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_STUDY_MAIN_AREA_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+    return getExportData(apiUrl, payload);
 };
 
 export const importStudyMainAreaDataAPI = (payload) => {
@@ -1069,22 +1153,22 @@ export const deleteContinentDataAPI = (payload) => {
 };
 
 export const exportContinentDataAPI = (payload) => {
-  let customSort = "";
-  if (Array.isArray(payload?.sort)) {
-    // Case 1: Only created_at is present → keep it
-    const isOnlyCreatedAt =
-      payload.sort.length === 1 && payload.sort[0].field === "created_at";
-    // Case 2: More fields exist → remove created_at
-    const finalSortArray = isOnlyCreatedAt
-      ? payload.sort
-      : payload.sort.filter((item) => item.field !== "created_at");
-    // Map fields into customSort string
-    customSort = finalSortArray
-      .map((item) => `${item.field}:${item.order}`)
-      .join(",");
-  }
-  const apiUrl = `${url.EXPORT_CONTINENT_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
-  return getExportData(apiUrl, payload);
+    let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        // Case 1: Only created_at is present → keep it
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        // Case 2: More fields exist → remove created_at
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        // Map fields into customSort string
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_CONTINENT_LIST_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+    return getExportData(apiUrl, payload);
 };
 
 export const importContinentDataAPI = (payload) => {
@@ -1104,17 +1188,17 @@ export const getCountryListDataAPI = (data) => {
       ? data.sort
       : data.sort.filter((s) => s.field !== "created_at");
 
-    // Map fields & build customSort string
-    customSort = finalSortArray
-      .map((s) => {
-        let field = s.field;
-        if (field === "continent") field = "continent";
-        return `${field}:${s.order}`;
-      })
-      .join(",");
-  }
-  const apiUrl = `${url.GET_COUNTRY_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&continent=${data?.continent}&customSort=${customSort}`;
-  return get(apiUrl);
+        // Map fields & build customSort string
+        customSort = finalSortArray
+            .map(s => {
+                let field = s.field;
+                if (field === "continent") field = "continent";
+                return `${field}:${s.order}`;
+            })
+            .join(",");
+    }
+    const apiUrl = `${url.GET_COUNTRY_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&continent=${data?.continent}&customSort=${customSort}`;
+    return get(apiUrl);
 };
 
 export const addCountryDataAPI = (payload) => {
@@ -1151,13 +1235,13 @@ export const exportCountryDataAPI = (payload) => {
       .map((s) => {
         let field = s.field;
 
-        if (field === "continent") field = "continent";
-        return `${field}:${s.order}`;
-      })
-      .join(",");
-  }
-  const apiUrl = `${url.EXPORT_COUNTRY_LIST_API}?fields=${payload?.fields}&country=${payload?.uuids}&continent=${payload?.continent}&customSort=${customSort}`;
-  return getExportData(apiUrl, payload);
+                if (field === "continent") field = "continent";
+                return `${field}:${s.order}`;
+            })
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_COUNTRY_LIST_API}?search=${payload?.search}&fields=${payload?.fields}&country=${payload?.uuids}&continent=${payload?.continent}&customSort=${customSort}`;
+    return getExportData(apiUrl, payload);
 };
 
 export const importCountryDataAPI = (payload) => {
@@ -1182,14 +1266,14 @@ export const getStateListDataAPI = (data) => {
       .map((s) => {
         let field = s.field;
 
-        if (field === "countryId") field = "countryName";
-        if (field === "stateId") field = "stateName";
-        return `${field}:${s.order}`;
-      })
-      .join(",");
-  }
-  const apiUrl = `${url.GET_STATE_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&country=${data?.country}&customSort=${customSort}`;
-  return get(apiUrl);
+                if (field === "countryId") field = "countryName";
+                if (field === "stateId") field = "stateName";
+                return `${field}:${s.order}`;
+            })
+            .join(",");
+    }
+    const apiUrl = `${url.GET_STATE_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&country=${data?.country}&customSort=${customSort}`;
+    return get(apiUrl);
 };
 
 export const addStateDataAPI = (payload) => {
@@ -1226,15 +1310,17 @@ export const exportStateDataAPI = (payload) => {
       .map((s) => {
         let field = s.field;
 
-        if (field === "countryId") field = "countryName";
-        if (field === "stateId") field = "stateName";
-        return `${field}:${s.order}`;
-      })
-      .join(",");
-  }
-  //const apiUrl = `${url.EXPORT_STATE_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&country=${payload?.country}&customSort=${customSort}`;
-  const apiUrl = `${url.EXPORT_STATE_LIST_API}?fields=${payload?.fields}&state=${payload?.uuids}&country=${payload?.country}&customSort=${customSort}`;
-  return getExportData(apiUrl, payload);
+                if (field === "countryId") field = "countryName";
+                if (field === "stateId") field = "stateName";
+                return `${field}:${s.order}`;
+            })
+            .join(",");
+    }
+    //const apiUrl = `${url.EXPORT_STATE_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&country=${payload?.country}&customSort=${customSort}`;
+        const apiUrl = `${url.EXPORT_STATE_LIST_API}?search=${payload?.search}&fields=${payload?.fields}&state=${payload?.uuids}&country=${payload?.country}&customSort=${customSort}`;
+
+    
+    return getExportData(apiUrl, payload);
 };
 
 export const importStateDataAPI = (payload) => {
@@ -1285,22 +1371,22 @@ export const deleteCivilIdNameDataAPI = (payload) => {
 };
 
 export const exportCivilIdNameDataAPI = (payload) => {
-  let customSort = "";
-  if (Array.isArray(payload?.sort)) {
-    // Case 1: Only created_at is present → keep it
-    const isOnlyCreatedAt =
-      payload.sort.length === 1 && payload.sort[0].field === "created_at";
-    // Case 2: More fields exist → remove created_at
-    const finalSortArray = isOnlyCreatedAt
-      ? payload.sort
-      : payload.sort.filter((item) => item.field !== "created_at");
-    // Map fields into customSort string
-    customSort = finalSortArray
-      .map((item) => `${item.field}:${item.order}`)
-      .join(",");
-  }
-  const apiUrl = `${url.EXPORT_CIVIL_ID_NAME_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
-  return getExportData(apiUrl, payload);
+    let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        // Case 1: Only created_at is present → keep it
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        // Case 2: More fields exist → remove created_at
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        // Map fields into customSort string
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_CIVIL_ID_NAME_LIST_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+    return getExportData(apiUrl, payload);
 };
 
 export const importCivilIdNameDataAPI = (payload) => {
@@ -1347,22 +1433,22 @@ export const deleteRelationDataAPI = (payload) => {
 };
 
 export const exportRelationDataAPI = (payload) => {
-  let customSort = "";
-  if (Array.isArray(payload?.sort)) {
-    // Case 1: Only created_at is present → keep it
-    const isOnlyCreatedAt =
-      payload.sort.length === 1 && payload.sort[0].field === "created_at";
-    // Case 2: More fields exist → remove created_at
-    const finalSortArray = isOnlyCreatedAt
-      ? payload.sort
-      : payload.sort.filter((item) => item.field !== "created_at");
-    // Map fields into customSort string
-    customSort = finalSortArray
-      .map((item) => `${item.field}:${item.order}`)
-      .join(",");
-  }
-  const apiUrl = `${url.EXPORT_RELATION_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
-  return getExportData(apiUrl, payload);
+    let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        // Case 1: Only created_at is present → keep it
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        // Case 2: More fields exist → remove created_at
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        // Map fields into customSort string
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_RELATION_LIST_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+    return getExportData(apiUrl, payload);
 };
 
 export const importRelationDataAPI = (payload) => {
@@ -1429,14 +1515,14 @@ export const exportTimeZoneDataAPI = (payload) => {
       .map((s) => {
         let field = s.field;
 
-        if (field === "countryId") field = "countryName";
-        if (field === "stateId") field = "stateName";
-        return `${field}:${s.order}`;
-      })
-      .join(",");
-  }
-  const apiUrl = `${url.EXPORT_TIME_ZONE_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&country=${payload?.country}&customSort=${customSort}`;
-  return getExportData(apiUrl, payload);
+                if (field === "countryId") field = "countryName";
+                if (field === "stateId") field = "stateName";
+                return `${field}:${s.order}`;
+            })
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_TIME_ZONE_LIST_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&country=${payload?.country}&customSort=${customSort}`;
+    return getExportData(apiUrl, payload);
 };
 
 export const importTimeZoneDataAPI = (payload) => {
@@ -1479,8 +1565,22 @@ export const importEducationDurationDataAPI = (payload) => {
 
 // Study Major Area
 export const getStudyMajorAreaListDataAPI = (data) => {
-  const apiUrl = `${url.GET_STUDY_MAJOR_AREA_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
-  return get(apiUrl);
+    let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        // Case 1: Only created_at is present → keep it
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        // Case 2: More fields exist → remove created_at
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        // Map fields into customSort string
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.GET_STUDY_MAJOR_AREA_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
+    return get(apiUrl);
 };
 
 export const addStudyMajorAreaDataAPI = (payload) => {
@@ -1502,8 +1602,22 @@ export const deleteStudyMajorAreaDataAPI = (payload) => {
 };
 
 export const exportStudyMajorAreaDataAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_STUDY_MAJOR_AREA_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
-  return getExportData(apiUrl, payload);
+    let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        // Case 1: Only created_at is present → keep it
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        // Case 2: More fields exist → remove created_at
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        // Map fields into customSort string
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_STUDY_MAJOR_AREA_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+    return getExportData(apiUrl, payload);
 };
 
 export const importStudyMajorAreaDataAPI = (payload) => {
@@ -1518,8 +1632,19 @@ export const studyMajorAreaListByMainAreaAPI = (payload) => {
 
 // Academic Result Type
 export const getAcademicResultTypeListDataAPI = (data) => {
-  const apiUrl = `${url.GET_ACADEMIC_RESULT_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
-  return get(apiUrl);
+    let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.GET_ACADEMIC_RESULT_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
+    return get(apiUrl);
 };
 
 export const addAcademicResultTypeDataAPI = (payload) => {
@@ -1541,8 +1666,19 @@ export const deleteAcademicResultTypeDataAPI = (payload) => {
 };
 
 export const exportAcademicResultTypeDataAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_ACADEMIC_RESULT_TYPE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
-  return getExportData(apiUrl, payload);
+    let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_ACADEMIC_RESULT_TYPE_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+    return getExportData(apiUrl, payload);
 };
 
 export const importAcademicResultTypeDataAPI = (payload) => {
@@ -1552,8 +1688,19 @@ export const importAcademicResultTypeDataAPI = (payload) => {
 
 // Education Type
 export const getEducationTypeListDataAPI = (data) => {
-  const apiUrl = `${url.GET_EDUCATION_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
-  return get(apiUrl);
+    let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.GET_EDUCATION_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
+    return get(apiUrl);
 };
 
 export const addEducationTypeDataAPI = (payload) => {
@@ -1573,8 +1720,19 @@ export const deleteEducationTypeDataAPI = (payload) => {
 };
 
 export const exportEducationTypeDataAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_EDUCATION_TYPE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
-  return getExportData(apiUrl, payload);
+    let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_EDUCATION_TYPE_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+    return getExportData(apiUrl, payload);
 };
 
 export const importEducationTypeDataAPI = (payload) => {
@@ -1585,8 +1743,19 @@ export const importEducationTypeDataAPI = (payload) => {
 // Study Specialisation
 
 export const getStudySpecialisationListDataAPI = (data) => {
-  const apiUrl = `${url.GET_STUDY_SPECIALISATION_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
-  return get(apiUrl);
+    let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.GET_STUDY_SPECIALISATION_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
+    return get(apiUrl);
 };
 
 export const addStudySpecialisationDataAPI = (payload) => {
@@ -1606,8 +1775,19 @@ export const deleteStudySpecialisationDataAPI = (payload) => {
 };
 
 export const exportStudySpecialisationDataAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_STUDY_SPECIALISATION_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
-  return getExportData(apiUrl, payload);
+    let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_STUDY_SPECIALISATION_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+    return getExportData(apiUrl, payload);
 };
 
 export const importStudySpecialisationDataAPI = (payload) => {
@@ -1617,8 +1797,19 @@ export const importStudySpecialisationDataAPI = (payload) => {
 
 // Degree Awarede By
 export const getDegreeAwardedByListDataAPI = (data) => {
-  const apiUrl = `${url.GET_DEGREE_AWARDED_BY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
-  return get(apiUrl);
+    let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.GET_DEGREE_AWARDED_BY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
+    return get(apiUrl);
 };
 
 export const addDegreeAwardedByDataAPI = (payload) => {
@@ -1638,8 +1829,19 @@ export const deleteDegreeAwardedByDataAPI = (payload) => {
 };
 
 export const exportDegreeAwardedByDataAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_DEGREE_AWARDED_BY_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
-  return getExportData(apiUrl, payload);
+    let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_DEGREE_AWARDED_BY_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+    return getExportData(apiUrl, payload);
 };
 
 export const importDegreeAwardedByDataAPI = (payload) => {
@@ -1648,8 +1850,19 @@ export const importDegreeAwardedByDataAPI = (payload) => {
 };
 // Academin result
 export const getAcademicResultListDataAPI = (data) => {
-  const apiUrl = `${url.GET_ACADEMIC_RESULT_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
-  return get(apiUrl);
+    let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.GET_ACADEMIC_RESULT_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
+    return get(apiUrl);
 };
 
 export const getAcademicResultListByAcademicTypeDataAPI = (payload) => {
@@ -1674,8 +1887,19 @@ export const deleteAcademicResultDataAPI = (payload) => {
 };
 
 export const exportAcademicResultDataAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_ACADEMIC_RESULT_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
-  return getExportData(apiUrl, payload);
+    let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_ACADEMIC_RESULT_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+    return getExportData(apiUrl, payload);
 };
 
 export const importAcademicResultDataAPI = (payload) => {
@@ -1685,8 +1909,19 @@ export const importAcademicResultDataAPI = (payload) => {
 
 // Degree Awarded Institute
 export const getDegreeAwardedInstituteListDataAPI = (data) => {
-  const apiUrl = `${url.GET_DEGREE_AWARDED_INSTITUTE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
-  return get(apiUrl);
+    let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.GET_DEGREE_AWARDED_INSTITUTE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
+    return get(apiUrl);
 };
 
 export const addDegreeAwardedInstituteDataAPI = (payload) => {
@@ -1706,8 +1941,19 @@ export const deleteDegreeAwardedInstituteDataAPI = (payload) => {
 };
 
 export const exportDegreeAwardedInstituteDataAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_DEGREE_AWARDED_INSTITUTE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
-  return getExportData(apiUrl, payload);
+    let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_DEGREE_AWARDED_INSTITUTE_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+    return getExportData(apiUrl, payload);
 };
 
 export const importDegreeAwardedInstituteDataAPI = (payload) => {
@@ -1717,8 +1963,19 @@ export const importDegreeAwardedInstituteDataAPI = (payload) => {
 
 // Academic Result To Result (Compare Mapping)
 export const getAcademicResultToResultListAPI = (data) => {
-  const apiUrl = `${url.GET_ACADEMIC_RESULT_TO_RESULT_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
-  return get(apiUrl);
+    let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.GET_ACADEMIC_RESULT_TO_RESULT_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
+    return get(apiUrl);
 };
 
 export const addAcademicResultToResultAPI = (payload) => {
@@ -1738,13 +1995,24 @@ export const deleteAcademicResultToResultAPI = (payload) => {
 };
 
 export const exportAcademicResultToResultAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_ACADEMIC_RESULT_TO_RESULT_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
-  return getExportData(apiUrl, payload);
+    let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_ACADEMIC_RESULT_TO_RESULT_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+    return getExportData(apiUrl, payload);
 };
 
 export const importAcademicResultToResultAPI = (payload) => {
-  const apiUrl = `${url.IMPORT_ACADEMIC_RESULT_TO_RESULT_API}`;
-  return post(apiUrl, payload);
+    const apiUrl = `${url.IMPORT_ACADEMIC_RESULT_TO_RESULT_API} `;
+    return post(apiUrl, payload);
 };
 
 // DISTRICT
@@ -1768,30 +2036,32 @@ export const getDistrictListDataAPI = (data) => {
         if (field === "stateId") field = "stateName";
         if (field === "districtId") field = "districtName";
 
-        return `${field}:${s.order}`;
-      })
-      .join(",");
-  }
-  const apiUrl = `${url.GET_DISTRICT_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&country=${data?.country}&state=${data?.state}&customSort=${customSort}`;
-  return get(apiUrl);
+                return `${field}:${s.order} `;
+            })
+            .join(",");
+    }
+
+    const apiUrl = `${url.GET_DISTRICT_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&country=${data?.country}&state=${data?.state}&customSort=${customSort}`;
+
+    return get(apiUrl);
 };
 
 export const addDistrictDataAPI = (payload) => {
-  const apiUrl = `${url.ADD_DISTRICT_LIST_API}`;
-  return post(apiUrl, payload);
+    const apiUrl = `${url.ADD_DISTRICT_LIST_API} `;
+    return post(apiUrl, payload);
 };
 
 export const editDistrictDataAPI = (payload) => {
-  const apiUrl = `${url.EDIT_DISTRICT_LIST_API}${payload?.uuid}/update/`;
-  return put(apiUrl, payload);
+    const apiUrl = `${url.EDIT_DISTRICT_LIST_API}${payload?.uuid} /update/`;
+    return put(apiUrl, payload);
 };
 
 export const deleteDistrictDataAPI = (payload) => {
-  const prepareDATA = {
-    id: payload,
-  };
-  const apiUrl = `${url.DELETE_DISTRICT_LIST_API}delete/`;
-  return delWithPayload(apiUrl, prepareDATA);
+    const prepareDATA = {
+        id: payload,
+    };
+    const apiUrl = `${url.DELETE_DISTRICT_LIST_API} delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
 };
 
 export const exportDistrictDataAPI = (payload) => {
@@ -1814,12 +2084,12 @@ export const exportDistrictDataAPI = (payload) => {
         if (field === "stateId") field = "stateName";
         if (field === "districtId") field = "districtName";
 
-        return `${field}:${s.order}`;
-      })
-      .join(",");
-  }
-  const apiUrl = `${url.EXPORT_DISTRICT_LIST_API}?fields=${payload?.fields}&district=${payload?.uuids}&country=${payload?.country}&state=${payload?.state}&customSort=${customSort}`;
-  return getExportData(apiUrl, payload);
+                return `${field}:${s.order}`;
+            })
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_DISTRICT_LIST_API}?search=${payload?.search}&fields=${payload?.fields}&district=${payload?.uuids}&country=${payload?.country}&state=${payload?.state}&customSort=${customSort}`;
+    return getExportData(apiUrl, payload);
 };
 
 export const importDistrictDataAPI = (payload) => {
@@ -1913,8 +2183,19 @@ export const importCityDataAPI = (payload) => {
 // ECA Awarding Body API Services
 
 export const getEcaAwardingBodyListAPI = (data) => {
-  const apiUrl = `${url.GET_ECA_AWARDING_BODY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
-  return get(apiUrl);
+    let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.GET_ECA_AWARDING_BODY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
+    return get(apiUrl);
 };
 
 export const addEcaAwardingBodyAPI = (payload) => {
@@ -1934,8 +2215,19 @@ export const deleteEcaAwardingBodyAPI = (payload) => {
 };
 
 export const exportEcaAwardingBodyAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_ECA_AWARDING_BODY_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
-  return getExportData(apiUrl, payload);
+    let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_ECA_AWARDING_BODY_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+    return getExportData(apiUrl, payload);
 };
 
 export const importEcaAwardingBodyAPI = (payload) => {
@@ -1945,8 +2237,19 @@ export const importEcaAwardingBodyAPI = (payload) => {
 // Medium of Education API Services
 
 export const getMediumOfEducationListAPI = (data) => {
-  const apiUrl = `${url.GET_MEDIUM_OF_EDUCATION_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
-  return get(apiUrl);
+    let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.GET_MEDIUM_OF_EDUCATION_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
+    return get(apiUrl);
 };
 
 export const addMediumOfEducationAPI = (payload) => {
@@ -1965,8 +2268,19 @@ export const deleteMediumOfEducationAPI = (payload) => {
 };
 
 export const exportMediumOfEducationAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_MEDIUM_OF_EDUCATION_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
-  return getExportData(apiUrl, payload);
+    let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_MEDIUM_OF_EDUCATION_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+    return getExportData(apiUrl, payload);
 };
 
 export const importMediumOfEducationAPI = (payload) => {
@@ -1976,8 +2290,19 @@ export const importMediumOfEducationAPI = (payload) => {
 
 // ECA For API Services
 export const getEcaForListAPI = (data) => {
-  const apiUrl = `${url.GET_ECA_FOR_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
-  return get(apiUrl);
+    let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.GET_ECA_FOR_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
+    return get(apiUrl);
 };
 
 export const addEcaForAPI = (payload) => {
@@ -1997,8 +2322,19 @@ export const deleteEcaForAPI = (payload) => {
 };
 
 export const exportEcaForAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_ECA_FOR_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
-  return getExportData(apiUrl, payload);
+    let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_ECA_FOR_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+    return getExportData(apiUrl, payload);
 };
 
 export const importEcaForAPI = (payload) => {
@@ -2008,8 +2344,19 @@ export const importEcaForAPI = (payload) => {
 
 // Language Name(Test)
 export const getLanguageNameTestListAPI = (data) => {
-  const apiUrl = `${url.GET_LANGUAGE_NAME_TEST_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
-  return get(apiUrl);
+    let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.GET_LANGUAGE_NAME_TEST_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
+    return get(apiUrl);
 };
 
 export const addLanguageNameTestAPI = (payload) => {
@@ -2031,8 +2378,19 @@ export const deleteLanguageNameTestAPI = (payload) => {
 };
 
 export const exportLanguageNameTestAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_LANGUAGE_NAME_TEST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
-  return getExportData(apiUrl, payload);
+    let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_LANGUAGE_NAME_TEST_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+    return getExportData(apiUrl, payload);
 };
 
 export const importLanguageNameTestAPI = (payload) => {

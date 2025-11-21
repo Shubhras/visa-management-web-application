@@ -157,7 +157,7 @@ const TimeZoneList = () => {
     const params = {
       page: tableState.page,
       limit: tableState.limit,
-      search: tableState.search || '',
+      search: (tableState.search).replace(/\s+/g, "") || '',
       status: tableState.status || '',
       sortBy: tableState.sortBy || '',
       sortOrder: tableState.sortOrder || '',
@@ -197,24 +197,6 @@ const TimeZoneList = () => {
           hasPrevious: false
         }));
       }
-    }));
-  };
-
-
-
-  const handleSearchChange = (value) => {
-    setTableState(prev => ({
-      ...prev,
-      search: value,
-      page: 1
-    }));
-  };
-
-  const handleStatusChange = (value) => {
-    setTableState(prev => ({
-      ...prev,
-      status: value === 'All' ? '' : value,
-      page: 1
     }));
   };
 
@@ -375,13 +357,6 @@ const TimeZoneList = () => {
     return <Icon icon="ri:sort-desc" className="sorting-th-icone" />;
   };
 
-  // const handleSearchChange = (value) => {
-  //   setTableState(prev => ({
-  //     ...prev,
-  //     search: value,
-  //     page: 1
-  //   }));
-  // };
 
   // Sort A–Z
   const applySortAsc = (field) => {
@@ -616,7 +591,7 @@ const TimeZoneList = () => {
       file: "xlsx",
       fields: fieldsString,
       uuids: selectAllOrNot === "all" ? [] : selectedRows,
-      search: tableState.search || '',
+      search: (tableState.search).replace(/\s+/g, "") || '',
       sort: tableState.sort,
       country: columnFilters.countryId.length > 0 ? columnFilters.countryId : null,
     };
