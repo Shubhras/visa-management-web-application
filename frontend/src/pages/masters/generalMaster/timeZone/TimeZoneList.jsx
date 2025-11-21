@@ -8,9 +8,21 @@ import { toast } from "react-toastify";
 import { timeZoneList, timeZoneDelete, timeZoneExportData } from '../../../../store/master/generalMasters/actions';
 import AddImportTimeZoneModal from './AddImportTimeZoneModal';
 import AddEditTimeZoneModal from './AddEditTimeZoneModal';
-
+import { countryDemoList } from '../../../../store/master/companyMasters/actions';
+import { useGlobalSearch, } from '../../../../components/comman/GlobalSearchContext';
+import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 const TimeZoneList = () => {
   const dispatch = useDispatch();
+
+  const { globalSearch, setGlobalSearch } = useGlobalSearch();
+  // Excel-style column filters - Now storing country , state and district IDs
+  const [columnFilters, setColumnFilters] = useState({
+    countryId: [], // Country filter
+  });
+  const [activeFilterColumn, setActiveFilterColumn] = useState(null);
+  const [filterDropdownData, setFilterDropdownData] = useState({});
+  const [filterSearchTerms, setFilterSearchTerms] = useState({});
+  const filterDropdownRef = useRef(null);
   const [modalState, setModalState] = useState({
     show: false,
     mode: 'add', // 'add' or 'edit'
@@ -48,25 +60,26 @@ const TimeZoneList = () => {
   const [items] = useState(["Country", "Time Zone", "Description", "Modified On"]);
   const [selectedItems, setSelectedItems] = useState(["Country", "Time Zone"]);
   const [ItemsRequired] = useState(["Country", "Time Zone"]);
-
+  const [countryListData, setCountryListData] = useState([]);
   // Table columns configuration
   const [tableColumns] = useState([
-    { id: 'countryName', label: 'Country', field: 'countryName', visible: true, required: false },
-    // { id: 'stateName', label: 'State', field: 'stateName', visible: true, required: false },
-    { id: 'timezone', label: 'Time Zone', field: 'timezone', visible: true, required: false },
-    { id: 'description', label: 'Description', field: 'description', visible: true, required: false },
-    { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false },
+    { id: 'countryName', label: 'Country', field: 'countryId', visible: true, required: false, filterable: true },
+    // { id: 'stateName', label: 'State', field: 'stateName', visible: true, required: false,filterable: false },
+    { id: 'timezone', label: 'Time Zone', field: 'timezone', visible: true, required: false, filterable: false },
+    { id: 'description', label: 'Description', field: 'description', visible: true, required: false, filterable: false },
+    { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false, filterable: false },
   ]);
+
 
   const [visibleColumns, setVisibleColumns] = useState(
     tableColumns.filter(col => col.visible).map(col => col.id)
   );
   const [showColumnDropdown, setShowColumnDropdown] = useState(false);
   const columnDropdownRef = useRef(null);
-  // Column visibility toggle handler
+
   const toggleColumnVisibility = (columnId) => {
     const column = tableColumns.find(col => col.id === columnId);
-    if (column?.required) return; // Don't allow hiding required columns
+    if (column?.required) return;
 
     setVisibleColumns(prev => {
       if (prev.includes(columnId)) {
@@ -77,27 +90,29 @@ const TimeZoneList = () => {
     });
   };
 
-  // Check if column is visible
   const isColumnVisible = (columnId) => {
     return visibleColumns.includes(columnId);
   };
 
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (columnDropdownRef.current && !columnDropdownRef.current.contains(event.target)) {
         setShowColumnDropdown(false);
       }
+      if (filterDropdownRef.current && !filterDropdownRef.current.contains(event.target)) {
+        setActiveFilterColumn(null);
+      }
     };
 
-    if (showColumnDropdown) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
+    document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showColumnDropdown]);
-  // Updated state with sorting
+  }, []);
+
+
+
   const [tableState, setTableState] = useState({
     page: 1,
     limit: 25,
@@ -105,12 +120,23 @@ const TimeZoneList = () => {
     status: '',
     sortBy: 'created_at', // Field to sort by
     sortOrder: 'desc', // 'asc' or 'desc'
+    sort: [
+      // { field: "updated_at", order: "desc" }
+      { field: "created_at", order: "desc" }
+    ],
     total: 0,
     totalPages: 0,
     currentPage: 1,
     hasNext: false,
     hasPrevious: false
   });
+  useEffect(() => {
+    setTableState(prev => ({ ...prev, search: globalSearch, page: 1 }));
+  }, [globalSearch]);
+
+  useEffect(() => {
+    fetchCountryList();
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -124,7 +150,7 @@ const TimeZoneList = () => {
 
   useEffect(() => {
     fetchTimeZoneList();
-  }, [tableState.page, tableState.limit, tableState.status, tableState.sortBy, tableState.sortOrder]);
+  }, [tableState.page, tableState.limit, tableState.status, tableState.sort, columnFilters]);
 
   const fetchTimeZoneList = () => {
     setLoading(true);
@@ -134,7 +160,9 @@ const TimeZoneList = () => {
       search: tableState.search || '',
       status: tableState.status || '',
       sortBy: tableState.sortBy || '',
-      sortOrder: tableState.sortOrder || ''
+      sortOrder: tableState.sortOrder || '',
+      sort: tableState.sort,
+      country: columnFilters.countryId.length > 0 ? columnFilters.countryId : null,
     };
 
     dispatch(timeZoneList(params, (response, error) => {
@@ -172,32 +200,7 @@ const TimeZoneList = () => {
     }));
   };
 
-  // Handle sorting
-  const handleSort = (field) => {
-    setTableState(prev => {
-      // If clicking the same field, toggle between asc -> desc -> no sort
-      if (prev.sortBy === field) {
-        if (prev.sortOrder === 'asc') {
-          return { ...prev, sortOrder: 'desc', page: 1 };
-        } else if (prev.sortOrder === 'desc') {
-          return { ...prev, sortBy: '', sortOrder: '', page: 1 };
-        }
-      }
-      // If clicking a new field, start with asc
-      return { ...prev, sortBy: field, sortOrder: 'asc', page: 1 };
-    });
-  };
 
-  // Get sort icon for a column
-  const getSortIcon = (field) => {
-    if (tableState.sortBy !== field) {
-      return <Icon icon="ri:sort-desc" className='sorting-th-icone' />;
-    }
-    if (tableState.sortOrder === 'asc') {
-      return <Icon icon="ri:sort-asc" className='sorting-th-icone' />;
-    }
-    return <Icon icon="ri:sort-desc" className='sorting-th-icone' />;
-  };
 
   const handleSearchChange = (value) => {
     setTableState(prev => ({
@@ -215,6 +218,203 @@ const TimeZoneList = () => {
     }));
   };
 
+  // Prepare country and state filter options
+  useEffect(() => {
+    if (countryListData.length > 0) {
+      // Create filter options with country names from countryListData
+      setFilterDropdownData(prev => ({
+        ...prev,
+        countryId: countryListData.map(country => ({
+          id: country.uuid || country.id,
+          name: country.name || country.countryName
+        })).sort((a, b) => a.name.localeCompare(b.name))
+      }));
+    }
+  }, [countryListData]);
+
+
+  const fetchCountryList = () => {
+    const params = {
+      page: 1,
+      limit: 2000,
+      search: '',
+      status: '',
+      sortBy: 'name',
+      sortOrder: 'asc',
+    };
+
+    dispatch(countryDemoList(params, (response, error) => {
+      if (response?.statusCode === 200 && response?.status === true) {
+        setCountryListData(response?.data || []);
+      }
+    }));
+  };
+  // Toggle filter dropdown for a column
+  const toggleFilterDropdown = (e, columnField) => {
+    e.stopPropagation();
+    setActiveFilterColumn(activeFilterColumn === columnField ? null : columnField);
+    setFilterSearchTerms(prev => ({ ...prev, [columnField]: '' }));
+  };
+  // Handle filter checkbox change - now handles both IDs and regular values
+  const handleFilterCheckboxChange = (columnField, value, checked) => {
+    setColumnFilters(prev => {
+      const currentFilters = prev[columnField] || [];
+      let newFilters;
+      if (checked) {
+        newFilters = [...currentFilters, value];
+      } else {
+        newFilters = currentFilters.filter(v => v !== value);
+      }
+      return { ...prev, [columnField]: newFilters };
+    });
+  };
+
+  // Select all in filter
+  const handleFilterSelectAll = (columnField) => {
+    const searchTerm = filterSearchTerms[columnField] || '';
+
+    // For country, state and district filter, select IDs
+    const availableOptions = (filterDropdownData[columnField] || [])
+      .filter(option => option.name.toLowerCase().includes(searchTerm.toLowerCase()))
+      .map(option => option.id);
+
+    setColumnFilters(prev => ({
+      ...prev,
+      [columnField]: availableOptions
+    }));
+  };
+
+  // Clear all in filter
+  const handleFilterClearAll = (columnField) => {
+    setColumnFilters(prev => ({
+      ...prev,
+      [columnField]: []
+    }));
+  };
+
+  // Clear all filters
+  const clearAllOnlyHeaderFilters = () => {
+    setColumnFilters({
+      countryId: [],
+    });
+  };
+
+  // Clear all filters
+  const clearAllFilters = () => {
+    // Reset filter dropdowns
+    setColumnFilters({
+      countryId: []
+    });
+    // Reset table state (sorting + pagination)
+    setTableState(prev => ({
+      ...prev,
+      page: 1,
+      limit: 25,
+      search: '',
+      status: '',
+      sort: [
+        { field: "created_at", order: "desc" }   // default sort
+      ],
+      total: 0,
+      totalPages: 0,
+      currentPage: 1,
+      hasNext: false,
+      hasPrevious: false
+    }));
+    // Reset global search
+    setGlobalSearch('');
+  };
+
+  // Check if any filters are active
+  const hasActiveFilters = () => {
+    return Object.values(columnFilters).some(filters => filters.length > 0);
+  };
+
+  // Get filtered options based on search term
+  const getFilteredOptions = (columnField) => {
+    const searchTerm = filterSearchTerms[columnField] || '';
+    const options = filterDropdownData[columnField] || [];
+
+    // For country, state and district filter, filter by name
+    return options.filter(option =>
+      option.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  };
+  // Handle sorting
+  const handleSort = (field) => {
+    setTableState(prev => {
+      let newSort = [...prev.sort];
+      const existingIndex = newSort.findIndex(s => s.field === field);
+      if (existingIndex === -1) {
+        newSort.push({ field, order: "asc" });
+      }
+      else {
+        const existing = newSort[existingIndex];
+        if (existing.order === "asc") {
+          newSort[existingIndex].order = "desc";
+        }
+        else if (existing.order === "desc") {
+          newSort.splice(existingIndex, 1);
+        }
+      }
+      return { ...prev, sort: newSort, page: 1 };
+    });
+  };
+
+  // Get sort icon for a column
+  const getSortIcon = (field) => {
+    const sortObj = tableState.sort.find(s => s.field === field);
+    if (!sortObj) {
+      // return <Icon icon="ri:arrow-up-down-line" className="sorting-th-icone" />;
+      //  return <Icon icon="ri:close-line" className="sorting-th-icone" />;
+      return <Icon icon="ri:menu-line" className="sorting-th-icone" />;
+    }
+    if (sortObj.order === "asc") {
+      return <Icon icon="ri:sort-asc" className="sorting-th-icone" />;
+    }
+    return <Icon icon="ri:sort-desc" className="sorting-th-icone" />;
+  };
+
+  // const handleSearchChange = (value) => {
+  //   setTableState(prev => ({
+  //     ...prev,
+  //     search: value,
+  //     page: 1
+  //   }));
+  // };
+
+  // Sort A–Z
+  const applySortAsc = (field) => {
+    setTableState(prev => {
+      let newSort = [...prev.sort];
+      const existingIndex = newSort.findIndex(s => s.field === field);
+
+      if (existingIndex === -1) {
+        newSort.push({ field, order: "asc" });
+      } else {
+        newSort[existingIndex].order = "asc";
+      }
+
+      return { ...prev, sort: newSort, page: 1 };
+    });
+  };
+
+  // Sort Z–A
+  const applySortDesc = (field) => {
+    setTableState(prev => {
+      let newSort = [...prev.sort];
+      const existingIndex = newSort.findIndex(s => s.field === field);
+
+      if (existingIndex === -1) {
+        newSort.push({ field, order: "desc" });
+      } else {
+        newSort[existingIndex].order = "desc";
+      }
+
+      return { ...prev, sort: newSort, page: 1 };
+    });
+  };
+
   const handlePageLengthChange = (value) => {
     setTableState(prev => ({
       ...prev,
@@ -223,14 +423,7 @@ const TimeZoneList = () => {
     }));
   };
 
-  // For "Select All" button
-  const handleSelectAllButton = () => {
-    if (isAllSelected) {
-      setSelectedRows([]);
-    } else {
-      setSelectedRows(timeZoneDataList.map(Item => Item.uuid));
-    }
-  };
+
   // For checkbox in table header
   const handleSelectAll = (e) => {
     const checked = e.target.checked;
@@ -423,6 +616,9 @@ const TimeZoneList = () => {
       file: "xlsx",
       fields: fieldsString,
       uuids: selectAllOrNot === "all" ? [] : selectedRows,
+      search: tableState.search || '',
+      sort: tableState.sort,
+      country: columnFilters.countryId.length > 0 ? columnFilters.countryId : null,
     };
     setLoadingExport(true);
     dispatch(timeZoneExportData(sendPayload, (response, error) => {
@@ -457,21 +653,6 @@ const TimeZoneList = () => {
   };
 
   const startIndex = (tableState.currentPage - 1) * tableState.limit;
-  const statusOptions = ['All', 'Active', 'Inactive'];
-
-  const formatDateTime = (dateString) => {
-    const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    let hours = date.getHours();
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const seconds = String(date.getSeconds()).padStart(2, '0');
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12 || 12;
-    hours = String(hours).padStart(2, '0');
-    return `${day}-${month}-${year} ${hours}:${minutes}:${seconds} ${ampm}`
-  };
 
 
   return (
@@ -484,6 +665,10 @@ const TimeZoneList = () => {
               {/* Left Section: Import / Export / Delete */}
               <div className="col-xl-6 col-lg-4 col-md-12">
                 <div className="d-flex flex-wrap align-items-center gap-2">
+                  <button
+                    className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
+                    onClick={handleShow}
+                  >New</button>
                   <button
                     className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
                     onClick={handleShowImport}
@@ -519,6 +704,17 @@ const TimeZoneList = () => {
                       </button>
                     </>
                   )}
+                  {hasActiveFilters() && (
+                    <button
+                      onClick={clearAllOnlyHeaderFilters}
+                      className="btn btn-sm py-1 comman-inactive-btn">
+                      <Icon icon="mdi:filter-off" width="16" /> Clear Filters
+                    </button>
+                  )}
+                  <button
+                    onClick={clearAllFilters}
+                    className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
+                  >Reset</button>
                 </div>
               </div>
 
@@ -535,44 +731,112 @@ const TimeZoneList = () => {
                     <option value={50}>50</option>
                     <option value={100}>100</option>
                   </select>
-                  <div className="position-relative flex-grow-1 search-filter-div">
-                    <Icon
-                      icon="ion:search-outline"
-                      className="position-absolute search-filter-icone"
-                    />
-                    <input
-                      type="text"
-                      className="form-control form-control-sm ps-5 search-filter-input"
-                      placeholder="Search..."
-                      value={tableState.search}
-                      onChange={(e) => handleSearchChange(e.target.value)}
-                    />
-                    {tableState.search && tableState.search.length > 0 && (
-                      <span
-                        className="position-absolute"
-                        style={{
-                          right: '10px',
-                          top: '50%',
-                          transform: 'translateY(-50%)',
-                          cursor: 'pointer',
-                          zIndex: 999,
-                          fontSize: '20px',
-                          color: '#6c757d',
-                          lineHeight: 1
-                        }}
-                        onClick={() => {
-
-                          handleSearchChange('');
-                        }}
-                      >
-                        ×
-                      </span>
-                    )}
-                  </div>
-                  <button
-                    className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
-                    onClick={handleShow}
-                  >New</button>
+                  {tableState.total > 0 && (
+                    <div className="d-flex justify-content-between align-items-center px-4 py-0">
+                      <div className="showing-total-page">
+                        {startIndex + 1}-{" "}
+                        {Math.min(startIndex + tableState.limit, tableState.total)}{" "}
+                        of {tableState.total}
+                      </div>
+                      <nav>
+                        <ul className="pagination mb-0 gap-4px">
+                          <li className={`page-item ${!tableState.hasPrevious ? 'disabled' : ''}`}>
+                            <button
+                              className="border-0 bg-transparent"
+                              onClick={() => goToPage(1)}
+                              disabled={!tableState.hasPrevious}
+                              style={{
+                                padding: '0px 8px',
+                                color: !tableState.hasPrevious ? '#ccc' : '#6c757d',
+                                fontSize: '18px',
+                                cursor: !tableState.hasPrevious ? 'not-allowed' : 'pointer'
+                              }}
+                            >
+                              «
+                            </button>
+                          </li>
+                          <li className={`page-item ${!tableState.hasPrevious ? 'disabled' : ''}`}>
+                            <button
+                              className="border-0 bg-transparent"
+                              onClick={() => goToPage(tableState.currentPage - 1)}
+                              disabled={!tableState.hasPrevious}
+                              style={{
+                                padding: '0px 8px',
+                                color: !tableState.hasPrevious ? '#ccc' : '#6c757d',
+                                fontSize: '18px',
+                                cursor: !tableState.hasPrevious ? 'not-allowed' : 'pointer'
+                              }}
+                            >
+                              ‹
+                            </button>
+                          </li>
+                          {getPaginationNumbers().map((page, idx) => (
+                            <li key={idx} className="page-item">
+                              {page === '...' ? (
+                                <span
+                                  className="border-0 bg-transparent"
+                                  style={{
+                                    padding: '0px 10px',
+                                    color: '#6c757d',
+                                    cursor: 'default'
+                                  }}
+                                >
+                                  ...
+                                </span>
+                              ) : (
+                                <button
+                                  className="border-0"
+                                  onClick={() => goToPage(page)}
+                                  style={{
+                                    padding: '0px 10px',
+                                    minWidth: '30px',
+                                    backgroundColor: page === tableState.currentPage ? '#5a6c5b' : 'transparent',
+                                    color: page === tableState.currentPage ? '#fff' : '#6c757d',
+                                    borderRadius: '4px',
+                                    fontWeight: page === tableState.currentPage ? '500' : '400',
+                                    cursor: 'pointer',
+                                    fontSize: "14px"
+                                  }}
+                                >
+                                  {page}
+                                </button>
+                              )}
+                            </li>
+                          ))}
+                          <li className={`page-item ${!tableState.hasNext ? 'disabled' : ''}`}>
+                            <button
+                              className="border-0 bg-transparent"
+                              onClick={() => goToPage(tableState.currentPage + 1)}
+                              disabled={!tableState.hasNext}
+                              style={{
+                                padding: '0px 8px',
+                                color: !tableState.hasNext ? '#ccc' : '#6c757d',
+                                fontSize: '18px',
+                                cursor: !tableState.hasNext ? 'not-allowed' : 'pointer'
+                              }}
+                            >
+                              ›
+                            </button>
+                          </li>
+                          <li className={`page-item ${!tableState.hasNext ? 'disabled' : ''}`}>
+                            <button
+                              className="border-0 bg-transparent"
+                              onClick={() => goToPage(tableState.totalPages)}
+                              disabled={!tableState.hasNext}
+                              style={{
+                                padding: '0px 8px',
+                                color: !tableState.hasNext ? '#ccc' : '#6c757d',
+                                fontSize: '18px',
+                                cursor: !tableState.hasNext ? 'not-allowed' : 'pointer'
+                              }}
+                            >
+                              »
+                            </button>
+                          </li>
+                        </ul>
+                      </nav>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -600,11 +864,126 @@ const TimeZoneList = () => {
                           key={column.id}
                           scope="col"
                           className='sorting-th'
-                          onClick={() => handleSort(column.field)}
                         >
-                          <div className="d-flex align-items-center">
-                            {column.label}
-                            {getSortIcon(column.field)}
+                          <div className="d-flex align-items-center justify-content-between position-relative">
+                            <div
+                              className="d-flex align-items-center flex-grow-1"
+                              onClick={() => handleSort(column.field)}
+                              style={{ cursor: 'pointer' }}
+                            >
+                              {column.label}
+                              {getSortIcon(column.field)}
+
+                              {column.filterable && (
+                                <div className="position-relative comman-filtter-all">
+                                  <Icon
+                                    icon={columnFilters[column.field]?.length > 0 ? "mdi:filter" : "mdi:filter-outline"}
+                                    width="18"
+                                    className={`ms-2 ${columnFilters[column.field]?.length > 0 ? 'comman-btn-color' : ''}`}
+                                    style={{ cursor: 'pointer' }}
+                                    onClick={(e) => toggleFilterDropdown(e, column.field)}
+                                  />
+
+                                  {activeFilterColumn === column.field && (
+                                    <div
+                                      ref={filterDropdownRef}
+                                      className="position-absolute bg-white border rounded shadow-sm p-3 main-div-dropdown"
+
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      {/* Sort Options */}
+                                      <div className={`filter-menu-item px-3 py-2 d-flex align-items-center ${tableState.sort.find(s => s.field === column.field)?.order === "asc"
+                                        ? "disabled-sort"
+                                        : ""
+                                        }`}
+                                        onClick={() => applySortAsc(column.field)}
+                                      >
+                                        <Icon icon="ri:arrow-up-line" className="me-2 text-muted" width="18" />
+                                        Sort Smallest to Largest
+                                      </div>
+                                      <div className={`filter-menu-item px-3 py-2 d-flex align-items-center ${tableState.sort.find(s => s.field === column.field)?.order === "desc"
+                                        ? "disabled-sort"
+                                        : ""
+                                        }`}
+                                        onClick={() => applySortDesc(column.field)}
+                                      >
+                                        <Icon icon="ri:arrow-down-line" className="me-2 text-muted" width="18" />
+                                        Sort Largest to Smallest
+                                      </div>
+                                      <div className="mb-2 ">
+                                        <input
+                                          type="text"
+                                          className="form-control form-control-sm input-search"
+                                          placeholder="Search..."
+                                          value={filterSearchTerms[column.field] || ''}
+                                          onChange={(e) => setFilterSearchTerms(prev => ({
+                                            ...prev,
+                                            [column.field]: e.target.value
+                                          }))}
+                                        />
+                                      </div>
+
+                                      <div className="gap-2 mb-2 select-clear-all" >
+                                        <button
+                                          className="btn btn-sm py-1 btn-primary flex-grow-1 comman-btn-color mr-10"
+                                          onClick={() => handleFilterSelectAll(column.field)}>
+                                          Select All
+                                        </button>
+                                        <button
+                                          className="btn btn-sm py-1 btn-secondary flex-grow-1"
+                                          onClick={() => handleFilterClearAll(column.field)}
+                                        >
+                                          Clear All
+                                        </button>
+                                      </div>
+
+                                      <div className='select-all-dropdown' >
+                                        {/* Country and State filter - show names but store IDs */}
+                                        {getFilteredOptions(column.field).length > 0 ? (
+                                          getFilteredOptions(column.field).map((option, idx) => (
+                                            <>
+                                              <div
+                                                key={idx}
+                                                className="bg-white rounded p-2 mb-2 d-flex align-items-center gap-2 form-check-div"
+                                              >
+                                                <input
+                                                  type="checkbox"
+                                                  id={`filter-${column.field}-${idx}`}
+                                                  checked={columnFilters[column.field]?.includes(option.id)}
+                                                  onChange={(e) => handleFilterCheckboxChange(
+                                                    column.field,
+                                                    option.id,
+                                                    e.target.checked
+                                                  )}
+                                                  className="form-check-input"
+                                                />
+                                                <label htmlFor={`item-${idx}`} className="mb-0 flex-grow-1 form-check-label">
+                                                  {option.name}
+                                                </label>
+                                              </div>
+                                            </>
+
+                                          ))
+                                        ) : (
+                                          <div className="no-records-found">
+                                            No options available
+                                          </div>
+                                        )}
+                                      </div>
+
+                                      <div className="d-flex gap-2 mt-2 pt-2 border-top justify-content-end">
+                                        <button
+                                          className="btn btn-sm  py-1 btn-secondary flex-grow-1  mt-10"
+                                          onClick={() => setActiveFilterColumn(null)}
+                                          style={{ maxWidth: "80px" }} >
+                                          Cancel
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </th>
                       )
@@ -682,7 +1061,7 @@ const TimeZoneList = () => {
                           <td><span>{rowItem.description}</span></td>
                         )}
                         {isColumnVisible('updated_at') && (
-                          <td><span>{formatDateTime(rowItem.updated_at)}</span></td>
+                          <td><span>{formatDateDDMMYYYYTime(rowItem.updated_at)}</span></td>
                         )}
                         <td className='action-td'>
                           <div className="d-flex align-items-end gap-2">
@@ -705,111 +1084,6 @@ const TimeZoneList = () => {
                   )}
                 </tbody>
               </table>
-
-              {tableState.total > 0 && (
-                <div className="d-flex justify-content-between align-items-center px-4 py-3" >
-                  <div className='showing-total-page' >
-                    Showing {startIndex + 1} to {Math.min(startIndex + tableState.limit, tableState.total)} of {tableState.total} entries
-                  </div>
-                  <nav>
-                    <ul className="pagination mb-0" style={{ gap: '4px' }}>
-                      <li className={`page-item ${!tableState.hasPrevious ? 'disabled' : ''}`}>
-                        <button
-                          className="border-0 bg-transparent"
-                          onClick={() => goToPage(1)}
-                          disabled={!tableState.hasPrevious}
-                          style={{
-                            padding: '6px 10px',
-                            color: !tableState.hasPrevious ? '#ccc' : '#6c757d',
-                            fontSize: '18px',
-                            cursor: !tableState.hasPrevious ? 'not-allowed' : 'pointer'
-                          }}
-                        >
-                          «
-                        </button>
-                      </li>
-                      <li className={`page-item ${!tableState.hasPrevious ? 'disabled' : ''}`}>
-                        <button
-                          className="border-0 bg-transparent"
-                          onClick={() => goToPage(tableState.currentPage - 1)}
-                          disabled={!tableState.hasPrevious}
-                          style={{
-                            padding: '6px 10px',
-                            color: !tableState.hasPrevious ? '#ccc' : '#6c757d',
-                            fontSize: '18px',
-                            cursor: !tableState.hasPrevious ? 'not-allowed' : 'pointer'
-                          }}
-                        >
-                          ‹
-                        </button>
-                      </li>
-                      {getPaginationNumbers().map((page, idx) => (
-                        <li key={idx} className="page-item">
-                          {page === '...' ? (
-                            <span
-                              className="border-0 bg-transparent"
-                              style={{
-                                padding: '6px 12px',
-                                color: '#6c757d',
-                                cursor: 'default'
-                              }}
-                            >
-                              ...
-                            </span>
-                          ) : (
-                            <button
-                              className="border-0 "
-                              onClick={() => goToPage(page)}
-                              style={{
-                                padding: '6px 12px',
-                                minWidth: '36px',
-                                backgroundColor: page === tableState.currentPage ? '#5a6c5b' : 'transparent',
-                                color: page === tableState.currentPage ? '#fff' : '#6c757d',
-                                borderRadius: '4px',
-                                fontWeight: page === tableState.currentPage ? '500' : '400',
-                                cursor: 'pointer',
-                                fontSize: "16px"
-                              }}
-                            >
-                              {page}
-                            </button>
-                          )}
-                        </li>
-                      ))}
-                      <li className={`page-item ${!tableState.hasNext ? 'disabled' : ''}`}>
-                        <button
-                          className=" border-0 bg-transparent"
-                          onClick={() => goToPage(tableState.currentPage + 1)}
-                          disabled={!tableState.hasNext}
-                          style={{
-                            padding: '6px 10px',
-                            color: !tableState.hasNext ? '#ccc' : '#6c757d',
-                            fontSize: '18px',
-                            cursor: !tableState.hasNext ? 'not-allowed' : 'pointer'
-                          }}
-                        >
-                          ›
-                        </button>
-                      </li>
-                      <li className={`page-item ${!tableState.hasNext ? 'disabled' : ''}`}>
-                        <button
-                          className="border-0 bg-transparent"
-                          onClick={() => goToPage(tableState.totalPages)}
-                          disabled={!tableState.hasNext}
-                          style={{
-                            padding: '6px 10px',
-                            color: !tableState.hasNext ? '#ccc' : '#6c757d',
-                            fontSize: '18px',
-                            cursor: !tableState.hasNext ? 'not-allowed' : 'pointer'
-                          }}
-                        >
-                          »
-                        </button>
-                      </li>
-                    </ul>
-                  </nav>
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -941,7 +1215,7 @@ const TimeZoneList = () => {
                     >
                       Cancel
                     </button>
-                   <button
+                    <button
                       onClick={handleExport}
                       type="button"
                       className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"

@@ -1022,28 +1022,22 @@ class VisaNameCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
-        country_id = request.data.get('country')
-        visamain_id = request.data.get('visamain')
-        visamajor_id = request.data.get('visamajor')
-        full_name = request.data.get('full_name', '').strip()
-
-        if not all([country_id, visamain_id, visamajor_id, full_name]):
-            return Response({"statusCode": 400, "status": False, "message": "country, visamain, visamajor, full_name are required"}, status=400)
-
-        if VisaName.objects.filter(
-            country_id=country_id,
-            visamain_id=visamain_id,
-            visamajor_id=visamajor_id,
-            full_name__iexact=full_name,
-            is_deleted=False
-        ).exists():
-            return Response({"statusCode": 400, "status": False, "message": "VisaName with this combination already exists"}, status=400)
-
         serializer = VisaNameSerializer(data=request.data)
+
         if serializer.is_valid():
             serializer.save()
-            return Response({"statusCode": 200, "status": True, "message": "VisaName created successfully", "data": serializer.data})
-        return Response({"statusCode": 400, "status": False, "message": serializer.errors}, status=400)
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "VisaName created successfully",
+                "data": serializer.data
+            }, status=200)
+
+        return Response({
+            "statusCode": 400,
+            "status": False,
+            "message": serializer.errors
+        }, status=400)
 
 
 # ------------------ RETRIEVE ------------------

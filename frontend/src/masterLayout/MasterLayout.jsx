@@ -14,6 +14,7 @@ const MasterLayout = ({ children }) => {
   const [selectedItemName, setSelectedItemName] = useState("Dashboard");
   const [openSubmenu, setOpenSubmenu] = useState(null);
   const [openChildMenu, setOpenChildMenu] = useState(null);
+
   const [searchAllowedModules] = useState([
     "City",
     "Department",
@@ -28,6 +29,9 @@ const MasterLayout = ({ children }) => {
     "Study : Gap Group",
     "Study : Backlogs Group",
     "Marital Status",
+    "Time Zone",
+    "Relation",
+    "Civil ID Name",
     "Representing Country",
     "Visa Major Category",
     "Applicant Type",
@@ -36,6 +40,7 @@ const MasterLayout = ({ children }) => {
     "Possibility Level",
     "Visa Name"
   ]);
+
   // Global Search State - Har page pe same rahega
   const { globalSearch, setGlobalSearch } = useGlobalSearch();
   const menuItems = [

@@ -2,9 +2,37 @@ from django.contrib.auth import authenticate,get_user_model
 from rest_framework import serializers
 from .models import *
 from rest_framework_simplejwt.tokens import RefreshToken
-
+# from .process import*
 
 User = get_user_model()
+
+# class AdminUserLoginSerializer(serializers.Serializer):
+#     email = serializers.EmailField()
+#     password = serializers.CharField(write_only=True)
+
+#     def validate(self, data):
+#         email = data.get("email")
+#         password = data.get("password")
+
+#         # Look up user by email
+#         try:
+#             user = User.objects.get(email=email)
+#         except User.DoesNotExist:
+#             raise serializers.ValidationError("Invalid email or password.")
+
+#         # Authenticate using username (Django default)
+#         user = authenticate(username=user.username, password=password)
+#         if not user:
+#             raise serializers.ValidationError("Invalid email or password.")
+
+#         # Only allow superuser/staff
+#         if not (user.is_staff or user.is_superuser):
+#             raise serializers.ValidationError("User is not an admin.")
+
+#         data['user'] = user
+#         return data
+
+
 
 class AdminUserLoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -14,23 +42,32 @@ class AdminUserLoginSerializer(serializers.Serializer):
         email = data.get("email")
         password = data.get("password")
 
-        # Look up user by email
-        try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
+        # Look up users by email (use filter instead of get to avoid crash)
+        users = User.objects.filter(email=email)
+        if not users.exists():
             raise serializers.ValidationError("Invalid email or password.")
+
+        # Handle multiple users with same email
+        if users.count() > 1:
+            raise serializers.ValidationError(
+                "Multiple users found with this email. Please contact the administrator."
+            )
+
+        user = users.first()
 
         # Authenticate using username (Django default)
         user = authenticate(username=user.username, password=password)
         if not user:
             raise serializers.ValidationError("Invalid email or password.")
 
-        # Only allow superuser/staff
+        # Allow only admin/staff
         if not (user.is_staff or user.is_superuser):
             raise serializers.ValidationError("User is not an admin.")
 
-        data['user'] = user
+        data["user"] = user
         return data
+
+
 
 class GenderSerializer(serializers.ModelSerializer):
     description = serializers.CharField(required=False, allow_blank=True)  
@@ -591,7 +628,19 @@ class StudySpecialisationSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at'
         ]
-        read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+        read_only_fields = ["id", "uuid", "created_at", "updated_at"]
+
+    def get_mainarea_uuid(self, obj):
+        try:
+            return obj.mainarea.uuid if obj.mainarea else None
+        except:
+            return None
+
+    def get_majorarea_uuid(self, obj):
+        try:
+            return obj.majorarea.uuid if obj.majorarea else None
+        except:
+            return None
 
 
 class AcademicResultTypeSerializer(serializers.ModelSerializer):
@@ -619,8 +668,9 @@ class AcademicResultSerializer(serializers.ModelSerializer):
     # Accept UUID to set the relation
     AcademicResulttype_id = serializers.SlugRelatedField(
         queryset=AcademicResultType.objects.all(),
-        source='AcademicResulttype',
         slug_field='uuid',
+        source='AcademicResulttype',
+        # slug_field='uuid',
         write_only=True,
         required=False,
         allow_null=True
@@ -638,7 +688,7 @@ class AcademicResultSerializer(serializers.ModelSerializer):
             'description',
             'is_deleted',
             'created_at',
-            'updated_at'
+            'updated_at',
         ]
         read_only_fields = ['id', 'uuid', 'created_at', 'updated_at', 
                             'AcademicResulttype_uuid', 'AcademicResulttype_name']
@@ -763,7 +813,6 @@ class DegreeAwardedBySerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
 
 
-
 class DegreeAwardedInstituteSerializer(serializers.ModelSerializer):
     # Accept UUIDs for related fields
     degree_awarded_by_id = serializers.SlugRelatedField(
@@ -820,8 +869,6 @@ class DegreeAwardedInstituteSerializer(serializers.ModelSerializer):
             'education_level_id', 'education_level_name'
         ]
         read_only_fields = ['id', 'uuid', 'degree_awarded_by_name', 'name', 'state_name', 'education_level_name']
-
-
 
 
 
@@ -1559,6 +1606,7 @@ class VisaMajorSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'uuid', 'created_at', 'updated_at', 'visamain_name']
 
 
+
 class VisaNameSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='country.full_name', read_only=True)
     visamain_name = serializers.CharField(source='visamain.name', read_only=True)
@@ -1585,6 +1633,346 @@ class ApplicantTypeSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
 
+
+
+class DocumentCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DocumentCategory
+        fields = [
+            "id",
+            "uuid",
+            "name",
+            "description",
+            "is_deleted",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["uuid", "created_at", "updated_at"]
+
+
+class DocumentTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DocumentType
+        fields = [
+            "uuid",
+            "name",
+            "description",
+            "is_deleted",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["uuid", "created_at", "updated_at"]
+
+
+
+
+class DocumentNameSerializer(serializers.ModelSerializer):
+    document_category_name = serializers.CharField(source="document_category.name", read_only=True)
+    document_category_uuid = serializers.UUIDField(source="document_category.uuid", read_only=True)
+
+    class Meta:
+        model = DocumentName
+        fields = [
+            "uuid",
+            "document_category_uuid",
+            "document_category_name",
+            "document_name",
+            "description",
+            "is_deleted",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["uuid", "created_at", "updated_at"]
+
+
+class PurposeOfVisitSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PurposeOfVisit
+        fields = [
+            "id",
+            "uuid",
+            "name",
+            "description",
+            "is_deleted",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "uuid", "created_at", "updated_at"]
+
+
+
+
+class DocumentsForSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DocumentsFor
+        fields = [
+            "uuid",
+            "name",
+            "description",
+            "is_deleted",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["uuid", "created_at", "updated_at"]
+
+
+class RequiredDocumentSerializer(serializers.ModelSerializer):
+    # Read-only human-readable fields
+    country_name = serializers.CharField(source='country.name', read_only=True)
+    visa_main_category_name = serializers.CharField(source='visa_main_category.name', read_only=True)
+    visa_major_category_name = serializers.CharField(source='visa_major_category.name', read_only=True)
+    visa_name_name = serializers.CharField(source='visa_name.name', read_only=True)
+    document_category_name = serializers.CharField(source='document_category.name', read_only=True)
+    document_name_name = serializers.CharField(source='document_name.document_name', read_only=True)
+
+    # Accept UUIDs for foreign keys in write operations
+    country = serializers.UUIDField(write_only=True)
+    visa_main_category = serializers.UUIDField(write_only=True)
+    visa_major_category = serializers.UUIDField(write_only=True)
+    visa_name = serializers.UUIDField(write_only=True)
+    document_category = serializers.UUIDField(write_only=True)
+    document_name = serializers.UUIDField(write_only=True)
+
+    class Meta:
+        model = RequiredDocument
+        fields = [
+            "id",
+            "uuid",
+            "country",
+            "country_name",
+            "visa_main_category",
+            "visa_main_category_name",
+            "visa_major_category",
+            "visa_major_category_name",
+            "visa_name",
+            "visa_name_name",
+            "document_category",
+            "document_category_name",
+            "document_name",
+            "document_name_name",
+            "description",
+            "is_deleted",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "uuid", "created_at", "updated_at"]
+
+    # Validate-and-convert helper: convert incoming UUID -> model instance
+    def _get_instance_by_uuid(self, model_class, value, field_label):
+        try:
+            return model_class.objects.get(uuid=value, is_deleted=False)
+        except model_class.DoesNotExist:
+            raise serializers.ValidationError({field_label: f"Invalid {field_label} UUID."})
+
+    def validate_country(self, value):
+        return self._get_instance_by_uuid(Country, value, 'country')
+
+    def validate_visa_main_category(self, value):
+        return self._get_instance_by_uuid(VisaMain, value, 'visa_main_category')
+
+    def validate_visa_major_category(self, value):
+        return self._get_instance_by_uuid(VisaMajor, value, 'visa_major_category')
+
+    def validate_visa_name(self, value):
+        return self._get_instance_by_uuid(VisaName, value, 'visa_name')
+
+    def validate_document_category(self, value):
+        return self._get_instance_by_uuid(DocumentCategory, value, 'document_category')
+
+    def validate_document_name(self, value):
+        return self._get_instance_by_uuid(DocumentName, value, 'document_name')
+
+
+class ProcessStatusSerializer(serializers.ModelSerializer):
+    # Read-only names for related models
+    country_name = serializers.CharField(source='country.name', read_only=True)
+    visa_main_category_name = serializers.CharField(source='visa_main_category.name', read_only=True)
+
+    # Accept UUIDs for foreign-key fields
+    country = serializers.UUIDField(write_only=True)
+    visa_main_category = serializers.UUIDField(write_only=True)
+
+    # Now process_status_name is a TEXT field, so:
+    process_status_name = serializers.CharField()
+
+    class Meta:
+        model = ProcessStatusName
+        fields = [
+            "id",
+            "uuid",
+            "country",
+            "country_name",
+            "visa_main_category",
+            "visa_main_category_name",
+            "process_status_name",
+            "description",
+            "is_deleted",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "uuid", "created_at", "updated_at"]
+
+    def _get_instance(self, model_class, value, label):
+        try:
+            return model_class.objects.get(uuid=value, is_deleted=False)
+        except model_class.DoesNotExist:
+            raise serializers.ValidationError({label: f"Invalid {label} UUID."})
+
+    def validate_country(self, value):
+        return self._get_instance(Country, value, "country")
+
+    def validate_visa_main_category(self, value):
+        return self._get_instance(VisaMain, value, "visa_main_category")
+
+
+class ProcessSubStatusSerializer(serializers.ModelSerializer):
+    country_name = serializers.CharField(source='country.name', read_only=True)
+    visa_main_category_name = serializers.CharField(source='visa_main_category.name', read_only=True)
+    process_status_name_value = serializers.CharField(source='process_status_name.name', read_only=True)
+
+    country = serializers.UUIDField(write_only=True)
+    visa_main_category = serializers.UUIDField(write_only=True)
+    process_status_name = serializers.UUIDField(write_only=True)
+
+    class Meta:
+        model = ProcessSubStatusName
+        fields = [
+            "id",
+            "uuid",
+            "country",
+            "country_name",
+            "visa_main_category",
+            "visa_main_category_name",
+            "process_status_name",
+            "process_status_name_value",
+            "process_sub_status_name",
+            "description",
+            "is_deleted",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "uuid", "created_at", "updated_at"]
+
+    def _get_instance(self, model_class, value, label):
+        try:
+            return model_class.objects.get(uuid=value, is_deleted=False)
+        except model_class.DoesNotExist:
+            raise serializers.ValidationError({label: f"Invalid {label} UUID."})
+
+    def validate_country(self, value):
+        return self._get_instance(Country, value, "country")
+
+    def validate_visa_main_category(self, value):
+        return self._get_instance(VisaMain, value, "visa_main_category")
+
+    def validate_process_status_name(self, value):
+        return self._get_instance(ProcessStatusName, value, "process_status_name")
+
+    
+class ProcessTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProcessType
+        fields = [
+            "id",
+            "uuid",
+            "name",
+            "description",
+            "is_deleted",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "uuid", "created_at", "updated_at"]
+
+
+class PaymentToSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PaymentTo
+        fields = [
+            "id",
+            "uuid",
+            "name",
+            "description",
+            "is_deleted",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "uuid", "created_at", "updated_at"]
+
+
+
+class PaymentCategorySerializer(serializers.ModelSerializer):
+    payment_to_name = serializers.CharField(source='payment_to.name', read_only=True)
+    payment_to = serializers.UUIDField(write_only=True)
+
+    class Meta:
+        model = PaymentCategory
+        fields = [
+            "id",
+            "uuid",
+            "payment_to",
+            "payment_to_name",
+            "payment_category",
+            "description",
+            "is_deleted",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "uuid", "created_at", "updated_at"]
+
+    def validate_payment_to(self, value):
+        try:
+            return PaymentTo.objects.get(uuid=value, is_deleted=False)
+        except PaymentTo.DoesNotExist:
+            raise serializers.ValidationError("Invalid or deleted Payment To UUID.")
+
+
+
+class CivilIdNameSerializer(serializers.ModelSerializer):
+    valid_type_detail = serializers.SerializerMethodField()
+    valid_duration_unit_detail = serializers.SerializerMethodField()
+
+    # Use CharField instead of ChoiceField
+    valid_type = serializers.CharField(required=False, allow_blank=True)
+    valid_duration_unit = serializers.CharField(required=False, allow_blank=True)
+
+    class Meta:
+        model = CivilIdName
+        fields = [
+            'uuid',
+            'civil_id_name',
+            'authority_full_name',
+            'authority_short_name',
+            'valid_type',
+            'valid_type_detail',
+            'valid_duration_value',
+            'valid_duration_unit',
+            'valid_duration_unit_detail',
+            'description',
+            'is_deleted',
+            'created_at',
+            'updated_at'
+        ]
+        read_only_fields = ['uuid', 'created_at', 'updated_at', 'is_deleted']
+
+    def get_valid_type_detail(self, obj):
+        return obj.get_valid_type_display() if obj.valid_type else None
+
+    def get_valid_duration_unit_detail(self, obj):
+        return obj.get_valid_duration_unit_display() if obj.valid_duration_unit else None
+
+    def validate_valid_type(self, value):
+        if value:
+            value = value.strip().title()  # e.g., "permanent" -> "Permanent"
+            if value not in dict(CivilIdName.VALID_TYPE_CHOICES):
+                raise serializers.ValidationError(f"{value} is not a valid choice")
+        return value
+
+    def validate_valid_duration_unit(self, value):
+        if value:
+            value = value.strip().title()
+            if value not in dict(CivilIdName.VALID_UNIT_CHOICES):
+                raise serializers.ValidationError(f"{value} is not a valid choice")
+        return value
 
 class VisaEligibilityTypeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -2145,36 +2533,6 @@ class DocumentTypeSerializer(serializers.ModelSerializer):
 
 
 
-class DocumentNameSerializer(serializers.ModelSerializer):
-    document_category_name = serializers.CharField(
-        source='document_category.name', read_only=True
-    )
-
-    
-    document_category = serializers.UUIDField(write_only=True)
-
-    class Meta:
-        model = DocumentName
-        fields = [
-            "uuid",
-            "document_category",
-            "document_category_name",
-            "document_name",
-            "description",
-            "is_deleted",
-            "created_at",
-            "updated_at",
-        ]
-        read_only_fields = ["uuid", "created_at", "updated_at"]
-
-    def validate_document_category(self, value):
-        """
-        Validate and convert UUID → actual DocumentCategory instance.
-        """
-        try:
-            return DocumentCategory.objects.get(uuid=value)
-        except DocumentCategory.DoesNotExist:
-            raise serializers.ValidationError("Invalid document category UUID.")
 
 
 
@@ -2418,3 +2776,187 @@ class PaymentCategorySerializer(serializers.ModelSerializer):
             return PaymentTo.objects.get(uuid=value, is_deleted=False)
         except PaymentTo.DoesNotExist:
             raise serializers.ValidationError("Invalid or deleted Payment To UUID.")
+
+
+
+
+class StudyFactorAgeSerializer(serializers.ModelSerializer):
+    # Write-only for input
+    factor_for = serializers.UUIDField(required=False, write_only=True)
+    study_age_group = serializers.UUIDField(required=False, write_only=True)
+
+    country = serializers.ListField(child=serializers.UUIDField(), write_only=True, required=False)
+    course_level = serializers.ListField(child=serializers.UUIDField(), write_only=True, required=False)
+
+    # Read-only for response
+    factor_for_uuid = serializers.SerializerMethodField()
+    study_age_group_uuid = serializers.SerializerMethodField()
+    country_list_uuid = serializers.SerializerMethodField()
+    course_level_list_uuid = serializers.SerializerMethodField()
+
+    # Names
+    factor_for_name = serializers.CharField(source='factor_for.name', read_only=True)
+    study_age_group_name = serializers.CharField(source='study_age_group.name', read_only=True)
+    country_names = serializers.SerializerMethodField()
+    course_level_names = serializers.SerializerMethodField()
+
+    class Meta:
+        model = StudyFactorAge
+        fields = [
+            'id', 'uuid',
+
+            # UUID response
+            'factor_for_uuid', 'factor_for_name',
+            'study_age_group_uuid', 'study_age_group_name',
+
+            # Input fields
+            'factor_for', 'study_age_group',
+
+            'minimum_age_months', 'maximum_age_months',
+
+            # M2M read response
+            'country_list_uuid', 'country_names',
+            'course_level_list_uuid', 'course_level_names',
+
+            # M2M input
+            'country', 'course_level',
+
+            'description', 'is_deleted', 'created_at', 'updated_at'
+        ]
+
+    # Return UUIDs in response
+    def get_factor_for_uuid(self, obj):
+        return str(obj.factor_for.uuid)
+
+    def get_study_age_group_uuid(self, obj):
+        return str(obj.study_age_group.uuid)
+
+    def get_country_list_uuid(self, obj):
+        return [str(c.uuid) for c in obj.country.all()]
+
+    def get_course_level_list_uuid(self, obj):
+        return [str(cl.uuid) for cl in obj.course_level.all()]
+
+    def get_country_names(self, obj):
+        return [c.name for c in obj.country.all()]
+
+    def get_course_level_names(self, obj):
+        return [cl.name for cl in obj.course_level.all()]
+
+    def update(self, instance, validated_data):
+
+        if 'factor_for' in validated_data:
+            instance.factor_for = FactorFor.objects.get(uuid=validated_data.pop('factor_for'))
+
+        if 'study_age_group' in validated_data:
+            instance.study_age_group = AgeGroup.objects.get(uuid=validated_data.pop('study_age_group'))
+
+        if 'country' in validated_data:
+            instance.country.set(Country.objects.filter(uuid__in=validated_data.pop('country')))
+
+        if 'course_level' in validated_data:
+            instance.course_level.set(CourseLevel.objects.filter(uuid__in=validated_data.pop('course_level')))
+
+        return super().update(instance, validated_data)
+
+
+class StudyFactorAcademicResultSerializer(serializers.ModelSerializer):
+    factor_for_name = serializers.CharField(source='factor_for.name', read_only=True)
+    academic_result_group_name = serializers.CharField(source='academic_result_group.name', read_only=True)
+    minimum_academic_result_required_name = serializers.CharField(source='minimum_academic_result_required.name', read_only=True)
+
+    class Meta:
+        model = StudyFactorAcademicResult
+        fields = [
+            'uuid',
+            'factor_for', 'factor_for_name',
+            'academic_result_group', 'academic_result_group_name',
+            'minimum_academic_result_required', 'minimum_academic_result_required_name',
+            'description',
+            'is_deleted', 'created_at', 'updated_at',
+        ]
+        read_only_fields = ['uuid', 'created_at', 'updated_at']
+
+
+
+
+
+class StudyFactorBacklogsSerializer(serializers.ModelSerializer):
+    factor_for_name = serializers.CharField(source="factor_for.name", read_only=True)
+    backlog_group_name = serializers.CharField(source="backlog_group.name", read_only=True)
+
+    class Meta:
+        model = StudyFactorBacklogs
+        fields = [
+            "uuid",
+            "factor_for",
+            "factor_for_name",
+            "backlog_group",
+            "backlog_group_name",
+            "backlog_accepted",
+            "max_backlogs",
+            "description",
+            "is_deleted",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ("uuid", "created_at", "updated_at")
+
+
+
+class StudyFactorGAPSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StudyFactorGAP
+        fields = "__all__"
+        read_only_fields = ("uuid", "created_at", "updated_at")
+
+
+
+class StudyFactorLanguageAbilitySerializer(serializers.ModelSerializer):
+
+    factor_for_name = serializers.CharField(source='factor_for.name', read_only=True)
+    language_ability_group_name = serializers.CharField(source='language_ability_group.name', read_only=True)
+    language_test_name_name = serializers.CharField(source='language_test_name.name', read_only=True)
+    module_name_name = serializers.CharField(source='module_name.name', read_only=True)
+    minimum_overall_score_name = serializers.CharField(source='minimum_overall_score.name', read_only=True)
+    not_less_than_name = serializers.CharField(source='not_less_than.name', read_only=True)
+
+    class Meta:
+        model = StudyFactorLanguageAbility
+        fields = [
+            'uuid',
+            'factor_for', 'factor_for_name',
+            'language_ability_group', 'language_ability_group_name',
+            'language_test_name', 'language_test_name_name',
+            'module_name', 'module_name_name',
+
+            'minimum_overall_score', 'minimum_overall_score_name',
+            'not_less_than', 'not_less_than_name',
+
+            'in_no_of_modules',
+            'description',
+            'is_deleted',
+            'created_at',
+            'updated_at'
+        ]
+
+        read_only_fields = ['uuid', 'created_at', 'updated_at']
+
+class StudyFactorEntranceTestAbilitySerializer(serializers.ModelSerializer):
+    factor_for_name = serializers.CharField(source='factor_for.name', read_only=True)
+    entrance_test_ability_group_name = serializers.CharField(source='entrance_test_ability_group.name', read_only=True)
+    entrance_test_name_name = serializers.CharField(source='entrance_test_name.name', read_only=True)
+    minimum_score_required_name = serializers.CharField(source='minimum_score_required.name', read_only=True)
+
+    class Meta:
+        model = StudyFactorEntranceTestAbility
+        fields = [
+            'id', 'uuid',
+            'factor_for', 'factor_for_name',
+            'entrance_test_ability_group', 'entrance_test_ability_group_name',
+            'entrance_test_name', 'entrance_test_name_name',
+            'minimum_score_required', 'minimum_score_required_name',
+            'description',
+            'is_deleted', 'created_at', 'updated_at',
+        ]
+        read_only_fields = ('id', 'uuid', 'is_deleted', 'created_at', 'updated_at')

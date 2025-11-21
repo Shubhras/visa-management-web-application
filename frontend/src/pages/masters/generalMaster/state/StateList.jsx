@@ -402,14 +402,6 @@ const StateList = () => {
     }));
   };
 
-  // For "Select All" button
-  const handleSelectAllButton = () => {
-    if (isAllSelected) {
-      setSelectedRows([]);
-    } else {
-      setSelectedRows(stateListData.map(Item => Item.uuid));
-    }
-  };
   // For checkbox in table header
   const handleSelectAll = (e) => {
     const checked = e.target.checked;
@@ -648,7 +640,6 @@ const StateList = () => {
   };
 
   const startIndex = (tableState.currentPage - 1) * tableState.limit;
-  const statusOptions = ['All', 'Active', 'Inactive'];
 
   return (
     <>
