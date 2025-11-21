@@ -182,7 +182,18 @@ export const importStakeholderCategoryDataAPI = (payload) => {
 
 // PRIORITY_TYPE
 export const getPriorityTypeListDataAPI = (data) => {
-    const apiUrl = `${url.GET_PRIORITY_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.GET_PRIORITY_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
     return get(apiUrl);
 };
 
@@ -205,7 +216,18 @@ export const deletePriorityTypeDataAPI = (payload) => {
 };
 
 export const exportPriorityTypeDataAPI = (payload) => {
-    const apiUrl = `${url.EXPORT_PRIORITY_TYPE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_PRIORITY_TYPE_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -216,7 +238,18 @@ export const importPriorityTypeDataAPI = (payload) => {
 
 // TAGS_TYPE
 export const getTagsTypeListDataAPI = (data) => {
-    const apiUrl = `${url.GET_TAGS_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+     let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.GET_TAGS_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
     return get(apiUrl);
 };
 
@@ -239,7 +272,18 @@ export const deleteTagsTypeDataAPI = (payload) => {
 };
 
 export const exportTagsTypeDataAPI = (payload) => {
-    const apiUrl = `${url.EXPORT_TAGS_TYPE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_TAGS_TYPE_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -250,7 +294,18 @@ export const importTagsTypeDataAPI = (payload) => {
 
 // ACTIVITY_TYPE
 export const getActivityTypeListDataAPI = (data) => {
-    const apiUrl = `${url.GET_ACTIVITY_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+       let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.GET_ACTIVITY_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
     return get(apiUrl);
 };
 
@@ -273,7 +328,18 @@ export const deleteActivityTypeDataAPI = (payload) => {
 };
 
 export const exportActivityTypeDataAPI = (payload) => {
-    const apiUrl = `${url.EXPORT_ACTIVITY_TYPE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_ACTIVITY_TYPE_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -285,7 +351,18 @@ export const importActivityTypeDataAPI = (payload) => {
 
 // LOST_REASON_B2C
 export const getLostReasonB2CListDataAPI = (data) => {
-    const apiUrl = `${url.GET_LOST_REASON_B2C_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+       let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.GET_LOST_REASON_B2C_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
     return get(apiUrl);
 };
 
@@ -308,7 +385,18 @@ export const deleteLostReasonB2CDataAPI = (payload) => {
 };
 
 export const exportLostReasonB2CDataAPI = (payload) => {
-    const apiUrl = `${url.EXPORT_LOST_REASON_B2C_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_LOST_REASON_B2C_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -319,7 +407,18 @@ export const importLostReasonB2CDataAPI = (payload) => {
 
 // LOST_REASON_B2B
 export const getLostReasonB2BListDataAPI = (data) => {
-    const apiUrl = `${url.GET_LOST_REASON_B2B_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+       let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.GET_LOST_REASON_B2B_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
     return get(apiUrl);
 };
 
@@ -342,7 +441,18 @@ export const deleteLostReasonB2BDataAPI = (payload) => {
 };
 
 export const exportLostReasonB2BDataAPI = (payload) => {
-    const apiUrl = `${url.EXPORT_LOST_REASON_B2B_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_LOST_REASON_B2B_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -352,7 +462,18 @@ export const importLostReasonB2BDataAPI = (payload) => {
 };
 // LEAD_SOURCE
 export const getLeadSourceListDataAPI = (data) => {
-    const apiUrl = `${url.GET_LEAD_SOURCE_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.GET_LEAD_SOURCE_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
     return get(apiUrl);
 };
 
@@ -375,7 +496,18 @@ export const deleteLeadSourceDataAPI = (payload) => {
 };
 
 export const exportLeadSourceDataAPI = (payload) => {
-    const apiUrl = `${url.EXPORT_LEAD_SOURCE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_LEAD_SOURCE_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -386,7 +518,18 @@ export const importLeadSourceDataAPI = (payload) => {
 
 // INTEREST_LEVEL
 export const getInterestLevelListDataAPI = (data) => {
-    const apiUrl = `${url.GET_INTEREST_LEVEL_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.GET_INTEREST_LEVEL_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
     return get(apiUrl);
 };
 
@@ -409,7 +552,18 @@ export const deleteInterestLevelDataAPI = (payload) => {
 };
 
 export const exportInterestLevelDataAPI = (payload) => {
-    const apiUrl = `${url.EXPORT_INTEREST_LEVEL_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+     let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_INTEREST_LEVEL_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -1140,7 +1294,7 @@ export const exportStateDataAPI = (payload) => {
             .join(",");
     }
     //const apiUrl = `${url.EXPORT_STATE_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&country=${payload?.country}&customSort=${customSort}`;
-        const apiUrl = `${url.EXPORT_STATE_LIST_API}?search=${payload?.search}&fields=${payload?.fields}&state=${payload?.uuids}&country=${payload?.country}&customSort=${customSort}`;
+    const apiUrl = `${url.EXPORT_STATE_LIST_API}?search=${payload?.search}&fields=${payload?.fields}&state=${payload?.uuids}&country=${payload?.country}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -2223,7 +2377,18 @@ export const importLanguageNameTestAPI = (payload) => {
 
 // Language Test Name
 export const getLanguageTestNameListAPI = (data) => {
-    const apiUrl = `${url.GET_LANGUAGE_TEST_NAME_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.GET_LANGUAGE_TEST_NAME_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
     return get(apiUrl);
 };
 
@@ -2246,7 +2411,18 @@ export const deleteLanguageTestNameAPI = (payload) => {
 };
 
 export const exportLanguageTestNameAPI = (payload) => {
-    const apiUrl = `${url.EXPORT_LANGUAGE_TEST_NAME_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_LANGUAGE_TEST_NAME_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -4499,96 +4675,93 @@ export const importVisaNameAPI = (payload) => {
 
 // Language Ability Group
 export const getLanguageAbilityGroupListAPI = (data) => {
-  const apiUrl = `${url.GET_LANGUAGE_ABILITY_GROUP_LIST}?search=${data?.search}&page=${
-    data?.page
-  }&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
-  return get(apiUrl);
+    const apiUrl = `${url.GET_LANGUAGE_ABILITY_GROUP_LIST}?search=${data?.search}&page=${data?.page
+        }&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
 };
 
 export const addLanguageAbilityGroupAPI = (payload) => {
-  return post(url.ADD_LANGUAGE_ABILITY_GROUP_API, payload);
+    return post(url.ADD_LANGUAGE_ABILITY_GROUP_API, payload);
 };
 
 export const editLanguageAbilityGroupAPI = (payload) => {
-  const apiUrl = `${url.EDIT_LANGUAGE_ABILITY_GROUP_API}${payload?.uuid}/update/`;
-  return put(apiUrl, payload);
+    const apiUrl = `${url.EDIT_LANGUAGE_ABILITY_GROUP_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
 };
 
 export const deleteLanguageAbilityGroupAPI = (payload) => {
-  const apiUrl = `${url.DELETE_LANGUAGE_ABILITY_GROUP_API}delete/`;
-  return delWithPayload(apiUrl, { id: payload });
+    const apiUrl = `${url.DELETE_LANGUAGE_ABILITY_GROUP_API}delete/`;
+    return delWithPayload(apiUrl, { id: payload });
 };
 
 export const exportLanguageAbilityGroupAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_LANGUAGE_ABILITY_GROUP_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
-  return getExportData(apiUrl, payload);
+    const apiUrl = `${url.EXPORT_LANGUAGE_ABILITY_GROUP_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
 };
 
 export const importLanguageAbilityGroupAPI = (payload) => {
-  return post(url.IMPORT_LANGUAGE_ABILITY_GROUP_API, payload);
+    return post(url.IMPORT_LANGUAGE_ABILITY_GROUP_API, payload);
 };
 
 // Entrance Test Ability Group
 export const getEntranceTestAbilityGroupListAPI = (data) => {
-  const apiUrl = `${url.GET_ENTRANCE_TEST_ABILITY_GROUP_LIST}?search=${data?.search}&page=${
-    data?.page
-  }&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
-  return get(apiUrl);
+    const apiUrl = `${url.GET_ENTRANCE_TEST_ABILITY_GROUP_LIST}?search=${data?.search}&page=${data?.page
+        }&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
 };
 
 export const addEntranceTestAbilityGroupAPI = (payload) => {
-  return post(url.ADD_ENTRANCE_TEST_ABILITY_GROUP_API, payload);
+    return post(url.ADD_ENTRANCE_TEST_ABILITY_GROUP_API, payload);
 };
 
 export const editEntranceTestAbilityGroupAPI = (payload) => {
-  const apiUrl = `${url.EDIT_ENTRANCE_TEST_ABILITY_GROUP_API}${payload?.uuid}/update/`;
-  return put(apiUrl, payload);
+    const apiUrl = `${url.EDIT_ENTRANCE_TEST_ABILITY_GROUP_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
 };
 
 
 export const deleteEntranceTestAbilityGroupAPI = (payload) => {
-  const apiUrl = `${url.DELETE_ENTRANCE_TEST_ABILITY_GROUP_API}delete/`;
-  return delWithPayload(apiUrl, { id: payload });
+    const apiUrl = `${url.DELETE_ENTRANCE_TEST_ABILITY_GROUP_API}delete/`;
+    return delWithPayload(apiUrl, { id: payload });
 };
 
 export const exportEntranceTestAbilityGroupAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_ENTRANCE_TEST_ABILITY_GROUP_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
-  return getExportData(apiUrl, payload);
+    const apiUrl = `${url.EXPORT_ENTRANCE_TEST_ABILITY_GROUP_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
 };
 
 export const importEntranceTestAbilityGroupAPI = (payload) => {
-  return post(url.IMPORT_ENTRANCE_TEST_ABILITY_GROUP_API, payload);
+    return post(url.IMPORT_ENTRANCE_TEST_ABILITY_GROUP_API, payload);
 };
 
 // Age – API Functions
 export const getAgeListAPI = (data) => {
-  const apiUrl = `${url.GET_AGE_LIST}?search=${data?.search}&page=${data?.page}&limit=${
-    data?.limit
-  }&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
-  return get(apiUrl);
+    const apiUrl = `${url.GET_AGE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit
+        }&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
 };
 
 export const addAgeAPI = (payload) => {
-  return post(url.ADD_AGE_API, payload);
+    return post(url.ADD_AGE_API, payload);
 };
 
 export const editAgeAPI = (payload) => {
-  const apiUrl = `${url.EDIT_AGE_API}${payload?.uuid}/update/`;
-  return put(apiUrl, payload);
+    const apiUrl = `${url.EDIT_AGE_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
 };
 
 export const deleteAgeAPI = (payload) => {
-  const apiUrl = `${url.DELETE_AGE_API}delete/`;
-  return delWithPayload(apiUrl, { id: payload });
+    const apiUrl = `${url.DELETE_AGE_API}delete/`;
+    return delWithPayload(apiUrl, { id: payload });
 };
 
 export const exportAgeAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_AGE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
-  return getExportData(apiUrl, payload);
+    const apiUrl = `${url.EXPORT_AGE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
 };
 
 export const importAgeAPI = (payload) => {
-  return post(url.IMPORT_AGE_API, payload);
+    return post(url.IMPORT_AGE_API, payload);
 };
 
 
