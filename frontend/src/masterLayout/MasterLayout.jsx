@@ -24,6 +24,7 @@ const MasterLayout = ({ children }) => {
     "Stakeholder Category",
     "Stakeholder Type",
     "Accrediation Category",
+    "Bank Account Type",
     "District",
     "State",
     "Country",
