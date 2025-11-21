@@ -39,6 +39,10 @@ const MasterLayout = ({ children }) => {
     "Visa Status",
     "Possibility Level",
     "Visa Name",
+    "Study : Language Ability Group",
+    "Study : Entrance Test Ability Group",
+    "Study Factor : Age",
+    "Marital Status",
     "Education Level Code",
     "Education Level",
     "Study Main Area",
@@ -53,10 +57,8 @@ const MasterLayout = ({ children }) => {
     "ECA Awarding Body",
     "Medium of Education",
     "Language Name(Test)",
-    "Study : Language Ability Group",
-    "Study : Entrance Test Ability Group",
-    "Study Factor : Age",
-    "Marital Status"
+
+
   ]);
 
 
