@@ -2,7 +2,7 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
-from django.db.models import Q
+from django.db.models import Q,F
 from uuid import UUID
 import datetime
 import openpyxl
@@ -53,27 +53,98 @@ class DocumentCategoryCreateAPIView(APIView):
 
 
 
+# class DocumentCategoryListAPIView(APIView):
+#     def get(self, request):
+#         search = request.GET.get('search', '').strip()
+#         sort_by = request.GET.get('sortBy', 'created_at')
+#         sort_order = request.GET.get('sortOrder', 'desc')
+
+#         allowed_sort_fields = ['name', 'description', 'created_at']
+#         if sort_by not in allowed_sort_fields:
+#             sort_by = 'created_at'
+
+#         if sort_order == 'desc':
+#             sort_by = f'-{sort_by}'
+
+#         queryset = DocumentCategory.objects.filter(is_deleted=False)
+
+#         if search:
+#             queryset = queryset.filter(
+#                 Q(name__istartswith=search)     
+#             )
+
+#         queryset = queryset.order_by(sort_by)
+#         paginator = CustomPagination()
+#         result_page = paginator.paginate_queryset(queryset, request)
+#         serializer = DocumentCategorySerializer(result_page, many=True)
+#         return paginator.get_paginated_response(serializer.data)
+
+
 class DocumentCategoryListAPIView(APIView):
+
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
 
+        # -----------------------
+        # CUSTOM SORTING (Excel type)
+        # -----------------------
+        custom_sort = request.GET.get('customSort')
         allowed_sort_fields = ['name', 'description', 'created_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
 
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        if custom_sort:
+            sort_fields = []
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
 
+                    if field not in allowed_sort_fields:
+                        continue
+
+                    # Case-insensitive sorting using Lower()
+                    if order == "asc":
+                        sort_fields.append(F(field).asc(nulls_last=True))
+                    else:
+                        sort_fields.append(F(field).desc(nulls_last=True))
+
+                except ValueError:
+                    continue
+
+        else:
+            # NORMAL SORTING
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'desc')
+
+            if sort_by not in allowed_sort_fields:
+                sort_by = 'created_at'
+
+            if sort_order == 'desc':
+                sort_fields = [f'-{sort_by}']
+            else:
+                sort_fields = [sort_by]
+
+        # -----------------------
+        # BASE QUERY
+        # -----------------------
         queryset = DocumentCategory.objects.filter(is_deleted=False)
 
+        # -----------------------
+        # SEARCH FILTER
+        # -----------------------
         if search:
             queryset = queryset.filter(
-                Q(name__istartswith=search)     
+                Q(name__istartswith=search)
             )
 
-        queryset = queryset.order_by(sort_by)
+        # -----------------------
+        # APPLY SORTING
+        # -----------------------
+        queryset = queryset.order_by(*sort_fields)
+
+        # -----------------------
+        # PAGINATION
+        # -----------------------
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = DocumentCategorySerializer(result_page, many=True)
@@ -481,34 +552,6 @@ class DocumentNameCreateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
-# class DocumentNameListAPIView(APIView):
-#     def get(self, request):
-#         search = request.GET.get('search', '').strip()
-#         category_id = request.GET.get('category_id')
-#         sort_by = request.GET.get('sortBy', 'created_at')
-#         sort_order = request.GET.get('sortOrder', 'desc')
-
-#         allowed_sort_fields = ['document_name', 'created_at']
-#         if sort_by not in allowed_sort_fields:
-#             sort_by = 'created_at'
-#         if sort_order == 'desc':
-#             sort_by = f'-{sort_by}'
-
-#         queryset = DocumentName.objects.filter(is_deleted=False)
-#         if category_id:
-#             queryset = queryset.filter(document_category_id=category_id)
-#         if search:
-#             queryset = queryset.filter(
-#                 Q(document_name__icontains=search) |
-#                 Q(description__icontains=search) |
-#                 Q(document_category__name__icontains=search)
-#             )
-
-#         queryset = queryset.order_by(sort_by)
-#         paginator = CustomPagination()
-#         result_page = paginator.paginate_queryset(queryset, request)
-#         serializer = DocumentNameSerializer(result_page, many=True)
-#         return paginator.get_paginated_response(serializer.data)
 
 
 class DocumentNameListAPIView(APIView):
@@ -2270,6 +2313,146 @@ class RequiredDocumentListAPIView(APIView):
         return paginator.get_paginated_response(serializer.data)
 
 
+# class VisaMajorByCountryListAPIView(APIView):
+#     def get(self, request, country_uuid):
+#         # Validate Country UUID
+#         try:
+#             country = Country.objects.get(uuid=country_uuid, is_deleted=False)
+#         except Country.DoesNotExist:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "Country not found"
+#             }, status=404)
+
+#         # Filter RequiredDocument and get unique VisaMajor categories
+#         visa_major_ids = (
+#             RequiredDocument.objects.filter(country=country, is_deleted=False)
+#             .values_list("visa_major_category", flat=True)
+#             .distinct()
+#         )
+
+#         visa_majors = VisaMajor.objects.filter(id__in=visa_major_ids, is_deleted=False)
+
+#         # Prepare response format
+#         data = [
+#             {"uuid": vm.uuid, "name": vm.name}
+#             for vm in visa_majors
+#         ]
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "country": country.name,
+#             "count": len(data),
+#             "data": data,
+#         }, status=200)
+# class VisaMajorByCountryListAPIView(APIView):
+#     def get(self, request, representing_country_uuid):
+
+#         # Step 1 — Validate representing country
+#         representing_country = (
+#             RepresentingCountry.objects
+#             .filter(uuid=representing_country_uuid, is_deleted=False)
+#             .select_related("country")
+#             .first()
+#         )
+
+#         if not representing_country:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "Representing Country not found"
+#             }, status=404)
+
+#         # Step 2 — Get the actual mapped country
+#         country_obj = representing_country.country
+
+#         # Step 3 — Fetch distinct Visa Major categories from RequiredDocument
+#         visa_majors = (
+#             RequiredDocument.objects.filter(
+#                 country=country_obj,
+#                 is_deleted=False
+#             )
+#             .values(
+#                 "visa_major_category__uuid",
+#                 "visa_major_category__name"
+#             )
+#             .distinct()
+#         )
+
+#         # Step 4 — Prepare the response list
+#         data = [
+#             {
+#                 "uuid": item["visa_major_category__uuid"],
+#                 "name": item["visa_major_category__name"]
+#             }
+#             for item in visa_majors
+#         ]
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "representing_country": representing_country.representing_country_name,
+#             "mapped_country": country_obj.name,
+#             "count": len(data),
+#             "data": data
+#         }, status=200)
+
+
+class VisaMajorByCountryListAPIView(APIView):
+    def get(self, request, representing_country_uuid):
+
+        # Step 1 — Validate representing country
+        representing_country = (
+            RepresentingCountry.objects
+            .filter(uuid=representing_country_uuid, is_deleted=False)
+            .select_related("country")
+            .first()
+        )
+
+        if not representing_country:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "Representing Country not found"
+            }, status=404)
+
+        # Step 2 — Get the actual mapped country
+        country_obj = representing_country.country
+
+        # Step 3 — Fetch distinct Visa Major categories from RequiredDocument
+        visa_majors = (
+            RequiredDocument.objects.filter(
+                country=country_obj,
+                is_deleted=False
+            )
+            .values(
+                "visa_major_category__uuid",
+                "visa_major_category__name"
+            )
+            .distinct()
+        )
+
+        # Step 4 — Prepare the response list
+        data = [
+            {
+                "uuid": item["visa_major_category__uuid"],
+                "name": item["visa_major_category__name"]
+            }
+            for item in visa_majors
+        ]
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "representing_country": representing_country.fullName,  # FIXED
+            "mapped_country": country_obj.fullName,
+            "count": len(data),
+            "data": data
+        }, status=200)
+
+
 class RequiredDocumentRetrieveAPIView(APIView):
     def get(self, request, uuid):
         try:
@@ -3122,6 +3305,101 @@ class ProcessSubStatusRetrieveAPIView(APIView):
             "status": True,
             "data": serializer.data
         })
+
+# class ProcessSubStatusByCountryAPIView(APIView):
+#     """
+#     Fetch all Process Sub Status Names for a given representing country UUID.
+#     """
+
+#     def get(self, request, country_uuid):
+
+#         # Validate country UUID
+#         country_obj = Country.objects.filter(uuid=country_uuid, is_deleted=False).first()
+
+#         if not country_obj:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Invalid country UUID"
+#             }, status=400)
+
+#         # Fetch unique process sub-status entries mapped to this country
+#         queryset = (
+#             ProcessSubStatusName.objects
+#             .filter(country=country_obj, is_deleted=False)
+#             .select_related("visa_main_category", "process_status_name")
+#             .order_by("process_sub_status_name")
+#         )
+
+#         if not queryset.exists():
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": "No records found for this country",
+#                 "data": []
+#             })
+
+#         # Serialize
+#         serializer = ProcessSubStatusSerializer(queryset, many=True)
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "country_name": country_obj.name,
+#             "count": queryset.count(),
+#             "data": serializer.data
+#         }, status=200)
+
+class ProcessSubStatusByCountryAPIView(APIView):
+
+    def get(self, request, representing_country_uuid):
+
+        representing_country = (
+            RepresentingCountry.objects
+            .filter(uuid=representing_country_uuid, is_deleted=False)
+            .select_related("country")
+            .first()
+        )
+
+        if not representing_country:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "Representing Country not found"
+            }, status=404)
+
+        # Step 2 — Get actual country object linked to representing country
+        country_obj = representing_country.country  
+
+        # Step 3 — Filter ProcessSubStatus by THIS country
+        items = (
+            ProcessSubStatusName.objects
+            .filter(country=country_obj, is_deleted=False)
+            .select_related("process_status_name")
+            .order_by("process_sub_status_name")
+        )
+
+        # Step 4 — Prepare response
+        data = [
+            {
+                "uuid": i.uuid,
+                "country_name": i.country.fullName,
+                "visa_main_category_name": i.visa_main_category.visa_main_category,
+                "process_status_name_value": i.process_status_name.process_status_name,
+                "process_sub_status_name": i.process_sub_status_name,
+                "description": i.description,
+            }
+            for i in items
+        ]
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "representing_country": representing_country.full_name,
+            "mapped_country": country_obj.fullName,
+            "count": len(data),
+            "data": data
+        }, status=200)
 
 
 class ProcessSubStatusUpdateAPIView(APIView):

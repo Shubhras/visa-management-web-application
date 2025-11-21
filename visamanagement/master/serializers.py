@@ -1651,71 +1651,71 @@ class DocumentsForSerializer(serializers.ModelSerializer):
         read_only_fields = ["uuid", "created_at", "updated_at"]
 
 
-class RequiredDocumentSerializer(serializers.ModelSerializer):
-    # Read-only human-readable fields
-    country_name = serializers.CharField(source='country.name', read_only=True)
-    visa_main_category_name = serializers.CharField(source='visa_main_category.name', read_only=True)
-    visa_major_category_name = serializers.CharField(source='visa_major_category.name', read_only=True)
-    visa_name_name = serializers.CharField(source='visa_name.name', read_only=True)
-    document_category_name = serializers.CharField(source='document_category.name', read_only=True)
-    document_name_name = serializers.CharField(source='document_name.document_name', read_only=True)
+# class RequiredDocumentSerializer(serializers.ModelSerializer):
+#     # Read-only human-readable fields
+#     country_name = serializers.CharField(source='country.name', read_only=True)
+#     visa_main_category_name = serializers.CharField(source='visa_main_category.name', read_only=True)
+#     visa_major_category_name = serializers.CharField(source='visa_major_category.name', read_only=True)
+#     visa_name_name = serializers.CharField(source='visa_name.name', read_only=True)
+#     document_category_name = serializers.CharField(source='document_category.name', read_only=True)
+#     document_name_name = serializers.CharField(source='document_name.document_name', read_only=True)
 
-    # Accept UUIDs for foreign keys in write operations
-    country = serializers.UUIDField(write_only=True)
-    visa_main_category = serializers.UUIDField(write_only=True)
-    visa_major_category = serializers.UUIDField(write_only=True)
-    visa_name = serializers.UUIDField(write_only=True)
-    document_category = serializers.UUIDField(write_only=True)
-    document_name = serializers.UUIDField(write_only=True)
+#     # Accept UUIDs for foreign keys in write operations
+#     country = serializers.UUIDField(write_only=True)
+#     visa_main_category = serializers.UUIDField(write_only=True)
+#     visa_major_category = serializers.UUIDField(write_only=True)
+#     visa_name = serializers.UUIDField(write_only=True)
+#     document_category = serializers.UUIDField(write_only=True)
+#     document_name = serializers.UUIDField(write_only=True)
 
-    class Meta:
-        model = RequiredDocument
-        fields = [
-            "id",
-            "uuid",
-            "country",
-            "country_name",
-            "visa_main_category",
-            "visa_main_category_name",
-            "visa_major_category",
-            "visa_major_category_name",
-            "visa_name",
-            "visa_name_name",
-            "document_category",
-            "document_category_name",
-            "document_name",
-            "document_name_name",
-            "description",
-            "is_deleted",
-            "created_at",
-            "updated_at",
-        ]
-        read_only_fields = ["id", "uuid", "created_at", "updated_at"]
+#     class Meta:
+#         model = RequiredDocument
+#         fields = [
+#             "id",
+#             "uuid",
+#             "country",
+#             "country_name",
+#             "visa_main_category",
+#             "visa_main_category_name",
+#             "visa_major_category",
+#             "visa_major_category_name",
+#             "visa_name",
+#             "visa_name_name",
+#             "document_category",
+#             "document_category_name",
+#             "document_name",
+#             "document_name_name",
+#             "description",
+#             "is_deleted",
+#             "created_at",
+#             "updated_at",
+#         ]
+#         read_only_fields = ["id", "uuid", "created_at", "updated_at"]
 
-    # Validate-and-convert helper: convert incoming UUID -> model instance
-    def _get_instance_by_uuid(self, model_class, value, field_label):
-        try:
-            return model_class.objects.get(uuid=value, is_deleted=False)
-        except model_class.DoesNotExist:
-            raise serializers.ValidationError({field_label: f"Invalid {field_label} UUID."})
+#     # Validate-and-convert helper: convert incoming UUID -> model instance
+#     def _get_instance_by_uuid(self, model_class, value, field_label):
+#         try:
+#             return model_class.objects.get(uuid=value, is_deleted=False)
+#         except model_class.DoesNotExist:
+#             raise serializers.ValidationError({field_label: f"Invalid {field_label} UUID."})
 
-    def validate_country(self, value):
-        return self._get_instance_by_uuid(Country, value, 'country')
+#     def validate_country(self, value):
+#         return self._get_instance_by_uuid(Country, value, 'country')
 
-    def validate_visa_main_category(self, value):
-        return self._get_instance_by_uuid(VisaMain, value, 'visa_main_category')
+#     def validate_visa_main_category(self, value):
+#         return self._get_instance_by_uuid(VisaMain, value, 'visa_main_category')
 
-    def validate_visa_major_category(self, value):
-        return self._get_instance_by_uuid(VisaMajor, value, 'visa_major_category')
+#     def validate_visa_major_category(self, value):
+#         return self._get_instance_by_uuid(VisaMajor, value, 'visa_major_category')
 
-    def validate_visa_name(self, value):
-        return self._get_instance_by_uuid(VisaName, value, 'visa_name')
+#     def validate_visa_name(self, value):
+#         return self._get_instance_by_uuid(VisaName, value, 'visa_name')
 
-    def validate_document_category(self, value):
-        return self._get_instance_by_uuid(DocumentCategory, value, 'document_category')
+#     def validate_document_category(self, value):
+#         return self._get_instance_by_uuid(DocumentCategory, value, 'document_category')
 
-    def validate_document_name(self, value):
-        return self._get_instance_by_uuid(DocumentName, value, 'document_name')
+#     def validate_document_name(self, value):
+#         return self._get_instance_by_uuid(DocumentName, value, 'document_name')
 
 
 class ProcessStatusSerializer(serializers.ModelSerializer):

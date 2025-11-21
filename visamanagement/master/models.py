@@ -584,7 +584,6 @@ class AcademicResultType(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     name=models.CharField(max_length=255,blank=True,null=True, unique=True)
-    name=models.TextField(max_length=255,blank=True,null=True, unique=True)
     datatype=models.CharField(max_length=250,choices=VALID_TYPE_CHOICES,blank=True, null=True)
     description = models.TextField(max_length=255,blank=True,null=True)
     is_deleted = models.BooleanField(default=False)
