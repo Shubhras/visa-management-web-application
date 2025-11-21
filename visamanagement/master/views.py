@@ -5375,7 +5375,7 @@ class CivilIdNameExportAPIView(APIView):
             queryset = queryset.filter(uuid__in=uuids)
 
         if search:
-            queryset = queryset.filter(name__istartswith=search)
+            queryset = queryset.filter(civil_id_name__istartswith=search)
             
 
         # -------- Custom Sorting ----------
