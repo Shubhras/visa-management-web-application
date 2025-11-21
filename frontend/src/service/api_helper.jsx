@@ -2047,12 +2047,12 @@ export const getDistrictListDataAPI = (data) => {
 };
 
 export const addDistrictDataAPI = (payload) => {
-    const apiUrl = `${url.ADD_DISTRICT_LIST_API} `;
+    const apiUrl = `${url.ADD_DISTRICT_LIST_API}`;
     return post(apiUrl, payload);
 };
 
 export const editDistrictDataAPI = (payload) => {
-    const apiUrl = `${url.EDIT_DISTRICT_LIST_API}${payload?.uuid} /update/`;
+    const apiUrl = `${url.EDIT_DISTRICT_LIST_API}${payload?.uuid}/update/`;
     return put(apiUrl, payload);
 };
 
@@ -2060,7 +2060,7 @@ export const deleteDistrictDataAPI = (payload) => {
     const prepareDATA = {
         id: payload,
     };
-    const apiUrl = `${url.DELETE_DISTRICT_LIST_API} delete/`;
+    const apiUrl = `${url.DELETE_DISTRICT_LIST_API}delete/`;
     return delWithPayload(apiUrl, prepareDATA);
 };
 
