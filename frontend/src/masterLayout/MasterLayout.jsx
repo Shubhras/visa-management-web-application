@@ -109,7 +109,7 @@ const MasterLayout = ({ children }) => {
             { name: "Ownership Type", path: "/ownership-type" },
             { name: "Stakeholder Category", path: "/stakeholder-list" },
             { name: "Stakeholder Type", path: "/stakeholder-type" },
-            { name: "Accrediation Category ", path: "/accrediation-category" },
+            { name: "Accrediation Category", path: "/accrediation-category" },
             { name: "Accrediation Name", path: "/accrediation-name" },
             { name: "Bank Account Type", path: "/bank-ccount-type" },
             { name: "License Name", path: "/license-name" },
