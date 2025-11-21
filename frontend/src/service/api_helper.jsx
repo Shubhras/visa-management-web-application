@@ -936,7 +936,7 @@ export const getCountryListDataAPI = (data) => {
             })
             .join(",");
     }
-    const apiUrl = `${url.GET_COUNTRY_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&continent=${data?.continent}&customSort=${customSort}`;
+    const apiUrl = `${url.GET_COUNTRY_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&continent=${data?.continent}&customSort=${customSort}`;
     return get(apiUrl);
 };
 
@@ -1011,7 +1011,7 @@ export const getStateListDataAPI = (data) => {
             })
             .join(",");
     }
-    const apiUrl = `${url.GET_STATE_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&country=${data?.country}&customSort=${customSort}`;
+    const apiUrl = `${url.GET_STATE_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&country=${data?.country}&customSort=${customSort}`;
     return get(apiUrl);
 };
 
@@ -1599,7 +1599,7 @@ export const getDistrictListDataAPI = (data) => {
             })
             .join(",");
     }
-    const apiUrl = `${url.GET_DISTRICT_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&country=${data?.country}&state=${data?.state}&customSort=${customSort}`;
+    const apiUrl = `${url.GET_DISTRICT_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&country=${data?.country}&state=${data?.state}&customSort=${customSort}`;
     return get(apiUrl);
 };
 

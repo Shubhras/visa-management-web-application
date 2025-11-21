@@ -106,6 +106,11 @@ const AddEditCountryModal = ({
       })
     );
   };
+  // Custom filter function for search from start
+  const customFilterOption = (option, inputValue) => {
+    if (!inputValue) return true;
+    return option.label.toLowerCase().startsWith(inputValue.toLowerCase());
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -260,6 +265,7 @@ const AddEditCountryModal = ({
                         : null
                     }
                     onChange={handleSelectChange}
+                    filterOption={customFilterOption}
                     placeholder="Select Continent"
                     isClearable
                     isSearchable

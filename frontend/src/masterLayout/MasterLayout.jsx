@@ -354,6 +354,8 @@ const MasterLayout = ({ children }) => {
   // }, [location.pathname]);
 
   useEffect(() => {
+    // when changes pathname than blank GlobalSearch
+    setGlobalSearch('');
     // Current path के basis पर menu item ढूंढो
     const findMenuItemByPath = (items, currentPath) => {
       for (const item of items) {
