@@ -38,8 +38,14 @@ const MasterLayout = ({ children }) => {
     "Visa Eligibility Type",
     "Visa Status",
     "Possibility Level",
-    "Visa Name"
+    "Visa Name",
+    "Study : Language Ability Group",
+    "Study : Entrance Test Ability Group",
+    "Study Factor : Age",
+    "Marital Status"
   ]);
+
+
 
   // Global Search State - Har page pe same rahega
   const { globalSearch, setGlobalSearch } = useGlobalSearch();
@@ -266,6 +272,9 @@ const MasterLayout = ({ children }) => {
             { name: "Study : Academic Result Group", path: "/academic-result-group" },
             { name: "Study : Gap Group", path: "/gap-group" },
             { name: "Study : Backlogs Group", path: "/backlogs-group" },
+            { name: "Study : Language Ability Group", path: "/language-ability-group" },
+            { name: "Study : Entrance Test Ability Group", path: "/entrance-test-ability-group" },
+            { name: "Study Factor : Age", path: "/age" },
           ],
         },
 

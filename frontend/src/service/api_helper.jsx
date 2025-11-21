@@ -504,7 +504,7 @@ export const exportGenderDataAPI = (payload) => {
             .map(item => `${item.field}:${item.order}`)
             .join(",");
     }
-    const apiUrl = `${url.EXPORT_GENDER_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+    const apiUrl = `${url.EXPORT_GENDER_API}?search=${data?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -1728,7 +1728,7 @@ export const exportCityDataAPI = (payload) => {
             })
             .join(",");
     }
-    const apiUrl = `${url.EXPORT_CITY_LIST_API}?fields=${payload?.fields}&city=${payload?.uuids}&country=${payload?.country}&state=${payload?.state}&district=${payload?.district}&customSort=${customSort}`;
+    const apiUrl = `${url.EXPORT_CITY_LIST_API}?search=${data?.search}&fields=${payload?.fields}&city=${payload?.uuids}&country=${payload?.country}&state=${payload?.state}&district=${payload?.district}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -4031,6 +4031,7 @@ export const editVisaEligibilityTypeAPI = (payload) => {
     return put(apiUrl, payload);
 };
 
+
 export const deleteVisaEligibilityTypeAPI = (payload) => {
     const prepareDATA = { id: payload };
     const apiUrl = `${url.DELETE_VISA_ELIGIBILITY_TYPE_API}delete/`;
@@ -4142,12 +4143,99 @@ export const importVisaNameAPI = (payload) => {
 };
 
 
+// Language Ability Group
+export const getLanguageAbilityGroupListAPI = (data) => {
+  const apiUrl = `${url.GET_LANGUAGE_ABILITY_GROUP_LIST}?search=${data?.search}&page=${
+    data?.page
+  }&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
+
+export const addLanguageAbilityGroupAPI = (payload) => {
+  return post(url.ADD_LANGUAGE_ABILITY_GROUP_API, payload);
+};
+
+export const editLanguageAbilityGroupAPI = (payload) => {
+  const apiUrl = `${url.EDIT_LANGUAGE_ABILITY_GROUP_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+
+export const deleteLanguageAbilityGroupAPI = (payload) => {
+  const apiUrl = `${url.DELETE_LANGUAGE_ABILITY_GROUP_API}delete/`;
+  return delWithPayload(apiUrl, { id: payload });
+};
+
+export const exportLanguageAbilityGroupAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_LANGUAGE_ABILITY_GROUP_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+
+export const importLanguageAbilityGroupAPI = (payload) => {
+  return post(url.IMPORT_LANGUAGE_ABILITY_GROUP_API, payload);
+};
+
+// Entrance Test Ability Group
+export const getEntranceTestAbilityGroupListAPI = (data) => {
+  const apiUrl = `${url.GET_ENTRANCE_TEST_ABILITY_GROUP_LIST}?search=${data?.search}&page=${
+    data?.page
+  }&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
+
+export const addEntranceTestAbilityGroupAPI = (payload) => {
+  return post(url.ADD_ENTRANCE_TEST_ABILITY_GROUP_API, payload);
+};
+
+export const editEntranceTestAbilityGroupAPI = (payload) => {
+  const apiUrl = `${url.EDIT_ENTRANCE_TEST_ABILITY_GROUP_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
 
 
+export const deleteEntranceTestAbilityGroupAPI = (payload) => {
+  const apiUrl = `${url.DELETE_ENTRANCE_TEST_ABILITY_GROUP_API}delete/`;
+  return delWithPayload(apiUrl, { id: payload });
+};
 
+export const exportEntranceTestAbilityGroupAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_ENTRANCE_TEST_ABILITY_GROUP_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
 
+export const importEntranceTestAbilityGroupAPI = (payload) => {
+  return post(url.IMPORT_ENTRANCE_TEST_ABILITY_GROUP_API, payload);
+};
 
+// Age – API Functions
+export const getAgeListAPI = (data) => {
+  const apiUrl = `${url.GET_AGE_LIST}?search=${data?.search}&page=${data?.page}&limit=${
+    data?.limit
+  }&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
 
+export const addAgeAPI = (payload) => {
+  return post(url.ADD_AGE_API, payload);
+};
+
+export const editAgeAPI = (payload) => {
+  const apiUrl = `${url.EDIT_AGE_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+
+export const deleteAgeAPI = (payload) => {
+  const apiUrl = `${url.DELETE_AGE_API}delete/`;
+  return delWithPayload(apiUrl, { id: payload });
+};
+
+export const exportAgeAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_AGE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+
+export const importAgeAPI = (payload) => {
+  return post(url.IMPORT_AGE_API, payload);
+};
 
 
 
