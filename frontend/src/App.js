@@ -460,6 +460,18 @@ import AgeGroupList from "./pages/masters/studyFactors/studyAgeGroup/AgeGroupLis
 import AcademicResultGroupList from "./pages/masters/studyFactors/academicResultGroup/AddImportAcademicResultGroupModal";
 import GapGroupList from "./pages/masters/studyFactors/gapGroup/GapGroupList";
 import BacklogsGroupList from "./pages/masters/studyFactors/backlogsGroup/BacklogsGroupList";
+import RepresentingCountryList from "./pages/masters/visaMaster/representingCountry/RepresentingCountryList";
+import VisaMajorCategoryList from "./pages/masters/visaMaster/visaMajorCategory/VisaMajorCategoryList";
+import ApplicantTypeList from "./pages/masters/visaMaster/applicantType/ApplicantTypeList";
+import VisaEligibilityTypeList from "./pages/masters/visaMaster/visaEligibilityType/VisaEligibilityTypeList";
+import VisaStatusList from "./pages/masters/visaMaster/visaStatus/VisaStatusList";
+import PossibilityLevelList from "./pages/masters/visaMaster/possibilityLevel/PossibilityLevelList";
+import VisaNameList from "./pages/masters/visaMaster/visaName/VisaNameList";
+
+import EntranceTestAbilityGroupList from "./pages/masters/studyFactors/entranceTestAbilityGroup/EntranceTestAbilityGroupList";
+import LanguageAbilityGroupList from "./pages/masters/studyFactors/languageAbilityGroup/LanguageAbilityGroupList";
+import AgeList from "./pages/masters/studyFactors/age/AgeList";
+
 
 
 
@@ -747,22 +759,22 @@ function App() {
           <Route path="/entrance-test-result" element={<ProtectedRoute><EntranceTestResultList /></ProtectedRoute>}></Route>
           <Route path="/language-test-result" element={<ProtectedRoute><LanguageTestResultList /></ProtectedRoute>}></Route>
 
-        {/*Occupation Master*/}
-        <Route path="/job-type" element={<ProtectedRoute><JobTypeList /></ProtectedRoute>}></Route>
-        <Route path="/mode-of-salary" element={<ProtectedRoute><ModeofSalaryList /></ProtectedRoute>}></Route>
-        <Route path="/it-return-status" element={<ProtectedRoute><ITReturnStatusList /></ProtectedRoute>}></Route>
-        <Route path="/occupation-type" element={<ProtectedRoute><OccupationTypeList /></ProtectedRoute>}></Route>
-        <Route path="/occupation-prospect" element={<ProtectedRoute><OccupationProspectList /></ProtectedRoute>}></Route>
-        <Route path="/occupation-category" element={<ProtectedRoute><OccupationCategoryList /></ProtectedRoute>}></Route>
-        <Route path="/occupation-version" element={<ProtectedRoute><OccupationVersionList /></ProtectedRoute>}></Route>
-        <Route path="/occupation-level-code" element={<ProtectedRoute><OccupationLevelCodeList /></ProtectedRoute>}></Route>
-        <Route path="/occupation-level" element={<ProtectedRoute><OccupationLevelList /></ProtectedRoute>}></Route>
-        <Route path="/occupation-code" element={<ProtectedRoute><OccupationCodeList /></ProtectedRoute>}></Route>
-        <Route path="/occupation-name" element={<ProtectedRoute><OccupationNameList /></ProtectedRoute>}></Route>
-        <Route path="/designation" element={<ProtectedRoute><DesignationList /></ProtectedRoute>}></Route>
-        <Route path="/job-prospect" element={<ProtectedRoute><JobProspectList /></ProtectedRoute>}></Route>
-        <Route path="/related-occupation" element={<ProtectedRoute>< RelatedOccupationList/></ProtectedRoute>}></Route>
-        
+          {/*Occupation Master*/}
+          <Route path="/job-type" element={<ProtectedRoute><JobTypeList /></ProtectedRoute>}></Route>
+          <Route path="/mode-of-salary" element={<ProtectedRoute><ModeofSalaryList /></ProtectedRoute>}></Route>
+          <Route path="/it-return-status" element={<ProtectedRoute><ITReturnStatusList /></ProtectedRoute>}></Route>
+          <Route path="/occupation-type" element={<ProtectedRoute><OccupationTypeList /></ProtectedRoute>}></Route>
+          <Route path="/occupation-prospect" element={<ProtectedRoute><OccupationProspectList /></ProtectedRoute>}></Route>
+          <Route path="/occupation-category" element={<ProtectedRoute><OccupationCategoryList /></ProtectedRoute>}></Route>
+          <Route path="/occupation-version" element={<ProtectedRoute><OccupationVersionList /></ProtectedRoute>}></Route>
+          <Route path="/occupation-level-code" element={<ProtectedRoute><OccupationLevelCodeList /></ProtectedRoute>}></Route>
+          <Route path="/occupation-level" element={<ProtectedRoute><OccupationLevelList /></ProtectedRoute>}></Route>
+          <Route path="/occupation-code" element={<ProtectedRoute><OccupationCodeList /></ProtectedRoute>}></Route>
+          <Route path="/occupation-name" element={<ProtectedRoute><OccupationNameList /></ProtectedRoute>}></Route>
+          <Route path="/designation" element={<ProtectedRoute><DesignationList /></ProtectedRoute>}></Route>
+          <Route path="/job-prospect" element={<ProtectedRoute><JobProspectList /></ProtectedRoute>}></Route>
+          <Route path="/related-occupation" element={<ProtectedRoute>< RelatedOccupationList /></ProtectedRoute>}></Route>
+
 
 
           {/*Institute Master*/}
@@ -808,17 +820,25 @@ function App() {
           <Route path="/process-sub-status-name" element={<ProtectedRoute><ProcessSubStatusNameList /></ProtectedRoute>}></Route>
           <Route path="/process-type" element={<ProtectedRoute><ProcessTypeList /></ProtectedRoute>}></Route>
           <Route path="/payment-to" element={<ProtectedRoute><PaymentToList /></ProtectedRoute>}></Route>
-           <Route path="/payment-category" element={<ProtectedRoute><PaymentCategoryList /></ProtectedRoute>}></Route>
-   
+          <Route path="/payment-category" element={<ProtectedRoute><PaymentCategoryList /></ProtectedRoute>}></Route>
 
+          {/* Visa Master */}
+          <Route path="/representing-country" element={<ProtectedRoute><RepresentingCountryList /></ProtectedRoute>}></Route>
+          <Route path="/visa-major-category" element={<ProtectedRoute><VisaMajorCategoryList /></ProtectedRoute>}></Route>
+          <Route path="/applicant-type" element={<ProtectedRoute><ApplicantTypeList /></ProtectedRoute>}></Route>
+          <Route path="/visa-eligibility-type" element={<ProtectedRoute><VisaEligibilityTypeList /></ProtectedRoute>}></Route>
+          <Route path="/visa-status" element={<ProtectedRoute><VisaStatusList /></ProtectedRoute>}></Route>
+          <Route path="/possibility-level" element={<ProtectedRoute><PossibilityLevelList /></ProtectedRoute>}></Route>
+          <Route path="/visa-name" element={<ProtectedRoute><VisaNameList /></ProtectedRoute>}></Route>
           {/* Study Factors Master */}
-          <Route path="/factor-for" element={<ProtectedRoute><FactorForList/></ProtectedRoute>}></Route>
-          <Route path="/age-group" element={<ProtectedRoute><AgeGroupList/></ProtectedRoute>}></Route>
-          <Route path="/academic-result-group" element={<ProtectedRoute><AcademicResultGroupList/></ProtectedRoute>}></Route>
-          <Route path="/gap-group" element={<ProtectedRoute><GapGroupList/></ProtectedRoute>}></Route>
-          <Route path="/backlogs-group" element={<ProtectedRoute><BacklogsGroupList/></ProtectedRoute>}></Route>
-
-
+          <Route path="/factor-for" element={<ProtectedRoute><FactorForList /></ProtectedRoute>}></Route>
+          <Route path="/age-group" element={<ProtectedRoute><AgeGroupList /></ProtectedRoute>}></Route>
+          <Route path="/academic-result-group" element={<ProtectedRoute><AcademicResultGroupList /></ProtectedRoute>}></Route>
+          <Route path="/gap-group" element={<ProtectedRoute><GapGroupList /></ProtectedRoute>}></Route>
+          <Route path="/backlogs-group" element={<ProtectedRoute><BacklogsGroupList /></ProtectedRoute>}></Route>
+          <Route path="/language-ability-group" element={<ProtectedRoute><LanguageAbilityGroupList /></ProtectedRoute>}></Route>
+          <Route path="/entrance-test-ability-group" element={<ProtectedRoute><EntranceTestAbilityGroupList /></ProtectedRoute>}></Route>
+          <Route path="/age" element={<ProtectedRoute><AgeList /></ProtectedRoute>}></Route>
 
           {/* 404 Error Page */}
           <Route path='*' element={<ErrorPage />} />

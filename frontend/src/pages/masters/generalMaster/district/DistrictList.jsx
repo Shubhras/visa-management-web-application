@@ -1122,6 +1122,8 @@ const DistrictList = () => {
       limit: tableState.limit,
       search: tableState.search || '',
       status: tableState.status || '',
+      sortBy: '',
+      sortOrder: '',
       sort: tableState.sort,
       country: columnFilters.countryId.length > 0 ? columnFilters.countryId : null,
       state: columnFilters.stateId.length > 0 ? columnFilters.stateId : null

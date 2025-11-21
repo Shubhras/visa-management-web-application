@@ -14,24 +14,60 @@ const MasterLayout = ({ children }) => {
   const [selectedItemName, setSelectedItemName] = useState("Dashboard");
   const [openSubmenu, setOpenSubmenu] = useState(null);
   const [openChildMenu, setOpenChildMenu] = useState(null);
-const [searchAllowedModules] = useState([
-  "City",
-  "Department",
-  "District",
-  "State",
-  "Country",
-  "Gender",
-  "Continents",
-  "Factor For",
-  "Study : Age Group",
-  "Study : Academic Result Group",
-  "Study : Gap Group",
-  "Study : Backlogs Group",
-  "Marital Status",
-  "Time Zone",
-  "Relation",
-  "Civil ID Name"
-]);
+
+  const [searchAllowedModules] = useState([
+    "City",
+    "Department",
+    "Employee Type",
+    "Company Type",
+    "Ownership Type",
+    "Stakeholder Category",
+    "Stakeholder Type",
+    "Accrediation Category",
+    "District",
+    "State",
+    "Country",
+    "Gender",
+    "Lead Source",
+    "Continents",
+    "Factor For",
+    "Study : Age Group",
+    "Study : Academic Result Group",
+    "Study : Gap Group",
+    "Study : Backlogs Group",
+    "Marital Status",
+    "Time Zone",
+    "Relation",
+    "Civil ID Name",
+    "Representing Country",
+    "Visa Major Category",
+    "Applicant Type",
+    "Visa Eligibility Type",
+    "Visa Status",
+    "Possibility Level",
+    "Visa Name",
+    "Study : Language Ability Group",
+    "Study : Entrance Test Ability Group",
+    "Study Factor : Age",
+    "Marital Status",
+    "Education Level Code",
+    "Education Level",
+    "Study Main Area",
+    "Study Major Area",
+    "Academic Result Type",
+    "Education Type",
+    "Study Specialisation",
+    "Degree Awarded By",
+    "Academic Result",
+    "Degree Awarded Institute",
+    "Compare : Academic Result To Result",
+    "ECA Awarding Body",
+    "Medium of Education",
+    "Language Name(Test)",
+  ]);
+
+
+
   // Global Search State - Har page pe same rahega
   const { globalSearch, setGlobalSearch } = useGlobalSearch();
   const menuItems = [
@@ -100,7 +136,7 @@ const [searchAllowedModules] = useState([
             { name: "Ownership Type", path: "/ownership-type" },
             { name: "Stakeholder Category", path: "/stakeholder-list" },
             { name: "Stakeholder Type", path: "/stakeholder-type" },
-            { name: "Accrediation Category ", path: "/accrediation-category" },
+            { name: "Accrediation Category", path: "/accrediation-category" },
             { name: "Accrediation Name", path: "/accrediation-name" },
             { name: "Bank Account Type", path: "/bank-ccount-type" },
             { name: "License Name", path: "/license-name" },
@@ -188,7 +224,7 @@ const [searchAllowedModules] = useState([
             { name: "Job Prospect", path: "/job-prospect" },
 
             { name: "Related Occupation", path: "/related-occupation" },
-            
+
           ],
         },
         {
@@ -257,6 +293,24 @@ const [searchAllowedModules] = useState([
             { name: "Study : Academic Result Group", path: "/academic-result-group" },
             { name: "Study : Gap Group", path: "/gap-group" },
             { name: "Study : Backlogs Group", path: "/backlogs-group" },
+            { name: "Study : Language Ability Group", path: "/language-ability-group" },
+            { name: "Study : Entrance Test Ability Group", path: "/entrance-test-ability-group" },
+            { name: "Study Factor : Age", path: "/age" },
+          ],
+        },
+
+        {
+          name: "Visa",
+          children: [
+            { name: "Representing Country", path: "/representing-country" },
+            { name: "Visa Main Category", path: "/visa-main-category" },
+            { name: "Visa Major Category", path: "/visa-major-category" },
+            { name: "Applicant Type", path: "/applicant-type" },
+            { name: "Visa Eligibility Type", path: "/visa-eligibility-type" },
+            { name: "Visa Status", path: "/visa-status" },
+            { name: "Possibility Level", path: "/possibility-level" },
+            { name: "Visa Name", path: "/visa-name" }
+
           ],
         },
 
@@ -321,6 +375,8 @@ const [searchAllowedModules] = useState([
   // }, [location.pathname]);
 
   useEffect(() => {
+    // when changes pathname than blank GlobalSearch
+    setGlobalSearch('');
     // Current path के basis पर menu item ढूंढो
     const findMenuItemByPath = (items, currentPath) => {
       for (const item of items) {
@@ -2012,7 +2068,7 @@ const [searchAllowedModules] = useState([
             {/* Sub Header */}
             <div className="sub-header-bar d-flex align-items-center justify-content-between">
               <div className="sub-header-title">{selectedItemName}</div>
-             {searchAllowedModules.indexOf(selectedItemName) !== -1 && (
+              {searchAllowedModules.indexOf(selectedItemName) !== -1 && (
                 <div className="position-relative search-filter-div">
                   <Icon
                     icon="ion:search-outline"
