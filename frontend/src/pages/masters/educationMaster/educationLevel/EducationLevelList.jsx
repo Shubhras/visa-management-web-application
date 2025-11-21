@@ -45,13 +45,14 @@ const EducationLevelList = () => {
     const [stakeholderTypeData, setStakeholderTypeData] = useState([]);
     const [loading, setLoading] = useState(false);
     const [loadingExport, setLoadingExport] = useState(false);
-    const [items] = useState(["Education Level", "Education Level Code", "Description", "Modified On"]);
-    const [selectedItems, setSelectedItems] = useState(["Education Level", "Education Level Code"]);
-    const [ItemsRequired] = useState(["Education Level", "Education Level Code"]);
+    const [items] = useState(["Education Level", "Education Level Code","Education Duration (Months)", "Description", "Modified On"]);
+    const [selectedItems, setSelectedItems] = useState(["Education Level", "Education Level Code","Education Duration (Months)"]);
+    const [ItemsRequired] = useState(["Education Level", "Education Level Code","Education Duration (Months)"]);
 
     const [tableColumns] = useState([
         { id: 'level_code_detail', label: 'Education Level Code', field: 'level_code_detail', visible: true, required: true },
         { id: 'educationlevel', label: 'Education Level ', field: 'educationlevel', visible: true, required: true },
+        { id: 'duration', label: 'Education Duration (Months)', field: 'duration', visible: true, required: true },
         { id: 'description', label: 'Description', field: 'description', visible: true, required: false },
         { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false },
     ]);
@@ -414,6 +415,7 @@ const EducationLevelList = () => {
         const fieldMapping = {
             "Education Level": "educationlevel",
             "Education Level Code": "level_code",
+            "Education Duration (Months)":"duration",
             "Modified On": "updated_at",
             "Description": "description",
         };
@@ -464,21 +466,6 @@ const EducationLevelList = () => {
 
     const startIndex = (tableState.currentPage - 1) * tableState.limit;
     const statusOptions = ['All', 'Active', 'Inactive'];
-
-    const formatDateTime = (dateString) => {
-        const date = new Date(dateString);
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const year = date.getFullYear();
-        let hours = date.getHours();
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        const seconds = String(date.getSeconds()).padStart(2, '0');
-        const ampm = hours >= 12 ? 'PM' : 'AM';
-        hours = hours % 12 || 12;
-        hours = String(hours).padStart(2, '0');
-        return `${day}-${month}-${year} ${hours}:${minutes}:${seconds} ${ampm}`
-    };
-
 
     return (
         <>
@@ -680,6 +667,9 @@ const EducationLevelList = () => {
                                                 )}
                                                 {isColumnVisible('educationlevel') && (
                                                     <td><span>{rowItem.educationlevel}</span></td>
+                                                )}
+                                                {isColumnVisible('durations') && (
+                                                    <td><span>{rowItem.durations}</span></td>
                                                 )}
                                                 {isColumnVisible('description') && (
                                                     <td><span>{rowItem.description}</span></td>

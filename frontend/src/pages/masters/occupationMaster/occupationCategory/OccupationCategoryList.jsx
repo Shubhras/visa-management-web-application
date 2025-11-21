@@ -496,8 +496,8 @@ const OccupationCategoryList = () => {
     // Map frontend labels to backend field names
     const fieldMapping = {
       "Occupation Category": "occupationcategory",
-      "Country": "country_name",
-      "Occupation Version": "occupation_version_name",
+      "Country": "country",
+      "Occupation Version": "occupation_version",
       "Occupation Category Code": "occupationcategorycode",
       "Modified On": "updated_at",
       Description: "description",
@@ -531,7 +531,7 @@ const OccupationCategoryList = () => {
             const url = window.URL.createObjectURL(blob);
             const link = document.createElement("a");
             link.href = url;
-            link.download = `OccupationType.xlsx`;
+            link.download = `Occupation Category.xlsx`;
             document.body.appendChild(link);
             link.click();
             link.remove();
@@ -788,7 +788,7 @@ const OccupationCategoryList = () => {
                         )}
                         {isColumnVisible("country") && (
                           <td>
-                            <span>{rowItem.country_name}</span>
+                            <span>{rowItem.country}</span>
                           </td>
                         )}
                         {isColumnVisible("occupationversion") && (

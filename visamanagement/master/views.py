@@ -17,6 +17,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from import_export.formats.base_formats import CSV, XLSX
 from tablib import Dataset
 import openpyxl
+from django.db.models.functions import Lower
 from django.http import HttpResponse
 from uuid import UUID
 from datetime import datetime  
@@ -128,32 +129,72 @@ class AdminLogoutView(APIView):
 
 
 class GenderListAPIView(APIView):
+    permission_classes = [IsAuthenticated]  # Add IsAdminUser if needed
+
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'asc')
-
-        allowed_sort_fields = ['name', 'description', 'created_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        custom_sort = request.GET.get('customSort')
+        
+        allowed_sort_fields = ['name', 'description', 'created_at', 'updated_at']
 
         queryset = Gender.objects.filter(is_deleted=False)
 
+        # Search filter
         if search:
-            queryset = queryset.filter(
-                Q(name__istartswith=search)
-            )
+            queryset = queryset.filter(Q(name__istartswith=search))
 
-        queryset = queryset.order_by(sort_by)
+        # Sorting
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
 
+        sort_fields = []
+
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sorting for string fields
+                    if field in ['name', 'description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+        else:
+            # fallback sorting
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'asc')
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+            f = F(orm_field)
+            sort_fields = [f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # Pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = GenderSerializer(result_page, many=True)
 
         return paginator.get_paginated_response(serializer.data)
+
+
+
 
 
 class GenderCreateAPIView(APIView):
@@ -341,16 +382,17 @@ class GenderDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-
-
 class GenderExportAPIView(APIView):
     """
-    Export Gender data to CSV or XLSX.
+    Export Gender data to CSV or XLSX with custom sorting.
     """
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')  # comma-separated
-        uuids_param = request.GET.get('uuids', '')  # comma-separated UUIDs
+        uuids_param = request.GET.get('uuids', '')  # comma-separated
+        custom_sort = request.GET.get('customSort')  # e.g., name:asc,created_at:desc
 
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
@@ -361,32 +403,67 @@ class GenderExportAPIView(APIView):
             'description': 'Description',
             'is_active': 'Active',
             'is_deleted': 'Deleted',
+            'created_at': 'Created On',
             'updated_at': 'Modified On',
         }
 
         # --- Determine export fields ---
-        if fields:
-            field_list = [f.strip() for f in fields.split(',')]
-        else:
-            field_list = list(field_header_map.keys())
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
         # --- Fetch queryset ---
         queryset = Gender.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
+
+        # --- Custom sorting logic ---
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'is_active': 'is_active',
+            'is_deleted': 'is_deleted',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+
+        sort_fields = []
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field not in sort_field_map:
+                        continue
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sorting for string fields
+                    if field in ['name', 'description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+                except ValueError:
+                    continue
+        else:
+            # Default sorting
+            sort_order = request.GET.get('sortOrder', 'desc')
+            f = F('created_at')
+            sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
 
         # --- Prepare dataset ---
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title="Gender"
+        dataset.title = "Gender"
 
         for gender in queryset:
             row = []
             for field in field_list:
                 value = getattr(gender, field, '')
                 if field in ['created_at', 'updated_at'] and value:
-                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                    value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
                     value = int(value)
                 row.append(value if value is not None else '')
@@ -410,6 +487,7 @@ class GenderExportAPIView(APIView):
         return response
 
 
+        
 class GenderImportAPIView(APIView):
     """
     Import Gender data from CSV or XLSX with skip and duplicate tracking.
@@ -539,31 +617,63 @@ class GenderImportAPIView(APIView):
 
 
 #-------------------------------maritalstatus--------------------------------
+
 class MaritalstatusListAPIView(APIView):
     def get(self, request):
         try:
             search = request.GET.get('search', '').strip()
-            sort_by = request.GET.get('sortBy', 'created_at')
-            sort_order = request.GET.get('sortOrder', 'asc')
+            custom_sort = request.GET.get('customSort')  # e.g., text:asc,created_at:desc
 
-            # Allowed fields to sort
-            allowed_sort_fields = ['text', 'description', 'created_at']
-            if sort_by not in allowed_sort_fields:
-                sort_by = 'created_at'
-            if sort_order == 'desc':
-                sort_by = f'-{sort_by}'
+            allowed_sort_fields = ['name', 'description', 'created_at', 'updated_at']
 
-            # Filter out deleted entries
             queryset = Maritalstatus.objects.filter(is_deleted=False)
 
-            # Apply search filter
+            # Search filter
             if search:
-                queryset = queryset.filter(
-                    Q(name__istartswith=search)
-                )
+                queryset = queryset.filter(Q(text__istartswith=search))
 
-            # Apply ordering
-            queryset = queryset.order_by(sort_by)
+            # Sorting logic
+            sort_field_map = {
+                'name': 'name',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+            }
+
+            sort_fields = []
+
+            if custom_sort:
+                for rule in custom_sort.split(','):
+                    try:
+                        field, order = rule.split(':')
+                        field = field.strip()
+                        order = order.strip().lower()
+
+                        if field not in sort_field_map:
+                            continue
+
+                        orm_field = sort_field_map[field]
+
+                        # Case-insensitive sorting for string fields
+                        if field in ['text', 'description']:
+                            f = Lower(orm_field)
+                        else:
+                            f = F(orm_field)
+
+                        sort_fields.append(
+                            f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                        )
+                    except ValueError:
+                        continue
+            else:
+                # fallback sorting
+                sort_by = request.GET.get('sortBy', 'created_at')
+                sort_order = request.GET.get('sortOrder', 'asc')
+                orm_field = sort_field_map.get(sort_by, 'created_at')
+                f = F(orm_field)
+                sort_fields = [f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)]
+
+            queryset = queryset.order_by(*sort_fields)
 
             # Pagination
             paginator = CustomPagination()
@@ -769,55 +879,92 @@ class MaritalstatusDeleteAPIView(APIView):
 
 class MaritalstatusExportAPIView(APIView):
     """
-    Export Maritalstatus data to CSV or XLSX.
+    Export Maritalstatus data to CSV or XLSX with custom sorting.
     """
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')  # comma-separated
         uuids_param = request.GET.get('uuids', '')  # comma-separated UUIDs
+        custom_sort = request.GET.get('customSort')  # e.g., name:asc,created_at:desc
 
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
-        # Field to header mapping
+        # --- Field to header mapping ---
         field_header_map = {
             'uuid': 'UUID',
             'name': 'Marital Status',
             'description': 'Description',
             'is_active': 'Active',
             'is_deleted': 'Deleted',
+            'created_at': 'Created On',
             'updated_at': 'Modified On',
         }
 
-        # Determine export fields
-        if fields:
-            field_list = [f.strip() for f in fields.split(',')]
-        else:
-            field_list = list(field_header_map.keys())
+        # --- Determine export fields ---
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
-        # Fetch queryset
+        # --- Fetch queryset ---
         queryset = Maritalstatus.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
 
+        # --- Custom sorting logic ---
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'is_active': 'is_active',
+            'is_deleted': 'is_deleted',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
 
-        # Prepare dataset
+        sort_fields = []
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field not in sort_field_map:
+                        continue
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sorting for string fields
+                    if field in ['name', 'description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+                except ValueError:
+                    continue
+        else:
+            # Default sorting by created_at
+            sort_order = request.GET.get('sortOrder', 'desc')
+            f = F('created_at')
+            sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # --- Prepare dataset ---
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title="MaritalStatus"
+        dataset.title = "MaritalStatus"
 
         for item in queryset:
             row = []
             for field in field_list:
                 value = getattr(item, field, '')
                 if field in ['created_at', 'updated_at'] and value:
-                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                    value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
                     value = int(value)
                 row.append(value if value is not None else '')
             dataset.append(row)
 
-        # Export file
+        # --- Export file ---
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
@@ -833,6 +980,7 @@ class MaritalstatusExportAPIView(APIView):
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
+    
 
 class MaritalstatusImportAPIView(APIView):
     """
@@ -967,32 +1115,72 @@ class MaritalstatusImportAPIView(APIView):
 
 
 #-------------------------------continents--------------------------------
+
+
 class ContinentListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['name', 'description', 'updated_at']
-
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        custom_sort = request.GET.get('customSort')
+        
+        allowed_sort_fields = ['name', 'description', 'created_at', 'updated_at']
 
         queryset = Continents.objects.filter(is_deleted=False)
-        if search:
-            queryset = queryset.filter(
-                Q(name__istartswith=search) 
-            )
 
-        queryset = queryset.order_by(sort_by)
+        # Search filter
+        if search:
+            queryset = queryset.filter(Q(name__istartswith=search))
+
+        # Sorting
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+
+        sort_fields = []
+
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sorting for string fields
+                    if field in ['name', 'description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+        else:
+            # fallback sorting
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'desc')
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+            f = F(orm_field)
+            sort_fields = [f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # Pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = ContinentSerializer(result_page, many=True)
-        return paginator.get_paginated_response(serializer.data)
 
+        return paginator.get_paginated_response(serializer.data)
 
 class ContinentCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -1132,6 +1320,9 @@ class ContinentDeleteAPIView(APIView):
 
 
 class ContinentExportAPIView(APIView):
+    """
+    Export Continents data to CSV or XLSX with custom sorting.
+    """
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
@@ -1139,6 +1330,8 @@ class ContinentExportAPIView(APIView):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')  # comma-separated fields
         uuids_param = request.GET.get('uuids', '')  # comma-separated UUIDs
+        custom_sort = request.GET.get('customSort')  # e.g., name:asc,created_at:desc
+
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
         # --- Field to header mapping ---
@@ -1153,16 +1346,50 @@ class ContinentExportAPIView(APIView):
         }
 
         # --- Determine which fields to export ---
-        if fields:
-            field_list = [f.strip() for f in fields.split(',')]
-        else:
-            field_list = list(field_header_map.keys())
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
         # --- Fetch queryset ---
         queryset = Continents.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
+
+        # --- Custom sorting logic ---
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'is_active': 'is_active',
+            'is_deleted': 'is_deleted',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+
+        sort_fields = []
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field not in sort_field_map:
+                        continue
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sorting for string fields
+                    if field in ['name', 'description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+                except ValueError:
+                    continue
+        else:
+            # Default sorting by created_at
+            sort_order = request.GET.get('sortOrder', 'desc')
+            f = F('created_at')
+            sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
 
         # --- Prepare dataset ---
         dataset = Dataset()
@@ -1173,13 +1400,10 @@ class ContinentExportAPIView(APIView):
             row = []
             for field in field_list:
                 value = getattr(obj, field, '')
-
                 if field in ['created_at', 'updated_at'] and value:
-                    # Convert UTC to IST
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
                     value = int(value)
-
                 row.append(value if value is not None else '')
             dataset.append(row)
 
@@ -1323,34 +1547,101 @@ class ContinentImportAPIView(APIView):
             "skipped_rows": skipped_rows
         }, status=status.HTTP_200_OK)
 
-#-------------------------------------------country---------------------------------
 
+
+
+
+#-------------------------------------------country---------------------------------
 
 class CountryListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['name', 'shortName', 'fullName', 'capitalCity', 'created_at']
+        custom_sort = request.GET.get('customSort')
 
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        # All allowed fields for sorting
+        allowed_sort_fields = [
+            'uuid', 'name', 'continent', 'shortName', 'fullName', 'officialName', 'capitalCity',
+            'dialCodes', 'currencyfullname', 'currencyshortname', 'description', 'currencyCode',
+            'status', 'created_at', 'updated_at', 'is_active', 'is_deleted'
+        ]
 
         queryset = Country.objects.filter(is_deleted=False)
-        if search:
-            queryset = queryset.filter(
-                Q(name__istartswith=search) 
-            )
 
-        queryset = queryset.order_by(sort_by)
+        # ---------------------------
+        # UUID filtering helper
+        def parse_ids(param_name):
+            raw = request.GET.get(param_name, '')
+            if raw:
+                items = [x.strip() for x in raw.split(',') if x.strip()]
+            else:
+                items = request.GET.getlist(param_name)
+            return items
+
+        def validate_uuid_list(uuid_list):
+            valid = []
+            for u in uuid_list:
+                try:
+                    valid.append(UUID(u))
+                except:
+                    pass
+            return valid
+
+        continent_list = validate_uuid_list(parse_ids('continent'))
+        if continent_list:
+            queryset = queryset.filter(continent__uuid__in=continent_list)
+
+        # Search filter
+        if search:
+            queryset = queryset.filter(Q(name__istartswith=search))
+
+        # ---------------------------
+        # Sorting
+        sort_field_map = {field: field for field in allowed_sort_fields}
+
+        sort_fields = []
+
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Use Lower for string fields for case-insensitive sorting
+                    if field in ['name', 'shortName', 'fullName', 'officialName', 'capitalCity', 'currencyfullname', 'currencyshortname', 'currencyCode', 'description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+        else:
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'desc')
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+            f = F(orm_field)
+            sort_fields = [f.asc(nulls_last=True) if sort_order.lower() == 'asc' else f.desc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # ---------------------------
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = CountrySerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
+
+
+
 
 class CountryCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -1382,6 +1673,8 @@ class CountryCreateAPIView(APIView):
             })
         errors = " ".join([msg for msgs in serializer.errors.values() for msg in msgs])
         return Response({"statusCode": 400, "status": False, "message": errors}, status=400)
+
+
 
 class CountryRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -1491,29 +1784,128 @@ class CountryDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+
 class CountryExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
-        fields = request.GET.get('fields')  # comma-separated fields
-        uuids_param = request.GET.get('uuids', '')  # comma-separated UUIDs
-        uuids = [u.strip() for u in uuids_param.split(',') if u]
+        fields = request.GET.get('fields')
+        search = request.GET.get('search', '').strip()
+        custom_sort = request.GET.get('customSort')
 
-        # --- Field to header mapping ---
+        # ---------------------------
+        # Parse IDs & Validate UUIDs
+        # ---------------------------
+        def parse_ids(param_name):
+            raw = request.GET.get(param_name, '')
+            if raw:
+                items = [x.strip() for x in raw.split(',') if x.strip()]
+            else:
+                items = request.GET.getlist(param_name)
+            return items
+
+        def validate_uuid_list(uuid_list):
+            valid = []
+            for u in uuid_list:
+                try:
+                    valid.append(UUID(u))
+                except:
+                    pass
+            return valid
+
+        continent_list = validate_uuid_list(parse_ids('continent'))
+        country_list = validate_uuid_list(parse_ids('country'))
+
+        # ---------------------------
+        # Base QuerySet with annotation
+        # ---------------------------
+        queryset = Country.objects.filter(is_deleted=False).annotate(
+            continent_name=F('continent__name')
+        )
+
+        # ---------------------------
+        # Hierarchical filtering
+        # ---------------------------
+        if country_list:
+            queryset = queryset.filter(uuid__in=country_list)
+        elif continent_list:
+            queryset = queryset.filter(continent__uuid__in=continent_list)
+
+        # ---------------------------
+        # Search
+        # ---------------------------
+        if search:
+            queryset = queryset.filter(name__istartswith=search)
+
+        # ---------------------------
+        # Sorting
+        # ---------------------------
+        # Map all fields for sorting
+        sort_field_map = {
+            'uuid': 'uuid',
+            'name': 'name',
+            'shortName': 'shortName',
+            'fullName': 'fullName',
+            'officialName': 'officialName',
+            'capitalCity': 'capitalCity',
+            'dialCodes': 'dialCodes',
+            'currencyfullname': 'currencyfullname',
+            'currencyshortname': 'currencyshortname',
+            'currencyCode': 'currencyCode',
+            'description': 'description',
+            'status': 'status',
+            'is_active': 'is_active',
+            'is_deleted': 'is_deleted',
+            'continent': 'continent_name',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+
+        sort_fields = []
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sorting for string fields
+                    if field in ['name', 'shortName', 'fullName', 'officialName', 'capitalCity', 'currencyfullname', 'currencyshortname', 'currencyCode', 'description', 'continent']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+                except ValueError:
+                    continue
+        else:
+            sort_order = request.GET.get('sortOrder', 'desc')
+            f = F('created_at')
+            sort_fields = [f.desc(nulls_last=True) if sort_order.lower() == 'desc' else f.asc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # ---------------------------
+        # Field mapping & Export
+        # ---------------------------
         field_header_map = {
             'uuid': 'UUID',
             'name': 'Country Name',
             'continent': 'Continent',
             'shortName': 'Country Short Name',
-            'fullName': 'Country Official Name',
+            'fullName': 'Country Full Name',
             'officialName': 'Country Official Name',
             'capitalCity': 'Capital City',
             'dialCodes': 'Country Calling Code',
-            'currencyfullname':'Currency Full Name',
-            'currencyshortname':'Currency Short Name',
+            'currencyfullname': 'Currency Full Name',
+            'currencyshortname': 'Currency Short Name',
             'currencyCode': 'Currency Code',
-            'description':'Description',
+            'description': 'Description',
             'status': 'Status',
             'is_active': 'Active',
             'is_deleted': 'Deleted',
@@ -1521,39 +1913,31 @@ class CountryExportAPIView(APIView):
             'updated_at': 'Modified On'
         }
 
-        # --- Determine which fields to export ---
-        if fields:
-            field_list = [f.strip() for f in fields.split(',')]
-        else:
-            field_list = list(field_header_map.keys())
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
-        # --- Fetch queryset ---
-        queryset = Country.objects.filter(is_deleted=False)
-        if uuids:
-            queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
-
-        # --- Prepare dataset ---
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = 'Country'
+
         for obj in queryset:
             row = []
             for field in field_list:
                 value = getattr(obj, field, '')
 
-                if field == 'continent' and obj.continent:
-                    value = obj.continent.name
-                elif field in ['created_at', 'updated_at'] and value:
-                    # Convert to IST and format
-                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-                elif isinstance(value, bool):
+                if field == 'continent':
+                    value = getattr(obj, 'continent_name', '')
+
+                if field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
+                if isinstance(value, bool):
                     value = int(value)
 
                 row.append(value if value is not None else '')
             dataset.append(row)
 
-        # --- Export data ---
+        # ---------------------------
+        # Export file
+        # ---------------------------
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv; charset=utf-8'
@@ -1563,7 +1947,6 @@ class CountryExportAPIView(APIView):
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'countries.xlsx'
 
-        # --- Return response ---
         response = HttpResponse(
             file_data if format_type == 'csv' else file_data.getvalue(),
             content_type=content_type
@@ -1571,6 +1954,7 @@ class CountryExportAPIView(APIView):
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
+        
 
 class CountryImportAPIView(APIView):
 
@@ -1808,17 +2192,11 @@ class StateListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['stateName', 'stateshortName', 'created_at', 'updated_at']
+        custom_sort = request.GET.get('customSort')
 
-        # Validate sort field
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        allowed_sort_fields = ['stateName', 'stateshortName', 'countryName', 'created_at', 'updated_at']
 
-        # Helper: parse comma-separated or multiple params
+      
         def parse_ids(param_name):
             raw = request.GET.get(param_name, '')
             if raw:
@@ -1827,45 +2205,84 @@ class StateListAPIView(APIView):
                 items = request.GET.getlist(param_name)
             return items
 
-        # Helper: filter valid UUIDs
         def validate_uuid_list(uuid_list):
-            valid_uuids = []
+            valid = []
             for u in uuid_list:
                 try:
-                    valid_uuids.append(UUID(u))
-                except ValueError:
+                    valid.append(UUID(u))
+                except:
                     pass
-            return valid_uuids
+            return valid
 
         country_list = validate_uuid_list(parse_ids('country'))
         state_list = validate_uuid_list(parse_ids('state'))
 
         queryset = State.objects.filter(is_deleted=False)
 
-        # ---------------------------
-        # HIERARCHICAL FILTERING
-        # ---------------------------
+        
         if state_list:
             queryset = queryset.filter(uuid__in=state_list)
         elif country_list:
             queryset = queryset.filter(countryName__uuid__in=country_list)
 
-        # ---------------------------
-        # TEXT SEARCH (STATE)
-        # ---------------------------
         if search:
             queryset = queryset.filter(
                 Q(stateName__istartswith=search)
             )
 
-        # Apply sorting
-        queryset = queryset.order_by(sort_by)
+        
+        sort_field_map = {
+            'stateName': 'stateName',
+            'stateshortName': 'stateshortName',
+            'countryName': 'countryName__name',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
 
+        sort_fields = []
+
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    if field in ['stateName', 'stateshortName', 'countryName']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+        else:
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'desc')
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+            f = F(orm_field)
+            sort_fields = [
+                f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)
+            ]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # ---------------------------
         # Pagination
+        # ---------------------------
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = StateSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
+
+
 
 
 class StateCreateAPIView(APIView):
@@ -2001,16 +2418,100 @@ class StateExportAPIView(APIView):
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')
-        uuids_param = request.GET.get('uuids', '')
-        uuids = [u.strip() for u in uuids_param.split(',') if u]
+        search = request.GET.get('search', '').strip()
+        custom_sort = request.GET.get('customSort')
 
-        # Header map for export
+        # ---------------------------
+        # Parse IDs & Validate UUIDs
+        # ---------------------------
+        def parse_ids(param_name):
+            raw = request.GET.get(param_name, '')
+            if raw:
+                items = [x.strip() for x in raw.split(',') if x.strip()]
+            else:
+                items = request.GET.getlist(param_name)
+            return items
+
+        def validate_uuid_list(uuid_list):
+            valid = []
+            for u in uuid_list:
+                try:
+                    valid.append(UUID(u))
+                except:
+                    pass
+            return valid
+
+        country_list = validate_uuid_list(parse_ids('country'))
+        state_list = validate_uuid_list(parse_ids('state'))
+
+        # ---------------------------
+        # Base QuerySet with annotation
+        # ---------------------------
+        queryset = State.objects.filter(is_deleted=False).annotate(
+            country_name=F('countryName__name')
+        )
+
+        # ---------------------------
+        # Hierarchical filtering
+        # ---------------------------
+        if state_list:
+            queryset = queryset.filter(uuid__in=state_list)
+        elif country_list:
+            queryset = queryset.filter(countryName__uuid__in=country_list)
+
+        # ---------------------------
+        # Search
+        # ---------------------------
+        if search:
+            queryset = queryset.filter(stateName__istartswith=search)
+
+        # ---------------------------
+        # Sorting
+        # ---------------------------
+        sort_field_map = {
+            'stateName': 'stateName',
+            'stateshortName': 'stateshortName',
+            'state': 'state',
+            'countryName': 'country_name',
+            'created_at': 'created_at'
+        }
+
+        sort_fields = []
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+                    # Case-insensitive for string fields
+                    if field in ['stateName', 'stateshortName', 'state', 'countryName']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+                except ValueError:
+                    continue
+        else:
+            sort_order = request.GET.get('sortOrder', 'desc')
+            f = F('created_at')
+            sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # ---------------------------
+        # Field mapping & Export
+        # ---------------------------
         field_header_map = {
             'uuid': 'UUID',
             'countryName': 'Country Name',
             'stateName': 'State Name',
             'stateshortName': 'State Short Name',
-            'state':'State / Territory',
+            'state': 'State / Territory',
             'description': 'Description',
             'is_active': 'Active',
             'is_deleted': 'Deleted',
@@ -2018,16 +2519,8 @@ class StateExportAPIView(APIView):
             'updated_at': 'Modified On',
         }
 
-        # Choose fields
         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
-        # Fetch queryset
-        queryset = State.objects.filter(is_deleted=False)
-        if uuids:
-            queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
-
-        # Prepare dataset
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = 'State'
@@ -2035,35 +2528,35 @@ class StateExportAPIView(APIView):
         for obj in queryset:
             row = []
             for field in field_list:
-                if field == 'country_name':
-                    value = obj.countryName.name if obj.countryName else ''
-                else:
-                    value = getattr(obj, field, '')
-                
+                value = getattr(obj, field, '')
+
+                if field == 'countryName':
+                    value = getattr(obj, 'country_name', '')
+
                 # Convert state/territory to Title Case
                 if field == 'state' and value:
-                    value = value.capitalize()  # STATE -> State, TERRITORY -> Territory
+                    value = value.capitalize()
 
-                # Format date/time fields
                 if field in ['created_at', 'updated_at'] and value:
-                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-                elif isinstance(value, bool):
+                    value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
+                if isinstance(value, bool):
                     value = int(value)
-                
+
                 row.append(value if value is not None else '')
             dataset.append(row)
 
+        # ---------------------------
         # Export file
+        # ---------------------------
         if format_type == 'csv':
             file_data = dataset.export('csv')
-            content_type = 'text/csv'
+            content_type = 'text/csv; charset=utf-8'
             file_name = 'states.csv'
         else:
             file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'states.xlsx'
 
-        # Build response
         response = HttpResponse(
             file_data if format_type == 'csv' else file_data.getvalue(),
             content_type=content_type
@@ -2071,6 +2564,9 @@ class StateExportAPIView(APIView):
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
+
+
+        
 class StateImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -2319,17 +2815,14 @@ class DistrictListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['districtName', 'created_at', 'updated_at']
+        custom_sort = request.GET.get('customSort')
 
-        # Validate sort field
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        # Allowed fields for validation
+        allowed_sort_fields = ['districtName', 'stateName', 'countryName', 'created_at', 'updated_at']
 
-        # Helper: parse comma-separated or multiple params
+        # ---------------------------
+        # Parse IDs helper
+        # ---------------------------
         def parse_ids(param_name):
             raw = request.GET.get(param_name, '')
             if raw:
@@ -2338,15 +2831,14 @@ class DistrictListAPIView(APIView):
                 items = request.GET.getlist(param_name)
             return items
 
-        # Helper: filter valid UUIDs
         def validate_uuid_list(uuid_list):
-            valid_uuids = []
+            valid = []
             for u in uuid_list:
                 try:
-                    valid_uuids.append(UUID(u))
-                except ValueError:
+                    valid.append(UUID(u))
+                except:
                     pass
-            return valid_uuids
+            return valid
 
         country_list = validate_uuid_list(parse_ids('country'))
         state_list = validate_uuid_list(parse_ids('state'))
@@ -2355,7 +2847,7 @@ class DistrictListAPIView(APIView):
         queryset = District.objects.filter(is_deleted=False)
 
         # ---------------------------
-        # HIERARCHICAL FILTERING
+        # Hierarchical Filtering
         # ---------------------------
         if district_list:
             queryset = queryset.filter(uuid__in=district_list)
@@ -2366,21 +2858,74 @@ class DistrictListAPIView(APIView):
                 queryset = queryset.filter(countryName__uuid__in=country_list)
 
         # ---------------------------
-        # TEXT SEARCH (DISTRICT)
+        # Search
         # ---------------------------
         if search:
             queryset = queryset.filter(
                 Q(districtName__istartswith=search)
             )
 
-        # Apply sorting
-        queryset = queryset.order_by(sort_by)
+        # ---------------------------
+        # Sorting Logic (same as City API)
+        # ---------------------------
+        sort_field_map = {
+            'districtName': 'districtName',
+            'stateName': 'stateName__stateName',
+            'countryName': 'countryName__name',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
 
+        sort_fields = []
+
+        if custom_sort:
+            # Example: customSort=districtName:asc,created_at:desc
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # lowercase sorting for text fields
+                    if field in ['districtName', 'stateName', 'countryName']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+        else:
+            # Fallback to default sort fields
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'desc')
+
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+            f = F(orm_field)
+
+            sort_fields = [
+                f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)
+            ]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # ---------------------------
         # Pagination
+        # ---------------------------
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = DistrictSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
+
+
+
 
 
 class DistrictCreateAPIView(APIView):
@@ -2516,17 +3061,105 @@ class DistrictDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-
 class DistrictExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')
-        uuids_param = request.GET.get('uuids', '')
-        uuids = [u.strip() for u in uuids_param.split(',') if u]
+        search = request.GET.get('search', '').strip()
+        custom_sort = request.GET.get('customSort')
 
-        # Header map for better readability
+        # ---------------------------
+        # Parse IDs & Validate UUIDs
+        # ---------------------------
+        def parse_ids(param_name):
+            raw = request.GET.get(param_name, '')
+            if raw:
+                items = [x.strip() for x in raw.split(',') if x.strip()]
+            else:
+                items = request.GET.getlist(param_name)
+            return items
+
+        def validate_uuid_list(uuid_list):
+            valid = []
+            for u in uuid_list:
+                try:
+                    valid.append(UUID(u))
+                except:
+                    pass
+            return valid
+
+        country_list = validate_uuid_list(parse_ids('country'))
+        state_list = validate_uuid_list(parse_ids('state'))
+        district_list = validate_uuid_list(parse_ids('district'))
+
+        # ---------------------------
+        # Base QuerySet with annotation
+        # ---------------------------
+        queryset = District.objects.filter(is_deleted=False).annotate(
+            country_name=F('countryName__name'),
+            state_name=F('stateName__stateName')
+        )
+
+        # ---------------------------
+        # Hierarchical filtering
+        # ---------------------------
+        if district_list:
+            queryset = queryset.filter(uuid__in=district_list)
+        else:
+            if state_list:
+                queryset = queryset.filter(stateName__uuid__in=state_list)
+            if country_list:
+                queryset = queryset.filter(countryName__uuid__in=country_list)
+
+        # ---------------------------
+        # Search
+        # ---------------------------
+        if search:
+            queryset = queryset.filter(districtName__istartswith=search)
+
+        # ---------------------------
+        # Sorting
+        # ---------------------------
+        sort_field_map = {
+            'districtName': 'districtName',
+            'stateName': 'state_name',
+            'countryName': 'country_name',
+            'created_at': 'created_at'
+        }
+
+        sort_fields = []
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sort for string fields
+                    if field in ['districtName', 'stateName', 'countryName']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+                except ValueError:
+                    continue
+        else:
+            sort_order = request.GET.get('sortOrder', 'desc')
+            f = F('created_at')
+            sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # ---------------------------
+        # Field mapping & Export
+        # ---------------------------
         field_header_map = {
             'uuid': 'UUID',
             'countryName': 'Country Name',
@@ -2535,19 +3168,11 @@ class DistrictExportAPIView(APIView):
             'description': 'Description',
             'is_deleted': 'Deleted',
             'created_at': 'Created On',
-            'updated_at': 'Modified On',
+            'updated_at': 'Modified On'
         }
 
-        # Select fields to include in export
         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
-        # Queryset with filtering and ordering
-        queryset = District.objects.filter(is_deleted=False)
-        if uuids:
-            queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
-
-        # Initialize dataset
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = 'District'
@@ -2555,37 +3180,40 @@ class DistrictExportAPIView(APIView):
         for obj in queryset:
             row = []
             for field in field_list:
-                if field == 'country_name':
-                    value = obj.countryName.name if obj.countryName else ''
-                elif field == 'state_name':
-                    value = obj.stateName.stateName if obj.stateName else ''
-                else:
-                    value = getattr(obj, field, '')
-                # Format timestamps
+                value = getattr(obj, field, '')
+
+                if field == 'countryName':
+                    value = getattr(obj, 'country_name', '')
+                elif field == 'stateName':
+                    value = getattr(obj, 'state_name', '')
+
                 if field in ['created_at', 'updated_at'] and value:
-                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-                elif isinstance(value, bool):
+                    value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
+                if isinstance(value, bool):
                     value = int(value)
+
                 row.append(value if value is not None else '')
             dataset.append(row)
 
-        # Export file based on requested format
+        # ---------------------------
+        # Export file
+        # ---------------------------
         if format_type == 'csv':
             file_data = dataset.export('csv')
-            content_type = 'text/csv'
+            content_type = 'text/csv; charset=utf-8'
             file_name = 'districts.csv'
         else:
             file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'districts.xlsx'
 
-        # Prepare response
         response = HttpResponse(
             file_data if format_type == 'csv' else file_data.getvalue(),
             content_type=content_type
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
+
 
 
 
@@ -2789,7 +3417,6 @@ class DistrictByFilterAPIView(APIView):
         search_term = request.GET.get("search", "")                 # search by district name
         sort_by = request.GET.get("sort_by", "districtName")        # default sort
 
-        # Helper: validate UUIDs and fetch objects
         def get_valid_objects(model, ids):
             valid_objs = []
             invalid_ids = []
@@ -2804,7 +3431,6 @@ class DistrictByFilterAPIView(APIView):
                     invalid_ids.append(_id)
             return valid_objs, invalid_ids
 
-        # Validate countries (optional)
         valid_countries, invalid_countries = get_valid_objects(Country, country_ids)
         if invalid_countries:
             return Response({
@@ -2813,7 +3439,6 @@ class DistrictByFilterAPIView(APIView):
                 "message": f"Invalid or non-existent country IDs: {', '.join(invalid_countries)}"
             }, status=400)
 
-        # Validate states (optional)
         if 'all' in [s.lower() for s in state_ids]:  # if 'all' is sent, ignore state filter
             valid_states = []
         else:
@@ -2825,27 +3450,22 @@ class DistrictByFilterAPIView(APIView):
                     "message": f"Invalid or non-existent state IDs: {', '.join(invalid_states)}"
                 }, status=400)
 
-        # Fetch districts
         districts = District.objects.filter(is_deleted=False)
 
         if valid_countries:
             districts = districts.filter(countryName__in=valid_countries)
-        if valid_states:  # filter only if valid states are sent (skip if 'all')
+        if valid_states:  
             districts = districts.filter(stateName__in=valid_states)
 
-        # Search filter
         if search_term:
             districts = districts.filter(districtName__icontains=search_term)
 
-        # Sorting
         if sort_by and hasattr(District, sort_by):
             districts = districts.order_by(sort_by)
 
-        # Pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(districts, request)
 
-        # Prepare response
         data = [
             {
                 "uuid": str(d.uuid),
@@ -2860,53 +3480,18 @@ class DistrictByFilterAPIView(APIView):
         return paginator.get_paginated_response(data)
 
 #--------------------------city--------------------
+# from django.db.models import F, Func, Value
+# from django.db.models.functions import Lower, Cast
+# from uuid import UUID
+
 class CityListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-
-        # -----------------------
-        # CUSTOM SORTING (Excel type)
-        # -----------------------
         custom_sort = request.GET.get('customSort')  
         allowed_sort_fields = ['cityName', 'stateName', 'districtName', 'countryName', 'created_at']
 
-        if custom_sort:
-            sort_fields = []
-            for rule in custom_sort.split(','):
-                try:
-                    field, order = rule.split(':')
-                    field = field.strip()
-                    order = order.strip().lower()
-
-                    if field not in allowed_sort_fields:
-                        continue
-
-                    # Use Lower() for string columns to mimic Excel's case-insensitive sort
-                    if order == "asc":
-                        sort_fields.append(F(field).asc(nulls_last=True))
-                    else:
-                        sort_fields.append(F(field).desc(nulls_last=True))
-
-                except ValueError:
-                    continue
-        else:
-            # NORMAL SORTING
-            sort_by = request.GET.get('sortBy', 'created_at')
-            sort_order = request.GET.get('sortOrder', 'desc')
-
-            if sort_by not in allowed_sort_fields:
-                sort_by = 'created_at'
-
-            if sort_order == 'desc':
-                sort_fields = [f'-{sort_by}']
-            else:
-                sort_fields = [sort_by]
-
-        # ---------------------------
-        # Helper functions
-        # ---------------------------
         def parse_ids(param_name):
             raw = request.GET.get(param_name, '')
             if raw:
@@ -2924,7 +3509,6 @@ class CityListAPIView(APIView):
                     pass
             return valid
 
-        # Parse filters
         country_list = validate_uuid_list(parse_ids('country'))
         state_list = validate_uuid_list(parse_ids('state'))
         district_list = validate_uuid_list(parse_ids('district'))
@@ -2932,9 +3516,7 @@ class CityListAPIView(APIView):
 
         queryset = City.objects.filter(is_deleted=False)
 
-        # ---------------------------
-        # Hierarchical filtering
-        # ---------------------------
+     
         if city_list:
             queryset = queryset.filter(uuid__in=city_list)
         else:
@@ -2945,26 +3527,52 @@ class CityListAPIView(APIView):
             if country_list:
                 queryset = queryset.filter(countryName__uuid__in=country_list)
 
-        # ---------------------------
-        # Search by city name
-        # ---------------------------
         if search:
             queryset = queryset.filter(cityName__istartswith=search)
 
-        # ---------------------------
-        # APPLY SORTING
-        # ---------------------------
+        sort_field_map = {
+            'cityName': 'cityName',
+            'stateName': 'stateName__stateName',
+            'districtName': 'districtName__districtName',
+            'countryName': 'countryName__name',
+            'created_at': 'created_at'
+        }
+
+        sort_fields = []
+
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    if field in ['cityName', 'stateName', 'districtName', 'countryName']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+
+                except ValueError:
+                    continue
+        else:
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'desc')
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+            f = F(orm_field)
+            sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
+
         queryset = queryset.order_by(*sort_fields)
 
-        # Pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = CitySerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
-
-
-
-
 
 
 # -------------------- City -------------------- 
@@ -3103,18 +3711,113 @@ class CityDeleteAPIView(APIView):
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         }, status=status.HTTP_200_OK)
 
-
-
 class CityExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')
-        uuids_param = request.GET.get('uuids', '')
-        uuids = [u.strip() for u in uuids_param.split(',') if u]
 
-        # Field to header mapping
+        # ---------------------------
+        # Parse IDs & Validate UUIDs
+        # ---------------------------
+        def parse_ids(param_name):
+            raw = request.GET.get(param_name, '')
+            if raw:
+                items = [x.strip() for x in raw.split(',') if x.strip()]
+            else:
+                items = request.GET.getlist(param_name)
+            return items
+
+        def validate_uuid_list(uuid_list):
+            valid = []
+            for u in uuid_list:
+                try:
+                    valid.append(UUID(u))
+                except:
+                    pass
+            return valid
+
+        country_list = validate_uuid_list(parse_ids('country'))
+        state_list = validate_uuid_list(parse_ids('state'))
+        district_list = validate_uuid_list(parse_ids('district'))
+        city_list = validate_uuid_list(parse_ids('city'))
+
+        search = request.GET.get('search', '').strip()
+        custom_sort = request.GET.get('customSort')  
+        allowed_sort_fields = ['cityName', 'stateName', 'districtName', 'countryName', 'created_at']
+
+        # ---------------------------
+        # Base QuerySet
+        # ---------------------------
+        queryset = City.objects.filter(is_deleted=False).annotate(
+            country_name=F('countryName__name'),
+            state_name=F('stateName__stateName'),
+            district_name=F('districtName__districtName')
+        )
+
+        # ---------------------------
+        # Hierarchical filtering
+        # ---------------------------
+        if city_list:
+            queryset = queryset.filter(uuid__in=city_list)
+        else:
+            if district_list:
+                queryset = queryset.filter(districtName__uuid__in=district_list)
+            if state_list:
+                queryset = queryset.filter(stateName__uuid__in=state_list)
+            if country_list:
+                queryset = queryset.filter(countryName__uuid__in=country_list)
+
+        # ---------------------------
+        # Search
+        # ---------------------------
+        if search:
+            queryset = queryset.filter(cityName__istartswith=search)
+
+        # ---------------------------
+        # Sorting
+        # ---------------------------
+        sort_field_map = {
+            'cityName': 'cityName',
+            'stateName': 'state_name',
+            'districtName': 'district_name',
+            'countryName': 'country_name',
+            'created_at': 'created_at'
+        }
+
+        sort_fields = []
+
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Use Lower() for string fields for case-insensitive sort
+                    if field in ['cityName', 'stateName', 'districtName', 'countryName']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+                except ValueError:
+                    continue
+        else:
+            sort_order = request.GET.get('sortOrder', 'desc')
+            f = F('created_at')
+            sort_fields = [f.desc(nulls_last=True) if sort_order=='desc' else f.asc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # ---------------------------
+        # Field mapping & Export
+        # ---------------------------
         field_header_map = {
             'uuid': 'UUID',
             'countryName': 'Country Name',
@@ -3129,11 +3832,6 @@ class CityExportAPIView(APIView):
 
         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
-        queryset = City.objects.filter(is_deleted=False)
-        if uuids:
-            queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
-
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = 'City'
@@ -3143,18 +3841,15 @@ class CityExportAPIView(APIView):
             for field in field_list:
                 value = getattr(city, field, '')
 
-                # Handle foreign keys by name
-                if field == 'countryName' and city.countryName:
-                    value = city.countryName.name
-                elif field == 'stateName' and city.stateName:
-                    value = city.stateName.stateName
-                elif field == 'districtName' and city.districtName:
-                    value = city.districtName.districtName
+                if field == 'countryName':
+                    value = getattr(city, 'country_name', '')
+                elif field == 'stateName':
+                    value = getattr(city, 'state_name', '')
+                elif field == 'districtName':
+                    value = getattr(city, 'district_name', '')
 
-                # Format datetime
                 if field in ['created_at', 'updated_at'] and value:
                     value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
-                # Convert bool to int
                 if isinstance(value, bool):
                     value = int(value)
 
@@ -3168,7 +3863,7 @@ class CityExportAPIView(APIView):
         else:
             file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'city.xlsx'
+            file_name = 'cities.xlsx'
 
         response = HttpResponse(
             file_data if format_type == 'csv' else file_data.getvalue(),
@@ -3176,7 +3871,6 @@ class CityExportAPIView(APIView):
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
-
 
 
 class CityImportAPIView(APIView):
@@ -3351,26 +4045,69 @@ class RelationListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['name', 'description', 'updated_at']
-
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        custom_sort = request.GET.get('customSort')
+        
+        allowed_sort_fields = ['name', 'description', 'created_at', 'updated_at']
 
         queryset = Relation.objects.filter(is_deleted=False)
-        if search:
-            queryset = queryset.filter(
-                Q(name__istartswith=search)
-            )
 
-        queryset = queryset.order_by(sort_by)
+        # Search filter
+        if search:
+            queryset = queryset.filter(Q(name__istartswith=search))
+
+        # Sorting logic (same as Gender API)
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+
+        sort_fields = []
+
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sorting for string fields
+                    if field in ['name', 'description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+        else:
+            # Fallback normal sorting
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'asc')
+
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+            f = F(orm_field)
+            sort_fields = [
+                f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)
+            ]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # Pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = RelationSerializer(result_page, many=True)
+
         return paginator.get_paginated_response(serializer.data)
+
 
 
 class RelationCreateAPIView(APIView):
@@ -3498,14 +4235,18 @@ class RelationDeleteAPIView(APIView):
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         }, status=status.HTTP_200_OK)
 
-#
 class RelationExportAPIView(APIView):
+    """
+    Export Relation data to CSV or XLSX with custom sorting.
+    """
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')  # comma-separated fields
-        uuids_param = request.GET.get('uuids', '')  # comma-separated UUIDs
+        uuids_param = request.GET.get('uuids', '')
+        custom_sort = request.GET.get('customSort')  # e.g., name:asc,created_at:desc
+
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
         # --- Field to header mapping ---
@@ -3515,25 +4256,66 @@ class RelationExportAPIView(APIView):
             'description': 'Description',
             'is_deleted': 'Deleted',
             'created_at': 'Created On',
-            'updated_at': 'Modified On'
+            'updated_at': 'Modified On',
         }
 
-        # --- Determine which fields to export ---
-        if fields:
-            field_list = [f.strip() for f in fields.split(',')]
-        else:
-            field_list = list(field_header_map.keys())
+        # --- Determine fields to export ---
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
         # --- Fetch queryset ---
         queryset = Relation.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
+
+        # --- Custom sorting logic ---
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'is_deleted': 'is_deleted',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+
+        sort_fields = []
+
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sorting for string fields
+                    if field in ['name', 'description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+
+                except ValueError:
+                    continue
+        else:
+            # Default sort by created_at desc
+            sort_order = request.GET.get('sortOrder', 'desc')
+            f = F('created_at')
+            sort_fields = [
+                f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)
+            ]
+
+        queryset = queryset.order_by(*sort_fields)
 
         # --- Prepare dataset ---
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title="Relation"
+        dataset.title = "Relation"
 
         for obj in queryset:
             row = []
@@ -3541,15 +4323,14 @@ class RelationExportAPIView(APIView):
                 value = getattr(obj, field, '')
 
                 if field in ['created_at', 'updated_at'] and value:
-                    # Convert to IST and format
-                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                    value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
                     value = int(value)
 
                 row.append(value if value is not None else '')
             dataset.append(row)
 
-        # --- Export data ---
+        # --- Export file ---
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv; charset=utf-8'
@@ -3562,13 +4343,12 @@ class RelationExportAPIView(APIView):
         # --- Return response ---
         response = HttpResponse(
             file_data if format_type == 'csv' else file_data.getvalue(),
-            content_type=content_type
+            content_type=content_type,
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
 
-# -------------------- Import -------------------- #
 class RelationImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -3723,6 +4503,14 @@ class RelationImportAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+
+
+
+
+
+
+
+
 #-----------------------TimeZone---------------
 
 class TimezoneListAPIView(APIView):
@@ -3730,28 +4518,90 @@ class TimezoneListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
+        custom_sort = request.GET.get('customSort')
 
-        allowed_sort_fields = ['Timezone', 'description', 'updated_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
+        # Parse UUIDs for filtering
+        def parse_ids(param_name):
+            raw = request.GET.get(param_name, '')
+            if raw:
+                items = [x.strip() for x in raw.split(',') if x.strip()]
+            else:
+                items = request.GET.getlist(param_name)
+            return items
 
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        def validate_uuid_list(uuid_list):
+            valid = []
+            for u in uuid_list:
+                try:
+                    valid.append(UUID(u))
+                except:
+                    pass
+            return valid
+
+        country_list = validate_uuid_list(parse_ids('country'))
+        state_list = validate_uuid_list(parse_ids('state'))
 
         queryset = Timezone.objects.filter(is_deleted=False)
 
-        if search:
-            queryset = queryset.filter(
-                Q(Timezone__istartswith=search) 
-            )
+        # Filter by country/state
+        if country_list:
+            queryset = queryset.filter(countryName__uuid__in=country_list)
+        if state_list:
+            queryset = queryset.filter(stateName__uuid__in=state_list)
 
-        queryset = queryset.order_by(sort_by)
+        # Search filter
+        if search:
+            queryset = queryset.filter(Q(Timezone__istartswith=search))
+
+        # Sorting mapping including related fields
+        sort_field_map = {
+            'Timezone': 'Timezone',
+            'description': 'description',
+            'countryName': 'countryName__name',
+            'stateName': 'stateName__stateName',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+
+        sort_fields = []
+
+        if custom_sort:
+            # Example: ?customSort=countryName:asc,stateName:desc
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sorting for string fields
+                    if field in ['Timezone', 'description', 'countryName', 'stateName']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+                except ValueError:
+                    continue
+        else:
+            # Fallback sorting
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'asc')
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+            f = F(orm_field)
+            sort_fields = [f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # Pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = TimezoneSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
+
 
 
 class TimezoneCreateAPIView(APIView):
@@ -3926,15 +4776,22 @@ class TimezoneDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+
 class TimezoneExportAPIView(APIView):
+    """
+    Export Timezone with custom sorting.
+    """
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')
         uuids_param = request.GET.get('uuids', '')
+        custom_sort = request.GET.get('customSort')  # e.g., countryName:asc,Timezone:desc
+
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
+        # -------- Field Headers ----------
         field_header_map = {
             'uuid': 'UUID',
             'countryName': 'Country',
@@ -3942,16 +4799,66 @@ class TimezoneExportAPIView(APIView):
             'Timezone': 'Time Zone',
             'description': 'Description',
             'is_deleted': 'Deleted',
-            'updated_at': 'Modified On'
+            'created_at': 'Created On',
+            'updated_at': 'Modified On',
         }
 
+        # Fields to export
         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
+        # -------- Fetch Queryset ----------
         queryset = Timezone.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
 
+        # -------- Sort Field Mapping (with related fields) ----------
+        sort_field_map = {
+            'countryName': 'countryName__name',
+            'stateName': 'stateName__stateName',
+            'Timezone': 'Timezone',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+
+        sort_fields = []
+
+        # -------- Custom Sorting ----------
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sorting for string fields
+                    if field in ['countryName', 'stateName', 'Timezone', 'description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+
+        else:
+            # Default sort: created_at desc
+            sort_order = request.GET.get('sortOrder', 'desc')
+            f = F('created_at')
+            sort_fields = [
+                f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)
+            ]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # -------- Prepare Dataset ----------
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = 'Timezone'
@@ -3960,13 +4867,22 @@ class TimezoneExportAPIView(APIView):
             row = []
             for field in field_list:
                 value = getattr(tz, field, '')
+
+                # For related fields, get the actual name
+                if field == 'countryName' and tz.countryName:
+                    value = tz.countryName.name
+                if field == 'stateName' and tz.stateName:
+                    value = tz.stateName.stateName
+
                 if field in ['created_at', 'updated_at'] and value:
                     value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
                     value = int(value)
+
                 row.append(value if value is not None else '')
             dataset.append(row)
 
+        # -------- Export XLSX or CSV ----------
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
@@ -3982,7 +4898,6 @@ class TimezoneExportAPIView(APIView):
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
-
 
 
 class TimezoneImportAPIView(APIView):
@@ -4155,41 +5070,86 @@ class CivilIdNameCreateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
  
  
+
 class CivilIdNameListAPIView(APIView):
     def get(self, request):
         search = request.GET.get("search", "").strip()
-        sort_by = request.GET.get("sortBy", "created_at")
-        sort_order = request.GET.get("sortOrder", "desc")
- 
+        custom_sort = request.GET.get("customSort")
+
         allowed_sort_fields = [
             "civil_id_name",
             "authority_full_name",
             "authority_short_name",
             "created_at",
+            "updated_at",
         ]
- 
-        if sort_by not in allowed_sort_fields:
-            sort_by = "created_at"
- 
-        if sort_order == "desc":
-            sort_by = f"-{sort_by}"
- 
+
         queryset = CivilIdName.objects.filter(is_deleted=False)
- 
+
+        # Search filter
         if search:
             queryset = queryset.filter(
-                Q(civil_id_name__istartswith=search) 
+                Q(civil_id_name__istartswith=search)
             )
- 
-        queryset = queryset.order_by(sort_by)
- 
+
+        # Sorting fields mapping
+        sort_field_map = {
+            "civil_id_name": "civil_id_name",
+            "authority_full_name": "authority_full_name",
+            "authority_short_name": "authority_short_name",
+            "created_at": "created_at",
+            "updated_at": "updated_at",
+        }
+
+        sort_fields = []
+
+        # --------------------------
+        # CUSTOM SORT LOGIC
+        # --------------------------
+        if custom_sort:
+            for rule in custom_sort.split(","):
+                try:
+                    field, order = rule.split(":")
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive for string fields
+                    if field in ["civil_id_name", "authority_full_name", "authority_short_name"]:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == "asc" else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+
+        else:
+            # Fallback sorting
+            sort_by = request.GET.get("sortBy", "created_at")
+            sort_order = request.GET.get("sortOrder", "desc")
+
+            orm_field = sort_field_map.get(sort_by, "created_at")
+            f = F(orm_field)
+
+            sort_fields = [
+                f.asc(nulls_last=True) if sort_order == "asc" else f.desc(nulls_last=True)
+            ]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # Pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
- 
+
         serializer = CivilIdNameSerializer(result_page, many=True)
- 
         return paginator.get_paginated_response(serializer.data)
- 
  
 class CivilIdNameRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -4312,19 +5272,20 @@ class CivilIdNameDeleteAPIView(APIView):
             "message": f"{count} Civil ID(s) deleted",
             "data": {"invalid_uuids": invalid} if invalid else None
         })
- 
- 
- 
- 
+
  
 class CivilIdNameExportAPIView(APIView):
+    """
+    Export CivilIdName data to CSV or XLSX with custom sorting.
+    """
     permission_classes = []  # Add IsAuthenticated if required
- 
+
     def get(self, request):
         format_type = request.GET.get("format", "xlsx").lower()
         fields = request.GET.get("fields")
         uuids_param = request.GET.get("uuids", "")
- 
+        custom_sort = request.GET.get("customSort")  # e.g., civil_id_name:asc,created_at:desc
+
         # Convert UUID strings to Python UUID objects
         uuids = []
         invalid_uuids = []
@@ -4333,65 +5294,111 @@ class CivilIdNameExportAPIView(APIView):
                 uuids.append(UUID(u))
             except ValueError:
                 invalid_uuids.append(u)
- 
+
+        # Field to header mapping
         field_header_map = {
             "uuid": "UUID",
             "civil_id_name": "Civil ID Name",
             "authority_full_name": "Authority Full Name",
             "authority_short_name": "Authority Short Name",
             "valid_type": "Civil ID Valid Upto",
-            "valid_date":"Civil ID Valid Date",
+            "valid_date": "Civil ID Valid Date",
             "valid_duration_value": "Civil ID Valid Duration Value",
             "valid_duration_unit": "Civil ID Valid Duration Unit",
             "description": "Description",
             "created_at": "Created On",
             "updated_at": "Modified On",
         }
- 
+
+        # Determine fields to export
         field_list = [f.strip() for f in fields.split(",")] if fields else list(field_header_map.keys())
- 
+
+        # Fetch queryset
         queryset = CivilIdName.objects.all()
- 
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
- 
-        queryset = queryset.order_by("-created_at")
- 
+
+        # -------- Custom Sorting ----------
+        sort_field_map = {
+            "civil_id_name": "civil_id_name",
+            "authority_full_name": "authority_full_name",
+            "authority_short_name": "authority_short_name",
+            "valid_type": "valid_type",
+            "valid_date": "valid_date",
+            "valid_duration_value": "valid_duration_value",
+            "valid_duration_unit": "valid_duration_unit",
+            "created_at": "created_at",
+            "updated_at": "updated_at",
+        }
+
+        sort_fields = []
+
+        if custom_sort:
+            for rule in custom_sort.split(","):
+                try:
+                    field, order = rule.split(":")
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sorting for string fields
+                    if field in ["civil_id_name", "authority_full_name", "authority_short_name", "description"]:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(f.asc(nulls_last=True) if order == "asc" else f.desc(nulls_last=True))
+
+                except ValueError:
+                    continue
+        else:
+            # Default sort by created_at desc
+            sort_order = request.GET.get("sortOrder", "desc")
+            f = F("created_at")
+            sort_fields = [f.desc(nulls_last=True) if sort_order == "desc" else f.asc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
         # Handle empty queryset
         if not queryset.exists():
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "No Civil ID records found for export"
-            }, status=404)
- 
+            return Response(
+                {
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No Civil ID records found for export",
+                },
+                status=404,
+            )
+
+        # -------- Prepare dataset ----------
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = "CivilIdName"
- 
+
         for obj in queryset:
             row = []
             for field in field_list:
                 value = getattr(obj, field, "")
- 
+
                 # display choice labels
                 if field == "valid_type" and obj.valid_type:
                     value = obj.get_valid_type_display()
-                
- 
                 if field == "valid_duration_unit" and obj.valid_duration_unit:
                     value = obj.get_valid_duration_unit_display()
- 
+
                 # Format date
                 if field in ["created_at", "updated_at"] and value:
                     value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
-                
                 if field == "valid_date" and value:
                     value = value.strftime("%d-%m-%Y")
- 
+
                 row.append(value if value is not None else "")
             dataset.append(row)
- 
+
+        # -------- Export file ----------
         if format_type == "csv":
             file_data = dataset.export("csv")
             content_type = "text/csv"
@@ -4400,15 +5407,16 @@ class CivilIdNameExportAPIView(APIView):
             file_data = io.BytesIO(dataset.export("xlsx"))
             content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             file_name = "civil_id_names.xlsx"
- 
+
+        # -------- Return response ----------
         response = HttpResponse(
             file_data if format_type == "csv" else file_data.getvalue(),
-            content_type=content_type
+            content_type=content_type,
         )
         response["Content-Disposition"] = f'attachment; filename="{file_name}"'
         return response
- 
- 
+
+
 class CivilIdNameImportAPIView(APIView):
     def post(self, request):
         file = request.FILES.get("file")
@@ -4640,6 +5648,75 @@ class CivilIdNameImportAPIView(APIView):
 # -----------------------department---------------------------------
 
 
+class DepartmentListAPIView(APIView):
+    def get(self, request):
+        search = request.GET.get('search', '').strip()
+        custom_sort = request.GET.get('customSort')  # e.g., name:asc,updated_at:desc
+
+        allowed_sort_fields = ['name', 'description', 'created_at', 'updated_at']
+
+        queryset = Department.objects.filter(is_deleted=False)
+
+        # Search filter
+        if search:
+            queryset = queryset.filter(Q(name__istartswith=search))
+
+        # Sorting fields mapping
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+
+        sort_fields = []
+
+        # --------------------------
+        # CUSTOM SORT LOGIC
+        # --------------------------
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive for string fields
+                    if field in ['name', 'description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+        else:
+            # Fallback sorting
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'desc')
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+            f = F(orm_field)
+            sort_fields = [
+                f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)
+            ]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # Pagination
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = DepartmentSerializer(result_page, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
+
+
 
 
 class DepartmentCreateAPIView(APIView):
@@ -4865,35 +5942,78 @@ class DepartmentDeleteAPIView(APIView):
 
 
 class DepartmentExportAPIView(APIView):
+    """
+    Export Department data to CSV or XLSX with custom sorting.
+    """
+    permission_classes = []  # Add IsAuthenticated if required
+
     def get(self, request):
         # --- Get query params ---
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')  # comma-separated fields
-        uuids_param = request.GET.get('uuids', '')  # comma-separated UUIDs
+        uuids_param = request.GET.get('uuids', '')
+        custom_sort = request.GET.get('customSort')  # e.g., name:asc,created_at:desc
+
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
         # --- Field to header mapping ---
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Department',  # Custom header
+            'name': 'Department',
             'description': 'Description',
             'is_deleted': 'Deleted',
+            'created_at': 'Created On',
             'updated_at': 'Modified On',
-            
         }
 
-        # --- Determine which fields to export ---
-        if fields:
-            field_list = [f.strip() for f in fields.split(',')]
-        else:
-            field_list = list(field_header_map.keys())
+        # --- Determine fields to export ---
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
         # --- Fetch queryset ---
-        queryset = Department.objects.filter(is_deleted=False) 
+        queryset = Department.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
 
+        # --- Custom sorting logic ---
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'is_deleted': 'is_deleted',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+
+        sort_fields = []
+
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sorting for string fields
+                    if field in ['name', 'description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+
+                except ValueError:
+                    continue
+        else:
+            # Default sort by created_at desc
+            sort_order = request.GET.get('sortOrder', 'desc')
+            f = F('created_at')
+            sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
 
         # --- Prepare dataset ---
         dataset = Dataset()
@@ -4906,20 +6026,20 @@ class DepartmentExportAPIView(APIView):
                 value = getattr(dept, field, '')
 
                 if field in ['created_at', 'updated_at'] and value:
-                    # Convert the stored UTC datetime to IST and format it
-                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                    # Convert UTC datetime to local timezone
+                    value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
                     value = int(value)
 
                 row.append(value if value is not None else '')
             dataset.append(row)
+
         # --- Export data ---
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
             file_name = 'departments.csv'
         else:
-            # XLSX export with BytesIO
             file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'departments.xlsx'
@@ -4931,6 +6051,8 @@ class DepartmentExportAPIView(APIView):
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
+
+
 
 
 class DepartmentImportAPIView(APIView):
@@ -5086,34 +6208,74 @@ class DepartmentImportAPIView(APIView):
 
 # -----------------------employeeType---------------------------------
 class EmployeeTypeListAPIView(APIView):    
-
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
+        custom_sort = request.GET.get('customSort')  # e.g., name:asc,updated_at:desc
 
-        allowed_sort_fields = ['name', 'description', 'updated_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-
-        # Apply descending order for 'desc'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        allowed_sort_fields = ['name', 'description', 'created_at', 'updated_at']
 
         queryset = EmployeeType.objects.filter(is_deleted=False)
 
+        # Search filter
         if search:
-            queryset = queryset.filter(
-                Q(name__istartswith=search)
-            )
+            queryset = queryset.filter(Q(name__istartswith=search))
 
-        queryset = queryset.order_by(sort_by)
+        # Sorting fields mapping
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
 
+        sort_fields = []
+
+        # --------------------------
+        # CUSTOM SORT LOGIC
+        # --------------------------
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive for string fields
+                    if field in ['name', 'description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+        else:
+            # Fallback sorting
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'desc')
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+            f = F(orm_field)
+            sort_fields = [
+                f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)
+            ]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # Pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = EmployeeTypeSerializer(result_page, many=True)
 
         return paginator.get_paginated_response(serializer.data)
+
+
 
 
 class EmployeeTypeCreateAPIView(APIView):
@@ -5292,49 +6454,91 @@ class EmployeeTypeDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK)
     
 
+
 class EmployeeTypeExportAPIView(APIView):
-    # permission_classes = [IsAuthenticated]  
+    """
+    Export EmployeeType data to CSV or XLSX with custom sorting.
+    """
+    # permission_classes = [IsAuthenticated]
 
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
-        fields = request.GET.get('fields')  
-        uuids_param = request.GET.get('uuids', '') 
-
+        fields = request.GET.get('fields')
+        uuids_param = request.GET.get('uuids', '')
+        custom_sort = request.GET.get('customSort')  # e.g., name:asc,created_at:desc
 
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
+        # Field headers
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Employee Type',  
+            'name': 'Employee Type',
             'description': 'Description',
             'is_deleted': 'Deleted',
+            'created_at': 'Created On',
             'updated_at': 'Modified On',
-            
         }
 
+        # Fields to export
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
-        if fields:
-            field_list = [f.strip() for f in fields.split(',')]
-        else:
-            field_list = list(field_header_map.keys())
-
+        # Fetch queryset
         queryset = EmployeeType.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
 
+        # --- Custom sorting logic ---
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'is_deleted': 'is_deleted',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+
+        sort_fields = []
+
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sorting for string fields
+                    if field in ['name', 'description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+
+                except ValueError:
+                    continue
+        else:
+            # Default sort by created_at desc
+            sort_order = request.GET.get('sortOrder', 'desc')
+            f = F('created_at')
+            sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # --- Prepare dataset ---
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = 'EmployeeType'
 
-        for dept in queryset:
+        for obj in queryset:
             row = []
             for field in field_list:
-                value = getattr(dept, field, '')
+                value = getattr(obj, field, '')
 
                 if field in ['created_at', 'updated_at'] and value:
-                    # Convert the stored UTC datetime to IST and format it
-                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                    value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
                     value = int(value)
 
@@ -5347,7 +6551,6 @@ class EmployeeTypeExportAPIView(APIView):
             content_type = 'text/csv'
             file_name = 'employeetype.csv'
         else:
-            # XLSX export with BytesIO
             file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'employeetype.xlsx'
@@ -5359,6 +6562,7 @@ class EmployeeTypeExportAPIView(APIView):
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
+
 
 
 class EmployeeTypeImportAPIView(APIView):
@@ -5518,31 +6722,71 @@ class EmployeeTypeImportAPIView(APIView):
 class CompanyTypeListAPIView(APIView):    
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
+        custom_sort = request.GET.get('customSort')  # e.g., name:asc,updated_at:desc
 
-        allowed_sort_fields = ['name', 'description', 'updated_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-
-        # Apply descending order for 'desc'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        allowed_sort_fields = ['name', 'description', 'created_at', 'updated_at']
 
         queryset = CompanyType.objects.filter(is_deleted=False)
 
+        # Search filter
         if search:
-            queryset = queryset.filter(
-                Q(name__istartswith=search)
-            )
+            queryset = queryset.filter(Q(name__istartswith=search))
 
-        queryset = queryset.order_by(sort_by)
+        # Sorting fields mapping
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
 
+        sort_fields = []
+
+        # --------------------------
+        # CUSTOM SORT LOGIC
+        # --------------------------
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive for string fields
+                    if field in ['name', 'description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+        else:
+            # Fallback sorting
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'desc')
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+            f = F(orm_field)
+            sort_fields = [
+                f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)
+            ]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # Pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = CompanyTypeSerializer(result_page, many=True)
 
         return paginator.get_paginated_response(serializer.data)
+
 
 class CompanyTypeCreateAPIView(APIView):
     def post(self, request):
@@ -5716,53 +6960,90 @@ class CompanyTypeDeleteAPIView(APIView):
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         }, status=status.HTTP_200_OK)
     
-
 class CompanyTypeExportAPIView(APIView):
-    # permission_classes = [IsAuthenticated]  
-    def get(self, request):
+    """
+    Export CompanyType data to CSV or XLSX with custom sorting.
+    """
+    # permission_classes = [IsAuthenticated]
 
+    def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
-        fields = request.GET.get('fields')  # comma-separated fields
-        uuids_param = request.GET.get('uuids', '')  # comma-separated UUIDs
+        fields = request.GET.get('fields')
+        uuids_param = request.GET.get('uuids', '')
+        custom_sort = request.GET.get('customSort')  # e.g., name:asc,created_at:desc
 
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
         # --- Field to header mapping ---
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Company Type',  # Custom header
+            'name': 'Company Type',
             'description': 'Description',
             'is_deleted': 'Deleted',
+            'created_at': 'Created On',
             'updated_at': 'Modified On',
-            
         }
 
-        # --- Determine which fields to export ---
-        if fields:
-            field_list = [f.strip() for f in fields.split(',')]
-        else:
-            field_list = list(field_header_map.keys())
+        # Determine fields to export
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
+        # Fetch queryset
         queryset = CompanyType.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
 
+        # --- Custom sorting logic ---
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'is_deleted': 'is_deleted',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
 
+        sort_fields = []
+
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sorting for string fields
+                    if field in ['name', 'description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+
+                except ValueError:
+                    continue
+        else:
+            # Default sort by created_at desc
+            sort_order = request.GET.get('sortOrder', 'desc')
+            f = F('created_at')
+            sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # --- Prepare dataset ---
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        
         dataset.title = 'CompanyType'
-        
 
-        for dept in queryset:
+        for obj in queryset:
             row = []
             for field in field_list:
-                value = getattr(dept, field, '')
+                value = getattr(obj, field, '')
 
                 if field in ['created_at', 'updated_at'] and value:
-                    # Convert the stored UTC datetime to IST and format it
-                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                    value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
                     value = int(value)
 
@@ -5775,7 +7056,6 @@ class CompanyTypeExportAPIView(APIView):
             content_type = 'text/csv'
             file_name = 'CompanyType.csv'
         else:
-            # XLSX export with BytesIO
             file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'CompanyType.xlsx'
@@ -5787,6 +7067,8 @@ class CompanyTypeExportAPIView(APIView):
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
+
+
 
 class CompanyTypeImportAPIView(APIView):
     """
@@ -5954,35 +7236,78 @@ class CompanyTypeImportAPIView(APIView):
 
 
 
-
 class OwnershipTypeListAPIView(APIView):    
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
+        custom_sort = request.GET.get('customSort')  # e.g., name:asc,updated_at:desc
 
-        allowed_sort_fields = ['name', 'description', 'updated_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-
-        # Apply descending order for 'desc'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        allowed_sort_fields = ['name', 'description', 'created_at', 'updated_at']
 
         queryset = OwnershipType.objects.filter(is_deleted=False)
 
+        # Search filter
         if search:
-            queryset = queryset.filter(
-                Q(name__istartswith=search)
-            )
+            queryset = queryset.filter(Q(name__istartswith=search))
 
-        queryset = queryset.order_by(sort_by)
+        # Sorting fields mapping
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
 
+        sort_fields = []
+
+        # --------------------------
+        # CUSTOM SORT LOGIC
+        # --------------------------
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive for string fields
+                    if field in ['name', 'description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+        else:
+            # Fallback sorting
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'desc')
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+            f = F(orm_field)
+            sort_fields = [
+                f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)
+            ]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # Pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = OwnershipTypeSerializer(result_page, many=True)
 
         return paginator.get_paginated_response(serializer.data)
+
+
+
+
+
 
 class OwnershipTypeCreateAPIView(APIView):
     def post(self, request):
@@ -6155,21 +7480,24 @@ class OwnershipTypeDeleteAPIView(APIView):
             "data": {"invalid_uuids": invalid_uuids}
         }, status=status.HTTP_200_OK)
 
-
 class OwnershipTypeExportAPIView(APIView):
     """
-    Export OwnershipType data to XLSX or CSV with company_type info.
+    Export OwnershipType data to XLSX or CSV with company_type info and custom sorting.
     """
+    # permission_classes = []  # Add IsAuthenticated if needed
 
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
-        fields = request.GET.get('fields')  # comma-separated fields
-        uuids_param = request.GET.get('uuids', '')  # comma-separated UUIDs
+        fields = request.GET.get('fields')
+        uuids_param = request.GET.get('uuids', '')
+        custom_sort = request.GET.get('customSort')  # e.g., name:asc,created_at:desc
+
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
+        # --- Field headers ---
         field_header_map = {
             'uuid': 'UUID',
-            'company_type': 'Company Type',
+            'company_type_name': 'Company Type',
             'name': 'Ownership Type',
             'description': 'Description',
             'is_deleted': 'Deleted',
@@ -6177,14 +7505,56 @@ class OwnershipTypeExportAPIView(APIView):
             'updated_at': 'Modified On',
         }
 
-        # Determine fields to export
+        # Fields to export
         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
+        # Fetch queryset
         queryset = OwnershipType.objects.all()
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
 
+        # --- Custom sorting logic ---
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'is_deleted': 'is_deleted',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+            'company_type_name': 'company_type__name',
+        }
+
+        sort_fields = []
+
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sorting for string fields
+                    if field in ['name', 'description', 'company_type_name']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+
+                except ValueError:
+                    continue
+        else:
+            # Default sort by created_at desc
+            sort_order = request.GET.get('sortOrder', 'desc')
+            f = F('created_at')
+            sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # --- Prepare dataset ---
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = 'OwnershipType'
@@ -6197,11 +7567,13 @@ class OwnershipTypeExportAPIView(APIView):
                 else:
                     value = getattr(obj, field, '')
                     if field in ['created_at', 'updated_at'] and value:
-                        value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                        value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
                     elif isinstance(value, bool):
                         value = int(value)
                 row.append(value if value is not None else '')
             dataset.append(row)
+
+        # --- Export data ---
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
@@ -6211,6 +7583,7 @@ class OwnershipTypeExportAPIView(APIView):
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'ownership_types.xlsx'
 
+        # --- Return response ---
         response = HttpResponse(
             file_data if format_type == 'csv' else file_data.getvalue(),
             content_type=content_type
@@ -6432,32 +7805,70 @@ class StakeholderCategoryCreateAPIView(APIView):
 class StakeholderCategoryListAPIView(APIView):    
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
+        custom_sort = request.GET.get('customSort')  # e.g., name:asc,updated_at:desc
 
-        allowed_sort_fields = ['name', 'description', 'updated_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-
-        # Apply descending order for 'desc'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        allowed_sort_fields = ['name', 'description', 'created_at', 'updated_at']
 
         queryset = StakeholderCategory.objects.filter(is_deleted=False)
 
+        # Search filter
         if search:
-            queryset = queryset.filter(
-                Q(name__istartswith=search)
-            )
+            queryset = queryset.filter(Q(name__istartswith=search))
 
-        queryset = queryset.order_by(sort_by)
+        # Sorting fields mapping
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
 
+        sort_fields = []
+
+        # --------------------------
+        # CUSTOM SORT LOGIC
+        # --------------------------
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive for string fields
+                    if field in ['name', 'description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+        else:
+            # Fallback sorting
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'desc')
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+            f = F(orm_field)
+            sort_fields = [
+                f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)
+            ]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # Pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = StakeholderCategorySerializer(result_page, many=True)
 
         return paginator.get_paginated_response(serializer.data)
-
 
 
 class StakeholderCategoryDetailAPIView(APIView):
@@ -6581,55 +7992,94 @@ class StakeholderCategoryDeleteAPIView(APIView):
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         }, status=status.HTTP_200_OK)
 
-
 class StakeholderCategoryExportAPIView(APIView):
-    # permission_classes = [IsAuthenticated]  # Uncomment and adjust as needed
+    """
+    Export StakeholderCategory data to CSV or XLSX with custom sorting.
+    """
+    # permission_classes = [IsAuthenticated]  # Uncomment if authentication is required
 
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
-        fields = request.GET.get('fields')  # comma-separated fields
-        uuids_param = request.GET.get('uuids', '')  # comma-separated UUIDs
-
+        fields = request.GET.get('fields')
+        uuids_param = request.GET.get('uuids', '')
+        custom_sort = request.GET.get('customSort')  
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
+        # --- Field to header mapping ---
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Stakeholder Category', 
+            'name': 'Stakeholder Category',
             'description': 'Description',
             'is_deleted': 'Deleted',
+            'created_at': 'Created On',
             'updated_at': 'Modified On',
         }
-        
-        # --- Determine which fields to export ---
-        if fields:
-            field_list = [f.strip() for f in fields.split(',')]
-        else:
-            field_list = list(field_header_map.keys())
 
+        # Determine fields to export
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+        # Fetch queryset
         queryset = StakeholderCategory.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
 
+        # --- Custom sorting logic ---
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'is_deleted': 'is_deleted',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
 
+        sort_fields = []
+
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sorting for string fields
+                    if field in ['name', 'description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+
+                except ValueError:
+                    continue
+        else:
+            # Default sort by created_at desc
+            sort_order = request.GET.get('sortOrder', 'desc')
+            f = F('created_at')
+            sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # --- Prepare dataset ---
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = 'StakeholderCategory'
 
-        for dept in queryset:
+        for obj in queryset:
             row = []
             for field in field_list:
-                value = getattr(dept, field, '')
-
+                value = getattr(obj, field, '')
                 if field in ['created_at', 'updated_at'] and value:
-                    # Convert the stored UTC datetime to IST and format it
-                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                    value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
                     value = int(value)
-
                 row.append(value if value is not None else '')
             dataset.append(row)
 
+        # --- Export data ---
         if format_type == 'xlsx':
             data = XLSX().export_data(dataset)
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
@@ -6642,6 +8092,9 @@ class StakeholderCategoryExportAPIView(APIView):
         response = HttpResponse(data, content_type=content_type)
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
+
+
+
 
 class StakeholderCategoryImportAPIView(APIView):
     
@@ -6807,30 +8260,71 @@ class StakeholderTypeListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
+        custom_sort = request.GET.get('customSort')  # e.g., name:asc,updated_at:desc
 
-        allowed_sort_fields = ['name', 'description', 'updated_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        allowed_sort_fields = ['name', 'description', 'created_at', 'updated_at']
 
         queryset = StakeholderType.objects.filter(is_deleted=False)
 
+        # Search filter
         if search:
-            queryset = queryset.filter(
-                Q(name__istartswith=search)
-            )
+            queryset = queryset.filter(Q(name__istartswith=search))
 
-        queryset = queryset.order_by(sort_by)
+        # Sorting fields mapping
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
 
+        sort_fields = []
+
+        # --------------------------
+        # CUSTOM SORT LOGIC
+        # --------------------------
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive for string fields
+                    if field in ['name', 'description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+        else:
+            # Fallback sorting
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'desc')
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+            f = F(orm_field)
+            sort_fields = [
+                f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)
+            ]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # Pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = StakeholderTypeSerializer(result_page, many=True)
 
         return paginator.get_paginated_response(serializer.data)
+
 
 # ----------------- CREATE -----------------
 class StakeholderTypeCreateAPIView(APIView):
@@ -7208,36 +8702,79 @@ class StakeholderTypeImportAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-
 class AccreditationCategoryListAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
+        custom_sort = request.GET.get('customSort')  # e.g., name:asc,updated_at:desc
 
-        allowed_sort_fields = ['name', 'description', 'updated_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        allowed_sort_fields = ['name', 'description', 'created_at', 'updated_at']
 
         queryset = AccreditationCategory.objects.filter(is_deleted=False)
 
+        # Search filter
         if search:
-            queryset = queryset.filter(
-                Q(name__istartswith=search)
-            )
+            queryset = queryset.filter(Q(name__istartswith=search))
 
-        queryset = queryset.order_by(sort_by)
+        # Sorting fields mapping
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
 
+        sort_fields = []
+
+        # --------------------------
+        # CUSTOM SORT LOGIC
+        # --------------------------
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive for string fields
+                    if field in ['name', 'description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+        else:
+            # Fallback sorting
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'desc')
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+            f = F(orm_field)
+            sort_fields = [
+                f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)
+            ]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # Pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = AccreditationCategorySerializer(result_page, many=True)
 
         return paginator.get_paginated_response(serializer.data)
+
+
+
+
 
 
 # ------------------ Create API ------------------
@@ -7751,9 +9288,8 @@ class AccreditationNameExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'country': 'Country',
             'category': 'Accrediation Category',
-            'full_name': 'Accrediation Full Name',
+            'full_name': 'Accrediation',
             'short_name': 'Accrediation Short Name',
             'issuing_authority': 'Accrediation Issuing Authority Name',
             'valid_type': 'Accrediation Valid Upto',
@@ -7784,10 +9320,6 @@ class AccreditationNameExportAPIView(APIView):
                 # Format date fields
                 if field in ['created_at', 'updated_at'] and value:
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-
-                # Use UUID for FK fields
-                elif field == 'country' and accred.country:
-                    value = accred.country.name
                 elif field == 'category' and accred.category:
                     value = accred.category.name
                 if field == "valid_date" and value:
@@ -7830,7 +9362,7 @@ class AccreditationNameImportAPIView(APIView):
         duplicate_names = []
         skipped_rows = []
 
-        required_headers = {'accrediation full name', 'country', 'accrediation category'}
+        required_headers = {'accrediation full name', 'accrediation category'}
         optional_headers = {
             'accrediation short name',
             'accrediation issuing authority name',
@@ -7910,7 +9442,6 @@ class AccreditationNameImportAPIView(APIView):
 
             for row in reversed(data):
                 full_name = str(row.get('accrediation full name')).strip() if row.get('accrediation full name') else None
-                country_name = str(row.get('country')).strip() if row.get('country') else None
                 category_name = str(row.get('accrediation category')).strip() if row.get('accrediation category') else None
                 short_name = str(row.get('accrediation short name')).strip() if row.get('accrediation short name') else ''
                 issuing_authority = str(row.get('accrediation issuing authority name')).strip() if row.get('accrediation issuing authority name') else ''
@@ -7934,44 +9465,39 @@ class AccreditationNameImportAPIView(APIView):
                         if not valid_date:
                             skipped_rows.append({
                                 'Accrediation Full Name': full_name,
-                                'country': country_name,
                                 'category': category_name,
                                 'Reason': f"Invalid date format '{valid_date_raw}'. Expected formats: dd-mm-yyyy, dd/mm/yyyy "
                             })
                             continue
 
-                if not full_name or not country_name or not category_name:
+                if not full_name or not  category_name:
                     skipped_rows.append({
                         'full_name': full_name or ' ',
                         'Reason': f"Missing required fields. Required: {', '.join(required_headers)}"
                     })
                     continue
 
-                country = Country.objects.filter(name__iexact=country_name).first()
                 category = AccreditationCategory.objects.filter(name__iexact=category_name).first()
 
-                if not full_name or not country_name or not category_name:
+                if not full_name or not category_name:
                     skipped_rows.append({
                         'Accrediation Full Name': full_name or 'Unknown',
-                        'Country': country_name or 'Unknown',
                         'Accrediation Category': category_name or 'Unknown',
                         'Reason': 'Missing required field(s)'
                     })
                     continue
 
-                if not country or not category:
+                if not category:
                     skipped_rows.append({
                         'Accrediation Full Name': full_name,
-                        'Country': country_name,
                         'Accrediation Category': category_name,
-                        'Reason': f'Invalid country or category: {country_name}/{category_name}'
+                        'Reason': f'Invalid country or category: /{category_name}'
                     })
                     continue
 
                 if valid_type and valid_type not in ALLOWED_VALID_TYPES:
                     skipped_rows.append({
                         'Accrediation Full Name': full_name,
-                        'Country': country_name,
                         'Accrediation Category': category_name,
                         'Reason': f"Invalid valid_type='{valid_type}'. Allowed: Permanent, Valid Upto, Date"
                     })
@@ -7983,7 +9509,6 @@ class AccreditationNameImportAPIView(APIView):
                     if valid_duration_value is None:
                         skipped_rows.append({
                             'Accrediation Full Name': full_name,
-                            'Country': country_name,
                             'Accrediation Category': category_name,
                             'Reason': "Valid Upto type requires 'Accrediation Valid Duration' as numeric and 'Accrediation Valid Unit' as one of: Months, Weeks, Years"
                         })
@@ -7997,7 +9522,6 @@ class AccreditationNameImportAPIView(APIView):
                     except (ValueError, TypeError):
                         skipped_rows.append({
                             'Accrediation Full Name': full_name,
-                            'Country': country_name,
                             'Accrediation Category': category_name,
                             'Reason': "Invalid 'Accrediation Valid Duration'. Please use a positive numeric value."
                         })
@@ -8007,7 +9531,6 @@ class AccreditationNameImportAPIView(APIView):
                     if not valid_duration_unit or valid_duration_unit not in ALLOWED_VALID_UNITS:
                         skipped_rows.append({
                             'Accrediation Full Name': full_name,
-                            'Country': country_name,
                             'Accrediation Category': category_name,
                             'Reason': f"Invalid 'Accrediation Valid Unit'='{valid_duration_unit}'. Please use one of: Months, Weeks, Years"
                         })
@@ -8016,7 +9539,6 @@ class AccreditationNameImportAPIView(APIView):
                 elif valid_type == 'Date' and not valid_date:
                     skipped_rows.append({
                         'Accrediation Full Name': full_name,
-                        'Country': country_name,
                         'Accrediation Category': category_name,
                         'Reason': "Accrediation Valid Date  requires valid_date formate DD-MM_YYY"
                     })
@@ -8025,7 +9547,6 @@ class AccreditationNameImportAPIView(APIView):
                 if valid_duration_unit and valid_duration_unit not in ALLOWED_VALID_UNITS:
                     skipped_rows.append({
                         'Accrediation Full Name': full_name,
-                        'Country': country_name,
                         'Accrediation Category': category_name,
                         'Reason': f"Invalid 'Accrediation Valid Unit'='{valid_duration_unit}'. Please use one of: Months, Weeks, Years"
                     })
@@ -8033,14 +9554,12 @@ class AccreditationNameImportAPIView(APIView):
 
                 existing = AccreditationName.objects.filter(
                     full_name__iexact=full_name,
-                    country=country,
                     category=category
                 ).first()
 
                 if existing:
                     if not existing.is_deleted:
                         duplicate_names.append({
-                            'Country': country_name,
                             'Accrediation Full Name': full_name,
                             'Accrediation Category': category_name
                         })
@@ -8064,7 +9583,6 @@ class AccreditationNameImportAPIView(APIView):
                     AccreditationName.objects.create(
                         full_name=full_name,
                         short_name=short_name,
-                        country=country,
                         category=category,
                         issuing_authority=issuing_authority,
                         valid_type=valid_type,
@@ -8077,7 +9595,6 @@ class AccreditationNameImportAPIView(APIView):
                     imported_count += 1
                 except IntegrityError:
                     duplicate_names.append({
-                        'Country': country_name,
                         'Accrediation Full Name': full_name,
                         'Accrediation Category': category_name
                     })
@@ -8126,26 +9643,65 @@ class BankAccountTypeCreateAPIView(APIView):
 class BankAccountTypeListAPIView(APIView):    
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
+        custom_sort = request.GET.get('customSort')  # e.g., name:asc,updated_at:desc
 
-        allowed_sort_fields = ['name', 'description', 'updated_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-
-        # Apply descending order for 'desc'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        allowed_sort_fields = ['name', 'description', 'created_at', 'updated_at']
 
         queryset = BankAccountType.objects.filter(is_deleted=False)
 
+        # Search filter
         if search:
-            queryset = queryset.filter(
-                Q(name__istartswith=search)
-            )
+            queryset = queryset.filter(Q(name__istartswith=search))
 
-        queryset = queryset.order_by(sort_by)
+        # Sorting fields mapping
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
 
+        sort_fields = []
+
+        # --------------------------
+        # CUSTOM SORT LOGIC
+        # --------------------------
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive for string fields
+                    if field in ['name', 'description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+        else:
+            # Fallback sorting
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'desc')
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+            f = F(orm_field)
+            sort_fields = [
+                f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)
+            ]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # Pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = BankAccountTypeSerializer(result_page, many=True)
@@ -8486,25 +10042,67 @@ class LicenseNameListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
+        custom_sort = request.GET.get('customSort')  # e.g., full_name:asc,valid_upto:desc
 
-        allowed_sort_fields = ['full_name', 'short_name', 'issuing_authority', 'valid_upto', 'created_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        allowed_sort_fields = ['full_name', 'short_name', 'issuing_authority', 'valid_upto', 'created_at', 'updated_at']
 
         queryset = LicenseName.objects.filter(is_deleted=False)
 
+        # Search filter
         if search:
-            queryset = queryset.filter(
-                Q(full_name__istartswith=search)
-            )
+            queryset = queryset.filter(Q(full_name__istartswith=search))
 
-        queryset = queryset.order_by(sort_by)
+        # Sorting fields mapping
+        sort_field_map = {
+            'full_name': 'full_name',
+            'short_name': 'short_name',
+            'issuing_authority': 'issuing_authority',
+            'valid_upto': 'valid_upto',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
 
+        sort_fields = []
+
+        # --------------------------
+        # CUSTOM SORT LOGIC
+        # --------------------------
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive for string fields
+                    if field in ['full_name', 'short_name', 'issuing_authority']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+        else:
+            # Fallback sorting
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'desc')
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+            f = F(orm_field)
+            sort_fields = [
+                f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)
+            ]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # Pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = LicenseNameSerializer(result_page, many=True)

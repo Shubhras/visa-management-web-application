@@ -89,9 +89,9 @@ const AddImportAccrediationNameModal = ({ show, handleClose }) => {
                     if (response?.duplicates?.length > 0) {
                         const prepareData = {
                             data: response.duplicates || [],
-                            headers: ["Country", "Accrediation Category", "Accrediation Full Name"],
-                            sheetName: "AccrediationName",
-                            fileName: "AccrediationName",
+                            headers: ["Accreditation Category", "Accreditation Full Name"],
+                            sheetName: "AccreditationName",
+                            fileName: "AccreditationName",
                         };
                         exportToExcelDuplicate(
                             prepareData.data,
@@ -103,9 +103,9 @@ const AddImportAccrediationNameModal = ({ show, handleClose }) => {
                     if (response?.skipped_rows?.length > 0) {
                         const prepareData = {
                             data: response.skipped_rows || [],
-                            headers: ["Country", "Accrediation Category", "Accrediation Full Name", "Reason"],
-                            sheetName: "AccrediationName",
-                            fileName: "AccrediationName",
+                            headers: ["Accreditation Category", "Accreditation Full Name", "Reason"],
+                            sheetName: "AccreditationName",
+                            fileName: "AccreditationName",
                         };
                         exportToExcelWrongData(
                             prepareData.data,
@@ -156,7 +156,7 @@ const AddImportAccrediationNameModal = ({ show, handleClose }) => {
                     <div className="modal-content radius-16 bg-base">
                         <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
                             <h1 className="modal-title fs-5" id="license-nameModalLabel">
-                                Upload Accrediation Name
+                                Upload Accreditation Name
                             </h1>
                             <button
                                 type="button"
@@ -256,10 +256,10 @@ const AddImportAccrediationNameModal = ({ show, handleClose }) => {
             </div>
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
-                    downloadFileName: "AccrediationName",
-                    items: ["Country", "Accrediation Category", "Accrediation Full Name", "Accrediation Short Name", "Accrediation Issuing Authority Name", "Accrediation Valid Upto", "Description"],
-                    selectedItems: ["Country", "Accrediation Category", "Accrediation Full Name"],
-                    ItemsRequired: ["Country", "Accrediation Category", "Accrediation Full Name"],
+                    downloadFileName: "AccreditationName",
+                    items: ["Accreditation Category", "Accreditation Full Name", "Accreditation Short Name", "Accreditation Issuing Authority Name", "Accreditation Valid Upto", "Description"],
+                    selectedItems: [ "Accreditation Category", "Accreditation Full Name"],
+                    ItemsRequired: ["Accreditation Category", "Accreditation Full Name"],
                 }
                 } />
             )}

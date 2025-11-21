@@ -15,6 +15,32 @@ const MasterLayout = ({ children }) => {
   const [openSubmenu, setOpenSubmenu] = useState(null);
   const [openChildMenu, setOpenChildMenu] = useState(null);
 
+  const [searchAllowedModules] = useState([
+    "City",
+    "Department",
+    "District",
+    "State",
+    "Country",
+    "Gender",
+    "Continents",
+    "Factor For",
+    "Study : Age Group",
+    "Study : Academic Result Group",
+    "Study : Gap Group",
+    "Study : Backlogs Group",
+    "Marital Status",
+    "Time Zone",
+    "Relation",
+    "Civil ID Name",
+    "Representing Country",
+    "Visa Major Category",
+    "Applicant Type",
+    "Visa Eligibility Type",
+    "Visa Status",
+    "Possibility Level",
+    "Visa Name"
+  ]);
+
   // Global Search State - Har page pe same rahega
   const { globalSearch, setGlobalSearch } = useGlobalSearch();
   const menuItems = [
@@ -62,8 +88,8 @@ const MasterLayout = ({ children }) => {
           children: [
             { name: "Gender", path: "/gender-list" },
             { name: "Marital Status", path: "/marital-status" },
-            { name: "Continents ", path: "/continent-list" },
-            { name: "Country ", path: "/country-list" },
+            { name: "Continents", path: "/continent-list" },
+            { name: "Country", path: "/country-list" },
             { name: "State", path: "/state-list" },
             { name: "District", path: "/district-list" },
             { name: "City", path: "/city-list" },
@@ -83,7 +109,7 @@ const MasterLayout = ({ children }) => {
             { name: "Ownership Type", path: "/ownership-type" },
             { name: "Stakeholder Category", path: "/stakeholder-list" },
             { name: "Stakeholder Type", path: "/stakeholder-type" },
-            { name: "Accrediation Category ", path: "/accrediation-category" },
+            { name: "Accrediation Category", path: "/accrediation-category" },
             { name: "Accrediation Name", path: "/accrediation-name" },
             { name: "Bank Account Type", path: "/bank-ccount-type" },
             { name: "License Name", path: "/license-name" },
@@ -109,7 +135,7 @@ const MasterLayout = ({ children }) => {
             { name: "Education Level Code", path: "/education-level-code" },
             { name: "Education Level", path: "/education-level" },
             { name: "Study Main Area", path: "/study-main-area" },
-            { name: "Education Duration", path: "/education-duration" },
+            // { name: "Education Duration", path: "/education-duration" },
             { name: "Study Major Area", path: "/study-major-area" },
             { name: "Academic Result Type", path: "/academic-result-type" },
             { name: "Education Type", path: "/education-type" },
@@ -167,6 +193,11 @@ const MasterLayout = ({ children }) => {
             { name: "Occupation Level", path: "/occupation-level" },
             { name: "Occupation Code", path: "/occupation-code" },
             { name: "Occupation Name", path: "/occupation-name" },
+            { name: "Designation (Job Title)", path: "/designation" },
+            { name: "Job Prospect", path: "/job-prospect" },
+
+            { name: "Related Occupation", path: "/related-occupation" },
+
           ],
         },
         {
@@ -192,6 +223,67 @@ const MasterLayout = ({ children }) => {
             { name: "Course Duration", path: "/course-duration" },
           ],
         },
+        {
+          name: "Visa Conditions",
+          children: [
+            { name: "Work Rights", path: "/work-rights" },
+            { name: "Work Rights During Study", path: "/work-rights-during-study" },
+            { name: "Work Rights During Vacation", path: "/work-rights-during-vacation" },
+            { name: "Work Rights After Study", path: "/work-rights-after-study" },
+            { name: "PR Possibility", path: "/pr-possibility" },
+            { name: "Spouse Can Apply with Candidate?", path: "/spouse-can-apply-with-candidate" },
+            { name: "Visa Main Category", path: "/visa-main-category" },
+            { name: "Spouse Visa Category", path: '/spouse-visa-category' },
+            { name: "Spouse Work Rights", path: "/spouse-work-rights" },
+            { name: "Children Can Apply with Candidate?", path: "/children-can-apply-with-candidate" },
+            { name: "Children Visa Category", path: "/children-visa-category" },
+            { name: "Children Study / Work Rights", path: "/children-study-work-rights" },
+
+          ],
+        },
+        {
+          name: "Visa Process",
+          children: [
+            { name: "Document Category", path: "/document-category" },
+            { name: "Document Name", path: "/document-name" },
+            { name: "Document Type", path: "/document-type" },
+            { name: "Purpose of Visit", path: "/purpose-of-visit" },
+            { name: "Documents For", path: "/documents-for" },
+            { name: "Required Documents (General)", path: "/required-documents-general" },
+            { name: "Process Status Name", path: "/process-status-name" },
+            { name: "Process Sub Status Name", path: "/process-sub-status-name" },
+            { name: "Process Type", path: "/process-type" },
+            { name: "Payment To", path: "/payment-to" },
+            { name: "Payment Category", path: "/payment-category" },
+          ],
+        },
+
+        {
+          name: "Study Factors",
+          children: [
+            { name: "Factor For", path: "/factor-for" },
+            { name: "Study : Age Group", path: "/age-group" },
+            { name: "Study : Academic Result Group", path: "/academic-result-group" },
+            { name: "Study : Gap Group", path: "/gap-group" },
+            { name: "Study : Backlogs Group", path: "/backlogs-group" },
+          ],
+        },
+
+        {
+          name: "Visa",
+          children: [
+            { name: "Representing Country", path: "/representing-country" },
+            { name: "Visa Main Category", path: "/visa-main-category" },
+            { name: "Visa Major Category", path: "/visa-major-category" },
+            { name: "Applicant Type", path: "/applicant-type" },
+            { name: "Visa Eligibility Type", path: "/visa-eligibility-type" },
+            { name: "Visa Status", path: "/visa-status" },
+            { name: "Possibility Level", path: "/possibility-level" },
+            { name: "Visa Name", path: "/visa-name" }
+
+          ],
+        },
+
 
         // { name: 'Education', path: '/' },
         // { name: 'Test', path: '/' },
@@ -1944,12 +2036,13 @@ const MasterLayout = ({ children }) => {
             {/* Sub Header */}
             <div className="sub-header-bar d-flex align-items-center justify-content-between">
               <div className="sub-header-title">{selectedItemName}</div>
-              {selectedItemName === "City" && (
+              {searchAllowedModules.indexOf(selectedItemName) !== -1 && (
                 <div className="position-relative search-filter-div">
                   <Icon
                     icon="ion:search-outline"
                     className="position-absolute search-filter-icone"
                   />
+
                   <input
                     type="text"
                     className="form-control form-control-sm ps-5 search-filter-input"
@@ -1957,21 +2050,21 @@ const MasterLayout = ({ children }) => {
                     value={globalSearch}
                     onChange={(e) => setGlobalSearch(e.target.value)}
                   />
-                  {/* Clear Button (×) */}
+
                   {globalSearch && (
                     <span
                       className="position-absolute"
                       style={{
-                        right: '10px',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        cursor: 'pointer',
+                        right: "10px",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        cursor: "pointer",
                         zIndex: 999,
-                        fontSize: '20px',
-                        color: '#6c757d',
+                        fontSize: "20px",
+                        color: "#6c757d",
                         lineHeight: 1,
                       }}
-                      onClick={() => setGlobalSearch('')}
+                      onClick={() => setGlobalSearch("")}
                     >
                       ×
                     </span>

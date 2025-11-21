@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from "react-redux";
-import { occupationVersionAdd, occupationVersionEdit } from "../../../../store/master/occupationMaster/action";
+import { occupationVersionAdd, occupationVersionEdit, representingCountryList } from "../../../../store/master/occupationMaster/action";
 import { toast } from "react-toastify";
-import { countryList } from "../../../../store/master/generalMasters/actions";
+// import { countryList } from "../../../../store/master/generalMasters/actions";
 import Select from "react-select";
 const AddEditOccupationVersionModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
     const dispatch = useDispatch();
@@ -63,7 +63,7 @@ const AddEditOccupationVersionModal = ({ show, handleClose, mode = 'add', rowDat
             sortBy: 'updated_at',
             sortOrder: 'desc',
         };
-        dispatch(countryList(params, (response, error) => {
+        dispatch(representingCountryList(params, (response, error) => {
             setLoading(false);
             if (response?.statusCode === 200 && response?.status === true) {
                 setCountryData(response?.data || []);

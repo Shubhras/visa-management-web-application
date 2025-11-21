@@ -9,10 +9,10 @@ import AddImportCityModal from './AddImportCityModal';
 import AddEditCityModal from './AddEditCityModal';
 import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 import { countryDemoList } from '../../../../store/master/companyMasters/actions';
-import { useGlobalSearch } from '../../../../components/comman/GlobalSearchContext';
+import { useGlobalSearch, } from '../../../../components/comman/GlobalSearchContext';
 const CityList = () => {
-  const { globalSearch } = useGlobalSearch();
   const dispatch = useDispatch();
+  const { globalSearch, setGlobalSearch } = useGlobalSearch();
   const [modalState, setModalState] = useState({
     show: false,
     mode: 'add',
@@ -39,13 +39,15 @@ const CityList = () => {
     });
   };
 
-  const handleClose = () => {
+  const handleClose = (shouldRefresh = false) => {
     setModalState({
       show: false,
       mode: 'add',
       rowData: null
     });
-    fetchCityList();
+    if (shouldRefresh) {
+      fetchCityList();
+    }
   }
 
   const [showImport, setShowImport] = useState(false);
@@ -118,8 +120,10 @@ const CityList = () => {
     limit: 25,
     search: '',
     status: '',
-    sortBy: 'created_at',
-    sortOrder: 'desc',
+    sort: [
+      // { field: "updated_at", order: "desc" }
+      { field: "created_at", order: "desc" }
+    ],
     total: 0,
     totalPages: 0,
     currentPage: 1,
@@ -180,7 +184,7 @@ const CityList = () => {
 
   useEffect(() => {
     fetchCityList();
-  }, [tableState.page, tableState.limit, tableState.status, tableState.sortBy, tableState.sortOrder, columnFilters]);
+  }, [tableState.page, tableState.limit, tableState.status, tableState.sort, columnFilters]);
 
   // Prepare country and state filter options
   useEffect(() => {
@@ -216,7 +220,6 @@ const CityList = () => {
   }, [stateListData]);
 
   // Prepare district filter options
-
   useEffect(() => {
     if (districtListData.length > 0) {
       setFilterDropdownData(prev => ({
@@ -241,22 +244,20 @@ const CityList = () => {
       limit: tableState.limit,
       search: tableState.search || '',
       status: tableState.status || '',
-      sortBy: tableState.sortBy || '',
-      sortOrder: tableState.sortOrder || '',
+      // sortBy: tableState.sortBy || '',
+      // sortOrder: tableState.sortOrder || '',
+      sort: tableState.sort,
       // Send country, state and district IDs
       country: columnFilters.countryId.length > 0 ? columnFilters.countryId : null,
       state: columnFilters.stateId.length > 0 ? columnFilters.stateId : null,
       district: columnFilters.districtId.length > 0 ? columnFilters.districtId : null
     };
 
-    console.log('Sending params:', { country: columnFilters.countryId, state: columnFilters.stateId, district: columnFilters.districtId });
-
     dispatch(cityList(params, (response, error) => {
       setLoading(false);
       if (response?.statusCode === 200 && response?.status === true) {
         const paginationData = response?.pagination || {};
         const data = response?.data || [];
-
         setCityDataList(data);
 
         setTableState(prev => ({
@@ -365,17 +366,14 @@ const CityList = () => {
 
   // Handle filter checkbox change - now handles both IDs and regular values
   const handleFilterCheckboxChange = (columnField, value, checked) => {
-    console.log('Filter change:', columnField, value, checked);
     setColumnFilters(prev => {
       const currentFilters = prev[columnField] || [];
       let newFilters;
-
       if (checked) {
         newFilters = [...currentFilters, value];
       } else {
         newFilters = currentFilters.filter(v => v !== value);
       }
-
       return { ...prev, [columnField]: newFilters };
     });
   };
@@ -403,21 +401,43 @@ const CityList = () => {
     }));
   };
 
-  // Apply filter and close dropdown
-  const applyColumnFilter = (columnField) => {
-    setActiveFilterColumn(null);
-    setTableState(prev => ({ ...prev, page: 1 }));
-  };
-
   // Clear all filters
-  const clearAllFilters = () => {
+  const clearAllOnlyHeaderFilters = () => {
     setColumnFilters({
       countryId: [],
       stateId: [],
       districtId: []
     });
-    setTableState(prev => ({ ...prev, page: 1 }));
   };
+
+  // Clear all filters
+  const clearAllFilters = () => {
+    // Reset filter dropdowns
+    setColumnFilters({
+      countryId: [],
+      stateId: [],
+      districtId: []
+    });
+    // Reset table state (sorting + pagination)
+    setTableState(prev => ({
+      ...prev,
+      page: 1,
+      limit: 25,
+      search: '',
+      status: '',
+      sort: [
+        { field: "created_at", order: "desc" }   // default sort
+      ],
+      total: 0,
+      totalPages: 0,
+      currentPage: 1,
+      hasNext: false,
+      hasPrevious: false
+    }));
+    // Reset global search
+    setGlobalSearch('');
+  };
+
 
   // Check if any filters are active
   const hasActiveFilters = () => {
@@ -437,35 +457,67 @@ const CityList = () => {
 
   const handleSort = (field) => {
     setTableState(prev => {
-      if (prev.sortBy === field) {
-        if (prev.sortOrder === 'asc') {
-          return { ...prev, sortOrder: 'desc', page: 1 };
-        } else if (prev.sortOrder === 'desc') {
-          return { ...prev, sortBy: '', sortOrder: '', page: 1 };
+      let newSort = [...prev.sort];
+      const existingIndex = newSort.findIndex(s => s.field === field);
+      if (existingIndex === -1) {
+        newSort.push({ field, order: "asc" });
+      }
+      else {
+        const existing = newSort[existingIndex];
+        if (existing.order === "asc") {
+          newSort[existingIndex].order = "desc";
+        }
+        else if (existing.order === "desc") {
+          newSort.splice(existingIndex, 1);
         }
       }
-      return { ...prev, sortBy: field, sortOrder: 'asc', page: 1 };
+      return { ...prev, sort: newSort, page: 1 };
     });
   };
 
   const getSortIcon = (field) => {
-    if (tableState.sortBy == field) {
-      if (tableState.sortOrder === 'asc') {
-        return <Icon icon="ri:sort-asc" className='sorting-th-icone' />;
-      }
-      if (tableState.sortOrder === 'desc') {
-        return <Icon icon="ri:sort-desc" className='sorting-th-icone' />;
-      }
+    const sortObj = tableState.sort.find(s => s.field === field);
+    if (!sortObj) {
+      // return <Icon icon="ri:arrow-up-down-line" className="sorting-th-icone" />;
+      //  return <Icon icon="ri:close-line" className="sorting-th-icone" />;
+      return <Icon icon="ri:menu-line" className="sorting-th-icone" />;
     }
-    return ''
+    if (sortObj.order === "asc") {
+      return <Icon icon="ri:sort-asc" className="sorting-th-icone" />;
+    }
+    return <Icon icon="ri:sort-desc" className="sorting-th-icone" />;
   };
 
-  const handleSearchChange = (value) => {
-    setTableState(prev => ({
-      ...prev,
-      search: value,
-      page: 1
-    }));
+  // Sort A–Z
+  const applySortAsc = (field) => {
+    setTableState(prev => {
+      let newSort = [...prev.sort];
+      const existingIndex = newSort.findIndex(s => s.field === field);
+
+      if (existingIndex === -1) {
+        newSort.push({ field, order: "asc" });
+      } else {
+        newSort[existingIndex].order = "asc";
+      }
+
+      return { ...prev, sort: newSort, page: 1 };
+    });
+  };
+
+  // Sort Z–A
+  const applySortDesc = (field) => {
+    setTableState(prev => {
+      let newSort = [...prev.sort];
+      const existingIndex = newSort.findIndex(s => s.field === field);
+
+      if (existingIndex === -1) {
+        newSort.push({ field, order: "desc" });
+      } else {
+        newSort[existingIndex].order = "desc";
+      }
+
+      return { ...prev, sort: newSort, page: 1 };
+    });
   };
 
   const handlePageLengthChange = (value) => {
@@ -598,9 +650,12 @@ const CityList = () => {
     setSelectAllOrNot('');
   };
 
-  const handleCloseImport = () => {
+  const handleCloseImport = (shouldRefresh = false) => {
     setShowImport(false);
-    fetchCityList();
+    // Only call API when data was successfully imported
+    if (shouldRefresh) {
+     fetchCityList();
+    }
   };
 
   const handleShowImport = () => {
@@ -661,7 +716,13 @@ const CityList = () => {
       file: "xlsx",
       fields: fieldsString,
       uuids: selectAllOrNot === "all" ? [] : selectedRows,
+      search: tableState.search || '',
+      sort: tableState.sort,
+      country: columnFilters.countryId.length > 0 ? columnFilters.countryId : null,
+      state: columnFilters.stateId.length > 0 ? columnFilters.stateId : null,
+      district: columnFilters.districtId.length > 0 ? columnFilters.districtId : null
     };
+
     setLoadingExport(true);
     dispatch(cityExportData(sendPayload, (response, error) => {
       if (error) {
@@ -746,49 +807,20 @@ const CityList = () => {
                   )}
                   {hasActiveFilters() && (
                     <button
-                      onClick={clearAllFilters}
-                      className="btn btn-sm py-1 comman-inactive-btn"
-                      title="Clear all filters"
-                    >
+                      onClick={clearAllOnlyHeaderFilters}
+                      className="btn btn-sm py-1 comman-inactive-btn">
                       <Icon icon="mdi:filter-off" width="16" /> Clear Filters
                     </button>
                   )}
+                  <button
+                    onClick={clearAllFilters}
+                    className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
+                  >Reset</button>
                 </div>
               </div>
 
               <div className="col-xl-6 col-lg-8 col-md-12">
                 <div className="d-flex flex-wrap align-items-center justify-content-end gap-2">
-                  {/* <div className="position-relative flex-grow-1 search-filter-div">
-                    <Icon
-                      icon="ion:search-outline"
-                      className="position-absolute search-filter-icone"
-                    />
-                    <input
-                      type="text"
-                      className="form-control form-control-sm ps-5 search-filter-input"
-                      placeholder="Search..."
-                      value={tableState.search}
-                      onChange={(e) => handleSearchChange(e.target.value)}
-                    />
-                    {tableState.search && tableState.search.length > 0 && (
-                      <span
-                        className="position-absolute"
-                        style={{
-                          right: '10px',
-                          top: '50%',
-                          transform: 'translateY(-50%)',
-                          cursor: 'pointer',
-                          zIndex: 999,
-                          fontSize: '20px',
-                          color: '#6c757d',
-                          lineHeight: 1
-                        }}
-                        onClick={() => handleSearchChange('')}
-                      >
-                        ×
-                      </span>
-                    )}
-                  </div> */}
                   <select
                     className="form-select form-select-sm select-page-filter"
                     value={tableState.limit}
@@ -802,7 +834,7 @@ const CityList = () => {
                   {tableState.total > 0 && (
                     <div className="d-flex justify-content-between align-items-center px-4 py-0">
                       <div className="showing-total-page">
-                         {startIndex + 1}-{" "}
+                        {startIndex + 1}-{" "}
                         {Math.min(startIndex + tableState.limit, tableState.total)}{" "}
                         of {tableState.total}
                       </div>
@@ -909,7 +941,6 @@ const CityList = () => {
               </div>
             </div>
           </div>
-
           <div className="card-body pt-0 container-table">
             <div className='container-table-div'>
               <table className="table mb-0">
@@ -961,19 +992,21 @@ const CityList = () => {
                                       onClick={(e) => e.stopPropagation()}
                                     >
                                       {/* Sort Options */}
-                                      <div className={`filter-menu-item px-3 py-2 d-flex align-items-center ${tableState.sortBy === column.field && tableState.sortOrder === 'asc'
-                                        ? 'disabled-sort'
-                                        : ''
+                                      <div className={`filter-menu-item px-3 py-2 d-flex align-items-center ${tableState.sort.find(s => s.field === column.field)?.order === "asc"
+                                        ? "disabled-sort"
+                                        : ""
                                         }`}
-                                        onClick={() => { handleSort(column.field); setTableState(prev => ({ ...prev, sortOrder: 'asc' })); }}>
+                                        onClick={() => applySortAsc(column.field)}
+                                      >
                                         <Icon icon="ri:arrow-up-line" className="me-2 text-muted" width="18" />
                                         Sort Smallest to Largest
                                       </div>
-                                      <div className={`filter-menu-item px-3 py-2 d-flex align-items-center mb-10 ${tableState.sortBy === column.field && tableState.sortOrder === 'desc'
-                                        ? 'disabled-sort'
-                                        : ''
+                                      <div className={`filter-menu-item px-3 py-2 d-flex align-items-center ${tableState.sort.find(s => s.field === column.field)?.order === "desc"
+                                        ? "disabled-sort"
+                                        : ""
                                         }`}
-                                        onClick={() => { handleSort(column.field); setTableState(prev => ({ ...prev, sortOrder: 'desc' })); }}>
+                                        onClick={() => applySortDesc(column.field)}
+                                      >
                                         <Icon icon="ri:arrow-down-line" className="me-2 text-muted" width="18" />
                                         Sort Largest to Smallest
                                       </div>
@@ -1051,7 +1084,6 @@ const CityList = () => {
                                 </div>
                               )}
                             </div>
-
                           </div>
                         </th>
                       )

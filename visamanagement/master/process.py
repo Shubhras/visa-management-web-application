@@ -14,6 +14,8 @@ from .pagination import *
 import io
 import pytz
 from django.utils import timezone
+from django.db.models.functions import Lower
+
 from tablib import Dataset
 from rest_framework import status
 
@@ -53,46 +55,27 @@ class DocumentCategoryCreateAPIView(APIView):
 
 
 
-# class DocumentCategoryListAPIView(APIView):
-#     def get(self, request):
-#         search = request.GET.get('search', '').strip()
-#         sort_by = request.GET.get('sortBy', 'created_at')
-#         sort_order = request.GET.get('sortOrder', 'desc')
-
-#         allowed_sort_fields = ['name', 'description', 'created_at']
-#         if sort_by not in allowed_sort_fields:
-#             sort_by = 'created_at'
-
-#         if sort_order == 'desc':
-#             sort_by = f'-{sort_by}'
-
-#         queryset = DocumentCategory.objects.filter(is_deleted=False)
-
-#         if search:
-#             queryset = queryset.filter(
-#                 Q(name__istartswith=search)     
-#             )
-
-#         queryset = queryset.order_by(sort_by)
-#         paginator = CustomPagination()
-#         result_page = paginator.paginate_queryset(queryset, request)
-#         serializer = DocumentCategorySerializer(result_page, many=True)
-#         return paginator.get_paginated_response(serializer.data)
-
-
 class DocumentCategoryListAPIView(APIView):
-
     def get(self, request):
         search = request.GET.get('search', '').strip()
-
-        # -----------------------
-        # CUSTOM SORTING (Excel type)
-        # -----------------------
         custom_sort = request.GET.get('customSort')
+
+        # Allowed fields to sort
         allowed_sort_fields = ['name', 'description', 'created_at']
 
+        # Map to ORM fields
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'created_at': 'created_at'
+        }
+
+        sort_fields = []
+
+        # ------------------------------------------
+        #  CUSTOM SORT (Same Logic as City API)
+        # ------------------------------------------
         if custom_sort:
-            sort_fields = []
             for rule in custom_sort.split(','):
                 try:
                     field, order = rule.split(':')
@@ -102,53 +85,62 @@ class DocumentCategoryListAPIView(APIView):
                     if field not in allowed_sort_fields:
                         continue
 
-                    # Case-insensitive sorting using Lower()
-                    if order == "asc":
-                        sort_fields.append(F(field).asc(nulls_last=True))
+                    orm_field = sort_field_map[field]
+
+                    # case-insensitive sorting for text fields
+                    if field in ['name', 'description']:
+                        f = Lower(orm_field)
                     else:
-                        sort_fields.append(F(field).desc(nulls_last=True))
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
 
                 except ValueError:
                     continue
 
+        # ------------------------------------------
+        # DEFAULT SORT
+        # ------------------------------------------
         else:
-            # NORMAL SORTING
             sort_by = request.GET.get('sortBy', 'created_at')
             sort_order = request.GET.get('sortOrder', 'desc')
 
             if sort_by not in allowed_sort_fields:
                 sort_by = 'created_at'
 
-            if sort_order == 'desc':
-                sort_fields = [f'-{sort_by}']
-            else:
-                sort_fields = [sort_by]
+            orm_field = sort_field_map.get(sort_by, 'created_at')
 
-        # -----------------------
+            f = F(orm_field)
+            sort_fields = [
+                f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)
+            ]
+
+        # ------------------------------------------
         # BASE QUERY
-        # -----------------------
+        # ------------------------------------------
         queryset = DocumentCategory.objects.filter(is_deleted=False)
 
-        # -----------------------
-        # SEARCH FILTER
-        # -----------------------
+        # ------------------------------------------
+        # SEARCH
+        # ------------------------------------------
         if search:
-            queryset = queryset.filter(
-                Q(name__istartswith=search)
-            )
+            queryset = queryset.filter(name__istartswith=search)
 
-        # -----------------------
-        # APPLY SORTING
-        # -----------------------
+        # ------------------------------------------
+        # APPLY SORT
+        # ------------------------------------------
         queryset = queryset.order_by(*sort_fields)
 
-        # -----------------------
+        # ------------------------------------------
         # PAGINATION
-        # -----------------------
+        # ------------------------------------------
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = DocumentCategorySerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
+
 
 
 class DocumentCategoryRetrieveAPIView(APIView):
@@ -276,13 +268,35 @@ class DocumentCategoryDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+
 class DocumentCategoryExportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
-        fields = request.GET.get('fields')  # comma-separated fields
+        fields = request.GET.get('fields')
+
         uuids_param = request.GET.get('uuids', '')
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
+        search = request.GET.get('search', '').strip()
+        custom_sort = request.GET.get('customSort')
+
+        # -----------------------------------------
+        # Allowed sorting fields (same rules as City)
+        # -----------------------------------------
+        allowed_sort_fields = ['name', 'description', 'created_at']
+
+        # Mapping to ORM fields
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'created_at': 'created_at',
+        }
+
+        # -----------------------------------------
+        # Field header names for export
+        # -----------------------------------------
         field_header_map = {
             'uuid': 'UUID',
             'name': 'Document Category',
@@ -292,28 +306,89 @@ class DocumentCategoryExportAPIView(APIView):
             'updated_at': 'Modified On'
         }
 
+        # If fields not provided → export all
         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
+        # -----------------------------------------
+        # Base Query
+        # -----------------------------------------
         queryset = DocumentCategory.objects.filter(is_deleted=False)
-        if uuids:
-            queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
 
+        # UUID filtering
+        if uuids and "all" not in uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+
+        # Search
+        if search:
+            queryset = queryset.filter(name__istartswith=search)
+
+        # -----------------------------------------
+        # Sorting
+        # -----------------------------------------
+        sort_fields = []
+
+        if custom_sort:
+            # Supports: ?customSort=name:asc,created_at:desc
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in allowed_sort_fields:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sorting for string fields
+                    if field in ['name', 'description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == "asc" else f.desc(nulls_last=True)
+                    )
+
+                except ValueError:
+                    continue
+        else:
+            # Default sorting
+            sort_order = request.GET.get('sortOrder', 'desc')
+            f = F('created_at')
+            sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # -----------------------------------------
+        # Export Logic
+        # -----------------------------------------
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = 'DocumentCategory'
+
+        india_tz = timezone.get_default_timezone()
 
         for category in queryset:
             row = []
             for field in field_list:
                 value = getattr(category, field, '')
+
+                # Format timestamps
                 if field in ['created_at', 'updated_at'] and value:
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-                elif isinstance(value, bool):
+
+                # Convert boolean to integer
+                if isinstance(value, bool):
                     value = int(value)
+
                 row.append(value if value is not None else '')
+
             dataset.append(row)
 
+        # -----------------------------------------
+        # Return file
+        # -----------------------------------------
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
@@ -329,6 +404,7 @@ class DocumentCategoryExportAPIView(APIView):
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
+
 
 
 class DocumentCategoryImportAPIView(APIView):
@@ -552,41 +628,96 @@ class DocumentNameCreateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
-
-
 class DocumentNameListAPIView(APIView):
     def get(self, request):
         search = request.GET.get('search', '').strip()
         category_id = request.GET.get('category_id')
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
+        custom_sort = request.GET.get('customSort')
 
+        # ------------------------------------------
+        #  Allowed sortable fields
+        # ------------------------------------------
         allowed_sort_fields = ['document_name', 'created_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
 
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        # Map API fields → ORM fields
+        sort_field_map = {
+            'document_name': 'document_name',
+            'created_at': 'created_at'
+        }
 
+        sort_fields = []
+
+        # ------------------------------------------
+        #  CUSTOM SORT (Same logic as Ideal API)
+        # ------------------------------------------
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in allowed_sort_fields:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sorting for text fields
+                    if field == 'document_name':
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+
+                except ValueError:
+                    continue
+
+        # ------------------------------------------
+        #  DEFAULT SORT (If customSort missing)
+        # ------------------------------------------
+        else:
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'desc')
+
+            if sort_by not in allowed_sort_fields:
+                sort_by = 'created_at'
+
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+
+            f = F(orm_field)
+            sort_fields = [
+                f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)
+            ]
+
+        # ------------------------------------------
+        # BASE QUERY
+        # ------------------------------------------
         queryset = DocumentName.objects.filter(is_deleted=False)
 
         if category_id:
             queryset = queryset.filter(document_category_id=category_id)
 
-
+        # ------------------------------------------
+        # SEARCH
+        # ------------------------------------------
         if search:
-            queryset = queryset.filter(
-                Q(document_name__istartswith=search)
-            )
+            queryset = queryset.filter(document_name__istartswith=search)
 
-        queryset = queryset.order_by(sort_by)
+        # ------------------------------------------
+        # APPLY SORT
+        # ------------------------------------------
+        queryset = queryset.order_by(*sort_fields)
 
+        # ------------------------------------------
+        # PAGINATION
+        # ------------------------------------------
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
-
         serializer = DocumentNameSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
-
 
 
 class DocumentNameRetrieveAPIView(APIView):
@@ -949,26 +1080,89 @@ class DocumentTypeCreateAPIView(APIView):
 class DocumentTypeListAPIView(APIView):
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
+        custom_sort = request.GET.get('customSort')
 
+        # ---------------------------------------------------
+        # Allowed sortable fields
+        # ---------------------------------------------------
         allowed_sort_fields = ['name', 'description', 'created_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
 
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        # Map API fields → ORM fields
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'created_at': 'created_at'
+        }
 
+        sort_fields = []
+
+        # ---------------------------------------------------
+        # CUSTOM SORT (Excel-style multi sorting)
+        # ---------------------------------------------------
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in allowed_sort_fields:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sorting for text fields
+                    if field in ['name', 'description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+
+                except ValueError:
+                    continue
+
+        # ---------------------------------------------------
+        # DEFAULT SORT (if customSort is not sent)
+        # ---------------------------------------------------
+        else:
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'desc')
+
+            if sort_by not in allowed_sort_fields:
+                sort_by = 'created_at'
+
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+            f = F(orm_field)
+
+            sort_fields = [
+                f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)
+            ]
+
+        # ---------------------------------------------------
+        # BASE QUERY
+        # ---------------------------------------------------
         queryset = DocumentType.objects.filter(is_deleted=False)
 
+        # ---------------------------------------------------
+        # SEARCH
+        # ---------------------------------------------------
         if search:
-            queryset = queryset.filter(
-                Q(name__istartswith=search)
-            )
+            queryset = queryset.filter(name__istartswith=search)
 
-        queryset = queryset.order_by(sort_by)
+        # ---------------------------------------------------
+        # APPLY SORT
+        # ---------------------------------------------------
+        queryset = queryset.order_by(*sort_fields)
+
+        # ---------------------------------------------------
+        # PAGINATION
+        # ---------------------------------------------------
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
+
         serializer = DocumentTypeSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
 
@@ -1364,61 +1558,70 @@ class PurposeOfVisitCreateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
-
-# class PurposeOfVisitListAPIView(APIView):
-#     def get(self, request):
-#         search = request.GET.get('search', '').strip()
-#         sort_by = request.GET.get('sortBy', 'created_at')
-#         sort_order = request.GET.get('sortOrder', 'desc')
-
-#         allowed_sort_fields = ['name', 'description', 'created_at']
-#         if sort_by not in allowed_sort_fields:
-#             sort_by = 'created_at'
-
-#         if sort_order == 'desc':
-#             sort_by = f'-{sort_by}'
-
-#         queryset = PurposeOfVisit.objects.filter(is_deleted=False)
-#         if search:
-#             queryset = queryset.filter(Q(name__icontains=search) | Q(description__icontains=search))
-#         queryset = queryset.order_by(sort_by)
-
-#         paginator = CustomPagination()
-#         result_page = paginator.paginate_queryset(queryset, request)
-#         serializer = PurposeOfVisitSerializer(result_page, many=True)
-#         return paginator.get_paginated_response(serializer.data)
-
 class PurposeOfVisitListAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
 
-        # Allowed sorting fields
+        # -----------------------
+        # CUSTOM SORTING (Excel type)
+        # -----------------------
+        custom_sort = request.GET.get('customSort')
         allowed_sort_fields = ['name', 'description', 'created_at']
 
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
+        if custom_sort:
+            sort_fields = []
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
 
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+                    if field not in allowed_sort_fields:
+                        continue
 
-        # Base Query
+                    # Case-insensitive sorting like Excel
+                    if order == "asc":
+                        sort_fields.append(F(field).asc(nulls_last=True))
+                    else:
+                        sort_fields.append(F(field).desc(nulls_last=True))
+
+                except ValueError:
+                    continue
+
+        else:
+            # NORMAL SORTING
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'desc')
+
+            if sort_by not in allowed_sort_fields:
+                sort_by = 'created_at'
+
+            if sort_order == 'desc':
+                sort_fields = [f'-{sort_by}']
+            else:
+                sort_fields = [sort_by]
+
+        # ---------------------------
+        # BASE QUERY
+        # ---------------------------
         queryset = PurposeOfVisit.objects.filter(is_deleted=False)
 
-        # STRICT search → ONLY name, using istartswith
+        # ---------------------------
+        # STRICT SEARCH (name only)
+        # ---------------------------
         if search:
-            queryset = queryset.filter(
-                Q(name__istartswith=search)
-            )
+            queryset = queryset.filter(name__istartswith=search)
 
-        queryset = queryset.order_by(sort_by)
+        # ---------------------------
+        # APPLY SORTING
+        # ---------------------------
+        queryset = queryset.order_by(*sort_fields)
 
         # Pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
-
         serializer = PurposeOfVisitSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
 
@@ -1477,7 +1680,6 @@ class PurposeOfVisitUpdateAPIView(APIView):
             "status": False,
             "message": serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
-
 
 
 class PurposeOfVisitDeleteAPIView(APIView):
@@ -1825,62 +2027,72 @@ class DocumentsForCreateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
-# class DocumentsForListAPIView(APIView):
-#     def get(self, request):
-#         search = request.GET.get("search", "").strip()
-#         sort_by = request.GET.get("sortBy", "created_at")
-#         sort_order = request.GET.get("sortOrder", "desc")
-
-#         allowed_sort_fields = ["name", "description", "created_at"]
-#         if sort_by not in allowed_sort_fields:
-#             sort_by = "created_at"
-
-#         if sort_order == "desc":
-#             sort_by = f"-{sort_by}"
-
-#         queryset = DocumentsFor.objects.filter(is_deleted=False)
-
-#         if search:
-#             queryset = queryset.filter(Q(name__icontains=search) | Q(description__icontains=search))
-
-#         queryset = queryset.order_by(sort_by)
-
-#         paginator = CustomPagination()
-#         result_page = paginator.paginate_queryset(queryset, request)
-#         serializer = DocumentsForSerializer(result_page, many=True)
-#         return paginator.get_paginated_response(serializer.data)
 
 class DocumentsForListAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
 
-        # Allowed sort fields – description removed because you said API
-        # must filter only by document_for column (name).
-        allowed_sort_fields = ['name', 'updated_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
+        # -----------------------
+        # CUSTOM SORTING (Excel type)
+        # -----------------------
+        custom_sort = request.GET.get('customSort')
+        allowed_sort_fields = ['name', 'updated_at', 'created_at']
 
-        # Apply descending order for 'desc'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        if custom_sort:
+            sort_fields = []
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
 
+                    if field not in allowed_sort_fields:
+                        continue
+
+                    # Excel-like case-insensitive sort
+                    if order == "asc":
+                        sort_fields.append(F(field).asc(nulls_last=True))
+                    else:
+                        sort_fields.append(F(field).desc(nulls_last=True))
+
+                except ValueError:
+                    continue
+
+        else:
+            # NORMAL SORTING
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'desc')
+
+            if sort_by not in allowed_sort_fields:
+                sort_by = 'created_at'
+
+            if sort_order == 'asc':
+                sort_fields = [sort_by]
+            else:
+                sort_fields = [f'-{sort_by}']
+
+        # ---------------------------
+        # BASE QUERY
+        # ---------------------------
         queryset = DocumentsFor.objects.filter(is_deleted=False)
 
-        # Search only on name (document_for column)
+        # ---------------------------
+        # STRICT SEARCH (ONLY name)
+        # ---------------------------
         if search:
-            queryset = queryset.filter(
-                Q(name__istartswith=search)
-            )
+            queryset = queryset.filter(name__istartswith=search)
 
-        # Apply dynamic ordering
-        queryset = queryset.order_by(sort_by)
+        # ---------------------------
+        # APPLY SORTING
+        # ---------------------------
+        queryset = queryset.order_by(*sort_fields)
 
+        # Pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = DocumentsForSerializer(result_page, many=True)
-
         return paginator.get_paginated_response(serializer.data)
 
 
@@ -2275,131 +2487,103 @@ class RequiredDocumentCreateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
+
 class RequiredDocumentListAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = [
-            'created_at',
-            'country', 'visa_main_category', 'visa_major_category', 'visa_name',
-            'document_category', 'document_name'
-        ]
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
 
+        # -----------------------------------------------------
+        # SORT FIELD MAP — Correct fields based on your model
+        # -----------------------------------------------------
+        allowed_sort_fields = {
+            'created_at': 'created_at',
+            'country': 'country__name',
+            'visa_main_category': 'visa_main_category__name',
+            'visa_major_category': 'visa_major_category__name',
+            'visa_name': 'visa_name__name',
+            'document_category': 'document_category__name',
+            'document_name': 'document_name__document_name'
+        }
+
+        custom_sort = request.GET.get('customSort')
+        sort_fields = []
+
+        # -----------------------------------------------------
+        # CUSTOM SORTING (Excel Style)
+        # -----------------------------------------------------
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in allowed_sort_fields:
+                        continue
+
+                    orm_field = allowed_sort_fields[field]
+
+                    if order == "asc":
+                        sort_fields.append(F(orm_field).asc(nulls_last=True))
+                    else:
+                        sort_fields.append(F(orm_field).desc(nulls_last=True))
+
+                except ValueError:
+                    continue
+
+        else:
+            # -----------------------------------------------------
+            # NORMAL SORTING
+            # -----------------------------------------------------
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'desc')
+
+            if sort_by not in allowed_sort_fields:
+                sort_by = 'created_at'
+
+            orm_field = allowed_sort_fields[sort_by]
+
+            if sort_order == "asc":
+                sort_fields = [orm_field]
+            else:
+                sort_fields = [f"-{orm_field}"]
+
+        # -----------------------------------------------------
+        # BASE QUERY
+        # -----------------------------------------------------
         queryset = RequiredDocument.objects.filter(is_deleted=False).select_related(
-            'country', 'visa_main_category', 'visa_major_category', 'visa_name',
-            'document_category', 'document_name'
+            'country',
+            'visa_main_category',
+            'visa_major_category',
+            'visa_name',
+            'document_category',
+            'document_name'
         )
 
+        # -----------------------------------------------------
+        # STRICT SEARCH — ONLY document_for (document_name)
+        # -----------------------------------------------------
         if search:
             queryset = queryset.filter(
-                Q(description__icontains=search) |
-                Q(country__name__icontains=search) |
-                Q(visa_main_category__name__icontains=search) |
-                Q(visa_major_category__name__icontains=search) |
-                Q(visa_name__name__icontains=search) |
-                Q(document_category__name__icontains=search) |
-                Q(document_name__document_name__icontains=search)
+                document_name__document_name__istartswith=search
             )
 
-        queryset = queryset.order_by(sort_by)
+        # -----------------------------------------------------
+        # APPLY SORTING
+        # -----------------------------------------------------
+        queryset = queryset.order_by(*sort_fields)
+
+        # -----------------------------------------------------
+        # PAGINATION
+        # -----------------------------------------------------
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = RequiredDocumentSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
 
-
-# class VisaMajorByCountryListAPIView(APIView):
-#     def get(self, request, country_uuid):
-#         # Validate Country UUID
-#         try:
-#             country = Country.objects.get(uuid=country_uuid, is_deleted=False)
-#         except Country.DoesNotExist:
-#             return Response({
-#                 "statusCode": 404,
-#                 "status": False,
-#                 "message": "Country not found"
-#             }, status=404)
-
-#         # Filter RequiredDocument and get unique VisaMajor categories
-#         visa_major_ids = (
-#             RequiredDocument.objects.filter(country=country, is_deleted=False)
-#             .values_list("visa_major_category", flat=True)
-#             .distinct()
-#         )
-
-#         visa_majors = VisaMajor.objects.filter(id__in=visa_major_ids, is_deleted=False)
-
-#         # Prepare response format
-#         data = [
-#             {"uuid": vm.uuid, "name": vm.name}
-#             for vm in visa_majors
-#         ]
-
-#         return Response({
-#             "statusCode": 200,
-#             "status": True,
-#             "country": country.name,
-#             "count": len(data),
-#             "data": data,
-#         }, status=200)
-# class VisaMajorByCountryListAPIView(APIView):
-#     def get(self, request, representing_country_uuid):
-
-#         # Step 1 — Validate representing country
-#         representing_country = (
-#             RepresentingCountry.objects
-#             .filter(uuid=representing_country_uuid, is_deleted=False)
-#             .select_related("country")
-#             .first()
-#         )
-
-#         if not representing_country:
-#             return Response({
-#                 "statusCode": 404,
-#                 "status": False,
-#                 "message": "Representing Country not found"
-#             }, status=404)
-
-#         # Step 2 — Get the actual mapped country
-#         country_obj = representing_country.country
-
-#         # Step 3 — Fetch distinct Visa Major categories from RequiredDocument
-#         visa_majors = (
-#             RequiredDocument.objects.filter(
-#                 country=country_obj,
-#                 is_deleted=False
-#             )
-#             .values(
-#                 "visa_major_category__uuid",
-#                 "visa_major_category__name"
-#             )
-#             .distinct()
-#         )
-
-#         # Step 4 — Prepare the response list
-#         data = [
-#             {
-#                 "uuid": item["visa_major_category__uuid"],
-#                 "name": item["visa_major_category__name"]
-#             }
-#             for item in visa_majors
-#         ]
-
-#         return Response({
-#             "statusCode": 200,
-#             "status": True,
-#             "representing_country": representing_country.representing_country_name,
-#             "mapped_country": country_obj.name,
-#             "count": len(data),
-#             "data": data
-#         }, status=200)
-
-
+#New API
 class VisaMajorByCountryListAPIView(APIView):
     def get(self, request, representing_country_uuid):
 
@@ -2853,32 +3037,99 @@ class ProcessStatusCreateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
+
 class ProcessStatusListAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
+        custom_sort = request.GET.get('customSort')
 
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        # ---------------------------------------------------------
+        # ALLOWED SORT FIELDS + ORM MAPPING
+        # ---------------------------------------------------------
+        allowed_sort_fields = {
+            'process_status_name': 'process_status_name__name',
+            'country': 'country__name',
+            'visa_main_category': 'visa_main_category__name',
+            'created_at': 'created_at'
+        }
 
+        sort_fields = []
+
+        # ---------------------------------------------------------
+        # CUSTOM SORT (Excel-like)
+        # ---------------------------------------------------------
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in allowed_sort_fields:
+                        continue
+
+                    orm_field = allowed_sort_fields[field]
+
+                    # Case-insensitive sort for string fields
+                    if field in ["process_status_name", "country", "visa_main_category"]:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+
+        else:
+            # ---------------------------------------------------------
+            # DEFAULT SORT (sortBy + sortOrder)
+            # ---------------------------------------------------------
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'desc')
+
+            if sort_by not in allowed_sort_fields:
+                sort_by = 'created_at'
+
+            orm_field = allowed_sort_fields[sort_by]
+
+            f = F(orm_field)
+            sort_fields = [
+                f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)
+            ]
+
+        # ---------------------------------------------------------
+        # BASE QUERY
+        # ---------------------------------------------------------
         queryset = ProcessStatusName.objects.filter(is_deleted=False).select_related(
             'country', 'visa_main_category'
         )
 
+        # ---------------------------------------------------------
+        # STRICT SEARCH — ONLY on Process Status Name
+        # ---------------------------------------------------------
         if search:
             queryset = queryset.filter(
-                Q(country__name__icontains=search) |
-                Q(visa_main_category__name__icontains=search) |
-                Q(process_status_name__name__icontains=search) |
-                Q(description__icontains=search)
+                process_status_name__name__istartswith=search
             )
 
-        queryset = queryset.order_by(sort_by)
+        # ---------------------------------------------------------
+        # APPLY SORTING
+        # ---------------------------------------------------------
+        queryset = queryset.order_by(*sort_fields)
+
+        # ---------------------------------------------------------
+        # PAGINATION
+        # ---------------------------------------------------------
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = ProcessStatusSerializer(result_page, many=True)
+
         return paginator.get_paginated_response(serializer.data)
+
 
 
 class ProcessStatusRetrieveAPIView(APIView):
@@ -3260,33 +3511,86 @@ class ProcessSubStatusCreateAPIView(APIView):
         }, status=400)
 
 
+
 class ProcessSubStatusListAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
 
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        # -----------------------
+        # CUSTOM SORTING (Excel type)
+        # -----------------------
+        custom_sort = request.GET.get('customSort')
 
+        # Allowed fields (ONLY THESE)
+        allowed_sort_fields = [
+            'process_sub_status_name',
+            'country__name',
+            'visa_main_category__name',
+            'process_status_name__name',
+            'created_at'
+        ]
+
+        if custom_sort:
+            sort_fields = []
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in allowed_sort_fields:
+                        continue
+
+                    # Case-insensitive Excel-like sort
+                    if order == "asc":
+                        sort_fields.append(F(field).asc(nulls_last=True))
+                    else:
+                        sort_fields.append(F(field).desc(nulls_last=True))
+
+                except ValueError:
+                    continue
+
+        else:
+            # NORMAL SORTING
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'desc')
+
+            if sort_by not in allowed_sort_fields:
+                sort_by = 'created_at'
+
+            if sort_order == 'desc':
+                sort_fields = [f'-{sort_by}']
+            else:
+                sort_fields = [sort_by]
+
+        # ---------------------------
+        # Base queryset
+        # ---------------------------
         queryset = ProcessSubStatusName.objects.filter(is_deleted=False).select_related(
             'country', 'visa_main_category', 'process_status_name'
         )
 
+        # ---------------------------
+        # Search (ONLY process_sub_status_name)
+        # ---------------------------
         if search:
             queryset = queryset.filter(
-                Q(country__name__icontains=search) |
-                Q(visa_main_category__name__icontains=search) |
-                Q(process_status_name__name__icontains=search) |
-                Q(process_sub_status_name__icontains=search) |
-                Q(description__icontains=search)
+                process_sub_status_name__istartswith=search
             )
 
-        queryset = queryset.order_by(sort_by)
+        # ---------------------------
+        # APPLY SORTING
+        # ---------------------------
+        queryset = queryset.order_by(*sort_fields)
+
+        # Pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = ProcessSubStatusSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
+
 
 
 class ProcessSubStatusRetrieveAPIView(APIView):
@@ -3306,50 +3610,9 @@ class ProcessSubStatusRetrieveAPIView(APIView):
             "data": serializer.data
         })
 
-# class ProcessSubStatusByCountryAPIView(APIView):
-#     """
-#     Fetch all Process Sub Status Names for a given representing country UUID.
-#     """
 
-#     def get(self, request, country_uuid):
 
-#         # Validate country UUID
-#         country_obj = Country.objects.filter(uuid=country_uuid, is_deleted=False).first()
-
-#         if not country_obj:
-#             return Response({
-#                 "statusCode": 400,
-#                 "status": False,
-#                 "message": "Invalid country UUID"
-#             }, status=400)
-
-#         # Fetch unique process sub-status entries mapped to this country
-#         queryset = (
-#             ProcessSubStatusName.objects
-#             .filter(country=country_obj, is_deleted=False)
-#             .select_related("visa_main_category", "process_status_name")
-#             .order_by("process_sub_status_name")
-#         )
-
-#         if not queryset.exists():
-#             return Response({
-#                 "statusCode": 200,
-#                 "status": True,
-#                 "message": "No records found for this country",
-#                 "data": []
-#             })
-
-#         # Serialize
-#         serializer = ProcessSubStatusSerializer(queryset, many=True)
-
-#         return Response({
-#             "statusCode": 200,
-#             "status": True,
-#             "country_name": country_obj.name,
-#             "count": queryset.count(),
-#             "data": serializer.data
-#         }, status=200)
-
+#New API
 class ProcessSubStatusByCountryAPIView(APIView):
 
     def get(self, request, representing_country_uuid):
@@ -3766,23 +4029,78 @@ class ProcessTypeCreateAPIView(APIView):
 
 
 class ProcessTypeListAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
     def get(self, request):
         search = request.GET.get("search", "").strip()
-        sort_by = request.GET.get("sortBy", "created_at")
-        sort_order = request.GET.get("sortOrder", "desc")
 
-        allowed_fields = ["name", "description", "created_at"]
-        if sort_by not in allowed_fields:
-            sort_by = "created_at"
+        # -----------------------
+        # CUSTOM SORTING (Excel type)
+        # -----------------------
+        custom_sort = request.GET.get("customSort")
 
-        if sort_order == "desc":
-            sort_by = f"-{sort_by}"
+        # Allowed sorting fields
+        allowed_sort_fields = ["name", "description", "created_at", "updated_at"]
 
+        sort_fields = []
+
+        if custom_sort:
+            for rule in custom_sort.split(","):
+                try:
+                    field, order = rule.split(":")
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in allowed_sort_fields:
+                        continue
+
+                    # Case-insensitive sort for string fields
+                    if field in ["name", "description"]:
+                        f = Lower(field)
+                    else:
+                        f = F(field)
+
+                    sort_fields.append(f.asc(nulls_last=True) if order == "asc" else f.desc(nulls_last=True))
+
+                except ValueError:
+                    continue
+
+        else:
+            # -----------------------
+            # NORMAL SORTING
+            # -----------------------
+            sort_by = request.GET.get("sortBy", "created_at")
+            sort_order = request.GET.get("sortOrder", "desc")
+
+            if sort_by not in allowed_sort_fields:
+                sort_by = "created_at"
+
+            if sort_by in ["name", "description"]:
+                f = Lower(sort_by)
+            else:
+                f = F(sort_by)
+
+            sort_fields = [f.asc(nulls_last=True) if sort_order == "asc" else f.desc(nulls_last=True)]
+
+        # -----------------------
+        # BASE QUERYSET
+        # -----------------------
         queryset = ProcessType.objects.filter(is_deleted=False)
-        if search:
-            queryset = queryset.filter(Q(name__icontains=search) | Q(description__icontains=search))
-        queryset = queryset.order_by(sort_by)
 
+        # -----------------------
+        # SEARCH (using Q)
+        # -----------------------
+        if search:
+            queryset = queryset.filter(
+                Q(name__istartswith=search)
+            )
+
+        # -----------------------
+        # APPLY SORTING
+        # -----------------------
+        queryset = queryset.order_by(*sort_fields)
+
+        # Pagination + Serialization
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = ProcessTypeSerializer(result_page, many=True)
@@ -4064,26 +4382,90 @@ class PaymentToCreateAPIView(APIView):
 
 
 class PaymentToListAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
     def get(self, request):
         search = request.GET.get("search", "").strip()
-        sort_by = request.GET.get("sortBy", "created_at")
-        sort_order = request.GET.get("sortOrder", "desc")
+        custom_sort = request.GET.get("customSort")  # e.g., name:asc,created_at:desc
 
-        allowed_fields = ["name", "description", "created_at"]
-        if sort_by not in allowed_fields:
-            sort_by = "created_at"
-
-        if sort_order == "desc":
-            sort_by = f"-{sort_by}"
+        # Allowed sortable fields (must match DB columns)
+        allowed_sort_fields = ["name", "description", "created_at", "updated_at"]
 
         queryset = PaymentTo.objects.filter(is_deleted=False)
-        if search:
-            queryset = queryset.filter(Q(name__icontains=search) | Q(description__icontains=search))
-        queryset = queryset.order_by(sort_by)
 
+        # --------------------------
+        # SEARCH (Only on main column: name)
+        # --------------------------
+        if search:
+            queryset = queryset.filter(Q(name__istartswith=search))
+
+        # ORM reference mapping
+        sort_field_map = {
+            "name": "name",
+            "description": "description",
+            "created_at": "created_at",
+            "updated_at": "updated_at",
+        }
+
+        sort_fields = []
+
+        # --------------------------
+        # CUSTOM SORT LOGIC (Excel type sorting)
+        # --------------------------
+        if custom_sort:
+            for rule in custom_sort.split(","):
+                try:
+                    field, order = rule.split(":")
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    # Skip unknown fields
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive for string fields
+                    if field in ["name", "description"]:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True)
+                        if order == "asc"
+                        else f.desc(nulls_last=True)
+                    )
+
+                except ValueError:
+                    continue
+
+        else:
+            # --------------------------
+            # NORMAL SORTING (Fallback)
+            # --------------------------
+            sort_by = request.GET.get("sortBy", "created_at")
+            sort_order = request.GET.get("sortOrder", "desc")
+
+            # Fix wrong sort field if given
+            if sort_by not in allowed_sort_fields:
+                sort_by = "created_at"
+
+            orm_field = sort_field_map.get(sort_by, "created_at")
+            f = F(orm_field)
+
+            sort_fields = [
+                f.asc(nulls_last=True) if sort_order == "asc" else f.desc(nulls_last=True)
+            ]
+
+        # Apply sorting
+        queryset = queryset.order_by(*sort_fields)
+
+        # Pagination + Serialization
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = PaymentToSerializer(result_page, many=True)
+
         return paginator.get_paginated_response(serializer.data)
 
 
@@ -4145,47 +4527,103 @@ class PaymentToUpdateAPIView(APIView):
 class PaymentToDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
-    def delete(self, request):
-        ids = request.data.get("uuids")
-        if not ids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Provide 'id' (UUID list or 'all')"
-            }, status=400)
+    def delete(self, request, uuid=None):
+        ids = request.data.get('id', None)
 
+        # ----------------------------------------
+        # 1. DELETE using URL param UUID
+        # ----------------------------------------
+        if uuid:
+            try:
+                payment_to = PaymentTo.objects.get(uuid=uuid)
+                payment_to.delete()
+                return Response({
+                    "statusCode": 204,
+                    "status": True,
+                    "message": "Payment To permanently deleted.",
+                    "data": None
+                }, status=status.HTTP_204_NO_CONTENT)
+            except PaymentTo.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "Payment To not found.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+
+        # ----------------------------------------
+        # 2. DELETE ALL records
+        # ----------------------------------------
         if ids == "all":
-            count = PaymentTo.objects.filter(is_deleted=False).update(is_deleted=True)
+            items = PaymentTo.objects.all()
+            count = items.count()
+
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No Payment To records found to delete.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+
+            items.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All ({count}) Payment To records deleted successfully."
-            })
+                "message": f"All {count} Payment To record(s) permanently deleted.",
+                "data": None
+            }, status=status.HTTP_200_OK)
 
-        if not isinstance(ids, list):
+        # ----------------------------------------
+        # 3. BULK DELETE using list of UUIDs
+        # ----------------------------------------
+        if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Provide list of UUIDs or 'all'"
-            }, status=400)
+                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
 
-        valid_uuids, invalid_uuids = [], []
+        valid_uuids = []
+        invalid_uuids = []
+
+        # Validate all UUIDs
         for u in ids:
             try:
                 valid_uuids.append(UUID(u))
             except ValueError:
                 invalid_uuids.append(u)
 
-        objs = PaymentTo.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = objs.count()
-        objs.update(is_deleted=True)
+        if not valid_uuids:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "No valid UUIDs provided.",
+                "data": {"invalid_uuids": invalid_uuids}
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Fetch records to delete
+        items = PaymentTo.objects.filter(uuid__in=valid_uuids)
+        count = items.count()
+
+        if count == 0:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "No matching Payment To records found.",
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        # PERMANENT DELETE
+        items.delete()
 
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f"{count} Payment To record(s) deleted successfully.",
-            "invalid_uuids": invalid_uuids
-        })
+            "message": f"{count} Payment To record(s) permanently deleted.",
+            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+        }, status=status.HTTP_200_OK)
 
 
 class PaymentToExportAPIView(APIView):
@@ -4248,7 +4686,6 @@ class PaymentToExportAPIView(APIView):
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
-
 
 
 class PaymentToImportAPIView(APIView):
@@ -4419,30 +4856,86 @@ class PaymentCategoryCreateAPIView(APIView):
 
 
 class PaymentCategoryListAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
     def get(self, request):
         search = request.GET.get("search", "").strip()
-        sort_by = request.GET.get("sortBy", "created_at")
-        sort_order = request.GET.get("sortOrder", "desc")
 
-        allowed_sort_fields = ["payment_category", "description", "created_at"]
-        if sort_by not in allowed_sort_fields:
-            sort_by = "created_at"
+        # --------------------------------------
+        # CUSTOM SORTING (Excel type)
+        # --------------------------------------
+        custom_sort = request.GET.get("customSort")
+        allowed_sort_fields = ["payment_category", "description", "created_at", "updated_at"]
 
-        if sort_order == "desc":
-            sort_by = f"-{sort_by}"
+        sort_fields = []
 
+        if custom_sort:
+            for rule in custom_sort.split(","):
+                try:
+                    field, order = rule.split(":")
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in allowed_sort_fields:
+                        continue
+
+                    # Case-insensitive sort for string fields
+                    if field in ["payment_category", "description"]:
+                        expr = Lower(field)
+                    else:
+                        expr = F(field)
+
+                    sort_fields.append(
+                        expr.asc(nulls_last=True) if order == "asc" else expr.desc(nulls_last=True)
+                    )
+
+                except ValueError:
+                    continue
+
+        else:
+            # --------------------------------------
+            # NORMAL SORTING
+            # --------------------------------------
+            sort_by = request.GET.get("sortBy", "created_at")
+            sort_order = request.GET.get("sortOrder", "desc")
+
+            if sort_by not in allowed_sort_fields:
+                sort_by = "created_at"
+
+            if sort_by in ["payment_category", "description"]:
+                expr = Lower(sort_by)
+            else:
+                expr = F(sort_by)
+
+            sort_fields = [
+                expr.asc(nulls_last=True) if sort_order == "asc" else expr.desc(nulls_last=True)
+            ]
+
+        # --------------------------------------
+        # BASE QUERYSET
+        # --------------------------------------
         queryset = PaymentCategory.objects.filter(is_deleted=False)
+
+        # --------------------------------------
+        # SEARCH (Only on payment_category)
+        # --------------------------------------
         if search:
             queryset = queryset.filter(
-                Q(payment_category__icontains=search) |
-                Q(description__icontains=search) |
-                Q(payment_to__name__icontains=search)
+                Q(payment_category__istartswith=search)
             )
-        queryset = queryset.order_by(sort_by)
 
+        # --------------------------------------
+        # APPLY SORTING
+        # --------------------------------------
+        queryset = queryset.order_by(*sort_fields)
+
+        # --------------------------------------
+        # PAGINATION + SERIALIZER
+        # --------------------------------------
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = PaymentCategorySerializer(result_page, many=True)
+
         return paginator.get_paginated_response(serializer.data)
 
 
@@ -4603,110 +5096,180 @@ class PaymentCategoryImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
-        file = request.FILES.get('file')
-        sheet_name = request.data.get('sheet_name')
-        if not file:
-            return Response({"statusCode": 400, "status": False, "message": "No file uploaded"}, status=400)
+        file = request.FILES.get("file")
+        sheet_name = request.data.get("sheet_name")
 
-        format_type = file.name.split('.')[-1].lower()
-        required_headers = {'payment to', 'payment category'}
-        optional_headers = {'description'}
-        data = []
+        if not file:
+            return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
+
+        format_type = file.name.split(".")[-1].lower()
         duplicates = []
         skipped_rows = []
 
+        required_headers = {"payment to", "payment category"}
+        optional_headers = {"description"}
+
         try:
-            # ---------- XLSX ----------
-            if format_type == 'xlsx':
+            data = []
+
+            # ---------- XLSX Handling ----------
+            if format_type == "xlsx":
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
 
                 if not sheet_name:
-                    return Response({"statusCode": 400, "status": False, "message": "Please provide sheet_name", "available_sheets": available_sheets}, status=400)
+                    return Response({
+                        "error": "Please provide sheet_name",
+                        "available_sheets": available_sheets,
+                    }, status=400)
 
                 if sheet_name not in available_sheets:
-                    return Response({"statusCode": 400, "status": False, "message": f'Sheet "{sheet_name}" not found', "available_sheets": available_sheets}, status=400)
+                    return Response({
+                        "error": f'Sheet "{sheet_name}" not found in uploaded file',
+                        "available_sheets": available_sheets,
+                    }, status=400)
 
                 ws = wb[sheet_name]
                 if ws.max_row <= 1:
-                    return Response({"statusCode": 400, "status": False, "message": f'The sheet "{sheet_name}" is empty'}, status=400)
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'Sheet "{sheet_name}" is empty.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
-                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                headers = [
+                    str(cell.value).strip().lower() if cell.value else ""
+                    for cell in next(ws.iter_rows(min_row=1, max_row=1))
+                ]
+
                 if not required_headers.issubset(set(headers)):
-                    return Response({"statusCode": 400, "status": False, "message": f"Missing required headers. Required: {required_headers}, Found: {set(headers)}"}, status=400)
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": (
+                            f"Missing required headers. Required: {required_headers}, "
+                            f"Found: {set(headers)}"
+                        )
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
                 for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     if not any(row):
                         continue
                     row_dict = dict(zip(headers, row))
-                    row_dict['_row_number'] = idx
+                    row_dict["_row_number"] = idx
                     data.append(row_dict)
 
-            # ---------- CSV ----------
-            elif format_type == 'csv':
-                decoded_file = file.read().decode('utf-8')
+            # ---------- CSV Handling ----------
+            elif format_type == "csv":
+                decoded_file = file.read().decode("utf-8")
                 dataset = Dataset()
-                dataset.load(decoded_file, format='csv')
+                dataset.load(decoded_file, format="csv")
 
                 for idx, row in enumerate(dataset.dict, start=2):
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
-                    row_lower['_row_number'] = idx
+                    row_lower["_row_number"] = idx
+
                     if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({"statusCode": 400, "status": False, "message": f"Missing required headers. Required: {required_headers}, Found: {set(row_lower.keys())}"}, status=400)
+                        return Response({
+                            "statusCode": 400,
+                            "status": False,
+                            "message": (
+                                f"Missing required headers. Required: {', '.join(required_headers)}. "
+                                f"Found headers in the file: {', '.join(row_lower.keys())}."
+                            )
+                        }, status=status.HTTP_400_BAD_REQUEST)
+
                     data.append(row_lower)
+
             else:
-                return Response({"statusCode": 400, "status": False, "message": "Unsupported file format. Use .xlsx or .csv"}, status=400)
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "error": "Unsupported file format. Use .xlsx or .csv",
+                }, status=status.HTTP_400_BAD_REQUEST)
 
             # ---------- Import Rows ----------
             imported_count = 0
 
             for row in reversed(data):
-                row_num = row.get('_row_number', '?')
-                reasons = []  # Collect all issues for this row
+                row_number = row.get("_row_number", "Unknown")
 
-                payment_to_name = row.get('payment to')
-                category_name = row.get('payment category')
-                description = str(row.get('description', '')).strip() if row.get('description') else ''
+                payment_to_name = (
+                    str(row.get("payment to")).strip()
+                    if row.get("payment to") else None
+                )
+                category_name = (
+                    str(row.get("payment category")).strip()
+                    if row.get("payment category") else None
+                )
+                description = (
+                    str(row.get("description")).strip()
+                    if row.get("description") else ""
+                )
 
-                # Validate 'Payment To'
-                if not payment_to_name or not isinstance(payment_to_name, str) or not payment_to_name.strip():
-                    reasons.append(f'Invalid Input : Payment To')
-                else:
-                    payment_to_name = payment_to_name.strip()
-                    payment_to = PaymentTo.objects.filter(name__iexact=payment_to_name, is_deleted=False).first()
-                    if not payment_to:
-                        reasons.append(f'Payment To "{payment_to_name}" not found')
-
-                # Validate 'Payment Category'
-                if not category_name or not isinstance(category_name, str) or not category_name.strip():
-                    reasons.append(f'Invalid Input : Payment Category')
-                else:
-                    category_name = category_name.strip()
-
-                # If there are any issues, skip this row
-                if reasons:
-                    skipped_rows.append({"Row": row_num, "Reason": "; ".join(reasons)})
+                # ----- Validate Payment To -----
+                if not payment_to_name:
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Reason": "Missing Payment To"
+                    })
                     continue
 
-                # Check for duplicates
-                existing = PaymentCategory.objects.filter(payment_to=payment_to, payment_category__iexact=category_name).first()
-                if existing and not existing.is_deleted:
-                    duplicates.append({'Row': row_num, 'Payment Category': category_name, 'Reason': 'Already exists in database'})
+                payment_to_obj = PaymentTo.objects.filter(
+                    name__iexact=payment_to_name,
+                    is_deleted=False
+                ).first()
+
+                if not payment_to_obj:
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Reason": f'Payment To "{payment_to_name}" not found'
+                    })
                     continue
 
-                if existing and existing.is_deleted:
-                    existing.description = description
-                    existing.is_deleted = False
-                    existing.save()
+                # ----- Validate Payment Category -----
+                if not category_name:
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Reason": "Missing Payment Category"
+                    })
+                    continue
+
+                existing = PaymentCategory.objects.filter(
+                    payment_to=payment_to_obj,
+                    payment_category__iexact=category_name
+                ).first()
+
+                if existing:
+                    if not existing.is_deleted:
+                        duplicates.append({
+                            "Row": row_number,
+                            "Payment Category": category_name,
+                            "Reason": "Already exists in database"
+                        })
+                        continue
+                    else:
+                        existing.description = description
+                        existing.is_deleted = False
+                        existing.save()
+                        imported_count += 1
+                else:
+                    PaymentCategory.objects.create(
+                        payment_to=payment_to_obj,
+                        payment_category=category_name,
+                        description=description,
+                        is_deleted=False,
+                    )
                     imported_count += 1
-                    continue
-
-                PaymentCategory.objects.create(payment_to=payment_to, payment_category=category_name, description=description, is_deleted=False)
-                imported_count += 1
 
         except Exception as e:
-            return Response({"statusCode": 400, "status": False, "message": f"Error importing data: {str(e)}"}, status=400)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": str(e),
+            }, status=status.HTTP_400_BAD_REQUEST)
 
+        # ---------- Final Response ----------
         return Response({
             "statusCode": 200,
             "status": True,
@@ -4714,7 +5277,7 @@ class PaymentCategoryImportAPIView(APIView):
             "imported_count": imported_count,
             "duplicates": duplicates,
             "skipped_rows": skipped_rows,
-        }, status=200)
+        }, status=status.HTTP_200_OK)
 
 
 

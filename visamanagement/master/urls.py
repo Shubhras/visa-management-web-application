@@ -742,6 +742,28 @@ urlpatterns = [
     path('jobprospect/export/', JobProspectExportAPIView.as_view(), name='JobProspect-export'),
     path('jobprospect/import/', JobProspectImportAPIView.as_view(), name='JobProspect-import'),
 
+    path('related-occupations/', RelatedOccupationListAPIView.as_view(), name='related-occupation-list'),
+    path('related-occupations/create/', RelatedOccupationCreateAPIView.as_view(), name='related-occupation-create'),
+    path('related-occupations/<uuid:uuid>/', RelatedOccupationRetrieveAPIView.as_view(), name='related-occupation-detail'),
+    path('related-occupations/<uuid:uuid>/update/', RelatedOccupationUpdateAPIView.as_view(), name='related-occupation-update'),
+    path('related-occupations/delete/', RelatedOccupationDeleteAPIView.as_view(), name='related-occupation-delete'),
+    path('related-occupations/export/', RelatedOccupationExportAPIView.as_view(), name='related-occupation-export'),
+    
+    path('designations/', DesignationListAPIView.as_view(), name='designation-list'),
+    path('designations/create/', DesignationCreateAPIView.as_view(), name='designation-create'),
+    path('designations/<uuid:uuid>/', DesignationRetrieveAPIView.as_view(), name='designation-detail'),
+    path('designations/<uuid:uuid>/update/', DesignationUpdateAPIView.as_view(), name='designation-update'),
+    path('designations/delete/', DesignationDeleteAPIView.as_view(), name='designation-delete'),
+    path('designations/export/', DesignationExportAPIView.as_view(), name='designation-export'),
+    path('designations/import/', DesignationImportAPIView.as_view(), name='designation-import'),
+
+    path('occupation-to-occupation/', OccupationToOccupationListAPIView.as_view(), name='occupation-to-occupation-list'),
+    path('occupation-to-occupation/create/', OccupationToOccupationCreateAPIView.as_view(), name='occupation-to-occupation-create'),
+    path('occupation-to-occupation/<uuid:uuid>/', OccupationToOccupationRetrieveAPIView.as_view(), name='occupation-to-occupation-detail'),
+    path('occupation-to-occupation/<uuid:uuid>/update/', OccupationToOccupationUpdateAPIView.as_view(), name='occupation-to-occupation-update'),
+    path('occupation-to-occupation/delete/', OccupationToOccupationDeleteAPIView.as_view(), name='occupation-to-occupation-delete'),
+    path('occupation-to-occupation/export/', OccupationToOccupationExportAPIView.as_view(), name='occupation-to-occupation-export'),
+
 
     path('workrights/', WorkRightsListAPIView.as_view(), name='workrights-list'),
     path('workrights/create/', WorkRightsCreateAPIView.as_view(), name='workrights-create'),
@@ -1031,7 +1053,25 @@ urlpatterns = [
     path('entrance-test-ability-group/export/', EntranceTestAbilityGroupExportAPIView.as_view(), name='entrancetestabilitygroup-export'),
     path('entrance-test-ability-group/import/', EntranceTestAbilityGroupImportAPIView.as_view(), name='entrancetestabilitygroup-import'),
 
+    path('designation/', DesignationListAPIView.as_view(), name='designation-list'),
+    path('designation/create/', DesignationCreateAPIView.as_view(), name='designation-create'),
+    path('designation/<uuid:uuid>/', DesignationRetrieveAPIView.as_view(), name='designation-retrieve'),
+    path('designation/<uuid:uuid>/update/', DesignationUpdateAPIView.as_view(), name='designation-update'),
+    path('designation/delete/', DesignationDeleteAPIView.as_view(), name='designation-delete'),
+    path('designation/export/', DesignationExportAPIView.as_view(), name='designation-export'),
+    path('designation/import/', DesignationImportAPIView.as_view(), name='designation-import'),
 
+
+    # ---------------- CHILDREN ----------------
+    path('children-visacategory/', ChildrenVisaCategoryListAPIView.as_view()),
+    path('children-visacategory/create/', ChildrenVisaCategoryCreateAPIView.as_view()),
+    path('children-visacategory/<uuid:uuid>/', ChildrenVisaCategoryRetrieveAPIView.as_view()),
+    path('children-visacategory/<uuid:uuid>/update/', ChildrenVisaCategoryUpdateAPIView.as_view()),
+    path('children-visacategory/delete/', ChildrenVisaCategoryDeleteAPIView.as_view()),
+    path('children-visacategory/export/', ChildrenVisaCategoryExportAPIView.as_view()),
+    path('children-visacategory/import/', ChildrenVisaCategoryImportAPIView.as_view()),
+
+    
     path('study-factor-age/create/', StudyFactorAgeCreateAPIView.as_view(),name='age-create'),
     path('study-factor-age/list/', StudyFactorAgeListAPIView.as_view(),name='age-list'),
     path('study-factor-age/<uuid:uuid>/', StudyFactorAgeRetrieveAPIView.as_view(),name='age-retrieve'),

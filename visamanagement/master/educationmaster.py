@@ -655,6 +655,7 @@ class EducationLevelExportAPIView(APIView):
             'uuid': 'UUID',
             'level_code': 'Education Level Code',
             'educationlevel': 'Education Level',
+            'educationduration':'Education Durations',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'created_at': 'Created On',
@@ -719,7 +720,7 @@ class EducationLevelImportAPIView(APIView):
         duplicates = []
         skipped_rows = []
 
-        required_headers = {'education level code', 'education level'}
+        required_headers = {'education level code', 'education level','education duration'}
         optional_headers = {'description', 'is_deleted'}
 
         try:
@@ -767,12 +768,14 @@ class EducationLevelImportAPIView(APIView):
             else:
                 return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
 
-            # ---------------- Process Data ----------------
+           
+
             imported_count = 0
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
                 level_code_id = row.get('education level code')
                 education_level_name = str(row.get('education level')).strip() if row.get('education level') else None
+                durations = str(row.get('education duration')).strip() if row.get('education duration') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
                 is_deleted = bool(int(row.get('is_deleted', 0))) if row.get('is_deleted') is not None else False
 
@@ -810,6 +813,7 @@ class EducationLevelImportAPIView(APIView):
                 else:
                     EducationLevel.objects.create(
                         level_code_id=level_code_id,
+                        durations=durations,
                         educationlevel=education_level_name,
                         description=description,
                         is_deleted=is_deleted

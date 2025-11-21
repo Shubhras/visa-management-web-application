@@ -6,6 +6,7 @@ import { saveAs } from "file-saver";
 import { countryImportData } from "../../../../store/master/generalMasters/actions";
 import CommanSampleExcelDownloadModal from "../../../../components/comman/CommanSampleExcelDownloadModal";
 import { exportToExcelDuplicate, exportToExcelWrongData } from "../../../../helper/utils/commanHelper";
+import { Truck } from "@phosphor-icons/react";
 const AddImportCountryModal = ({ show, handleClose }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
@@ -122,7 +123,7 @@ const AddImportCountryModal = ({ show, handleClose }) => {
             setFile(null);
             setSheetNames([]);
             setSelectedSheet("");
-            handleClose();
+            handleClose(Truck);
           } else {
             toast.error("Something went wrong.");
           }
@@ -137,7 +138,7 @@ const AddImportCountryModal = ({ show, handleClose }) => {
     setError("");
     setSheetNames([]);
     setSelectedSheet("");
-    handleClose();
+    handleClose(false);
     setLoading(false);
   };
   const handleDownloadSample = () => {

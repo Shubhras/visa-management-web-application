@@ -5,8 +5,8 @@ import {
   occupationCodeAdd,
   occupationCodeEdit,
   occupationVersionList,
+  representingCountryList,
 } from "../../../../store/master/occupationMaster/action";
-import { countryList } from "../../../../store/master/generalMasters/actions";
 import Select from "react-select";
 
 const AddEditOccupationCode = ({
@@ -47,7 +47,7 @@ const AddEditOccupationCode = ({
       sortOrder: "asc",
     };
     dispatch(
-      countryList(params, (response, error) => {
+      representingCountryList(params, (response, error) => {
         // setLoading(false);
         if (response?.statusCode === 200 && response?.status === true) {
           setCountryData(response?.data || []);

@@ -9,7 +9,21 @@ export const logoutUserAPI = (data) => post(url.POST_LOGOUT, data)
 
 
 export const getDepartmentListDataAPI = (data) => {
-    const apiUrl = `${url.GET_DEPARTMENT_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        // Case 1: Only created_at is present → keep it
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        // Case 2: More fields exist → remove created_at
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        // Map fields into customSort string
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.GET_DEPARTMENT_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
     return get(apiUrl)
 };
 
@@ -33,7 +47,21 @@ export const deleteDepartmentDataAPI = (payload) => {
 
 
 export const exportDepartmentDataAPI = (payload) => {
-    const apiUrl = `${url.EXPORT_DEPARTMENT_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        // Case 1: Only created_at is present → keep it
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        // Case 2: More fields exist → remove created_at
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        // Map fields into customSort string
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_DEPARTMENT_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -425,7 +453,21 @@ export const importBankAccountTypeDataAPI = (payload) => {
 
 // GENDER
 export const getGenderListDataAPI = (data) => {
-    const apiUrl = `${url.GET_GENDER_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        // Case 1: Only created_at is present → keep it
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        // Case 2: More fields exist → remove created_at
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        // Map fields into customSort string
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.GET_GENDER_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
     return get(apiUrl);
 };
 
@@ -448,7 +490,21 @@ export const deleteGenderDataAPI = (payload) => {
 };
 
 export const exportGenderDataAPI = (payload) => {
-    const apiUrl = `${url.EXPORT_GENDER_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        // Case 1: Only created_at is present → keep it
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        // Case 2: More fields exist → remove created_at
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        // Map fields into customSort string
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_GENDER_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -460,7 +516,21 @@ export const importGenderDataAPI = (payload) => {
 
 // MARITAL STATUS
 export const getMaritalStatusListDataAPI = (data) => {
-    const apiUrl = `${url.GET_MARITAL_STATUS_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        // Case 1: Only created_at is present → keep it
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        // Case 2: More fields exist → remove created_at
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        // Map fields into customSort string
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.GET_MARITAL_STATUS_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
     return get(apiUrl);
 };
 
@@ -483,7 +553,21 @@ export const deleteMaritalStatusDataAPI = (payload) => {
 };
 
 export const exportMaritalStatusDataAPI = (payload) => {
-    const apiUrl = `${url.EXPORT_MARITAL_STATUS_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        // Case 1: Only created_at is present → keep it
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        // Case 2: More fields exist → remove created_at
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        // Map fields into customSort string
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_MARITAL_STATUS_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -771,7 +855,21 @@ export const importStudyMainAreaDataAPI = (payload) => {
 
 // CONTINENT
 export const getContinentListDataAPI = (data) => {
-    const apiUrl = `${url.GET_CONTINENT_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        // Case 1: Only created_at is present → keep it
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        // Case 2: More fields exist → remove created_at
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        // Map fields into customSort string
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.GET_CONTINENT_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
     return get(apiUrl);
 };
 
@@ -794,7 +892,21 @@ export const deleteContinentDataAPI = (payload) => {
 };
 
 export const exportContinentDataAPI = (payload) => {
-    const apiUrl = `${url.EXPORT_CONTINENT_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        // Case 1: Only created_at is present → keep it
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        // Case 2: More fields exist → remove created_at
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        // Map fields into customSort string
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_CONTINENT_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -805,7 +917,26 @@ export const importContinentDataAPI = (payload) => {
 
 //COUNTRY
 export const getCountryListDataAPI = (data) => {
-    const apiUrl = `${url.GET_COUNTRY_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    let customSort = "";
+    if (data.sort && Array.isArray(data.sort)) {
+        // Check if only created_at exists
+        const onlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        // Remove created_at if other fields exist
+        const finalSortArray = onlyCreatedAt
+            ? data.sort
+            : data.sort.filter(s => s.field !== "created_at");
+
+        // Map fields & build customSort string
+        customSort = finalSortArray
+            .map(s => {
+                let field = s.field;
+                if (field === "continent") field = "continent";
+                return `${field}:${s.order}`;
+            })
+            .join(",");
+    }
+    const apiUrl = `${url.GET_COUNTRY_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&continent=${data?.continent}&customSort=${customSort}`;
     return get(apiUrl);
 };
 
@@ -828,7 +959,27 @@ export const deleteCountryDataAPI = (payload) => {
 };
 
 export const exportCountryDataAPI = (payload) => {
-    const apiUrl = `${url.EXPORT_COUNTRY_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    let customSort = "";
+    if (payload.sort && Array.isArray(payload.sort)) {
+        // Check if only created_at exists
+        const onlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        // Remove created_at if other fields exist
+        const finalSortArray = onlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(s => s.field !== "created_at");
+
+        // Map fields & build customSort string
+        customSort = finalSortArray
+            .map(s => {
+                let field = s.field;
+
+                if (field === "continent") field = "continent";
+                return `${field}:${s.order}`;
+            })
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_COUNTRY_LIST_API}?fields=${payload?.fields}&country=${payload?.uuids}&continent=${payload?.continent}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -839,7 +990,28 @@ export const importCountryDataAPI = (payload) => {
 
 // STATE
 export const getStateListDataAPI = (data) => {
-    const apiUrl = `${url.GET_STATE_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    let customSort = "";
+    if (data.sort && Array.isArray(data.sort)) {
+        // Check if only created_at exists
+        const onlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        // Remove created_at if other fields exist
+        const finalSortArray = onlyCreatedAt
+            ? data.sort
+            : data.sort.filter(s => s.field !== "created_at");
+
+        // Map fields & build customSort string
+        customSort = finalSortArray
+            .map(s => {
+                let field = s.field;
+
+                if (field === "countryId") field = "countryName";
+                if (field === "stateId") field = "stateName";
+                return `${field}:${s.order}`;
+            })
+            .join(",");
+    }
+    const apiUrl = `${url.GET_STATE_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&country=${data?.country}&customSort=${customSort}`;
     return get(apiUrl);
 };
 
@@ -862,7 +1034,29 @@ export const deleteStateDataAPI = (payload) => {
 };
 
 export const exportStateDataAPI = (payload) => {
-    const apiUrl = `${url.EXPORT_STATE_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    let customSort = "";
+    if (payload.sort && Array.isArray(payload.sort)) {
+        // Check if only created_at exists
+        const onlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        // Remove created_at if other fields exist
+        const finalSortArray = onlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(s => s.field !== "created_at");
+
+        // Map fields & build customSort string
+        customSort = finalSortArray
+            .map(s => {
+                let field = s.field;
+
+                if (field === "countryId") field = "countryName";
+                if (field === "stateId") field = "stateName";
+                return `${field}:${s.order}`;
+            })
+            .join(",");
+    }
+    //const apiUrl = `${url.EXPORT_STATE_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&country=${payload?.country}&customSort=${customSort}`;
+        const apiUrl = `${url.EXPORT_STATE_LIST_API}?fields=${payload?.fields}&state=${payload?.uuids}&country=${payload?.country}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -878,7 +1072,22 @@ export const getStateDataByCountryAPI = (data) => {
 
 // CIVIL_ID_NAME
 export const getCivilIdNameListDataAPI = (data) => {
-    const apiUrl = `${url.GET_CIVIL_ID_NAME_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+
+    let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        // Case 1: Only created_at is present → keep it
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        // Case 2: More fields exist → remove created_at
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        // Map fields into customSort string
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.GET_CIVIL_ID_NAME_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
     return get(apiUrl);
 };
 
@@ -901,7 +1110,21 @@ export const deleteCivilIdNameDataAPI = (payload) => {
 };
 
 export const exportCivilIdNameDataAPI = (payload) => {
-    const apiUrl = `${url.EXPORT_CIVIL_ID_NAME_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        // Case 1: Only created_at is present → keep it
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        // Case 2: More fields exist → remove created_at
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        // Map fields into customSort string
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_CIVIL_ID_NAME_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -912,7 +1135,21 @@ export const importCivilIdNameDataAPI = (payload) => {
 
 // RELATION
 export const getRelationListDataAPI = (data) => {
-    const apiUrl = `${url.GET_RELATION_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        // Case 1: Only created_at is present → keep it
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        // Case 2: More fields exist → remove created_at
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        // Map fields into customSort string
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.GET_RELATION_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
     return get(apiUrl);
 };
 
@@ -935,7 +1172,21 @@ export const deleteRelationDataAPI = (payload) => {
 };
 
 export const exportRelationDataAPI = (payload) => {
-    const apiUrl = `${url.EXPORT_RELATION_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        // Case 1: Only created_at is present → keep it
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        // Case 2: More fields exist → remove created_at
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        // Map fields into customSort string
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_RELATION_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -946,7 +1197,27 @@ export const importRelationDataAPI = (payload) => {
 
 // TIME_ZONE
 export const getTimeZoneListDataAPI = (data) => {
-    const apiUrl = `${url.GET_TIME_ZONE_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+
+    let customSort = "";
+    if (data.sort && Array.isArray(data.sort)) {
+        // Check if only created_at exists
+        const onlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        // Remove created_at if other fields exist
+        const finalSortArray = onlyCreatedAt
+            ? data.sort
+            : data.sort.filter(s => s.field !== "created_at");
+
+        // Map fields & build customSort string
+        customSort = finalSortArray
+            .map(s => {
+                let field = s.field;
+                if (field === "countryId") field = "countryName";
+                return `${field}:${s.order}`;
+            })
+            .join(",");
+    }
+    const apiUrl = `${url.GET_TIME_ZONE_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&country=${data?.country}&customSort=${customSort}`;
     return get(apiUrl);
 };
 
@@ -969,7 +1240,28 @@ export const deleteTimeZoneDataAPI = (payload) => {
 };
 
 export const exportTimeZoneDataAPI = (payload) => {
-    const apiUrl = `${url.EXPORT_TIME_ZONE_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    let customSort = "";
+    if (payload.sort && Array.isArray(payload.sort)) {
+        // Check if only created_at exists
+        const onlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        // Remove created_at if other fields exist
+        const finalSortArray = onlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(s => s.field !== "created_at");
+
+        // Map fields & build customSort string
+        customSort = finalSortArray
+            .map(s => {
+                let field = s.field;
+
+                if (field === "countryId") field = "countryName";
+                if (field === "stateId") field = "stateName";
+                return `${field}:${s.order}`;
+            })
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_TIME_ZONE_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&country=${payload?.country}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -1284,7 +1576,30 @@ export const importAcademicResultToResultAPI = (payload) => {
 
 // DISTRICT
 export const getDistrictListDataAPI = (data) => {
-    const apiUrl = `${url.GET_DISTRICT_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    let customSort = "";
+    if (data.sort && Array.isArray(data.sort)) {
+        // Check if only created_at exists
+        const onlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        // Remove created_at if other fields exist
+        const finalSortArray = onlyCreatedAt
+            ? data.sort
+            : data.sort.filter(s => s.field !== "created_at");
+
+        // Map fields & build customSort string
+        customSort = finalSortArray
+            .map(s => {
+                let field = s.field;
+
+                if (field === "countryId") field = "countryName";
+                if (field === "stateId") field = "stateName";
+                if (field === "districtId") field = "districtName";
+
+                return `${field}:${s.order}`;
+            })
+            .join(",");
+    }
+    const apiUrl = `${url.GET_DISTRICT_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&country=${data?.country}&state=${data?.state}&customSort=${customSort}`;
     return get(apiUrl);
 };
 
@@ -1307,7 +1622,30 @@ export const deleteDistrictDataAPI = (payload) => {
 };
 
 export const exportDistrictDataAPI = (payload) => {
-    const apiUrl = `${url.EXPORT_DISTRICT_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    let customSort = "";
+    if (payload.sort && Array.isArray(payload.sort)) {
+        // Check if only created_at exists
+        const onlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        // Remove created_at if other fields exist
+        const finalSortArray = onlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(s => s.field !== "created_at");
+
+        // Map fields & build customSort string
+        customSort = finalSortArray
+            .map(s => {
+                let field = s.field;
+
+                if (field === "countryId") field = "countryName";
+                if (field === "stateId") field = "stateName";
+                if (field === "districtId") field = "districtName";
+
+                return `${field}:${s.order}`;
+            })
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_DISTRICT_LIST_API}?fields=${payload?.fields}&district=${payload?.uuids}&country=${payload?.country}&state=${payload?.state}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -1322,7 +1660,31 @@ export const getDistrictDataByStateAPI = (payload) => {
 
 // CITY
 export const getCityListDataAPI = (data) => {
-    const apiUrl = `${url.GET_CITY_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&country=${data?.country}&state=${data?.state}&district=${data?.district}`;
+    let customSort = "";
+    if (data.sort && Array.isArray(data.sort)) {
+        // Check if only created_at exists
+        const onlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        // Remove created_at if other fields exist
+        const finalSortArray = onlyCreatedAt
+            ? data.sort
+            : data.sort.filter(s => s.field !== "created_at");
+
+        // Map fields & build customSort string
+        customSort = finalSortArray
+            .map(s => {
+                let field = s.field;
+
+                if (field === "countryId") field = "countryName";
+                if (field === "stateId") field = "stateName";
+                if (field === "districtId") field = "districtName";
+
+                return `${field}:${s.order}`;
+            })
+            .join(",");
+    }
+    //const apiUrl = `${url.GET_CITY_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&country=${data?.country}&state=${data?.state}&district=${data?.district}&customSort=${customSort}`;
+    const apiUrl = `${url.GET_CITY_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&country=${data?.country}&state=${data?.state}&district=${data?.district}&customSort=${customSort}`;
     return get(apiUrl);
 };
 
@@ -1343,7 +1705,30 @@ export const deleteCityDataAPI = (payload) => {
 };
 
 export const exportCityDataAPI = (payload) => {
-    const apiUrl = `${url.EXPORT_CITY_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    let customSort = "";
+    if (payload.sort && Array.isArray(payload.sort)) {
+        // Check if only created_at exists
+        const onlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        // Remove created_at if other fields exist
+        const finalSortArray = onlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(s => s.field !== "created_at");
+
+        // Map fields & build customSort string
+        customSort = finalSortArray
+            .map(s => {
+                let field = s.field;
+
+                if (field === "countryId") field = "countryName";
+                if (field === "stateId") field = "stateName";
+                if (field === "districtId") field = "districtName";
+
+                return `${field}:${s.order}`;
+            })
+            .join(",");
+    }
+    const apiUrl = `${url.EXPORT_CITY_LIST_API}?fields=${payload?.fields}&city=${payload?.uuids}&country=${payload?.country}&state=${payload?.state}&district=${payload?.district}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -2039,66 +2424,170 @@ export const importOccupationLevelAPI = (payload) => {
 
 //  Occupation Code 
 export const getOccupationCodeListAPI = (data) => {
-  const apiUrl = `${url.GET_OCCUPATION_CODE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
-  return get(apiUrl);
+    const apiUrl = `${url.GET_OCCUPATION_CODE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
 };
 
 export const addOccupationCodeAPI = (payload) => {
-  const apiUrl = `${url.ADD_OCCUPATION_CODE_API}`;
-  return post(apiUrl, payload);
+    const apiUrl = `${url.ADD_OCCUPATION_CODE_API}`;
+    return post(apiUrl, payload);
 };
 
 export const editOccupationCodeAPI = (payload) => {
-  const apiUrl = `${url.EDIT_OCCUPATION_CODE_API}${payload?.uuid}/update/`;
-  return put(apiUrl, payload);
+    const apiUrl = `${url.EDIT_OCCUPATION_CODE_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
 };
 
 export const deleteOccupationCodeAPI = (payload) => {
-  const preparedData = { id: payload };
-  const apiUrl = `${url.DELETE_OCCUPATION_CODE_API}delete/`;
-  return delWithPayload(apiUrl, preparedData);
+    const preparedData = { id: payload };
+    const apiUrl = `${url.DELETE_OCCUPATION_CODE_API}delete/`;
+    return delWithPayload(apiUrl, preparedData);
 };
 
 export const exportOccupationCodeAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_OCCUPATION_CODE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
-  return getExportData(apiUrl, payload);
+    const apiUrl = `${url.EXPORT_OCCUPATION_CODE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
 };
 
 export const importOccupationCodeAPI = (payload) => {
-  const apiUrl = `${url.IMPORT_OCCUPATION_CODE_API}`;
-  return post(apiUrl, payload);
+    const apiUrl = `${url.IMPORT_OCCUPATION_CODE_API}`;
+    return post(apiUrl, payload);
 };
 
 //  Occupation Name 
 export const getOccupationNameListAPI = (data) => {
-  const apiUrl = `${url.GET_OCCUPATION_NAME_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
-  return get(apiUrl);
+    const apiUrl = `${url.GET_OCCUPATION_NAME_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
 };
 
 export const addOccupationNameAPI = (payload) => {
-  const apiUrl = `${url.ADD_OCCUPATION_NAME_API}`;
-  return post(apiUrl, payload);
+    const apiUrl = `${url.ADD_OCCUPATION_NAME_API}`;
+    return post(apiUrl, payload);
 };
 
 export const editOccupationNameAPI = (payload) => {
-  const apiUrl = `${url.EDIT_OCCUPATION_NAME_API}${payload?.uuid}/update/`;
-  return put(apiUrl, payload);
+    const apiUrl = `${url.EDIT_OCCUPATION_NAME_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
 };
 
 export const deleteOccupationNameAPI = (payload) => {
-  const preparedData = { id: payload };
-  const apiUrl = `${url.DELETE_OCCUPATION_NAME_API}delete/`;
-  return delWithPayload(apiUrl, preparedData);
+    const preparedData = { id: payload };
+    const apiUrl = `${url.DELETE_OCCUPATION_NAME_API}delete/`;
+    return delWithPayload(apiUrl, preparedData);
 };
 
 export const exportOccupationNameAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_OCCUPATION_NAME_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
-  return getExportData(apiUrl, payload);
+    const apiUrl = `${url.EXPORT_OCCUPATION_NAME_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
 };
 
 export const importOccupationNameAPI = (payload) => {
-  const apiUrl = `${url.IMPORT_OCCUPATION_NAME_API}`;
-  return post(apiUrl, payload);
+    const apiUrl = `${url.IMPORT_OCCUPATION_NAME_API}`;
+    return post(apiUrl, payload);
+};
+
+//  Designation 
+export const getDesignationListAPI = (data) => {
+    const apiUrl = `${url.GET_DESIGNATION_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addDesignationAPI = (payload) => {
+    const apiUrl = `${url.ADD_DESIGNATION_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editDesignationAPI = (payload) => {
+    const apiUrl = `${url.EDIT_DESIGNATION_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteDesignationAPI = (payload) => {
+    const preparedData = { id: payload };
+    const apiUrl = `${url.DELETE_DESIGNATION_API}delete/`;
+    return delWithPayload(apiUrl, preparedData);
+};
+
+export const exportDesignationAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_DESIGNATION_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importDesignationAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_DESIGNATION_API}`;
+    return post(apiUrl, payload);
+};
+
+// Job Prospect
+export const getJobProspectListAPI = (data) => {
+    const apiUrl = `${url.GET_JOB_PROSPECT_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addJobProspectAPI = (payload) => {
+    const apiUrl = `${url.ADD_JOB_PROSPECT_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editJobProspectAPI = (payload) => {
+    const apiUrl = `${url.EDIT_JOB_PROSPECT_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteJobProspectAPI = (payload) => {
+    const preparedData = { id: payload };
+    const apiUrl = `${url.DELETE_JOB_PROSPECT_API}delete/`;
+    return delWithPayload(apiUrl, preparedData);
+};
+
+export const exportJobProspectAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_JOB_PROSPECT_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importJobProspectAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_JOB_PROSPECT_API}`;
+    return post(apiUrl, payload);
+};
+
+//Representing api
+export const getRepresentingCountryListAPI = (data) => {
+    const apiUrl = `${url.GET_REPRESENTING_COUNTRY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+
+// Related Occupation
+export const getRelatedOccupationListAPI = (data) => {
+    const apiUrl = `${url.GET_RELATED_OCCUPATION_LIST}?search=${data?.search}&page=${data?.page
+        }&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addRelatedOccupationAPI = (payload) => {
+    const apiUrl = `${url.ADD_RELATED_OCCUPATION_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editRelatedOccupationAPI = (payload) => {
+    const apiUrl = `${url.EDIT_RELATED_OCCUPATION_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteRelatedOccupationAPI = (payload) => {
+    const preparedData = { id: payload };
+    const apiUrl = `${url.DELETE_RELATED_OCCUPATION_API}delete/`;
+    return delWithPayload(apiUrl, preparedData);
+};
+
+export const exportRelatedOccupationAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_RELATED_OCCUPATION_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importRelatedOccupationAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_RELATED_OCCUPATION_API}`;
+    return post(apiUrl, payload);
 };
 
 
@@ -2574,6 +3063,1097 @@ export const importCourseDurationDataAPI = (payload) => {
     const apiUrl = `${url.IMPORT_COURSE_DURATION_API}`;
     return post(apiUrl, payload);
 };
+
+
+
+// Work Rights
+export const getWorkRightsListAPI = (data) => {
+    const apiUrl = `${url.GET_WORK_RIGHTS_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addWorkRightsAPI = (payload) => {
+    const apiUrl = `${url.ADD_WORK_RIGHTS_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editWorkRightsAPI = (payload) => {
+    const apiUrl = `${url.EDIT_WORK_RIGHTS_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteWorkRightsAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_WORK_RIGHTS_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportWorkRightsAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_WORK_RIGHTS_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importWorkRightsAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_WORK_RIGHTS_API}`;
+    return post(apiUrl, payload);
+};
+// Work Rights During Study
+export const getWorkRightsDuringStudyListAPI = (data) => {
+    const apiUrl = `${url.GET_WORK_RIGHTS_DURING_STUDY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addWorkRightsDuringStudyAPI = (payload) => {
+    const apiUrl = `${url.ADD_WORK_RIGHTS_DURING_STUDY_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editWorkRightsDuringStudyAPI = (payload) => {
+    const apiUrl = `${url.EDIT_WORK_RIGHTS_DURING_STUDY_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteWorkRightsDuringStudyAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_WORK_RIGHTS_DURING_STUDY_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportWorkRightsDuringStudyAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_WORK_RIGHTS_DURING_STUDY_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importWorkRightsDuringStudyAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_WORK_RIGHTS_DURING_STUDY_API}`;
+    return post(apiUrl, payload);
+};
+
+// Work Rights During Vacation
+export const getWorkRightsDuringVacationListAPI = (data) => {
+    const apiUrl = `${url.GET_WORK_RIGHTS_DURING_VACATION_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addWorkRightsDuringVacationAPI = (payload) => {
+    const apiUrl = `${url.ADD_WORK_RIGHTS_DURING_VACATION_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editWorkRightsDuringVacationAPI = (payload) => {
+    const apiUrl = `${url.EDIT_WORK_RIGHTS_DURING_VACATION_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteWorkRightsDuringVacationAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_WORK_RIGHTS_DURING_VACATION_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportWorkRightsDuringVacationAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_WORK_RIGHTS_DURING_VACATION_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importWorkRightsDuringVacationAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_WORK_RIGHTS_DURING_VACATION_API}`;
+    return post(apiUrl, payload);
+};
+// Work Rights After Study
+export const getWorkRightsAfterStudyAPI = (data) => {
+    const apiUrl = `${url.GET_WORK_RIGHTS_AFTER_STUDY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addWorkRightsAfterStudyAPI = (payload) => {
+    return post(url.ADD_WORK_RIGHTS_AFTER_STUDY_API, payload);
+};
+
+export const editWorkRightsAfterStudyAPI = (payload) => {
+    return put(`${url.EDIT_WORK_RIGHTS_AFTER_STUDY_API}${payload.uuid}/update/`, payload);
+};
+
+export const deleteWorkRightsAfterStudyAPI = (payload) => {
+    return delWithPayload(`${url.DELETE_WORK_RIGHTS_AFTER_STUDY_API}delete/`, { id: payload });
+};
+
+export const exportWorkRightsAfterStudyAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_WORK_RIGHTS_AFTER_STUDY_API}?fields=${payload.fields}&uuids=${payload.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importWorkRightsAfterStudyAPI = (payload) => {
+    return post(url.IMPORT_WORK_RIGHTS_AFTER_STUDY_API, payload);
+};
+
+
+// PR Possibility
+export const getPRPossibilityAPI = (data) => {
+    const apiUrl = `${url.GET_PR_POSSIBILITY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addPRPossibilityAPI = (payload) => {
+    return post(url.ADD_PR_POSSIBILITY_API, payload);
+};
+
+export const editPRPossibilityAPI = (payload) => {
+    return put(`${url.EDIT_PR_POSSIBILITY_API}${payload.uuid}/update/`, payload);
+};
+
+export const deletePRPossibilityAPI = (payload) => {
+    return delWithPayload(`${url.DELETE_PR_POSSIBILITY_API}delete/`, { id: payload });
+};
+
+export const exportPRPossibilityAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_PR_POSSIBILITY_API}?fields=${payload.fields}&uuids=${payload.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importPRPossibilityAPI = (payload) => {
+    return post(url.IMPORT_PR_POSSIBILITY_API, payload);
+};
+
+
+// Spouse Apply With Candidate
+export const getSpouseApplyWithCandidateAPI = (data) => {
+    const apiUrl = `${url.GET_SPOUSE_APPLY_WITH_CANDIDATE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addSpouseApplyWithCandidateAPI = (payload) => {
+    return post(url.ADD_SPOUSE_APPLY_WITH_CANDIDATE_API, payload);
+};
+
+export const editSpouseApplyWithCandidateAPI = (payload) => {
+    return put(`${url.EDIT_SPOUSE_APPLY_WITH_CANDIDATE_API}${payload.uuid}/update/`, payload);
+};
+
+export const deleteSpouseApplyWithCandidateAPI = (payload) => {
+    return delWithPayload(`${url.DELETE_SPOUSE_APPLY_WITH_CANDIDATE_API}delete/`, { id: payload });
+};
+
+export const exportSpouseApplyWithCandidateAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_SPOUSE_APPLY_WITH_CANDIDATE_API}?fields=${payload.fields}&uuids=${payload.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importSpouseApplyWithCandidateAPI = (payload) => {
+    return post(url.IMPORT_SPOUSE_APPLY_WITH_CANDIDATE_API, payload);
+};
+// Spouse Visa Category
+export const getSpouseVisaCategoryListAPI = (data) => {
+    const apiUrl = `${url.GET_SPOUSE_VISA_CATEGORY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addSpouseVisaCategoryAPI = (payload) => {
+    const apiUrl = `${url.ADD_SPOUSE_VISA_CATEGORY_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editSpouseVisaCategoryAPI = (payload) => {
+    const apiUrl = `${url.EDIT_SPOUSE_VISA_CATEGORY_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteSpouseVisaCategoryAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_SPOUSE_VISA_CATEGORY_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportSpouseVisaCategoryAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_SPOUSE_VISA_CATEGORY_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importSpouseVisaCategoryAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_SPOUSE_VISA_CATEGORY_API}`;
+    return post(apiUrl, payload);
+};
+// SPOUSE WORK RIGHTS
+export const getSpouseWorkRightsListAPI = (data) => {
+    const apiUrl = `${url.GET_SPOUSE_WORK_RIGHTS_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addSpouseWorkRightsAPI = (payload) => {
+    return post(url.ADD_SPOUSE_WORK_RIGHTS_API, payload);
+};
+
+export const editSpouseWorkRightsAPI = (payload) => {
+    const apiUrl = `${url.EDIT_SPOUSE_WORK_RIGHTS_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteSpouseWorkRightsAPI = (payload) => {
+    const apiUrl = `${url.DELETE_SPOUSE_WORK_RIGHTS_API}delete/`;
+    return delWithPayload(apiUrl, { id: payload });
+};
+
+export const exportSpouseWorkRightsAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_SPOUSE_WORK_RIGHTS_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importSpouseWorkRightsAPI = (payload) => {
+    return post(url.IMPORT_SPOUSE_WORK_RIGHTS_API, payload);
+};
+
+
+// CHILDREN APPLY WITH CANDIDATE
+export const getChildrenApplyWithCandidateListAPI = (data) => {
+    const apiUrl = `${url.GET_CHILDREN_APPLY_WITH_CANDIDATE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addChildrenApplyWithCandidateAPI = (payload) => {
+    return post(url.ADD_CHILDREN_APPLY_WITH_CANDIDATE_API, payload);
+};
+
+export const editChildrenApplyWithCandidateAPI = (payload) => {
+    const apiUrl = `${url.EDIT_CHILDREN_APPLY_WITH_CANDIDATE_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteChildrenApplyWithCandidateAPI = (payload) => {
+    const apiUrl = `${url.DELETE_CHILDREN_APPLY_WITH_CANDIDATE_API}delete/`;
+    return delWithPayload(apiUrl, { id: payload });
+};
+
+export const exportChildrenApplyWithCandidateAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_CHILDREN_APPLY_WITH_CANDIDATE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importChildrenApplyWithCandidateAPI = (payload) => {
+    return post(url.IMPORT_CHILDREN_APPLY_WITH_CANDIDATE_API, payload);
+};
+// CHILDREN VISA CATEGORY
+export const getChildrenVisaCategoryListAPI = (data) => {
+    const apiUrl = `${url.GET_CHILDREN_VISA_CATEGORY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addChildrenVisaCategoryAPI = (payload) => {
+    return post(url.ADD_CHILDREN_VISA_CATEGORY_API, payload);
+};
+
+export const editChildrenVisaCategoryAPI = (payload) => {
+    const apiUrl = `${url.EDIT_CHILDREN_VISA_CATEGORY_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteChildrenVisaCategoryAPI = (payload) => {
+    const apiUrl = `${url.DELETE_CHILDREN_VISA_CATEGORY_API}delete/`;
+    return delWithPayload(apiUrl, { id: payload });
+};
+
+export const exportChildrenVisaCategoryAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_CHILDREN_VISA_CATEGORY_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importChildrenVisaCategoryAPI = (payload) => {
+    return post(url.IMPORT_CHILDREN_VISA_CATEGORY_API, payload);
+};
+// CHILDREN STUDY / WORK RIGHTS
+export const getChildrenStudyWorkRightsListAPI = (data) => {
+    const apiUrl = `${url.GET_CHILDREN_STUDY_WORK_RIGHTS_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addChildrenStudyWorkRightsAPI = (payload) => {
+    return post(url.ADD_CHILDREN_STUDY_WORK_RIGHTS_API, payload);
+};
+
+export const editChildrenStudyWorkRightsAPI = (payload) => {
+    const apiUrl = `${url.EDIT_CHILDREN_STUDY_WORK_RIGHTS_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteChildrenStudyWorkRightsAPI = (payload) => {
+    const apiUrl = `${url.DELETE_CHILDREN_STUDY_WORK_RIGHTS_API}delete/`;
+    return delWithPayload(apiUrl, { id: payload });
+};
+
+export const exportChildrenStudyWorkRightsAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_CHILDREN_STUDY_WORK_RIGHTS_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importChildrenStudyWorkRightsAPI = (payload) => {
+    return post(url.IMPORT_CHILDREN_STUDY_WORK_RIGHTS_API, payload);
+};
+// Visa Main Category
+export const getVisaMainCategoryListAPI = (data) => {
+    const apiUrl = `${url.GET_VISA_MAIN_CATEGORY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addVisaMainCategoryAPI = (payload) => {
+    const apiUrl = `${url.ADD_VISA_MAIN_CATEGORY_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editVisaMainCategoryAPI = (payload) => {
+    const apiUrl = `${url.EDIT_VISA_MAIN_CATEGORY_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteVisaMainCategoryAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_VISA_MAIN_CATEGORY_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportVisaMainCategoryAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_VISA_MAIN_CATEGORY_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importVisaMainCategoryAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_VISA_MAIN_CATEGORY_API}`;
+    return post(apiUrl, payload);
+};
+
+
+// Document Category
+export const getDocumentCategoryListAPI = (data) => {
+    const apiUrl = `${url.GET_DOCUMENT_CATEGORY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addDocumentCategoryAPI = (payload) => {
+    const apiUrl = `${url.ADD_DOCUMENT_CATEGORY_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editDocumentCategoryAPI = (payload) => {
+    const apiUrl = `${url.EDIT_DOCUMENT_CATEGORY_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteDocumentCategoryAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_DOCUMENT_CATEGORY_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportDocumentCategoryAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_DOCUMENT_CATEGORY_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importDocumentCategoryAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_DOCUMENT_CATEGORY_API}`;
+    return post(apiUrl, payload);
+};
+
+// Document Name
+export const getDocumentNameListAPI = (data) => {
+    const apiUrl = `${url.GET_DOCUMENT_NAME_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addDocumentNameAPI = (payload) => {
+    const apiUrl = `${url.ADD_DOCUMENT_NAME_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editDocumentNameAPI = (payload) => {
+    const apiUrl = `${url.EDIT_DOCUMENT_NAME_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteDocumentNameAPI = (payload) => {
+    const prepareDATA = {
+        id: payload,
+    };
+    const apiUrl = `${url.DELETE_DOCUMENT_NAME_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportDocumentNameAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_DOCUMENT_NAME_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importDocumentNameAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_DOCUMENT_NAME_API}`;
+    return post(apiUrl, payload);
+};
+// Document Type
+export const getDocumentTypeListAPI = (data) => {
+    const apiUrl = `${url.GET_DOCUMENT_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addDocumentTypeAPI = (payload) => {
+    const apiUrl = `${url.ADD_DOCUMENT_TYPE_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editDocumentTypeAPI = (payload) => {
+    const apiUrl = `${url.EDIT_DOCUMENT_TYPE_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteDocumentTypeAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_DOCUMENT_TYPE_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportDocumentTypeAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_DOCUMENT_TYPE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importDocumentTypeAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_DOCUMENT_TYPE_API}`;
+    return post(apiUrl, payload);
+};
+// Purpose of Visit
+export const getPurposeOfVisitListAPI = (data) => {
+    const apiUrl = `${url.GET_PURPOSE_OF_VISIT_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addPurposeOfVisitAPI = (payload) => {
+    const apiUrl = `${url.ADD_PURPOSE_OF_VISIT_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editPurposeOfVisitAPI = (payload) => {
+    const apiUrl = `${url.EDIT_PURPOSE_OF_VISIT_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deletePurposeOfVisitAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_PURPOSE_OF_VISIT_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportPurposeOfVisitAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_PURPOSE_OF_VISIT_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importPurposeOfVisitAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_PURPOSE_OF_VISIT_API}`;
+    return post(apiUrl, payload);
+};
+// Documents For
+export const getDocumentsForListAPI = (data) => {
+    const apiUrl = `${url.GET_DOCUMENTS_FOR_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addDocumentsForAPI = (payload) => {
+    const apiUrl = `${url.ADD_DOCUMENTS_FOR_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editDocumentsForAPI = (payload) => {
+    const apiUrl = `${url.EDIT_DOCUMENTS_FOR_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteDocumentsForAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_DOCUMENTS_FOR_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportDocumentsForAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_DOCUMENTS_FOR_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importDocumentsForAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_DOCUMENTS_FOR_API}`;
+    return post(apiUrl, payload);
+};
+// Required Documents (General)
+export const getRequiredDocumentGeneralListAPI = (data) => {
+    const apiUrl = `${url.GET_REQUIRED_DOCUMENT_GENERAL_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addRequiredDocumentGeneralAPI = (payload) => {
+    const apiUrl = `${url.ADD_REQUIRED_DOCUMENT_GENERAL_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editRequiredDocumentGeneralAPI = (payload) => {
+    const apiUrl = `${url.EDIT_REQUIRED_DOCUMENT_GENERAL_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteRequiredDocumentGeneralAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_REQUIRED_DOCUMENT_GENERAL_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportRequiredDocumentGeneralAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_REQUIRED_DOCUMENT_GENERAL_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importRequiredDocumentGeneralAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_REQUIRED_DOCUMENT_GENERAL_API}`;
+    return post(apiUrl, payload);
+};
+
+// Process Status Name
+export const getProcessStatusNameListAPI = (data) => {
+    const apiUrl = `${url.GET_PROCESS_STATUS_NAME_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addProcessStatusNameAPI = (payload) => {
+    const apiUrl = `${url.ADD_PROCESS_STATUS_NAME_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editProcessStatusNameAPI = (payload) => {
+    const apiUrl = `${url.EDIT_PROCESS_STATUS_NAME_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteProcessStatusNameAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_PROCESS_STATUS_NAME_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportProcessStatusNameAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_PROCESS_STATUS_NAME_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importProcessStatusNameAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_PROCESS_STATUS_NAME_API}`;
+    return post(apiUrl, payload);
+};
+// Process Sub-Status Name
+export const getProcessSubStatusNameListAPI = (data) => {
+    const apiUrl = `${url.GET_PROCESS_SUB_STATUS_NAME_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addProcessSubStatusNameAPI = (payload) => {
+    const apiUrl = `${url.ADD_PROCESS_SUB_STATUS_NAME_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editProcessSubStatusNameAPI = (payload) => {
+    const apiUrl = `${url.EDIT_PROCESS_SUB_STATUS_NAME_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteProcessSubStatusNameAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_PROCESS_SUB_STATUS_NAME_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportProcessSubStatusNameAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_PROCESS_SUB_STATUS_NAME_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importProcessSubStatusNameAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_PROCESS_SUB_STATUS_NAME_API}`;
+    return post(apiUrl, payload);
+};
+// Process Type
+export const getProcessTypeListAPI = (data) => {
+    const apiUrl = `${url.GET_PROCESS_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addProcessTypeAPI = (payload) => {
+    const apiUrl = `${url.ADD_PROCESS_TYPE_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editProcessTypeAPI = (payload) => {
+    const apiUrl = `${url.EDIT_PROCESS_TYPE_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteProcessTypeAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_PROCESS_TYPE_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportProcessTypeAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_PROCESS_TYPE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importProcessTypeAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_PROCESS_TYPE_API}`;
+    return post(apiUrl, payload);
+};
+// Payment To
+export const getPaymentToListAPI = (data) => {
+    const apiUrl = `${url.GET_PAYMENT_TO_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addPaymentToAPI = (payload) => {
+    const apiUrl = `${url.ADD_PAYMENT_TO_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editPaymentToAPI = (payload) => {
+    const apiUrl = `${url.EDIT_PAYMENT_TO_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deletePaymentToAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_PAYMENT_TO_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportPaymentToAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_PAYMENT_TO_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importPaymentToAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_PAYMENT_TO_API}`;
+    return post(apiUrl, payload);
+};
+// Payment Category
+export const getPaymentCategoryListAPI = (data) => {
+    const apiUrl = `${url.GET_PAYMENT_CATEGORY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addPaymentCategoryAPI = (payload) => {
+    const apiUrl = `${url.ADD_PAYMENT_CATEGORY_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editPaymentCategoryAPI = (payload) => {
+    const apiUrl = `${url.EDIT_PAYMENT_CATEGORY_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deletePaymentCategoryAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_PAYMENT_CATEGORY_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportPaymentCategoryAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_PAYMENT_CATEGORY_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importPaymentCategoryAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_PAYMENT_CATEGORY_API}`;
+    return post(apiUrl, payload);
+};
+
+
+//  Factor For
+export const getFactorForListAPI = (data) => {
+    const apiUrl = `${url.GET_FACTOR_FOR_LIST}?search=${data?.search}&page=${data?.page
+        }&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addFactorForAPI = (payload) => {
+    const apiUrl = `${url.ADD_FACTOR_FOR_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editFactorForAPI = (payload) => {
+    const apiUrl = `${url.EDIT_FACTOR_FOR_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteFactorForAPI = (payload) => {
+    const preparedData = { id: payload };
+    const apiUrl = `${url.DELETE_FACTOR_FOR_API}delete/`;
+    return delWithPayload(apiUrl, preparedData);
+};
+
+export const exportFactorForAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_FACTOR_FOR_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importFactorForAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_FACTOR_FOR_API}`;
+    return post(apiUrl, payload);
+};
+
+// Age Group
+export const getAgeGroupListAPI = (data) => {
+    const apiUrl = `${url.GET_AGE_GROUP_LIST}?search=${data?.search}&page=${data?.page
+        }&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addAgeGroupAPI = (payload) => {
+    const apiUrl = `${url.ADD_AGE_GROUP_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editAgeGroupAPI = (payload) => {
+    const apiUrl = `${url.EDIT_AGE_GROUP_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteAgeGroupAPI = (payload) => {
+    const preparedData = { id: payload };
+    const apiUrl = `${url.DELETE_AGE_GROUP_API}delete/`;
+    return delWithPayload(apiUrl, preparedData);
+};
+
+export const exportAgeGroupAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_AGE_GROUP_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importAgeGroupAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_AGE_GROUP_API}`;
+    return post(apiUrl, payload);
+};
+
+// ACADEMIC_RESULT_GROUP
+export const getAcademicResultGroupListAPI = (data) => {
+    const apiUrl = `${url.GET_ACADEMIC_RESULT_GROUP_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addAcademicResultGroupAPI = (payload) => {
+    return post(url.ADD_ACADEMIC_RESULT_GROUP_API, payload);
+};
+
+export const editAcademicResultGroupAPI = (payload) => {
+    const apiUrl = `${url.EDIT_ACADEMIC_RESULT_GROUP_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteAcademicResultGroupAPI = (payload) => {
+    const preparedData = { id: payload };
+    const apiUrl = `${url.DELETE_ACADEMIC_RESULT_GROUP_API}delete/`;
+    return delWithPayload(apiUrl, preparedData);
+};
+
+export const exportAcademicResultGroupAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_ACADEMIC_RESULT_GROUP_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importAcademicResultGroupAPI = (payload) => {
+    return post(url.IMPORT_ACADEMIC_RESULT_GROUP_API, payload);
+};
+
+// BACKLOGS_GROUP
+export const getBacklogsGroupListAPI = (data) => {
+    const apiUrl = `${url.GET_BACKLOGS_GROUP_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addBacklogsGroupAPI = (payload) => {
+    return post(url.ADD_BACKLOGS_GROUP_API, payload);
+};
+
+export const editBacklogsGroupAPI = (payload) => {
+    const apiUrl = `${url.EDIT_BACKLOGS_GROUP_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteBacklogsGroupAPI = (payload) => {
+    const preparedData = { id: payload };
+    const apiUrl = `${url.DELETE_BACKLOGS_GROUP_API}delete/`;
+    return delWithPayload(apiUrl, preparedData);
+};
+
+export const exportBacklogsGroupAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_BACKLOGS_GROUP_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importBacklogsGroupAPI = (payload) => {
+    return post(url.IMPORT_BACKLOGS_GROUP_API, payload);
+};
+
+// GAP_GROUP
+export const getGapGroupListAPI = (data) => {
+    const apiUrl = `${url.GET_GAP_GROUP_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addGapGroupAPI = (payload) => {
+    return post(url.ADD_GAP_GROUP_API, payload);
+};
+
+export const editGapGroupAPI = (payload) => {
+    const apiUrl = `${url.EDIT_GAP_GROUP_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteGapGroupAPI = (payload) => {
+    const preparedData = { id: payload };
+    const apiUrl = `${url.DELETE_GAP_GROUP_API}delete/`;
+    return delWithPayload(apiUrl, preparedData);
+};
+
+export const exportGapGroupAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_GAP_GROUP_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importGapGroupAPI = (payload) => {
+    return post(url.IMPORT_GAP_GROUP_API, payload);
+
+};
+
+// Representing Country
+
+export const addRepresentingCountryAPI = (payload) => {
+    const apiUrl = `${url.ADD_REPRESENTING_COUNTRY_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editRepresentingCountryAPI = (payload) => {
+    const apiUrl = `${url.EDIT_REPRESENTING_COUNTRY_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteRepresentingCountryAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_REPRESENTING_COUNTRY_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportRepresentingCountryAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_REPRESENTING_COUNTRY_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importRepresentingCountryAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_REPRESENTING_COUNTRY_API}`;
+    return post(apiUrl, payload);
+
+};
+// Visa Major Category
+export const getVisaMajorCategoryListAPI = (data) => {
+    const apiUrl = `${url.GET_VISA_MAJOR_CATEGORY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+// Add
+export const addVisaMajorCategoryAPI = (payload) => {
+    return post(url.ADD_VISA_MAJOR_CATEGORY_API, payload);
+};
+
+// Edit
+export const editVisaMajorCategoryAPI = (payload) => {
+    return put(`${url.EDIT_VISA_MAJOR_CATEGORY_API}${payload?.uuid}/update/`, payload);
+};
+
+// Delete
+export const deleteVisaMajorCategoryAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    return delWithPayload(`${url.DELETE_VISA_MAJOR_CATEGORY_API}delete/`, prepareDATA);
+};
+
+// Export
+export const exportVisaMajorCategoryAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_VISA_MAJOR_CATEGORY_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+// Import
+export const importVisaMajorCategoryAPI = (payload) => {
+    return post(url.IMPORT_VISA_MAJOR_CATEGORY_API, payload);
+};
+// Applicant Type
+export const getApplicantTypeListAPI = (data) => {
+    const apiUrl = `${url.GET_APPLICANT_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addApplicantTypeAPI = (payload) => {
+    const apiUrl = `${url.ADD_APPLICANT_TYPE_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editApplicantTypeAPI = (payload) => {
+    const apiUrl = `${url.EDIT_APPLICANT_TYPE_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteApplicantTypeAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_APPLICANT_TYPE_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportApplicantTypeAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_APPLICANT_TYPE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importApplicantTypeAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_APPLICANT_TYPE_API}`;
+    return post(apiUrl, payload);
+};
+// VISA ELIGIBILITY TYPE
+export const getVisaEligibilityTypeListAPI = (data) => {
+    const apiUrl = `${url.GET_VISA_ELIGIBILITY_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addVisaEligibilityTypeAPI = (payload) => {
+    const apiUrl = `${url.ADD_VISA_ELIGIBILITY_TYPE_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editVisaEligibilityTypeAPI = (payload) => {
+    const apiUrl = `${url.EDIT_VISA_ELIGIBILITY_TYPE_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteVisaEligibilityTypeAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_VISA_ELIGIBILITY_TYPE_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportVisaEligibilityTypeAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_VISA_ELIGIBILITY_TYPE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importVisaEligibilityTypeAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_VISA_ELIGIBILITY_TYPE_API}`;
+    return post(apiUrl, payload);
+};
+// VISA STATUS
+export const getVisaStatusListAPI = (data) => {
+    const apiUrl = `${url.GET_VISA_STATUS_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addVisaStatusAPI = (payload) => {
+    const apiUrl = `${url.ADD_VISA_STATUS_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editVisaStatusAPI = (payload) => {
+    const apiUrl = `${url.EDIT_VISA_STATUS_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteVisaStatusAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_VISA_STATUS_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportVisaStatusAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_VISA_STATUS_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importVisaStatusAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_VISA_STATUS_API}`;
+    return post(apiUrl, payload);
+};
+// POSSIBILITY LEVEL
+export const getPossibilityLevelListAPI = (data) => {
+    const apiUrl = `${url.GET_POSSIBILITY_LEVEL_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addPossibilityLevelAPI = (payload) => {
+    const apiUrl = `${url.ADD_POSSIBILITY_LEVEL_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editPossibilityLevelAPI = (payload) => {
+    const apiUrl = `${url.EDIT_POSSIBILITY_LEVEL_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deletePossibilityLevelAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_POSSIBILITY_LEVEL_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportPossibilityLevelAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_POSSIBILITY_LEVEL_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importPossibilityLevelAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_POSSIBILITY_LEVEL_API}`;
+    return post(apiUrl, payload);
+};
+
+// ---------------- VISA NAME ----------------
+export const getVisaNameListAPI = (data) => {
+    const apiUrl = `${url.GET_VISA_NAME_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+    return get(apiUrl);
+};
+
+export const addVisaNameAPI = (payload) => {
+    const apiUrl = `${url.ADD_VISA_NAME_API}`;
+    return post(apiUrl, payload);
+};
+
+export const editVisaNameAPI = (payload) => {
+    const apiUrl = `${url.EDIT_VISA_NAME_API}${payload?.uuid}/update/`;
+    return put(apiUrl, payload);
+};
+
+export const deleteVisaNameAPI = (payload) => {
+    const prepareDATA = { id: payload };
+    const apiUrl = `${url.DELETE_VISA_NAME_API}delete/`;
+    return delWithPayload(apiUrl, prepareDATA);
+};
+
+export const exportVisaNameAPI = (payload) => {
+    const apiUrl = `${url.EXPORT_VISA_NAME_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+    return getExportData(apiUrl, payload);
+};
+
+export const importVisaNameAPI = (payload) => {
+    const apiUrl = `${url.IMPORT_VISA_NAME_API}`;
+    return post(apiUrl, payload);
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
