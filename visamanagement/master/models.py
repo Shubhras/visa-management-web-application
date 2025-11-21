@@ -1588,13 +1588,13 @@ class SpouseCanApplywithCandidate(models.Model):
 
 class CivilIdName(models.Model):
     VALID_TYPE_CHOICES = (
-        ("PERMANENT", "Permanent"),
-        ("VALID_UP_TO", "Valid Up To"),
+        ("Permanent", "Permanent"),
+        ("Valid Up To", "Valid Up To"),
     )
 
     VALID_UNIT_CHOICES = (
-        ("MONTHS", "Months"),
-        ("YEARS", "Years"),
+        ("Months", "Months"),
+        ("Years", "Years"),
     )
 
     id = models.AutoField(primary_key=True)

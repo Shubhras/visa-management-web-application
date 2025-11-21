@@ -1928,11 +1928,12 @@ class PaymentCategorySerializer(serializers.ModelSerializer):
 
 
 class CivilIdNameSerializer(serializers.ModelSerializer):
-    # Show choice label for valid_type
     valid_type_detail = serializers.SerializerMethodField()
-
-    # Show choice label for valid_duration_unit
     valid_duration_unit_detail = serializers.SerializerMethodField()
+
+    # Use CharField instead of ChoiceField
+    valid_type = serializers.CharField(required=False, allow_blank=True)
+    valid_duration_unit = serializers.CharField(required=False, allow_blank=True)
 
     class Meta:
         model = CivilIdName
@@ -1941,26 +1942,38 @@ class CivilIdNameSerializer(serializers.ModelSerializer):
             'civil_id_name',
             'authority_full_name',
             'authority_short_name',
-
             'valid_type',
             'valid_type_detail',
-
             'valid_duration_value',
             'valid_duration_unit',
             'valid_duration_unit_detail',
-
             'description',
             'is_deleted',
             'created_at',
             'updated_at'
         ]
-        read_only_fields = ['uuid', 'created_at', 'updated_at','is_deleted']
+        read_only_fields = ['uuid', 'created_at', 'updated_at', 'is_deleted']
 
     def get_valid_type_detail(self, obj):
         return obj.get_valid_type_display() if obj.valid_type else None
 
     def get_valid_duration_unit_detail(self, obj):
         return obj.get_valid_duration_unit_display() if obj.valid_duration_unit else None
+
+    def validate_valid_type(self, value):
+        if value:
+            value = value.strip().title()  # e.g., "permanent" -> "Permanent"
+            if value not in dict(CivilIdName.VALID_TYPE_CHOICES):
+                raise serializers.ValidationError(f"{value} is not a valid choice")
+        return value
+
+    def validate_valid_duration_unit(self, value):
+        if value:
+            value = value.strip().title()
+            if value not in dict(CivilIdName.VALID_UNIT_CHOICES):
+                raise serializers.ValidationError(f"{value} is not a valid choice")
+        return value
+
 class VisaEligibilityTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = VisaEligibilityType

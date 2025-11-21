@@ -1553,7 +1553,6 @@ class ContinentImportAPIView(APIView):
 
 #-------------------------------------------country---------------------------------
 
-
 class CountryListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -1561,11 +1560,17 @@ class CountryListAPIView(APIView):
         search = request.GET.get('search', '').strip()
         custom_sort = request.GET.get('customSort')
 
-        allowed_sort_fields = ['name', 'shortName', 'fullName', 'capitalCity', 'created_at', 'updated_at']
+        # All allowed fields for sorting
+        allowed_sort_fields = [
+            'uuid', 'name', 'continent', 'shortName', 'fullName', 'officialName', 'capitalCity',
+            'dialCodes', 'currencyfullname', 'currencyshortname', 'description', 'currencyCode',
+            'status', 'created_at', 'updated_at', 'is_active', 'is_deleted'
+        ]
 
         queryset = Country.objects.filter(is_deleted=False)
 
-        # UUID filtering
+        # ---------------------------
+        # UUID filtering helper
         def parse_ids(param_name):
             raw = request.GET.get(param_name, '')
             if raw:
@@ -1591,15 +1596,9 @@ class CountryListAPIView(APIView):
         if search:
             queryset = queryset.filter(Q(name__istartswith=search))
 
+        # ---------------------------
         # Sorting
-        sort_field_map = {
-            'name': 'name',
-            'shortName': 'shortName',
-            'fullName': 'fullName',
-            'capitalCity': 'capitalCity',
-            'created_at': 'created_at',
-            'updated_at': 'updated_at',
-        }
+        sort_field_map = {field: field for field in allowed_sort_fields}
 
         sort_fields = []
 
@@ -1615,8 +1614,8 @@ class CountryListAPIView(APIView):
 
                     orm_field = sort_field_map[field]
 
-                    # Case-insensitive for string fields
-                    if field in ['name', 'shortName', 'fullName', 'capitalCity']:
+                    # Use Lower for string fields for case-insensitive sorting
+                    if field in ['name', 'shortName', 'fullName', 'officialName', 'capitalCity', 'currencyfullname', 'currencyshortname', 'currencyCode', 'description']:
                         f = Lower(orm_field)
                     else:
                         f = F(orm_field)
@@ -1635,11 +1634,12 @@ class CountryListAPIView(APIView):
 
         queryset = queryset.order_by(*sort_fields)
 
-        
+        # ---------------------------
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = CountrySerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
+
 
 
 
@@ -1784,69 +1784,160 @@ class CountryDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+
 class CountryExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
- 
+
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
-        fields = request.GET.get('fields')  # comma-separated fields
-        uuids_param = request.GET.get('uuids', '')  # comma-separated UUIDs
-        uuids = [u.strip() for u in uuids_param.split(',') if u]
- 
-        # --- Field to header mapping ---
+        fields = request.GET.get('fields')
+        search = request.GET.get('search', '').strip()
+        custom_sort = request.GET.get('customSort')
+
+        # ---------------------------
+        # Parse IDs & Validate UUIDs
+        # ---------------------------
+        def parse_ids(param_name):
+            raw = request.GET.get(param_name, '')
+            if raw:
+                items = [x.strip() for x in raw.split(',') if x.strip()]
+            else:
+                items = request.GET.getlist(param_name)
+            return items
+
+        def validate_uuid_list(uuid_list):
+            valid = []
+            for u in uuid_list:
+                try:
+                    valid.append(UUID(u))
+                except:
+                    pass
+            return valid
+
+        continent_list = validate_uuid_list(parse_ids('continent'))
+        country_list = validate_uuid_list(parse_ids('country'))
+
+        # ---------------------------
+        # Base QuerySet with annotation
+        # ---------------------------
+        queryset = Country.objects.filter(is_deleted=False).annotate(
+            continent_name=F('continent__name')
+        )
+
+        # ---------------------------
+        # Hierarchical filtering
+        # ---------------------------
+        if country_list:
+            queryset = queryset.filter(uuid__in=country_list)
+        elif continent_list:
+            queryset = queryset.filter(continent__uuid__in=continent_list)
+
+        # ---------------------------
+        # Search
+        # ---------------------------
+        if search:
+            queryset = queryset.filter(name__istartswith=search)
+
+        # ---------------------------
+        # Sorting
+        # ---------------------------
+        # Map all fields for sorting
+        sort_field_map = {
+            'uuid': 'uuid',
+            'name': 'name',
+            'shortName': 'shortName',
+            'fullName': 'fullName',
+            'officialName': 'officialName',
+            'capitalCity': 'capitalCity',
+            'dialCodes': 'dialCodes',
+            'currencyfullname': 'currencyfullname',
+            'currencyshortname': 'currencyshortname',
+            'currencyCode': 'currencyCode',
+            'description': 'description',
+            'status': 'status',
+            'is_active': 'is_active',
+            'is_deleted': 'is_deleted',
+            'continent': 'continent_name',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+
+        sort_fields = []
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sorting for string fields
+                    if field in ['name', 'shortName', 'fullName', 'officialName', 'capitalCity', 'currencyfullname', 'currencyshortname', 'currencyCode', 'description', 'continent']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+                except ValueError:
+                    continue
+        else:
+            sort_order = request.GET.get('sortOrder', 'desc')
+            f = F('created_at')
+            sort_fields = [f.desc(nulls_last=True) if sort_order.lower() == 'desc' else f.asc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # ---------------------------
+        # Field mapping & Export
+        # ---------------------------
         field_header_map = {
             'uuid': 'UUID',
             'name': 'Country Name',
             'continent': 'Continent',
             'shortName': 'Country Short Name',
-            'fullName': 'Country Official Name',
+            'fullName': 'Country Full Name',
             'officialName': 'Country Official Name',
             'capitalCity': 'Capital City',
             'dialCodes': 'Country Calling Code',
-            'currencyfullname':'Currency Full Name',
-            'currencyshortname':'Currency Short Name',
+            'currencyfullname': 'Currency Full Name',
+            'currencyshortname': 'Currency Short Name',
             'currencyCode': 'Currency Code',
-            'description':'Description',
+            'description': 'Description',
             'status': 'Status',
             'is_active': 'Active',
             'is_deleted': 'Deleted',
             'created_at': 'Created On',
             'updated_at': 'Modified On'
         }
- 
-        # --- Determine which fields to export ---
-        if fields:
-            field_list = [f.strip() for f in fields.split(',')]
-        else:
-            field_list = list(field_header_map.keys())
- 
-        # --- Fetch queryset ---
-        queryset = Country.objects.filter(is_deleted=False)
-        if uuids:
-            queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
- 
-        # --- Prepare dataset ---
+
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = 'Country'
+
         for obj in queryset:
             row = []
             for field in field_list:
                 value = getattr(obj, field, '')
- 
-                if field == 'continent' and obj.continent:
-                    value = obj.continent.name
-                elif field in ['created_at', 'updated_at'] and value:
-                    # Convert to IST and format
-                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-                elif isinstance(value, bool):
+
+                if field == 'continent':
+                    value = getattr(obj, 'continent_name', '')
+
+                if field in ['created_at', 'updated_at'] and value:
+                    value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
+                if isinstance(value, bool):
                     value = int(value)
- 
+
                 row.append(value if value is not None else '')
             dataset.append(row)
- 
-        # --- Export data ---
+
+        # ---------------------------
+        # Export file
+        # ---------------------------
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv; charset=utf-8'
@@ -1855,8 +1946,7 @@ class CountryExportAPIView(APIView):
             file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'countries.xlsx'
- 
-        # --- Return response ---
+
         response = HttpResponse(
             file_data if format_type == 'csv' else file_data.getvalue(),
             content_type=content_type
@@ -1864,7 +1954,7 @@ class CountryExportAPIView(APIView):
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
-
+        
 
 class CountryImportAPIView(APIView):
 
@@ -2330,7 +2420,6 @@ class StateExportAPIView(APIView):
         fields = request.GET.get('fields')
         search = request.GET.get('search', '').strip()
         custom_sort = request.GET.get('customSort')
-        allowed_sort_fields = ['stateName', 'stateshortName', 'state', 'countryName', 'created_at']
 
         # ---------------------------
         # Parse IDs & Validate UUIDs
@@ -2356,7 +2445,7 @@ class StateExportAPIView(APIView):
         state_list = validate_uuid_list(parse_ids('state'))
 
         # ---------------------------
-        # Base QuerySet
+        # Base QuerySet with annotation
         # ---------------------------
         queryset = State.objects.filter(is_deleted=False).annotate(
             country_name=F('countryName__name')
@@ -2398,8 +2487,7 @@ class StateExportAPIView(APIView):
                         continue
 
                     orm_field = sort_field_map[field]
-
-                    # Use Lower() for string fields for case-insensitive sort
+                    # Case-insensitive for string fields
                     if field in ['stateName', 'stateshortName', 'state', 'countryName']:
                         f = Lower(orm_field)
                     else:
@@ -2411,7 +2499,7 @@ class StateExportAPIView(APIView):
         else:
             sort_order = request.GET.get('sortOrder', 'desc')
             f = F('created_at')
-            sort_fields = [f.desc(nulls_last=True) if sort_order=='desc' else f.asc(nulls_last=True)]
+            sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
 
         queryset = queryset.order_by(*sort_fields)
 
@@ -2462,7 +2550,7 @@ class StateExportAPIView(APIView):
         # ---------------------------
         if format_type == 'csv':
             file_data = dataset.export('csv')
-            content_type = 'text/csv'
+            content_type = 'text/csv; charset=utf-8'
             file_name = 'states.csv'
         else:
             file_data = io.BytesIO(dataset.export('xlsx'))
@@ -2475,7 +2563,9 @@ class StateExportAPIView(APIView):
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
-          
+
+
+
         
 class StateImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -2979,7 +3069,6 @@ class DistrictExportAPIView(APIView):
         fields = request.GET.get('fields')
         search = request.GET.get('search', '').strip()
         custom_sort = request.GET.get('customSort')
-        allowed_sort_fields = ['districtName', 'stateName', 'countryName', 'created_at']
 
         # ---------------------------
         # Parse IDs & Validate UUIDs
@@ -3006,7 +3095,7 @@ class DistrictExportAPIView(APIView):
         district_list = validate_uuid_list(parse_ids('district'))
 
         # ---------------------------
-        # Base QuerySet
+        # Base QuerySet with annotation
         # ---------------------------
         queryset = District.objects.filter(is_deleted=False).annotate(
             country_name=F('countryName__name'),
@@ -3052,7 +3141,7 @@ class DistrictExportAPIView(APIView):
 
                     orm_field = sort_field_map[field]
 
-                    # Use Lower() for string fields for case-insensitive sort
+                    # Case-insensitive sort for string fields
                     if field in ['districtName', 'stateName', 'countryName']:
                         f = Lower(orm_field)
                     else:
@@ -3064,7 +3153,7 @@ class DistrictExportAPIView(APIView):
         else:
             sort_order = request.GET.get('sortOrder', 'desc')
             f = F('created_at')
-            sort_fields = [f.desc(nulls_last=True) if sort_order=='desc' else f.asc(nulls_last=True)]
+            sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
 
         queryset = queryset.order_by(*sort_fields)
 
@@ -3111,7 +3200,7 @@ class DistrictExportAPIView(APIView):
         # ---------------------------
         if format_type == 'csv':
             file_data = dataset.export('csv')
-            content_type = 'text/csv'
+            content_type = 'text/csv; charset=utf-8'
             file_name = 'districts.csv'
         else:
             file_data = io.BytesIO(dataset.export('xlsx'))
@@ -3124,6 +3213,8 @@ class DistrictExportAPIView(APIView):
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
+
+
 
 
 
@@ -4685,7 +4776,7 @@ class TimezoneDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-        
+
 class TimezoneExportAPIView(APIView):
     """
     Export Timezone with custom sorting.
