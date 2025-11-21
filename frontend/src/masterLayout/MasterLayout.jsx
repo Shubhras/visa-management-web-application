@@ -42,7 +42,21 @@ const MasterLayout = ({ children }) => {
     "Study : Language Ability Group",
     "Study : Entrance Test Ability Group",
     "Study Factor : Age",
-    "Marital Status"
+    "Marital Status",
+    "Education Level Code",
+    "Education Level",
+    "Study Main Area",
+    "Study Major Area",
+    "Academic Result Type",
+    "Education Type",
+    "Study Specialisation",
+    "Degree Awarded By",
+    "Academic Result",
+    "Degree Awarded Institute",
+    "Compare : Academic Result To Result",
+    "ECA Awarding Body",
+    "Medium of Education",
+    "Language Name(Test)",
   ]);
 
 

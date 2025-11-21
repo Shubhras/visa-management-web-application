@@ -99,7 +99,7 @@ const AddEditECAForModal = ({ show, handleClose, mode = 'add', rowData = null })
           if (response?.statusCode === 200 && response?.status === true) {
             toast.success(response?.message);
             resetForm();
-            handleClose();
+            handleClose(true);
           } else {
             toast.error("Something went wrong.");
           }
@@ -122,7 +122,7 @@ const AddEditECAForModal = ({ show, handleClose, mode = 'add', rowData = null })
   const onClose = () => {
     resetForm();
     setLoading(false);
-    handleClose();
+    handleClose(false);
   };
 
   // Conditional return after all hooks

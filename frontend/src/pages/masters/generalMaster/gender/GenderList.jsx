@@ -218,7 +218,7 @@ const GenderList = () => {
       sortBy: '',
       sortOrder: '',
       sort: [
-        { field: "created_at", order: "desc" }   // default sort
+        { field: "created_at", order: "desc" }  
       ],
       total: 0,
       totalPages: 0,

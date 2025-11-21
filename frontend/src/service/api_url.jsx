@@ -791,12 +791,12 @@ export const DELETE_PROCESS_SUB_STATUS_NAME_API = "/api/v1/master/processsubstat
 export const EXPORT_PROCESS_SUB_STATUS_NAME_API = "/api/v1/master/processsubstatusname/export/";
 export const IMPORT_PROCESS_SUB_STATUS_NAME_API = "/api/v1/master/processsubstatusname/import/";
 // Process Type
-export const GET_PROCESS_TYPE_LIST = "/api/v1/master/processtype/";
-export const ADD_PROCESS_TYPE_API = "/api/v1/master/processtype/create/";
-export const EDIT_PROCESS_TYPE_API = "/api/v1/master/processtype/";
-export const DELETE_PROCESS_TYPE_API = "/api/v1/master/processtype/";
-export const EXPORT_PROCESS_TYPE_API = "/api/v1/master/processtype/export/";
-export const IMPORT_PROCESS_TYPE_API = "/api/v1/master/processtype/import/";
+export const GET_PROCESS_TYPE_LIST = "/api/v1/master/process-type/";
+export const ADD_PROCESS_TYPE_API = "/api/v1/master/process-type/create/";
+export const EDIT_PROCESS_TYPE_API = "/api/v1/master/process-type/";
+export const DELETE_PROCESS_TYPE_API = "/api/v1/master/process-type/";
+export const EXPORT_PROCESS_TYPE_API = "/api/v1/master/process-type/export/";
+export const IMPORT_PROCESS_TYPE_API = "/api/v1/master/process-type/import/";
 // Payment To
 export const GET_PAYMENT_TO_LIST = "/api/v1/master/payment-to/";
 export const ADD_PAYMENT_TO_API = "/api/v1/master/payment-to/create/";
