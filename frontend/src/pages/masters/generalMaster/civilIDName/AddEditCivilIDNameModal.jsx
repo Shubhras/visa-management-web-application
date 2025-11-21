@@ -175,7 +175,7 @@ const AddEditCivilIDNameModal = ({ show, handleClose, mode = 'add', rowData = nu
           civil_id_name: formData.name,
           authority_full_name: formData.full_name || "",
           authority_short_name: formData.short_name || "",
-          valid_date: formData.valid_upto || "",
+          valid_date:  formData.valid_upto || "",
           valid_type: formData.valid_upto_type || "",
           valid_duration_value: formData.valid_upto_numeric || null,
           valid_duration_unit: formData.valid_upto_unit ? formData.valid_upto_unit : "",
