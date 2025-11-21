@@ -1589,11 +1589,13 @@ class SpouseCanApplywithCandidate(models.Model):
 class CivilIdName(models.Model):
     VALID_TYPE_CHOICES = (
         ("Permanent", "Permanent"),
-        ("Valid Up To", "Valid Up To"),
+        ("Valid Upto", "Valid Upto"),
+        ("Date","Date")
     )
-
+ 
     VALID_UNIT_CHOICES = (
         ("Months", "Months"),
+        ("Weeks","Weeks"),
         ("Years", "Years"),
     )
 
@@ -1601,7 +1603,7 @@ class CivilIdName(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 
     civil_id_name = models.CharField(max_length=255)
-    authority_full_name = models.CharField(max_length=255)
+    authority_full_name = models.CharField(max_length=255, blank=True, null=True)
     authority_short_name = models.CharField(max_length=255, blank=True, null=True)
 
     valid_type = models.CharField(max_length=20, choices=VALID_TYPE_CHOICES)

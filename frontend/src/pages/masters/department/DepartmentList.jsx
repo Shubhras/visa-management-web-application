@@ -139,6 +139,7 @@ const DepartmentList = () => {
     hasNext: false,
     hasPrevious: false,
   });
+
   useEffect(() => {
     setTableState((prev) => ({ ...prev, search: globalSearch, page: 1 }));
   }, [globalSearch]);
@@ -262,6 +263,7 @@ const DepartmentList = () => {
     // Reset Global Search
     setGlobalSearch("");
   };
+  
   const handlePageLengthChange = (value) => {
     setTableState((prev) => ({
       ...prev,
