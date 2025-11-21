@@ -38,7 +38,21 @@ const MasterLayout = ({ children }) => {
     "Visa Eligibility Type",
     "Visa Status",
     "Possibility Level",
-    "Visa Name"
+    "Visa Name",
+    "Education Level Code",
+    "Education Level",
+    "Study Main Area",
+    "Study Major Area",
+    "Academic Result Type",
+    "Education Type",
+    "Study Specialisation",
+    "Degree Awarded By",
+    "Academic Result",
+    "Degree Awarded Institute",
+    "Compare : Academic Result To Result",
+    "ECA Awarding Body",
+    "Medium of Education",
+    "Language Name(Test)",
   ]);
 
   // Global Search State - Har page pe same rahega
