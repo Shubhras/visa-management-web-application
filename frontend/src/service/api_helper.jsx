@@ -504,7 +504,7 @@ export const exportGenderDataAPI = (payload) => {
             .map(item => `${item.field}:${item.order}`)
             .join(",");
     }
-    const apiUrl = `${url.EXPORT_GENDER_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+    const apiUrl = `${url.EXPORT_GENDER_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -567,7 +567,7 @@ export const exportMaritalStatusDataAPI = (payload) => {
             .map(item => `${item.field}:${item.order}`)
             .join(",");
     }
-    const apiUrl = `${url.EXPORT_MARITAL_STATUS_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+    const apiUrl = `${url.EXPORT_MARITAL_STATUS_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -990,7 +990,7 @@ export const exportContinentDataAPI = (payload) => {
             .map(item => `${item.field}:${item.order}`)
             .join(",");
     }
-    const apiUrl = `${url.EXPORT_CONTINENT_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+    const apiUrl = `${url.EXPORT_CONTINENT_LIST_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -1020,7 +1020,7 @@ export const getCountryListDataAPI = (data) => {
             })
             .join(",");
     }
-    const apiUrl = `${url.GET_COUNTRY_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&continent=${data?.continent}&customSort=${customSort}`;
+    const apiUrl = `${url.GET_COUNTRY_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&continent=${data?.continent}&customSort=${customSort}`;
     return get(apiUrl);
 };
 
@@ -1063,7 +1063,7 @@ export const exportCountryDataAPI = (payload) => {
             })
             .join(",");
     }
-    const apiUrl = `${url.EXPORT_COUNTRY_LIST_API}?fields=${payload?.fields}&country=${payload?.uuids}&continent=${payload?.continent}&customSort=${customSort}`;
+    const apiUrl = `${url.EXPORT_COUNTRY_LIST_API}?search=${payload?.search}&fields=${payload?.fields}&country=${payload?.uuids}&continent=${payload?.continent}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -1095,7 +1095,7 @@ export const getStateListDataAPI = (data) => {
             })
             .join(",");
     }
-    const apiUrl = `${url.GET_STATE_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&country=${data?.country}&customSort=${customSort}`;
+    const apiUrl = `${url.GET_STATE_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&country=${data?.country}&customSort=${customSort}`;
     return get(apiUrl);
 };
 
@@ -1140,7 +1140,7 @@ export const exportStateDataAPI = (payload) => {
             .join(",");
     }
     //const apiUrl = `${url.EXPORT_STATE_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&country=${payload?.country}&customSort=${customSort}`;
-    const apiUrl = `${url.EXPORT_STATE_LIST_API}?fields=${payload?.fields}&state=${payload?.uuids}&country=${payload?.country}&customSort=${customSort}`;
+        const apiUrl = `${url.EXPORT_STATE_LIST_API}?search=${payload?.search}&fields=${payload?.fields}&state=${payload?.uuids}&country=${payload?.country}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -1208,7 +1208,7 @@ export const exportCivilIdNameDataAPI = (payload) => {
             .map(item => `${item.field}:${item.order}`)
             .join(",");
     }
-    const apiUrl = `${url.EXPORT_CIVIL_ID_NAME_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+    const apiUrl = `${url.EXPORT_CIVIL_ID_NAME_LIST_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -1270,7 +1270,7 @@ export const exportRelationDataAPI = (payload) => {
             .map(item => `${item.field}:${item.order}`)
             .join(",");
     }
-    const apiUrl = `${url.EXPORT_RELATION_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+    const apiUrl = `${url.EXPORT_RELATION_LIST_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -1345,7 +1345,7 @@ export const exportTimeZoneDataAPI = (payload) => {
             })
             .join(",");
     }
-    const apiUrl = `${url.EXPORT_TIME_ZONE_LIST_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&country=${payload?.country}&customSort=${customSort}`;
+    const apiUrl = `${url.EXPORT_TIME_ZONE_LIST_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&country=${payload?.country}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -1865,7 +1865,7 @@ export const getDistrictListDataAPI = (data) => {
             })
             .join(",");
     }
-    const apiUrl = `${url.GET_DISTRICT_LIST_API}?search = ${data?.search}& page=${data?.page}& limit=${data?.limit}& country=${data?.country}& state=${data?.state}& customSort=${customSort} `;
+    const apiUrl = `${url.GET_DISTRICT_LIST_API}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&country=${data?.country}&state=${data?.state}&customSort=${customSort}`;
     return get(apiUrl);
 };
 
@@ -1911,7 +1911,7 @@ export const exportDistrictDataAPI = (payload) => {
             })
             .join(",");
     }
-    const apiUrl = `${url.EXPORT_DISTRICT_LIST_API}?fields=${payload?.fields}&district=${payload?.uuids}&country=${payload?.country}&state=${payload?.state}&customSort=${customSort}`;
+    const apiUrl = `${url.EXPORT_DISTRICT_LIST_API}?search=${payload?.search}&fields=${payload?.fields}&district=${payload?.uuids}&country=${payload?.country}&state=${payload?.state}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -1994,7 +1994,7 @@ export const exportCityDataAPI = (payload) => {
             })
             .join(",");
     }
-    const apiUrl = `${url.EXPORT_CITY_LIST_API}?fields=${payload?.fields}&city=${payload?.uuids}&country=${payload?.country}&state=${payload?.state}&district=${payload?.district}&customSort=${customSort}`;
+    const apiUrl = `${url.EXPORT_CITY_LIST_API}?search=${payload?.search}&fields=${payload?.fields}&city=${payload?.uuids}&country=${payload?.country}&state=${payload?.state}&district=${payload?.district}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -4385,6 +4385,7 @@ export const editVisaEligibilityTypeAPI = (payload) => {
     return put(apiUrl, payload);
 };
 
+
 export const deleteVisaEligibilityTypeAPI = (payload) => {
     const prepareDATA = { id: payload };
     const apiUrl = `${url.DELETE_VISA_ELIGIBILITY_TYPE_API}delete/`;
@@ -4496,12 +4497,99 @@ export const importVisaNameAPI = (payload) => {
 };
 
 
+// Language Ability Group
+export const getLanguageAbilityGroupListAPI = (data) => {
+  const apiUrl = `${url.GET_LANGUAGE_ABILITY_GROUP_LIST}?search=${data?.search}&page=${
+    data?.page
+  }&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
+
+export const addLanguageAbilityGroupAPI = (payload) => {
+  return post(url.ADD_LANGUAGE_ABILITY_GROUP_API, payload);
+};
+
+export const editLanguageAbilityGroupAPI = (payload) => {
+  const apiUrl = `${url.EDIT_LANGUAGE_ABILITY_GROUP_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+
+export const deleteLanguageAbilityGroupAPI = (payload) => {
+  const apiUrl = `${url.DELETE_LANGUAGE_ABILITY_GROUP_API}delete/`;
+  return delWithPayload(apiUrl, { id: payload });
+};
+
+export const exportLanguageAbilityGroupAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_LANGUAGE_ABILITY_GROUP_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+
+export const importLanguageAbilityGroupAPI = (payload) => {
+  return post(url.IMPORT_LANGUAGE_ABILITY_GROUP_API, payload);
+};
+
+// Entrance Test Ability Group
+export const getEntranceTestAbilityGroupListAPI = (data) => {
+  const apiUrl = `${url.GET_ENTRANCE_TEST_ABILITY_GROUP_LIST}?search=${data?.search}&page=${
+    data?.page
+  }&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
+
+export const addEntranceTestAbilityGroupAPI = (payload) => {
+  return post(url.ADD_ENTRANCE_TEST_ABILITY_GROUP_API, payload);
+};
+
+export const editEntranceTestAbilityGroupAPI = (payload) => {
+  const apiUrl = `${url.EDIT_ENTRANCE_TEST_ABILITY_GROUP_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
 
 
+export const deleteEntranceTestAbilityGroupAPI = (payload) => {
+  const apiUrl = `${url.DELETE_ENTRANCE_TEST_ABILITY_GROUP_API}delete/`;
+  return delWithPayload(apiUrl, { id: payload });
+};
 
+export const exportEntranceTestAbilityGroupAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_ENTRANCE_TEST_ABILITY_GROUP_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
 
+export const importEntranceTestAbilityGroupAPI = (payload) => {
+  return post(url.IMPORT_ENTRANCE_TEST_ABILITY_GROUP_API, payload);
+};
 
+// Age – API Functions
+export const getAgeListAPI = (data) => {
+  const apiUrl = `${url.GET_AGE_LIST}?search=${data?.search}&page=${data?.page}&limit=${
+    data?.limit
+  }&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
 
+export const addAgeAPI = (payload) => {
+  return post(url.ADD_AGE_API, payload);
+};
+
+export const editAgeAPI = (payload) => {
+  const apiUrl = `${url.EDIT_AGE_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+
+export const deleteAgeAPI = (payload) => {
+  const apiUrl = `${url.DELETE_AGE_API}delete/`;
+  return delWithPayload(apiUrl, { id: payload });
+};
+
+export const exportAgeAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_AGE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+
+export const importAgeAPI = (payload) => {
+  return post(url.IMPORT_AGE_API, payload);
+};
 
 
 

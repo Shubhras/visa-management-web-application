@@ -53,7 +53,13 @@ const MasterLayout = ({ children }) => {
     "ECA Awarding Body",
     "Medium of Education",
     "Language Name(Test)",
+    "Study : Language Ability Group",
+    "Study : Entrance Test Ability Group",
+    "Study Factor : Age",
+    "Marital Status"
   ]);
+
+
 
   // Global Search State - Har page pe same rahega
   const { globalSearch, setGlobalSearch } = useGlobalSearch();
@@ -280,6 +286,9 @@ const MasterLayout = ({ children }) => {
             { name: "Study : Academic Result Group", path: "/academic-result-group" },
             { name: "Study : Gap Group", path: "/gap-group" },
             { name: "Study : Backlogs Group", path: "/backlogs-group" },
+            { name: "Study : Language Ability Group", path: "/language-ability-group" },
+            { name: "Study : Entrance Test Ability Group", path: "/entrance-test-ability-group" },
+            { name: "Study Factor : Age", path: "/age" },
           ],
         },
 
@@ -359,6 +368,8 @@ const MasterLayout = ({ children }) => {
   // }, [location.pathname]);
 
   useEffect(() => {
+    // when changes pathname than blank GlobalSearch
+    setGlobalSearch('');
     // Current path के basis पर menu item ढूंढो
     const findMenuItemByPath = (items, currentPath) => {
       for (const item of items) {

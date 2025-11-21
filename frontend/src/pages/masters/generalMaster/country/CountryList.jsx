@@ -1253,6 +1253,8 @@ const CountryList = () => {
       limit: tableState.limit,
       search: tableState.search || "",
       status: tableState.status || "",
+      sortBy: '',
+      sortOrder: '',
       sort: tableState.sort,
       continent: columnFilters.continentId.length > 0 ? columnFilters.continentId : null,
     };

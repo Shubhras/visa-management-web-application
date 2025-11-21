@@ -1,68 +1,61 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from 'react'
 import { useDispatch } from "react-redux";
-// import Breadcrumb from "../../../components/Breadcrumb";
-import { Icon } from "@iconify/react/dist/iconify.js";
-import { Link } from "react-router-dom";
-import { toast } from "react-toastify";
 import MasterLayout from "../../../../masterLayout/MasterLayout";
-import {
-  continentDelete,
-  continentExportData,
-  continentList,
-} from "../../../../store/master/generalMasters/actions";
-import AddEditContinentModel from "./AddEditContinentModal";
-import AddImportContinentModal from "./AddImportContinentModel";
-import { formatDateDDMMYYYYTime } from "../../../../helper/utils/commanHelper";
-import { useGlobalSearch } from "../../../../components/comman/GlobalSearchContext";
-
-const ContinentsList = () => {
+import { Icon } from '@iconify/react/dist/iconify.js';
+import { Link } from 'react-router-dom';
+import { toast } from "react-toastify";
+import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
+import { useGlobalSearch } from '../../../../components/comman/GlobalSearchContext';
+import { languageAbilityGroupDelete, languageAbilityGroupExportData, languageAbilityGroupList } from '../../../../store/actions';
+import AddImportLanguageAbilityGroupModal from './AddImportLanguageAbilityGroupModal';
+import AddEditLanguageAbilityGroupModal from './AddEditLanguageAbilityGroupModal';
+const LanguageAbilityGroupList = () => {
+  const { globalSearch ,setGlobalSearch} = useGlobalSearch();
   const dispatch = useDispatch();
-  const { globalSearch, setGlobalSearch } = useGlobalSearch();
   const [modalState, setModalState] = useState({
     show: false,
-    mode: "add", // 'add' or 'edit'
-    rowData: null,
-  });
+    mode: 'add',
+    rowData: null
+  })
+
   const handleShow = () => {
     setModalState({
       show: true,
-      mode: "add",
-      rowData: null,
+      mode: 'add',
+      rowData: null
     });
   };
-  // For closing modal
+
+  // ✅ FIXED: For closing modal - only refresh if shouldRefresh is true
   const handleClose = (shouldRefresh = false) => {
     setModalState({
       show: false,
-      mode: "add",
-      rowData: null,
+      mode: 'add',
+      rowData: null
     });
+    // Only call API when data was successfully added/updated
     if (shouldRefresh) {
-      fetchContinentsList();
+      fetchLanguageAbilityGroupList();
     }
-  };
+  }
 
-  // const [showEdit, setShowEdit] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [rowSelectData, setRowSelectData] = useState({});
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState(
-    "Are you sure you want to delete this continent?"
-  );
+  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this language ability group?");
   const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
-  const [selectAllOrNot, setSelectAllOrNot] = useState("");
-  const [continents, setContinents] = useState([]);
-
+  const [selectAllOrNot, setSelectAllOrNot] = useState('');
+  const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [items] = useState(["Continent", "Description", "Modified On"]);
-  const [selectedItems, setSelectedItems] = useState(["Continent"]);
-  const [ItemsRequired] = useState(["Continent"]);
+  const [items] = useState(["Language Ability Group", "Description", "Modified On"]);
+  const [selectedItems, setSelectedItems] = useState(["Language Ability Group"]);
+  const [ItemsRequired] = useState(["Language Ability Group"]);
 
-  // Table columns configuration
   const [tableColumns] = useState([
-    { id: 'name', label: 'Continent', field: 'name', visible: true, required: false },
+    { id: 'name', label: 'Language Ability Group', field: 'name', visible: true, required: false },
     { id: 'description', label: 'Description', field: 'description', visible: true, required: false },
     { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false },
   ]);
@@ -72,10 +65,10 @@ const ContinentsList = () => {
   );
   const [showColumnDropdown, setShowColumnDropdown] = useState(false);
   const columnDropdownRef = useRef(null);
-  // Column visibility toggle handler
+
   const toggleColumnVisibility = (columnId) => {
     const column = tableColumns.find(col => col.id === columnId);
-    if (column?.required) return; // Don't allow hiding required columns
+    if (column?.required) return;
 
     setVisibleColumns(prev => {
       if (prev.includes(columnId)) {
@@ -86,7 +79,6 @@ const ContinentsList = () => {
     });
   };
 
-  // Check if column is visible
   const isColumnVisible = (columnId) => {
     return visibleColumns.includes(columnId);
   };
@@ -106,24 +98,20 @@ const ContinentsList = () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [showColumnDropdown]);
-  // Updated state with sorting
+
   const [tableState, setTableState] = useState({
     page: 1,
     limit: 25,
     search: '',
     status: '',
-    sortBy: '', // Field to sort by
-    sortOrder: '', // 'asc' or 'desc'
-    sort: [
-      { field: "created_at", order: "desc" }
-    ],
+    sortBy: 'created_at',
+    sortOrder: 'desc',
     total: 0,
     totalPages: 0,
     currentPage: 1,
     hasNext: false,
     hasPrevious: false
   });
-
   useEffect(() => {
     setTableState(prev => ({ ...prev, search: globalSearch, page: 1 }));
   }, [globalSearch]);
@@ -131,7 +119,7 @@ const ContinentsList = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (tableState.search !== undefined) {
-        fetchContinentsList();
+        fetchLanguageAbilityGroupList();
       }
     }, 500);
 
@@ -139,149 +127,128 @@ const ContinentsList = () => {
   }, [tableState.search]);
 
   useEffect(() => {
-    fetchContinentsList();
-  }, [tableState.page, tableState.limit, tableState.status, tableState.sort]);
+    fetchLanguageAbilityGroupList();
+  }, [tableState.page, tableState.limit, tableState.status, tableState.sortBy, tableState.sortOrder]);
 
-  const fetchContinentsList = () => {
+  const fetchLanguageAbilityGroupList = () => {
     setLoading(true);
     const params = {
       page: tableState.page,
       limit: tableState.limit,
-      search: tableState.search || "",
-      status: tableState.status || "",
-      sortBy: tableState.sortBy || "",
-      sortOrder: tableState.sortOrder || "",
-      sort: tableState.sort,
+      search: tableState.search || '',
+      status: tableState.status || '',
+      sortBy: tableState.sortBy || '',
+      sortOrder: tableState.sortOrder || ''
     };
 
-    dispatch(
-      continentList(params, (response, error) => {
-        setLoading(false);
-        if (response?.statusCode === 200 && response?.status === true) {
-          const paginationData = response?.pagination || {};
+    dispatch(languageAbilityGroupList(params, (response, error) => {
+      setLoading(false);
+      if (response?.statusCode === 200 && response?.status === true) {
+        const paginationData = response?.pagination || {};
 
-          setContinents(response?.data || []);
-          setTableState((prev) => ({
-            ...prev,
-            total: paginationData.totalItems || 0,
-            totalPages: paginationData.totalPages || 0,
-            currentPage: paginationData.currentPage || 1,
-            hasNext: paginationData.nextPage || false,
-            hasPrevious: paginationData.previousPage || false,
-          }));
-          setSelectedRows(prev => {
-            const filtered = prev.filter(rowId =>
-              response?.data.some(rowItems => rowItems.uuid === rowId)
-            );
-            return filtered;
-          });
-        } else {
-          setContinents([]);
-          setTableState((prev) => ({
-            ...prev,
-            total: 0,
-            totalPages: 0,
-            currentPage: 1,
-            hasNext: false,
-            hasPrevious: false,
-          }));
-        }
-      })
-    );
+        setDepartments(response?.data || []);
+        setTableState(prev => ({
+          ...prev,
+          total: paginationData.totalItems || 0,
+          totalPages: paginationData.totalPages || 0,
+          currentPage: paginationData.currentPage || 1,
+          hasNext: paginationData.nextPage || false,
+          hasPrevious: paginationData.previousPage || false
+        }));
+
+        setSelectedRows(prev => {
+          const filtered = prev.filter(rowId =>
+            response?.data.some(rowItems => rowItems.uuid === rowId)
+          );
+          return filtered;
+        });
+      } else {
+        setDepartments([]);
+        setTableState(prev => ({
+          ...prev,
+          total: 0,
+          totalPages: 0,
+          currentPage: 1,
+          hasNext: false,
+          hasPrevious: false
+        }));
+      }
+    }));
   };
 
-  // Handle sorting
   const handleSort = (field) => {
     setTableState(prev => {
-      let newSort = [...prev.sort];
-      const existingIndex = newSort.findIndex(s => s.field === field);
-      if (existingIndex === -1) {
-        newSort.push({ field, order: "asc" });
-      }
-      else {
-        const existing = newSort[existingIndex];
-        if (existing.order === "asc") {
-          newSort[existingIndex].order = "desc";
-        }
-        else if (existing.order === "desc") {
-          newSort.splice(existingIndex, 1);
+      if (prev.sortBy === field) {
+        if (prev.sortOrder === 'asc') {
+          return { ...prev, sortOrder: 'desc', page: 1 };
+        } else if (prev.sortOrder === 'desc') {
+          return { ...prev, sortBy: '', sortOrder: '', page: 1 };
         }
       }
-      return { ...prev, sort: newSort, page: 1 };
+      return { ...prev, sortBy: field, sortOrder: 'asc', page: 1 };
     });
   };
 
   const getSortIcon = (field) => {
-    const sortObj = tableState.sort.find(s => s.field === field);
-    if (!sortObj) {
+    if (tableState.sortBy !== field) {
       return <Icon icon="ri:menu-line" className="sorting-th-icone" />;
     }
-    if (sortObj.order === "asc") {
-      return <Icon icon="ri:sort-asc" className="sorting-th-icone" />;
+    if (tableState.sortOrder === 'asc') {
+      return <Icon icon="ri:sort-asc" className='sorting-th-icone' />;
     }
-    return <Icon icon="ri:sort-desc" className="sorting-th-icone" />;
+    return <Icon icon="ri:sort-desc" className='sorting-th-icone' />;
   };
-  // Clear all filters
+
+  // // Clear all filters
   const clearAllFilters = () => {
     setTableState(prev => ({
       ...prev,
       page: 1,
-      limit: 25,
-      search: '',
       status: '',
-      sortBy: '',
-      sortOrder: '',
-      sort: [
-        { field: "created_at", order: "desc" }   // default sort
-      ],
-      total: 0,
-      totalPages: 0,
-      currentPage: 1,
-      hasNext: false,
-      hasPrevious: false
+      sortBy: 'created_at',
+      sortOrder: 'desc',
     }));
-    // Reset Global Search
+    // Reset Global Search also
     setGlobalSearch('');
   };
 
   const handlePageLengthChange = (value) => {
-    setTableState((prev) => ({
+    setTableState(prev => ({
       ...prev,
       limit: Number(value),
-      page: 1,
+      page: 1
     }));
   };
 
-  // For checkbox in table header
+
   const handleSelectAll = (e) => {
     const checked = e.target.checked;
     if (checked) {
-      setSelectedRows(continents.map((Item) => Item.uuid));
+      setSelectedRows(departments.map(Item => Item.uuid));
     } else {
       setSelectedRows([]);
-      setSelectAllOrNot("");
+      setSelectAllOrNot('');
     }
   };
 
   const handleRowSelect = (uuid) => {
-    setSelectedRows((prev) => {
+    setSelectedRows(prev => {
       if (prev.includes(uuid)) {
-        return prev.filter((rowId) => rowId !== uuid);
+        return prev.filter(rowId => rowId !== uuid);
       } else {
         return [...prev, uuid];
       }
     });
   };
 
-  const isAllSelected =
-    continents.length > 0 &&
-    continents.every((Item) => selectedRows.includes(Item.uuid));
+  const isAllSelected = departments.length > 0 &&
+    departments.every(Item => selectedRows.includes(Item.uuid));
 
   const goToPage = (page) => {
     if (page >= 1 && page <= tableState.totalPages) {
-      setTableState((prev) => ({
+      setTableState(prev => ({
         ...prev,
-        page: page,
+        page: page
       }));
     }
   };
@@ -299,17 +266,17 @@ const ContinentsList = () => {
     } else {
       if (currentPage <= 3) {
         for (let i = 1; i <= 4; i++) pages.push(i);
-        pages.push("...");
+        pages.push('...');
         pages.push(totalPages);
       } else if (currentPage >= totalPages - 2) {
         pages.push(1);
-        pages.push("...");
+        pages.push('...');
         for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i);
       } else {
         pages.push(1);
-        pages.push("...");
+        pages.push('...');
         for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i);
-        pages.push("...");
+        pages.push('...');
         pages.push(totalPages);
       }
     }
@@ -319,18 +286,19 @@ const ContinentsList = () => {
   const handleShowEdit = (rowData) => {
     setModalState({
       show: true,
-      mode: "edit",
-      rowData: rowData,
+      mode: 'edit',
+      rowData: rowData
     });
   };
 
   const handleSelectAllOrNot = (a) => {
     setSelectAllOrNot(a);
-  };
+  }
+
   const handleDelete = (uuid) => {
     setDeleteId(uuid);
     setShowDeleteConfirm(true);
-    setDeleteConfirmMessage(`Are you sure you want to delete this department?`);
+    setDeleteConfirmMessage(`Are you sure you want to delete this language ability group?`);
   };
 
   const handleBulkDelete = () => {
@@ -338,63 +306,51 @@ const ContinentsList = () => {
       toast.error("Please select at least one row to delete");
       return;
     }
-    // Choose message based on delete type
-    const message =
-      selectAllOrNot === "all"
-        ? `${tableState.total} all continent`
-        : `${selectedRows.length} selected continent`;
-    setDeleteConfirmMessage(
-      `Are you sure you want to delete this department (${message})?`
-    );
+    const message = selectAllOrNot === "all" ? `${tableState.total} all language ability groups` : `${selectedRows.length} selected departments`;
+    setDeleteConfirmMessage(`Are you sure you want to delete this language ability group (${message})?`);
     setShowDeleteConfirm(true);
   };
 
   const confirmDelete = () => {
-    // const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
-    const sendPayload =
-      selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
+    const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
     if (!sendPayload || sendPayload.length === 0) {
-      toast.error("No continent selected for deletion.");
+      toast.error("No language ability group selected for deletion.");
       return;
     }
-    dispatch(
-      continentDelete(sendPayload, (response, error) => {
-        if (error) {
-          toast.error(error?.response?.data?.message || "server error");
+    dispatch(languageAbilityGroupDelete(sendPayload, (response, error) => {
+      if (error) {
+        toast.error(error?.response?.data?.message || "server error");
+      } else {
+        if (response?.statusCode === 200 && response?.status === true) {
+          toast.success(response?.message);
+          setDepartments(prevRowItems => prevRowItems.filter(Item => Item.uuid !== deleteId));
+          setSelectedRows(prevSelected => prevSelected.filter(rowId => rowId !== deleteId));
+          setShowDeleteConfirm(false);
+          setSelectedRows([]);
+          setSelectAllOrNot('');
+          setDeleteId(null);
+          fetchLanguageAbilityGroupList();
         } else {
-          if (response?.statusCode === 200 && response?.status === true) {
-            toast.success(response?.message);
-            setContinents((prevRowItems) =>
-              prevRowItems.filter((Item) => Item.uuid !== deleteId)
-            );
-            setSelectedRows((prevSelected) =>
-              prevSelected.filter((rowId) => rowId !== deleteId)
-            );
-            setShowDeleteConfirm(false);
-            setSelectedRows([]);
-            setSelectAllOrNot("");
-            setDeleteId(null);
-            fetchContinentsList();
-          } else {
-            toast.error("Something went wrong.");
-          }
+          toast.error("Something went wrong.");
         }
-      })
-    );
+      }
+    }));
   };
 
   const cancelDelete = () => {
     setShowDeleteConfirm(false);
     setDeleteId(null);
-    setSelectedRows([]);
-    setDeleteConfirmMessage("");
-    setSelectAllOrNot("");
+    setSelectedRows([])
+    setDeleteConfirmMessage('');
+    setSelectAllOrNot('');
   };
 
+  // ✅ FIXED: For closing import modal - only refresh if shouldRefresh is true
   const handleCloseImport = (shouldRefresh = false) => {
     setShowImport(false);
+    // Only call API when data was successfully imported
     if (shouldRefresh) {
-      fetchContinentsList();
+      fetchLanguageAbilityGroupList();
     }
   };
 
@@ -404,7 +360,7 @@ const ContinentsList = () => {
 
   const handleExportTest = () => {
     setShowExportPopop(true);
-  };
+  }
 
   const cancelExportTest = () => {
     setShowExportPopop(false);
@@ -422,12 +378,12 @@ const ContinentsList = () => {
     newSelected.splice(dropIndex, 0, draggedItem);
     setSelectedItems(newSelected);
   };
+
   const handleDragOver = (e) => {
     e.preventDefault();
   };
 
   const handleCheckboxChange = (item, checked) => {
-    // prevent unchecking required items
     if (ItemsRequired.includes(item)) return;
 
     if (checked) {
@@ -440,74 +396,61 @@ const ContinentsList = () => {
   const handleExport = () => {
     if (selectedItems.length == 0) {
       toast.error("Please select at least one field");
-      return;
+      return
     }
-    // Map frontend labels to backend field names
     const fieldMapping = {
-      Continent: "name",
+      "Language Ability Group": "name",
       "Modified On": "updated_at",
-      Description: "description",
+      "Description": "description",
     };
-    // Convert selectedItems to backend field names
-    const mappedFields = selectedItems.map(
-      (item) => fieldMapping[item] || item
-    );
-    // Convert to comma-separated string
+    const mappedFields = selectedItems.map((item) => fieldMapping[item] || item);
     const fieldsString = mappedFields.join(",");
     const sendPayload = {
       file: "xlsx",
       fields: fieldsString,
       uuids: selectAllOrNot === "all" ? [] : selectedRows,
-      search: tableState.search || '',
-      sort: tableState.sort,
     };
     setLoadingExport(true);
-    dispatch(
-      continentExportData(sendPayload, (response, error) => {
-        if (error) {
-          setLoadingExport(false);
-          toast.error(error?.response?.message || "server error");
-        } else {
-          setLoadingExport(false);
-          if (response?.status === 200) {
-            const blob = new Blob([response.data], {
-              type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            });
+    dispatch(languageAbilityGroupExportData(sendPayload, (response, error) => {
+      if (error) {
+        setLoadingExport(false);
+        toast.error(error?.response?.message || "server error");
+      } else {
+        setLoadingExport(false);
+        if (response?.status === 200) {
+          const blob = new Blob([response.data], {
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          });
 
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.href = url;
-            link.download = `Continent.xlsx`;
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            window.URL.revokeObjectURL(url);
-            toast.success("Export successful");
-            cancelExportTest();
-            setSelectedRows([]);
-            setSelectAllOrNot("");
-            setDeleteId(null);
-          } else {
-            toast.error("Something went wrong.");
-          }
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `Language Ability Group.xlsx`;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          window.URL.revokeObjectURL(url);
+          toast.success("Export successful");
+          cancelExportTest();
+          setSelectedRows([]);
+          setSelectAllOrNot('');
+          setDeleteId(null);
+        } else {
+          toast.error("Something went wrong.");
         }
-      })
-    );
+      }
+    }));
   };
 
   const startIndex = (tableState.currentPage - 1) * tableState.limit;
-  const statusOptions = ["All", "Active", "Inactive"];
-
-
+  const statusOptions = ['All', 'Active', 'Inactive'];
 
   return (
     <>
       <MasterLayout>
-        {/* <Breadcrumb title="Department" subTitle="List" /> */}
         <div className="card basic-data-table main-container-data">
           <div className="card-body container-data">
             <div className="row align-items-center gy-3 gx-2 flex-wrap filter-action-btn">
-              {/* Left Section: Import / Export / Delete */}
               <div className="col-xl-6 col-lg-4 col-md-12">
                 <div className="d-flex flex-wrap align-items-center gap-2">
                   <button
@@ -533,7 +476,7 @@ const ContinentsList = () => {
                   >
                     Delete
                   </button>
-                  {(selectedRows?.length > 0 && selectedRows?.length === continents?.length) && (
+                  {(selectedRows?.length > 0 && selectedRows?.length === departments?.length) && (
                     <>
                       <button
                         onClick={() => handleSelectAllOrNot("onlySelected")}
@@ -551,12 +494,14 @@ const ContinentsList = () => {
                   )}
                   <button
                     onClick={clearAllFilters}
-                    className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
-                  >Reset </button>
+                    className="btn btn-sm py-1 comman-inactive-btn"
+                  >
+                    <Icon icon="mdi:filter-off" width="16" /> Clear Filters
+                  </button>
+
                 </div>
               </div>
 
-              {/* Right Section: Select / Search / +Add New */}
               <div className="col-xl-6 col-lg-8 col-md-12">
                 <div className="d-flex flex-wrap align-items-center justify-content-end gap-2">
                   <select
@@ -679,8 +624,8 @@ const ContinentsList = () => {
               </div>
             </div>
           </div>
-          <div className="card-body pt-0 container-table">
-            <div className="container-table-div">
+          <div className="card-body pt-0 container-table" >
+            <div className='container-table-div'>
               <table className="table mb-0">
                 <thead>
                   <tr>
@@ -691,7 +636,7 @@ const ContinentsList = () => {
                           type="checkbox"
                           checked={isAllSelected}
                           onChange={handleSelectAll}
-                          disabled={continents.length === 0}
+                          disabled={departments.length === 0}
                         />
                         <span>No.</span>
                       </div>
@@ -763,8 +708,8 @@ const ContinentsList = () => {
                         </div>
                       </td>
                     </tr>
-                  ) : continents.length > 0 ? (
-                    continents.map((rowItem, index) => (
+                  ) : departments.length > 0 ? (
+                    departments.map((rowItem, index) => (
                       <tr key={rowItem.uuid}>
                         <td>
                           <div className="d-flex align-items-center gap-2">
@@ -807,36 +752,138 @@ const ContinentsList = () => {
                   )}
                 </tbody>
               </table>
+
+              {/* {tableState.total > 0 && (
+                <div className="d-flex justify-content-between align-items-center px-4 py-3" >
+                  <div className='showing-total-page' >
+                    Showing {startIndex + 1} to {Math.min(startIndex + tableState.limit, tableState.total)} of {tableState.total} entries
+                  </div>
+                  <nav>
+                    <ul className="pagination mb-0" style={{ gap: '4px' }}>
+                      <li className={`page-item ${!tableState.hasPrevious ? 'disabled' : ''}`}>
+                        <button
+                          className="border-0 bg-transparent"
+                          onClick={() => goToPage(1)}
+                          disabled={!tableState.hasPrevious}
+                          style={{
+                            padding: '6px 10px',
+                            color: !tableState.hasPrevious ? '#ccc' : '#6c757d',
+                            fontSize: '18px',
+                            cursor: !tableState.hasPrevious ? 'not-allowed' : 'pointer'
+                          }}
+                        >
+                          «
+                        </button>
+                      </li>
+                      <li className={`page-item ${!tableState.hasPrevious ? 'disabled' : ''}`}>
+                        <button
+                          className="border-0 bg-transparent"
+                          onClick={() => goToPage(tableState.currentPage - 1)}
+                          disabled={!tableState.hasPrevious}
+                          style={{
+                            padding: '6px 10px',
+                            color: !tableState.hasPrevious ? '#ccc' : '#6c757d',
+                            fontSize: '18px',
+                            cursor: !tableState.hasPrevious ? 'not-allowed' : 'pointer'
+                          }}
+                        >
+                          ‹
+                        </button>
+                      </li>
+                      {getPaginationNumbers().map((page, idx) => (
+                        <li key={idx} className="page-item">
+                          {page === '...' ? (
+                            <span
+                              className="border-0 bg-transparent"
+                              style={{
+                                padding: '6px 12px',
+                                color: '#6c757d',
+                                cursor: 'default'
+                              }}
+                            >
+                              ...
+                            </span>
+                          ) : (
+                            <button
+                              className="border-0 "
+                              onClick={() => goToPage(page)}
+                              style={{
+                                padding: '6px 12px',
+                                minWidth: '36px',
+                                backgroundColor: page === tableState.currentPage ? '#5a6c5b' : 'transparent',
+                                color: page === tableState.currentPage ? '#fff' : '#6c757d',
+                                borderRadius: '4px',
+                                fontWeight: page === tableState.currentPage ? '500' : '400',
+                                cursor: 'pointer',
+                                fontSize: "16px"
+                              }}
+                            >
+                              {page}
+                            </button>
+                          )}
+                        </li>
+                      ))}
+                      <li className={`page-item ${!tableState.hasNext ? 'disabled' : ''}`}>
+                        <button
+                          className=" border-0 bg-transparent"
+                          onClick={() => goToPage(tableState.currentPage + 1)}
+                          disabled={!tableState.hasNext}
+                          style={{
+                            padding: '6px 10px',
+                            color: !tableState.hasNext ? '#ccc' : '#6c757d',
+                            fontSize: '18px',
+                            cursor: !tableState.hasNext ? 'not-allowed' : 'pointer'
+                          }}
+                        >
+                          ›
+                        </button>
+                      </li>
+                      <li className={`page-item ${!tableState.hasNext ? 'disabled' : ''}`}>
+                        <button
+                          className="border-0 bg-transparent"
+                          onClick={() => goToPage(tableState.totalPages)}
+                          disabled={!tableState.hasNext}
+                          style={{
+                            padding: '6px 10px',
+                            color: !tableState.hasNext ? '#ccc' : '#6c757d',
+                            fontSize: '18px',
+                            cursor: !tableState.hasNext ? 'not-allowed' : 'pointer'
+                          }}
+                        >
+                          »
+                        </button>
+                      </li>
+                    </ul>
+                  </nav>
+                </div>
+              )} */}
             </div>
           </div>
         </div>
-        <AddEditContinentModel
+
+        {/* Add/Edit Modal */}
+        <AddEditLanguageAbilityGroupModal
           show={modalState.show}
           handleClose={handleClose}
           mode={modalState.mode}
           rowData={modalState.rowData}
         />
+
+        {/* Import Modal */}
         {showImport && (
-          <AddImportContinentModal
-            show={showImport}
-            handleClose={handleCloseImport}
-          />
+          <AddImportLanguageAbilityGroupModal show={showImport} handleClose={handleCloseImport} />
         )}
+
+        {/* Delete Confirmation Modal */}
         {showDeleteConfirm && (
           <div className="modal fade show common-ctl-popup">
             <div className="modal-dialog modal-dialog-centered">
-              <div className="modal-content" style={{ borderRadius: "10px" }}>
+              <div className="modal-content" style={{ borderRadius: '10px' }}>
                 <div className="modal-header">
                   <h6 className="modal-title text-danger">Confirm Delete</h6>
-                  <button
-                    type="button"
-                    className="btn-close"
-                    onClick={cancelDelete}
-                  ></button>
+                  <button type="button" className="btn-close" onClick={cancelDelete}></button>
                 </div>
                 <div className="modal-body">
-                  {/* <p className="mb-0">Are you sure you want to delete this department?</p> */}
-                  {/* <p className="mb-0"> Are you sure you want to delete this department ({selectedRows.length})?</p> */}
                   <p className="mb-0">{deleteConfirmMessage}</p>
                 </div>
                 <div className="modal-footer">
@@ -859,19 +906,18 @@ const ContinentsList = () => {
             </div>
           </div>
         )}
+
+        {/* Export Modal */}
         {showExportPopop && (
           <div
             className="modal fade show common-ctl-popup"
             tabIndex={-1}
             role="dialog"
           >
-            <div
-              className="modal-dialog modal-xl modal-dialog-centered"
-              role="document"
-            >
+            <div className="modal-dialog modal-xl modal-dialog-centered" role="document">
               <div className="modal-content radius-16 bg-base">
                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                  <h1 className="modal-title fs-5">Export Continent</h1>
+                  <h1 className="modal-title fs-5">Export Factor For</h1>
                   <button
                     type="button"
                     className="btn-close"
@@ -882,10 +928,8 @@ const ContinentsList = () => {
                 <div className="modal-body p-24">
                   <div className="row">
                     <div className="col-12 col-md-6">
-                      <h3 className="text-sm font-semibold mb-3 text-gray-700">
-                        Available fields
-                      </h3>
-                      <div className="border rounded-lg p-3 bg-gray-50 export-file-left">
+                      <h3 className="text-sm font-semibold mb-3 text-gray-700">Available fields</h3>
+                      <div className="border rounded-lg p-3 bg-gray-50 export-file-left" >
                         {items.map((item, index) => (
                           <div
                             key={index}
@@ -895,16 +939,11 @@ const ContinentsList = () => {
                               type="checkbox"
                               id={`item-${index}`}
                               checked={selectedItems.includes(item)}
-                              onChange={(e) =>
-                                handleCheckboxChange(item, e.target.checked)
-                              }
-                              disabled={ItemsRequired.includes(item)} // 🔒 Disable required item
+                              onChange={(e) => handleCheckboxChange(item, e.target.checked)}
+                              disabled={ItemsRequired.includes(item)}
                               className="form-check-input"
                             />
-                            <label
-                              htmlFor={`item-${index}`}
-                              className="mb-0 flex-grow-1"
-                            >
+                            <label htmlFor={`item-${index}`} className="mb-0 flex-grow-1">
                               {item}
                             </label>
                           </div>
@@ -915,7 +954,7 @@ const ContinentsList = () => {
                       <h3 className="text-sm font-semibold mb-3 text-gray-700">
                         Selected fields ({selectedItems.length})
                       </h3>
-                      <div className="border rounded-lg p-3 bg-blue-50 export-file-righit">
+                      <div className="border rounded-lg p-3 bg-blue-50 export-file-righit" >
                         {selectedItems.length === 0 ? (
                           <div className="text-center text-muted py-5">
                             No fields selected
@@ -929,17 +968,13 @@ const ContinentsList = () => {
                               onDrop={(e) => handleDrop(e, index)}
                               onDragOver={handleDragOver}
                               className="bg-white border border-primary rounded p-2 mb-2 d-flex align-items-center gap-2 export-file"
-                              style={{ cursor: "grab" }}
+                              style={{ cursor: 'grab' }}
                             >
-                              <span className="text-muted move-drop-icone">
-                                ☰
-                              </span>
+                              <span className="text-muted move-drop-icone">☰</span>
                               <span className="flex-grow-1">{item}</span>
                               {!ItemsRequired.includes(item) && (
                                 <button
-                                  onClick={() =>
-                                    handleCheckboxChange(item, false)
-                                  }
+                                  onClick={() => handleCheckboxChange(item, false)}
                                   className="btn btn-sm btn-link text-danger p-0 close-icone"
                                 >
                                   ×
@@ -967,14 +1002,15 @@ const ContinentsList = () => {
                       type="button"
                       className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                       disabled={loadingExport}
-                    >{loadingExport ? (
-                      <>
-                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                        Submit...
-                      </>
-                    ) : (
-                      "Submit"
-                    )}
+                    >
+                      {loadingExport ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                          Submit...
+                        </>
+                      ) : (
+                        "Submit"
+                      )}
                     </button>
                   </div>
                 </div>
@@ -987,4 +1023,4 @@ const ContinentsList = () => {
   );
 };
 
-export default ContinentsList;
+export default LanguageAbilityGroupList;
