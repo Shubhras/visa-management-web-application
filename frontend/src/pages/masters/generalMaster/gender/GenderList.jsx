@@ -837,7 +837,7 @@ const GenderList = () => {
                               id={`item-${index}`}
                               checked={selectedItems.includes(item)}
                               onChange={(e) => handleCheckboxChange(item, e.target.checked)}
-                              disabled={ItemsRequired.includes(item)} // 🔒 Disable required item
+                              disabled={ItemsRequired.includes(item)} 
                               className="form-check-input"
                             />
                             <label htmlFor={`item-${index}`} className="mb-0 flex-grow-1">
