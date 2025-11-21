@@ -68,8 +68,8 @@ const AddEditCountryModal = ({
       limit: 2000,
       search: "",
       status: "",
-      sortBy: "updated_at",
-      sortOrder: "desc",
+      sortBy: "name",
+      sortOrder: "asc",
     };
 
     setLoading(true);

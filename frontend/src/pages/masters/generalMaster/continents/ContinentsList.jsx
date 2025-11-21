@@ -458,6 +458,7 @@ const ContinentsList = () => {
       file: "xlsx",
       fields: fieldsString,
       uuids: selectAllOrNot === "all" ? [] : selectedRows,
+      search: tableState.search || '',
       sort: tableState.sort,
     };
     setLoadingExport(true);
