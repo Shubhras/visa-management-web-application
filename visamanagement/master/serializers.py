@@ -504,7 +504,7 @@ class EducationLevelSerializer(serializers.ModelSerializer):
             'level_code', 
             'level_code_detail',
             'educationlevel',
-            '   ' 
+            'durations', 
             'description', 
             'is_deleted',
             'created_at', 
