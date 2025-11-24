@@ -1108,7 +1108,7 @@ class EducationLevelExportAPIView(APIView):
 
         queryset = EducationLevel.objects.filter(is_deleted=False)
         if uuids:
-            queryset = queryset.filter(educationlevel__uuid__in=uuids)
+            queryset = queryset.filter(level_code__uuid__in=uuids)
         queryset = queryset.order_by('-created_at')
 
         dataset = Dataset()
