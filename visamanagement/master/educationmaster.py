@@ -518,12 +518,11 @@ class EducationLevelCreateAPIView(APIView):
 
     def post(self, request):
         educationlevel_name = request.data.get('educationlevel', '').strip()
-        level_code_id = request.data.get('level_code')  # UUID of EducationLevelCode
 
         # Check for duplicate based on combination of level_code and educationlevel
         existing = EducationLevel.objects.filter(
-            educationlevel__iexact=educationlevel_name,
-            level_code_id=level_code_id
+            educationlevel__iexact=educationlevel_name
+            # level_code_id=level_code_id
         ).first()
 
         if existing:
