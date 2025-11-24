@@ -95,36 +95,104 @@ class EducationLevelCodeListAPIView(APIView):
 
 
 # ------------------ Create API ------------------
+# class EducationLevelCodeCreateAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def post(self, request):
+#         name = request.data.get("name", "").strip()
+#         existing = EducationLevelCode.objects.filter(name__iexact=name, is_deleted=False).first()
+
+#         if existing:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Education level code with this name already exists."
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         serializer = EducationLevelCodeSerializer(data=request.data)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": "Education level code created successfully",
+#                 "data": serializer.data
+#             }, status=status.HTTP_200_OK)
+#         else:
+#             messages = [msg for msgs in serializer.errors.values() for msg in msgs]
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": " ".join(messages)
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
 class EducationLevelCodeCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
-        name = request.data.get("name", "").strip()
-        existing = EducationLevelCode.objects.filter(name__iexact=name, is_deleted=False).first()
+        try:
+            name = request.data.get("name")
 
-        if existing:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Education level code with this name already exists."
-            }, status=status.HTTP_400_BAD_REQUEST)
+            # Validate: name must exist
+            if name is None:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Name field is required."
+                }, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = EducationLevelCodeSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": "Education level code created successfully",
-                "data": serializer.data
-            }, status=status.HTTP_200_OK)
-        else:
+            # Validate: name must be an integer
+            try:
+                name_int = int(name)
+            except (ValueError, TypeError):
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Name must be an integer."
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Check existing record (use int match instead of iexact)
+            existing = EducationLevelCode.objects.filter(
+                name=name_int,
+                is_deleted=False
+            ).first()
+
+            if existing:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Education level code with this name already exists."
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Inject cleaned field into request
+            data = request.data.copy()
+            data['name'] = name_int
+
+            serializer = EducationLevelCodeSerializer(data=data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": "Education level code created successfully",
+                    "data": serializer.data
+                }, status=status.HTTP_200_OK)
+
+            # Collect serializer errors
             messages = [msg for msgs in serializer.errors.values() for msg in msgs]
             return Response({
                 "statusCode": 400,
                 "status": False,
                 "message": " ".join(messages)
             }, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            # Catch unexpected errors
+            return Response({
+                "statusCode": 500,
+                "status": False,
+                "message": f"Internal server error: {str(e)}"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # ------------------ Retrieve API ------------------
@@ -187,70 +255,60 @@ class EducationLevelCodeUpdateAPIView(APIView):
 
 
 # ------------------ Delete API ------------------
+
 class EducationLevelCodeDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
-    def delete(self, request, uuid=None):
-        ids = request.data.get('id', None)
+    def delete(self, request):
+        try:
+            ids = request.data.get("id", None)
 
-        # Single delete via URL
-        if uuid:
-            try:
-                edu = EducationLevelCode.objects.get(uuid=uuid)
-                edu.delete()
+            # Validate if IDs are provided
+            if not ids or not isinstance(ids, list):
                 return Response({
-                    "statusCode": 204,
-                    "status": True,
-                    "message": "Education level code permanently deleted.",
-                    "data": None
-                }, status=status.HTTP_204_NO_CONTENT)
-            except EducationLevelCode.DoesNotExist:
-                return Response({
-                    "statusCode": 404,
+                    "statusCode": 400,
                     "status": False,
-                    "message": "Education level code not found.",
+                    "message": "Please provide a list of UUIDs in the 'id' field.",
                     "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
+                }, status=status.HTTP_400_BAD_REQUEST)
 
-        # Delete all
-        if ids == "all":
-            queryset = EducationLevelCode.objects.all()
+            valid_uuids = []
+            invalid_uuids = []
+
+            # Validate UUIDs
+            for u in ids:
+                try:
+                    valid_uuids.append(UUID(u))
+                except (ValueError, TypeError):
+                    invalid_uuids.append(u)
+
+            if not valid_uuids:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "No valid UUIDs provided.",
+                    "data": {"invalid_uuids": invalid_uuids}
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Delete valid UUIDs
+            queryset = EducationLevelCode.objects.filter(uuid__in=valid_uuids)
             count = queryset.count()
             queryset.delete()
+
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} education level code(s) permanently deleted.",
-                "data": None
+                "message": f"{count} education level code(s) permanently deleted.",
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
             }, status=status.HTTP_200_OK)
 
-        # Bulk delete
-        if not ids or not isinstance(ids, list):
+        except Exception as e:
             return Response({
-                "statusCode": 400,
+                "statusCode": 500,
                 "status": False,
-                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+                "message": f"Internal server error: {str(e)}",
                 "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        valid_uuids = []
-        invalid_uuids = []
-        for u in ids:
-            try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
-
-        queryset = EducationLevelCode.objects.filter(uuid__in=valid_uuids)
-        count = queryset.count()
-        queryset.delete()
-
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"{count} education level code(s) permanently deleted.",
-            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        }, status=status.HTTP_200_OK)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # ------------------ Export API ------------------
