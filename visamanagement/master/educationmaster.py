@@ -21,7 +21,7 @@ import openpyxl
 from django.http import HttpResponse
 from uuid import UUID
 from datetime import datetime  
-from django.db import IntegrityError,transaction
+from django.db import IntegrityError, transaction, DatabaseError
 import csv
 import io
 import pytz
@@ -2890,21 +2890,57 @@ class AcademicResultTypeListAPIView(APIView):
 
 
 # --------------------- Create API ---------------------
+# class AcademicResultTypeCreateAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def post(self, request):
+#         name = request.data.get("name", "").strip()
+#         if AcademicResultType.objects.filter(name__iexact=name, is_deleted=False).exists():
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Academic Result Type with this name already exists."
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         serializer = AcademicResultTypeSerializer(data=request.data)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": "Academic Result Type created successfully",
+#                 "data": serializer.data
+#             }, status=status.HTTP_200_OK)
+
+#         message_text = " ".join([str(msg) for msgs in serializer.errors.values() for msg in msgs])
+#         return Response({
+#             "statusCode": 400,
+#             "status": False,
+#             "message": message_text
+#         }, status=status.HTTP_400_BAD_REQUEST)
+
 class AcademicResultTypeCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
-        name = request.data.get("name", "").strip()
-        if AcademicResultType.objects.filter(name__iexact=name, is_deleted=False).exists():
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Academic Result Type with this name already exists."
-            }, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            name = request.data.get("name", "").strip()
 
-        serializer = AcademicResultTypeSerializer(data=request.data)
-        if serializer.is_valid():
+            # ----------- Duplicate Check -----------
+            if AcademicResultType.objects.filter(name__iexact=name, is_deleted=False).exists():
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Academic Result Type with this name already exists."
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # ----------- Serializer Validation ----------
+            serializer = AcademicResultTypeSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+
+            # ----------- Save Safe Block -----------
             serializer.save()
+
             return Response({
                 "statusCode": 200,
                 "status": True,
@@ -2912,13 +2948,37 @@ class AcademicResultTypeCreateAPIView(APIView):
                 "data": serializer.data
             }, status=status.HTTP_200_OK)
 
-        message_text = " ".join([str(msg) for msgs in serializer.errors.values() for msg in msgs])
-        return Response({
-            "statusCode": 400,
-            "status": False,
-            "message": message_text
-        }, status=status.HTTP_400_BAD_REQUEST)
+        except ValidationError as e:
+            # Serializer validation errors
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": e.detail if isinstance(e.detail, str) else " ".join([str(val[0]) for val in e.detail.values()])
+            }, status=status.HTTP_400_BAD_REQUEST)
 
+        except IntegrityError:
+            # Database constraint errors
+            return Response({
+                "statusCode": 500,
+                "status": False,
+                "message": "Database integrity error occurred."
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        except DatabaseError:
+            # General DB error fallback
+            return Response({
+                "statusCode": 500,
+                "status": False,
+                "message": "A database error occurred. Please try again."
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        except Exception as e:
+            # Fallback for unexpected errors
+            return Response({
+                "statusCode": 500,
+                "status": False,
+                "message": f"Something went wrong: {str(e)}"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # --------------------- Retrieve API ---------------------
 class AcademicResultTypeRetrieveAPIView(APIView):
