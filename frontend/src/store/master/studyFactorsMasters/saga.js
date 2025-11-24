@@ -1,6 +1,6 @@
 import { call, takeEvery } from "redux-saga/effects";
 import {
-    addAcademicResultGroupAPI,
+  addAcademicResultGroupAPI,
   addAgeAPI,
   addAgeGroupAPI,
   addBacklogsGroupAPI,
@@ -8,6 +8,8 @@ import {
   addFactorForAPI,
   addGapGroupAPI,
   addLanguageAbilityGroupAPI,
+  addStudyFactorAcademicResultAPI,
+  addStudyFactorBacklogsAPI,
   deleteAcademicResultGroupAPI,
   deleteAgeAPI,
   deleteAgeGroupAPI,
@@ -16,6 +18,8 @@ import {
   deleteFactorForAPI,
   deleteGapGroupAPI,
   deleteLanguageAbilityGroupAPI,
+  deleteStudyFactorAcademicResultAPI,
+  deleteStudyFactorBacklogsAPI,
   editAcademicResultGroupAPI,
   editAgeAPI,
   editAgeGroupAPI,
@@ -24,6 +28,8 @@ import {
   editFactorForAPI,
   editGapGroupAPI,
   editLanguageAbilityGroupAPI,
+  editStudyFactorAcademicResultAPI,
+  editStudyFactorBacklogsAPI,
   exportAcademicResultGroupAPI,
   exportAgeAPI,
   exportAgeGroupAPI,
@@ -32,6 +38,8 @@ import {
   exportFactorForAPI,
   exportGapGroupAPI,
   exportLanguageAbilityGroupAPI,
+  exportStudyFactorAcademicResultAPI,
+  exportStudyFactorBacklogsAPI,
   getAcademicResultGroupListAPI,
   getAgeGroupListAPI,
   getAgeListAPI,
@@ -40,6 +48,8 @@ import {
   getFactorForListAPI,
   getGapGroupListAPI,
   getLanguageAbilityGroupListAPI,
+  getStudyFactorAcademicResultListAPI,
+  getStudyFactorBacklogsListAPI,
   importAcademicResultGroupAPI,
   importAgeAPI,
   importAgeGroupAPI,
@@ -48,9 +58,11 @@ import {
   importFactorForAPI,
   importGapGroupAPI,
   importLanguageAbilityGroupAPI,
+  importStudyFactorAcademicResultAPI,
+  importStudyFactorBacklogsAPI,
 } from "../../../service/api_helper";
 import {
-    ACADEMIC_RESULT_GROUP_LIST,
+  ACADEMIC_RESULT_GROUP_LIST,
   ADD_ACADEMIC_RESULT_GROUP,
   ADD_AGE,
   ADD_AGE_GROUP,
@@ -59,6 +71,8 @@ import {
   ADD_FACTOR_FOR,
   ADD_GAP_GROUP,
   ADD_LANGUAGE_ABILITY_GROUP,
+  ADD_STUDY_FACTOR_ACADEMIC_RESULT,
+  ADD_STUDY_FACTOR_BACKLOGS,
   AGE_GROUP_LIST,
   AGE_LIST,
   BACKLOGS_GROUP_LIST,
@@ -70,6 +84,8 @@ import {
   DELETE_FACTOR_FOR,
   DELETE_GAP_GROUP,
   DELETE_LANGUAGE_ABILITY_GROUP,
+  DELETE_STUDY_FACTOR_ACADEMIC_RESULT,
+  DELETE_STUDY_FACTOR_BACKLOGS,
   EDIT_ACADEMIC_RESULT_GROUP,
   EDIT_AGE,
   EDIT_AGE_GROUP,
@@ -78,6 +94,8 @@ import {
   EDIT_FACTOR_FOR,
   EDIT_GAP_GROUP,
   EDIT_LANGUAGE_ABILITY_GROUP,
+  EDIT_STUDY_FACTOR_ACADEMIC_RESULT,
+  EDIT_STUDY_FACTOR_BACKLOGS,
   ENTRANCE_TEST_ABILITY_GROUP_LIST,
   EXPORT_ACADEMIC_RESULT_GROUP,
   EXPORT_AGE,
@@ -87,6 +105,8 @@ import {
   EXPORT_FACTOR_FOR,
   EXPORT_GAP_GROUP,
   EXPORT_LANGUAGE_ABILITY_GROUP,
+  EXPORT_STUDY_FACTOR_ACADEMIC_RESULT,
+  EXPORT_STUDY_FACTOR_BACKLOGS,
   FACTOR_FOR_LIST,
   GAP_GROUP_LIST,
   IMPORT_ACADEMIC_RESULT_GROUP,
@@ -97,7 +117,11 @@ import {
   IMPORT_FACTOR_FOR,
   IMPORT_GAP_GROUP,
   IMPORT_LANGUAGE_ABILITY_GROUP,
+  IMPORT_STUDY_FACTOR_ACADEMIC_RESULT,
+  IMPORT_STUDY_FACTOR_BACKLOGS,
   LANGUAGE_ABILITY_GROUP_LIST,
+  STUDY_FACTOR_ACADEMIC_RESULT_LIST,
+  STUDY_FACTOR_BACKLOGS_LIST,
 } from "./actionType";
 
 //Factor For
@@ -430,7 +454,10 @@ function* languageAbilityGroupImportSaga(action) {
 // Entrance Test Ability Group Sagas
 function* entranceTestAbilityGroupListSaga(action) {
   try {
-    const response = yield call(getEntranceTestAbilityGroupListAPI, action?.data);
+    const response = yield call(
+      getEntranceTestAbilityGroupListAPI,
+      action?.data
+    );
     action.callback?.(response);
   } catch (error) {
     action.callback?.(null, error);
@@ -457,7 +484,10 @@ function* entranceTestAbilityGroupEditSaga(action) {
 
 function* entranceTestAbilityGroupDeleteSaga(action) {
   try {
-    const response = yield call(deleteEntranceTestAbilityGroupAPI, action?.data);
+    const response = yield call(
+      deleteEntranceTestAbilityGroupAPI,
+      action?.data
+    );
     action.callback?.(response);
   } catch (error) {
     action.callback?.(null, error);
@@ -466,7 +496,10 @@ function* entranceTestAbilityGroupDeleteSaga(action) {
 
 function* entranceTestAbilityGroupExportSaga(action) {
   try {
-    const response = yield call(exportEntranceTestAbilityGroupAPI, action?.data);
+    const response = yield call(
+      exportEntranceTestAbilityGroupAPI,
+      action?.data
+    );
     action.callback?.(response);
   } catch (error) {
     action.callback?.(null, error);
@@ -475,7 +508,10 @@ function* entranceTestAbilityGroupExportSaga(action) {
 
 function* entranceTestAbilityGroupImportSaga(action) {
   try {
-    const response = yield call(importEntranceTestAbilityGroupAPI, action?.data);
+    const response = yield call(
+      importEntranceTestAbilityGroupAPI,
+      action?.data
+    );
     action.callback?.(response);
   } catch (error) {
     action.callback?.(null, error);
@@ -537,6 +573,128 @@ function* ageImportSaga(action) {
   }
 }
 
+// Study Factor – Academic Result Sagas
+function* studyFactorAcademicResultListSaga(action) {
+  try {
+    const response = yield call(
+      getStudyFactorAcademicResultListAPI,
+      action?.data
+    );
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* studyFactorAcademicResultAddSaga(action) {
+  try {
+    const response = yield call(addStudyFactorAcademicResultAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* studyFactorAcademicResultEditSaga(action) {
+  try {
+    const response = yield call(editStudyFactorAcademicResultAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* studyFactorAcademicResultDeleteSaga(action) {
+  try {
+    const response = yield call(
+      deleteStudyFactorAcademicResultAPI,
+      action?.data
+    );
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* studyFactorAcademicResultExportSaga(action) {
+  try {
+    const response = yield call(
+      exportStudyFactorAcademicResultAPI,
+      action?.data
+    );
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* studyFactorAcademicResultImportSaga(action) {
+  try {
+    const response = yield call(
+      importStudyFactorAcademicResultAPI,
+      action?.data
+    );
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+// Study Factor – Backlogs Sagas
+function* studyFactorBacklogsListSaga(action) {
+  try {
+    const response = yield call(getStudyFactorBacklogsListAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* studyFactorBacklogsAddSaga(action) {
+  try {
+    const response = yield call(addStudyFactorBacklogsAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* studyFactorBacklogsEditSaga(action) {
+  try {
+    const response = yield call(editStudyFactorBacklogsAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* studyFactorBacklogsDeleteSaga(action) {
+  try {
+    const response = yield call(deleteStudyFactorBacklogsAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* studyFactorBacklogsExportSaga(action) {
+  try {
+    const response = yield call(exportStudyFactorBacklogsAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* studyFactorBacklogsImportSaga(action) {
+  try {
+    const response = yield call(importStudyFactorBacklogsAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
 function* studyFactorsMasterSaga() {
   yield takeEvery(FACTOR_FOR_LIST, factorForListSaga);
   yield takeEvery(ADD_FACTOR_FOR, factorForAddSaga);
@@ -571,20 +729,82 @@ function* studyFactorsMasterSaga() {
   yield takeEvery(LANGUAGE_ABILITY_GROUP_LIST, languageAbilityGroupListSaga);
   yield takeEvery(ADD_LANGUAGE_ABILITY_GROUP, languageAbilityGroupAddSaga);
   yield takeEvery(EDIT_LANGUAGE_ABILITY_GROUP, languageAbilityGroupEditSaga);
-  yield takeEvery(DELETE_LANGUAGE_ABILITY_GROUP, languageAbilityGroupDeleteSaga);
-  yield takeEvery(EXPORT_LANGUAGE_ABILITY_GROUP, languageAbilityGroupExportSaga);
-  yield takeEvery(IMPORT_LANGUAGE_ABILITY_GROUP, languageAbilityGroupImportSaga);
-  yield takeEvery(ENTRANCE_TEST_ABILITY_GROUP_LIST, entranceTestAbilityGroupListSaga);
-  yield takeEvery(ADD_ENTRANCE_TEST_ABILITY_GROUP, entranceTestAbilityGroupAddSaga);
-  yield takeEvery(EDIT_ENTRANCE_TEST_ABILITY_GROUP, entranceTestAbilityGroupEditSaga);
-  yield takeEvery(DELETE_ENTRANCE_TEST_ABILITY_GROUP, entranceTestAbilityGroupDeleteSaga);
-  yield takeEvery(EXPORT_ENTRANCE_TEST_ABILITY_GROUP, entranceTestAbilityGroupExportSaga);
-  yield takeEvery(IMPORT_ENTRANCE_TEST_ABILITY_GROUP, entranceTestAbilityGroupImportSaga);
+  yield takeEvery(
+    DELETE_LANGUAGE_ABILITY_GROUP,
+    languageAbilityGroupDeleteSaga
+  );
+  yield takeEvery(
+    EXPORT_LANGUAGE_ABILITY_GROUP,
+    languageAbilityGroupExportSaga
+  );
+  yield takeEvery(
+    IMPORT_LANGUAGE_ABILITY_GROUP,
+    languageAbilityGroupImportSaga
+  );
+  yield takeEvery(
+    ENTRANCE_TEST_ABILITY_GROUP_LIST,
+    entranceTestAbilityGroupListSaga
+  );
+  yield takeEvery(
+    ADD_ENTRANCE_TEST_ABILITY_GROUP,
+    entranceTestAbilityGroupAddSaga
+  );
+  yield takeEvery(
+    EDIT_ENTRANCE_TEST_ABILITY_GROUP,
+    entranceTestAbilityGroupEditSaga
+  );
+  yield takeEvery(
+    DELETE_ENTRANCE_TEST_ABILITY_GROUP,
+    entranceTestAbilityGroupDeleteSaga
+  );
+  yield takeEvery(
+    EXPORT_ENTRANCE_TEST_ABILITY_GROUP,
+    entranceTestAbilityGroupExportSaga
+  );
+  yield takeEvery(
+    IMPORT_ENTRANCE_TEST_ABILITY_GROUP,
+    entranceTestAbilityGroupImportSaga
+  );
   yield takeEvery(AGE_LIST, ageListSaga);
   yield takeEvery(ADD_AGE, ageAddSaga);
   yield takeEvery(EDIT_AGE, ageEditSaga);
   yield takeEvery(DELETE_AGE, ageDeleteSaga);
   yield takeEvery(EXPORT_AGE, ageExportSaga);
   yield takeEvery(IMPORT_AGE, ageImportSaga);
+  yield takeEvery(
+    STUDY_FACTOR_ACADEMIC_RESULT_LIST,
+    studyFactorAcademicResultListSaga
+  );
+
+  yield takeEvery(
+    ADD_STUDY_FACTOR_ACADEMIC_RESULT,
+    studyFactorAcademicResultAddSaga
+  );
+
+  yield takeEvery(
+    EDIT_STUDY_FACTOR_ACADEMIC_RESULT,
+    studyFactorAcademicResultEditSaga
+  );
+
+  yield takeEvery(
+    DELETE_STUDY_FACTOR_ACADEMIC_RESULT,
+    studyFactorAcademicResultDeleteSaga
+  );
+
+  yield takeEvery(
+    EXPORT_STUDY_FACTOR_ACADEMIC_RESULT,
+    studyFactorAcademicResultExportSaga
+  );
+
+  yield takeEvery(
+    IMPORT_STUDY_FACTOR_ACADEMIC_RESULT,
+    studyFactorAcademicResultImportSaga
+  );
+  yield takeEvery(STUDY_FACTOR_BACKLOGS_LIST, studyFactorBacklogsListSaga);
+  yield takeEvery(ADD_STUDY_FACTOR_BACKLOGS, studyFactorBacklogsAddSaga);
+  yield takeEvery(EDIT_STUDY_FACTOR_BACKLOGS, studyFactorBacklogsEditSaga);
+  yield takeEvery(DELETE_STUDY_FACTOR_BACKLOGS, studyFactorBacklogsDeleteSaga);
+  yield takeEvery(EXPORT_STUDY_FACTOR_BACKLOGS, studyFactorBacklogsExportSaga);
+  yield takeEvery(IMPORT_STUDY_FACTOR_BACKLOGS, studyFactorBacklogsImportSaga);
 }
 export default studyFactorsMasterSaga;

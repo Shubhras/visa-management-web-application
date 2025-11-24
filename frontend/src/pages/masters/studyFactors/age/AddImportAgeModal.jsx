@@ -6,6 +6,7 @@ import { saveAs } from "file-saver";
 import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
 import { stateImportData } from '../../../../store/master/generalMasters/actions';
 import { exportToExcelDuplicate, exportToExcelWrongData } from '../../../../helper/utils/commanHelper';
+import { ageImportData } from '../../../../store/actions';
 const AddImportAgeModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
@@ -66,7 +67,7 @@ const AddImportAgeModal = ({ show, handleClose }) => {
             formData.append('sheet_name', selectedSheet);
         }
         setLoading(true);
-        dispatch(stateImportData(formData, (response, error) => {
+        dispatch(ageImportData(formData, (response, error) => {
             setLoading(false);
             if (error) {
                 toast.error(error?.response?.data?.message || "Server error");
@@ -90,8 +91,8 @@ const AddImportAgeModal = ({ show, handleClose }) => {
                         const prepareData = {
                             data: response.duplicates || [],
                             headers: ["Factor For", "Study Age Group", "Minimum Age","Maximum Age","Country", "Course Level",],
-                            sheetName: "Study Age Group",
-                            fileName: "Study Age Group",
+                            sheetName: "Study Factor Age",
+                            fileName: "Study Factor Age",
                         };
                         exportToExcelDuplicate(
                             prepareData.data,
@@ -104,8 +105,8 @@ const AddImportAgeModal = ({ show, handleClose }) => {
                         const prepareData = {
                             data: response.skipped_rows || [],
                             headers: ["Factor For", "Study Age Group", "Minimum Age","Maximum Age","Country", "Course Level","Reason"],
-                            sheetName: "Study Age Group",
-                            fileName: "Study Age Group",
+                            sheetName: "Study Factor Age",
+                            fileName: "Study Factor Age",
                         };
                         exportToExcelWrongData(
                             prepareData.data,
@@ -155,7 +156,7 @@ const AddImportAgeModal = ({ show, handleClose }) => {
                     <div className="modal-content radius-16 bg-base">
                         <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
                             <h1 className="modal-title fs-5" id="StateModalLabel">
-                                Upload Study Age Group
+                                Upload Study Factor Age
                             </h1>
                             <button
                                 type="button"
@@ -255,8 +256,8 @@ const AddImportAgeModal = ({ show, handleClose }) => {
             </div>
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
-                    downloadFileName: "Study Age Group",
-                    items: ["Factor For", "Study Age Group", "Minimum Age","Maximum Age","Country", "Course Level", "Description", "Modified On"],
+                    downloadFileName: "Study Factor Age",
+                    items: ["Factor For", "Study Age Group", "Minimum Age","Maximum Age","Country", "Course Level", "Description"],
                     selectedItems: ["Factor For", "Study Age Group", "Minimum Age","Maximum Age","Country", "Course Level"],
                     ItemsRequired: ["Factor For", "Study Age Group", "Minimum Age","Maximum Age","Country", "Course Level"]
                 }

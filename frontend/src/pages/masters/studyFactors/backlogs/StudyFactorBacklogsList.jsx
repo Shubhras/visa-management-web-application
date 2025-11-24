@@ -7,10 +7,10 @@ import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 import { countryDemoList } from '../../../../store/master/companyMasters/actions';
 import { useGlobalSearch, } from '../../../../components/comman/GlobalSearchContext';
 import MasterLayout from '../../../../masterLayout/MasterLayout';
-import AddEditAgeModal from './AddEditAgeModal';
-import AddImportAgeModal from './AddImportAgeModal';
-import { ageDelete, ageExportData, ageList } from '../../../../store/actions';
-const AgeList = () => {
+import { studyFactorBacklogsDelete, studyFactorBacklogsExportData, studyFactorBacklogsList } from '../../../../store/actions';
+import AddEditStudyFactorBacklogsModal from './AddEditStudyFactorBacklogsModal';
+import AddImportStudyFactorBacklogsModal from './AddImportStudyFactorBacklogsModal';
+const StudyFactorBacklogsList = () => {
   const dispatch = useDispatch();
   const { globalSearch, setGlobalSearch } = useGlobalSearch();
   const [modalState, setModalState] = useState({
@@ -58,18 +58,16 @@ const AgeList = () => {
   const [stateListData, setStateListData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [items] = useState(["Factor For", "Study Age Group", "Minimum Age","Maximum Age","Country", "Course Level", "Description", "Modified On"]);
-  const [selectedItems, setSelectedItems] = useState(["Factor For", "Study Age Group", "Minimum Age","Maximum Age","Country", "Course Level",]);
-  const [ItemsRequired] = useState(["Factor For", "Study Age Group", "Minimum Age","Maximum Age","Country", "Course Level",]);
+  const [items] = useState(["Factor For", "Study : Backlogs Group", "Backlogs Accepted","Maximum Backlogs Accepted","Description", "Modified On"]);
+  const [selectedItems, setSelectedItems] = useState(["Factor For", "Study : Backlogs Group", "Backlogs Accepted","Maximum Backlogs Accepted",]);
+  const [ItemsRequired] = useState(["Factor For", "Study : Backlogs Group", "Backlogs Accepted","Maximum Backlogs Accepted",]);
   const [countryListData, setCountryListData] = useState([]);
   // Table columns configuration
   const [tableColumns] = useState([
       { id: 'factorForName', label: 'Factor For', field: 'factorForName', visible: true, required: false, filterable: false },
-      { id: 'studyAgeGroup', label: 'Study Age Group', field: 'studyAgeGroup', visible: true, required: false, filterable: false },
-      { id: 'minimumAge', label: 'Minimum Age(Months)', field: 'minimumAge', visible: true, required: false, filterable: false },
-      { id: 'maximumAge', label: 'Maximum Age(Months)', field: 'maximumAge', visible: true, required: false, filterable: false },
-      { id: 'countryName', label: 'Country', field: 'countryId', visible: true, required: false, filterable: true },
-    { id: 'courseLevel', label: 'Course Level', field: 'courseLevel', visible: true, required: false, filterable: false },
+      { id: 'studyBacklogsGroup', label: 'Study : Backlogs Group', field: 'studyBacklogsGroup', visible: true, required: false, filterable: false },
+      { id: 'backlogsAccepted', label: 'Backlogs Accepted', field: 'backlogsAccepted', visible: true, required: false, filterable: false },
+      { id: 'maximumBacklogsAccepted', label: 'Maximum Backlogs Accepted', field: 'maximumBacklogsAccepted', visible: true, required: false, filterable: false },
     { id: 'description', label: 'Description', field: 'description', visible: false, required: false, filterable: false },
     { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false, filterable: false },
   ]);
@@ -163,7 +161,7 @@ const AgeList = () => {
       country: columnFilters.countryId.length > 0 ? columnFilters.countryId : null,
     };
 
-    dispatch(ageList(params, (response, error) => {
+    dispatch(studyFactorBacklogsList(params, (response, error) => {
       setLoading(false);
       if (response?.statusCode === 200 && response?.status === true) {
         const paginationData = response?.pagination || {};
@@ -514,7 +512,7 @@ const AgeList = () => {
       toast.error("No state selected for deletion.");
       return;
     }
-    dispatch(ageDelete(sendPayload, (response, error) => {
+    dispatch(studyFactorBacklogsDelete(sendPayload, (response, error) => {
       if (error) {
         toast.error(error?.response?.data?.message || "server error");
       } else {
@@ -597,12 +595,10 @@ const AgeList = () => {
     // Map frontend labels to State field names
 
     const fieldMapping = {
-      "Country": "country",
       "Factor For": "factor_for",
-      "Study Age Group": "study_age_group",
-      "Minimum Age": "minimum_age_months",
-      "Maximum Age":"maximum_age_months",
-      "Course Level":"course_level",
+      "Study : Backlogs Group": "studyBacklogsGroup",
+      "Backlogs Accepted": "backlogsAccepted",
+      "Maximum Backlogs Accepted":"maximumBacklogsAccepted",
       "Description": "description",
       "Modified On": "updated_at",
     };
@@ -620,7 +616,7 @@ const AgeList = () => {
     };
 
     setLoadingExport(true);
-    dispatch(ageExportData(sendPayload, (response, error) => {
+    dispatch(studyFactorBacklogsExportData(sendPayload, (response, error) => {
       if (error) {
         setLoadingExport(false);
         toast.error(error?.response?.message || "server error");
@@ -634,7 +630,7 @@ const AgeList = () => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `Age.xlsx`;
+          link.download = `Stuy Factor : Academic Result.xlsx`;
           document.body.appendChild(link);
           link.click();
           link.remove();
@@ -1050,19 +1046,14 @@ const AgeList = () => {
                         {isColumnVisible('factorForName') && (
                           <td><span>{rowItem.factor_for_name}</span></td>
                         )}
-                        {isColumnVisible('studyAgeGroup') && (
-                          <td><span>{rowItem.study_age_group_name}</span></td>
+                        {isColumnVisible('studyBacklogsGroup') && (
+                          <td><span>{rowItem.Academicresult}</span></td>
                         )}
-                        {isColumnVisible('minimumAge') && (
-                          <td><span>{rowItem.minimum_age_months}</span></td>
+                        {isColumnVisible('backlogsAccepted') && (
+                          <td><span>{rowItem.minimumAcademicResultType}</span></td>
                         )}
-                        {isColumnVisible('maximumAge') && (
-                          <td><span>{rowItem.maximum_age_months}</span></td>
-                        )} {isColumnVisible('countryName') && (
-                            <td><span>{Array.isArray(rowItem.countryName) ? rowItem.countryName.join(", ") : rowItem.countryName}</span></td>
-                        )}
-                        {isColumnVisible('courseLevel') && (
-                          <td><span>{Array.isArray(rowItem.courseLevel) ? rowItem.courseLevel.join(", ") : rowItem.courseLevel}</span></td>
+                        {isColumnVisible('maximumBacklogsAccepted') && (
+                          <td><span>{rowItem.minimumAcademicResult}</span></td>
                         )}
                         {isColumnVisible('description') && (
                           <td><span>{rowItem.description}</span></td>
@@ -1094,14 +1085,14 @@ const AgeList = () => {
             </div>
           </div>
         </div>
-        <AddEditAgeModal
+        <AddEditStudyFactorBacklogsModal
           show={modalState.show}
           handleClose={handleClose}
           mode={modalState.mode}
           rowData={modalState.rowData}
         />
         {showImport && (
-          <AddImportAgeModal show={showImport} handleClose={handleCloseImport} />)}
+          <AddImportStudyFactorBacklogsModal show={showImport} handleClose={handleCloseImport} />)}
         {showDeleteConfirm && (
           <div className="modal fade show common-ctl-popup">
             <div className="modal-dialog modal-dialog-centered">
@@ -1143,7 +1134,7 @@ const AgeList = () => {
             <div className="modal-dialog modal-xl modal-dialog-centered" role="document">
               <div className="modal-content radius-16 bg-base">
                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                  <h1 className="modal-title fs-5">Export Age</h1>
+                  <h1 className="modal-title fs-5">Export Study Factor: Backlogs</h1>
                   <button
                     type="button"
                     className="btn-close"
@@ -1248,4 +1239,4 @@ const AgeList = () => {
   );
 };
 
-export default AgeList;
+export default StudyFactorBacklogsList;

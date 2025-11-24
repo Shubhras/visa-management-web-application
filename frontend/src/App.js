@@ -471,6 +471,8 @@ import VisaNameList from "./pages/masters/visaMaster/visaName/VisaNameList";
 import EntranceTestAbilityGroupList from "./pages/masters/studyFactors/entranceTestAbilityGroup/EntranceTestAbilityGroupList";
 import LanguageAbilityGroupList from "./pages/masters/studyFactors/languageAbilityGroup/LanguageAbilityGroupList";
 import AgeList from "./pages/masters/studyFactors/age/AgeList";
+import StudyFactorAcademicResultList from "./pages/masters/studyFactors/academicResult/StudyFactorAcademicResultList";
+import StudyFactorBacklogsList from "./pages/masters/studyFactors/backlogs/StudyFactorBacklogsList";
 
 
 
@@ -830,6 +832,7 @@ function App() {
           <Route path="/visa-status" element={<ProtectedRoute><VisaStatusList /></ProtectedRoute>}></Route>
           <Route path="/possibility-level" element={<ProtectedRoute><PossibilityLevelList /></ProtectedRoute>}></Route>
           <Route path="/visa-name" element={<ProtectedRoute><VisaNameList /></ProtectedRoute>}></Route>
+
           {/* Study Factors Master */}
           <Route path="/factor-for" element={<ProtectedRoute><FactorForList /></ProtectedRoute>}></Route>
           <Route path="/age-group" element={<ProtectedRoute><AgeGroupList /></ProtectedRoute>}></Route>
@@ -839,6 +842,8 @@ function App() {
           <Route path="/language-ability-group" element={<ProtectedRoute><LanguageAbilityGroupList /></ProtectedRoute>}></Route>
           <Route path="/entrance-test-ability-group" element={<ProtectedRoute><EntranceTestAbilityGroupList /></ProtectedRoute>}></Route>
           <Route path="/age" element={<ProtectedRoute><AgeList /></ProtectedRoute>}></Route>
+          <Route path="/study-factor-academic-result" element={<ProtectedRoute><StudyFactorAcademicResultList /></ProtectedRoute>}></Route>
+          <Route path="/study-factor-backlogs" element={<ProtectedRoute><StudyFactorBacklogsList /></ProtectedRoute>}></Route>
 
           {/* 404 Error Page */}
           <Route path='*' element={<ErrorPage />} />

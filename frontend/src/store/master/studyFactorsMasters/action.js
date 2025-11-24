@@ -8,6 +8,8 @@ import {
   ADD_FACTOR_FOR,
   ADD_GAP_GROUP,
   ADD_LANGUAGE_ABILITY_GROUP,
+  ADD_STUDY_FACTOR_ACADEMIC_RESULT,
+  ADD_STUDY_FACTOR_BACKLOGS,
   AGE_GROUP_LIST,
   AGE_LIST,
   BACKLOGS_GROUP_LIST,
@@ -19,6 +21,8 @@ import {
   DELETE_FACTOR_FOR,
   DELETE_GAP_GROUP,
   DELETE_LANGUAGE_ABILITY_GROUP,
+  DELETE_STUDY_FACTOR_ACADEMIC_RESULT,
+  DELETE_STUDY_FACTOR_BACKLOGS,
   EDIT_ACADEMIC_RESULT_GROUP,
   EDIT_AGE,
   EDIT_AGE_GROUP,
@@ -27,6 +31,8 @@ import {
   EDIT_FACTOR_FOR,
   EDIT_GAP_GROUP,
   EDIT_LANGUAGE_ABILITY_GROUP,
+  EDIT_STUDY_FACTOR_ACADEMIC_RESULT,
+  EDIT_STUDY_FACTOR_BACKLOGS,
   ENTRANCE_TEST_ABILITY_GROUP_LIST,
   EXPORT_ACADEMIC_RESULT_GROUP,
   EXPORT_AGE,
@@ -36,6 +42,8 @@ import {
   EXPORT_FACTOR_FOR,
   EXPORT_GAP_GROUP,
   EXPORT_LANGUAGE_ABILITY_GROUP,
+  EXPORT_STUDY_FACTOR_ACADEMIC_RESULT,
+  EXPORT_STUDY_FACTOR_BACKLOGS,
   FACTOR_FOR_LIST,
   GAP_GROUP_LIST,
   IMPORT_ACADEMIC_RESULT_GROUP,
@@ -46,7 +54,11 @@ import {
   IMPORT_FACTOR_FOR,
   IMPORT_GAP_GROUP,
   IMPORT_LANGUAGE_ABILITY_GROUP,
+  IMPORT_STUDY_FACTOR_ACADEMIC_RESULT,
+  IMPORT_STUDY_FACTOR_BACKLOGS,
   LANGUAGE_ABILITY_GROUP_LIST,
+  STUDY_FACTOR_ACADEMIC_RESULT_LIST,
+  STUDY_FACTOR_BACKLOGS_LIST,
 } from "./actionType";
 
 // FACTOR_FOR
@@ -336,6 +348,78 @@ export const ageExportData = (data, callback) => ({
 
 export const ageImportData = (data, callback) => ({
   type: IMPORT_AGE,
+  data,
+  callback,
+});
+
+export const studyFactorAcademicResultList = (data, callback) => ({
+  type: STUDY_FACTOR_ACADEMIC_RESULT_LIST,
+  data,
+  callback,
+});
+
+export const studyFactorAcademicResultAdd = (data, callback) => ({
+  type: ADD_STUDY_FACTOR_ACADEMIC_RESULT,
+  data,
+  callback,
+});
+
+export const studyFactorAcademicResultEdit = (data, callback) => ({
+  type: EDIT_STUDY_FACTOR_ACADEMIC_RESULT,
+  data,
+ callback,
+});
+
+export const studyFactorAcademicResultDelete = (data, callback) => ({
+  type: DELETE_STUDY_FACTOR_ACADEMIC_RESULT,
+  data,
+  callback,
+});
+
+export const studyFactorAcademicResultExportData = (data, callback) => ({
+  type: EXPORT_STUDY_FACTOR_ACADEMIC_RESULT,
+  data,
+  callback,
+});
+
+export const studyFactorAcademicResultImportData = (data, callback) => ({
+  type: IMPORT_STUDY_FACTOR_ACADEMIC_RESULT,
+  data,
+  callback,
+});
+
+export const studyFactorBacklogsList = (data, callback) => ({
+  type: STUDY_FACTOR_BACKLOGS_LIST,
+  data,
+  callback,
+});
+
+export const studyFactorBacklogsAdd = (data, callback) => ({
+  type: ADD_STUDY_FACTOR_BACKLOGS,
+  data,
+  callback,
+});
+
+export const studyFactorBacklogsEdit = (data, callback) => ({
+  type: EDIT_STUDY_FACTOR_BACKLOGS,
+  data,
+  callback,
+});
+
+export const studyFactorBacklogsDelete = (data, callback) => ({
+  type: DELETE_STUDY_FACTOR_BACKLOGS,
+  data,
+  callback,
+});
+
+export const studyFactorBacklogsExportData = (data, callback) => ({
+  type: EXPORT_STUDY_FACTOR_BACKLOGS,
+  data,
+  callback,
+});
+
+export const studyFactorBacklogsImportData = (data, callback) => ({
+  type: IMPORT_STUDY_FACTOR_BACKLOGS,
   data,
   callback,
 });

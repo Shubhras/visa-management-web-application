@@ -4935,3 +4935,67 @@ export const exportAgeAPI = (payload) => {
 export const importAgeAPI = (payload) => {
     return post(url.IMPORT_AGE_API, payload);
 };
+
+// Study Factor – Academic Result
+export const getStudyFactorAcademicResultListAPI = (data) => {
+  const apiUrl = `${url.GET_STUDY_FACTOR_ACADEMIC_RESULT_LIST}?search=${data?.search}&page=${
+    data?.page
+  }&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
+
+export const addStudyFactorAcademicResultAPI = (payload) => {
+  return post(url.ADD_STUDY_FACTOR_ACADEMIC_RESULT_API, payload);
+};
+
+export const editStudyFactorAcademicResultAPI = (payload) => {
+  const apiUrl = `${url.EDIT_STUDY_FACTOR_ACADEMIC_RESULT_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+
+export const deleteStudyFactorAcademicResultAPI = (payload) => {
+  const apiUrl = `${url.DELETE_STUDY_FACTOR_ACADEMIC_RESULT_API}delete/`;
+  return delWithPayload(apiUrl, { id: payload });
+};
+
+export const exportStudyFactorAcademicResultAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_STUDY_FACTOR_ACADEMIC_RESULT_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+
+export const importStudyFactorAcademicResultAPI = (payload) => {
+  return post(url.IMPORT_STUDY_FACTOR_ACADEMIC_RESULT_API, payload);
+};
+
+// Study Factor – Backlogs
+export const getStudyFactorBacklogsListAPI = (data) => {
+  const apiUrl = `${url.GET_STUDY_FACTOR_BACKLOGS_LIST}?search=${data?.search}&page=${
+    data?.page
+  }&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
+
+export const addStudyFactorBacklogsAPI = (payload) => {
+  return post(url.ADD_STUDY_FACTOR_BACKLOGS_API, payload);
+};
+
+export const editStudyFactorBacklogsAPI = (payload) => {
+  const apiUrl = `${url.EDIT_STUDY_FACTOR_BACKLOGS_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+
+export const deleteStudyFactorBacklogsAPI = (payload) => {
+  const apiUrl = `${url.DELETE_STUDY_FACTOR_BACKLOGS_API}delete/`;
+  return delWithPayload(apiUrl, { id: payload });
+};
+
+export const exportStudyFactorBacklogsAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_STUDY_FACTOR_BACKLOGS_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+
+export const importStudyFactorBacklogsAPI = (payload) => {
+  return post(url.IMPORT_STUDY_FACTOR_BACKLOGS_API, payload);
+};
+
+
