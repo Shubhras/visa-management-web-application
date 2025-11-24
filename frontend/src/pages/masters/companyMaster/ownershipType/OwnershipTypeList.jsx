@@ -47,7 +47,6 @@ const OwnershipTypeList = () => {
 
   // const [showEdit, setShowEdit] = useState(false);
   const [showImport, setShowImport] = useState(false);
-  const [rowSelectData, setRowSelectData] = useState({});
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmMessage, setDeleteConfirmMessage] = useState(
@@ -74,7 +73,7 @@ const OwnershipTypeList = () => {
 
 
   const [columnFilters, setColumnFilters] = useState({
-    name: [], // filter by company type NAME
+    company_type: [], // filter by company type NAME
   });
 
   const [activeFilterColumn, setActiveFilterColumn] = useState(null);
@@ -97,7 +96,7 @@ const OwnershipTypeList = () => {
       filterable: false,
     },
     {
-      id: "name",
+      id: "company_type",
       label: "Company Type",
       field: "name",
       visible: true,
@@ -224,9 +223,9 @@ const OwnershipTypeList = () => {
       sortBy: tableState.sortBy || "",
       sortOrder: tableState.sortOrder || "",
       sort: tableState.sort,
-      name:
-        columnFilters.name.length > 0
-          ? columnFilters.name
+      company_type:
+        columnFilters.company_type.length > 0
+          ? columnFilters.company_type
           : null,
     };
 
@@ -421,7 +420,7 @@ const OwnershipTypeList = () => {
 
   const clearAllOnlyHeaderFilters = () => {
     setColumnFilters({
-      name: [],
+      company_type: [],
     });
   };
 
@@ -459,25 +458,10 @@ const OwnershipTypeList = () => {
     }));
     setGlobalSearch("");
     setColumnFilters({
-      name: [],
+      company_type: [],
     });
   };
 
-  const handleSearchChange = (value) => {
-    setTableState((prev) => ({
-      ...prev,
-      search: value,
-      page: 1,
-    }));
-  };
-
-  const handleStatusChange = (value) => {
-    setTableState((prev) => ({
-      ...prev,
-      status: value === "All" ? "" : value,
-      page: 1,
-    }));
-  };
 
   const handlePageLengthChange = (value) => {
     setTableState((prev) => ({
@@ -487,14 +471,6 @@ const OwnershipTypeList = () => {
     }));
   };
 
-  // For "Select All" button
-  const handleSelectAllButton = () => {
-    if (isAllSelected) {
-      setSelectedRows([]);
-    } else {
-      setSelectedRows(ownershipTypeData.map((Item) => Item.uuid));
-    }
-  };
 
   // For checkbox in table header
   const handleSelectAll = (e) => {
@@ -703,7 +679,7 @@ const OwnershipTypeList = () => {
       uuids: selectAllOrNot === "all" ? [] : selectedRows,
       search: tableState.search || "",
       sort: tableState.sort,
-      name:
+      company_type:
         columnFilters.name.length > 0
           ? columnFilters.name
           : null,
