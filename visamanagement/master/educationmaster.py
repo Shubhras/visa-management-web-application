@@ -816,7 +816,7 @@ class EducationLevelListAPIView(APIView):
                     pass
 
         if uuid_list:
-            queryset = queryset.filter(uuid__in=uuid_list)
+            queryset = queryset.filter(level_code__uuid__in=uuid_list)
 
         # ---------------------------
         # Search filter
@@ -1090,7 +1090,7 @@ class EducationLevelExportAPIView(APIView):
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')
-        uuids_param = request.GET.get('uuids', '')
+        uuids_param = request.GET.get('educationLevelCode', '')
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
         field_header_map = {
@@ -1108,7 +1108,7 @@ class EducationLevelExportAPIView(APIView):
 
         queryset = EducationLevel.objects.filter(is_deleted=False)
         if uuids:
-            queryset = queryset.filter(educationlevel__uuid__in=uuids)
+            queryset = queryset.filter(level_code__uuid__in=uuids)
         queryset = queryset.order_by('-created_at')
 
         dataset = Dataset()
