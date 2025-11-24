@@ -1160,7 +1160,7 @@ export const getEducationLevelListDataAPI = (data) => {
             .map(item => `${item.field}:${item.order}`)
             .join(",");
     }
-    const apiUrl = `${url.GET_EDUCATION_LEVEL_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
+    const apiUrl = `${url.GET_EDUCATION_LEVEL_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&educationLevelCode=${data?.educationLevelCode}&customSort=${customSort}`;
     return get(apiUrl);
 };
 
@@ -1731,7 +1731,7 @@ export const getStudyMajorAreaListDataAPI = (data) => {
             .map(item => `${item.field}:${item.order}`)
             .join(",");
     }
-    const apiUrl = `${url.GET_STUDY_MAJOR_AREA_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
+    const apiUrl = `${url.GET_STUDY_MAJOR_AREA_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&studyMainArea=${data?.studyMainArea}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
     return get(apiUrl);
 };
 
@@ -1906,7 +1906,7 @@ export const getStudySpecialisationListDataAPI = (data) => {
             .map(item => `${item.field}:${item.order}`)
             .join(",");
     }
-    const apiUrl = `${url.GET_STUDY_SPECIALISATION_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
+    const apiUrl = `${url.GET_STUDY_SPECIALISATION_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&studyMainArea=${data.studyMainArea}&studyMajorArea=${data.studyMajorArea}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
     return get(apiUrl);
 };
 
@@ -1960,7 +1960,7 @@ export const getDegreeAwardedByListDataAPI = (data) => {
             .map(item => `${item.field}:${item.order}`)
             .join(",");
     }
-    const apiUrl = `${url.GET_DEGREE_AWARDED_BY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
+    const apiUrl = `${url.GET_DEGREE_AWARDED_BY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&country=${data?.country}&educationLevel=${data?.educationLevel}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
     return get(apiUrl);
 };
 
@@ -2013,7 +2013,7 @@ export const getAcademicResultListDataAPI = (data) => {
             .map(item => `${item.field}:${item.order}`)
             .join(",");
     }
-    const apiUrl = `${url.GET_ACADEMIC_RESULT_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
+    const apiUrl = `${url.GET_ACADEMIC_RESULT_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&academicResultType=${data?.academicResultType}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
     return get(apiUrl);
 };
 
@@ -2072,7 +2072,7 @@ export const getDegreeAwardedInstituteListDataAPI = (data) => {
             .map(item => `${item.field}:${item.order}`)
             .join(",");
     }
-    const apiUrl = `${url.GET_DEGREE_AWARDED_INSTITUTE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
+    const apiUrl = `${url.GET_DEGREE_AWARDED_INSTITUTE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&country=${data?.country}&state=${data?.state}&educationLevel=${data?.educationLevel}&degreeAwardedBy=${data?.degreeAwardedBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
     return get(apiUrl);
 };
 
@@ -2126,7 +2126,7 @@ export const getAcademicResultToResultListAPI = (data) => {
             .map(item => `${item.field}:${item.order}`)
             .join(",");
     }
-    const apiUrl = `${url.GET_ACADEMIC_RESULT_TO_RESULT_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
+    const apiUrl = `${url.GET_ACADEMIC_RESULT_TO_RESULT_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&academicResultType=${data?.academicResultType}&academicResult=${data?.academicResult}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
     return get(apiUrl);
 };
 
@@ -2344,7 +2344,7 @@ export const getEcaAwardingBodyListAPI = (data) => {
             .map(item => `${item.field}:${item.order}`)
             .join(",");
     }
-    const apiUrl = `${url.GET_ECA_AWARDING_BODY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
+    const apiUrl = `${url.GET_ECA_AWARDING_BODY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&country=${data?.country}&ecaFor=${data?.ecaFor}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
     return get(apiUrl);
 };
 
