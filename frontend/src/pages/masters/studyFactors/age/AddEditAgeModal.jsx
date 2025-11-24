@@ -176,10 +176,10 @@ const AddEditAgeModal = ({ show, handleClose, mode = 'add', rowData = null }) =>
           description: formData.description.trim(),
         }
         : {
-         factorForName: formData.factorForName,
-          studyAgeGroup: formData.studyAgeGroup,
-          minimumAge: formData.minimumAge,
-          maximumAge: formData.maximumAge,
+         factor_for: formData.factorForName,
+          study_age_group: formData.studyAgeGroup,
+          minimum_age_months: formData.minimumAge,
+          maximum_age_months: formData.maximumAge,
           countryName: formData.countryName,
           courseLevel: formData.courseLevel,
           description: formData.description.trim(),
@@ -378,7 +378,7 @@ const AddEditAgeModal = ({ show, handleClose, mode = 'add', rowData = null }) =>
                 {/* State Name */}
                 <div className="col-6 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Minimum Age <span className="text-danger">*</span>
+                    Minimum Age (Months)<span className="text-danger">*</span>
                   </label>
                   <input
                     type="number"
@@ -394,7 +394,7 @@ const AddEditAgeModal = ({ show, handleClose, mode = 'add', rowData = null }) =>
                 </div>
                 <div className="col-6 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Maximum Age <span className="text-danger">*</span>
+                    Maximum Age (Months) <span className="text-danger">*</span>
                   </label>
                   <input
                     type="number"

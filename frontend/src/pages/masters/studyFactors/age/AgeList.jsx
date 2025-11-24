@@ -1048,17 +1048,17 @@ const AgeList = () => {
                           </div>
                         </td>
                         {isColumnVisible('factorForName') && (
-                          <td><span>{rowItem.factorForName}</span></td>
+                          <td><span>{rowItem.factor_for_name}</span></td>
                         )}
 
                         {isColumnVisible('studyAgeGroup') && (
-                          <td><span>{rowItem.studyAgeGroup}</span></td>
+                          <td><span>{rowItem.study_age_group_name}</span></td>
                         )}
                         {isColumnVisible('minimumAge') && (
-                          <td><span>{rowItem.minimumAge}</span></td>
+                          <td><span>{rowItem.minimum_age_months}</span></td>
                         )}
                         {isColumnVisible('maximumAge') && (
-                          <td><span>{rowItem.maximumAge}</span></td>
+                          <td><span>{rowItem.maximum_age_months}</span></td>
                         )} {isColumnVisible('countryName') && (
                           <td><span>{rowItem.countryName}</span></td>
                         )}
