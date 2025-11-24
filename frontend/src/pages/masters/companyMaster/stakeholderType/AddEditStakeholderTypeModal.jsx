@@ -53,8 +53,8 @@ const AddEditStakeholderTypeModal = ({ show, handleClose, mode = 'add', rowData 
       limit: 2000,
       search: '',
       status: '',
-      sortBy: 'updated_at',
-      sortOrder: 'desc',
+      sortBy: 'name',
+      sortOrder: 'asc',
     };
 
     dispatch(stakeholderCategoryList(params, (response, error) => {
@@ -151,7 +151,7 @@ const AddEditStakeholderTypeModal = ({ show, handleClose, mode = 'add', rowData 
           if (response?.statusCode === 200 && response?.status === true) {
             toast.success(response?.message);
             resetForm();
-            handleClose();
+            handleClose(true);
           } else {
             toast.error("Something went wrong.");
           }
@@ -175,7 +175,7 @@ const AddEditStakeholderTypeModal = ({ show, handleClose, mode = 'add', rowData 
   const onClose = () => {
     resetForm();
     setLoading(false);
-    handleClose();
+    handleClose(false);
   };
 
   // Conditional return after all hooks

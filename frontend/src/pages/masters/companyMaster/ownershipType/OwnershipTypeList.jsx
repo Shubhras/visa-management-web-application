@@ -12,17 +12,21 @@ import {
   ownershipTypeDelete,
   ownershipTypeExportData,
 } from "../../../../store/master/companyMasters/actions";
+import { companyList } from "../../../../store/master/actions";
+
 import { formatDateDDMMYYYYTime } from "../../../../helper/utils/commanHelper";
 import { useGlobalSearch } from "../../../../components/comman/GlobalSearchContext";
 
 const OwnershipTypeList = () => {
   const dispatch = useDispatch();
   const { globalSearch, setGlobalSearch } = useGlobalSearch();
+
   const [modalState, setModalState] = useState({
     show: false,
     mode: "add", // 'add' or 'edit'
     rowData: null,
   });
+
   const handleShow = () => {
     setModalState({
       show: true,
@@ -30,6 +34,7 @@ const OwnershipTypeList = () => {
       rowData: null,
     });
   };
+
   // For closing modal
   const handleClose = () => {
     setModalState({
@@ -42,7 +47,6 @@ const OwnershipTypeList = () => {
 
   // const [showEdit, setShowEdit] = useState(false);
   const [showImport, setShowImport] = useState(false);
-  const [rowSelectData, setRowSelectData] = useState({});
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmMessage, setDeleteConfirmMessage] = useState(
@@ -54,6 +58,7 @@ const OwnershipTypeList = () => {
   const [ownershipTypeData, setOwnershipTypeData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
+
   const [items] = useState([
     "Ownership Type",
     "Company Type",
@@ -66,6 +71,20 @@ const OwnershipTypeList = () => {
   ]);
   const [ItemsRequired] = useState(["Ownership Type", "Company Type"]);
 
+
+  const [columnFilters, setColumnFilters] = useState({
+    company_type: [], // filter by company type NAME
+  });
+
+  const [activeFilterColumn, setActiveFilterColumn] = useState(null);
+  const [filterDropdownData, setFilterDropdownData] = useState({});
+  const [filterSearchTerms, setFilterSearchTerms] = useState({});
+  const filterDropdownRef = useRef(null);
+
+  // Company type list for filter (from getCompanyListDataAPI)
+  const [companyTypeOptionsLoaded, setCompanyTypeOptionsLoaded] =
+    useState(false);
+
   // Table columns configuration
   const [tableColumns] = useState([
     {
@@ -74,13 +93,15 @@ const OwnershipTypeList = () => {
       field: "name",
       visible: true,
       required: false,
+      filterable: false,
     },
     {
-      id: "company_type_name",
+      id: "company_type",
       label: "Company Type",
-      field: "company_type_name",
+      field: "name",
       visible: true,
       required: false,
+      filterable: true, 
     },
     {
       id: "description",
@@ -88,6 +109,7 @@ const OwnershipTypeList = () => {
       field: "description",
       visible: true,
       required: false,
+      filterable: false,
     },
     {
       id: "updated_at",
@@ -95,6 +117,7 @@ const OwnershipTypeList = () => {
       field: "updated_at",
       visible: true,
       required: false,
+      filterable: false,
     },
   ]);
 
@@ -103,6 +126,7 @@ const OwnershipTypeList = () => {
   );
   const [showColumnDropdown, setShowColumnDropdown] = useState(false);
   const columnDropdownRef = useRef(null);
+
   // Column visibility toggle handler
   const toggleColumnVisibility = (columnId) => {
     const column = tableColumns.find((col) => col.id === columnId);
@@ -122,6 +146,7 @@ const OwnershipTypeList = () => {
     return visibleColumns.includes(columnId);
   };
 
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -130,17 +155,21 @@ const OwnershipTypeList = () => {
       ) {
         setShowColumnDropdown(false);
       }
+      if (
+        filterDropdownRef.current &&
+        !filterDropdownRef.current.contains(event.target)
+      ) {
+        setActiveFilterColumn(null);
+      }
     };
 
-    if (showColumnDropdown) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [showColumnDropdown]);
-  // Updated state with sorting
+  }, []);
+
+
   const [tableState, setTableState] = useState({
     page: 1,
     limit: 25,
@@ -168,10 +197,12 @@ const OwnershipTypeList = () => {
     }, 500);
 
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tableState.search]);
 
   useEffect(() => {
     fetchBankAccountTypeList();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     tableState.page,
     tableState.limit,
@@ -179,6 +210,7 @@ const OwnershipTypeList = () => {
     tableState.sortBy,
     tableState.sortOrder,
     tableState.sort,
+    columnFilters,
   ]);
 
   const fetchBankAccountTypeList = () => {
@@ -191,6 +223,10 @@ const OwnershipTypeList = () => {
       sortBy: tableState.sortBy || "",
       sortOrder: tableState.sortOrder || "",
       sort: tableState.sort,
+      company_type:
+        columnFilters.company_type.length > 0
+          ? columnFilters.company_type
+          : null,
     };
 
     dispatch(
@@ -229,7 +265,50 @@ const OwnershipTypeList = () => {
     );
   };
 
-  // Handle sorting
+  const fetchCompanyTypeOptions = () => {
+    if (companyTypeOptionsLoaded) return; 
+
+    const params = {
+      page: 1,
+      limit: 2000,
+      search: "",
+      status: "",
+      sortBy: "name",
+      sortOrder: "asc",
+    };
+
+    dispatch(
+      companyList(params, (response, error) => {
+        if (response?.statusCode === 200 && response?.status === true) {
+          const options =
+            (response?.data || [])
+              .map((item) => {
+                const name =
+                  item.name ||
+                  item.companyTypeName ||
+                  item.name ||
+                  "";
+                return name
+                  ? {
+                      id: name, // we filter by NAME
+                      name,
+                    }
+                  : null;
+              })
+              .filter(Boolean)
+              .sort((a, b) => a.name.localeCompare(b.name)) || [];
+
+          setFilterDropdownData((prev) => ({
+            ...prev,
+            name: options,
+          }));
+          setCompanyTypeOptionsLoaded(true);
+        }
+      })
+    );
+  };
+
+
   const handleSort = (field) => {
     setTableState((prev) => {
       let newSort = [...prev.sort];
@@ -259,7 +338,108 @@ const OwnershipTypeList = () => {
     return <Icon icon="ri:sort-desc" className="sorting-th-icone" />;
   };
 
-  // Clear all filters
+  // Small helpers for filter dropdown to apply sort
+  const applySortAsc = (field) => {
+    setTableState((prev) => {
+      let newSort = [...prev.sort];
+      const existingIndex = newSort.findIndex((s) => s.field === field);
+
+      if (existingIndex === -1) {
+        newSort.push({ field, order: "asc" });
+      } else {
+        newSort[existingIndex].order = "asc";
+      }
+
+      return { ...prev, sort: newSort, page: 1 };
+    });
+  };
+
+  const applySortDesc = (field) => {
+    setTableState((prev) => {
+      let newSort = [...prev.sort];
+      const existingIndex = newSort.findIndex((s) => s.field === field);
+
+      if (existingIndex === -1) {
+        newSort.push({ field, order: "desc" });
+      } else {
+        newSort[existingIndex].order = "desc";
+      }
+
+      return { ...prev, sort: newSort, page: 1 };
+    });
+  };
+
+  const toggleFilterDropdown = (e, columnField) => {
+    e.stopPropagation();
+
+    // When opening Company Type filter, ensure options are loaded
+    if (columnField === "name" && !companyTypeOptionsLoaded) {
+      fetchCompanyTypeOptions();
+    }
+
+    setActiveFilterColumn(
+      activeFilterColumn === columnField ? null : columnField
+    );
+    setFilterSearchTerms((prev) => ({ ...prev, [columnField]: "" }));
+  };
+
+  const handleFilterCheckboxChange = (columnField, value, checked) => {
+    setColumnFilters((prev) => {
+      const currentFilters = prev[columnField] || [];
+      let newFilters;
+      if (checked) {
+        newFilters = [...currentFilters, value];
+      } else {
+        newFilters = currentFilters.filter((v) => v !== value);
+      }
+      return { ...prev, [columnField]: newFilters };
+    });
+  };
+
+  const handleFilterSelectAll = (columnField) => {
+    const searchTerm = filterSearchTerms[columnField] || "";
+
+    const availableOptions = (filterDropdownData[columnField] || [])
+      .filter((option) =>
+        option.name.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      .map((option) => option.id); // here id === name
+
+    setColumnFilters((prev) => ({
+      ...prev,
+      [columnField]: availableOptions,
+    }));
+  };
+
+  const handleFilterClearAll = (columnField) => {
+    setColumnFilters((prev) => ({
+      ...prev,
+      [columnField]: [],
+    }));
+  };
+
+  const clearAllOnlyHeaderFilters = () => {
+    setColumnFilters({
+      company_type: [],
+    });
+  };
+
+  const hasActiveFilters = () => {
+    return Object.values(columnFilters).some(
+      (filters) => filters && filters.length > 0
+    );
+  };
+
+  const getFilteredOptions = (columnField) => {
+    const searchTerm = filterSearchTerms[columnField] || "";
+    const options = filterDropdownData[columnField] || [];
+
+    return options.filter((option) =>
+      option.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  };
+
+
   const clearAllFilters = () => {
     setTableState((prev) => ({
       ...prev,
@@ -276,25 +456,12 @@ const OwnershipTypeList = () => {
       hasNext: false,
       hasPrevious: false,
     }));
-    // Reset Global Search
     setGlobalSearch("");
+    setColumnFilters({
+      company_type: [],
+    });
   };
 
-  const handleSearchChange = (value) => {
-    setTableState((prev) => ({
-      ...prev,
-      search: value,
-      page: 1,
-    }));
-  };
-
-  const handleStatusChange = (value) => {
-    setTableState((prev) => ({
-      ...prev,
-      status: value === "All" ? "" : value,
-      page: 1,
-    }));
-  };
 
   const handlePageLengthChange = (value) => {
     setTableState((prev) => ({
@@ -304,14 +471,7 @@ const OwnershipTypeList = () => {
     }));
   };
 
-  // For "Select All" button
-  const handleSelectAllButton = () => {
-    if (isAllSelected) {
-      setSelectedRows([]);
-    } else {
-      setSelectedRows(ownershipTypeData.map((Item) => Item.uuid));
-    }
-  };
+
   // For checkbox in table header
   const handleSelectAll = (e) => {
     const checked = e.target.checked;
@@ -368,18 +528,14 @@ const OwnershipTypeList = () => {
       } else {
         pages.push(1);
         pages.push("...");
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i);
+        for (let i = currentPage - 1; i <= currentPage + 1; i++)
+          pages.push(i);
         pages.push("...");
         pages.push(totalPages);
       }
     }
     return pages;
   };
-
-  // const handleCloseEdit = () => {
-  //   setShowEdit(false);
-  //   fetchBankAccountTypeList();
-  // };
 
   const handleShowEdit = (rowData) => {
     setModalState({
@@ -388,9 +544,11 @@ const OwnershipTypeList = () => {
       rowData: rowData,
     });
   };
+
   const handleSelectAllOrNot = (a) => {
     setSelectAllOrNot(a);
   };
+
   const handleDelete = (uuid) => {
     setDeleteId(uuid);
     setShowDeleteConfirm(true);
@@ -404,7 +562,6 @@ const OwnershipTypeList = () => {
       toast.error("Please select at least one row to delete");
       return;
     }
-    // Choose message based on delete type
     const message =
       selectAllOrNot === "all"
         ? `${tableState.total} all ownership type`
@@ -416,7 +573,6 @@ const OwnershipTypeList = () => {
   };
 
   const confirmDelete = () => {
-    // const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
     const sendPayload =
       selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
     if (!sendPayload || sendPayload.length === 0) {
@@ -491,7 +647,6 @@ const OwnershipTypeList = () => {
   };
 
   const handleCheckboxChange = (item, checked) => {
-    // prevent unchecking required items
     if (ItemsRequired.includes(item)) return;
 
     if (checked) {
@@ -502,29 +657,32 @@ const OwnershipTypeList = () => {
   };
 
   const handleExport = () => {
-    if (selectedItems.length == 0) {
+    if (selectedItems.length === 0) {
       toast.error("Please select at least one field");
       return;
     }
-    // Map frontend labels to backend field names
+
     const fieldMapping = {
       "Ownership Type": "name",
       "Company Type": "company_type",
       "Modified On": "updated_at",
       Description: "description",
     };
-    // Convert selectedItems to backend field names
     const mappedFields = selectedItems.map(
       (item) => fieldMapping[item] || item
     );
-    // Convert to comma-separated string
     const fieldsString = mappedFields.join(",");
+
     const sendPayload = {
       file: "xlsx",
       fields: fieldsString,
       uuids: selectAllOrNot === "all" ? [] : selectedRows,
       search: tableState.search || "",
       sort: tableState.sort,
+      company_type:
+        columnFilters.name.length > 0
+          ? columnFilters.name
+          : null,
     };
 
     setLoadingExport(true);
@@ -630,6 +788,15 @@ const OwnershipTypeList = () => {
                       </>
                     )}
 
+                  {hasActiveFilters() && (
+                    <button
+                      onClick={clearAllOnlyHeaderFilters}
+                      className="btn btn-sm py-1 comman-inactive-btn"
+                    >
+                      <Icon icon="mdi:filter-off" width="16" /> Clear Filters
+                    </button>
+                  )}
+
                   <button
                     onClick={clearAllFilters}
                     className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
@@ -639,7 +806,7 @@ const OwnershipTypeList = () => {
                 </div>
               </div>
 
-              {/* RIGHT — Page Size + Pagination (NO Search Bar Here) */}
+              {/* RIGHT — Page Size + Pagination */}
               <div className="col-xl-6 col-lg-8 col-md-12">
                 <div className="d-flex flex-wrap align-items-center justify-content-end gap-2">
                   <select
@@ -815,6 +982,8 @@ const OwnershipTypeList = () => {
               </div>
             </div>
           </div>
+
+          {/* ================== TABLE ================== */}
           <div className="card-body pt-0 container-table">
             <div className="container-table-div">
               <table className="table mb-0">
@@ -835,15 +1004,191 @@ const OwnershipTypeList = () => {
                     {tableColumns.map(
                       (column) =>
                         isColumnVisible(column.id) && (
-                          <th
-                            key={column.id}
-                            scope="col"
-                            className="sorting-th"
-                            onClick={() => handleSort(column.field)}
-                          >
-                            <div className="d-flex align-items-center">
-                              {column.label}
-                              {getSortIcon(column.field)}
+                          <th key={column.id} scope="col" className="sorting-th">
+                            <div className="d-flex align-items-center justify-content-between position-relative">
+                              <div
+                                className="d-flex align-items-center flex-grow-1"
+                                onClick={() => handleSort(column.field)}
+                                style={{ cursor: "pointer" }}
+                              >
+                                {column.label}
+                                {getSortIcon(column.field)}
+
+                                {/* 🔽 Filter icon ONLY for Company Type */}
+                                {column.filterable && (
+                                  <div className="position-relative comman-filtter-all">
+                                    <Icon
+                                      icon={
+                                        columnFilters[column.field]?.length > 0
+                                          ? "mdi:filter"
+                                          : "mdi:filter-outline"
+                                      }
+                                      width="18"
+                                      className={`ms-2 ${
+                                        columnFilters[column.field]?.length > 0
+                                          ? "comman-btn-color"
+                                          : ""
+                                      }`}
+                                      style={{ cursor: "pointer" }}
+                                      onClick={(e) =>
+                                        toggleFilterDropdown(e, column.field)
+                                      }
+                                    />
+
+                                    {activeFilterColumn ===
+                                      column.field && (
+                                      <div
+                                        ref={filterDropdownRef}
+                                        className="position-absolute bg-white border rounded shadow-sm p-3 main-div-dropdown"
+                                        onClick={(e) => e.stopPropagation()}
+                                      >
+                                        {/* Sort Options */}
+                                        <div
+                                          className={`filter-menu-item px-3 py-2 d-flex align-items-center ${
+                                            tableState.sort.find(
+                                              (s) =>
+                                                s.field === column.field
+                                            )?.order === "asc"
+                                              ? "disabled-sort"
+                                              : ""
+                                          }`}
+                                          onClick={() =>
+                                            applySortAsc(column.field)
+                                          }
+                                        >
+                                          <Icon
+                                            icon="ri:arrow-up-line"
+                                            className="me-2 text-muted"
+                                            width="18"
+                                          />
+                                          Sort Smallest to Largest
+                                        </div>
+                                        <div
+                                          className={`filter-menu-item px-3 py-2 d-flex align-items-center ${
+                                            tableState.sort.find(
+                                              (s) =>
+                                                s.field === column.field
+                                            )?.order === "desc"
+                                              ? "disabled-sort"
+                                              : ""
+                                          }`}
+                                          onClick={() =>
+                                            applySortDesc(column.field)
+                                          }
+                                        >
+                                          <Icon
+                                            icon="ri:arrow-down-line"
+                                            className="me-2 text-muted"
+                                            width="18"
+                                          />
+                                          Sort Largest to Smallest
+                                        </div>
+
+                                        {/* Search inside dropdown */}
+                                        <div className="mb-2">
+                                          <input
+                                            type="text"
+                                            className="form-control form-control-sm input-search"
+                                            placeholder="Search..."
+                                            value={
+                                              filterSearchTerms[
+                                                column.field
+                                              ] || ""
+                                            }
+                                            onChange={(e) =>
+                                              setFilterSearchTerms(
+                                                (prev) => ({
+                                                  ...prev,
+                                                  [column.field]:
+                                                    e.target.value,
+                                                })
+                                              )
+                                            }
+                                          />
+                                        </div>
+
+                                        {/* Select/Clear All */}
+                                        <div className="gap-2 mb-2 select-clear-all">
+                                          <button
+                                            className="btn btn-sm py-1 btn-primary flex-grow-1 comman-btn-color mr-10"
+                                            onClick={() =>
+                                              handleFilterSelectAll(
+                                                column.field
+                                              )
+                                            }
+                                          >
+                                            Select All
+                                          </button>
+                                          <button
+                                            className="btn btn-sm py-1 btn-secondary flex-grow-1"
+                                            onClick={() =>
+                                              handleFilterClearAll(
+                                                column.field
+                                              )
+                                            }
+                                          >
+                                            Clear All
+                                          </button>
+                                        </div>
+
+                                        {/* Options list */}
+                                        <div className="select-all-dropdown">
+                                          {getFilteredOptions(
+                                            column.field
+                                          ).length > 0 ? (
+                                            getFilteredOptions(
+                                              column.field
+                                            ).map((option, idx) => (
+                                              <div
+                                                key={idx}
+                                                className="bg-white rounded p-2 mb-2 d-flex align-items-center gap-2 form-check-div"
+                                              >
+                                                <input
+                                                  type="checkbox"
+                                                  id={`filter-${column.field}-${idx}`}
+                                                  checked={columnFilters[
+                                                    column.field
+                                                  ]?.includes(option.id)}
+                                                  onChange={(e) =>
+                                                    handleFilterCheckboxChange(
+                                                      column.field,
+                                                      option.id,
+                                                      e.target.checked
+                                                    )
+                                                  }
+                                                  className="form-check-input"
+                                                />
+                                                <label
+                                                  htmlFor={`filter-${column.field}-${idx}`}
+                                                  className="mb-0 flex-grow-1 form-check-label"
+                                                >
+                                                  {option.name}
+                                                </label>
+                                              </div>
+                                            ))
+                                          ) : (
+                                            <div className="no-records-found">
+                                              No options available
+                                            </div>
+                                          )}
+                                        </div>
+
+                                        <div className="d-flex gap-2 mt-2 pt-2 border-top justify-content-end">
+                                          <button
+                                            className="btn btn-sm py-1 btn-secondary flex-grow-1 mt-10"
+                                            onClick={() =>
+                                              setActiveFilterColumn(null)
+                                            }
+                                            style={{ maxWidth: "80px" }}
+                                          >
+                                            Cancel
+                                          </button>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </th>
                         )
@@ -936,12 +1281,11 @@ const OwnershipTypeList = () => {
                             <span>{rowItem.name}</span>
                           </td>
                         )}
-                        {isColumnVisible("company_type_name") && (
+                        {isColumnVisible("name") && (
                           <td>
-                            <span>{rowItem.company_type_name}</span>
+                            <span>{rowItem.name}</span>
                           </td>
                         )}
-
                         {isColumnVisible("description") && (
                           <td>
                             <span>{rowItem.description}</span>
@@ -999,23 +1343,27 @@ const OwnershipTypeList = () => {
             </div>
           </div>
         </div>
+
+        {/* ========= MODALS ========= */}
         <AddEditOwnershipTypeModal
           show={modalState.show}
           handleClose={handleClose}
           mode={modalState.mode}
           rowData={modalState.rowData}
         />
+
         {showImport && (
           <AddImportOwnershipTypeModal
             show={showImport}
             handleClose={handleCloseImport}
           />
         )}
+
         {showDeleteConfirm && (
           <div className="modal fade show common-ctl-popup">
             <div className="modal-dialog modal-dialog-centered">
               <div className="modal-content" style={{ borderRadius: "10px" }}>
-                <div className="modal-header">
+              <div className="modal-header">
                   <h6 className="modal-title text-danger">Confirm Delete</h6>
                   <button
                     type="button"
@@ -1046,6 +1394,7 @@ const OwnershipTypeList = () => {
             </div>
           </div>
         )}
+
         {showExportPopop && (
           <div
             className="modal fade show common-ctl-popup"
@@ -1085,7 +1434,7 @@ const OwnershipTypeList = () => {
                               onChange={(e) =>
                                 handleCheckboxChange(item, e.target.checked)
                               }
-                              disabled={ItemsRequired.includes(item)} // 🔒 Disable required item
+                              disabled={ItemsRequired.includes(item)}
                               className="form-check-input"
                             />
                             <label

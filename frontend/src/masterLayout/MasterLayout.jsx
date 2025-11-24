@@ -24,6 +24,9 @@ const MasterLayout = ({ children }) => {
     "Stakeholder Category",
     "Stakeholder Type",
     "Accrediation Category",
+    "Accrediation Name",
+    "Bank Account Type",
+    "License Name",
     "District",
     "State",
     "Country",
@@ -64,6 +67,16 @@ const MasterLayout = ({ children }) => {
     "ECA Awarding Body",
     "Medium of Education",
     "Language Name(Test)",
+    "Language Test Name",
+    "Lead Source",
+    "Interest Level",
+    "Priority",
+    "Tags",
+    "Activity Type",
+    "Lost Reason (B2C)",
+    "Lost Reason (B2B)"
+
+
   ]);
 
 

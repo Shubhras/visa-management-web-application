@@ -4,16 +4,11 @@ import MasterLayout from "../../../../masterLayout/MasterLayout";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
-import AddImportLeadSourceModal from "./AddImportLeadSourceModal";
-import AddEditLeadSourceModal from "./AddEditLeadSourceModal";
-import {
-  leadSourceList,
-  leadSourceDelete,
-  leadSourceExportData,
-} from "../../../../store/master/salesMasters/actions";
-import { formatDateDDMMYYYYTime } from "../../../../helper/utils/commanHelper";
-import { useGlobalSearch } from "../../../../components/comman/GlobalSearchContext";
-
+import AddImportLeadSourceModal from './AddImportLeadSourceModal';
+import AddEditLeadSourceModal from './AddEditLeadSourceModal';
+import { leadSourceList, leadSourceDelete, leadSourceExportData } from '../../../../store/master/salesMasters/actions';
+import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
+import { useGlobalSearch } from '../../../../components/comman/GlobalSearchContext';
 const LeadSourceList = () => {
   const dispatch = useDispatch();
   const { globalSearch, setGlobalSearch } = useGlobalSearch();
@@ -30,14 +25,17 @@ const LeadSourceList = () => {
     });
   };
   // For closing modal
-  const handleClose = () => {
+  const handleClose = (shouldRefresh = false) => {
     setModalState({
       show: false,
       mode: "add",
       rowData: null,
     });
-    fetchLeadSourceList();
-  };
+    if (shouldRefresh) {
+      fetchLeadSourceList();
+    }
+
+  }
 
   const [showEdit, setShowEdit] = useState(false);
   const [showImport, setShowImport] = useState(false);
@@ -127,17 +125,22 @@ const LeadSourceList = () => {
   const [tableState, setTableState] = useState({
     page: 1,
     limit: 25,
-    search: "",
-    status: "",
-    sortBy: "",
-    sortOrder: "",
-    sort: [{ field: "created_at", order: "desc" }],
+    search: '',
+    status: '',
+    sortBy: '', // Field to sort by
+    sortOrder: '', // 'asc' or 'desc'
+    sort: [
+      { field: "created_at", order: "desc" }
+    ],
     total: 0,
     totalPages: 0,
     currentPage: 1,
     hasNext: false,
     hasPrevious: false,
   });
+  useEffect(() => {
+    setTableState(prev => ({ ...prev, search: globalSearch, page: 1 }));
+  }, [globalSearch]);
 
   useEffect(() => {
     setTableState((prev) => ({ ...prev, search: globalSearch, page: 1 }));
@@ -155,24 +158,17 @@ const LeadSourceList = () => {
 
   useEffect(() => {
     fetchLeadSourceList();
-  }, [
-    tableState.page,
-    tableState.limit,
-    tableState.status,
-    // tableState.sortBy,
-    // tableState.sortOrder,
-    tableState.sort,
-  ]);
+  }, [tableState.page, tableState.limit, tableState.status, tableState.sort]);
 
   const fetchLeadSourceList = () => {
     setLoading(true);
     const params = {
       page: tableState.page,
       limit: tableState.limit,
-      search: tableState.search || "",
-      status: tableState.status || "",
-      sortBy: tableState.sortBy || "",
-      sortOrder: tableState.sortOrder || "",
+      search: tableState.search || '',
+      status: tableState.status || '',
+      sortBy: tableState.sortBy || '',
+      sortOrder: tableState.sortOrder || '',
       sort: tableState.sort,
     };
 
@@ -214,16 +210,18 @@ const LeadSourceList = () => {
 
   // Handle sorting
   const handleSort = (field) => {
-    setTableState((prev) => {
+    setTableState(prev => {
       let newSort = [...prev.sort];
-      const existingIndex = newSort.findIndex((s) => s.field === field);
+      const existingIndex = newSort.findIndex(s => s.field === field);
       if (existingIndex === -1) {
         newSort.push({ field, order: "asc" });
-      } else {
+      }
+      else {
         const existing = newSort[existingIndex];
         if (existing.order === "asc") {
           newSort[existingIndex].order = "desc";
-        } else if (existing.order === "desc") {
+        }
+        else if (existing.order === "desc") {
           newSort.splice(existingIndex, 1);
         }
       }
@@ -231,9 +229,8 @@ const LeadSourceList = () => {
     });
   };
 
-  // Get sort icon for a column
   const getSortIcon = (field) => {
-    const sortObj = tableState.sort.find((s) => s.field === field);
+    const sortObj = tableState.sort.find(s => s.field === field);
     if (!sortObj) {
       return <Icon icon="ri:menu-line" className="sorting-th-icone" />;
     }
@@ -243,27 +240,26 @@ const LeadSourceList = () => {
     return <Icon icon="ri:sort-desc" className="sorting-th-icone" />;
   };
 
-  // Clear all filters
   const clearAllFilters = () => {
-    setTableState((prev) => ({
+    setTableState(prev => ({
       ...prev,
       page: 1,
       limit: 25,
-      search: "",
-      status: "",
-      sortBy: "",
-      sortOrder: "",
+      search: '',
+      status: '',
+      sortBy: '',
+      sortOrder: '',
       sort: [
-        { field: "created_at", order: "desc" }, // default sort
+        { field: "created_at", order: "desc" }   // default sort
       ],
       total: 0,
       totalPages: 0,
       currentPage: 1,
       hasNext: false,
-      hasPrevious: false,
+      hasPrevious: false
     }));
     // Reset Global Search
-    setGlobalSearch("");
+    setGlobalSearch('');
   };
 
   const handleSearchChange = (value) => {
@@ -443,9 +439,12 @@ const LeadSourceList = () => {
     setSelectAllOrNot("");
   };
 
-  const handleCloseImport = () => {
+  const handleCloseImport = (shouldRefresh = false) => {
     setShowImport(false);
-    fetchLeadSourceList();
+    if (shouldRefresh) {
+      fetchLeadSourceList();
+    }
+
   };
 
   const handleShowImport = () => {
@@ -508,8 +507,9 @@ const LeadSourceList = () => {
       file: "xlsx",
       fields: fieldsString,
       uuids: selectAllOrNot === "all" ? [] : selectedRows,
-      search: tableState.search || "",
-      sort: tableState.sort,
+      search: tableState.search || '', // Add search parameter
+      sort: tableState.sort, // Add sort parameter
+
     };
 
     setLoadingExport(true);
@@ -560,10 +560,7 @@ const LeadSourceList = () => {
                   <button
                     className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
                     onClick={handleShow}
-                  >
-                    New
-                  </button>
-
+                  >New</button>
                   <button
                     className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
                     onClick={handleShowImport}
@@ -585,44 +582,29 @@ const LeadSourceList = () => {
                   >
                     Delete
                   </button>
-
-                  {selectedRows?.length > 0 &&
-                    selectedRows?.length === leadSourcesData?.length && (
-                      <>
-                        <button
-                          onClick={() => handleSelectAllOrNot("onlySelected")}
-                          className={`btn btn-sm py-1 fw-medium ${
-                            selectAllOrNot === "onlySelected"
-                              ? "comman-btn-color"
-                              : "comman-inactive-btn"
-                          }`}
-                        >
-                          {`Select (${selectedRows.length})`}
-                        </button>
-
-                        <button
-                          onClick={() => handleSelectAllOrNot("all")}
-                          className={`btn btn-sm py-1 fw-medium ${
-                            selectAllOrNot === "all"
-                              ? "comman-btn-color"
-                              : "comman-inactive-btn"
-                          }`}
-                        >
-                          {`Select All (${tableState.total})`}
-                        </button>
-                      </>
-                    )}
-
+                  {(selectedRows?.length > 0 && selectedRows?.length === leadSourcesData?.length) && (
+                    <>
+                      <button
+                        onClick={() => handleSelectAllOrNot("onlySelected")}
+                        className={`btn btn-sm py-1 fw-medium ${selectAllOrNot === "onlySelected" ? "comman-btn-color" : "comman-inactive-btn"}`}
+                      >
+                        {`Select (${selectedRows.length})`}
+                      </button>
+                      <button
+                        onClick={() => handleSelectAllOrNot("all")}
+                        className={`btn btn-sm py-1 fw-medium ${selectAllOrNot === "all" ? "comman-btn-color" : "comman-inactive-btn"}`}
+                      >
+                        {`Select All (${tableState.total})`}
+                      </button>
+                    </>
+                  )}
                   <button
                     onClick={clearAllFilters}
                     className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
-                  >
-                    Reset
-                  </button>
+                  >Reset </button>
                 </div>
               </div>
-
-              {/* RIGHT SECTION – Page Size / Pagination (No Search Input) */}
+              {/* Right Section: Select / Search / +Add New */}
               <div className="col-xl-6 col-lg-8 col-md-12">
                 <div className="d-flex flex-wrap align-items-center justify-content-end gap-2">
                   <select
@@ -635,79 +617,54 @@ const LeadSourceList = () => {
                     <option value={50}>50</option>
                     <option value={100}>100</option>
                   </select>
-
                   {tableState.total > 0 && (
                     <div className="d-flex justify-content-between align-items-center px-4 py-0">
                       <div className="showing-total-page">
                         {startIndex + 1}-{" "}
-                        {Math.min(
-                          startIndex + tableState.limit,
-                          tableState.total
-                        )}{" "}
+                        {Math.min(startIndex + tableState.limit, tableState.total)}{" "}
                         of {tableState.total}
                       </div>
-
                       <nav>
                         <ul className="pagination mb-0 gap-4px">
-                          <li
-                            className={`page-item ${
-                              !tableState.hasPrevious ? "disabled" : ""
-                            }`}
-                          >
+                          <li className={`page-item ${!tableState.hasPrevious ? 'disabled' : ''}`}>
                             <button
                               className="border-0 bg-transparent"
                               onClick={() => goToPage(1)}
                               disabled={!tableState.hasPrevious}
                               style={{
-                                padding: "0px 8px",
-                                color: !tableState.hasPrevious
-                                  ? "#ccc"
-                                  : "#6c757d",
-                                fontSize: "18px",
-                                cursor: !tableState.hasPrevious
-                                  ? "not-allowed"
-                                  : "pointer",
+                                padding: '0px 8px',
+                                color: !tableState.hasPrevious ? '#ccc' : '#6c757d',
+                                fontSize: '18px',
+                                cursor: !tableState.hasPrevious ? 'not-allowed' : 'pointer'
                               }}
                             >
                               «
                             </button>
                           </li>
-
-                          <li
-                            className={`page-item ${
-                              !tableState.hasPrevious ? "disabled" : ""
-                            }`}
-                          >
+                          <li className={`page-item ${!tableState.hasPrevious ? 'disabled' : ''}`}>
                             <button
                               className="border-0 bg-transparent"
-                              onClick={() =>
-                                goToPage(tableState.currentPage - 1)
-                              }
+                              onClick={() => goToPage(tableState.currentPage - 1)}
                               disabled={!tableState.hasPrevious}
                               style={{
-                                padding: "0px 8px",
-                                color: !tableState.hasPrevious
-                                  ? "#ccc"
-                                  : "#6c757d",
-                                fontSize: "18px",
-                                cursor: !tableState.hasPrevious
-                                  ? "not-allowed"
-                                  : "pointer",
+                                padding: '0px 8px',
+                                color: !tableState.hasPrevious ? '#ccc' : '#6c757d',
+                                fontSize: '18px',
+                                cursor: !tableState.hasPrevious ? 'not-allowed' : 'pointer'
                               }}
                             >
                               ‹
                             </button>
                           </li>
-
                           {getPaginationNumbers().map((page, idx) => (
                             <li key={idx} className="page-item">
-                              {page === "..." ? (
+                              {page === '...' ? (
                                 <span
                                   className="border-0 bg-transparent"
                                   style={{
-                                    padding: "0px 10px",
-                                    color: "#6c757d",
-                                    cursor: "default",
+                                    padding: '0px 10px',
+                                    color: '#6c757d',
+                                    cursor: 'default'
                                   }}
                                 >
                                   ...
@@ -717,23 +674,14 @@ const LeadSourceList = () => {
                                   className="border-0"
                                   onClick={() => goToPage(page)}
                                   style={{
-                                    padding: "0px 10px",
-                                    minWidth: "30px",
-                                    backgroundColor:
-                                      page === tableState.currentPage
-                                        ? "#5a6c5b"
-                                        : "transparent",
-                                    color:
-                                      page === tableState.currentPage
-                                        ? "#fff"
-                                        : "#6c757d",
-                                    borderRadius: "4px",
-                                    fontWeight:
-                                      page === tableState.currentPage
-                                        ? "500"
-                                        : "400",
-                                    cursor: "pointer",
-                                    fontSize: "14px",
+                                    padding: '0px 10px',
+                                    minWidth: '30px',
+                                    backgroundColor: page === tableState.currentPage ? '#5a6c5b' : 'transparent',
+                                    color: page === tableState.currentPage ? '#fff' : '#6c757d',
+                                    borderRadius: '4px',
+                                    fontWeight: page === tableState.currentPage ? '500' : '400',
+                                    cursor: 'pointer',
+                                    fontSize: "14px"
                                   }}
                                 >
                                   {page}
@@ -741,47 +689,31 @@ const LeadSourceList = () => {
                               )}
                             </li>
                           ))}
-
-                          <li
-                            className={`page-item ${
-                              !tableState.hasNext ? "disabled" : ""
-                            }`}
-                          >
+                          <li className={`page-item ${!tableState.hasNext ? 'disabled' : ''}`}>
                             <button
                               className="border-0 bg-transparent"
-                              onClick={() =>
-                                goToPage(tableState.currentPage + 1)
-                              }
+                              onClick={() => goToPage(tableState.currentPage + 1)}
                               disabled={!tableState.hasNext}
                               style={{
-                                padding: "0px 8px",
-                                color: !tableState.hasNext ? "#ccc" : "#6c757d",
-                                fontSize: "18px",
-                                cursor: !tableState.hasNext
-                                  ? "not-allowed"
-                                  : "pointer",
+                                padding: '0px 8px',
+                                color: !tableState.hasNext ? '#ccc' : '#6c757d',
+                                fontSize: '18px',
+                                cursor: !tableState.hasNext ? 'not-allowed' : 'pointer'
                               }}
                             >
                               ›
                             </button>
                           </li>
-
-                          <li
-                            className={`page-item ${
-                              !tableState.hasNext ? "disabled" : ""
-                            }`}
-                          >
+                          <li className={`page-item ${!tableState.hasNext ? 'disabled' : ''}`}>
                             <button
                               className="border-0 bg-transparent"
                               onClick={() => goToPage(tableState.totalPages)}
                               disabled={!tableState.hasNext}
                               style={{
-                                padding: "0px 8px",
-                                color: !tableState.hasNext ? "#ccc" : "#6c757d",
-                                fontSize: "18px",
-                                cursor: !tableState.hasNext
-                                  ? "not-allowed"
-                                  : "pointer",
+                                padding: '0px 8px',
+                                color: !tableState.hasNext ? '#ccc' : '#6c757d',
+                                fontSize: '18px',
+                                cursor: !tableState.hasNext ? 'not-allowed' : 'pointer'
                               }}
                             >
                               »
