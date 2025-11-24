@@ -2863,30 +2863,134 @@ class StudyMajorAreaByMainUUIDAPIView(APIView):
 
 
 # -------------------- AcademicResultType -------------------- 
+# class AcademicResultTypeListAPIView(APIView):
+#     def get(self, request):
+#         search = request.GET.get('search', '').strip()
+#         sort_by = request.GET.get('sortBy', 'created_at')
+#         sort_order = request.GET.get('sortOrder', 'desc')
+
+#         allowed_sort_fields = ['name', 'description', 'updated_at']
+#         if sort_by not in allowed_sort_fields:
+#             sort_by = 'created_at'
+#         if sort_order == 'desc':
+#             sort_by = f'-{sort_by}'
+
+#         queryset = AcademicResultType.objects.filter(is_deleted=False)
+#         if search:
+#             queryset = queryset.filter(
+#                 Q(name__istartswith=search)
+#             )
+
+#         queryset = queryset.order_by(sort_by)
+
+#         paginator = CustomPagination()
+#         result_page = paginator.paginate_queryset(queryset, request)
+#         serializer = AcademicResultTypeSerializer(result_page, many=True)
+#         return paginator.get_paginated_response(serializer.data)
+
+
 class AcademicResultTypeListAPIView(APIView):
     def get(self, request):
-        search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
+        try:
+            search = request.GET.get('search', '').strip()
+            custom_sort = request.GET.get('customSort')   # name:asc,description:desc
 
-        allowed_sort_fields = ['name', 'description', 'updated_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+            allowed_sort_fields = [
+                "name", "description", "datatype",
+                "created_at", "updated_at", "uuid"
+            ]
 
-        queryset = AcademicResultType.objects.filter(is_deleted=False)
-        if search:
-            queryset = queryset.filter(
-                Q(name__istartswith=search)
-            )
+            queryset = AcademicResultType.objects.filter(is_deleted=False)
 
-        queryset = queryset.order_by(sort_by)
+            # ---------------------------------------------------
+            # Search
+            # ---------------------------------------------------
+            if search:
+                queryset = queryset.filter(
+                    Q(name__istartswith=search)
+                )
 
-        paginator = CustomPagination()
-        result_page = paginator.paginate_queryset(queryset, request)
-        serializer = AcademicResultTypeSerializer(result_page, many=True)
-        return paginator.get_paginated_response(serializer.data)
+            # ---------------------------------------------------
+            # customSort logic (multi-column sorting)
+            # ---------------------------------------------------
+            sort_fields = []
+
+            if custom_sort:
+                for rule in custom_sort.split(','):
+                    try:
+                        field, order = rule.split(':')
+                        field = field.strip()
+                        order = order.strip().lower()
+
+                        if field not in allowed_sort_fields:
+                            continue
+
+                        # Case-insensitive string sorting
+                        if field in ["name", "description", "datatype"]:
+                            f = Lower(field)
+                        else:
+                            f = F(field)
+
+                        sort_fields.append(
+                            f.asc(nulls_last=True) if order == "asc" else f.desc(nulls_last=True)
+                        )
+                    except ValueError:
+                        continue
+            else:
+                # Fallback Sorting
+                sort_by = request.GET.get("sortBy", "created_at")
+                sort_order = request.GET.get("sortOrder", "desc")
+
+                if sort_by not in allowed_sort_fields:
+                    sort_by = "created_at"
+
+                f = F(sort_by)
+                sort_fields = [
+                    f.asc(nulls_last=True) if sort_order == "asc" else f.desc(nulls_last=True)
+                ]
+
+            queryset = queryset.order_by(*sort_fields)
+
+            # ---------------------------------------------------
+            # Pagination
+            # ---------------------------------------------------
+            paginator = CustomPagination()
+            result_page = paginator.paginate_queryset(queryset, request)
+            serializer = AcademicResultTypeSerializer(result_page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+
+        # -------------------------------------------------------
+        # Exception Handling
+        # -------------------------------------------------------
+        except ValidationError as e:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Invalid data provided",
+                "detail": str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        except IntegrityError:
+            return Response({
+                "statusCode": 500,
+                "status": False,
+                "message": "Database integrity error occurred."
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        except DatabaseError:
+            return Response({
+                "statusCode": 500,
+                "status": False,
+                "message": "Database error occurred."
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        except Exception as e:
+            return Response({
+                "statusCode": 500,
+                "status": False,
+                "message": "Something went wrong.",
+                "detail": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # --------------------- Create API ---------------------
