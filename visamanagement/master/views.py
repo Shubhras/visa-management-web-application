@@ -7366,8 +7366,9 @@ class OwnershipTypeListAPIView(APIView):
         if search:
             queryset = queryset.filter(Q(name__istartswith=search))
 
-        if company_type_uuid:
-            queryset = queryset.filter(company_type__uuid=company_type_uuid)    
+        # Ignore "null", empty, None
+        if company_type_uuid and company_type_uuid.lower() != "null":
+            queryset = queryset.filter(company_type__uuid=company_type_uuid)   
 
         # Sorting fields mapping
         sort_field_map = {
