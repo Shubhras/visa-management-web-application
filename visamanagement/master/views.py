@@ -10187,7 +10187,6 @@ class BankAccountTypeDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-
 class BankAccountTypeExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -10196,8 +10195,6 @@ class BankAccountTypeExportAPIView(APIView):
         fields = request.GET.get('fields')  # comma-separated fields
         uuids_param = request.GET.get('uuids', '')  # comma-separated UUIDs
         search = request.GET.get('search', '').strip()
-
-
         custom_sort = request.GET.get('customSort')  # e.g., name:asc,created_at:desc
 
         uuids = [u.strip() for u in uuids_param.split(',') if u]
@@ -10205,27 +10202,23 @@ class BankAccountTypeExportAPIView(APIView):
         # --- Field to header mapping ---
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Bank Account Type',  # Custom header
+            'name': 'Bank Account Type',
             'description': 'Description',
             'is_deleted': 'Deleted',
+            'created_at': 'Created On',
             'updated_at': 'Modified On',
-            
         }
 
         # --- Determine which fields to export ---
-        if fields:
-            field_list = [f.strip() for f in fields.split(',')]
-        else:
-            field_list = list(field_header_map.keys())
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
         queryset = BankAccountType.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
 
-        # Search filter
+        # --- Search filter ---
         if search:
-            queryset = queryset.filter(Q(name__istartswith=search))
-
+            queryset = queryset.filter(Q(name__icontains=search))
 
         # --- Custom sorting logic ---
         sort_field_map = {
@@ -10237,45 +10230,46 @@ class BankAccountTypeExportAPIView(APIView):
         }
 
         sort_fields = []
+
         if custom_sort:
             for rule in custom_sort.split(','):
-                try:
+                if ':' in rule:
                     field, order = rule.split(':')
                     field = field.strip()
                     order = order.strip().lower()
                     if field not in sort_field_map:
                         continue
+
                     orm_field = sort_field_map[field]
 
-                    # Case-insensitive sorting for string fields
+                    # Case-insensitive for string fields
                     if field in ['name', 'description']:
                         f = Lower(orm_field)
                     else:
                         f = F(orm_field)
 
                     sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
-                except ValueError:
-                    continue
-        else:
-            # Default sorting by created_at
+
+        # --- Fallback sorting ---
+        if not sort_fields:
             sort_order = request.GET.get('sortOrder', 'desc')
             f = F('created_at')
-            sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]    
+            sort_fields = [f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)]
 
-        queryset = queryset.order_by('-created_at')
+        queryset = queryset.order_by(*sort_fields)
 
-
+        # --- Prepare dataset ---
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title ="BankAccountType"
+        dataset.title = "BankAccountType"
 
         for record in queryset:
             row = []
             for field in field_list:
                 value = getattr(record, field, '')
 
+                # Format dates
                 if field in ['created_at', 'updated_at'] and value:
-                    # Convert UTC to IST and format
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
                     value = int(value)
@@ -10420,36 +10414,37 @@ class LicenseNameListAPIView(APIView):
         search = request.GET.get('search', '').strip()
         custom_sort = request.GET.get('customSort')  # e.g., full_name:asc,valid_upto:desc
 
-        allowed_sort_fields = ['full_name', 'short_name', 'issuing_authority', 'valid_upto', 'created_at', 'updated_at']
+        # Fields allowed for sorting
+        allowed_sort_fields = [
+            'full_name', 'short_name', 'issuing_authority',
+            'valid_date', 'created_at', 'updated_at'
+        ]
 
         queryset = LicenseName.objects.filter(is_deleted=False)
 
-        # Search filter
+        # --- Search filter ---
         if search:
-            queryset = queryset.filter(Q(full_name__istartswith=search))
+            queryset = queryset.filter(Q(full_name__icontains=search))
 
-        # Sorting fields mapping
+        # --- Sorting fields mapping ---
         sort_field_map = {
             'full_name': 'full_name',
             'short_name': 'short_name',
             'issuing_authority': 'issuing_authority',
-            'valid_upto': 'valid_upto',
+            'valid_date': 'valid_date',
             'created_at': 'created_at',
             'updated_at': 'updated_at',
         }
 
         sort_fields = []
 
-        # --------------------------
-        # CUSTOM SORT LOGIC
-        # --------------------------
+        # --- Custom sort logic ---
         if custom_sort:
             for rule in custom_sort.split(','):
-                try:
+                if ':' in rule:
                     field, order = rule.split(':')
                     field = field.strip()
                     order = order.strip().lower()
-
                     if field not in sort_field_map:
                         continue
 
@@ -10461,24 +10456,19 @@ class LicenseNameListAPIView(APIView):
                     else:
                         f = F(orm_field)
 
-                    sort_fields.append(
-                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
-                    )
-                except ValueError:
-                    continue
-        else:
-            # Fallback sorting
+                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+
+        # --- Fallback sorting ---
+        if not sort_fields:
             sort_by = request.GET.get('sortBy', 'created_at')
             sort_order = request.GET.get('sortOrder', 'desc')
             orm_field = sort_field_map.get(sort_by, 'created_at')
             f = F(orm_field)
-            sort_fields = [
-                f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)
-            ]
+            sort_fields = [f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)]
 
         queryset = queryset.order_by(*sort_fields)
 
-        # Pagination
+        # --- Pagination ---
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = LicenseNameSerializer(result_page, many=True)
@@ -10648,16 +10638,20 @@ class LicenseNameDeleteAPIView(APIView):
 # ------------------ Export API ------------------
 class LicenseNameExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
+
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')
         uuids_param = request.GET.get('uuids', '')
         search = request.GET.get('search', '').strip()
+        custom_sort = request.GET.get('customSort', '')
 
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
+        # --- Field headers ---
         field_header_map = {
             'uuid': 'UUID',
+            'country': 'Country',
             'full_name': 'License Full Name',
             'short_name': 'License Short Name',
             'issuing_authority': 'License Issuing Authority Name',
@@ -10666,23 +10660,51 @@ class LicenseNameExportAPIView(APIView):
             'valid_duration_value': 'License Valid Duration Value',
             'valid_duration_unit': 'License Valid Duration Unit',
             'valid_date': 'License Valid Date',
-            'country': 'Country',
             'is_deleted': 'Deleted',
+            'created_at': 'Created On',
             'updated_at': 'Modified On',
         }
 
+        # --- Fields to export ---
         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
+        # --- Fetch queryset ---
         queryset = LicenseName.objects.filter(is_deleted=False)
+
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
 
-        # Search filter
         if search:
-            queryset = queryset.filter(Q(name__istartswith=search))
+            queryset = queryset.filter(full_name__icontains=search)
 
-        queryset = queryset.order_by('-created_at')
+        # --- Custom sorting ---
+        sort_field_map = {
+            'full_name': 'full_name',
+            'short_name': 'short_name',
+            'valid_date': 'valid_date',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
 
+        sort_fields = []
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                if ':' in rule:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field in sort_field_map:
+                        orm_field = sort_field_map[field]
+                        if order == 'desc':
+                            sort_fields.append(f"-{orm_field}")
+                        else:
+                            sort_fields.append(orm_field)
+        if not sort_fields:
+            sort_fields = ['-created_at']
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # --- Prepare dataset ---
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = 'LicenseName'
@@ -10695,17 +10717,18 @@ class LicenseNameExportAPIView(APIView):
                 else:
                     value = getattr(obj, field, '')
 
+                # Format dates
                 if field in ['created_at', 'updated_at'] and value:
-                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                    value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif field == 'valid_date' and value:
                     value = value.strftime("%d-%m-%Y")
                 elif isinstance(value, bool):
                     value = int(value)
-                
 
                 row.append(value if value is not None else '')
             dataset.append(row)
 
+        # --- Export file ---
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
@@ -10721,7 +10744,6 @@ class LicenseNameExportAPIView(APIView):
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
-
 
 
 
