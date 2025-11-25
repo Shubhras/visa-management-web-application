@@ -7036,10 +7036,10 @@ class DegreeAwardedInstituteListAPIView(APIView):
             'name': 'name',
             'created_at': 'created_at',
             'updated_at': 'updated_at',
-            'country_name': 'country__name',
-            'state_name': 'state__name',
-            'education_level_name': 'education_level__educationlevel',
-            'degree_awarded_by_name': 'degree_awarded_by__degree_name'
+            'country': 'country__name',
+            'state': 'state__name',
+            'educationLevel': 'education_level__educationlevel',
+            'degreeAwardedBy': 'degree_awarded_by__degree_name'
         }
 
         # -----------------------
@@ -7100,7 +7100,7 @@ class DegreeAwardedInstituteListAPIView(APIView):
                     orm_field = sort_field_map[field]
 
                     # Case-insensitive sorting for string fields
-                    if field in ['name', 'country_name', 'state_name', 'education_level_name', 'degree_awarded_by_name']:
+                    if field in ['name', 'country', 'state', 'educationLevel', 'degreeAwardedBy']:
                         f = Lower(orm_field)
                     else:
                         f = F(orm_field)
