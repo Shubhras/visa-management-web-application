@@ -4,7 +4,7 @@ import { educationTypeImportData } from '../../../../store/master/educationMaste
 import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
-import { exportToExcelDuplicate } from '../../../../helper/utils/commanHelper';
+import { exportToExcelDuplicate, exportToExcelWrongData } from '../../../../helper/utils/commanHelper';
 const AddImportAcademicResultTypeModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
@@ -93,6 +93,20 @@ const AddImportAcademicResultTypeModal = ({ show, handleClose }) => {
                             fileName: "EducationType",
                         };
                         exportToExcelDuplicate(
+                            prepareData.data,
+                            prepareData.headers,
+                            prepareData.sheetName,
+                            prepareData.fileName
+                        );
+                    }
+                    if (response?.skipped_rows?.length > 0) {
+                        const prepareData = {
+                            data: response.skipped_rows || [],
+                            headers: ["Education Type", "Reason"],
+                            sheetName: "EducationType",
+                            fileName: "EducationType",
+                        };
+                        exportToExcelWrongData(
                             prepareData.data,
                             prepareData.headers,
                             prepareData.sheetName,

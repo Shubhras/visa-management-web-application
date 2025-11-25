@@ -166,7 +166,7 @@ const AcademicResultList = () => {
 
     // Table columns configuration
     const [tableColumns] = useState([
-        { id: 'AcademicResulttype_name', label: 'Academic Result Type', field: 'academicResultType', visible: true, required: false ,filterable: true},
+        { id: 'AcademicResulttype_name', label: 'Academic Result Type', field: 'academicResultType', visible: true, required: false, filterable: true },
         { id: 'Academicresult', label: 'Academic Result', field: 'Academicresult', visible: true, required: false },
         { id: 'description', label: 'Description', field: 'description', visible: true, required: false },
         { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false },
@@ -969,7 +969,7 @@ const AcademicResultList = () => {
                                                                             {/* Footer */}
                                                                             <div className="d-flex gap-2 mt-2 pt-2 border-top justify-content-end">
                                                                                 <button
-                                                                                    className="btn btn-sm py-1 btn-secondary"
+                                                                                    className="btn btn-sm  py-1 btn-secondary flex-grow-1  mt-10"
                                                                                     onClick={() => setActiveFilterColumn(null)}
                                                                                     style={{ maxWidth: '80px' }}
                                                                                 >
