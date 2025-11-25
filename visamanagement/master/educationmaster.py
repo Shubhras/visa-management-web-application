@@ -7037,7 +7037,7 @@ class DegreeAwardedInstituteListAPIView(APIView):
             'created_at': 'created_at',
             'updated_at': 'updated_at',
             'country': 'country__name',
-            'state': 'state__name',
+            'state': 'state__stateName',
             'educationLevel': 'education_level__educationlevel',
             'degreeAwardedBy': 'degree_awarded_by__degree_name'
         }
