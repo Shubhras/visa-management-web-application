@@ -1278,7 +1278,6 @@ class EducationLevelExportAPIView(APIView):
 #             "skipped_rows": skipped_rows
 #         }, status=200)
 
-
 class EducationLevelImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -1293,7 +1292,6 @@ class EducationLevelImportAPIView(APIView):
         duplicates = []
         skipped_rows = []
         required_headers = {'education level code', 'education level', 'education durations'}
-        optional_headers = {'description', 'is_deleted'}
 
         try:
             data = []
@@ -1308,7 +1306,7 @@ class EducationLevelImportAPIView(APIView):
                     return Response({'error': 'Please provide sheet_name', 'available_sheets': available_sheets}, status=400)
 
                 if sheet_name not in available_sheets:
-                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
+                    return Response({'error': f'Sheet \"{sheet_name}\" not found', 'available_sheets': available_sheets}, status=400)
 
                 ws = wb[sheet_name]
 
@@ -1324,7 +1322,6 @@ class EducationLevelImportAPIView(APIView):
                 for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     if not any(row):
                         continue
-
                     row_dict = dict(zip(headers, row))
                     row_dict["_row_number"] = idx
                     data.append(row_dict)
@@ -1353,77 +1350,85 @@ class EducationLevelImportAPIView(APIView):
 
             imported_count = 0
 
-            for row in data:   # ⚠️ NO reversed()
+            # ========================================================
+            #               PROCESS EACH ROW
+            # ========================================================
+            for row in data:
                 row_number = row.get("_row_number", "Unknown")
 
-                # --- Extract fields ---
-                level_code_id = row.get("education level code")
-                education_level_name = row.get("education level")
+                code = row.get("education level code")
+                edu_level = row.get("education level")
                 durations = row.get("education durations")
                 description = row.get("description", "")
                 is_deleted = row.get("is_deleted", 0)
 
-                # Clean values
-                education_level_name = str(education_level_name).strip() if education_level_name else None
+                if not code or not edu_level:
+                    skipped_rows.append({"Row": row_number, "Reason": "Missing required fields"})
+                    continue
+
+                code = str(code).strip()
+                edu_level = str(edu_level).strip() if edu_level else None
                 durations = str(durations).strip() if durations else None
                 description = str(description).strip()
 
-                # Boolean cleaning
+                # Convert is_deleted
                 try:
                     is_deleted = bool(int(is_deleted))
                 except:
                     is_deleted = False
 
-                # Validate required fields
-                if not level_code_id or not education_level_name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing education level code or education level"})
+                # Code must be numeric
+                if not code.isnumeric():
+                    skipped_rows.append({"Row": row_number, "Code": code, "Reason": "Education level code must be numeric"})
                     continue
 
-                # Validate numerics
-                if not str(level_code_id).isnumeric():
-                    skipped_rows.append({"Row": row_number, "Education Level Code": level_code_id, "Reason": "Education level code must be numeric"})
-                    continue
+                # -------------------------------------------
+                #  NEW LOGIC: Auto-create EducationLevelCode
+                # -------------------------------------------
+                level_code_obj = EducationLevelCode.objects.filter(name=code).first()
 
-                level_code_id = int(level_code_id)
-
-                # Validate LevelCode existence
-                level_code_obj = EducationLevelCode.objects.filter(id=level_code_id, is_deleted=False).first()
                 if not level_code_obj:
-                    skipped_rows.append({
-                        "Row": row_number,
-                        "Education Level Code": level_code_id,
-                        "Reason": f"EducationLevelCode ID {level_code_id} not found"
-                    })
-                    continue
+                    level_code_obj = EducationLevelCode.objects.create(
+                        name=code,
+                        description=f"Auto-generated for code {code}",
+                        is_deleted=False
+                    )
 
-                # Check existing entry
+                # -------------------------------------------
+                #  CHECK EXISTING EDUCATION LEVEL
+                # -------------------------------------------
+                # CHECK FULL DUPLICATE (all fields must match)
                 existing = EducationLevel.objects.filter(
-                    level_code_id=level_code_id,
-                    educationlevel__iexact=education_level_name
+                    level_code=level_code_obj,
+                    educationlevel__iexact=edu_level,
+                    durations=durations,
+                    description=description
                 ).first()
 
                 if existing:
-                    if not existing.is_deleted:
-                        duplicates.append({
-                            "Row": row_number,
-                            "Education Level": education_level_name,
-                            "Education Level Code": level_code_id,
-                            "Reason": "Already exists"
-                        })
-                        continue
-                    else:
-                        # Restore deleted entry
+                    if existing.is_deleted:
                         existing.description = description
                         existing.is_deleted = False
                         existing.durations = durations
                         existing.save()
                         imported_count += 1
-                        continue
+                    else:
+                        duplicates.append({
+                            "Row": row_number,
+                            "Education Level": edu_level,
+                            "Code": code,
+                            "Durations": durations,
+                            "Description": description,
+                            "Reason": "Duplicate → All fields matched"
+                        })
+                    continue
 
-                # Fresh insert
+                
+
+                # NEW INSERT
                 EducationLevel.objects.create(
-                    level_code_id=level_code_id,
-                    educationlevel=education_level_name,
+                    level_code=level_code_obj,
+                    educationlevel=edu_level,
                     durations=durations,
                     description=description,
                     is_deleted=is_deleted
@@ -1440,7 +1445,7 @@ class EducationLevelImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f'Sheet "{sheet_name}" imported successfully',
+            "message": f'Sheet \"{sheet_name}\" imported successfully',
             "imported_count": imported_count,
             "duplicates": duplicates,
             "skipped_rows": skipped_rows
@@ -2219,34 +2224,141 @@ class StudymainareaImportAPIView(APIView):
 
 # -------------------- Studymajor -------------------- #
 
+# class StudyMajorAreaListAPIView(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def get(self, request):
+#         search = request.GET.get('search', '').strip()
+#         sort_by = request.GET.get('sortBy', 'created_at')
+#         sort_order = request.GET.get('sortOrder', 'desc')
+
+#         allowed_sort_fields = ['majorarea', 'description', 'updated_at']
+#         if sort_by not in allowed_sort_fields:
+#             sort_by = 'created_at'
+#         if sort_order == 'desc':
+#             sort_by = f'-{sort_by}'
+
+#         queryset = Studymajorarea.objects.filter(is_deleted=False)
+
+#         if search:
+#             queryset = queryset.filter(
+#                 Q(majorarea__istartswith=search) 
+#             )
+
+#         queryset = queryset.order_by(sort_by)
+
+#         paginator = CustomPagination()
+#         result_page = paginator.paginate_queryset(queryset, request)
+#         serializer = StudyMajorAreaSerializer(result_page, many=True)
+
+#         return paginator.get_paginated_response(serializer.data)
+
+
 class StudyMajorAreaListAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
+        custom_sort = request.GET.get('customSort')
         sort_by = request.GET.get('sortBy', 'created_at')
         sort_order = request.GET.get('sortOrder', 'desc')
+        uuid_param = request.GET.get('studyMainArea', '')
 
-        allowed_sort_fields = ['majorarea', 'description', 'updated_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        # Allowed sortable fields
+        allowed_sort_fields = [
+            'majorarea', 'description', 'created_at', 'updated_at', "mainarea_name"
+        ]
 
         queryset = Studymajorarea.objects.filter(is_deleted=False)
 
+        # --------------------------------------------------
+        # UUID Filtering
+        # --------------------------------------------------
+        uuid_list = []
+        if uuid_param:
+            for u in uuid_param.split(','):
+                try:
+                    uuid_list.append(UUID(u.strip()))
+                except:
+                    pass
+
+        if uuid_list:
+            queryset = queryset.filter(mainarea__uuid__in=uuid_list)
+
+        # --------------------------------------------------
+        # Search Filter
+        # --------------------------------------------------
         if search:
-            queryset = queryset.filter(
-                Q(majorarea__istartswith=search) 
-            )
+            queryset = queryset.filter(majorarea__icontains=search)
 
-        queryset = queryset.order_by(sort_by)
+        # --------------------------------------------------
+        # Sort field mapping
+        # --------------------------------------------------
+        sort_field_map = {
+            "majorarea": "majorarea",
+            "description": "description",
+            "created_at": "created_at",
+            "updated_at": "updated_at",
+            "mainarea_name": "mainarea__name"
+        }
 
+        sort_fields = []
+
+        # --------------------------------------------------
+        # CUSTOM SORT (same as Country API)
+        # --------------------------------------------------
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive ordering for string fields
+                    if field in ["majorarea", "mainarea_name", "description"]:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == "asc" else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+
+        else:
+            # --------------------------------------------------
+            # DEFAULT SORT
+            # --------------------------------------------------
+            if sort_by not in allowed_sort_fields:
+                sort_by = "created_at"
+
+            orm_field = sort_field_map.get(sort_by, "created_at")
+            f = F(orm_field)
+
+            sort_fields = [
+                f.asc(nulls_last=True) if sort_order == "asc" else f.desc(nulls_last=True)
+            ]
+
+        # --------------------------------------------------
+        # Apply sorting
+        # --------------------------------------------------
+        queryset = queryset.order_by(*sort_fields)
+
+        # --------------------------------------------------
+        # Pagination
+        # --------------------------------------------------
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = StudyMajorAreaSerializer(result_page, many=True)
 
         return paginator.get_paginated_response(serializer.data)
+
 
 
 class StudyMajorAreaCreateAPIView(APIView):
@@ -2603,29 +2715,147 @@ class StudyMajorAreaImportAPIView(APIView):
 # -------------------- Studyspecialisation -------------------- #
 
 
+# class StudySpecialisationListAPIView(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def get(self, request):
+#         search = request.GET.get('search', '').strip()
+#         sort_by = request.GET.get('sortBy', 'created_at')
+#         sort_order = request.GET.get('sortOrder', 'desc')
+
+#         allowed_sort_fields = ['studyspecialisation', 'description', 'updated_at']
+#         if sort_by not in allowed_sort_fields:
+#             sort_by = 'created_at'
+#         if sort_order == 'desc':
+#             sort_by = f'-{sort_by}'
+
+#         queryset = StudySpecialisation.objects.filter(is_deleted=False)
+
+#         if search:
+#             queryset = queryset.filter(
+#                 Q(studyspecialisation__istartswith=search) 
+#             )
+
+#         queryset = queryset.order_by(sort_by)
+
+#         paginator = CustomPagination()
+#         result_page = paginator.paginate_queryset(queryset, request)
+#         serializer = StudySpecialisationSerializer(result_page, many=True)
+
+#         return paginator.get_paginated_response(serializer.data)
+
+
 class StudySpecialisationListAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
+        custom_sort = request.GET.get('customSort')
         sort_by = request.GET.get('sortBy', 'created_at')
         sort_order = request.GET.get('sortOrder', 'desc')
 
-        allowed_sort_fields = ['studyspecialisation', 'description', 'updated_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        uuid_studyMainArea = request.GET.get('studyMainArea', '')
+        uuid_studyMajorArea = request.GET.get('studyMajorArea', '')
 
         queryset = StudySpecialisation.objects.filter(is_deleted=False)
 
+        # ----------------------------------------
+        # UUID FILTERING HELPERS
+        # ----------------------------------------
+        def parse_uuid_list(raw):
+            valid = []
+            if raw:
+                for x in raw.split(','):
+                    try:
+                        valid.append(UUID(x.strip()))
+                    except:
+                        pass
+            return valid
+
+        # Filter by mainarea
+        mainarea_list = parse_uuid_list(uuid_studyMainArea)
+        if mainarea_list:
+            queryset = queryset.filter(mainarea__uuid__in=mainarea_list)
+
+        # Filter by majorarea
+        majorarea_list = parse_uuid_list(uuid_studyMajorArea)
+        if majorarea_list:
+            queryset = queryset.filter(majorarea__uuid__in=majorarea_list)
+
+        # ----------------------------------------
+        # SEARCH FILTER
+        # ----------------------------------------
         if search:
-            queryset = queryset.filter(
-                Q(studyspecialisation__istartswith=search) 
-            )
+            queryset = queryset.filter(studyspecialisation__icontains=search)
 
-        queryset = queryset.order_by(sort_by)
+        # ----------------------------------------
+        # SORT FIELD MAP
+        # ----------------------------------------
+        sort_field_map = {
+            "studyspecialisation": "studyspecialisation",
+            "description": "description",
+            "mainarea_name": "mainarea__name",
+            "majorarea_name": "majorarea__majorarea",
+            "created_at": "created_at",
+            "updated_at": "updated_at",
+        }
 
+        # Allowed fields
+        allowed_sort_fields = list(sort_field_map.keys())
+
+        sort_fields = []
+
+        # ----------------------------------------
+        # CUSTOM SORT LOGIC
+        # ----------------------------------------
+        if custom_sort:
+            for rule in custom_sort.split(","):
+                try:
+                    field, order = rule.split(":")
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive fields
+                    if field in [
+                        "studyspecialisation", "description",
+                        "mainarea_name", "majorarea_name"
+                    ]:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True)
+                        if order == "asc" else f.desc(nulls_last=True)
+                    )
+
+                except ValueError:
+                    continue
+
+        else:
+            # ----------------------------------------
+            # DEFAULT SORT
+            # ----------------------------------------
+            if sort_by not in allowed_sort_fields:
+                sort_by = "created_at"
+
+            orm_field = sort_field_map.get(sort_by, "created_at")
+            f = F(orm_field)
+
+            sort_fields = [
+                f.asc(nulls_last=True) if sort_order == "asc" else f.desc(nulls_last=True)
+            ]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # ----------------------------------------
+        # PAGINATION
+        # ----------------------------------------
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = StudySpecialisationSerializer(result_page, many=True)
@@ -5972,30 +6202,144 @@ class DegreeAwardedByDeleteAPIView(APIView):
 
 
 # -------------------- EXPORT API --------------------
+# class DegreeAwardedByExportAPIView(APIView):
+#     def get(self, request):
+#         format_type = request.GET.get('format', 'xlsx').lower()
+#         fields = request.GET.get('fields')
+#         uuids_param = request.GET.get('uuids', '')
+#         uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+#         field_header_map = {
+#             'uuid': 'UUID',
+#             'country': 'Country',
+#             'education_level_name': 'Education Level',
+#             'degree_name': 'Degree Awarded By',
+#             'description': 'Description',
+#             'created_at': 'Created On',
+#             'updated_at': 'Modified On'
+#         }
+
+#         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+#         queryset = DegreeAwardedBy.objects.all()
+#         if uuids:
+#             queryset = queryset.filter(uuid__in=uuids)
+#         queryset = queryset.order_by('-created_at')
+
+#         dataset = Dataset()
+#         dataset.headers = [field_header_map.get(f, f) for f in field_list]
+#         dataset.title = 'DegreeAwardedBy'
+
+#         for degree in queryset:
+#             row = []
+#             for field in field_list:
+#                 value = getattr(degree, field, '')
+#                 if field in ['created_at', 'updated_at'] and value:
+#                     value = value.strftime("%d-%m-%Y %I:%M:%S %p")
+#                 elif field == 'country' and degree.country:
+#                     value = degree.country.name
+#                 elif field == 'education_level_name' and degree.education_level:
+#                     value = degree.education_level.educationlevel
+#                 elif isinstance(value, bool):
+#                     value = int(value)
+#                 row.append(value if value is not None else '')
+#             dataset.append(row)
+
+#         if format_type == 'csv':
+#             file_data = dataset.export('csv')
+#             content_type = 'text/csv'
+#             file_name = 'degrees.csv'
+#         else:
+#             file_data = io.BytesIO(dataset.export('xlsx'))
+#             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+#             file_name = 'degrees.xlsx'
+
+#         response = HttpResponse(
+#             file_data if format_type == 'csv' else file_data.getvalue(),
+#             content_type=content_type
+#         )
+#         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+#         return response
+
+
 class DegreeAwardedByExportAPIView(APIView):
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')
+        custom_sort = request.GET.get('customSort')
         uuids_param = request.GET.get('uuids', '')
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
+        # ------------------ Field Mapping ------------------
         field_header_map = {
             'uuid': 'UUID',
             'country': 'Country',
             'education_level_name': 'Education Level',
-            'degree_name': 'Degree Name By',
+            'degree_name': 'Degree Awarded By',
             'description': 'Description',
             'created_at': 'Created On',
-            'updated_at': 'Updated On'
+            'updated_at': 'Modified On'
         }
 
+        # ------------------ Allowed Sorting Fields ------------------
+        allowed_sort_fields = {
+            "uuid": "uuid",
+            "country": "country__name",
+            "education_level_name": "education_level__educationlevel",
+            "degree_name": "degree_name",
+            "description": "description",
+            "created_at": "created_at",
+            "updated_at": "updated_at",
+        }
+
+        # ------------------ Dataset fields ------------------
         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
-        queryset = DegreeAwardedBy.objects.all()
+        # ------------------ Queryset ------------------
+        queryset = DegreeAwardedBy.objects.select_related("country", "education_level")
+
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
 
+        # ---------------------------
+        # ⭐ Custom Sorting (Same Logic as CountryListAPIView)
+        # ---------------------------
+        sort_fields = []
+
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in allowed_sort_fields:
+                        continue
+
+                    orm_field = allowed_sort_fields[field]
+
+                    # Case-insensitive sort for string fields
+                    string_fields = ["country", "education_level_name", "degree_name", "description"]
+                    is_string = field in string_fields
+
+                    if is_string:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+
+        else:
+            # default fallback
+            sort_fields = [F("created_at").desc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # ------------------ Export Data ------------------
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = 'DegreeAwardedBy'
@@ -6003,159 +6347,330 @@ class DegreeAwardedByExportAPIView(APIView):
         for degree in queryset:
             row = []
             for field in field_list:
-                value = getattr(degree, field, '')
-                if field in ['created_at', 'updated_at'] and value:
+                value = getattr(degree, field, "")
+
+                if field == "country":
+                    value = degree.country.name if degree.country else ""
+
+                elif field == "education_level_name":
+                    value = degree.education_level.educationlevel if degree.education_level else ""
+
+                elif field in ["created_at", "updated_at"] and value:
                     value = value.strftime("%d-%m-%Y %I:%M:%S %p")
-                elif field == 'country' and degree.country:
-                    value = degree.country.name
-                elif field == 'education_level_name' and degree.education_level:
-                    value = degree.education_level.educationlevel
+
                 elif isinstance(value, bool):
                     value = int(value)
-                row.append(value if value is not None else '')
+
+                row.append(value if value is not None else "")
+
             dataset.append(row)
 
+        # ------------------ File Output ------------------
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
             file_name = 'degrees.csv'
+            response_data = file_data
         else:
             file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'degrees.xlsx'
+            response_data = file_data.getvalue()
 
-        response = HttpResponse(
-            file_data if format_type == 'csv' else file_data.getvalue(),
-            content_type=content_type
-        )
+        response = HttpResponse(response_data, content_type=content_type)
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
 
 # -------------------- IMPORT API --------------------
+# class DegreeAwardedByImportAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def post(self, request):
+#         file = request.FILES.get('file')
+#         sheet_name = request.data.get('sheet_name', None)
+
+#         if not file:
+#             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+
+#         format_type = file.name.split('.')[-1].lower()
+#         imported_count = 0
+#         skipped_rows = []
+#         duplicate_rows = []
+
+#         required_headers = {'degree awarded by', 'country', 'education level'}
+#         optional_headers = {'description'}
+
+#         try:
+#             data = []
+
+#             # ---------- XLSX ----------
+#             if format_type == 'xlsx':
+#                 wb = openpyxl.load_workbook(file, read_only=True)
+#                 ws = wb[sheet_name] if sheet_name else wb.active
+#                 headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+#                 if not required_headers.issubset(set(headers)):
+#                     return Response({'statusCode': 400, 'status': False, 'message': f'Missing required headers: {required_headers - set(headers)}'}, status=status.HTTP_400_BAD_REQUEST)
+#                 for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+#                     if not any(row):
+#                         continue
+#                     row_dict = dict(zip(headers, row))
+#                     row_dict['_row_number'] = idx
+#                     data.append(row_dict)
+
+#             # ---------- CSV ----------
+#             elif format_type == 'csv':
+#                 decoded_file = file.read().decode('utf-8')
+#                 reader = csv.DictReader(io.StringIO(decoded_file))
+#                 headers = [h.strip().lower() for h in reader.fieldnames]
+#                 if not required_headers.issubset(set(headers)):
+#                     return Response({'statusCode': 400, 'status': False, 'message': f'Missing required headers: {required_headers - set(headers)}'}, status=status.HTTP_400_BAD_REQUEST)
+#                 for idx, row in enumerate(reader, start=2):
+#                     row_lower = {k.strip().lower(): v for k, v in row.items()}
+#                     row_lower['_row_number'] = idx
+#                     data.append(row_lower)
+#             else:
+#                 return Response({'statusCode': 400, 'status': False, 'message': 'Unsupported file format'}, status=status.HTTP_400_BAD_REQUEST)
+
+#             # ---------- Process Data ----------
+#             for row in reversed(data):
+#                 row_number = row.get('_row_number', 'Unknown')
+#                 degree_name = str(row.get('degree awarded by')).strip() if row.get('degree awarded by') else None
+#                 country_name = str(row.get('country')).strip() if row.get('country') else None
+#                 education_level_name = str(row.get('education level')).strip() if row.get('education level') else None
+#                 description = str(row.get('description') or '').strip()
+
+#                 # Required fields check
+#                 if not degree_name or not country_name or not education_level_name:
+#                     skipped_rows.append({
+#                         "Row": row_number,
+#                         "Degree Awarded By": degree_name or "Unknown",
+#                         "Country": country_name,
+#                         "Education Level": education_level_name,
+#                         "Reason": "Missing required field(s)"
+#                     })
+#                     continue
+
+#                 # Foreign key validation
+#                 country = Country.objects.filter(name__iexact=country_name).first()
+#                 education_level = EducationLevel.objects.filter(educationlevel__iexact=education_level_name).first()
+#                 if not country:
+#                     skipped_rows.append({
+#                         "Row": row_number,
+#                         "Degree Awarded By": degree_name,
+#                         "Country": country_name,
+#                         "Education Level": education_level_name,
+#                         "Reason": f'Country "{country_name}" not found'
+#                     })
+#                     continue
+#                 if not education_level:
+#                     skipped_rows.append({
+#                         "Row": row_number,
+#                         "Degree Awarded By": degree_name,
+#                         "Country": country_name,
+#                         "Education Level": education_level_name,
+#                         "Reason": f'Education Level "{education_level_name}" not found'
+#                     })
+#                     continue
+
+#                 # Duplicate check
+#                 existing = DegreeAwardedBy.objects.filter(degree_name__iexact=degree_name, country=country, education_level=education_level).first()
+#                 if existing:
+#                     duplicate_rows.append({
+#                         "Row": row_number,
+#                         "Degree Awarded By": degree_name,
+#                         "Country": country_name,
+#                         "Education Level": education_level_name,
+#                         "Reason": "Already exists"
+#                     })
+#                     continue
+
+#                 # Create record
+#                 DegreeAwardedBy.objects.create(
+#                     degree_name=degree_name,
+#                     country=country,
+#                     education_level=education_level,
+#                     description=description
+#                 )
+#                 imported_count += 1
+
+#         except Exception as e:
+#             return Response({'statusCode': 400, 'status': False, 'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "duplicates": duplicate_rows,
+#             "skipped_rows": skipped_rows,
+#             "imported_count": imported_count,
+#             "message": "Import completed"
+#         })
+
+
 class DegreeAwardedByImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
         file = request.FILES.get('file')
-        sheet_name = request.data.get('sheet_name', None)
+        sheet_name = request.data.get('sheet_name')
 
         if not file:
-            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'No file uploaded'}, status=400)
 
         format_type = file.name.split('.')[-1].lower()
-        imported_count = 0
-        skipped_rows = []
-        duplicate_rows = []
 
-        required_headers = {'degree awarded by', 'country', 'education level'}
-        optional_headers = {'description'}
+        required_headers = {
+            'country',
+            'education level',
+            'degree awarded by'
+        }
+
+        data = []
+        skipped_rows = []
+        duplicates = []
+        imported_count = 0
 
         try:
-            data = []
-
-            # ---------- XLSX ----------
-            if format_type == 'xlsx':
+            # =====================================================
+            #                   READ EXCEL / CSV
+            # =====================================================
+            if format_type == "xlsx":
+                import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
-                ws = wb[sheet_name] if sheet_name else wb.active
-                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                if not required_headers.issubset(set(headers)):
-                    return Response({'statusCode': 400, 'status': False, 'message': f'Missing required headers: {required_headers - set(headers)}'}, status=status.HTTP_400_BAD_REQUEST)
+                sheets = wb.sheetnames
+
+                if not sheet_name:
+                    return Response({"error": "Please provide sheet_name", "available_sheets": sheets}, status=400)
+
+                if sheet_name not in sheets:
+                    return Response({"error": f"Sheet '{sheet_name}' not found", "available_sheets": sheets}, status=400)
+
+                ws = wb[sheet_name]
+                headers = [
+                    (cell.value or "").strip().lower()
+                    for cell in next(ws.iter_rows(min_row=1, max_row=1))
+                ]
+
+                missing = required_headers - set(headers)
+                if missing:
+                    return Response({"error": f"Missing required headers: {missing}"}, status=400)
+
                 for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     if not any(row):
                         continue
                     row_dict = dict(zip(headers, row))
-                    row_dict['_row_number'] = idx
+                    row_dict["_row_number"] = idx
                     data.append(row_dict)
 
-            # ---------- CSV ----------
-            elif format_type == 'csv':
-                decoded_file = file.read().decode('utf-8')
-                reader = csv.DictReader(io.StringIO(decoded_file))
-                headers = [h.strip().lower() for h in reader.fieldnames]
-                if not required_headers.issubset(set(headers)):
-                    return Response({'statusCode': 400, 'status': False, 'message': f'Missing required headers: {required_headers - set(headers)}'}, status=status.HTTP_400_BAD_REQUEST)
+            elif format_type == "csv":
+                import csv, io
+                decoded = file.read().decode('utf-8')
+                reader = csv.DictReader(io.StringIO(decoded))
+
+                headers = {h.strip().lower() for h in reader.fieldnames}
+
+                missing = required_headers - headers
+                if missing:
+                    return Response({"error": f"Missing required headers: {missing}"}, status=400)
+
                 for idx, row in enumerate(reader, start=2):
-                    row_lower = {k.strip().lower(): v for k, v in row.items()}
-                    row_lower['_row_number'] = idx
-                    data.append(row_lower)
+                    row_dict = {k.lower(): (v or "").strip() for k, v in row.items()}
+                    row_dict["_row_number"] = idx
+                    data.append(row_dict)
             else:
-                return Response({'statusCode': 400, 'status': False, 'message': 'Unsupported file format'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": "Unsupported file format (.xlsx or .csv only)"}, status=400)
 
-            # ---------- Process Data ----------
-            for row in reversed(data):
-                row_number = row.get('_row_number', 'Unknown')
-                degree_name = str(row.get('degree awarded by')).strip() if row.get('degree awarded by') else None
-                country_name = str(row.get('country')).strip() if row.get('country') else None
-                education_level_name = str(row.get('education level')).strip() if row.get('education level') else None
-                description = str(row.get('description') or '').strip()
+            # =====================================================
+            #                PROCESS ROWS (same logic as EducationLevel)
+            # =====================================================
+            for row in data:
+                row_no = row.get("_row_number")
 
-                # Required fields check
-                if not degree_name or not country_name or not education_level_name:
+                country_name = row.get("country", "").strip()
+                edu_level_name = row.get("education level", "").strip()
+                degree_name = row.get("degree awarded by", "").strip()
+                description = row.get("description", "")
+
+                # Required Fields
+                if not country_name or not edu_level_name or not degree_name:
                     skipped_rows.append({
-                        "Row": row_number,
-                        "Degree Awarded By": degree_name or "Unknown",
+                        "Row": row_no,
+                        "Reason": "Missing required fields",
                         "Country": country_name,
-                        "Education Level": education_level_name,
-                        "Reason": "Missing required field(s)"
+                        "Education Level": edu_level_name,
+                        "Degree Name By": degree_name,
                     })
                     continue
 
-                # Foreign key validation
+                # ---------------------------------------------
+                #            VALIDATE / CREATE COUNTRY
+                # ---------------------------------------------
                 country = Country.objects.filter(name__iexact=country_name).first()
-                education_level = EducationLevel.objects.filter(educationlevel__iexact=education_level_name).first()
                 if not country:
                     skipped_rows.append({
-                        "Row": row_number,
-                        "Degree Awarded By": degree_name,
-                        "Country": country_name,
-                        "Education Level": education_level_name,
-                        "Reason": f'Country "{country_name}" not found'
+                        "Row": row_no,
+                        "Reason": f'Country "{country_name}" not found',
+                        "Country": country_name
                     })
                     continue
-                if not education_level:
+
+                # ---------------------------------------------
+                #      VALIDATE / CREATE Education Level
+                # ---------------------------------------------
+                edu_level = EducationLevel.objects.filter(educationlevel__iexact=edu_level_name).first()
+
+                if not edu_level:
                     skipped_rows.append({
-                        "Row": row_number,
-                        "Degree Awarded By": degree_name,
-                        "Country": country_name,
-                        "Education Level": education_level_name,
-                        "Reason": f'Education Level "{education_level_name}" not found'
+                        "Row": row_no,
+                        "Reason": f'Education Level "{edu_level_name}" not found',
+                        "Education Level": edu_level_name
                     })
                     continue
 
-                # Duplicate check
-                existing = DegreeAwardedBy.objects.filter(degree_name__iexact=degree_name, country=country, education_level=education_level).first()
-                if existing:
-                    duplicate_rows.append({
-                        "Row": row_number,
-                        "Degree Awarded By": degree_name,
-                        "Country": country_name,
-                        "Education Level": education_level_name,
-                        "Reason": "Already exists"
-                    })
-                    continue
-
-                # Create record
-                DegreeAwardedBy.objects.create(
-                    degree_name=degree_name,
+                # ---------------------------------------------
+                #           DUPLICATE CHECK
+                # ---------------------------------------------
+                existing = DegreeAwardedBy.objects.filter(
                     country=country,
-                    education_level=education_level,
+                    education_level=edu_level
+                ).first()
+
+                if existing:
+                    duplicates.append({
+                        "row": idx + 1,
+                        "reason": f"Duplicate: combination of country '{country.name}' and education level '{edu_level.educationlevel}' already exists.",
+                    })
+                    continue
+
+                #     continue
+
+
+                # ---------------------------------------------
+                #           CREATE NEW RECORD
+                # ---------------------------------------------
+                DegreeAwardedBy.objects.create(
+                    country=country,
+                    education_level=edu_level,
+                    degree_name=degree_name,
                     description=description
                 )
                 imported_count += 1
 
         except Exception as e:
-            return Response({'statusCode': 400, 'status': False, 'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": str(e)
+            }, status=400)
 
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": duplicate_rows,
-            "skipped_rows": skipped_rows,
+            "message": "Import completed",
             "imported_count": imported_count,
-            "message": "Import completed"
+            "duplicates": duplicates,
+            "skipped_rows": skipped_rows
         })
-
 
 
 
