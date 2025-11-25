@@ -218,6 +218,7 @@ const PriorityTypeList = () => {
     }));
     // Reset Global Search
     setGlobalSearch('');
+    setSelectedRows([]);
   };
 
 

@@ -436,6 +436,7 @@ const CityList = () => {
     }));
     // Reset global search
     setGlobalSearch('');
+    setSelectedRows([]);
   };
 
 

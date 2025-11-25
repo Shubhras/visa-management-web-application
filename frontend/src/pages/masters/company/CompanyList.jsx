@@ -251,6 +251,7 @@ const CompanyList = () => {
     }));
     // Reset Global Search
     setGlobalSearch("");
+    setSelectedRows([]);
   };
 
   const handleSearchChange = (value) => {

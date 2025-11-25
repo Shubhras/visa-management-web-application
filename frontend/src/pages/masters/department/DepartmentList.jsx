@@ -262,6 +262,7 @@ const DepartmentList = () => {
     }));
     // Reset Global Search
     setGlobalSearch("");
+    setSelectedRows([]);
   };
   
   const handlePageLengthChange = (value) => {

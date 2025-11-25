@@ -305,6 +305,7 @@ const TimeZoneList = () => {
     }));
     // Reset global search
     setGlobalSearch('');
+    setSelectedRows([]);
   };
 
   // Check if any filters are active

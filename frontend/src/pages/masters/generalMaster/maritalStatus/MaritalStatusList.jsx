@@ -233,6 +233,7 @@ const MaritalStatusList = () => {
     }));
     // Reset Global Search
     setGlobalSearch('');
+    setSelectedRows([]);
   };
   const handlePageLengthChange = (value) => {
     setTableState(prev => ({

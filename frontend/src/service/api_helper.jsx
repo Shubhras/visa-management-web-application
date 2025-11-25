@@ -252,7 +252,7 @@ export const exportStakeholderCategoryDataAPI = (payload) => {
       .map((item) => `${item.field}:${item.order}`)
       .join(",");
   }
-  const apiUrl = `${url.EXPORT_STAKEHOLDER_CATEGORY_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+  const apiUrl = `${url.EXPORT_STAKEHOLDER_CATEGORY_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -853,7 +853,7 @@ export const getStakeholderTypeListDataAPI = (data) => {
       .map((item) => `${item.field}:${item.order}`)
       .join(",");
   }
-  const apiUrl = `${url.GET_STAKEHOLDER_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
+  const apiUrl = `${url.GET_STAKEHOLDER_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&category=${data?.category}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -890,7 +890,7 @@ export const exportStakeholderTypeDataAPI = (payload) => {
       .map((item) => `${item.field}:${item.order}`)
       .join(",");
   }
-  const apiUrl = `${url.EXPORT_STAKEHOLDER_TYPE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+  const apiUrl = `${url.EXPORT_STAKEHOLDER_TYPE_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&category=${payload?.category}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -962,7 +962,7 @@ export const exportOwnershipTypeDataAPI = (payload) => {
       .map((item) => `${item.field}:${item.order}`)
       .join(",");
   }
-  const apiUrl = `${url.EXPORT_OWNERSHIP_TYPE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+  const apiUrl = `${url.EXPORT_OWNERSHIP_TYPE_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -1024,7 +1024,7 @@ export const exportAccreditationCategoryDataAPI = (payload) => {
       .map((item) => `${item.field}:${item.order}`)
       .join(",");
   }
-  const apiUrl = `${url.EXPORT_ACCREDITATION_CATEGORY_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+  const apiUrl = `${url.EXPORT_ACCREDITATION_CATEGORY_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -1049,7 +1049,7 @@ export const getLicenceNameListDataAPI = (data) => {
             .map(item => `${item.field}:${item.order}`)
             .join(",");
     }
-  const apiUrl = `${url.GET_LICENCE_NAME_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
+  const apiUrl = `${url.GET_LICENCE_NAME_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&country=${data?.country}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -1086,7 +1086,7 @@ export const exportLicenceNameDataAPI = (payload) => {
             .map(item => `${item.field}:${item.order}`)
             .join(",");
     }
-  const apiUrl = `${url.EXPORT_LICENCE_NAME_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+  const apiUrl = `${url.EXPORT_LICENCE_NAME_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&country=${payload?.country}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -1111,7 +1111,7 @@ export const getAccreditationNameListDataAPI = (data) => {
       .map((item) => `${item.field}:${item.order}`)
       .join(",");
   }
-  const apiUrl = `${url.GET_ACCREDITATION_NAME_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
+  const apiUrl = `${url.GET_ACCREDITATION_NAME_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&category=${data?.category}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -1148,7 +1148,7 @@ export const exportAccreditationNameDataAPI = (payload) => {
       .map((item) => `${item.field}:${item.order}`)
       .join(",");
   }
-  const apiUrl = `${url.EXPORT_ACCREDITATION_NAME_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+  const apiUrl = `${url.EXPORT_ACCREDITATION_NAME_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&category=${payload?.category}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 

@@ -216,8 +216,6 @@ const StakeholderTypeList = () => {
   ]);
 
   const fetchStakeholderTypeList = () => {
-
-    console.log('hhhhhhhhhhhhhhhhhh',columnFilters)
     setLoading(true);
     const params = {
       page: tableState.page,
@@ -281,28 +279,26 @@ const StakeholderTypeList = () => {
 
     dispatch(
       stakeholderCategoryList(params, (response, error) => {
-        if (response?.statusCode === 200 && response?.status === true) {
+
+          if (response?.statusCode === 200 && response?.status === true) {
           const options =
             (response?.data || [])
               .map((item) => {
-                const name = item.name || item.category_name || "";
-                return name
+                return item.uuid
                   ? {
-                      id: name,
-                      name,
-                    }
+                    id: item.uuid,      // ✔️ payload me ID jayegi
+                    name: item.name,    // ✔️ dropdown me name dikhayega
+                  }
                   : null;
               })
               .filter(Boolean)
-              .sort((a, b) => a.name.localeCompare(b.name)) || [];
+              .sort((a, b) => a.name.localeCompare(b.name));
 
           setFilterDropdownData((prev) => ({
             ...prev,
             category_name: options,
           }));
           setCategoryOptionsLoaded(true);
-        } else {
-          toast.error("Failed to load stakeholder categories");
         }
       })
     );
@@ -461,6 +457,7 @@ const StakeholderTypeList = () => {
     setColumnFilters({
       category_name: [],
     });
+    setSelectedRows([]);
   };
 
 

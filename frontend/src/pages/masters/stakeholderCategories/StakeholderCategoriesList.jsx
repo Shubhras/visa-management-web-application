@@ -23,9 +23,12 @@ const StakeholderCategoriesList = () => {
   const { globalSearch, setGlobalSearch } = useGlobalSearch();
   const [show, setShow] = useState(false);
   const handleShow = () => setShow(true);
-  const handleClose = () => {
+  const handleClose = (shouldRefresh = false) => {
     setShow(false);
-    fetchStakeholderCategoriesList();
+    // Only call API when data was successfully added/updated
+    if (shouldRefresh) {
+      fetchStakeholderCategoriesList();
+    }
   };
 
   const [showEdit, setShowEdit] = useState(false);
@@ -353,9 +356,12 @@ const StakeholderCategoriesList = () => {
     return pages;
   };
 
-  const handleCloseEdit = () => {
+  const handleCloseEdit = (shouldRefresh = false) => {
     setShowEdit(false);
-    fetchStakeholderCategoriesList();
+    // Only call API when data was successfully added/updated
+    if (shouldRefresh) {
+      fetchStakeholderCategoriesList();
+    }
   };
 
   const handleShowEdit = (rowData) => {
@@ -431,9 +437,12 @@ const StakeholderCategoriesList = () => {
     setSelectAllOrNot("");
   };
 
-  const handleCloseImport = () => {
+  const handleCloseImport = (shouldRefresh = false) => {
     setShowImport(false);
-    fetchStakeholderCategoriesList();
+    // Only call API when data was successfully added/updated
+    if (shouldRefresh) {
+      fetchStakeholderCategoriesList();
+    }
   };
 
   const handleShowImport = () => {
@@ -581,22 +590,20 @@ const StakeholderCategoriesList = () => {
                       <>
                         <button
                           onClick={() => handleSelectAllOrNot("onlySelected")}
-                          className={`btn btn-sm py-1 fw-medium ${
-                            selectAllOrNot === "onlySelected"
+                          className={`btn btn-sm py-1 fw-medium ${selectAllOrNot === "onlySelected"
                               ? "comman-btn-color"
                               : "comman-inactive-btn"
-                          }`}
+                            }`}
                         >
                           {`Select (${selectedRows.length})`}
                         </button>
 
                         <button
                           onClick={() => handleSelectAllOrNot("all")}
-                          className={`btn btn-sm py-1 fw-medium ${
-                            selectAllOrNot === "all"
+                          className={`btn btn-sm py-1 fw-medium ${selectAllOrNot === "all"
                               ? "comman-btn-color"
                               : "comman-inactive-btn"
-                          }`}
+                            }`}
                         >
                           {`Select All (${tableState.total})`}
                         </button>
@@ -641,9 +648,8 @@ const StakeholderCategoriesList = () => {
                         <ul className="pagination mb-0" style={{ gap: "4px" }}>
                           {/* First */}
                           <li
-                            className={`page-item ${
-                              !tableState.hasPrevious ? "disabled" : ""
-                            }`}
+                            className={`page-item ${!tableState.hasPrevious ? "disabled" : ""
+                              }`}
                           >
                             <button
                               className="border-0 bg-transparent"
@@ -666,9 +672,8 @@ const StakeholderCategoriesList = () => {
 
                           {/* Prev */}
                           <li
-                            className={`page-item ${
-                              !tableState.hasPrevious ? "disabled" : ""
-                            }`}
+                            className={`page-item ${!tableState.hasPrevious ? "disabled" : ""
+                              }`}
                           >
                             <button
                               className="border-0 bg-transparent"
@@ -735,9 +740,8 @@ const StakeholderCategoriesList = () => {
 
                           {/* Next */}
                           <li
-                            className={`page-item ${
-                              !tableState.hasNext ? "disabled" : ""
-                            }`}
+                            className={`page-item ${!tableState.hasNext ? "disabled" : ""
+                              }`}
                           >
                             <button
                               className="border-0 bg-transparent"
@@ -760,9 +764,8 @@ const StakeholderCategoriesList = () => {
 
                           {/* Last */}
                           <li
-                            className={`page-item ${
-                              !tableState.hasNext ? "disabled" : ""
-                            }`}
+                            className={`page-item ${!tableState.hasNext ? "disabled" : ""
+                              }`}
                           >
                             <button
                               className="border-0 bg-transparent"
