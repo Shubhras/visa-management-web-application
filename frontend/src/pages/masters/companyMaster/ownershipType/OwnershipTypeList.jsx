@@ -657,6 +657,8 @@ const OwnershipTypeList = () => {
   };
 
   const handleExport = () => {
+
+    console.log('ddd')
     if (selectedItems.length === 0) {
       toast.error("Please select at least one field");
       return;
@@ -668,7 +670,7 @@ const OwnershipTypeList = () => {
       "Modified On": "updated_at",
       Description: "description",
     };
-    const mappedFields = selectedItems.map(
+    let mappedFields = selectedItems.map(
       (item) => fieldMapping[item] || item
     );
     const fieldsString = mappedFields.join(",");
@@ -680,8 +682,8 @@ const OwnershipTypeList = () => {
       search: tableState.search || "",
       sort: tableState.sort,
       company_type:
-        columnFilters.name.length > 0
-          ? columnFilters.name
+        columnFilters.company_type.length > 0
+          ? columnFilters.company_type
           : null,
     };
 

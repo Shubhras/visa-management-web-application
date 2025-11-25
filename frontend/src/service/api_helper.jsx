@@ -1111,7 +1111,7 @@ export const getAccreditationNameListDataAPI = (data) => {
       .map((item) => `${item.field}:${item.order}`)
       .join(",");
   }
-  const apiUrl = `${url.GET_ACCREDITATION_NAME_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
+  const apiUrl = `${url.GET_ACCREDITATION_NAME_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&category=${data?.category}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -1148,7 +1148,7 @@ export const exportAccreditationNameDataAPI = (payload) => {
       .map((item) => `${item.field}:${item.order}`)
       .join(",");
   }
-  const apiUrl = `${url.EXPORT_ACCREDITATION_NAME_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+  const apiUrl = `${url.EXPORT_ACCREDITATION_NAME_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&category=${payload?.category}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
