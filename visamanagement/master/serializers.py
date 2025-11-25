@@ -866,7 +866,7 @@ class DegreeAwardedInstituteSerializer(serializers.ModelSerializer):
             'degree_awarded_by_id', 'degree_awarded_by_name',
             'country_id', 'name',
             'state_id', 'state_name',
-            'education_level_id', 'education_level_name'
+            'education_level_id', 'education_level_name','created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'uuid', 'degree_awarded_by_name', 'state_name', 'education_level_name']
 
