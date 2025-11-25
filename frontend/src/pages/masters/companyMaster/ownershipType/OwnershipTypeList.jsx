@@ -36,13 +36,15 @@ const OwnershipTypeList = () => {
   };
 
   // For closing modal
-  const handleClose = () => {
+  const handleClose = (shouldRefresh = false) => {
     setModalState({
       show: false,
       mode: "add",
       rowData: null,
     });
-    fetchBankAccountTypeList();
+    if (shouldRefresh) {
+      fetchBankAccountTypeList();
+    }
   };
 
   // const [showEdit, setShowEdit] = useState(false);
@@ -98,10 +100,10 @@ const OwnershipTypeList = () => {
     {
       id: "company_type",
       label: "Company Type",
-      field: "name",
+      field: "company_type",
       visible: true,
       required: false,
-      filterable: true, 
+      filterable: true,
     },
     {
       id: "description",
@@ -215,6 +217,7 @@ const OwnershipTypeList = () => {
 
   const fetchBankAccountTypeList = () => {
     setLoading(true);
+    console.log('ggggggggggggg', columnFilters)
     const params = {
       page: tableState.page,
       limit: tableState.limit,
@@ -266,7 +269,7 @@ const OwnershipTypeList = () => {
   };
 
   const fetchCompanyTypeOptions = () => {
-    if (companyTypeOptionsLoaded) return; 
+    if (companyTypeOptionsLoaded) return;
 
     const params = {
       page: 1,
@@ -283,24 +286,19 @@ const OwnershipTypeList = () => {
           const options =
             (response?.data || [])
               .map((item) => {
-                const name =
-                  item.name ||
-                  item.companyTypeName ||
-                  item.name ||
-                  "";
-                return name
+                return item.uuid
                   ? {
-                      id: name, // we filter by NAME
-                      name,
-                    }
+                    id: item.uuid,      // ✔️ payload me ID jayegi
+                    name: item.name,    // ✔️ dropdown me name dikhayega
+                  }
                   : null;
               })
               .filter(Boolean)
-              .sort((a, b) => a.name.localeCompare(b.name)) || [];
+              .sort((a, b) => a.name.localeCompare(b.name));
 
           setFilterDropdownData((prev) => ({
             ...prev,
-            name: options,
+            company_type: options,
           }));
           setCompanyTypeOptionsLoaded(true);
         }
@@ -373,7 +371,7 @@ const OwnershipTypeList = () => {
     e.stopPropagation();
 
     // When opening Company Type filter, ensure options are loaded
-    if (columnField === "name" && !companyTypeOptionsLoaded) {
+    if (columnField === "company_type" && !companyTypeOptionsLoaded) {
       fetchCompanyTypeOptions();
     }
 
@@ -613,9 +611,11 @@ const OwnershipTypeList = () => {
     setSelectAllOrNot("");
   };
 
-  const handleCloseImport = () => {
+  const handleCloseImport = (shouldRefresh = false) => {
     setShowImport(false);
-    fetchBankAccountTypeList();
+    if (shouldRefresh) {
+      fetchBankAccountTypeList();
+    }
   };
 
   const handleShowImport = () => {
@@ -664,7 +664,7 @@ const OwnershipTypeList = () => {
 
     const fieldMapping = {
       "Ownership Type": "name",
-      "Company Type": "company_type",
+      "Company Type": "company_type_name",
       "Modified On": "updated_at",
       Description: "description",
     };
@@ -766,22 +766,20 @@ const OwnershipTypeList = () => {
                       <>
                         <button
                           onClick={() => handleSelectAllOrNot("onlySelected")}
-                          className={`btn btn-sm py-1 fw-medium ${
-                            selectAllOrNot === "onlySelected"
-                              ? "comman-btn-color"
-                              : "comman-inactive-btn"
-                          }`}
+                          className={`btn btn-sm py-1 fw-medium ${selectAllOrNot === "onlySelected"
+                            ? "comman-btn-color"
+                            : "comman-inactive-btn"
+                            }`}
                         >
                           {`Select (${selectedRows.length})`}
                         </button>
 
                         <button
                           onClick={() => handleSelectAllOrNot("all")}
-                          className={`btn btn-sm py-1 fw-medium ${
-                            selectAllOrNot === "all"
-                              ? "comman-btn-color"
-                              : "comman-inactive-btn"
-                          }`}
+                          className={`btn btn-sm py-1 fw-medium ${selectAllOrNot === "all"
+                            ? "comman-btn-color"
+                            : "comman-inactive-btn"
+                            }`}
                         >
                           {`Select All (${tableState.total})`}
                         </button>
@@ -835,9 +833,8 @@ const OwnershipTypeList = () => {
                         <ul className="pagination mb-0" style={{ gap: "4px" }}>
                           {/* First */}
                           <li
-                            className={`page-item ${
-                              !tableState.hasPrevious ? "disabled" : ""
-                            }`}
+                            className={`page-item ${!tableState.hasPrevious ? "disabled" : ""
+                              }`}
                           >
                             <button
                               className="border-0 bg-transparent"
@@ -860,9 +857,8 @@ const OwnershipTypeList = () => {
 
                           {/* Prev */}
                           <li
-                            className={`page-item ${
-                              !tableState.hasPrevious ? "disabled" : ""
-                            }`}
+                            className={`page-item ${!tableState.hasPrevious ? "disabled" : ""
+                              }`}
                           >
                             <button
                               className="border-0 bg-transparent"
@@ -929,9 +925,8 @@ const OwnershipTypeList = () => {
 
                           {/* Next */}
                           <li
-                            className={`page-item ${
-                              !tableState.hasNext ? "disabled" : ""
-                            }`}
+                            className={`page-item ${!tableState.hasNext ? "disabled" : ""
+                              }`}
                           >
                             <button
                               className="border-0 bg-transparent"
@@ -954,9 +949,8 @@ const OwnershipTypeList = () => {
 
                           {/* Last */}
                           <li
-                            className={`page-item ${
-                              !tableState.hasNext ? "disabled" : ""
-                            }`}
+                            className={`page-item ${!tableState.hasNext ? "disabled" : ""
+                              }`}
                           >
                             <button
                               className="border-0 bg-transparent"
@@ -1024,11 +1018,10 @@ const OwnershipTypeList = () => {
                                           : "mdi:filter-outline"
                                       }
                                       width="18"
-                                      className={`ms-2 ${
-                                        columnFilters[column.field]?.length > 0
-                                          ? "comman-btn-color"
-                                          : ""
-                                      }`}
+                                      className={`ms-2 ${columnFilters[column.field]?.length > 0
+                                        ? "comman-btn-color"
+                                        : ""
+                                        }`}
                                       style={{ cursor: "pointer" }}
                                       onClick={(e) =>
                                         toggleFilterDropdown(e, column.field)
@@ -1037,155 +1030,153 @@ const OwnershipTypeList = () => {
 
                                     {activeFilterColumn ===
                                       column.field && (
-                                      <div
-                                        ref={filterDropdownRef}
-                                        className="position-absolute bg-white border rounded shadow-sm p-3 main-div-dropdown"
-                                        onClick={(e) => e.stopPropagation()}
-                                      >
-                                        {/* Sort Options */}
                                         <div
-                                          className={`filter-menu-item px-3 py-2 d-flex align-items-center ${
-                                            tableState.sort.find(
+                                          ref={filterDropdownRef}
+                                          className="position-absolute bg-white border rounded shadow-sm p-3 main-div-dropdown"
+                                          onClick={(e) => e.stopPropagation()}
+                                        >
+                                          {/* Sort Options */}
+                                          <div
+                                            className={`filter-menu-item px-3 py-2 d-flex align-items-center ${tableState.sort.find(
                                               (s) =>
                                                 s.field === column.field
                                             )?.order === "asc"
                                               ? "disabled-sort"
                                               : ""
-                                          }`}
-                                          onClick={() =>
-                                            applySortAsc(column.field)
-                                          }
-                                        >
-                                          <Icon
-                                            icon="ri:arrow-up-line"
-                                            className="me-2 text-muted"
-                                            width="18"
-                                          />
-                                          Sort Smallest to Largest
-                                        </div>
-                                        <div
-                                          className={`filter-menu-item px-3 py-2 d-flex align-items-center ${
-                                            tableState.sort.find(
+                                              }`}
+                                            onClick={() =>
+                                              applySortAsc(column.field)
+                                            }
+                                          >
+                                            <Icon
+                                              icon="ri:arrow-up-line"
+                                              className="me-2 text-muted"
+                                              width="18"
+                                            />
+                                            Sort Smallest to Largest
+                                          </div>
+                                          <div
+                                            className={`filter-menu-item px-3 py-2 d-flex align-items-center ${tableState.sort.find(
                                               (s) =>
                                                 s.field === column.field
                                             )?.order === "desc"
                                               ? "disabled-sort"
                                               : ""
-                                          }`}
-                                          onClick={() =>
-                                            applySortDesc(column.field)
-                                          }
-                                        >
-                                          <Icon
-                                            icon="ri:arrow-down-line"
-                                            className="me-2 text-muted"
-                                            width="18"
-                                          />
-                                          Sort Largest to Smallest
-                                        </div>
-
-                                        {/* Search inside dropdown */}
-                                        <div className="mb-2">
-                                          <input
-                                            type="text"
-                                            className="form-control form-control-sm input-search"
-                                            placeholder="Search..."
-                                            value={
-                                              filterSearchTerms[
-                                                column.field
-                                              ] || ""
-                                            }
-                                            onChange={(e) =>
-                                              setFilterSearchTerms(
-                                                (prev) => ({
-                                                  ...prev,
-                                                  [column.field]:
-                                                    e.target.value,
-                                                })
-                                              )
-                                            }
-                                          />
-                                        </div>
-
-                                        {/* Select/Clear All */}
-                                        <div className="gap-2 mb-2 select-clear-all">
-                                          <button
-                                            className="btn btn-sm py-1 btn-primary flex-grow-1 comman-btn-color mr-10"
+                                              }`}
                                             onClick={() =>
-                                              handleFilterSelectAll(
-                                                column.field
-                                              )
+                                              applySortDesc(column.field)
                                             }
                                           >
-                                            Select All
-                                          </button>
-                                          <button
-                                            className="btn btn-sm py-1 btn-secondary flex-grow-1"
-                                            onClick={() =>
-                                              handleFilterClearAll(
-                                                column.field
-                                              )
-                                            }
-                                          >
-                                            Clear All
-                                          </button>
-                                        </div>
+                                            <Icon
+                                              icon="ri:arrow-down-line"
+                                              className="me-2 text-muted"
+                                              width="18"
+                                            />
+                                            Sort Largest to Smallest
+                                          </div>
 
-                                        {/* Options list */}
-                                        <div className="select-all-dropdown">
-                                          {getFilteredOptions(
-                                            column.field
-                                          ).length > 0 ? (
-                                            getFilteredOptions(
+                                          {/* Search inside dropdown */}
+                                          <div className="mb-2">
+                                            <input
+                                              type="text"
+                                              className="form-control form-control-sm input-search"
+                                              placeholder="Search..."
+                                              value={
+                                                filterSearchTerms[
+                                                column.field
+                                                ] || ""
+                                              }
+                                              onChange={(e) =>
+                                                setFilterSearchTerms(
+                                                  (prev) => ({
+                                                    ...prev,
+                                                    [column.field]:
+                                                      e.target.value,
+                                                  })
+                                                )
+                                              }
+                                            />
+                                          </div>
+
+                                          {/* Select/Clear All */}
+                                          <div className="gap-2 mb-2 select-clear-all">
+                                            <button
+                                              className="btn btn-sm py-1 btn-primary flex-grow-1 comman-btn-color mr-10"
+                                              onClick={() =>
+                                                handleFilterSelectAll(
+                                                  column.field
+                                                )
+                                              }
+                                            >
+                                              Select All
+                                            </button>
+                                            <button
+                                              className="btn btn-sm py-1 btn-secondary flex-grow-1"
+                                              onClick={() =>
+                                                handleFilterClearAll(
+                                                  column.field
+                                                )
+                                              }
+                                            >
+                                              Clear All
+                                            </button>
+                                          </div>
+
+                                          {/* Options list */}
+                                          <div className="select-all-dropdown">
+                                            {getFilteredOptions(
                                               column.field
-                                            ).map((option, idx) => (
-                                              <div
-                                                key={idx}
-                                                className="bg-white rounded p-2 mb-2 d-flex align-items-center gap-2 form-check-div"
-                                              >
-                                                <input
-                                                  type="checkbox"
-                                                  id={`filter-${column.field}-${idx}`}
-                                                  checked={columnFilters[
-                                                    column.field
-                                                  ]?.includes(option.id)}
-                                                  onChange={(e) =>
-                                                    handleFilterCheckboxChange(
-                                                      column.field,
-                                                      option.id,
-                                                      e.target.checked
-                                                    )
-                                                  }
-                                                  className="form-check-input"
-                                                />
-                                                <label
-                                                  htmlFor={`filter-${column.field}-${idx}`}
-                                                  className="mb-0 flex-grow-1 form-check-label"
+                                            ).length > 0 ? (
+                                              getFilteredOptions(
+                                                column.field
+                                              ).map((option, idx) => (
+                                                <div
+                                                  key={idx}
+                                                  className="bg-white rounded p-2 mb-2 d-flex align-items-center gap-2 form-check-div"
                                                 >
-                                                  {option.name}
-                                                </label>
+                                                  <input
+                                                    type="checkbox"
+                                                    id={`filter-${column.field}-${idx}`}
+                                                    checked={columnFilters[
+                                                      column.field
+                                                    ]?.includes(option.id)}
+                                                    onChange={(e) =>
+                                                      handleFilterCheckboxChange(
+                                                        column.field,
+                                                        option.id,
+                                                        e.target.checked
+                                                      )
+                                                    }
+                                                    className="form-check-input"
+                                                  />
+                                                  <label
+                                                    htmlFor={`filter-${column.field}-${idx}`}
+                                                    className="mb-0 flex-grow-1 form-check-label"
+                                                  >
+                                                    {option.name}
+                                                  </label>
+                                                </div>
+                                              ))
+                                            ) : (
+                                              <div className="no-records-found">
+                                                No options available
                                               </div>
-                                            ))
-                                          ) : (
-                                            <div className="no-records-found">
-                                              No options available
-                                            </div>
-                                          )}
-                                        </div>
+                                            )}
+                                          </div>
 
-                                        <div className="d-flex gap-2 mt-2 pt-2 border-top justify-content-end">
-                                          <button
-                                            className="btn btn-sm py-1 btn-secondary flex-grow-1 mt-10"
-                                            onClick={() =>
-                                              setActiveFilterColumn(null)
-                                            }
-                                            style={{ maxWidth: "80px" }}
-                                          >
-                                            Cancel
-                                          </button>
+                                          <div className="d-flex gap-2 mt-2 pt-2 border-top justify-content-end">
+                                            <button
+                                              className="btn btn-sm py-1 btn-secondary flex-grow-1 mt-10"
+                                              onClick={() =>
+                                                setActiveFilterColumn(null)
+                                              }
+                                              style={{ maxWidth: "80px" }}
+                                            >
+                                              Cancel
+                                            </button>
+                                          </div>
                                         </div>
-                                      </div>
-                                    )}
+                                      )}
                                   </div>
                                 )}
                               </div>
@@ -1363,7 +1354,7 @@ const OwnershipTypeList = () => {
           <div className="modal fade show common-ctl-popup">
             <div className="modal-dialog modal-dialog-centered">
               <div className="modal-content" style={{ borderRadius: "10px" }}>
-              <div className="modal-header">
+                <div className="modal-header">
                   <h6 className="modal-title text-danger">Confirm Delete</h6>
                   <button
                     type="button"
