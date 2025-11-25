@@ -2714,29 +2714,147 @@ class StudyMajorAreaImportAPIView(APIView):
 # -------------------- Studyspecialisation -------------------- #
 
 
+# class StudySpecialisationListAPIView(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def get(self, request):
+#         search = request.GET.get('search', '').strip()
+#         sort_by = request.GET.get('sortBy', 'created_at')
+#         sort_order = request.GET.get('sortOrder', 'desc')
+
+#         allowed_sort_fields = ['studyspecialisation', 'description', 'updated_at']
+#         if sort_by not in allowed_sort_fields:
+#             sort_by = 'created_at'
+#         if sort_order == 'desc':
+#             sort_by = f'-{sort_by}'
+
+#         queryset = StudySpecialisation.objects.filter(is_deleted=False)
+
+#         if search:
+#             queryset = queryset.filter(
+#                 Q(studyspecialisation__istartswith=search) 
+#             )
+
+#         queryset = queryset.order_by(sort_by)
+
+#         paginator = CustomPagination()
+#         result_page = paginator.paginate_queryset(queryset, request)
+#         serializer = StudySpecialisationSerializer(result_page, many=True)
+
+#         return paginator.get_paginated_response(serializer.data)
+
+
 class StudySpecialisationListAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
+        custom_sort = request.GET.get('customSort')
         sort_by = request.GET.get('sortBy', 'created_at')
         sort_order = request.GET.get('sortOrder', 'desc')
 
-        allowed_sort_fields = ['studyspecialisation', 'description', 'updated_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        uuid_studyMainArea = request.GET.get('studyMainArea', '')
+        uuid_studyMajorArea = request.GET.get('studyMajorArea', '')
 
         queryset = StudySpecialisation.objects.filter(is_deleted=False)
 
+        # ----------------------------------------
+        # UUID FILTERING HELPERS
+        # ----------------------------------------
+        def parse_uuid_list(raw):
+            valid = []
+            if raw:
+                for x in raw.split(','):
+                    try:
+                        valid.append(UUID(x.strip()))
+                    except:
+                        pass
+            return valid
+
+        # Filter by mainarea
+        mainarea_list = parse_uuid_list(uuid_studyMainArea)
+        if mainarea_list:
+            queryset = queryset.filter(mainarea__uuid__in=mainarea_list)
+
+        # Filter by majorarea
+        majorarea_list = parse_uuid_list(uuid_studyMajorArea)
+        if majorarea_list:
+            queryset = queryset.filter(majorarea__uuid__in=majorarea_list)
+
+        # ----------------------------------------
+        # SEARCH FILTER
+        # ----------------------------------------
         if search:
-            queryset = queryset.filter(
-                Q(studyspecialisation__istartswith=search) 
-            )
+            queryset = queryset.filter(studyspecialisation__icontains=search)
 
-        queryset = queryset.order_by(sort_by)
+        # ----------------------------------------
+        # SORT FIELD MAP
+        # ----------------------------------------
+        sort_field_map = {
+            "studyspecialisation": "studyspecialisation",
+            "description": "description",
+            "mainarea_name": "mainarea__name",
+            "majorarea_name": "majorarea__majorarea",
+            "created_at": "created_at",
+            "updated_at": "updated_at",
+        }
 
+        # Allowed fields
+        allowed_sort_fields = list(sort_field_map.keys())
+
+        sort_fields = []
+
+        # ----------------------------------------
+        # CUSTOM SORT LOGIC
+        # ----------------------------------------
+        if custom_sort:
+            for rule in custom_sort.split(","):
+                try:
+                    field, order = rule.split(":")
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive fields
+                    if field in [
+                        "studyspecialisation", "description",
+                        "mainarea_name", "majorarea_name"
+                    ]:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True)
+                        if order == "asc" else f.desc(nulls_last=True)
+                    )
+
+                except ValueError:
+                    continue
+
+        else:
+            # ----------------------------------------
+            # DEFAULT SORT
+            # ----------------------------------------
+            if sort_by not in allowed_sort_fields:
+                sort_by = "created_at"
+
+            orm_field = sort_field_map.get(sort_by, "created_at")
+            f = F(orm_field)
+
+            sort_fields = [
+                f.asc(nulls_last=True) if sort_order == "asc" else f.desc(nulls_last=True)
+            ]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # ----------------------------------------
+        # PAGINATION
+        # ----------------------------------------
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = StudySpecialisationSerializer(result_page, many=True)
