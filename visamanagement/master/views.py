@@ -9362,7 +9362,7 @@ class AccreditationNameListAPIView(APIView):
         # Search filter
         # -----------------------------
         if search:
-            queryset = queryset.filter(full_name__icontains=search)
+            queryset = queryset.filter(full_name__istartswith=search)
 
         # -----------------------------
         # Category filter (single, multiple, null-safe)
@@ -9692,7 +9692,7 @@ class AccreditationNameExportAPIView(APIView):
 
         # --- Filter by search ---
         if search:
-            queryset = queryset.filter(full_name__icontains=search)
+            queryset = queryset.filter(full_name__istartswith=search)
 
         # --- Filter by category (single, multiple, null-safe) ---
         if category_param:
