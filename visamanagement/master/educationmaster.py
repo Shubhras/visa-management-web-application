@@ -6017,29 +6017,138 @@ class ECAAwardingBodyImportAPIView(APIView):
 
 
 
+# class DegreeAwardedByListAPIView(APIView):
+#     def get(self, request):
+#         search = request.GET.get('search', '').strip()
+#         sort_by = request.GET.get('sortBy', 'created_at')
+#         sort_order = request.GET.get('sortOrder', 'desc')
+#         custom_sort = request.GET.get('customSort')
+#         uuid_country = request.GET.get('country', '')
+#         uuid_education_level = request.GET.get('education_level', '')
+
+#         allowed_sort_fields = ['degree_name', 'created_at', 'updated_at']
+#         if sort_by not in allowed_sort_fields:
+#             sort_by = 'created_at'
+#         if sort_order == 'desc':
+#             sort_by = f'-{sort_by}'
+
+#         queryset = DegreeAwardedBy.objects.all()
+#         if search:
+#             queryset = queryset.filter(
+#                 Q(degree_name__istartswith=search)
+#             )
+
+#         queryset = queryset.order_by(sort_by)
+#         paginator = CustomPagination()
+#         result_page = paginator.paginate_queryset(queryset, request)
+#         serializer = DegreeAwardedBySerializer(result_page, many=True)
+#         return paginator.get_paginated_response(serializer.data)
+
 class DegreeAwardedByListAPIView(APIView):
     def get(self, request):
         search = request.GET.get('search', '').strip()
+
         sort_by = request.GET.get('sortBy', 'created_at')
         sort_order = request.GET.get('sortOrder', 'desc')
+        custom_sort = request.GET.get('customSort')
 
+        uuid_country = request.GET.get('country', '')
+        uuid_education_level = request.GET.get('education_level', '')
+
+        # Allowed fields for normal sorting
         allowed_sort_fields = ['degree_name', 'created_at', 'updated_at']
+
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
+
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
-        queryset = DegreeAwardedBy.objects.all()
-        if search:
-            queryset = queryset.filter(
-                Q(degree_name__istartswith=search)
-            )
+        # -----------------------------------
+        # Base Queryset
+        # -----------------------------------
+        queryset = DegreeAwardedBy.objects.select_related("country", "education_level")
 
-        queryset = queryset.order_by(sort_by)
+        # -----------------------------------
+        # Filters
+        # -----------------------------------
+        if search:
+            queryset = queryset.filter(degree_name__istartswith=search)
+
+        def parse_uuid_list(raw):
+            valid = []
+            if raw:
+                for x in raw.split(','):
+                    try:
+                        valid.append(UUID(x.strip()))
+                    except:
+                        pass
+            return valid
+
+        # Filter by mainarea
+        country_uuids = parse_uuid_list(uuid_country)
+        if country_uuids:
+            queryset = queryset.filter(country__uuid__in=country_uuids)
+
+        # Filter by majorarea
+        education_level_uuids = parse_uuid_list(uuid_education_level)
+        if education_level_uuids:
+            queryset = queryset.filter(education_level__uuid__in=education_level_uuids)
+
+        # -----------------------------------
+        # Custom Sorting (Advanced)
+        # ----------------------------------
+        if custom_sort:
+            sort_fields = []
+
+            from django.db.models.functions import Lower
+            from django.db.models import F
+
+            field_map = {
+                'degree_name': 'degree_name',
+                'created_at': 'created_at',
+                'updated_at': 'updated_at',
+                'name': 'country__name',
+                'education_level_name': 'education_level__educationlevel'
+            }
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in field_map:
+                        continue
+
+                    orm_field = field_map[field]
+
+                    # Case-insensitive sorting for text fields
+                    if field in ['degree_name', 'country', 'education_level']:
+                        expression = Lower(orm_field)
+                    else:
+                        expression = F(orm_field)
+
+                    sort_fields.append(
+                        expression.asc(nulls_last=True)
+                        if order == 'asc'
+                        else expression.desc(nulls_last=True)
+                    )
+                except:
+                    continue
+
+            if sort_fields:
+                queryset = queryset.order_by(*sort_fields)
+        else:
+            queryset = queryset.order_by(sort_by)
+
+        # -----------------------------------
+        # Pagination
+        # -----------------------------------
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = DegreeAwardedBySerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
+
 
 
 # -------------------- CREATE API --------------------
