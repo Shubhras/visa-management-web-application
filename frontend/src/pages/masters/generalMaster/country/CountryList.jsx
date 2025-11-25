@@ -284,6 +284,7 @@ const CountryList = () => {
       hasPrevious: false,
     }));
     setGlobalSearch("");
+    setSelectedRows([]);
   };
 
   const hasActiveFilters = () => Object.values(columnFilters).some((arr) => arr.length > 0);

@@ -217,6 +217,7 @@ const TagsTypeList = () => {
     }));
     // Reset Global Search
     setGlobalSearch('');
+    setSelectedRows([]);
   };
   const handleSearchChange = (value) => {
     setTableState(prev => ({

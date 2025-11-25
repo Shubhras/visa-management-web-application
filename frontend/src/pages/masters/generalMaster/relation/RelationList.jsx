@@ -232,6 +232,7 @@ const RelationList = () => {
     }));
     // Reset Global Search
     setGlobalSearch('');
+    setSelectedRows([]);
   };
 
   const handlePageLengthChange = (value) => {

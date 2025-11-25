@@ -493,6 +493,7 @@ const LicenceNameList = () => {
       countryId: [],
     });
     setActiveFilterColumn(null);
+    setSelectedRows([]);
   };
 
   const handlePageLengthChange = (value) => {

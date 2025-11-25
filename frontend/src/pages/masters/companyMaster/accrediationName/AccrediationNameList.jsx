@@ -1727,6 +1727,7 @@ const AccrediationNameList = () => {
       hasPrevious: false,
     }));
     setGlobalSearch("");
+    setSelectedRows([]);
   };
 
   const handlePageLengthChange = (value) => {
