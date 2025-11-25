@@ -10,6 +10,7 @@ import {
   licenceNameExportData,
   licenceNameList,
   licenceNameDelete,
+  countryDemoList,
 } from "../../../../store/master/companyMasters/actions";
 import {
   formatDateDDMMYYYY,
@@ -35,7 +36,7 @@ const LicenceNameList = () => {
     });
   };
 
-  // ✅ For closing modal - only refresh if shouldRefresh is true (same as DepartmentList)
+  // ✅ For closing modal - only refresh if shouldRefresh is true
   const handleClose = (shouldRefresh = false) => {
     setModalState({
       show: false,
@@ -80,14 +81,27 @@ const LicenceNameList = () => {
     "License Short Name",
   ]);
 
-  // Table columns configuration (same structure as before)
+  // 🔽 Excel-style column filters (Country UUIDs)
+  const [columnFilters, setColumnFilters] = useState({
+    countryId: [],
+  });
+
+  const [activeFilterColumn, setActiveFilterColumn] = useState(null);
+  const [filterDropdownData, setFilterDropdownData] = useState({});
+  const [filterSearchTerms, setFilterSearchTerms] = useState({});
+  const filterDropdownRef = useRef(null);
+
+  const [countryListData, setCountryListData] = useState([]);
+
+  // Table columns configuration
   const [tableColumns] = useState([
     {
       id: "name",
       label: "Country",
-      field: "name",
+      field: "countryId",
       visible: true,
       required: false,
+      filterable: true, 
     },
     {
       id: "full_name",
@@ -160,10 +174,9 @@ const LicenceNameList = () => {
   const [showColumnDropdown, setShowColumnDropdown] = useState(false);
   const columnDropdownRef = useRef(null);
 
-  // Column visibility toggle handler
   const toggleColumnVisibility = (columnId) => {
     const column = tableColumns.find((col) => col.id === columnId);
-    if (column?.required) return; // Don't allow hiding required columns
+    if (column?.required) return;
 
     setVisibleColumns((prev) => {
       if (prev.includes(columnId)) {
@@ -174,12 +187,11 @@ const LicenceNameList = () => {
     });
   };
 
-  // Check if column is visible
   const isColumnVisible = (columnId) => {
     return visibleColumns.includes(columnId);
   };
 
-  // Close column dropdown on outside click (same as DepartmentList)
+  // Close column & filter dropdowns on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -188,18 +200,21 @@ const LicenceNameList = () => {
       ) {
         setShowColumnDropdown(false);
       }
+      if (
+        filterDropdownRef.current &&
+        !filterDropdownRef.current.contains(event.target)
+      ) {
+        setActiveFilterColumn(null);
+      }
     };
 
-    if (showColumnDropdown) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [showColumnDropdown]);
+  }, []);
 
-  // Table state (same style as DepartmentList)
+  // Table state
   const [tableState, setTableState] = useState({
     page: 1,
     limit: 25,
@@ -215,10 +230,54 @@ const LicenceNameList = () => {
     hasPrevious: false,
   });
 
-  // 🔗 Sync globalSearch into this table (same behaviour as DepartmentList)
+  // 🔗 Sync globalSearch into this table
   useEffect(() => {
     setTableState((prev) => ({ ...prev, search: globalSearch, page: 1 }));
   }, [globalSearch]);
+
+  // Fetch Country list for filter dropdown
+  useEffect(() => {
+    fetchCountryList();
+  }, []);
+
+  const fetchCountryList = () => {
+    const params = {
+      page: 1,
+      limit: 2000,
+      search: "",
+      status: "",
+      sortBy: "name",
+      sortOrder: "asc",
+    };
+
+    dispatch(
+      countryDemoList(params, (response, error) => {
+        if (response?.statusCode === 200 && response?.status === true) {
+          setCountryListData(response?.data || []);
+        }
+      })
+    );
+  };
+
+  // Prepare country filter options
+  useEffect(() => {
+    if (countryListData.length > 0) {
+      setFilterDropdownData((prev) => ({
+        ...prev,
+        countryId: countryListData
+          .map((country) => ({
+            id:
+              country.uuid ||
+              country.id ||
+              country.country ||
+              country.countryId,
+            name: country.name || country.countryName,
+          }))
+          .filter((opt) => opt.id && opt.name)
+          .sort((a, b) => a.name.localeCompare(b.name)),
+      }));
+    }
+  }, [countryListData]);
 
   // Debounced fetch on search
   useEffect(() => {
@@ -232,7 +291,7 @@ const LicenceNameList = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tableState.search]);
 
-  // Fetch whenever pagination, sort, etc. changes
+  // Fetch whenever pagination, sort, filters, etc. change
   useEffect(() => {
     fetchLicenceNameList();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -243,6 +302,7 @@ const LicenceNameList = () => {
     tableState.sortBy,
     tableState.sortOrder,
     tableState.sort,
+    columnFilters,
   ]);
 
   const fetchLicenceNameList = () => {
@@ -255,6 +315,8 @@ const LicenceNameList = () => {
       sortBy: tableState.sortBy || "",
       sortOrder: tableState.sortOrder || "",
       sort: tableState.sort,
+      country:
+        columnFilters.countryId.length > 0 ? columnFilters.countryId : null,
     };
 
     dispatch(
@@ -295,7 +357,7 @@ const LicenceNameList = () => {
     );
   };
 
-  // Handle sorting (same logic as DepartmentList)
+  // Sorting
   const handleSort = (field) => {
     setTableState((prev) => {
       let newSort = [...prev.sort];
@@ -325,7 +387,91 @@ const LicenceNameList = () => {
     return <Icon icon="ri:sort-desc" className="sorting-th-icone" />;
   };
 
-  // Clear all filters + reset global search (same as DepartmentList Reset)
+  // Sort A–Z
+  const applySortAsc = (field) => {
+    setTableState((prev) => {
+      let newSort = [...prev.sort];
+      const existingIndex = newSort.findIndex((s) => s.field === field);
+
+      if (existingIndex === -1) {
+        newSort.push({ field, order: "asc" });
+      } else {
+        newSort[existingIndex].order = "asc";
+      }
+
+      return { ...prev, sort: newSort, page: 1 };
+    });
+  };
+
+  // Sort Z–A
+  const applySortDesc = (field) => {
+    setTableState((prev) => {
+      let newSort = [...prev.sort];
+      const existingIndex = newSort.findIndex((s) => s.field === field);
+
+      if (existingIndex === -1) {
+        newSort.push({ field, order: "desc" });
+      } else {
+        newSort[existingIndex].order = "desc";
+      }
+
+      return { ...prev, sort: newSort, page: 1 };
+    });
+  };
+
+  // Column header filters helpers
+  const toggleFilterDropdown = (e, columnField) => {
+    e.stopPropagation();
+    setActiveFilterColumn(
+      activeFilterColumn === columnField ? null : columnField
+    );
+    setFilterSearchTerms((prev) => ({ ...prev, [columnField]: "" }));
+  };
+
+  const handleFilterCheckboxChange = (columnField, value, checked) => {
+    setColumnFilters((prev) => {
+      const currentFilters = prev[columnField] || [];
+      let newFilters;
+      if (checked) {
+        newFilters = [...currentFilters, value];
+      } else {
+        newFilters = currentFilters.filter((v) => v !== value);
+      }
+      return { ...prev, [columnField]: newFilters };
+    });
+  };
+
+  const handleFilterSelectAll = (columnField) => {
+    const searchTerm = filterSearchTerms[columnField] || "";
+
+    const availableOptions = (filterDropdownData[columnField] || [])
+      .filter((option) =>
+        option.name.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      .map((option) => option.id);
+
+    setColumnFilters((prev) => ({
+      ...prev,
+      [columnField]: availableOptions,
+    }));
+  };
+
+  const handleFilterClearAll = (columnField) => {
+    setColumnFilters((prev) => ({
+      ...prev,
+      [columnField]: [],
+    }));
+  };
+
+  const getFilteredOptions = (columnField) => {
+    const searchTerm = filterSearchTerms[columnField] || "";
+    const options = filterDropdownData[columnField] || [];
+    return options.filter((option) =>
+      option.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  };
+
+  // Clear all filters + reset global search
   const clearAllFilters = () => {
     setTableState((prev) => ({
       ...prev,
@@ -343,6 +489,10 @@ const LicenceNameList = () => {
       hasPrevious: false,
     }));
     setGlobalSearch("");
+    setColumnFilters({
+      countryId: [],
+    });
+    setActiveFilterColumn(null);
   };
 
   const handlePageLengthChange = (value) => {
@@ -493,7 +643,7 @@ const LicenceNameList = () => {
     setSelectAllOrNot("");
   };
 
-  // ✅ For closing import modal - only refresh if shouldRefresh is true (same as DepartmentList)
+  // ✅ For closing import modal - only refresh if shouldRefresh is true
   const handleCloseImport = (shouldRefresh = false) => {
     setShowImport(false);
     if (shouldRefresh) {
@@ -531,7 +681,6 @@ const LicenceNameList = () => {
   };
 
   const handleCheckboxChange = (item, checked) => {
-    // prevent unchecking required items
     if (ItemsRequired.includes(item)) return;
 
     if (checked) {
@@ -546,7 +695,6 @@ const LicenceNameList = () => {
       toast.error("Please select at least one field");
       return;
     }
-    // Map frontend labels to backend field names
     const fieldMapping = {
       Country: "country",
       "License Full Name": "full_name",
@@ -561,7 +709,6 @@ const LicenceNameList = () => {
     };
     let mappedFields = selectedItems.map((item) => fieldMapping[item] || item);
 
-    // If "License Valid Upto" is selected, add related fields too
     if (mappedFields.includes("valid_type")) {
       mappedFields.push(
         "valid_date",
@@ -570,7 +717,6 @@ const LicenceNameList = () => {
       );
     }
 
-    // Remove duplicates
     mappedFields = [...new Set(mappedFields)];
 
     const fieldsString = mappedFields.join(",");
@@ -580,6 +726,8 @@ const LicenceNameList = () => {
       uuids: selectAllOrNot === "all" ? [] : selectedRows,
       search: tableState.search || "",
       sort: tableState.sort,
+      country:
+        columnFilters.countryId.length > 0 ? columnFilters.countryId : null,
     };
 
     setLoadingExport(true);
@@ -617,7 +765,7 @@ const LicenceNameList = () => {
   };
 
   const startIndex = (tableState.currentPage - 1) * tableState.limit;
-  const statusOptions = ["All", "Active", "Inactive"]; // not used but kept for consistency
+  const statusOptions = ["All", "Active", "Inactive"]; // not used but kept
 
   return (
     <>
@@ -626,7 +774,7 @@ const LicenceNameList = () => {
         <div className="card basic-data-table main-container-data">
           <div className="card-body container-data">
             <div className="row align-items-center gy-3 gx-2 flex-wrap filter-action-btn">
-              {/* LEFT — New / Import / Export / Delete / Select / Reset (EXACT like DepartmentList) */}
+              {/* LEFT */}
               <div className="col-xl-6 col-lg-4 col-md-12">
                 <div className="d-flex flex-wrap align-items-center gap-2">
                   <button
@@ -694,7 +842,7 @@ const LicenceNameList = () => {
                 </div>
               </div>
 
-              {/* RIGHT — Page Size + Pagination (EXACT like DepartmentList, NO search here) */}
+              {/* RIGHT */}
               <div className="col-xl-6 col-lg-8 col-md-12">
                 <div className="d-flex flex-wrap align-items-center justify-content-end gap-2">
                   <select
@@ -721,7 +869,6 @@ const LicenceNameList = () => {
 
                       <nav>
                         <ul className="pagination mb-0 gap-4px">
-                          {/* First */}
                           <li
                             className={`page-item ${
                               !tableState.hasPrevious ? "disabled" : ""
@@ -746,7 +893,6 @@ const LicenceNameList = () => {
                             </button>
                           </li>
 
-                          {/* Prev */}
                           <li
                             className={`page-item ${
                               !tableState.hasPrevious ? "disabled" : ""
@@ -773,7 +919,6 @@ const LicenceNameList = () => {
                             </button>
                           </li>
 
-                          {/* Numbers */}
                           {getPaginationNumbers().map((page, idx) => (
                             <li key={idx} className="page-item">
                               {page === "..." ? (
@@ -817,7 +962,6 @@ const LicenceNameList = () => {
                             </li>
                           ))}
 
-                          {/* Next */}
                           <li
                             className={`page-item ${
                               !tableState.hasNext ? "disabled" : ""
@@ -842,7 +986,6 @@ const LicenceNameList = () => {
                             </button>
                           </li>
 
-                          {/* Last */}
                           <li
                             className={`page-item ${
                               !tableState.hasNext ? "disabled" : ""
@@ -908,6 +1051,174 @@ const LicenceNameList = () => {
                               >
                                 {column.label}
                                 {getSortIcon(column.field)}
+
+                                {column.filterable && (
+                                  <div className="position-relative comman-filtter-all">
+                                    <Icon
+                                      icon={
+                                        columnFilters[column.field]?.length > 0
+                                          ? "mdi:filter"
+                                          : "mdi:filter-outline"
+                                      }
+                                      width="18"
+                                      className={`ms-2 ${
+                                        columnFilters[column.field]?.length > 0
+                                          ? "comman-btn-color"
+                                          : ""
+                                      }`}
+                                      style={{ cursor: "pointer" }}
+                                      onClick={(e) =>
+                                        toggleFilterDropdown(e, column.field)
+                                      }
+                                    />
+
+                                    {activeFilterColumn === column.field && (
+                                      <div
+                                        ref={filterDropdownRef}
+                                        className="position-absolute bg-white border rounded shadow-sm p-3 main-div-dropdown"
+                                        onClick={(e) => e.stopPropagation()}
+                                      >
+                                        {/* Sort Options */}
+                                        <div
+                                          className={`filter-menu-item px-3 py-2 d-flex align-items-center ${
+                                            tableState.sort.find(
+                                              (s) =>
+                                                s.field === column.field &&
+                                                s.order === "asc"
+                                            )
+                                              ? "disabled-sort"
+                                              : ""
+                                          }`}
+                                          onClick={() =>
+                                            applySortAsc(column.field)
+                                          }
+                                        >
+                                          <Icon
+                                            icon="ri:arrow-up-line"
+                                            className="me-2 text-muted"
+                                            width="18"
+                                          />
+                                          Sort Smallest to Largest
+                                        </div>
+                                        <div
+                                          className={`filter-menu-item px-3 py-2 d-flex align-items-center ${
+                                            tableState.sort.find(
+                                              (s) =>
+                                                s.field === column.field &&
+                                                s.order === "desc"
+                                            )
+                                              ? "disabled-sort"
+                                              : ""
+                                          }`}
+                                          onClick={() =>
+                                            applySortDesc(column.field)
+                                          }
+                                        >
+                                          <Icon
+                                            icon="ri:arrow-down-line"
+                                            className="me-2 text-muted"
+                                            width="18"
+                                          />
+                                          Sort Largest to Smallest
+                                        </div>
+
+                                        {/* Search inside filter */}
+                                        <div className="mb-2 ">
+                                          <input
+                                            type="text"
+                                            className="form-control form-control-sm input-search"
+                                            placeholder="Search..."
+                                            value={
+                                              filterSearchTerms[column.field] ||
+                                              ""
+                                            }
+                                            onChange={(e) =>
+                                              setFilterSearchTerms((prev) => ({
+                                                ...prev,
+                                                [column.field]: e.target.value,
+                                              }))
+                                            }
+                                          />
+                                        </div>
+
+                                        {/* Select / Clear all */}
+                                        <div className="gap-2 mb-2 select-clear-all">
+                                          <button
+                                            className="btn btn-sm py-1 btn-primary flex-grow-1 comman-btn-color mr-10"
+                                            onClick={() =>
+                                              handleFilterSelectAll(
+                                                column.field
+                                              )
+                                            }
+                                          >
+                                            Select All
+                                          </button>
+                                          <button
+                                            className="btn btn-sm py-1 btn-secondary flex-grow-1"
+                                            onClick={() =>
+                                              handleFilterClearAll(column.field)
+                                            }
+                                          >
+                                            Clear All
+                                          </button>
+                                        </div>
+
+                                        {/* Checkbox list */}
+                                        <div className="select-all-dropdown">
+                                          {getFilteredOptions(column.field)
+                                            .length > 0 ? (
+                                            getFilteredOptions(
+                                              column.field
+                                            ).map((option, idx) => (
+                                              <div
+                                                key={option.id || idx}
+                                                className="bg-white rounded p-2 mb-2 d-flex align-items-center gap-2 form-check-div"
+                                              >
+                                                <input
+                                                  type="checkbox"
+                                                  id={`filter-${column.field}-${idx}`}
+                                                  checked={columnFilters[
+                                                    column.field
+                                                  ]?.includes(option.id)}
+                                                  onChange={(e) =>
+                                                    handleFilterCheckboxChange(
+                                                      column.field,
+                                                      option.id,
+                                                      e.target.checked
+                                                    )
+                                                  }
+                                                  className="form-check-input"
+                                                />
+                                                <label
+                                                  htmlFor={`filter-${column.field}-${idx}`}
+                                                  className="mb-0 flex-grow-1 form-check-label"
+                                                >
+                                                  {option.name}
+                                                </label>
+                                              </div>
+                                            ))
+                                          ) : (
+                                            <div className="no-records-found">
+                                              No options available
+                                            </div>
+                                          )}
+                                        </div>
+
+                                        <div className="d-flex gap-2 mt-2 pt-2 border-top justify-content-end">
+                                          <button
+                                            className="btn btn-sm  py-1 btn-secondary flex-grow-1  mt-10"
+                                            onClick={() =>
+                                              setActiveFilterColumn(null)
+                                            }
+                                            style={{ maxWidth: "80px" }}
+                                          >
+                                            Cancel
+                                          </button>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </th>
@@ -1105,7 +1416,6 @@ const LicenceNameList = () => {
 
         {/* ========= MODALS ========= */}
 
-        {/* Add/Edit Modal */}
         <AddEditLicenceNameModal
           show={modalState.show}
           handleClose={handleClose}
@@ -1113,7 +1423,6 @@ const LicenceNameList = () => {
           rowData={modalState.rowData}
         />
 
-        {/* Import Modal */}
         {showImport && (
           <AddImportLicenceNameModal
             show={showImport}
@@ -1121,7 +1430,6 @@ const LicenceNameList = () => {
           />
         )}
 
-        {/* Delete Confirmation Modal */}
         {showDeleteConfirm && (
           <div className="modal fade show common-ctl-popup">
             <div className="modal-dialog modal-dialog-centered">
@@ -1158,7 +1466,6 @@ const LicenceNameList = () => {
           </div>
         )}
 
-        {/* Export Modal */}
         {showExportPopop && (
           <div
             className="modal fade show common-ctl-popup"

@@ -1049,7 +1049,7 @@ export const getLicenceNameListDataAPI = (data) => {
             .map(item => `${item.field}:${item.order}`)
             .join(",");
     }
-  const apiUrl = `${url.GET_LICENCE_NAME_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
+  const apiUrl = `${url.GET_LICENCE_NAME_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&country=${data?.country}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -1086,7 +1086,7 @@ export const exportLicenceNameDataAPI = (payload) => {
             .map(item => `${item.field}:${item.order}`)
             .join(",");
     }
-  const apiUrl = `${url.EXPORT_LICENCE_NAME_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+  const apiUrl = `${url.EXPORT_LICENCE_NAME_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&country=${payload?.country}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
