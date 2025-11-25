@@ -83,7 +83,7 @@ const EditStakeholderCategories = ({ show, handleCloseEdit, rowSelectData }) => 
                             description: '',
                         });
                         setErrors({});
-                        handleCloseEdit();
+                        handleCloseEdit(true);
                     } else {
                         toast.error("Something went wrong.");
                     }
@@ -101,7 +101,7 @@ const EditStakeholderCategories = ({ show, handleCloseEdit, rowSelectData }) => 
             description: '',
         });
         setErrors({});
-        handleCloseEdit();
+        handleCloseEdit(false);
         setLoading(false);
     };
 
