@@ -7348,29 +7348,32 @@ class CompanyTypeImportAPIView(APIView):
 
 
 
+class OwnershipTypeListAPIView(APIView):
+    # permission_classes = [IsAuthenticated, IsAdminUser]
 
-
-
-
-class OwnershipTypeListAPIView(APIView):    
     def get(self, request):
         search = request.GET.get('search', '').strip()
         custom_sort = request.GET.get('customSort')  # e.g., name:asc,updated_at:desc
-        company_type_uuid = request.GET.get('company_type') 
+        company_type_uuids = request.GET.get('company_type', '')  # can be single or multiple comma-separated UUIDs
 
         allowed_sort_fields = ['name', 'description', 'created_at', 'updated_at']
 
         queryset = OwnershipType.objects.filter(is_deleted=False)
 
-        # Search filter
+        # --- Search filter ---
         if search:
             queryset = queryset.filter(Q(name__istartswith=search))
 
-        # Ignore "null", empty, None
-        if company_type_uuid and company_type_uuid.lower() != "null":
-            queryset = queryset.filter(company_type__uuid=company_type_uuid)   
+        # --- Company type filter (supports multiple UUIDs) ---
+        if company_type_uuids:
+            uuid_list = [
+                u.strip() for u in company_type_uuids.split(',')
+                if u and u.lower() != 'null'
+            ]
+            if uuid_list:
+                queryset = queryset.filter(company_type__uuid__in=uuid_list)
 
-        # Sorting fields mapping
+        # --- Sorting fields mapping ---
         sort_field_map = {
             'name': 'name',
             'description': 'description',
@@ -7380,9 +7383,7 @@ class OwnershipTypeListAPIView(APIView):
 
         sort_fields = []
 
-        # --------------------------
-        # CUSTOM SORT LOGIC
-        # --------------------------
+        # --- Custom sort logic ---
         if custom_sort:
             for rule in custom_sort.split(','):
                 try:
@@ -7406,26 +7407,26 @@ class OwnershipTypeListAPIView(APIView):
                     )
                 except ValueError:
                     continue
-        else:
-            # Fallback sorting
+
+        # --- Fallback sorting ---
+        if not sort_fields:
             sort_by = request.GET.get('sortBy', 'created_at')
             sort_order = request.GET.get('sortOrder', 'desc')
             orm_field = sort_field_map.get(sort_by, 'created_at')
             f = F(orm_field)
-            sort_fields = [
+            sort_fields.append(
                 f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)
-            ]
+            )
 
+        # --- Apply ordering ---
         queryset = queryset.order_by(*sort_fields)
 
-        # Pagination
+        # --- Pagination ---
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = OwnershipTypeSerializer(result_page, many=True)
 
         return paginator.get_paginated_response(serializer.data)
-
-
 
 
 
@@ -11010,30 +11011,53 @@ class LeadSourceListAPIView(APIView):
     def get(self, request):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
+        sort_order = request.GET.get('sortOrder', 'desc')  # fallback
+        custom_sort = request.GET.get('customSort')  # e.g., name:desc
 
-        allowed_sort_fields = ['name', 'description', 'updated_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-
-        # Apply descending order for 'desc'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        allowed_sort_fields = ['name', 'description', 'created_at', 'updated_at']
 
         queryset = LeadSource.objects.filter(is_deleted=False)
 
+        # Search filter
         if search:
-            queryset = queryset.filter(
-                Q(name__istartswith=search)
-            )
+            queryset = queryset.filter(Q(name__istartswith=search))
 
-        queryset = queryset.order_by(sort_by)
+        # --- Sorting ---
+        sort_fields = []
 
+        # Custom sort takes priority
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                if ':' in rule:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field not in allowed_sort_fields:
+                        continue
+
+                    # Case-insensitive for string fields
+                    if field in ['name', 'description']:
+                        f = Lower(field)
+                    else:
+                        f = F(field)
+
+                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+        else:
+            # Fallback sorting
+            if sort_by not in allowed_sort_fields:
+                sort_by = 'created_at'
+            f = F(sort_by)
+            sort_fields = [f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # Pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = LeadSourceSerializer(result_page, many=True)
 
         return paginator.get_paginated_response(serializer.data)
+
 
 
 class LeadSourceRetrieveAPIView(APIView):
@@ -11183,7 +11207,8 @@ class LeadSourceExportAPIView(APIView):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')  # optional comma-separated fields
         uuids_param = request.GET.get('uuids', '')  # optional comma-separated uuids
-
+        custom_sort = request.GET.get('customSort')  # e.g., name:asc,updated_at:desc
+        search = request.GET.get('search', '').strip() 
         # Parse UUIDs
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
@@ -11193,8 +11218,8 @@ class LeadSourceExportAPIView(APIView):
             'name': 'Lead Source',
             'description': 'Description',
             'is_deleted': 'Deleted',
+            'created_at': 'Created On',
             'updated_at': 'Modified On',
-            
         }
 
         # Determine which fields to export
@@ -11207,14 +11232,40 @@ class LeadSourceExportAPIView(APIView):
         queryset = LeadSource.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
 
+        if search:
+            queryset = queryset.filter(name__istartswith=search)    
+
+        # --- Custom sorting logic ---
+        allowed_sort_fields = ['name', 'description', 'created_at', 'updated_at']
+        sort_fields = []
+
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                if ':' in rule:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field not in allowed_sort_fields:
+                        continue
+
+                    # Case-insensitive sorting for string fields
+                    if field in ['name', 'description']:
+                        f = Lower(field)
+                    else:
+                        f = F(field)
+
+                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+        else:
+            # Default sort by created_at descending
+            sort_fields = [F('created_at').desc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
 
         # Prepare dataset
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title="LeadSource"
-
+        dataset.title = "LeadSource"
 
         for lead in queryset:
             row = []
@@ -11247,7 +11298,6 @@ class LeadSourceExportAPIView(APIView):
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
-
 
 class LeadSourceImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
