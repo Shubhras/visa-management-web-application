@@ -9289,27 +9289,52 @@ class AccreditationCategoryImportAPIView(APIView):
 class AccreditationNameListAPIView(APIView):
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
+        category = request.GET.get('category')
+        sort_by = request.GET.get('sortBy')
+        sort_order = request.GET.get('sortOrder', '')
+        custom_sort = request.GET.get('customSort', '')
 
         allowed_sort_fields = ['full_name', 'short_name', 'valid_upto', 'created_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
 
         queryset = AccreditationName.objects.all()
+
+        #  SEARCH
         if search:
-            queryset = queryset.filter(
-                Q(full_name__istartswith=search)
-            )
+            queryset = queryset.filter(full_name__icontains=search)
 
-        queryset = queryset.order_by(sort_by)
+        #  CATEGORY FILTER
+        if category:
+            queryset = queryset.filter(category__uuid=category)
 
+        #  CUSTOM SORT: created_at:desc,full_name:asc
+        if custom_sort:
+            sort_fields = []
+            for rule in custom_sort.split(','):
+                if ':' in rule:
+                    field, order = rule.split(':')
+                    if field in allowed_sort_fields:
+                        if order == 'desc':
+                            sort_fields.append(f"-{field}")
+                        else:
+                            sort_fields.append(field)
+            if sort_fields:
+                queryset = queryset.order_by(*sort_fields)
+        else:
+            # 📌 NORMAL SORTING
+            if sort_by in allowed_sort_fields:
+                if sort_order == 'desc':
+                    sort_by = f"-{sort_by}"
+                queryset = queryset.order_by(sort_by)
+            else:
+                queryset = queryset.order_by("-created_at")
+
+        #  PAGINATION
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = AccreditationNameSerializer(result_page, many=True)
+
         return paginator.get_paginated_response(serializer.data)
+
 
 
 # -------------------- CREATE API --------------------
@@ -9462,14 +9487,97 @@ class AccreditationNameDeleteAPIView(APIView):
 
 # -------------------- EXPORT API --------------------
 
+# class AccreditationNameExportAPIView(APIView):
+#     def get(self, request):
+#         format_type = request.GET.get('format', 'xlsx').lower()
+#         fields = request.GET.get('fields')
+#         uuids_param = request.GET.get('uuids', '')
+#         search = request.GET.get('search', '').strip()
+#         uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+#         field_header_map = {
+#             'uuid': 'UUID',
+#             'category': 'Accrediation Category',
+#             'full_name': 'Accrediation',
+#             'short_name': 'Accrediation Short Name',
+#             'issuing_authority': 'Accrediation Issuing Authority Name',
+#             'valid_type': 'Accrediation Valid Upto',
+#             'valid_duration_value': 'Accrediation Valid Duration Value',
+#             'valid_duration_unit': 'Accrediation Valid Duration Unit',
+#             'valid_date': 'Accrediation Valid Date',
+#             'description': 'Description',
+#             'created_at': 'Created On',
+#             'updated_at': 'Modified On'
+#         }
+
+#         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+#         queryset = AccreditationName.objects.all()
+#         if uuids:
+#             queryset = queryset.filter(uuid__in=uuids)
+
+#         # Search filter
+#         if search:
+#             queryset = queryset.filter(Q(name__istartswith=search))
+
+#         queryset = queryset.order_by('-created_at')
+
+#         dataset = Dataset()
+#         dataset.headers = [field_header_map.get(f, f) for f in field_list]
+#         dataset.title = 'AccreditationName'
+
+#         for accred in queryset:
+#             row = []
+#             for field in field_list:
+#                 value = getattr(accred, field, '')
+
+#                 # Format date fields
+#                 if field in ['created_at', 'updated_at'] and value:
+#                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+#                 elif field == 'category' and accred.category:
+#                     value = accred.category.name
+#                 if field == "valid_date" and value:
+#                     value = value.strftime("%d-%m-%Y")
+
+#                 elif isinstance(value, bool):
+#                     value = int(value)
+
+#                 row.append(value if value is not None else '')
+#             dataset.append(row)
+
+#         if format_type == 'csv':
+#             file_data = dataset.export('csv')
+#             content_type = 'text/csv'
+#             file_name = 'accreditations.csv'
+#         else:
+#             file_data = io.BytesIO(dataset.export('xlsx'))
+#             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+#             file_name = 'accreditations.xlsx'
+
+#         response = HttpResponse(
+#             file_data if format_type == 'csv' else file_data.getvalue(),
+#             content_type=content_type
+#         )
+#         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+#         return response
+
 class AccreditationNameExportAPIView(APIView):
+    """
+    Export AccreditationName data to XLSX or CSV with category info and custom sorting.
+    """
+    # permission_classes = []  # Add IsAuthenticated if needed
+
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')
         uuids_param = request.GET.get('uuids', '')
         search = request.GET.get('search', '').strip()
+        category = request.GET.get('category')
+        custom_sort = request.GET.get('customSort', '')
+
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
+        # --- Field headers ---
         field_header_map = {
             'uuid': 'UUID',
             'category': 'Accrediation Category',
@@ -9485,18 +9593,49 @@ class AccreditationNameExportAPIView(APIView):
             'updated_at': 'Modified On'
         }
 
+        # --- Fields to export ---
         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
+        # --- Fetch queryset ---
         queryset = AccreditationName.objects.all()
+
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
 
-        # Search filter
         if search:
-            queryset = queryset.filter(Q(name__istartswith=search))
+            queryset = queryset.filter(full_name__icontains=search)
 
-        queryset = queryset.order_by('-created_at')
+        if category:
+            queryset = queryset.filter(category__uuid=category)
 
+        # --- Custom sorting ---
+        sort_field_map = {
+            'full_name': 'full_name',
+            'short_name': 'short_name',
+            'valid_date': 'valid_date',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+
+        sort_fields = []
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                if ':' in rule:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field in sort_field_map:
+                        orm_field = sort_field_map[field]
+                        if order == 'desc':
+                            sort_fields.append(f"-{orm_field}")
+                        else:
+                            sort_fields.append(orm_field)
+        if not sort_fields:
+            sort_fields = ['-created_at']
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # --- Prepare dataset ---
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = 'AccreditationName'
@@ -9506,20 +9645,19 @@ class AccreditationNameExportAPIView(APIView):
             for field in field_list:
                 value = getattr(accred, field, '')
 
-                # Format date fields
                 if field in ['created_at', 'updated_at'] and value:
-                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                    value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif field == 'category' and accred.category:
                     value = accred.category.name
-                if field == "valid_date" and value:
+                elif field == "valid_date" and value:
                     value = value.strftime("%d-%m-%Y")
-
                 elif isinstance(value, bool):
                     value = int(value)
 
                 row.append(value if value is not None else '')
             dataset.append(row)
 
+        # --- Export file ---
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'

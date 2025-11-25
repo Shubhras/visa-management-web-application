@@ -1278,7 +1278,6 @@ class EducationLevelExportAPIView(APIView):
 #             "skipped_rows": skipped_rows
 #         }, status=200)
 
-
 class EducationLevelImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -1293,7 +1292,6 @@ class EducationLevelImportAPIView(APIView):
         duplicates = []
         skipped_rows = []
         required_headers = {'education level code', 'education level', 'education durations'}
-        optional_headers = {'description', 'is_deleted'}
 
         try:
             data = []
@@ -1308,7 +1306,7 @@ class EducationLevelImportAPIView(APIView):
                     return Response({'error': 'Please provide sheet_name', 'available_sheets': available_sheets}, status=400)
 
                 if sheet_name not in available_sheets:
-                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
+                    return Response({'error': f'Sheet \"{sheet_name}\" not found', 'available_sheets': available_sheets}, status=400)
 
                 ws = wb[sheet_name]
 
@@ -1324,7 +1322,6 @@ class EducationLevelImportAPIView(APIView):
                 for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     if not any(row):
                         continue
-
                     row_dict = dict(zip(headers, row))
                     row_dict["_row_number"] = idx
                     data.append(row_dict)
@@ -1353,77 +1350,85 @@ class EducationLevelImportAPIView(APIView):
 
             imported_count = 0
 
-            for row in data:   # ⚠️ NO reversed()
+            # ========================================================
+            #               PROCESS EACH ROW
+            # ========================================================
+            for row in data:
                 row_number = row.get("_row_number", "Unknown")
 
-                # --- Extract fields ---
-                level_code_id = row.get("education level code")
-                education_level_name = row.get("education level")
+                code = row.get("education level code")
+                edu_level = row.get("education level")
                 durations = row.get("education durations")
                 description = row.get("description", "")
                 is_deleted = row.get("is_deleted", 0)
 
-                # Clean values
-                education_level_name = str(education_level_name).strip() if education_level_name else None
+                if not code or not edu_level:
+                    skipped_rows.append({"Row": row_number, "Reason": "Missing required fields"})
+                    continue
+
+                code = str(code).strip()
+                edu_level = str(edu_level).strip() if edu_level else None
                 durations = str(durations).strip() if durations else None
                 description = str(description).strip()
 
-                # Boolean cleaning
+                # Convert is_deleted
                 try:
                     is_deleted = bool(int(is_deleted))
                 except:
                     is_deleted = False
 
-                # Validate required fields
-                if not level_code_id or not education_level_name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing education level code or education level"})
+                # Code must be numeric
+                if not code.isnumeric():
+                    skipped_rows.append({"Row": row_number, "Code": code, "Reason": "Education level code must be numeric"})
                     continue
 
-                # Validate numerics
-                if not str(level_code_id).isnumeric():
-                    skipped_rows.append({"Row": row_number, "Education Level Code": level_code_id, "Reason": "Education level code must be numeric"})
-                    continue
+                # -------------------------------------------
+                #  NEW LOGIC: Auto-create EducationLevelCode
+                # -------------------------------------------
+                level_code_obj = EducationLevelCode.objects.filter(name=code).first()
 
-                level_code_id = int(level_code_id)
-
-                # Validate LevelCode existence
-                level_code_obj = EducationLevelCode.objects.filter(id=level_code_id, is_deleted=False).first()
                 if not level_code_obj:
-                    skipped_rows.append({
-                        "Row": row_number,
-                        "Education Level Code": level_code_id,
-                        "Reason": f"EducationLevelCode ID {level_code_id} not found"
-                    })
-                    continue
+                    level_code_obj = EducationLevelCode.objects.create(
+                        name=code,
+                        description=f"Auto-generated for code {code}",
+                        is_deleted=False
+                    )
 
-                # Check existing entry
+                # -------------------------------------------
+                #  CHECK EXISTING EDUCATION LEVEL
+                # -------------------------------------------
+                # CHECK FULL DUPLICATE (all fields must match)
                 existing = EducationLevel.objects.filter(
-                    level_code_id=level_code_id,
-                    educationlevel__iexact=education_level_name
+                    level_code=level_code_obj,
+                    educationlevel__iexact=edu_level,
+                    durations=durations,
+                    description=description
                 ).first()
 
                 if existing:
-                    if not existing.is_deleted:
-                        duplicates.append({
-                            "Row": row_number,
-                            "Education Level": education_level_name,
-                            "Education Level Code": level_code_id,
-                            "Reason": "Already exists"
-                        })
-                        continue
-                    else:
-                        # Restore deleted entry
+                    if existing.is_deleted:
                         existing.description = description
                         existing.is_deleted = False
                         existing.durations = durations
                         existing.save()
                         imported_count += 1
-                        continue
+                    else:
+                        duplicates.append({
+                            "Row": row_number,
+                            "Education Level": edu_level,
+                            "Code": code,
+                            "Durations": durations,
+                            "Description": description,
+                            "Reason": "Duplicate → All fields matched"
+                        })
+                    continue
 
-                # Fresh insert
+                
+
+                # NEW INSERT
                 EducationLevel.objects.create(
-                    level_code_id=level_code_id,
-                    educationlevel=education_level_name,
+                    level_code=level_code_obj,
+                    educationlevel=edu_level,
                     durations=durations,
                     description=description,
                     is_deleted=is_deleted
@@ -1440,12 +1445,11 @@ class EducationLevelImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f'Sheet "{sheet_name}" imported successfully',
+            "message": f'Sheet \"{sheet_name}\" imported successfully',
             "imported_count": imported_count,
             "duplicates": duplicates,
             "skipped_rows": skipped_rows
         }, status=200)
-
 
 #----------------------------EducationDuration----------------------
 
