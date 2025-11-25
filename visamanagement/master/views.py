@@ -9303,8 +9303,11 @@ class AccreditationNameListAPIView(APIView):
             queryset = queryset.filter(full_name__icontains=search)
 
         #  CATEGORY FILTER
-        if category:
+        if category and category.lower() != "null":    #manage  null  value also
             queryset = queryset.filter(category__uuid=category)
+
+        # if category:
+        #     queryset = queryset.filter(category__uuid=category)
 
         #  CUSTOM SORT: created_at:desc,full_name:asc
         if custom_sort:
@@ -9689,7 +9692,8 @@ class AccreditationNameImportAPIView(APIView):
         duplicate_names = []
         skipped_rows = []
 
-        required_headers = {'accrediation full name', 'accrediation category'}
+        # required_headers = {'accrediation full name', 'accrediation category'}
+        required_headers = {'AccreditationCategory'}
         optional_headers = {
             'accrediation short name',
             'accrediation issuing authority name',
