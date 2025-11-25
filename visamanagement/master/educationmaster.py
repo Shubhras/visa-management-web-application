@@ -3966,40 +3966,159 @@ class AcademicResultTypeImportAPIView(APIView):
 # -------------------- AcademicResult -------------------- #
 
 
+# class AcademicResultListAPIView(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def get(self, request):
+#         # Optional search query parameters
+#         search = request.GET.get('search', '').strip()
+#         sort_by = request.GET.get('sortBy', 'created_at')
+#         sort_order = request.GET.get('sortOrder', 'desc')
+#         uuid_param = request.GET.get('academicResultType', '')
+
+
+#         # Allowed sort fields
+#         allowed_sort_fields = ['Academicresult', 'description', 'created_at']
+#         if sort_by not in allowed_sort_fields:
+#             sort_by = 'created_at'
+#         if sort_order == 'desc':
+#             sort_by = f'-{sort_by}'
+
+#         # Initial queryset filtered for non-deleted results
+#         queryset = AcademicResult.objects.filter(is_deleted=False)
+
+#         uuid_list = []
+#         if uuid_param:
+#             for u in uuid_param.split(','):
+#                 u = u.strip()
+#                 try:
+#                     uuid_list.append(UUID(u))
+#                 except:
+#                     pass
+
+#         if uuid_list:
+#             queryset = queryset.filter(AcademicResulttype__uuid__in=uuid_list)
+            
+#         # Apply search filter if search query is provided
+#         if search:
+#             queryset = queryset.filter(
+#                 Q(Academicresult__istartwith=search) 
+#             )
+
+#         # Sorting
+#         queryset = queryset.order_by(sort_by)
+
+#         # Pagination
+#         paginator = CustomPagination()  # CustomPagination should be implemented in your project
+#         result_page = paginator.paginate_queryset(queryset, request)
+        
+#         serializer = AcademicResultSerializer(result_page, many=True)
+
+#         return paginator.get_paginated_response(serializer.data)
+
+
+
+
 class AcademicResultListAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        # Optional search query parameters
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
+        custom_sort = request.GET.get('customSort')  # e.g., "Academicresult:asc,description:desc"
+        uuid_param = request.GET.get('academicResultType', '')
 
-        # Allowed sort fields
-        allowed_sort_fields = ['Academicresult', 'description', 'created_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        allowed_sort_fields = ['Academicresult', 'description', 'created_at', 'updated_at']
 
-        # Initial queryset filtered for non-deleted results
+        # Initial queryset
         queryset = AcademicResult.objects.filter(is_deleted=False)
 
-        # Apply search filter if search query is provided
+        # ----------------------
+        # UUID Filter
+        # ----------------------
+        uuid_list = []
+        if uuid_param:
+            for u in uuid_param.split(','):
+                u = u.strip()
+                try:
+                    uuid_list.append(UUID(u))
+                except ValueError:
+                    pass
+
+        if uuid_list:
+            queryset = queryset.filter(AcademicResulttype__uuid__in=uuid_list)
+
+        # ----------------------
+        # Search Filter
+        # ----------------------
         if search:
             queryset = queryset.filter(
-                Q(Academicresult__istartwith=search) 
+                Q(Academicresult__icontains=search)
             )
 
-        # Sorting
-        queryset = queryset.order_by(sort_by)
+        # ----------------------
+        # Sort field mapping
+        # ----------------------
+        sort_field_map = {
+            'Academicresult': 'Academicresult',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+            'AcademicResulttype': 'AcademicResulttype__name', 
+        }
 
-        # Pagination
-        paginator = CustomPagination()  # CustomPagination should be implemented in your project
+        sort_fields = []
+
+        # ----------------------
+        # CUSTOM SORT
+        # ----------------------
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive for string fields
+                    if field in ['Academicresult', 'description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+
+                except ValueError:
+                    continue
+
+        # ----------------------
+        # DEFAULT SORT
+        # ----------------------
+        else:
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'desc')
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+            f = F(orm_field)
+            sort_fields = [
+                f.asc(nulls_last=True) if sort_order.lower() == 'asc' else f.desc(nulls_last=True)
+            ]
+
+        # ----------------------
+        # APPLY SORTING
+        # ----------------------
+        queryset = queryset.order_by(*sort_fields)
+
+        # ----------------------
+        # Pagination + Response
+        # ----------------------
+        paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
-        
         serializer = AcademicResultSerializer(result_page, many=True)
-
         return paginator.get_paginated_response(serializer.data)
 
 
@@ -6787,6 +6906,114 @@ class DegreeAwardedByImportAPIView(APIView):
 
 
         
+# class DegreeAwardedInstituteListAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def get(self, request):
+#         search = request.GET.get('search', '').strip()
+#         sort_by = request.GET.get('sortBy', 'created_at')
+#         sort_order = request.GET.get('sortOrder', 'desc')
+
+#         allowed_sort_fields = ['name', 'created_at', 'updated_at']
+#         if sort_by not in allowed_sort_fields:
+#             sort_by = 'created_at'
+#         if sort_order == 'desc':
+#             sort_by = f'-{sort_by}'
+
+#         queryset = DegreeAwardedInstitute.objects.all()
+#         if search:
+#             queryset = queryset.filter(
+#                 Q(name__istartswith=search) 
+#             )
+
+#         queryset = queryset.order_by(sort_by)
+#         serializer = DegreeAwardedInstituteSerializer(queryset, many=True)
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "data": serializer.data
+#         })
+
+
+
+# class DegreeAwardedInstituteListAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def get(self, request):
+#         search = request.GET.get('search', '').strip()
+#         sort_by = request.GET.get('sortBy', 'created_at')
+#         sort_order = request.GET.get('sortOrder', 'desc')
+
+#         # Filter parameters (can be comma-separated UUIDs)
+#         country_param = request.GET.get('country', '')
+#         state_param = request.GET.get('state', '')
+#         education_level_param = request.GET.get('educationLevel', '')
+#         degree_awarded_by_param = request.GET.get('degreeAwardedBy', '')
+
+#         # -----------------------
+#         # Allowed sort fields
+#         # -----------------------
+#         allowed_sort_fields = ['name', 'created_at', 'updated_at']
+#         if sort_by not in allowed_sort_fields:
+#             sort_by = 'created_at'
+#         if sort_order == 'desc':
+#             sort_by = f'-{sort_by}'
+
+#         # -----------------------
+#         # Initial queryset
+#         # -----------------------
+#         queryset = DegreeAwardedInstitute.objects.all()
+
+#         # -----------------------
+#         # Search filter
+#         # -----------------------
+#         if search:
+#             queryset = queryset.filter(Q(name__istartswith=search))
+
+#         # -----------------------
+#         # UUID filters helper
+#         # -----------------------
+#         def parse_uuid_list(param):
+#             uuids = []
+#             for u in param.split(','):
+#                 u = u.strip()
+#                 if not u:
+#                     continue
+#                 try:
+#                     uuids.append(UUID(u))
+#                 except ValueError:
+#                     pass
+#             return uuids
+
+#         # Apply filters
+#         country_uuids = parse_uuid_list(country_param)
+#         state_uuids = parse_uuid_list(state_param)
+#         education_level_uuids = parse_uuid_list(education_level_param)
+#         degree_awarded_by_uuids = parse_uuid_list(degree_awarded_by_param)
+
+#         if country_uuids:
+#             queryset = queryset.filter(country__uuid__in=country_uuids)
+#         if state_uuids:
+#             queryset = queryset.filter(state__uuid__in=state_uuids)
+#         if education_level_uuids:
+#             queryset = queryset.filter(education_level__uuid__in=education_level_uuids)
+#         if degree_awarded_by_uuids:
+#             queryset = queryset.filter(degree_awarded_by__uuid__in=degree_awarded_by_uuids)
+
+#         # -----------------------
+#         # Sorting
+#         # -----------------------
+#         queryset = queryset.order_by(sort_by)
+
+#         # -----------------------
+#         # Pagination
+#         # -----------------------
+#         paginator = CustomPagination()
+#         result_page = paginator.paginate_queryset(queryset, request)
+#         serializer = DegreeAwardedInstituteSerializer(result_page, many=True)
+
+#         return paginator.get_paginated_response(serializer.data)
+
 class DegreeAwardedInstituteListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -6794,62 +7021,179 @@ class DegreeAwardedInstituteListAPIView(APIView):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'created_at')
         sort_order = request.GET.get('sortOrder', 'desc')
+        custom_sort = request.GET.get('customSort', '')  # e.g., "name:asc,created_at:desc"
 
-        allowed_sort_fields = ['name', 'created_at', 'updated_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        # Filter parameters (comma-separated UUIDs)
+        country_param = request.GET.get('country', '')
+        state_param = request.GET.get('state', '')
+        education_level_param = request.GET.get('educationLevel', '')
+        degree_awarded_by_param = request.GET.get('degreeAwardedBy', '')
 
+        # -----------------------
+        # Allowed sort fields mapping
+        # -----------------------
+        sort_field_map = {
+            'name': 'name',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+            'country': 'country__name',
+            'state': 'state__name',
+            'educationLevel': 'education_level__educationlevel',
+            'degreeAwardedBy': 'degree_awarded_by__degree_name'
+        }
+
+        # -----------------------
+        # Initial queryset
+        # -----------------------
         queryset = DegreeAwardedInstitute.objects.all()
-        if search:
-            queryset = queryset.filter(
-                Q(name__istartswith=search) 
-            )
 
-        queryset = queryset.order_by(sort_by)
-        serializer = DegreeAwardedInstituteSerializer(queryset, many=True)
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "data": serializer.data
-        })
+        # -----------------------
+        # Search filter
+        # -----------------------
+        if search:
+            queryset = queryset.filter(Q(name__istartswith=search))
+
+        # -----------------------
+        # UUID filters helper
+        # -----------------------
+        def parse_uuid_list(param):
+            uuids = []
+            for u in param.split(','):
+                u = u.strip()
+                if not u:
+                    continue
+                try:
+                    uuids.append(UUID(u))
+                except ValueError:
+                    pass
+            return uuids
+
+        # Apply filters
+        country_uuids = parse_uuid_list(country_param)
+        state_uuids = parse_uuid_list(state_param)
+        education_level_uuids = parse_uuid_list(education_level_param)
+        degree_awarded_by_uuids = parse_uuid_list(degree_awarded_by_param)
+
+        if country_uuids:
+            queryset = queryset.filter(country__uuid__in=country_uuids)
+        if state_uuids:
+            queryset = queryset.filter(state__uuid__in=state_uuids)
+        if education_level_uuids:
+            queryset = queryset.filter(education_level__uuid__in=education_level_uuids)
+        if degree_awarded_by_uuids:
+            queryset = queryset.filter(degree_awarded_by__uuid__in=degree_awarded_by_uuids)
+
+        # -----------------------
+        # Custom Sort
+        # -----------------------
+        sort_fields = []
+
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sorting for string fields
+                    if field in ['name', 'country', 'state', 'educationLevel', 'degreeAwardedBy']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+
+        # -----------------------
+        # Default sort if customSort not provided
+        # -----------------------
+        if not sort_fields:
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+            f = F(orm_field)
+            sort_fields = [
+                f.asc(nulls_last=True) if sort_order.lower() == 'asc' else f.desc(nulls_last=True)
+            ]
+
+        # Apply sorting
+        queryset = queryset.order_by(*sort_fields)
+
+        # -----------------------
+        # Pagination
+        # -----------------------
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = DegreeAwardedInstituteSerializer(result_page, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
+
 
 
 # -------------------- CREATE API --------------------
+
 class DegreeAwardedInstituteCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
-        uuid_value = request.data.get('uuid')
-        if uuid_value:
-            try:
-                request.data['uuid'] = UUID(uuid_value)
-            except ValueError:
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "Invalid UUID format"
-                }, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            # -------------------------
+            # Validate UUID (if provided)
+            # -------------------------
+            uuid_value = request.data.get('uuid')
+            if uuid_value:
+                try:
+                    request.data['uuid'] = UUID(uuid_value)
+                except ValueError:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "Invalid UUID format for 'uuid'."
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = DegreeAwardedInstituteSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
+            # -------------------------
+            # Serializer validation
+            # -------------------------
+            serializer = DegreeAwardedInstituteSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": "Degree Awarded Institute created successfully.",
+                    "data": serializer.data
+                }, status=status.HTTP_200_OK)
+
+            # -------------------------
+            # Serializer errors
+            # -------------------------
+            errors = []
+            for field, field_errors in serializer.errors.items():
+                for error in field_errors:
+                    errors.append(f"{field}: {error}")
+
             return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": "Degree Awarded Institute created successfully",
-                "data": serializer.data
-            })
-        errors = serializer.errors
-        messages = []
-        for field, msgs in errors.items():
-            messages.extend(msgs)
-        return Response({
-            "statusCode": 400,
-            "status": False,
-            "message": " ".join(messages)
-        }, status=status.HTTP_400_BAD_REQUEST)
+                "statusCode": 400,
+                "status": False,
+                "message": "Validation error.",
+                "errors": errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            # -------------------------
+            # Unexpected errors
+            # -------------------------
+            return Response({
+                "statusCode": 500,
+                "status": False,
+                "message": "An unexpected error occurred while creating the Degree Awarded Institute.",
+                "error": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # -------------------- RETRIEVE API --------------------
