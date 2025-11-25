@@ -657,8 +657,6 @@ const OwnershipTypeList = () => {
   };
 
   const handleExport = () => {
-
-    console.log('ddd')
     if (selectedItems.length === 0) {
       toast.error("Please select at least one field");
       return;
