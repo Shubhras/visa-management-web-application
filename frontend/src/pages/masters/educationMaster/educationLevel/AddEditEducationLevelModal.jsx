@@ -107,7 +107,7 @@ const AddEditEducationLevelModal = ({ show, handleClose, mode = 'add', rowData =
       newErrors.category = 'Education level code is required';
       isValid = false;
     }
-    if (!formData.durations.trim()) {
+    if (!formData.durations) {
       newErrors.durations = 'Education duration (months) is required';
       isValid = false;
     }
