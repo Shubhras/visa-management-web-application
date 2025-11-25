@@ -216,8 +216,6 @@ const StakeholderTypeList = () => {
   ]);
 
   const fetchStakeholderTypeList = () => {
-
-    console.log('hhhhhhhhhhhhhhhhhh',columnFilters)
     setLoading(true);
     const params = {
       page: tableState.page,
