@@ -83,9 +83,9 @@ const LicenceNameList = () => {
   // Table columns configuration (same structure as before)
   const [tableColumns] = useState([
     {
-      id: "country_name",
+      id: "name",
       label: "Country",
-      field: "country_name",
+      field: "name",
       visible: true,
       required: false,
     },
@@ -999,9 +999,9 @@ const LicenceNameList = () => {
                           </div>
                         </td>
 
-                        {isColumnVisible("country_name") && (
+                        {isColumnVisible("name") && (
                           <td>
-                            <span>{rowItem.country_name}</span>
+                            <span>{rowItem.name}</span>
                           </td>
                         )}
                         {isColumnVisible("full_name") && (

@@ -902,22 +902,32 @@ export const importStakeholderTypeDataAPI = (payload) => {
 // OWNERSHIP_TYPE
 export const getOwnershipTypeListDataAPI = (data) => {
   let customSort = "";
+
   if (Array.isArray(data?.sort)) {
-    // Case 1: Only created_at is present → keep it
+    // Case 1: Only created_at → keep it
     const isOnlyCreatedAt =
       data.sort.length === 1 && data.sort[0].field === "created_at";
-    // Case 2: More fields exist → remove created_at
+
+    // Case 2: Other fields exist → remove created_at
     const finalSortArray = isOnlyCreatedAt
       ? data.sort
-      : data.sort.filter((item) => item.field !== "created_at");
-    // Map fields into customSort string
+      : data.sort.filter(item => item.field !== "created_at");
+
+    // Build customSort string — use company_type when field matches
     customSort = finalSortArray
-      .map((item) => `${item.field}:${item.order}`)
+      .map(item => {
+        let field = item.field;
+        if (field === "company_type") field = "company_type";
+        return `${field}:${item.order}`;
+      })
       .join(",");
   }
-  const apiUrl = `${url.GET_OWNERSHIP_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
+
+  const apiUrl = `${url.GET_OWNERSHIP_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&company_type=${data?.company_type}&customSort=${customSort}`;
+
   return get(apiUrl);
 };
+
 
 export const addOwnershipTypeDataAPI = (payload) => {
   const apiUrl = `${url.ADD_OWNERSHIP_TYPE_API}`;
