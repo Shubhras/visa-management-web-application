@@ -1273,9 +1273,9 @@ const OwnershipTypeList = () => {
                             <span>{rowItem.name}</span>
                           </td>
                         )}
-                        {isColumnVisible("name") && (
+                        {isColumnVisible("company_type") && (
                           <td>
-                            <span>{rowItem.name}</span>
+                            <span>{rowItem.company_type_name}</span>
                           </td>
                         )}
                         {isColumnVisible("description") && (
