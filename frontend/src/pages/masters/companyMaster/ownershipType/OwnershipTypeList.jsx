@@ -458,6 +458,7 @@ const OwnershipTypeList = () => {
     setColumnFilters({
       company_type: [],
     });
+    setSelectedRows([]);
   };
 
 

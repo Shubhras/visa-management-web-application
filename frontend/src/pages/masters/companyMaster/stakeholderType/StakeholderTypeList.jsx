@@ -457,6 +457,7 @@ const StakeholderTypeList = () => {
     setColumnFilters({
       category_name: [],
     });
+    setSelectedRows([]);
   };
 
 

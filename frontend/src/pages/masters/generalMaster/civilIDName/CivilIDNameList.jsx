@@ -237,6 +237,7 @@ const CivilIDNameList = () => {
     }));
     // Reset Global Search
     setGlobalSearch('');
+    setSelectedRows([]);
   };
 
   const handleSearchChange = (value) => {

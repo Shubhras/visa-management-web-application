@@ -228,6 +228,7 @@ const GenderList = () => {
     }));
     // Reset Global Search
     setGlobalSearch('');
+    setSelectedRows([]);
   };
 
   const handlePageLengthChange = (value) => {

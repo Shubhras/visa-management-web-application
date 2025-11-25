@@ -343,6 +343,7 @@ const LicenceNameList = () => {
       hasPrevious: false,
     }));
     setGlobalSearch("");
+    setSelectedRows([]);
   };
 
   const handlePageLengthChange = (value) => {
