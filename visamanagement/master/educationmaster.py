@@ -3407,12 +3407,21 @@ class AcademicResultTypeExportAPIView(APIView):
             'name': 'Academic Result Type',
             'description': 'Description',
             'is_deleted': 'Deleted',
-            'data_type':'Data Type',
+            'datatype':'Data Type',
             'updated_at': 'Modified On',
             'created_at': 'Created On',
         }
  
+        # field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+        
         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+        # force mapping data_type → datatype
+        field_list = [
+            'datatype' if f.lower().replace('-', '_') in ['data_type', 'datatype', 'data type'] else f
+            for f in field_list
+        ]
+
  
         queryset = AcademicResultType.objects.filter(is_deleted=False)
         if uuids:
