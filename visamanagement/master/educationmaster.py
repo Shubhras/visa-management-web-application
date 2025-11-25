@@ -6,7 +6,7 @@ from rest_framework import status
 from .serializers import  *
 from django.core.paginator import Paginator
 from django.db.models import Q, F, IntegerField
-import uuid
+import re
 from django.db.models.functions import Lower, Cast
 from rest_framework.permissions import IsAuthenticated ,AllowAny ,BasePermission 
 from django.shortcuts import get_object_or_404
@@ -3283,6 +3283,146 @@ class AcademicResultTypeExportAPIView(APIView):
  
  
 # --------------------- Import API ---------------------
+# class AcademicResultTypeImportAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def post(self, request):
+#         file = request.FILES.get('file')
+#         sheet_name = request.data.get('sheet_name')
+
+#         if not file:
+#             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+
+#         format_type = file.name.split('.')[-1].lower()
+#         duplicate_names = []
+
+#         required_headers = {'name', 'datatype'}  # datatype is required now
+#         optional_headers = {'description'}
+
+#         try:
+#             data = []
+
+#             if format_type == 'xlsx':
+#                 import openpyxl
+#                 wb = openpyxl.load_workbook(file, read_only=True)
+#                 available_sheets = wb.sheetnames
+
+#                 if not sheet_name:
+#                     return Response({
+#                         'error': 'Please provide sheet_name',
+#                         'available_sheets': available_sheets
+#                     }, status=status.HTTP_400_BAD_REQUEST)
+
+#                 if sheet_name not in available_sheets:
+#                     return Response({
+#                         'error': f'Sheet "{sheet_name}" not found',
+#                         'available_sheets': available_sheets
+#                     }, status=status.HTTP_400_BAD_REQUEST)
+
+#                 ws = wb[sheet_name]
+#                 if ws.max_row <= 1:
+#                     return Response({
+#                         "statusCode": 400,
+#                         "status": False,
+#                         "message": f'The uploaded XLSX file is empty.'
+#                     }, status=status.HTTP_400_BAD_REQUEST)
+
+#                 headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+#                 if not required_headers.issubset(set(headers)):
+#                     return Response({
+#                         "statusCode": 400,
+#                         "status": True,
+#                         'message': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
+#                     }, status=status.HTTP_400_BAD_REQUEST)
+
+#                 for row in ws.iter_rows(min_row=2, values_only=True):
+#                     if not any(row):
+#                         continue
+#                     row_dict = dict(zip(headers, row))
+#                     data.append(row_dict)
+
+#             elif format_type == 'csv':
+#                 import csv
+#                 decoded_file = file.read().decode('utf-8').splitlines()
+#                 reader = csv.DictReader(decoded_file)
+#                 for row in reader:
+#                     row_lower = {k.strip().lower(): v for k, v in row.items()}
+#                     if not required_headers.issubset(set(row_lower.keys())):
+#                         return Response({
+#                             "statusCode": 400,
+#                             "status": True,
+#                             "message": f'Missing required headers. Required: {required_headers}'
+#                         }, status=status.HTTP_400_BAD_REQUEST)
+#                     data.append(row_lower)
+#             else:
+#                 return Response({
+#                     "statusCode": 400,
+#                     "status": True,
+#                     'error': 'Unsupported file format. Use .xlsx or .csv'
+#                 }, status=status.HTTP_400_BAD_REQUEST)
+
+#             imported_count = 0
+#             errors = []
+
+#             VALID_TYPES = ["Numeric", "Text"]
+
+#             for idx, row in enumerate(reversed(data), start=2):  # row number starts at 2 (after header)
+#                 name = str(row.get('name')).strip() if row.get('name') else None
+#                 datatype = str(row.get('datatype')).strip() if row.get('datatype') else None
+#                 description = str(row.get('description')).strip() if row.get('description') else ''
+
+#                 if not name or not datatype:
+#                     errors.append(f"Row {idx}: 'name' and 'datatype' are required.")
+#                     continue
+
+#                 if datatype not in VALID_TYPES:
+#                     errors.append(f"Row {idx}: Invalid datatype '{datatype}'. Must be one of {VALID_TYPES}.")
+#                     continue
+
+#                 # Validate based on datatype
+#                 if datatype == "Numeric" and not name.isdigit():
+#                     errors.append(f"Row {idx}: Name '{name}' must be numeric for datatype 'Numeric'.")
+#                     continue
+#                 elif datatype == "Text" and any(char.isdigit() for char in name):
+#                     errors.append(f"Row {idx}: Name '{name}' must not contain numbers for datatype 'Text'.")
+#                     continue
+
+#                 existing = AcademicResultType.objects.filter(name__iexact=name).first()
+#                 if existing:
+#                     if not existing.is_deleted:
+#                         duplicate_names.append(name)
+#                         continue
+#                     else:
+#                         existing.description = description
+#                         existing.datatype = datatype
+#                         existing.is_deleted = False
+#                         existing.save()
+#                         imported_count += 1
+#                 else:
+#                     AcademicResultType.objects.create(
+#                         name=name,
+#                         datatype=datatype,
+#                         description=description,
+#                         is_deleted=False
+#                     )
+#                     imported_count += 1
+
+#         except Exception as e:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": True,
+#                 'message': str(e)
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "duplicates": list(set(duplicate_names)),
+#             "errors": errors,
+#             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+#             "imported_count": imported_count
+#         }, status=status.HTTP_200_OK)
+
 class AcademicResultTypeImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -3293,47 +3433,52 @@ class AcademicResultTypeImportAPIView(APIView):
         if not file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
+        import io, csv, openpyxl, re
+
         format_type = file.name.split('.')[-1].lower()
         duplicate_names = []
+        skipped_rows = []
 
-        required_headers = {'name', 'datatype'}  # datatype is required now
-        optional_headers = {'description'}
+        required_headers = {'academic result type', 'data type'}
+        optional_headers = {'description', 'modified on'}
+
+        # Robust normalization: lowercase, strip, remove invisible chars
+        def normalize_header(h):
+            print("hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh00-------------",h)
+            if not h:
+                return ''
+            h = str(h)
+            h = re.sub(r'\s+', ' ', h)  # replace all whitespace sequences with a single space
+            h = re.sub(r'[\u200B-\u200D\uFEFF]', '', h)  # remove zero-width/invisible chars
+            return h.strip().lower()
 
         try:
             data = []
 
+            # ---------------- XLSX Import ----------------
             if format_type == 'xlsx':
-                import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
 
-                if not sheet_name:
-                    return Response({
-                        'error': 'Please provide sheet_name',
-                        'available_sheets': available_sheets
-                    }, status=status.HTTP_400_BAD_REQUEST)
+                print("available_sheetsavailable_sheets-----",available_sheets)
 
+                if not sheet_name:
+                    return Response({'error': 'Please provide sheet_name', 'available_sheets': available_sheets}, status=400)
                 if sheet_name not in available_sheets:
-                    return Response({
-                        'error': f'Sheet "{sheet_name}" not found',
-                        'available_sheets': available_sheets
-                    }, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
 
                 ws = wb[sheet_name]
+                print("wswswswswswsws-----------",ws)
                 if ws.max_row <= 1:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": f'The uploaded XLSX file is empty.'
-                    }, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({"statusCode": 400, "status": False, "message": f'The uploaded XLSX sheet "{sheet_name}" is empty.'}, status=400)
 
-                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                if not required_headers.issubset(set(headers)):
-                    return Response({
-                        "statusCode": 400,
-                        "status": True,
-                        'message': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
-                    }, status=status.HTTP_400_BAD_REQUEST)
+                headers = [normalize_header(cell.value) for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+
+                print("headersheadersheadersheaders----",headers)
+                missing = required_headers - set(headers)
+                print("missingmissingmissingmissing-------",missing)
+                if missing:
+                    return Response({"statusCode": 400, "status": False, "message": f"Missing required headers: {missing}"}, status=400)
 
                 for row in ws.iter_rows(min_row=2, values_only=True):
                     if not any(row):
@@ -3341,89 +3486,75 @@ class AcademicResultTypeImportAPIView(APIView):
                     row_dict = dict(zip(headers, row))
                     data.append(row_dict)
 
+            # ---------------- CSV Import ----------------
             elif format_type == 'csv':
-                import csv
-                decoded_file = file.read().decode('utf-8').splitlines()
-                reader = csv.DictReader(decoded_file)
+                decoded_file = file.read().decode('utf-8')
+                reader = csv.DictReader(io.StringIO(decoded_file))
+                reader.fieldnames = [normalize_header(h) for h in reader.fieldnames]
+
+                missing = required_headers - set(reader.fieldnames)
+                if missing:
+                    return Response({"statusCode": 400, "status": False, "message": f"Missing required headers: {missing}"}, status=400)
+
                 for row in reader:
-                    row_lower = {k.strip().lower(): v for k, v in row.items()}
-                    if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({
-                            "statusCode": 400,
-                            "status": True,
-                            "message": f'Missing required headers. Required: {required_headers}'
-                        }, status=status.HTTP_400_BAD_REQUEST)
+                    row_lower = {normalize_header(k): v for k, v in row.items()}
                     data.append(row_lower)
+
             else:
-                return Response({
-                    "statusCode": 400,
-                    "status": True,
-                    'error': 'Unsupported file format. Use .xlsx or .csv'
-                }, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"statusCode": 400, "status": False, "error": "Unsupported file format. Use .xlsx or .csv"}, status=400)
 
+            # ---------------- Data Processing ----------------
             imported_count = 0
-            errors = []
-
             VALID_TYPES = ["Numeric", "Text"]
 
-            for idx, row in enumerate(reversed(data), start=2):  # row number starts at 2 (after header)
-                name = str(row.get('name')).strip() if row.get('name') else None
-                datatype = str(row.get('datatype')).strip() if row.get('datatype') else None
+            for idx, row in enumerate(data, start=2):
+                name = str(row.get('academic result type')).strip() if row.get('academic result type') else None
+                datatype = str(row.get('data type')).strip() if row.get('data type') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
+                # Required fields
                 if not name or not datatype:
-                    errors.append(f"Row {idx}: 'name' and 'datatype' are required.")
+                    skipped_rows.append({"Row": idx, "Reason": "Missing required field: Academic Result Type or Data Type"})
                     continue
 
+                # Validate data type
                 if datatype not in VALID_TYPES:
-                    errors.append(f"Row {idx}: Invalid datatype '{datatype}'. Must be one of {VALID_TYPES}.")
+                    skipped_rows.append({"Row": idx, "Reason": f"Invalid Data Type '{datatype}'. Expected {VALID_TYPES}"})
                     continue
 
-                # Validate based on datatype
-                if datatype == "Numeric" and not name.isdigit():
-                    errors.append(f"Row {idx}: Name '{name}' must be numeric for datatype 'Numeric'.")
-                    continue
-                elif datatype == "Text" and any(char.isdigit() for char in name):
-                    errors.append(f"Row {idx}: Name '{name}' must not contain numbers for datatype 'Text'.")
+                # Name must not contain numbers
+                if any(char.isdigit() for char in name):
+                    skipped_rows.append({"Row": idx, "Reason": f"Name '{name}' must not contain numbers"})
                     continue
 
+                # Duplicate check
                 existing = AcademicResultType.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
                         duplicate_names.append(name)
                         continue
                     else:
-                        existing.description = description
                         existing.datatype = datatype
+                        existing.description = description
                         existing.is_deleted = False
                         existing.save()
                         imported_count += 1
                 else:
-                    AcademicResultType.objects.create(
-                        name=name,
-                        datatype=datatype,
-                        description=description,
-                        is_deleted=False
-                    )
+                    AcademicResultType.objects.create(name=name, datatype=datatype, description=description, is_deleted=False)
                     imported_count += 1
 
         except Exception as e:
-            return Response({
-                "statusCode": 400,
-                "status": True,
-                'message': str(e)
-            }, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
 
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_names)),
-            "errors": errors,
+            "duplicates": duplicate_names,
+            "skipped_rows": skipped_rows,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
-        }, status=status.HTTP_200_OK)
+        }, status=200)
 
- 
 # -------------------- AcademicResult -------------------- #
 
 
