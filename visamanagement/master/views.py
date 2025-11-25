@@ -10327,7 +10327,7 @@ class BankAccountTypeExportAPIView(APIView):
 
         # --- Search filter ---
         if search:
-            queryset = queryset.filter(Q(name__icontains=search))
+            queryset = queryset.filter(Q(name__istartswith=search))
 
         # --- Custom sorting logic ---
         sort_field_map = {
@@ -10533,7 +10533,7 @@ class LicenseNameListAPIView(APIView):
 
         # --- Search filter ---
         if search:
-            queryset = queryset.filter(Q(full_name__icontains=search))
+            queryset = queryset.filter(Q(full_name__istartswith=search))
 
         # --- Sorting fields mapping ---
         sort_field_map = {
@@ -10784,7 +10784,7 @@ class LicenseNameExportAPIView(APIView):
             queryset = queryset.filter(uuid__in=uuids)
 
         if search:
-            queryset = queryset.filter(full_name__icontains=search)
+            queryset = queryset.filter(full_name__istartswith=search)
 
         # --- Custom sorting ---
         sort_field_map = {
