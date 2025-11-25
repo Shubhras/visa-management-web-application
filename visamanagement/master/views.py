@@ -9802,7 +9802,8 @@ class AccreditationNameImportAPIView(APIView):
         skipped_rows = []
 
         # required_headers = {'accrediation full name', 'accrediation category'}
-        required_headers = {'AccreditationCategory'}
+        required_headers = {'Accreditation Category', 'Accreditation Full Name'}
+        # required_headers = {'AccreditationCategory'}
         optional_headers = {
             'accrediation short name',
             'accrediation issuing authority name',
