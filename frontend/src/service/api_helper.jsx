@@ -1024,7 +1024,7 @@ export const exportAccreditationCategoryDataAPI = (payload) => {
       .map((item) => `${item.field}:${item.order}`)
       .join(",");
   }
-  const apiUrl = `${url.EXPORT_ACCREDITATION_CATEGORY_API}?search=${data?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+  const apiUrl = `${url.EXPORT_ACCREDITATION_CATEGORY_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
