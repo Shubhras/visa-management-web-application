@@ -704,7 +704,7 @@ export const exportBankAccountTypeDataAPI = (payload) => {
       .map((item) => `${item.field}:${item.order}`)
       .join(",");
   }
-  const apiUrl = `${url.EXPORT_BANK_ACCOUNT_TYPE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+  const apiUrl = `${url.EXPORT_BANK_ACCOUNT_TYPE_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -1086,7 +1086,7 @@ export const exportLicenceNameDataAPI = (payload) => {
             .map(item => `${item.field}:${item.order}`)
             .join(",");
     }
-  const apiUrl = `${url.EXPORT_LICENCE_NAME_API}?fields=${payload?.fields}&uuids=${payload?.uuids}&country=${payload?.country}&customSort=${customSort}`;
+  const apiUrl = `${url.EXPORT_LICENCE_NAME_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&country=${payload?.country}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
