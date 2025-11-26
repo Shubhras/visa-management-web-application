@@ -1215,6 +1215,7 @@ class EducationLevelExportAPIView(APIView):
             sort_field_map = {
                 'uuid': 'uuid',
                 'educationLevelCode': 'level_code__name',  # FK sorting key ✅
+                'educationlevelCode': 'level_code__name',  # FK sorting key ✅
                 'level_code': 'level_code__name',
                 'educationlevel': 'educationlevel',
                 'duration': 'durations',   # User sends "duration" but model has "durations" ✅
