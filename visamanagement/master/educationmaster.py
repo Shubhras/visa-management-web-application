@@ -597,6 +597,7 @@ class EducationLevelCodeExportAPIView(APIView):
             # ---------------------------
             dataset = Dataset()
             dataset.headers = [field_header_map[f] for f in field_list]
+            dataset.title = 'EducationLevelCode'
 
             for edu in queryset:
                 row = []
