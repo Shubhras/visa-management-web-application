@@ -1215,7 +1215,7 @@ class EducationLevelExportAPIView(APIView):
             sort_field_map = {
                 'uuid': 'uuid',
                 # 'educationLevelCode': 'level_code__name',  # FK sorting key ✅
-                'educationlevelCode': 'level_code__name',  # FK sorting key ✅
+                'educationlevelcode': 'level_code__name',  # FK sorting key ✅
                 'level_code': 'level_code__name',
                 'educationlevel': 'educationlevel',
                 'duration': 'durations',   # User sends "duration" but model has "durations" ✅
@@ -1235,7 +1235,9 @@ class EducationLevelExportAPIView(APIView):
 
                     field, order = rule.split(':')
                     field = field.strip().lower()
+                    print("fieldfieldfield-----",field)
                     order = order.strip().lower()
+                    print("orderorderorder----",order)
 
                     if field not in sort_field_map:
                         return Response({"status": False, "statusCode": 400, "message": f"Invalid sort field: {field}"}, status=400)
