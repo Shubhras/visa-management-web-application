@@ -11088,30 +11088,75 @@ class LicenseNameImportAPIView(APIView):
 
 #-------------------------------------------LeadSource---------------------------------
 
+# class LeadSourceCreateAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+#     def post(self, request):
+#         serializer = LeadSourceSerializer(data=request.data)
+#         if serializer.is_valid():
+#             if LeadSource.objects.filter(name=serializer.validated_data['name'], is_deleted=False).exists():
+#                 return Response({
+#                     "statusCode": 400,
+#                     "status": False,
+#                     "message": "Lead Source  with this name already exists"
+#                 }, status=status.HTTP_400_BAD_REQUEST)
+#             serializer.save()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": "Lead Source created successfully",
+#                 "data": serializer.data
+#             }, status=status.HTTP_200_OK)
+
+
+#         return Response({
+#             "statusCode": 400,
+#             "status": False,
+#             "message": serializer.errors
+#         }, status=status.HTTP_400_BAD_REQUEST)
+
 class LeadSourceCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
+
     def post(self, request):
-        serializer = LeadSourceSerializer(data=request.data)
+        name = request.data.get("name", "").strip()
+        if not name:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Name is required.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check duplicate
+        if LeadSource.objects.filter(name__iexact=name, is_deleted=False).exists():
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Lead source with this name already exists.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        data = request.data.copy()
+        data['name'] = name
+
+        serializer = LeadSourceSerializer(data=data)
         if serializer.is_valid():
-            if LeadSource.objects.filter(name=serializer.validated_data['name'], is_deleted=False).exists():
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "Lead Source  with this name already exists"
-                }, status=status.HTTP_400_BAD_REQUEST)
             serializer.save()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "Lead Source created successfully",
+                "message": "Lead source created successfully",
                 "data": serializer.data
             }, status=status.HTTP_200_OK)
 
-
+        messages = []
+        for field, msgs in serializer.errors.items():
+            messages.extend(msgs)
         return Response({
             "statusCode": 400,
             "status": False,
-            "message": serializer.errors
+            "message": " ".join(messages),
+            "data": None
         }, status=status.HTTP_400_BAD_REQUEST)
 
 class LeadSourceListAPIView(APIView):    
@@ -11191,39 +11236,38 @@ class LeadSourceRetrieveAPIView(APIView):
 
 
 class LeadSourceUpdateAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
     def put(self, request, uuid):
         try:
-            category = LeadSource.objects.get(uuid=uuid, is_deleted=False)
+            leadsource = LeadSource.objects.get(uuid=uuid, is_deleted=False)
         except LeadSource.DoesNotExist:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "Lead Source not found"
+                "message": "Lead source not found",
+                "data": None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = LeadSourceSerializer(category, data=request.data, partial=True)
+        serializer = LeadSourceSerializer(leadsource, data=request.data, partial=True)
         if serializer.is_valid():
-            new_name = serializer.validated_data.get("name", category.name)
-            if LeadSource.objects.filter(name=new_name).exclude(uuid=uuid).exists():
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "Lead Source with this name already exists"
-                }, status=status.HTTP_400_BAD_REQUEST)
-
             serializer.save()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "Lead Source details updated successfully",
+                "message": "Lead source updated successfully",
                 "data": serializer.data
-            }, status=status.HTTP_200_OK)
+            })
 
+
+        errors = serializer.errors
+        messages = []
+        for field, msgs in errors.items():
+            messages.extend(msgs)
+        message_text = " ".join(messages)
         return Response({
             "statusCode": 400,
             "status": False,
-            "message": serializer.errors
+            "message": message_text,
+            "data": None
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -11536,18 +11580,33 @@ class LeadSourceImportAPIView(APIView):
 #-------------------------------------------InterestLevel---------------------------------
 
 
-
 class InterestLevelCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
+
     def post(self, request):
-        serializer = InterestLevelSerializer(data=request.data)
+        name = request.data.get("name", "").strip()
+        if not name:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Name is required.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check duplicate
+        if InterestLevel.objects.filter(name__iexact=name, is_deleted=False).exists():
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Interest Level with this name already exists.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        data = request.data.copy()
+        data['name'] = name
+
+        serializer = InterestLevelSerializer(data=data)
         if serializer.is_valid():
-            if InterestLevel.objects.filter(name=serializer.validated_data['name'], is_deleted=False).exists():
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "Interest Level  with this name already exists"
-                }, status=status.HTTP_400_BAD_REQUEST)
             serializer.save()
             return Response({
                 "statusCode": 200,
@@ -11556,40 +11615,42 @@ class InterestLevelCreateAPIView(APIView):
                 "data": serializer.data
             }, status=status.HTTP_200_OK)
 
-
+        messages = []
+        for field, msgs in serializer.errors.items():
+            messages.extend(msgs)
         return Response({
             "statusCode": 400,
             "status": False,
-            "message": serializer.errors
+            "message": " ".join(messages),
+            "data": None
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
-class InterestLevelListAPIView(APIView):   
-    permission_classes = [IsAuthenticated, IsAdminUser] 
+class InterestLevelListAPIView(APIView):
+    permission_classes = [IsAuthenticated]  # Add IsAdminUser if needed
+
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
-        custom_sort = request.GET.get('customSort')  # e.g., name:asc,updated_at:desc 
-        allowed_sort_fields = ['name', 'description', 'updated_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
+        custom_sort = request.GET.get('customSort')
+        
+        allowed_sort_fields = ['name', 'description', 'created_at', 'updated_at']
 
-        # Apply descending order for 'desc'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        queryset = InterestLevel.objects.filter(is_deleted=False)
 
-        # --- Sorting fields mapping ---
+        # Search filter
+        if search:
+            queryset = queryset.filter(Q(name__istartswith=search))
+
+        # Sorting
         sort_field_map = {
             'name': 'name',
             'description': 'description',
             'created_at': 'created_at',
             'updated_at': 'updated_at',
-        }    
+        }
 
         sort_fields = []
 
-        # --- Custom sort logic ---
         if custom_sort:
             for rule in custom_sort.split(','):
                 try:
@@ -11602,7 +11663,7 @@ class InterestLevelListAPIView(APIView):
 
                     orm_field = sort_field_map[field]
 
-                    # Case-insensitive for string fields
+                    # Case-insensitive sorting for string fields
                     if field in ['name', 'description']:
                         f = Lower(orm_field)
                     else:
@@ -11612,32 +11673,24 @@ class InterestLevelListAPIView(APIView):
                         f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
                     )
                 except ValueError:
-                    continue    
-        # --- Fallback sorting ---
-        if not sort_fields:
+                    continue
+        else:
+            # fallback sorting
             sort_by = request.GET.get('sortBy', 'created_at')
-            sort_order = request.GET.get('sortOrder', 'desc')
+            sort_order = request.GET.get('sortOrder', 'asc')
             orm_field = sort_field_map.get(sort_by, 'created_at')
             f = F(orm_field)
-            sort_fields.append(
-                f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)
-            )
-        
+            sort_fields = [f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)]
 
-        queryset = InterestLevel.objects.filter(is_deleted=False)
+        queryset = queryset.order_by(*sort_fields)
 
-        if search:
-            queryset = queryset.filter(
-                Q(name__istartswith=search)
-            )
-
-        queryset = queryset.order_by(sort_by)
-
+        # Pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = InterestLevelSerializer(result_page, many=True)
 
         return paginator.get_paginated_response(serializer.data)
+
 
 class InterestLevelRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -11661,39 +11714,38 @@ class InterestLevelRetrieveAPIView(APIView):
 
 
 class InterestLevelUpdateAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
     def put(self, request, uuid):
         try:
-            category = InterestLevel.objects.get(uuid=uuid, is_deleted=False)
+            interestlevel = InterestLevel.objects.get(uuid=uuid, is_deleted=False)
         except InterestLevel.DoesNotExist:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "Interest Level not found"
+                "message": "Interest Level not found",
+                "data": None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = InterestLevelSerializer(category, data=request.data, partial=True)
+        serializer = InterestLevelSerializer(interestlevel, data=request.data, partial=True)
         if serializer.is_valid():
-            new_name = serializer.validated_data.get("name", category.name)
-            if InterestLevel.objects.filter(name=new_name).exclude(uuid=uuid).exists():
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "Interest Level with this name already exists"
-                }, status=status.HTTP_400_BAD_REQUEST)
-
             serializer.save()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "Interest Level details updated successfully",
+                "message": "Interest Level updated successfully",
                 "data": serializer.data
-            }, status=status.HTTP_200_OK)
+            })
 
+
+        errors = serializer.errors
+        messages = []
+        for field, msgs in errors.items():
+            messages.extend(msgs)
+        message_text = " ".join(messages)
         return Response({
             "statusCode": 400,
             "status": False,
-            "message": serializer.errors
+            "message": message_text,
+            "data": None
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -11829,7 +11881,7 @@ class InterestLevelExportAPIView(APIView):
                     orm_field = field_header_map[field]
 
                     # Case-insensitive sorting for string fields
-                    if field in ['name', 'description', 'company_type_name']:
+                    if field in ['name', 'description']:
                         f = Lower(orm_field)
                     else:
                         f = F(orm_field)

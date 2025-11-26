@@ -2,8 +2,8 @@ import axios from "axios";
 
 //apply base url for axios
 //const API_URL = "http://192.168.0.156:8000"//import.meta.env.VITE_API_BASE_URL_USERS_MANAGEMENT_SERVICE;
-const API_URL = "https://visaadmin.digiprima.co"//import.meta.env.VITE_API_BASE_URL_USERS_MANAGEMENT_SERVICE;
-// const API_URL="http://127.0.0.1:8000"
+//const API_URL = "https://visaadmin.digiprima.co"//import.meta.env.VITE_API_BASE_URL_USERS_MANAGEMENT_SERVICE;
+const API_URL="http://127.0.0.1:8000"
 const axiosApi = axios.create({
   baseURL: API_URL,
 });
