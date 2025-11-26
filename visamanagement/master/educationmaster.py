@@ -526,7 +526,7 @@ class EducationLevelCodeExportAPIView(APIView):
             queryset = EducationLevelCode.objects.filter(is_deleted=False)
 
             if uuids:
-                queryset = queryset.filter(uuid__in=uuids)
+                queryset = queryset.filter(uuid__in=uuids).distinct()
 
             if search:
                 queryset = queryset.filter(
@@ -643,6 +643,7 @@ class EducationLevelCodeExportAPIView(APIView):
                 "message": "Internal server error",
                 "error": str(e)
             }, status=500)
+
 
 # ------------------ Import API ------------------
 class EducationLevelCodeImportAPIView(APIView):
@@ -1162,7 +1163,8 @@ class EducationLevelExportAPIView(APIView):
             # Query Params
             format_type = request.GET.get('format', 'xlsx').lower()
             fields = request.GET.get('fields')
-            uuids_param = request.GET.get('uuids', '')  # ✅ fixed param key
+            # uuids_param = request.GET.get('educationLevelCode', '')  # ✅ fixed param key
+            # uuids_param = request.GET.get('uuids', '')  # ✅ fixed param key
             custom_sort = request.GET.get('customSort')
             search = request.GET.get('search', '').strip()
 
@@ -1191,23 +1193,33 @@ class EducationLevelExportAPIView(APIView):
             else:
                 field_list = list(field_header_map.keys())
 
-            # ✅ UUID filter applied on EducationLevel.uuid
-            uuid_list = []
-            if uuids_param:
-                for u in uuids_param.split(','):
-                    u = u.strip()
-                    if not u:
-                        continue
-                    try:
-                        uuid_list.append(UUID(u))
-                    except:
-                        return Response({"status": False, "statusCode": 400, "message": f"Invalid UUID: {u}"}, status=400)
+            def parse_ids(param_name):
+                raw = request.GET.get(param_name, '')
+                if raw:
+                    items = [x.strip() for x in raw.split(',') if x.strip()]
+                else:
+                    items = request.GET.getlist(param_name)
+                return items
 
+            def validate_uuid_list(uuid_list):
+                valid = []
+                for u in uuid_list:
+                    try:
+                        valid.append(UUID(u))
+                    except:
+                        pass
+                return valid
+
+            educationLevelCode_list = validate_uuid_list(parse_ids('educationLevelCode'))
+            uuids_list = validate_uuid_list(parse_ids('uuids'))
+            
             # Base Queryset
             queryset = EducationLevel.objects.filter(is_deleted=False)
 
-            if uuid_list:
-                queryset = queryset.filter(uuid__in=uuid_list)  # ✅ Only selected rows
+            if educationLevelCode_list:
+                queryset = queryset.filter(level_code__uuid__in=educationLevelCode_list)
+            elif uuids_list:
+                queryset = queryset.filter(uuid__in=uuids_list)
 
             if search:
                 queryset = queryset.filter(Q(educationlevel__istartswith=search))
@@ -1299,6 +1311,137 @@ class EducationLevelExportAPIView(APIView):
 
 
 # ------------------ Import API ------------------
+# class EducationLevelImportAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def post(self, request):
+#         file = request.FILES.get('file')
+#         sheet_name = request.data.get('sheet_name')
+
+#         if not file:
+#             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+
+#         format_type = file.name.split('.')[-1].lower()
+#         duplicates = []
+#         skipped_rows = []
+
+#         required_headers = {'education level code', 'education level','education durations'}
+#         optional_headers = {'description', 'is_deleted'}
+
+#         try:
+#             data = []
+
+#             # ---------------- XLSX ----------------
+#             if format_type == 'xlsx':
+#                 import openpyxl
+#                 wb = openpyxl.load_workbook(file, read_only=True)
+#                 available_sheets = wb.sheetnames
+
+#                 if not sheet_name:
+#                     return Response({'error': 'Please provide sheet_name', 'available_sheets': available_sheets}, status=400)
+#                 if sheet_name not in available_sheets:
+#                     return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
+
+#                 ws = wb[sheet_name]
+#                 if ws.max_row <= 1:
+#                     return Response({'error': f'Sheet "{sheet_name}" is empty'}, status=400)
+
+#                 headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+#                 missing_headers = required_headers - set(headers)
+#                 if missing_headers:
+#                     return Response({'error': f'Missing required headers: {missing_headers}'}, status=400)
+
+#                 for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+#                     if not any(row):
+#                         continue
+#                     row_dict = dict(zip(headers, row))
+#                     row_dict["_row_number"] = idx
+#                     data.append(row_dict)
+
+#             # ---------------- CSV ----------------
+#             elif format_type == 'csv':
+#                 import csv
+#                 import io
+#                 decoded_file = file.read().decode('utf-8')
+#                 reader = csv.DictReader(io.StringIO(decoded_file))
+#                 for idx, row in enumerate(reader, start=2):
+#                     row_lower = {k.strip().lower(): v for k, v in row.items()}
+#                     if not required_headers.issubset(set(row_lower.keys())):
+#                         return Response({'error': f'Missing required headers. Required: {required_headers}, Found: {set(row_lower.keys())}'}, status=400)
+#                     row_lower["_row_number"] = idx
+#                     data.append(row_lower)
+#             else:
+#                 return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
+
+           
+
+#             imported_count = 0
+#             for row in reversed(data):
+#                 row_number = row.get("_row_number", "Unknown")
+#                 level_code_id = row.get('education level code')
+#                 education_level_name = str(row.get('education level')).strip() if row.get('education level') else None
+#                 durations = str(row.get('education durations')).strip() if row.get('education durations') else None
+#                 description = str(row.get('description')).strip() if row.get('description') else ''
+#                 is_deleted = bool(int(row.get('is_deleted', 0))) if row.get('is_deleted') is not None else False
+
+#                 # Skip if required fields are missing
+#                 if not level_code_id or not education_level_name:
+#                     skipped_rows.append({"Row": row_number, "Reason": "Missing education level code or education level"})
+#                     continue
+
+#                 # Check if level_code_id is numeric
+#                 if not str(level_code_id).isnumeric():
+#                     skipped_rows.append({"Row": row_number, "Education Level Code": level_code_id, "Reason": "Education level code must be numeric"})
+#                     continue
+
+#                 # Convert to int for querying
+#                 level_code_id = int(level_code_id)
+
+#                 # Validate LevelCode existence
+#                 level_code_obj = EducationLevelCode.objects.filter(id=level_code_id, is_deleted=False).first()
+#                 if not level_code_obj:
+#                     skipped_rows.append({"Row": row_number, "Education Level Code": level_code_id, "Reason": "Invalid education level code"})
+#                     continue
+
+                
+
+#                 existing = EducationLevel.objects.filter(level_code_id=level_code_id, educationlevel__iexact=education_level_name).first()
+#                 if existing:
+#                     if not existing.is_deleted:
+#                         duplicates.append({"Row": row_number, "Education Level": education_level_name, "Education Level Code": level_code_id,"Reason": "Already exists"})
+#                         continue
+#                     else:
+#                         existing.description = description
+#                         existing.is_deleted = False
+#                         existing.save()
+#                         imported_count += 1
+#                 else:
+#                     EducationLevel.objects.create(
+#                         level_code_id=level_code_id,
+#                         durations=durations,
+#                         educationlevel=education_level_name,
+#                         description=description,
+#                         is_deleted=is_deleted
+#                     )
+#                     imported_count += 1
+
+#         except Exception as e:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 'message': str(e)
+#             }, status=400)
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+#             "imported_count": imported_count,
+#             "duplicates": duplicates,
+#             "skipped_rows": skipped_rows
+#         }, status=200)
+
+
 class EducationLevelImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -1307,19 +1450,20 @@ class EducationLevelImportAPIView(APIView):
         sheet_name = request.data.get('sheet_name')
 
         if not file:
-            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'No file uploaded'}, status=400)
 
         format_type = file.name.split('.')[-1].lower()
-        duplicates = []
-        skipped_rows = []
+        duplicates = []        # country API jaisa
+        skipped_rows = []      # country API jaisa
 
-        required_headers = {'education level code', 'education level','education durations'}
+        required_headers = {'education level code', 'education level', 'education durations'}
         optional_headers = {'description', 'is_deleted'}
 
         try:
             data = []
+            headers = []
 
-            # ---------------- XLSX ----------------
+            # ------------- XLSX -------------
             if format_type == 'xlsx':
                 import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
@@ -1327,17 +1471,18 @@ class EducationLevelImportAPIView(APIView):
 
                 if not sheet_name:
                     return Response({'error': 'Please provide sheet_name', 'available_sheets': available_sheets}, status=400)
+
                 if sheet_name not in available_sheets:
                     return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
 
                 ws = wb[sheet_name]
                 if ws.max_row <= 1:
-                    return Response({'error': f'Sheet "{sheet_name}" is empty'}, status=400)
+                    return Response({"statusCode": 400, "status": False, "message": f'Sheet "{sheet_name}" is empty'}, status=400)
 
                 headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
                 missing_headers = required_headers - set(headers)
                 if missing_headers:
-                    return Response({'error': f'Missing required headers: {missing_headers}'}, status=400)
+                    return Response({"statusCode": 400, "status": False, "message": f"Missing required headers: {missing_headers}"}, status=400)
 
                 for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     if not any(row):
@@ -1346,80 +1491,106 @@ class EducationLevelImportAPIView(APIView):
                     row_dict["_row_number"] = idx
                     data.append(row_dict)
 
-            # ---------------- CSV ----------------
+            # ------------- CSV -------------
             elif format_type == 'csv':
-                import csv
-                import io
+                import csv, io
                 decoded_file = file.read().decode('utf-8')
                 reader = csv.DictReader(io.StringIO(decoded_file))
-                for idx, row in enumerate(reader, start=2):
+                headers = [h.strip().lower() for h in reader.fieldnames]
+                missing_headers = required_headers - set(headers)
+                if missing_headers:
+                    return Response({"statusCode": 400, "status": False, "message": f"Missing required headers: {missing_headers}"}, status=400)
+
+                for row in reader:
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
-                    if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({'error': f'Missing required headers. Required: {required_headers}, Found: {set(row_lower.keys())}'}, status=400)
-                    row_lower["_row_number"] = idx
+                    row_lower["_row_number"] = imported_count = 0
                     data.append(row_lower)
             else:
-                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
-
-           
+                return Response({"statusCode": 400, "status": False, "message": "Unsupported file format. Use .xlsx or .csv"}, status=400)
 
             imported_count = 0
+
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                level_code_id = row.get('education level code')
+
+                level_code_value = row.get('education level code')
                 education_level_name = str(row.get('education level')).strip() if row.get('education level') else None
-                durations = str(row.get('education durations')).strip() if row.get('education durations') else None
+                durations = row.get('education durations')
                 description = str(row.get('description')).strip() if row.get('description') else ''
-                is_deleted = bool(int(row.get('is_deleted', 0))) if row.get('is_deleted') is not None else False
+                is_deleted = bool(int(row.get('is_deleted', 0))) if row.get('is_deleted') not in [None, ''] else False
 
-                # Skip if required fields are missing
-                if not level_code_id or not education_level_name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing education level code or education level"})
+                # ---- Skip check (exact map Country API jaisa format response) ----
+                if not level_code_value or not education_level_name or not durations:
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Reason": "Missing education level code, education level, or duration"
+                    })
                     continue
 
-                # Check if level_code_id is numeric
-                if not str(level_code_id).isnumeric():
-                    skipped_rows.append({"Row": row_number, "Education Level Code": level_code_id, "Reason": "Education level code must be numeric"})
+                # ---- Numeric validation (country logic jaisa) ----
+                if not str(level_code_value).isnumeric():
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Education Level Code": level_code_value,
+                        "Reason": "Education level code must be numeric"
+                    })
                     continue
 
-                # Convert to int for querying
-                level_code_id = int(level_code_id)
+                level_code_int = int(level_code_value)
 
-                # Validate LevelCode existence
-                level_code_obj = EducationLevelCode.objects.filter(id=level_code_id, is_deleted=False).first()
+                # ---- Validate FK existence by `name` (exact country-style logic) ----
+                level_code_obj = EducationLevelCode.objects.filter(name=level_code_int, is_deleted=False).first()
                 if not level_code_obj:
-                    skipped_rows.append({"Row": row_number, "Education Level Code": level_code_id, "Reason": "Invalid education level code"})
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Education Level Code": level_code_int,
+                        "Reason": "Invalid education level code"
+                    })
                     continue
 
-                
+                # ---- Duplicate check (bilkul country API jaisa combination logic) ----
+                existing = EducationLevel.objects.filter(
+                    level_code=level_code_obj,
+                    educationlevel__iexact=education_level_name
+                ).first()
 
-                existing = EducationLevel.objects.filter(level_code_id=level_code_id, educationlevel__iexact=education_level_name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Education Level": education_level_name, "Education Level Code": level_code_id,"Reason": "Already exists"})
+                        duplicates.append({
+                            "Row": row_number,
+                            "Education Level": existing.educationlevel,
+                            "Education Level Code": level_code_int,
+                            "Reason": "Already exists"
+                        })
                         continue
                     else:
                         existing.description = description
+                        existing.durations = durations
                         existing.is_deleted = False
                         existing.save()
                         imported_count += 1
                 else:
-                    EducationLevel.objects.create(
-                        level_code_id=level_code_id,
-                        durations=durations,
-                        educationlevel=education_level_name,
-                        description=description,
-                        is_deleted=is_deleted
-                    )
-                    imported_count += 1
+                    try:
+                        EducationLevel.objects.create(
+                            level_code=level_code_obj,  # ✅ object assignment (id nahi)
+                            educationlevel=education_level_name,
+                            durations=durations,
+                            description=description,
+                            is_deleted=False
+                        )
+                        imported_count += 1
+                    except IntegrityError:
+                        duplicates.append({
+                            "Row": row_number,
+                            "Education Level": education_level_name,
+                            "Education Level Code": level_code_int,
+                            "Reason": "Already exists"
+                        })
 
         except Exception as e:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                'message': str(e)
-            }, status=400)
+            return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
 
+        # Final response (Country API style exact keys)
         return Response({
             "statusCode": 200,
             "status": True,
@@ -1428,7 +1599,6 @@ class EducationLevelImportAPIView(APIView):
             "duplicates": duplicates,
             "skipped_rows": skipped_rows
         }, status=200)
-
 
 # class EducationLevelImportAPIView(APIView):
 #     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -2006,25 +2176,116 @@ class EducationDurationImportAPIView(APIView):
 
 
 
+# class StudymainareaListAPIView(APIView):
+#     def get(self, request):
+#         search = request.GET.get('search', '').strip()
+#         sort_by = request.GET.get('sortBy', 'created_at')
+#         sort_order = request.GET.get('sortOrder', 'desc')
+
+#         allowed_sort_fields = ['name', 'description', 'updated_at']
+#         if sort_by not in allowed_sort_fields:
+#             sort_by = 'created_at'
+#         if sort_order == 'desc':
+#             sort_by = f'-{sort_by}'
+
+#         queryset = Studymainarea.objects.filter(is_deleted=False)
+#         if search:
+#             queryset = queryset.filter(Q(name__istartswith=search) 
+#                                        )
+
+#         queryset = queryset.order_by(sort_by)
+
+#         paginator = CustomPagination()
+#         result_page = paginator.paginate_queryset(queryset, request)
+#         serializer = StudymainareaSerializer(result_page, many=True)
+#         return paginator.get_paginated_response(serializer.data)
+
+
 class StudymainareaListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
-
-        allowed_sort_fields = ['name', 'description', 'updated_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        custom_sort = request.GET.get('customSort')
 
         queryset = Studymainarea.objects.filter(is_deleted=False)
+
+        # ---------------------------
+        # SEARCH FILTER
+        # ---------------------------
         if search:
-            queryset = queryset.filter(Q(name__istartswith=search) 
-                                       )
+            queryset = queryset.filter(Q(name__icontains=search))
 
-        queryset = queryset.order_by(sort_by)
+        # ---------------------------
+        # SORT FIELD MAP
+        # (only persistent model fields)
+        # ---------------------------
+        sort_field_map = {
+            'uuid': 'uuid',
+            'name': 'name',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
 
+        sort_fields = []
+
+        # ---------------------------
+        # CUSTOM SORT → multiple rules
+        # Example → ?customSort=name:asc,description:desc
+        # ---------------------------
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    # if invalid field → skip (not break)
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # STRING fields → Lower()
+                    if field in ['name', 'description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+
+                except ValueError:
+                    continue
+
+        # ---------------------------
+        # DEFAULT SORT → single field fallback
+        # ---------------------------
+        else:
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'desc')
+
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+
+            if sort_by in ['name', 'description']:
+                f = Lower(orm_field)
+            else:
+                f = F(orm_field)
+
+            sort_fields = [
+                f.asc(nulls_last=True) if sort_order.lower() == 'asc' else f.desc(nulls_last=True)
+            ]
+
+        # ---------------------------
+        # APPLY SORTING
+        # ---------------------------
+        queryset = queryset.order_by(*sort_fields)
+
+        # ---------------------------
+        # PAGINATION + RESPONSE
+        # ---------------------------
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = StudymainareaSerializer(result_page, many=True)
