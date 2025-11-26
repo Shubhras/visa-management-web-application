@@ -465,7 +465,7 @@ class EducationLevelCodeExportAPIView(APIView):
             # ---------------------------
             format_type = request.GET.get('format', 'xlsx').lower()
             fields = request.GET.get('fields')
-            uuids_param = request.GET.get('uuids', '')
+            uuids_param = request.GET.get('educationLevelCode', '')
             custom_sort = request.GET.get('customSort')
             search = request.GET.get('search', '').strip()
 
