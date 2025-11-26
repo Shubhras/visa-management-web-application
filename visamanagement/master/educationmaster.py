@@ -526,7 +526,7 @@ class EducationLevelCodeExportAPIView(APIView):
             queryset = EducationLevelCode.objects.filter(is_deleted=False)
 
             if uuids:
-                queryset = queryset.filter(uuid__in=uuids)
+                queryset = queryset.filter(uuid__in=uuids).distinct()
 
             if search:
                 queryset = queryset.filter(
@@ -643,6 +643,7 @@ class EducationLevelCodeExportAPIView(APIView):
                 "message": "Internal server error",
                 "error": str(e)
             }, status=500)
+
 
 # ------------------ Import API ------------------
 class EducationLevelCodeImportAPIView(APIView):
