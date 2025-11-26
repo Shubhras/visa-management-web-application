@@ -1238,9 +1238,9 @@ class EducationLevelExportAPIView(APIView):
             # ---------------------------
             sort_field_map = {
                 'uuid': 'uuid',
-                'level_code': 'level_code__name',
+                'educationLevelCode': 'level_code__name',
                 'educationlevel': 'educationlevel',
-                'durations': 'durations',
+                'duration': 'durations',
                 'description': 'description',
                 'is_deleted': 'is_deleted',
                 'created_at': 'created_at',
