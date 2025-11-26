@@ -1163,7 +1163,8 @@ class EducationLevelExportAPIView(APIView):
             # Query Params
             format_type = request.GET.get('format', 'xlsx').lower()
             fields = request.GET.get('fields')
-            uuids_param = request.GET.get('educationLevelCode', '')  # ✅ fixed param key
+            # uuids_param = request.GET.get('educationLevelCode', '')  # ✅ fixed param key
+            # uuids_param = request.GET.get('uuids', '')  # ✅ fixed param key
             custom_sort = request.GET.get('customSort')
             search = request.GET.get('search', '').strip()
 
@@ -1192,23 +1193,33 @@ class EducationLevelExportAPIView(APIView):
             else:
                 field_list = list(field_header_map.keys())
 
-            # ✅ UUID filter applied on EducationLevel.uuid
-            uuid_list = []
-            if uuids_param:
-                for u in uuids_param.split(','):
-                    u = u.strip()
-                    if not u:
-                        continue
-                    try:
-                        uuid_list.append(UUID(u))
-                    except:
-                        return Response({"status": False, "statusCode": 400, "message": f"Invalid UUID: {u}"}, status=400)
+            def parse_ids(param_name):
+                raw = request.GET.get(param_name, '')
+                if raw:
+                    items = [x.strip() for x in raw.split(',') if x.strip()]
+                else:
+                    items = request.GET.getlist(param_name)
+                return items
 
+            def validate_uuid_list(uuid_list):
+                valid = []
+                for u in uuid_list:
+                    try:
+                        valid.append(UUID(u))
+                    except:
+                        pass
+                return valid
+
+            educationLevelCode_list = validate_uuid_list(parse_ids('educationLevelCode'))
+            uuids_list = validate_uuid_list(parse_ids('uuids'))
+            
             # Base Queryset
             queryset = EducationLevel.objects.filter(is_deleted=False)
 
-            if uuid_list:
-                queryset = queryset.filter(uuid__in=uuid_list)  # ✅ Only selected rows
+            if educationLevelCode_list:
+                queryset = queryset.filter(level_code__uuid__in=educationLevelCode_list)
+            elif uuids_list:
+                queryset = queryset.filter(uuid__in=uuids_list)
 
             if search:
                 queryset = queryset.filter(Q(educationlevel__istartswith=search))
