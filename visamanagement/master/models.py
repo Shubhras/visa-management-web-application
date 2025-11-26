@@ -90,7 +90,7 @@ class State(models.Model):
 
 
     def __str__(self):
-        return self.stateName
+        return self.stateName if self.stateName else "Unnamed stateName"
 
 
 class District(models.Model):
@@ -1395,7 +1395,7 @@ class RepresentingCountry(models.Model):
 
 
     def __str__(self):
-        return self.full_name
+        return self.full_name if self.full_name else "Unnamed Country"
     
 
 class VisaMain(models.Model):

@@ -8,6 +8,7 @@ from .serializers import ApplicantSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status, serializers 
 
+
 class ApplicantCreateAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -20,43 +21,38 @@ class ApplicantCreateAPIView(APIView):
                 applicant = serializer.save()
 
             return Response({
-                "status": "success",
-                "message": "Applicant created successfully.",
+                "status": True,
+                "message": "Applicant created successfully",
                 "data": ApplicantSerializer(applicant).data
             }, status=status.HTTP_201_CREATED)
 
         except serializers.ValidationError as ve:
-            # Handles DRF validation errors
             return Response({
-                "status": "error",
-                "message": "Validation failed.",
+                "status": False,
+                "message": "Validation failed",
                 "errors": ve.detail
             }, status=status.HTTP_400_BAD_REQUEST)
 
         except IntegrityError as ie:
-            # Handles database integrity errors (unique constraints etc)
             return Response({
-                "status": "error",
-                "message": "Database integrity error.",
+                "status": False,
+                "message": "Database integrity error",
                 "details": str(ie)
             }, status=status.HTTP_400_BAD_REQUEST)
 
         except ValidationError as ve:
-            # Handles Django model validation errors
             return Response({
-                "status": "error",
-                "message": "Validation failed.",
+                "status": False,
+                "message": "Validation failed",
                 "errors": ve.message_dict
             }, status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as e:
-            # Catch-all for any unexpected errors
             return Response({
-                "status": "error",
-                "message": "Something went wrong.",
+                "status": False,
+                "message": "Something went wrong",
                 "details": str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 
 class ApplicantUpdateAPIView(APIView):
