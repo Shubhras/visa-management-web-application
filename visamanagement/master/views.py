@@ -11564,53 +11564,75 @@ class InterestLevelCreateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
-class InterestLevelRetrieveAPIView(APIView):    
-    permission_classes = [IsAuthenticated, IsAdminUser]
-
+class InterestLevelListAPIView(APIView):   
+    permission_classes = [IsAuthenticated, IsAdminUser] 
     def get(self, request):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')  # fallback
-        custom_sort = request.GET.get('customSort')  # e.g., name:desc
+        sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
+        custom_sort = request.GET.get('customSort')  # e.g., name:asc,updated_at:desc 
+        allowed_sort_fields = ['name', 'description', 'updated_at']
+        if sort_by not in allowed_sort_fields:
+            sort_by = 'created_at'
 
-        allowed_sort_fields = ['name', 'description', 'created_at', 'updated_at']
+        # Apply descending order for 'desc'
+        if sort_order == 'desc':
+            sort_by = f'-{sort_by}'
 
-        queryset = InterestLevel.objects.filter(is_deleted=False)
+        # --- Sorting fields mapping ---
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }    
 
-        # Search filter
-        if search:
-            queryset = queryset.filter(Q(name__istartswith=search))
-
-        # --- Sorting ---
         sort_fields = []
 
-        # Custom sort takes priority
+        # --- Custom sort logic ---
         if custom_sort:
             for rule in custom_sort.split(','):
-                if ':' in rule:
+                try:
                     field, order = rule.split(':')
                     field = field.strip()
                     order = order.strip().lower()
-                    if field not in allowed_sort_fields:
+
+                    if field not in sort_field_map:
                         continue
+
+                    orm_field = sort_field_map[field]
 
                     # Case-insensitive for string fields
                     if field in ['name', 'description']:
-                        f = Lower(field)
+                        f = Lower(orm_field)
                     else:
-                        f = F(field)
+                        f = F(orm_field)
 
-                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
-        else:
-            # Fallback sorting
-            if sort_by not in allowed_sort_fields:
-                sort_by = 'created_at'
-            f = F(sort_by)
-            sort_fields = [f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)]
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue    
+        # --- Fallback sorting ---
+        if not sort_fields:
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'desc')
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+            f = F(orm_field)
+            sort_fields.append(
+                f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)
+            )
+        
 
-        queryset = queryset.order_by(*sort_fields)
+        queryset = InterestLevel.objects.filter(is_deleted=False)
 
-        # Pagination
+        if search:
+            queryset = queryset.filter(
+                Q(name__istartswith=search)
+            )
+
+        queryset = queryset.order_by(sort_by)
+
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = InterestLevelSerializer(result_page, many=True)
