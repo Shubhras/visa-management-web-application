@@ -231,7 +231,7 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
           if (response?.statusCode === 200 && response?.status === true) {
             toast.success(response?.message);
             resetForm();
-            handleClose();
+            handleClose(true);
           } else {
             toast.error("Something went wrong.");
           }
@@ -261,7 +261,7 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
   const onClose = () => {
     resetForm();
     setLoading(false);
-    handleClose();
+    handleClose(false);
   };
 
   // Conditional return after all hooks

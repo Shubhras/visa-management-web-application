@@ -10517,26 +10517,123 @@ class BankAccountTypeImportAPIView(APIView):
 
 
 #-------------------------------------------LicenseName---------------------------------
+# class LicenseNameListAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def get(self, request):
+#         search = request.GET.get('search', '').strip()
+#         custom_sort = request.GET.get('customSort')  # e.g., full_name:asc,valid_upto:desc
+
+#         # Fields allowed for sorting
+#         allowed_sort_fields = [
+#             'full_name', 'short_name', 'issuing_authority',
+#             'valid_date', 'created_at', 'updated_at'
+#         ]
+
+#         queryset = LicenseName.objects.filter(is_deleted=False)
+
+#         # --- Search filter ---
+#         if search:
+#             queryset = queryset.filter(Q(full_name__istartswith=search))
+
+#         # --- Sorting fields mapping ---
+#         sort_field_map = {
+#             'full_name': 'full_name',
+#             'short_name': 'short_name',
+#             'issuing_authority': 'issuing_authority',
+#             'valid_date': 'valid_date',
+#             'created_at': 'created_at',
+#             'updated_at': 'updated_at',
+#         }
+
+#         sort_fields = []
+
+#         # --- Custom sort logic ---
+#         if custom_sort:
+#             for rule in custom_sort.split(','):
+#                 if ':' in rule:
+#                     field, order = rule.split(':')
+#                     field = field.strip()
+#                     order = order.strip().lower()
+#                     if field not in sort_field_map:
+#                         continue
+
+#                     orm_field = sort_field_map[field]
+
+#                     # Case-insensitive for string fields
+#                     if field in ['full_name', 'short_name', 'issuing_authority']:
+#                         f = Lower(orm_field)
+#                     else:
+#                         f = F(orm_field)
+
+#                     sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+
+#         # --- Fallback sorting ---
+#         if not sort_fields:
+#             sort_by = request.GET.get('sortBy', 'created_at')
+#             sort_order = request.GET.get('sortOrder', 'desc')
+#             orm_field = sort_field_map.get(sort_by, 'created_at')
+#             f = F(orm_field)
+#             sort_fields = [f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)]
+
+#         queryset = queryset.order_by(*sort_fields)
+
+#         # --- Pagination ---
+#         paginator = CustomPagination()
+#         result_page = paginator.paginate_queryset(queryset, request)
+#         serializer = LicenseNameSerializer(result_page, many=True)
+
+#         return paginator.get_paginated_response(serializer.data)
 class LicenseNameListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
-        search = request.GET.get('search', '').strip()
-        custom_sort = request.GET.get('customSort')  # e.g., full_name:asc,valid_upto:desc
 
-        # Fields allowed for sorting
-        allowed_sort_fields = [
-            'full_name', 'short_name', 'issuing_authority',
-            'valid_date', 'created_at', 'updated_at'
-        ]
+        search = request.GET.get('search', '').strip()
+        custom_sort = request.GET.get('customSort')
+
+        # ---------------------------
+        # Country filter (same logic as State API)
+        # ---------------------------
+
+        def parse_ids(param_name):
+            raw = request.GET.get(param_name, '')
+            if raw:
+                items = [x.strip() for x in raw.split(',') if x.strip()]
+            else:
+                items = request.GET.getlist(param_name)
+            return items
+
+        def validate_uuid_list(uuid_list):
+            valid = []
+            for u in uuid_list:
+                try:
+                    valid.append(UUID(u))
+                except:
+                    pass
+            return valid
+
+        country_list = validate_uuid_list(parse_ids('country'))
 
         queryset = LicenseName.objects.filter(is_deleted=False)
 
-        # --- Search filter ---
-        if search:
-            queryset = queryset.filter(Q(full_name__istartswith=search))
+        # ---------------------------
+        # Apply Country Filter
+        # ---------------------------
+        if country_list:
+            queryset = queryset.filter(country__uuid__in=country_list)
 
-        # --- Sorting fields mapping ---
+        # ---------------------------
+        # Search
+        # ---------------------------
+        if search:
+            queryset = queryset.filter(
+                Q(full_name__istartswith=search)
+            )
+
+        # ---------------------------
+        # Sorting
+        # ---------------------------
         sort_field_map = {
             'full_name': 'full_name',
             'short_name': 'short_name',
@@ -10548,37 +10645,43 @@ class LicenseNameListAPIView(APIView):
 
         sort_fields = []
 
-        # --- Custom sort logic ---
         if custom_sort:
             for rule in custom_sort.split(','):
                 if ':' in rule:
                     field, order = rule.split(':')
                     field = field.strip()
                     order = order.strip().lower()
+
                     if field not in sort_field_map:
                         continue
 
                     orm_field = sort_field_map[field]
 
-                    # Case-insensitive for string fields
                     if field in ['full_name', 'short_name', 'issuing_authority']:
                         f = Lower(orm_field)
                     else:
                         f = F(orm_field)
 
-                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
 
-        # --- Fallback sorting ---
+        # Default sort
         if not sort_fields:
             sort_by = request.GET.get('sortBy', 'created_at')
             sort_order = request.GET.get('sortOrder', 'desc')
             orm_field = sort_field_map.get(sort_by, 'created_at')
+
             f = F(orm_field)
-            sort_fields = [f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)]
+            sort_fields = [
+                f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)
+            ]
 
         queryset = queryset.order_by(*sort_fields)
 
-        # --- Pagination ---
+        # ---------------------------
+        # Pagination
+        # ---------------------------
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = LicenseNameSerializer(result_page, many=True)
@@ -10746,6 +10849,115 @@ class LicenseNameDeleteAPIView(APIView):
 
 
 # ------------------ Export API ------------------
+# class LicenseNameExportAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def get(self, request):
+#         format_type = request.GET.get('format', 'xlsx').lower()
+#         fields = request.GET.get('fields')
+#         uuids_param = request.GET.get('uuids', '')
+#         search = request.GET.get('search', '').strip()
+#         custom_sort = request.GET.get('customSort', '')
+
+#         uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+#         # --- Field headers ---
+#         field_header_map = {
+#             'uuid': 'UUID',
+#             'country': 'Country',
+#             'full_name': 'License Full Name',
+#             'short_name': 'License Short Name',
+#             'issuing_authority': 'License Issuing Authority Name',
+#             'description': 'Description',
+#             'valid_type': 'License Valid Upto',
+#             'valid_duration_value': 'License Valid Duration Value',
+#             'valid_duration_unit': 'License Valid Duration Unit',
+#             'valid_date': 'License Valid Date',
+#             'is_deleted': 'Deleted',
+#             'created_at': 'Created On',
+#             'updated_at': 'Modified On',
+#         }
+
+#         # --- Fields to export ---
+#         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+#         # --- Fetch queryset ---
+#         queryset = LicenseName.objects.filter(is_deleted=False)
+
+#         if uuids:
+#             queryset = queryset.filter(uuid__in=uuids)
+
+#         if search:
+#             queryset = queryset.filter(full_name__istartswith=search)
+
+#         # --- Custom sorting ---
+#         sort_field_map = {
+#             'full_name': 'full_name',
+#             'short_name': 'short_name',
+#             'valid_date': 'valid_date',
+#             'created_at': 'created_at',
+#             'updated_at': 'updated_at',
+#         }
+
+#         sort_fields = []
+#         if custom_sort:
+#             for rule in custom_sort.split(','):
+#                 if ':' in rule:
+#                     field, order = rule.split(':')
+#                     field = field.strip()
+#                     order = order.strip().lower()
+#                     if field in sort_field_map:
+#                         orm_field = sort_field_map[field]
+#                         if order == 'desc':
+#                             sort_fields.append(f"-{orm_field}")
+#                         else:
+#                             sort_fields.append(orm_field)
+#         if not sort_fields:
+#             sort_fields = ['-created_at']
+
+#         queryset = queryset.order_by(*sort_fields)
+
+#         # --- Prepare dataset ---
+#         dataset = Dataset()
+#         dataset.headers = [field_header_map.get(f, f) for f in field_list]
+#         dataset.title = 'LicenseName'
+
+#         for obj in queryset:
+#             row = []
+#             for field in field_list:
+#                 if field == 'country':
+#                     value = obj.country.name if obj.country else ''
+#                 else:
+#                     value = getattr(obj, field, '')
+
+#                 # Format dates
+#                 if field in ['created_at', 'updated_at'] and value:
+#                     value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
+#                 elif field == 'valid_date' and value:
+#                     value = value.strftime("%d-%m-%Y")
+#                 elif isinstance(value, bool):
+#                     value = int(value)
+
+#                 row.append(value if value is not None else '')
+#             dataset.append(row)
+
+#         # --- Export file ---
+#         if format_type == 'csv':
+#             file_data = dataset.export('csv')
+#             content_type = 'text/csv'
+#             file_name = 'licenses.csv'
+#         else:
+#             file_data = io.BytesIO(dataset.export('xlsx'))
+#             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+#             file_name = 'licenses.xlsx'
+
+#         response = HttpResponse(
+#             file_data if format_type == 'csv' else file_data.getvalue(),
+#             content_type=content_type
+#         )
+#         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+#         return response
+
 class LicenseNameExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -10758,7 +10970,29 @@ class LicenseNameExportAPIView(APIView):
 
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
-        # --- Field headers ---
+        # -------------------------------
+        # Country Filter (Same as State API)
+        # -------------------------------
+        def parse_ids(param_name):
+            raw = request.GET.get(param_name, '')
+            if raw:
+                return [x.strip() for x in raw.split(',') if x.strip()]
+            return request.GET.getlist(param_name)
+
+        def validate_uuid_list(uuid_list):
+            valid = []
+            for u in uuid_list:
+                try:
+                    valid.append(UUID(u))
+                except:
+                    pass
+            return valid
+
+        country_list = validate_uuid_list(parse_ids('country'))
+
+        # -------------------------------
+        # Field headers
+        # -------------------------------
         field_header_map = {
             'uuid': 'UUID',
             'country': 'Country',
@@ -10775,19 +11009,27 @@ class LicenseNameExportAPIView(APIView):
             'updated_at': 'Modified On',
         }
 
-        # --- Fields to export ---
         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
-        # --- Fetch queryset ---
+        # -------------------------------
+        # Queryset
+        # -------------------------------
         queryset = LicenseName.objects.filter(is_deleted=False)
 
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
 
+        # Apply country filter
+        if country_list:
+            queryset = queryset.filter(country__uuid__in=country_list)
+
+        # Search
         if search:
             queryset = queryset.filter(full_name__istartswith=search)
 
-        # --- Custom sorting ---
+        # -------------------------------
+        # Sorting
+        # -------------------------------
         sort_field_map = {
             'full_name': 'full_name',
             'short_name': 'short_name',
@@ -10803,18 +11045,19 @@ class LicenseNameExportAPIView(APIView):
                     field, order = rule.split(':')
                     field = field.strip()
                     order = order.strip().lower()
+
                     if field in sort_field_map:
                         orm_field = sort_field_map[field]
-                        if order == 'desc':
-                            sort_fields.append(f"-{orm_field}")
-                        else:
-                            sort_fields.append(orm_field)
+                        sort_fields.append(f"-{orm_field}" if order == 'desc' else orm_field)
+
         if not sort_fields:
             sort_fields = ['-created_at']
 
         queryset = queryset.order_by(*sort_fields)
 
-        # --- Prepare dataset ---
+        # -------------------------------
+        # Dataset
+        # -------------------------------
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = 'LicenseName'
@@ -10827,7 +11070,7 @@ class LicenseNameExportAPIView(APIView):
                 else:
                     value = getattr(obj, field, '')
 
-                # Format dates
+                # Date formatting
                 if field in ['created_at', 'updated_at'] and value:
                     value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif field == 'valid_date' and value:
@@ -10836,25 +11079,27 @@ class LicenseNameExportAPIView(APIView):
                     value = int(value)
 
                 row.append(value if value is not None else '')
+
             dataset.append(row)
 
-        # --- Export file ---
+        # -------------------------------
+        # File Export
+        # -------------------------------
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
             file_name = 'licenses.csv'
+            response_data = file_data
         else:
             file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'licenses.xlsx'
+            response_data = file_data.getvalue()
 
-        response = HttpResponse(
-            file_data if format_type == 'csv' else file_data.getvalue(),
-            content_type=content_type
-        )
+        response = HttpResponse(response_data, content_type=content_type)
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
-        return response
 
+        return response
 
 
 # ------------------ Import API ------------------
@@ -11088,30 +11333,75 @@ class LicenseNameImportAPIView(APIView):
 
 #-------------------------------------------LeadSource---------------------------------
 
+# class LeadSourceCreateAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+#     def post(self, request):
+#         serializer = LeadSourceSerializer(data=request.data)
+#         if serializer.is_valid():
+#             if LeadSource.objects.filter(name=serializer.validated_data['name'], is_deleted=False).exists():
+#                 return Response({
+#                     "statusCode": 400,
+#                     "status": False,
+#                     "message": "Lead Source  with this name already exists"
+#                 }, status=status.HTTP_400_BAD_REQUEST)
+#             serializer.save()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": "Lead Source created successfully",
+#                 "data": serializer.data
+#             }, status=status.HTTP_200_OK)
+
+
+#         return Response({
+#             "statusCode": 400,
+#             "status": False,
+#             "message": serializer.errors
+#         }, status=status.HTTP_400_BAD_REQUEST)
+
 class LeadSourceCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
+
     def post(self, request):
-        serializer = LeadSourceSerializer(data=request.data)
+        name = request.data.get("name", "").strip()
+        if not name:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Name is required.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check duplicate
+        if LeadSource.objects.filter(name__iexact=name, is_deleted=False).exists():
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Lead source with this name already exists.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        data = request.data.copy()
+        data['name'] = name
+
+        serializer = LeadSourceSerializer(data=data)
         if serializer.is_valid():
-            if LeadSource.objects.filter(name=serializer.validated_data['name'], is_deleted=False).exists():
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "Lead Source  with this name already exists"
-                }, status=status.HTTP_400_BAD_REQUEST)
             serializer.save()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "Lead Source created successfully",
+                "message": "Lead source created successfully",
                 "data": serializer.data
             }, status=status.HTTP_200_OK)
 
-
+        messages = []
+        for field, msgs in serializer.errors.items():
+            messages.extend(msgs)
         return Response({
             "statusCode": 400,
             "status": False,
-            "message": serializer.errors
+            "message": " ".join(messages),
+            "data": None
         }, status=status.HTTP_400_BAD_REQUEST)
 
 class LeadSourceListAPIView(APIView):    
@@ -11191,39 +11481,38 @@ class LeadSourceRetrieveAPIView(APIView):
 
 
 class LeadSourceUpdateAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
     def put(self, request, uuid):
         try:
-            category = LeadSource.objects.get(uuid=uuid, is_deleted=False)
+            leadsource = LeadSource.objects.get(uuid=uuid, is_deleted=False)
         except LeadSource.DoesNotExist:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "Lead Source not found"
+                "message": "Lead source not found",
+                "data": None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = LeadSourceSerializer(category, data=request.data, partial=True)
+        serializer = LeadSourceSerializer(leadsource, data=request.data, partial=True)
         if serializer.is_valid():
-            new_name = serializer.validated_data.get("name", category.name)
-            if LeadSource.objects.filter(name=new_name).exclude(uuid=uuid).exists():
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "Lead Source with this name already exists"
-                }, status=status.HTTP_400_BAD_REQUEST)
-
             serializer.save()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "Lead Source details updated successfully",
+                "message": "Lead source updated successfully",
                 "data": serializer.data
-            }, status=status.HTTP_200_OK)
+            })
 
+
+        errors = serializer.errors
+        messages = []
+        for field, msgs in errors.items():
+            messages.extend(msgs)
+        message_text = " ".join(messages)
         return Response({
             "statusCode": 400,
             "status": False,
-            "message": serializer.errors
+            "message": message_text,
+            "data": None
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -11486,6 +11775,8 @@ class LeadSourceImportAPIView(APIView):
                 if not name:
                     skipped_rows.append({
                         "Row": row_number,
+                        "Lead Source": name,
+                        "Description": description,
                         "Reason": "Missing lead source name"
                     })
                     continue
@@ -11534,18 +11825,33 @@ class LeadSourceImportAPIView(APIView):
 #-------------------------------------------InterestLevel---------------------------------
 
 
-
 class InterestLevelCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
+
     def post(self, request):
-        serializer = InterestLevelSerializer(data=request.data)
+        name = request.data.get("name", "").strip()
+        if not name:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Name is required.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check duplicate
+        if InterestLevel.objects.filter(name__iexact=name, is_deleted=False).exists():
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Interest Level with this name already exists.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        data = request.data.copy()
+        data['name'] = name
+
+        serializer = InterestLevelSerializer(data=data)
         if serializer.is_valid():
-            if InterestLevel.objects.filter(name=serializer.validated_data['name'], is_deleted=False).exists():
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "Interest Level  with this name already exists"
-                }, status=status.HTTP_400_BAD_REQUEST)
             serializer.save()
             return Response({
                 "statusCode": 200,
@@ -11554,40 +11860,42 @@ class InterestLevelCreateAPIView(APIView):
                 "data": serializer.data
             }, status=status.HTTP_200_OK)
 
-
+        messages = []
+        for field, msgs in serializer.errors.items():
+            messages.extend(msgs)
         return Response({
             "statusCode": 400,
             "status": False,
-            "message": serializer.errors
+            "message": " ".join(messages),
+            "data": None
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
-class InterestLevelListAPIView(APIView):   
-    permission_classes = [IsAuthenticated, IsAdminUser] 
+class InterestLevelListAPIView(APIView):
+    permission_classes = [IsAuthenticated]  # Add IsAdminUser if needed
+
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
-        custom_sort = request.GET.get('customSort')  # e.g., name:asc,updated_at:desc 
-        allowed_sort_fields = ['name', 'description', 'updated_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
+        custom_sort = request.GET.get('customSort')
+        
+        allowed_sort_fields = ['name', 'description', 'created_at', 'updated_at']
 
-        # Apply descending order for 'desc'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        queryset = InterestLevel.objects.filter(is_deleted=False)
 
-        # --- Sorting fields mapping ---
+        # Search filter
+        if search:
+            queryset = queryset.filter(Q(name__istartswith=search))
+
+        # Sorting
         sort_field_map = {
             'name': 'name',
             'description': 'description',
             'created_at': 'created_at',
             'updated_at': 'updated_at',
-        }    
+        }
 
         sort_fields = []
 
-        # --- Custom sort logic ---
         if custom_sort:
             for rule in custom_sort.split(','):
                 try:
@@ -11600,7 +11908,7 @@ class InterestLevelListAPIView(APIView):
 
                     orm_field = sort_field_map[field]
 
-                    # Case-insensitive for string fields
+                    # Case-insensitive sorting for string fields
                     if field in ['name', 'description']:
                         f = Lower(orm_field)
                     else:
@@ -11610,32 +11918,24 @@ class InterestLevelListAPIView(APIView):
                         f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
                     )
                 except ValueError:
-                    continue    
-        # --- Fallback sorting ---
-        if not sort_fields:
+                    continue
+        else:
+            # fallback sorting
             sort_by = request.GET.get('sortBy', 'created_at')
-            sort_order = request.GET.get('sortOrder', 'desc')
+            sort_order = request.GET.get('sortOrder', 'asc')
             orm_field = sort_field_map.get(sort_by, 'created_at')
             f = F(orm_field)
-            sort_fields.append(
-                f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)
-            )
-        
+            sort_fields = [f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)]
 
-        queryset = InterestLevel.objects.filter(is_deleted=False)
+        queryset = queryset.order_by(*sort_fields)
 
-        if search:
-            queryset = queryset.filter(
-                Q(name__istartswith=search)
-            )
-
-        queryset = queryset.order_by(sort_by)
-
+        # Pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = InterestLevelSerializer(result_page, many=True)
 
         return paginator.get_paginated_response(serializer.data)
+
 
 class InterestLevelRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -11659,39 +11959,38 @@ class InterestLevelRetrieveAPIView(APIView):
 
 
 class InterestLevelUpdateAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
     def put(self, request, uuid):
         try:
-            category = InterestLevel.objects.get(uuid=uuid, is_deleted=False)
+            interestlevel = InterestLevel.objects.get(uuid=uuid, is_deleted=False)
         except InterestLevel.DoesNotExist:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "Interest Level not found"
+                "message": "Interest Level not found",
+                "data": None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = InterestLevelSerializer(category, data=request.data, partial=True)
+        serializer = InterestLevelSerializer(interestlevel, data=request.data, partial=True)
         if serializer.is_valid():
-            new_name = serializer.validated_data.get("name", category.name)
-            if InterestLevel.objects.filter(name=new_name).exclude(uuid=uuid).exists():
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "Interest Level with this name already exists"
-                }, status=status.HTTP_400_BAD_REQUEST)
-
             serializer.save()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "Interest Level details updated successfully",
+                "message": "Interest Level updated successfully",
                 "data": serializer.data
-            }, status=status.HTTP_200_OK)
+            })
 
+
+        errors = serializer.errors
+        messages = []
+        for field, msgs in errors.items():
+            messages.extend(msgs)
+        message_text = " ".join(messages)
         return Response({
             "statusCode": 400,
             "status": False,
-            "message": serializer.errors
+            "message": message_text,
+            "data": None
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -11827,7 +12126,7 @@ class InterestLevelExportAPIView(APIView):
                     orm_field = field_header_map[field]
 
                     # Case-insensitive sorting for string fields
-                    if field in ['name', 'description', 'company_type_name']:
+                    if field in ['name', 'description']:
                         f = Lower(orm_field)
                     else:
                         f = F(orm_field)
