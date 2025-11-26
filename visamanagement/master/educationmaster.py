@@ -1158,26 +1158,18 @@ class EducationLevelExportAPIView(APIView):
 
     def get(self, request):
         try:
-            # ---------------------------
             # Query Params
-            # ---------------------------
             format_type = request.GET.get('format', 'xlsx').lower()
             fields = request.GET.get('fields')
-            uuids_param = request.GET.get('educationLevelCode', '')
+            uuids_param = request.GET.get('uuids', '')  # ✅ fixed param key
             custom_sort = request.GET.get('customSort')
             search = request.GET.get('search', '').strip()
 
             # Validate format
             if format_type not in ['xlsx', 'csv']:
-                return Response({
-                    "status": False,
-                    "statusCode": 400,
-                    "message": "Invalid format. Allowed: xlsx, csv"
-                }, status=400)
+                return Response({"status": False, "statusCode": 400, "message": "Invalid format"}, status=400)
 
-            # ---------------------------
-            # Field Mapping for Headers
-            # ---------------------------
+            # Field Mapping
             field_header_map = {
                 'uuid': 'UUID',
                 'level_code': 'Education Level Code',
@@ -1192,105 +1184,80 @@ class EducationLevelExportAPIView(APIView):
             # Validate fields
             if fields:
                 field_list = [f.strip() for f in fields.split(',')]
-                invalid_fields = [f for f in field_list if f not in field_header_map]
-                if invalid_fields:
-                    return Response({
-                        "status": False,
-                        "statusCode": 400,
-                        "message": f"Invalid fields: {invalid_fields}",
-                    }, status=400)
+                invalid = [f for f in field_list if f not in field_header_map]
+                if invalid:
+                    return Response({"status": False, "statusCode": 400, "message": f"Invalid fields: {invalid}"}, status=400)
             else:
                 field_list = list(field_header_map.keys())
 
-            # ---------------------------
-            # UUID Processing
-            # ---------------------------
-            uuids = []
+            # ✅ UUID filter applied on EducationLevel.uuid
+            uuid_list = []
             if uuids_param:
                 for u in uuids_param.split(','):
                     u = u.strip()
                     if not u:
                         continue
                     try:
-                        uuids.append(UUID(u))  # ✅ convert to UUID object
+                        uuid_list.append(UUID(u))
                     except:
-                        return Response({
-                            "status": False,
-                            "statusCode": 400,
-                            "message": f"Invalid UUID: {u}",
-                        }, status=400)
+                        return Response({"status": False, "statusCode": 400, "message": f"Invalid UUID: {u}"}, status=400)
 
-            # ---------------------------
-            # Base QuerySet
-            # ---------------------------
+            # Base Queryset
             queryset = EducationLevel.objects.filter(is_deleted=False)
 
-            if uuids:
-                queryset = queryset.filter(level_code__uuid__in=uuids)
+            if uuid_list:
+                queryset = queryset.filter(uuid__in=uuid_list)  # ✅ Only selected rows
 
             if search:
-                queryset = queryset.filter(
-                    Q(educationlevel__istartswith=search)
-                )
+                queryset = queryset.filter(Q(educationlevel__istartswith=search))
 
-            # ---------------------------
-            # Sorting Logic (backend auto-key-fix ✅)
-            # ---------------------------
+            # ✅ FIXED SORTING MAPPING
             sort_field_map = {
                 'uuid': 'uuid',
-                'educationLevelCode': 'level_code__name',  # ✅ FK sorting
+                'educationlevelcode': 'level_code__name',  # FK sorting key ✅
+                'level_code': 'level_code__name',
                 'educationlevel': 'educationlevel',
-                'duration': 'durations',  # ✅ now correctly mapped
+                'duration': 'durations',   # User sends "duration" but model has "durations" ✅
+                'durations': 'durations',
+                'updated_at': 'updated_at',
+                'created_at': 'created_at',
                 'description': 'description',
                 'is_deleted': 'is_deleted',
-                'created_at': 'created_at',
-                'updated_at': 'updated_at',
             }
 
-            sort_fields = []
+            order_by_rules = []
 
             if custom_sort:
                 for rule in custom_sort.split(','):
+                    if ':' not in rule:
+                        return Response({"status": False, "statusCode": 400, "message": f"Invalid sort rule: {rule}"}, status=400)
+
                     field, order = rule.split(':')
-                    field = field.strip()
+                    field = field.strip().lower()
                     order = order.strip().lower()
 
                     if field not in sort_field_map:
-                        return Response({
-                            "status": False,
-                            "statusCode": 400,
-                            "message": f"Invalid sort field: {field}",
-                        }, status=400)
+                        return Response({"status": False, "statusCode": 400, "message": f"Invalid sort field: {field}"}, status=400)
 
                     orm_field = sort_field_map[field]
 
-                    if order not in ['asc', 'desc']:
-                        return Response({
-                            "status": False,
-                            "statusCode": 400,
-                            "message": f"Invalid sort order: {order}. Use asc/desc",
-                        }, status=400)
-
-                    f = F(orm_field)
-
-                    sort_fields.append(
-                        f.asc(nulls_last=True) if order == 'asc'
-                        else f.desc(nulls_last=True)
-                    )
+                    if order == 'desc':
+                        order_by_rules.append(f"-{orm_field}")
+                    else:
+                        order_by_rules.append(orm_field)
 
             else:
-                sort_fields = [F('created_at').desc(nulls_last=True)]
+                order_by_rules = ["-created_at"]
 
-            queryset = queryset.order_by(*sort_fields)  # ✅ apply final sorting
+            queryset = queryset.order_by(*order_by_rules)  # ✅ FK + all fields sorted properly now
 
-            # ---------------------------
-            # Preparing Dataset (sorted queryset se fill ✅)
-            # ---------------------------
+            # Build dataset
             dataset = Dataset()
             dataset.headers = [field_header_map[f] for f in field_list]
-            dataset.title = 'EducationLevel'
+            dataset.title = "EducationLevel"
 
-            for obj in queryset:  # queryset already sorted ✅
+            # Prepare rows
+            for obj in queryset:  # already sorted + filtered rows ✅
                 row = []
                 for field in field_list:
                     if field == 'level_code':
@@ -1303,35 +1270,26 @@ class EducationLevelExportAPIView(APIView):
                     elif isinstance(value, bool):
                         value = int(value)
 
-                    row.append(value or "")
+                    row.append(value or '')
 
                 dataset.append(row)
 
-            # ---------------------------
-            # Export File (Same as API 1 ✅)
-            # ---------------------------
+            # Export
             if format_type == 'csv':
-                file_data = dataset.export('csv')
-                content_type = 'text/csv'
-                file_name = 'education_levels.csv'
-                response_content = file_data
+                return HttpResponse(
+                    dataset.export("csv"),
+                    content_type="text/csv",
+                    headers={"Content-Disposition": 'attachment; filename="education_levels.csv"'}
+                )
             else:
-                file_buffer = io.BytesIO(dataset.export('xlsx'))
-                content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-                file_name = 'education_levels.xlsx'
-                response_content = file_buffer.getvalue()
-
-            response = HttpResponse(response_content, content_type=content_type)
-            response['Content-Disposition'] = f'attachment; filename="{file_name}"'
-            return response
+                return HttpResponse(
+                    dataset.export("xlsx"),
+                    content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    headers={"Content-Disposition": 'attachment; filename="education_levels.xlsx"'}
+                )
 
         except Exception as e:
-            return Response({
-                "status": False,
-                "statusCode": 500,
-                "message": "Internal server error",
-                "error": str(e),
-            }, status=500)
+            return Response({"status": False, "statusCode": 500, "message": "Internal Error", "error": str(e)}, status=500)
 
 
 
