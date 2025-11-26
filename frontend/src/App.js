@@ -354,7 +354,6 @@ import ActivityTypeList from "./pages/masters/salesMasters/activityType/Activity
 import LostReasonB2CList from "./pages/masters/salesMasters/lostReasonB2C/LostReasonB2CList";
 import LostReasonB2BList from "./pages/masters/salesMasters/lostReasonB2B/LostReasonB2BList";
 import InterestLevelList from "./pages/masters/salesMasters/interestLevel/InterestLevelList";
-import LeadsList from "./pages/leads/LeadsList";
 import BankAccountTypeList from "./pages/masters/companyMaster/bankAccountType/BankAccountTypeList";
 import GenderList from "./pages/masters/generalMaster/gender/GenderList";
 import MaritalStatusList from "./pages/masters/generalMaster/maritalStatus/MaritalStatusList";
@@ -696,7 +695,7 @@ function App() {
           <Route path='/wizard' element={<ProtectedRoute><WizardPage /></ProtectedRoute>} />
 
           {/* Master routes - Protected */}
-          <Route path='/leads' element={<ProtectedRoute><LeadsList /></ProtectedRoute>} />
+        
           <Route path='/lead-source' element={<ProtectedRoute><LeadSourceList /></ProtectedRoute>} />
           <Route path='/interest-level' element={<ProtectedRoute><InterestLevelList /></ProtectedRoute>} />
           <Route path='/priority-type' element={<ProtectedRoute><PriorityTypeList /></ProtectedRoute>} />
