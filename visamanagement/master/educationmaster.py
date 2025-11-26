@@ -465,7 +465,7 @@ class EducationLevelCodeExportAPIView(APIView):
             # ---------------------------
             format_type = request.GET.get('format', 'xlsx').lower()
             fields = request.GET.get('fields')
-            uuids_param = request.GET.get('educationLevelCode', '')
+            uuids_param = request.GET.get('uuids', '')
             custom_sort = request.GET.get('customSort')
             search = request.GET.get('search', '').strip()
 
@@ -1163,7 +1163,7 @@ class EducationLevelExportAPIView(APIView):
             # Query Params
             format_type = request.GET.get('format', 'xlsx').lower()
             fields = request.GET.get('fields')
-            uuids_param = request.GET.get('uuids', '')  # ✅ fixed param key
+            uuids_param = request.GET.get('educationLevelCode', '')  # ✅ fixed param key
             custom_sort = request.GET.get('customSort')
             search = request.GET.get('search', '').strip()
 
