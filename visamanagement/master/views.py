@@ -11486,6 +11486,8 @@ class LeadSourceImportAPIView(APIView):
                 if not name:
                     skipped_rows.append({
                         "Row": row_number,
+                        "Lead Source": name,
+                        "Description": description,
                         "Reason": "Missing lead source name"
                     })
                     continue
