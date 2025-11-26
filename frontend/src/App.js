@@ -471,6 +471,7 @@ import EntranceTestAbilityGroupList from "./pages/masters/studyFactors/entranceT
 import LanguageAbilityGroupList from "./pages/masters/studyFactors/languageAbilityGroup/LanguageAbilityGroupList";
 import AgeList from "./pages/masters/studyFactors/age/AgeList";
 import LeadsB2CList from "./pages/sales/leadsB2C/LeadsB2CList";
+import LeadB2CForm from "./pages/sales/leadsB2C/LeadB2CForm";
 
 
 
@@ -843,6 +844,8 @@ function App() {
 
             {/*Sales*/}
             <Route path="/leads-B2C" element={<ProtectedRoute><LeadsB2CList /></ProtectedRoute>}></Route>
+            <Route path="/leads-form" element={<ProtectedRoute><LeadB2CForm /></ProtectedRoute>}></Route>
+
 
           {/* 404 Error Page */}
           <Route path='*' element={<ErrorPage />} />

@@ -3,9 +3,9 @@ import { useDispatch } from "react-redux";
 import MasterLayout from "../../../masterLayout/MasterLayout";
 // import Breadcrumb from "../../../components/Breadcrumb";
 import { Icon } from '@iconify/react/dist/iconify.js';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { toast } from "react-toastify";
-import { ecaForList, ecaForDelete, ecaForExportData } from '../../../store/master/educationMaster/action';
+import { leadsB2CList, leadsB2CDelete, leadsB2CExportData } from '../../../store/sales/leadsB2C/action';
 import AddImportLeadsB2CModal from './AddImportLeadsB2CModal';
 import { formatDateDDMMYYYY, formatDateDDMMYYYYTime } from '../../../helper/utils/commanHelper';
 import { useGlobalSearch } from '../../../components/comman/GlobalSearchContext';
@@ -18,11 +18,7 @@ const LeadsB2CList = () => {
         rowData: null
     })
     const handleShow = () => {
-        setModalState({
-            show: true,
-            mode: 'add',
-            rowData: null
-        });
+        navigate('/leads-form');
     };
     // For closing modal
     const handleClose = (shouldRefresh = false) => {
@@ -53,10 +49,12 @@ const LeadsB2CList = () => {
     const [selectedItems, setSelectedItems] = useState(["First Name"]);
     const [ItemsRequired] = useState(["First Name"]);
 
+    const navigate = useNavigate();
+
 
     // Table columns configuration
     const [tableColumns] = useState([
-        { id: 'leadId', label: 'Lead ID', field: 'leadId', visible: true, required: true },
+        { id: 'leadId', label: 'Lead ID', field: 'leadId', visible: true, required: false },
         { id: 'firstName', label: 'First Name', field: 'firstName', visible: true, required: false },
         { id: 'lastName', label: 'Last Name', field: 'lastName', visible: true, required: false },
         { id: 'mobileNo', label: 'Mobile No', field: 'mobileNo', visible: true, required: false },
@@ -151,7 +149,7 @@ const LeadsB2CList = () => {
             sort: tableState.sort,
         };
 
-        dispatch(ecaForList(params, (response, error) => {
+        dispatch(leadsB2CList(params, (response, error) => {
             setLoading(false);
             if (response?.statusCode === 200 && response?.status === true) {
                 const paginationData = response?.pagination || {};
@@ -336,11 +334,7 @@ const LeadsB2CList = () => {
     };
 
     const handleShowEdit = (rowData) => {
-        setModalState({
-            show: true,
-            mode: 'edit',
-            rowData: rowData
-        });
+        navigate('/leads-form');
     };
 
     const handleSelectAllOrNot = (a) => {
@@ -370,7 +364,7 @@ const LeadsB2CList = () => {
             toast.error("No Leads B2C selected for deletion.");
             return;
         }
-        dispatch(ecaForDelete(sendPayload, (response, error) => {
+        dispatch(leadsB2CDelete(sendPayload, (response, error) => {
             if (error) {
                 toast.error(error?.response?.data?.message || "server error");
             } else {
@@ -456,9 +450,13 @@ const LeadsB2CList = () => {
         }
         // Map frontend labels to backend field names
         const fieldMapping = {
-            "Leads B2C": "name",
-            "Modified On": "updated_at",
-            "Description": "description",
+            "Lead ID": "leadId",
+            "First Name": "firstName",
+            "Last Name": "lastName",
+            "Mobile No": "mobileNo",
+            "Email ID": "emailId",
+            "Sales Team": "salesTeam",
+            "Sales Person": "salesPerson",
         };
         // Convert selectedItems to backend field names
         const mappedFields = selectedItems.map((item) => fieldMapping[item] || item);
@@ -473,7 +471,7 @@ const LeadsB2CList = () => {
 
         };
         setLoadingExport(true);
-        dispatch(ecaForExportData(sendPayload, (response, error) => {
+        dispatch(leadsB2CExportData(sendPayload, (response, error) => {
             if (error) {
                 setLoadingExport(false);
                 toast.error(error?.response?.message || "server error");

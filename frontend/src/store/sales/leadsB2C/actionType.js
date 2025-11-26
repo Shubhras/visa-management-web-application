@@ -1,0 +1,7 @@
+// Leads B2C
+export const LEADS_B2C_LIST = "LEADS_B2C_LIST";
+export const ADD_LEADS_B2C = "ADD_LEADS_B2C";
+export const EDIT_LEADS_B2C = "EDIT_LEADS_B2C";
+export const DELETE_LEADS_B2C = "DELETE_LEADS_B2C";
+export const EXPORT_LEADS_B2C = "EXPORT_LEADS_B2C";
+export const IMPORT_LEADS_B2C = "IMPORT_LEADS_B2C";

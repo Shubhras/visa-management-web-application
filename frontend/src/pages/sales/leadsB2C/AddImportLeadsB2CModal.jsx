@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useDispatch } from "react-redux";
-import { ecaForImportData } from '../../../store/master/educationMaster/action';
+import { leadsB2CImportData } from '../../../store/sales/leadsB2C/action';
 import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
@@ -66,7 +66,7 @@ const AddImportLeadsB2CModal = ({ show, handleClose }) => {
             formData.append('sheet_name', selectedSheet);
         }
         setLoading(true);
-        dispatch(ecaForImportData(formData, (response, error) => {
+        dispatch(leadsB2CImportData(formData, (response, error) => {
             setLoading(false);
             if (error) {
                 toast.error(error?.response?.data?.message || "Server error");
@@ -78,7 +78,7 @@ const AddImportLeadsB2CModal = ({ show, handleClose }) => {
                             <div>{response?.message}</div>
                             {response?.duplicates?.length > 0 && (
                                 <div style={{ marginTop: '6px' }}>
-                                    <strong>Duplicate eca for skipped — the duplicate data from your uploaded file has been exported into an .xlsx file.</strong>
+                                    <strong>Duplicate Leads B2C skipped — the duplicate data from your uploaded file has been exported into an .xlsx file.</strong>
                                 </div>
                             )}
                         </div>,
@@ -89,7 +89,7 @@ const AddImportLeadsB2CModal = ({ show, handleClose }) => {
                     if (response?.duplicates?.length > 0) {
                         const prepareData = {
                             data: response.duplicates || [],
-                            headers: ["First Name"],
+                            headers: ["First Name","Last Name"],
                             sheetName: "LeadsB2C",
                             fileName: "LeadsB2C",
                         };
@@ -103,7 +103,7 @@ const AddImportLeadsB2CModal = ({ show, handleClose }) => {
                     if (response?.skipped_rows?.length > 0) {
                         const prepareData = {
                             data: response.skipped_rows || [],
-                            headers: ["First Name", "Reason"],
+                            headers: ["First Name","Last Name", "Reason"],
                             sheetName: "LeadsB2C",
                             fileName: "LeadsB2C",
                         };
@@ -155,7 +155,7 @@ const AddImportLeadsB2CModal = ({ show, handleClose }) => {
                     <div className="modal-content radius-16 bg-base">
                         <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
                             <h1 className="modal-title fs-5" id="departmentModalLabel">
-                                Upload ECA For
+                                Upload Leads B2C
                             </h1>
                             <button
                                 type="button"
@@ -248,10 +248,10 @@ const AddImportLeadsB2CModal = ({ show, handleClose }) => {
             </div>
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
-                    downloadFileName: "ECAFor",
-                    items: ["ECA For", "Description", "Modified On"],
-                    selectedItems: ["ECA For"],
-                    ItemsRequired: ["ECA For"]
+                    downloadFileName: "LeadsB2C",
+                    items: ["Lead ID","First Name","Last Name","Mobile No","Email ID","Sales Team","Sales Person"],
+                    selectedItems: ["First Name","Last Name"],
+                    ItemsRequired: ["First Name","Last Name"]
                 }
                 } />
             )}

@@ -89,7 +89,7 @@ const MasterLayout = ({ children }) => {
     "Institute Department",
     "Bank Account For",
     "When Commission Issue",
-    "LeadsB2C"
+    "Leads B2C"
 
 
   ]);
@@ -107,14 +107,8 @@ const MasterLayout = ({ children }) => {
     {
       name: "Sales",
       submenu: [
-        {
-          name: "Sales Master",
-          children: [
-            { name: "LeadsB2C", path: "/leads-B2C" },
-            { name: "InquiryB2C", path: "/inquiryB2C" },
-
-          ],
-        },
+        {  name: "Leads B2C", path: "/leads-B2C"},
+        {  name: "InquiryB2C", path: "/inquiryB2C"},
       ],
 
     },
