@@ -1214,7 +1214,7 @@ class EducationLevelExportAPIView(APIView):
             # ✅ FIXED SORTING MAPPING
             sort_field_map = {
                 'uuid': 'uuid',
-                'educationLevelCode': 'level_code__name',  # FK sorting key ✅
+                # 'educationLevelCode': 'level_code__name',  # FK sorting key ✅
                 'educationlevelCode': 'level_code__name',  # FK sorting key ✅
                 'level_code': 'level_code__name',
                 'educationlevel': 'educationlevel',
