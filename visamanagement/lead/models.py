@@ -37,6 +37,7 @@ class Applicant(models.Model):
        blank=True,
         related_name="interest_country_leads"
     )
+    
     id = models.AutoField(primary_key=True) 
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     first_name = models.CharField(max_length=100,blank=True, null=True)
