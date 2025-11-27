@@ -7,10 +7,144 @@ import { Link } from 'react-router-dom';
 import { toast } from "react-toastify";
 import AddImportEducationLevelModal from './AddImportEducationLevelModal';
 import AddEditEducationLevelModal from './AddEditEducationLevelModal';
-import { educationLevelList, educationLevelDelete, educationLevelExportData } from "../../../../store/master/educationMaster/action";
+import { educationLevelList, educationLevelDelete, educationLevelExportData, educationLevelCodeList } from "../../../../store/master/educationMaster/action";
 import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
+import { useGlobalSearch } from '../../../../components/comman/GlobalSearchContext';
 const EducationLevelList = () => {
     const dispatch = useDispatch();
+    const { globalSearch, setGlobalSearch } = useGlobalSearch();
+    const [columnFilters, setColumnFilters] = useState({
+        educationLevelCode: [],
+    });
+    const [activeFilterColumn, setActiveFilterColumn] = useState(null);
+    const [filterDropdownData, setFilterDropdownData] = useState({});
+    const [filterSearchTerms, setFilterSearchTerms] = useState({});
+    const filterDropdownRef = useRef(null);
+    useEffect(() => {
+        fetchEducationLevelCodeDropdown();
+    }, []);
+
+    const fetchEducationLevelCodeDropdown = () => {
+        const params = {
+            page: 1,
+            limit: 2000,
+            search: "",
+            sortBy: "name",
+            sortOrder: "asc"
+        };
+        dispatch(educationLevelCodeList(params, (response, error) => {
+            if (response?.statusCode === 200 && response?.status === true) {
+                const options = (response.data || []).map(item => ({
+                    id: item.uuid || item.id,
+                    name: String(item.name ?? '')
+                }));
+                const sortedOptions = options.sort((a, b) =>
+                    String(a.name).localeCompare(String(b.name))
+                );
+                setFilterDropdownData({
+                    educationLevelCode: sortedOptions
+                });
+            }
+        }));
+    };
+    // ================= Filter Handling =================
+    const toggleFilterDropdown = (e, columnField) => {
+        e.stopPropagation();
+        setActiveFilterColumn(activeFilterColumn === columnField ? null : columnField);
+        setFilterSearchTerms(prev => ({ ...prev, [columnField]: "" }));
+    };
+
+    const handleFilterCheckboxChange = (columnField, value, checked) => {
+        setColumnFilters(prev => {
+            const currentFilters = prev[columnField] || [];
+            const updated = checked
+                ? [...currentFilters, value]
+                : currentFilters.filter(v => v !== value);
+            return { ...prev, [columnField]: updated };
+        });
+    };
+
+    const handleFilterSelectAll = (columnField) => {
+        const searchTerm = String(filterSearchTerms[columnField] || "").toLowerCase();
+        const available = (filterDropdownData[columnField] || [])
+            .filter(opt =>
+                opt.name !== null &&
+                opt.name !== undefined &&
+                String(opt.name).toLowerCase().includes(searchTerm)
+            )
+            .map(opt => opt.id);
+
+        setColumnFilters(prev => ({ ...prev, [columnField]: available }));
+    };
+
+    const handleFilterClearAll = (columnField) => {
+        setColumnFilters(prev => ({ ...prev, [columnField]: [] }));
+    };
+
+    // Clear only header‑level dropdown filters
+    const clearAllOnlyHeaderFilters = () => {
+        setColumnFilters({
+            educationLevelCode: [],
+        });
+    };
+
+    const hasActiveFilters = () => {
+        return Object.values(columnFilters).some(list => list.length > 0);
+    };
+
+    const getFilteredOptions = (columnField) => {
+        const searchTerm = (filterSearchTerms[columnField] || "").toString().toLowerCase();
+        const options = filterDropdownData[columnField] || [];
+        return options.filter(o =>
+            o.name !== null &&
+            o.name !== undefined &&
+            o.name.toString().toLowerCase().includes(searchTerm)
+        );
+    };
+
+    // Close filter when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (filterDropdownRef.current && !filterDropdownRef.current.contains(event.target)) {
+                setActiveFilterColumn(null);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+    // Sort A–Z / Smallest to Largest
+    const applySortAsc = (field) => {
+        setTableState(prev => {
+            let newSort = [...prev.sort];
+            const existingIndex = newSort.findIndex(s => s.field === field);
+
+            if (existingIndex === -1) {
+                newSort.push({ field, order: "asc" });
+            } else {
+                newSort[existingIndex].order = "asc";
+            }
+
+            return { ...prev, sort: newSort, page: 1 };
+        });
+    };
+
+    // Sort Z–A / Largest to Smallest
+    const applySortDesc = (field) => {
+        setTableState(prev => {
+            let newSort = [...prev.sort];
+            const existingIndex = newSort.findIndex(s => s.field === field);
+
+            if (existingIndex === -1) {
+                newSort.push({ field, order: "desc" });
+            } else {
+                newSort[existingIndex].order = "desc";
+            }
+
+            return { ...prev, sort: newSort, page: 1 };
+        });
+    };
+
+
     const [modalState, setModalState] = useState({
         show: false,
         mode: 'add', // 'add' or 'edit'
@@ -24,13 +158,15 @@ const EducationLevelList = () => {
         });
     };
     // For closing modal
-    const handleClose = () => {
+    const handleClose = (shouldRefresh = false) => {
         setModalState({
             show: false,
             mode: 'add',
             rowData: null
         });
-        fetchBankAccountTypeList();
+        if (shouldRefresh) {
+            fetchBankAccountTypeList();
+        }
     }
 
     // const [showEdit, setShowEdit] = useState(false);
@@ -45,16 +181,16 @@ const EducationLevelList = () => {
     const [stakeholderTypeData, setStakeholderTypeData] = useState([]);
     const [loading, setLoading] = useState(false);
     const [loadingExport, setLoadingExport] = useState(false);
-    const [items] = useState(["Education Level", "Education Level Code","Education Duration (Months)", "Description", "Modified On"]);
-    const [selectedItems, setSelectedItems] = useState(["Education Level", "Education Level Code","Education Duration (Months)"]);
-    const [ItemsRequired] = useState(["Education Level", "Education Level Code","Education Duration (Months)"]);
+    const [items] = useState(["Education Level", "Education Level Code", "Education Duration (Months)", "Description", "Modified On"]);
+    const [selectedItems, setSelectedItems] = useState(["Education Level", "Education Level Code", "Education Duration (Months)"]);
+    const [ItemsRequired] = useState(["Education Level", "Education Level Code", "Education Duration (Months)"]);
 
     const [tableColumns] = useState([
-        { id: 'level_code_detail', label: 'Education Level Code', field: 'level_code_detail', visible: true, required: true },
-        { id: 'educationlevel', label: 'Education Level ', field: 'educationlevel', visible: true, required: true },
-        { id: 'duration', label: 'Education Duration (Months)', field: 'duration', visible: true, required: true },
-        { id: 'description', label: 'Description', field: 'description', visible: true, required: false },
-        { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false },
+        { id: 'educationLevelCode', label: 'Education Level Code', field: 'educationLevelCode', visible: true, required: false, filterable: true },
+        { id: 'educationlevel', label: 'Education Level ', field: 'educationlevel', visible: true, required: false, filterable: false },
+        { id: 'duration', label: 'Education Duration (Months)', field: 'duration', visible: true, required: false, filterable: false },
+        { id: 'description', label: 'Description', field: 'description', visible: false, required: false, filterable: false },
+        { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false, filterable: false },
     ]);
 
     const [visibleColumns, setVisibleColumns] = useState(
@@ -103,8 +239,11 @@ const EducationLevelList = () => {
         limit: 25,
         search: '',
         status: '',
-        sortBy: 'created_at', // Field to sort by
-        sortOrder: 'desc', // 'asc' or 'desc'
+        sortBy: '', // Field to sort by
+        sortOrder: '', // 'asc' or 'desc'
+        sort: [
+            { field: "created_at", order: "desc" }
+        ],
         total: 0,
         totalPages: 0,
         currentPage: 1,
@@ -113,18 +252,20 @@ const EducationLevelList = () => {
     });
 
     useEffect(() => {
+        setTableState(prev => ({ ...prev, search: globalSearch, page: 1 }));
+    }, [globalSearch]);
+    useEffect(() => {
         const timer = setTimeout(() => {
             if (tableState.search !== undefined) {
                 fetchBankAccountTypeList();
             }
         }, 500);
-
         return () => clearTimeout(timer);
     }, [tableState.search]);
 
     useEffect(() => {
         fetchBankAccountTypeList();
-    }, [tableState.page, tableState.limit, tableState.status, tableState.sortBy, tableState.sortOrder]);
+    }, [tableState.page, tableState.limit, tableState.status, tableState.sort, columnFilters]);
 
     const fetchBankAccountTypeList = () => {
         setLoading(true);
@@ -134,7 +275,11 @@ const EducationLevelList = () => {
             search: tableState.search || '',
             status: tableState.status || '',
             sortBy: tableState.sortBy || '',
-            sortOrder: tableState.sortOrder || ''
+            sortOrder: tableState.sortOrder || '',
+            sort: tableState.sort,
+            educationLevelCode: columnFilters.educationLevelCode.length > 0
+                ? columnFilters.educationLevelCode
+                : null,
         };
 
         dispatch(educationLevelList(params, (response, error) => {
@@ -151,6 +296,7 @@ const EducationLevelList = () => {
                     hasNext: paginationData.nextPage || false,
                     hasPrevious: paginationData.previousPage || false
                 }));
+
                 setSelectedRows(prev => {
                     const filtered = prev.filter(rowId =>
                         response?.data.some(rowItems => rowItems.uuid === rowId)
@@ -174,45 +320,58 @@ const EducationLevelList = () => {
     // Handle sorting
     const handleSort = (field) => {
         setTableState(prev => {
-            // If clicking the same field, toggle between asc -> desc -> no sort
-            if (prev.sortBy === field) {
-                if (prev.sortOrder === 'asc') {
-                    return { ...prev, sortOrder: 'desc', page: 1 };
-                } else if (prev.sortOrder === 'desc') {
-                    return { ...prev, sortBy: '', sortOrder: '', page: 1 };
+            let newSort = [...prev.sort];
+            const existingIndex = newSort.findIndex(s => s.field === field);
+            if (existingIndex === -1) {
+                newSort.push({ field, order: "asc" });
+            }
+            else {
+                const existing = newSort[existingIndex];
+                if (existing.order === "asc") {
+                    newSort[existingIndex].order = "desc";
+                }
+                else if (existing.order === "desc") {
+                    newSort.splice(existingIndex, 1);
                 }
             }
-            // If clicking a new field, start with asc
-            return { ...prev, sortBy: field, sortOrder: 'asc', page: 1 };
+            return { ...prev, sort: newSort, page: 1 };
         });
     };
 
-    // Get sort icon for a column
     const getSortIcon = (field) => {
-        if (tableState.sortBy !== field) {
-            return <Icon icon="ri:sort-desc" className='sorting-th-icone' />;
+        const sortObj = tableState.sort.find(s => s.field === field);
+        if (!sortObj) {
+            return <Icon icon="ri:menu-line" className="sorting-th-icone" />;
         }
-        if (tableState.sortOrder === 'asc') {
-            return <Icon icon="ri:sort-asc" className='sorting-th-icone' />;
+        if (sortObj.order === "asc") {
+            return <Icon icon="ri:sort-asc" className="sorting-th-icone" />;
         }
-        return <Icon icon="ri:sort-desc" className='sorting-th-icone' />;
+        return <Icon icon="ri:sort-desc" className="sorting-th-icone" />;
     };
 
-    const handleSearchChange = (value) => {
+
+    const clearAllFilters = () => {
         setTableState(prev => ({
             ...prev,
-            search: value,
-            page: 1
+            page: 1,
+            limit: 25,
+            search: '',
+            status: '',
+            sortBy: '',
+            sortOrder: '',
+            sort: [
+                { field: "created_at", order: "desc" }
+            ],
+            total: 0,
+            totalPages: 0,
+            currentPage: 1,
+            hasNext: false,
+            hasPrevious: false
         }));
+        // Reset Global Search
+        setGlobalSearch('');
     };
 
-    const handleStatusChange = (value) => {
-        setTableState(prev => ({
-            ...prev,
-            status: value === 'All' ? '' : value,
-            page: 1
-        }));
-    };
 
     const handlePageLengthChange = (value) => {
         setTableState(prev => ({
@@ -293,10 +452,6 @@ const EducationLevelList = () => {
         return pages;
     };
 
-    // const handleCloseEdit = () => {
-    //   setShowEdit(false);
-    //   fetchBankAccountTypeList();
-    // };
 
     const handleShowEdit = (rowData) => {
         setModalState({
@@ -360,9 +515,11 @@ const EducationLevelList = () => {
         setSelectAllOrNot('');
     };
 
-    const handleCloseImport = () => {
+    const handleCloseImport = (shouldRefresh = false) => {
         setShowImport(false);
-        fetchBankAccountTypeList();
+        if (shouldRefresh) {
+            fetchBankAccountTypeList();
+        }
     };
 
     const handleShowImport = () => {
@@ -415,7 +572,7 @@ const EducationLevelList = () => {
         const fieldMapping = {
             "Education Level": "educationlevel",
             "Education Level Code": "level_code",
-            "Education Duration (Months)":"duration",
+            "Education Duration (Months)": "durations",
             "Modified On": "updated_at",
             "Description": "description",
         };
@@ -431,8 +588,12 @@ const EducationLevelList = () => {
             file: "xlsx",
             fields: fieldsString,
             uuids: selectAllOrNot === "all" ? [] : selectedRows,
+            search: tableState.search || '',
+            sort: tableState.sort,
+            educationLevelCode: columnFilters.educationLevelCode.length > 0
+                ? columnFilters.educationLevelCode
+                : null,
         };
-
         setLoadingExport(true);
         dispatch(educationLevelExportData(sendPayload, (response, error) => {
             if (error) {
@@ -478,6 +639,10 @@ const EducationLevelList = () => {
                             <div className="col-xl-6 col-lg-4 col-md-12">
                                 <div className="d-flex flex-wrap align-items-center gap-2">
                                     <button
+                                        className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
+                                        onClick={handleShow}
+                                    >New</button>
+                                    <button
                                         className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
                                         onClick={handleShowImport}
                                     >
@@ -512,6 +677,18 @@ const EducationLevelList = () => {
                                             </button>
                                         </>
                                     )}
+                                    {hasActiveFilters() && (
+                                        <button
+                                            onClick={clearAllOnlyHeaderFilters}
+                                            className="btn btn-sm py-1 comman-inactive-btn"
+                                        >
+                                            <Icon icon="mdi:filter-off" width="16" /> Clear Filters
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={clearAllFilters}
+                                        className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
+                                    >Reset </button>
                                 </div>
                             </div>
 
@@ -528,44 +705,112 @@ const EducationLevelList = () => {
                                         <option value={50}>50</option>
                                         <option value={100}>100</option>
                                     </select>
-                                    <div className="position-relative flex-grow-1 search-filter-div">
-                                        <Icon
-                                            icon="ion:search-outline"
-                                            className="position-absolute search-filter-icone"
-                                        />
-                                        <input
-                                            type="text"
-                                            className="form-control form-control-sm ps-5 search-filter-input"
-                                            placeholder="Search..."
-                                            value={tableState.search}
-                                            onChange={(e) => handleSearchChange(e.target.value)}
-                                        />
-                                        {tableState.search && tableState.search.length > 0 && (
-                                            <span
-                                                className="position-absolute"
-                                                style={{
-                                                    right: '10px',
-                                                    top: '50%',
-                                                    transform: 'translateY(-50%)',
-                                                    cursor: 'pointer',
-                                                    zIndex: 999,
-                                                    fontSize: '20px',
-                                                    color: '#6c757d',
-                                                    lineHeight: 1
-                                                }}
-                                                onClick={() => {
-                                                    // console.log("Close clicked");
-                                                    handleSearchChange('');
-                                                }}
-                                            >
-                                                ×
-                                            </span>
-                                        )}
-                                    </div>
-                                    <button
-                                        className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
-                                        onClick={handleShow}
-                                    >New</button>
+                                    {tableState.total > 0 && (
+                                        <div className="d-flex justify-content-between align-items-center px-4 py-0">
+                                            <div className="showing-total-page">
+                                                {startIndex + 1}-{" "}
+                                                {Math.min(startIndex + tableState.limit, tableState.total)}{" "}
+                                                of {tableState.total}
+                                            </div>
+                                            <nav>
+                                                <ul className="pagination mb-0 gap-4px">
+                                                    <li className={`page-item ${!tableState.hasPrevious ? 'disabled' : ''}`}>
+                                                        <button
+                                                            className="border-0 bg-transparent"
+                                                            onClick={() => goToPage(1)}
+                                                            disabled={!tableState.hasPrevious}
+                                                            style={{
+                                                                padding: '0px 8px',
+                                                                color: !tableState.hasPrevious ? '#ccc' : '#6c757d',
+                                                                fontSize: '18px',
+                                                                cursor: !tableState.hasPrevious ? 'not-allowed' : 'pointer'
+                                                            }}
+                                                        >
+                                                            «
+                                                        </button>
+                                                    </li>
+                                                    <li className={`page-item ${!tableState.hasPrevious ? 'disabled' : ''}`}>
+                                                        <button
+                                                            className="border-0 bg-transparent"
+                                                            onClick={() => goToPage(tableState.currentPage - 1)}
+                                                            disabled={!tableState.hasPrevious}
+                                                            style={{
+                                                                padding: '0px 8px',
+                                                                color: !tableState.hasPrevious ? '#ccc' : '#6c757d',
+                                                                fontSize: '18px',
+                                                                cursor: !tableState.hasPrevious ? 'not-allowed' : 'pointer'
+                                                            }}
+                                                        >
+                                                            ‹
+                                                        </button>
+                                                    </li>
+                                                    {getPaginationNumbers().map((page, idx) => (
+                                                        <li key={idx} className="page-item">
+                                                            {page === '...' ? (
+                                                                <span
+                                                                    className="border-0 bg-transparent"
+                                                                    style={{
+                                                                        padding: '0px 10px',
+                                                                        color: '#6c757d',
+                                                                        cursor: 'default'
+                                                                    }}
+                                                                >
+                                                                    ...
+                                                                </span>
+                                                            ) : (
+                                                                <button
+                                                                    className="border-0"
+                                                                    onClick={() => goToPage(page)}
+                                                                    style={{
+                                                                        padding: '0px 10px',
+                                                                        minWidth: '30px',
+                                                                        backgroundColor: page === tableState.currentPage ? '#5a6c5b' : 'transparent',
+                                                                        color: page === tableState.currentPage ? '#fff' : '#6c757d',
+                                                                        borderRadius: '4px',
+                                                                        fontWeight: page === tableState.currentPage ? '500' : '400',
+                                                                        cursor: 'pointer',
+                                                                        fontSize: "14px"
+                                                                    }}
+                                                                >
+                                                                    {page}
+                                                                </button>
+                                                            )}
+                                                        </li>
+                                                    ))}
+                                                    <li className={`page-item ${!tableState.hasNext ? 'disabled' : ''}`}>
+                                                        <button
+                                                            className="border-0 bg-transparent"
+                                                            onClick={() => goToPage(tableState.currentPage + 1)}
+                                                            disabled={!tableState.hasNext}
+                                                            style={{
+                                                                padding: '0px 8px',
+                                                                color: !tableState.hasNext ? '#ccc' : '#6c757d',
+                                                                fontSize: '18px',
+                                                                cursor: !tableState.hasNext ? 'not-allowed' : 'pointer'
+                                                            }}
+                                                        >
+                                                            ›
+                                                        </button>
+                                                    </li>
+                                                    <li className={`page-item ${!tableState.hasNext ? 'disabled' : ''}`}>
+                                                        <button
+                                                            className="border-0 bg-transparent"
+                                                            onClick={() => goToPage(tableState.totalPages)}
+                                                            disabled={!tableState.hasNext}
+                                                            style={{
+                                                                padding: '0px 8px',
+                                                                color: !tableState.hasNext ? '#ccc' : '#6c757d',
+                                                                fontSize: '18px',
+                                                                cursor: !tableState.hasNext ? 'not-allowed' : 'pointer'
+                                                            }}
+                                                        >
+                                                            »
+                                                        </button>
+                                                    </li>
+                                                </ul>
+                                            </nav>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -587,28 +832,176 @@ const EducationLevelList = () => {
                                                 <span>No.</span>
                                             </div>
                                         </th>
+
+                                        {/* identical to StateList - builds columns dynamically */}
                                         {tableColumns.map((column) => (
                                             isColumnVisible(column.id) && (
-                                                <th
-                                                    key={column.id}
-                                                    scope="col"
-                                                    className='sorting-th'
-                                                    onClick={() => handleSort(column.field)}
-                                                >
-                                                    <div className="d-flex align-items-center">
-                                                        {column.label}
-                                                        {getSortIcon(column.field)}
+                                                <th key={column.id} scope="col" className="sorting-th">
+                                                    <div className="d-flex align-items-center justify-content-between position-relative">
+                                                        <div
+                                                            className="d-flex align-items-center flex-grow-1"
+                                                            onClick={() => handleSort(column.field)}
+                                                            style={{ cursor: 'pointer' }}
+                                                        >
+                                                            {column.label}
+                                                            {getSortIcon(column.field)}
+
+
+                                                            {column.filterable && (
+                                                                <div className="position-relative comman-filtter-all">
+                                                                    <Icon
+                                                                        icon={
+                                                                            columnFilters.educationLevelCode.length > 0
+                                                                                ? "mdi:filter"
+                                                                                : "mdi:filter-outline"
+                                                                        }
+                                                                        width="18"
+                                                                        className={`ms-2 ${columnFilters.educationLevelCode.length > 0
+                                                                            ? "comman-btn-color"
+                                                                            : ""
+                                                                            }`}
+                                                                        style={{ cursor: "pointer" }}
+                                                                        onClick={(e) => toggleFilterDropdown(e, "educationLevelCode")}
+                                                                    />
+
+                                                                    {activeFilterColumn === "educationLevelCode" && (
+                                                                        <div
+                                                                            ref={filterDropdownRef}
+                                                                            className="position-absolute bg-white border rounded shadow-sm p-3 main-div-dropdown"
+                                                                            onClick={(e) => e.stopPropagation()}
+                                                                        >
+                                                                            {/* Sort options like StateList */}
+                                                                            <div
+                                                                                className={`filter-menu-item px-3 py-2 d-flex align-items-center ${tableState.sort.find(
+                                                                                    (s) => s.field === column.field && s.order === "asc"
+                                                                                )
+                                                                                    ? "disabled-sort"
+                                                                                    : ""
+                                                                                    }`}
+                                                                                onClick={() => applySortAsc(column.field)}
+                                                                            >
+                                                                                <Icon
+                                                                                    icon="ri:arrow-up-line"
+                                                                                    className="me-2 text-muted"
+                                                                                    width="18"
+                                                                                />
+                                                                                Sort Smallest to Largest
+                                                                            </div>
+                                                                            <div
+                                                                                className={`filter-menu-item px-3 py-2 d-flex align-items-center ${tableState.sort.find(
+                                                                                    (s) => s.field === column.field && s.order === "desc"
+                                                                                )
+                                                                                    ? "disabled-sort"
+                                                                                    : ""
+                                                                                    }`}
+                                                                                onClick={() => applySortDesc(column.field)}
+                                                                            >
+                                                                                <Icon
+                                                                                    icon="ri:arrow-down-line"
+                                                                                    className="me-2 text-muted"
+                                                                                    width="18"
+                                                                                />
+                                                                                Sort Largest to Smallest
+                                                                            </div>
+
+                                                                            {/* Search in filter */}
+                                                                            <div className="mb-2">
+                                                                                <input
+                                                                                    type="text"
+                                                                                    className="form-control form-control-sm input-search"
+                                                                                    placeholder="Search..."
+                                                                                    value={filterSearchTerms.educationLevelCode || ""}
+                                                                                    onChange={(e) =>
+                                                                                        setFilterSearchTerms((prev) => ({
+                                                                                            ...prev,
+                                                                                            educationLevelCode: e.target.value,
+                                                                                        }))
+                                                                                    }
+                                                                                />
+                                                                            </div>
+
+                                                                            {/* Select/Clear all */}
+                                                                            <div className="gap-2 mb-2 select-clear-all d-flex">
+                                                                                <button
+                                                                                    className="btn btn-sm py-1 btn-primary flex-grow-1 comman-btn-color"
+                                                                                    onClick={() => handleFilterSelectAll("educationLevelCode")}
+                                                                                >
+                                                                                    Select All
+                                                                                </button>
+                                                                                <button
+                                                                                    className="btn btn-sm py-1 btn-secondary flex-grow-1"
+                                                                                    onClick={() => handleFilterClearAll("educationLevelCode")}
+                                                                                >
+                                                                                    Clear All
+                                                                                </button>
+                                                                            </div>
+
+                                                                            {/* Checkbox list */}
+                                                                            <div className="select-all-dropdown">
+                                                                                {getFilteredOptions("educationLevelCode").length > 0 ? (
+                                                                                    getFilteredOptions("educationLevelCode").map((option, idx) => (
+                                                                                        <div
+                                                                                            key={idx}
+                                                                                            className="bg-white rounded p-2 mb-2 d-flex align-items-center gap-2 form-check-div"
+                                                                                        >
+                                                                                            <input
+                                                                                                type="checkbox"
+                                                                                                checked={columnFilters.educationLevelCode.includes(option.id)}
+                                                                                                onChange={(e) =>
+                                                                                                    handleFilterCheckboxChange(
+                                                                                                        "educationLevelCode",
+                                                                                                        option.id,
+                                                                                                        e.target.checked
+                                                                                                    )
+                                                                                                }
+                                                                                                className="form-check-input"
+                                                                                                id={`filter-educationLevelCode-${idx}`}
+                                                                                            />
+                                                                                            <label
+                                                                                                htmlFor={`filter-educationLevelCode-${idx}`}
+                                                                                                className="mb-0 flex-grow-1 form-check-label"
+                                                                                            >
+                                                                                                {option.name}
+                                                                                            </label>
+                                                                                        </div>
+                                                                                    ))
+                                                                                ) : (
+                                                                                    <div className="no-records-found">
+                                                                                        No options available
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
+
+                                                                            <div className="d-flex gap-2 mt-2 pt-2 border-top justify-content-end">
+                                                                                <button
+                                                                                    className="btn btn-sm  py-1 btn-secondary flex-grow-1  mt-10"
+                                                                                    onClick={() => setActiveFilterColumn(null)}
+                                                                                    style={{ maxWidth: "80px" }}
+                                                                                >
+                                                                                    Cancel
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </th>
                                             )
                                         ))}
-                                        <th scope="col" className='action-th'>
-                                            <div className="position-relative table-header-hide-show" ref={columnDropdownRef}>
+
+                                        {/* Action column */}
+                                        <th scope="col" className="action-th">
+                                            <div
+                                                className="position-relative table-header-hide-show"
+                                                ref={columnDropdownRef}
+                                            >
                                                 <button
                                                     className="position-relative table-header-hide-show"
                                                     onClick={() => setShowColumnDropdown(!showColumnDropdown)}
                                                 >
-                                                    Action <Icon icon="mdi:table-column" width="20" className='icone' />
+                                                    Action <Icon icon="mdi:table-column" width="20" className="icone" />
                                                 </button>
                                                 {showColumnDropdown && (
                                                     <div className="position-absolute bg-white border rounded shadow-sm p-2 show-dropdowns-header">
@@ -625,7 +1018,10 @@ const EducationLevelList = () => {
                                                                     disabled={column.required}
                                                                     className="form-check-input"
                                                                 />
-                                                                <label htmlFor={`column-${column.id}`} className="mb-0 flex-grow-1 form-label">
+                                                                <label
+                                                                    htmlFor={`column-${column.id}`}
+                                                                    className="mb-0 flex-grow-1 form-label"
+                                                                >
                                                                     {column.label}
                                                                 </label>
                                                             </div>
@@ -662,13 +1058,13 @@ const EducationLevelList = () => {
                                                         <span>{String(startIndex + index + 1).padStart(2, '0')}</span>
                                                     </div>
                                                 </td>
-                                                {isColumnVisible('level_code_detail') && (
+                                                {isColumnVisible('educationLevelCode') && (
                                                     <td><span>{rowItem.level_code_detail}</span></td>
                                                 )}
                                                 {isColumnVisible('educationlevel') && (
                                                     <td><span>{rowItem.educationlevel}</span></td>
                                                 )}
-                                                {isColumnVisible('durations') && (
+                                                {isColumnVisible('duration') && (
                                                     <td><span>{rowItem.durations}</span></td>
                                                 )}
                                                 {isColumnVisible('description') && (
@@ -698,110 +1094,6 @@ const EducationLevelList = () => {
                                     )}
                                 </tbody>
                             </table>
-                            {tableState.total > 0 && (
-                                <div className="d-flex justify-content-between align-items-center px-4 py-3" >
-                                    <div className='showing-total-page' >
-                                        Showing {startIndex + 1} to {Math.min(startIndex + tableState.limit, tableState.total)} of {tableState.total} entries
-                                    </div>
-                                    <nav>
-                                        <ul className="pagination mb-0" style={{ gap: '4px' }}>
-                                            <li className={`page-item ${!tableState.hasPrevious ? 'disabled' : ''}`}>
-                                                <button
-                                                    className="border-0 bg-transparent"
-                                                    onClick={() => goToPage(1)}
-                                                    disabled={!tableState.hasPrevious}
-                                                    style={{
-                                                        padding: '6px 10px',
-                                                        color: !tableState.hasPrevious ? '#ccc' : '#6c757d',
-                                                        fontSize: '18px',
-                                                        cursor: !tableState.hasPrevious ? 'not-allowed' : 'pointer'
-                                                    }}
-                                                >
-                                                    «
-                                                </button>
-                                            </li>
-                                            <li className={`page-item ${!tableState.hasPrevious ? 'disabled' : ''}`}>
-                                                <button
-                                                    className="border-0 bg-transparent"
-                                                    onClick={() => goToPage(tableState.currentPage - 1)}
-                                                    disabled={!tableState.hasPrevious}
-                                                    style={{
-                                                        padding: '6px 10px',
-                                                        color: !tableState.hasPrevious ? '#ccc' : '#6c757d',
-                                                        fontSize: '18px',
-                                                        cursor: !tableState.hasPrevious ? 'not-allowed' : 'pointer'
-                                                    }}
-                                                >
-                                                    ‹
-                                                </button>
-                                            </li>
-                                            {getPaginationNumbers().map((page, idx) => (
-                                                <li key={idx} className="page-item">
-                                                    {page === '...' ? (
-                                                        <span
-                                                            className="border-0 bg-transparent"
-                                                            style={{
-                                                                padding: '6px 12px',
-                                                                color: '#6c757d',
-                                                                cursor: 'default'
-                                                            }}
-                                                        >
-                                                            ...
-                                                        </span>
-                                                    ) : (
-                                                        <button
-                                                            className="border-0 "
-                                                            onClick={() => goToPage(page)}
-                                                            style={{
-                                                                padding: '6px 12px',
-                                                                minWidth: '36px',
-                                                                backgroundColor: page === tableState.currentPage ? '#5a6c5b' : 'transparent',
-                                                                color: page === tableState.currentPage ? '#fff' : '#6c757d',
-                                                                borderRadius: '4px',
-                                                                fontWeight: page === tableState.currentPage ? '500' : '400',
-                                                                cursor: 'pointer',
-                                                                fontSize: "16px"
-                                                            }}
-                                                        >
-                                                            {page}
-                                                        </button>
-                                                    )}
-                                                </li>
-                                            ))}
-                                            <li className={`page-item ${!tableState.hasNext ? 'disabled' : ''}`}>
-                                                <button
-                                                    className=" border-0 bg-transparent"
-                                                    onClick={() => goToPage(tableState.currentPage + 1)}
-                                                    disabled={!tableState.hasNext}
-                                                    style={{
-                                                        padding: '6px 10px',
-                                                        color: !tableState.hasNext ? '#ccc' : '#6c757d',
-                                                        fontSize: '18px',
-                                                        cursor: !tableState.hasNext ? 'not-allowed' : 'pointer'
-                                                    }}
-                                                >
-                                                    ›
-                                                </button>
-                                            </li>
-                                            <li className={`page-item ${!tableState.hasNext ? 'disabled' : ''}`}>
-                                                <button
-                                                    className="border-0 bg-transparent"
-                                                    onClick={() => goToPage(tableState.totalPages)}
-                                                    disabled={!tableState.hasNext}
-                                                    style={{
-                                                        padding: '6px 10px',
-                                                        color: !tableState.hasNext ? '#ccc' : '#6c757d',
-                                                        fontSize: '18px',
-                                                        cursor: !tableState.hasNext ? 'not-allowed' : 'pointer'
-                                                    }}
-                                                >
-                                                    »
-                                                </button>
-                                            </li>
-                                        </ul>
-                                    </nav>
-                                </div>
-                            )}
                         </div>
                     </div>
                 </div>

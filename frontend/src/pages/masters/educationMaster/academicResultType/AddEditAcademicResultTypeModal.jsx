@@ -89,12 +89,12 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
         ? {
           uuid: formData.uuid,
           name: formData.departmentName,
-          dataType: formData.dataType,
+          datatype: formData.dataType,
           description: formData.description,
         }
         : {
           name: formData.departmentName,
-          dataType: formData.dataType,
+          datatype: formData.dataType,
           description: formData.description,
         };
 
@@ -110,7 +110,7 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
           if (response?.statusCode === 200 && response?.status === true) {
             toast.success(response?.message);
             resetForm();
-            handleClose();
+            handleClose(true);
           } else {
             toast.error("Something went wrong.");
           }
@@ -134,7 +134,7 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
   const onClose = () => {
     resetForm();
     setLoading(false);
-    handleClose();
+    handleClose(false);
   };
 
   // Conditional return after all hooks
@@ -193,8 +193,8 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
 
                   <Select
                     options={[
-                      { value: "text", label: "Text" },
-                      { value: "numeric", label: "Numeric" },
+                      { value: "Text", label: "Text" },
+                      { value: "Numeric", label: "Numeric" },
                     ]}
                     value={
                       formData.dataType

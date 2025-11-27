@@ -119,9 +119,9 @@ const CivilIDNameList = () => {
     hasNext: false,
     hasPrevious: false
   });
-    useEffect(() => {
-      setTableState(prev => ({ ...prev, search: globalSearch, page: 1 }));
-    }, [globalSearch]);
+  useEffect(() => {
+    setTableState(prev => ({ ...prev, search: globalSearch, page: 1 }));
+  }, [globalSearch]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -185,59 +185,60 @@ const CivilIDNameList = () => {
   };
 
   // Handle sorting
-   const handleSort = (field) => {
-     setTableState(prev => {
-       let newSort = [...prev.sort];
-       const existingIndex = newSort.findIndex(s => s.field === field);
-       if (existingIndex === -1) {
-         newSort.push({ field, order: "asc" });
-       }
-       else {
-         const existing = newSort[existingIndex];
-         if (existing.order === "asc") {
-           newSort[existingIndex].order = "desc";
-         }
-         else if (existing.order === "desc") {
-           newSort.splice(existingIndex, 1);
-         }
-       }
-       return { ...prev, sort: newSort, page: 1 };
-     });
-   };
- 
-   const getSortIcon = (field) => {
-     const sortObj = tableState.sort.find(s => s.field === field);
-     if (!sortObj) {
-       return <Icon icon="ri:menu-line" className="sorting-th-icone" />;
-     }
-     if (sortObj.order === "asc") {
-       return <Icon icon="ri:sort-asc" className="sorting-th-icone" />;
-     }
-     return <Icon icon="ri:sort-desc" className="sorting-th-icone" />;
-   };
- 
-   // Clear all filters
-   const clearAllFilters = () => {
-     setTableState(prev => ({
-       ...prev,
-       page: 1,
-       limit: 25,
-       search: '',
-       status: '',
-       sortBy: '',
-       sortOrder: '',
-       sort: [
-         { field: "created_at", order: "desc" }   // default sort
-       ],
-       total: 0,
-       totalPages: 0,
-       currentPage: 1,
-       hasNext: false,
-       hasPrevious: false
-     }));
-     // Reset Global Search
-     setGlobalSearch('');
-   };
+  const handleSort = (field) => {
+    setTableState(prev => {
+      let newSort = [...prev.sort];
+      const existingIndex = newSort.findIndex(s => s.field === field);
+      if (existingIndex === -1) {
+        newSort.push({ field, order: "asc" });
+      }
+      else {
+        const existing = newSort[existingIndex];
+        if (existing.order === "asc") {
+          newSort[existingIndex].order = "desc";
+        }
+        else if (existing.order === "desc") {
+          newSort.splice(existingIndex, 1);
+        }
+      }
+      return { ...prev, sort: newSort, page: 1 };
+    });
+  };
+
+  const getSortIcon = (field) => {
+    const sortObj = tableState.sort.find(s => s.field === field);
+    if (!sortObj) {
+      return <Icon icon="ri:menu-line" className="sorting-th-icone" />;
+    }
+    if (sortObj.order === "asc") {
+      return <Icon icon="ri:sort-asc" className="sorting-th-icone" />;
+    }
+    return <Icon icon="ri:sort-desc" className="sorting-th-icone" />;
+  };
+
+  // Clear all filters
+  const clearAllFilters = () => {
+    setTableState(prev => ({
+      ...prev,
+      page: 1,
+      limit: 25,
+      search: '',
+      status: '',
+      sortBy: '',
+      sortOrder: '',
+      sort: [
+        { field: "created_at", order: "desc" }   // default sort
+      ],
+      total: 0,
+      totalPages: 0,
+      currentPage: 1,
+      hasNext: false,
+      hasPrevious: false
+    }));
+    // Reset Global Search
+    setGlobalSearch('');
+    setSelectedRows([]);
+  };
 
   const handleSearchChange = (value) => {
     setTableState(prev => ({
@@ -459,7 +460,7 @@ const CivilIDNameList = () => {
       "Modified On": "updated_at",
       "Description": "description",
     };
-   let mappedFields = selectedItems.map((item) => fieldMapping[item] || item);
+    let mappedFields = selectedItems.map((item) => fieldMapping[item] || item);
 
     // 👉 If "License Valid Upto" is selected, add related fields too
     if (mappedFields.includes("valid_type")) {
@@ -474,7 +475,7 @@ const CivilIDNameList = () => {
       file: "xlsx",
       fields: fieldsString,
       uuids: selectAllOrNot === "all" ? [] : selectedRows,
-       search: tableState.search || '',
+      search: tableState.search || '',
       sort: tableState.sort,
     };
     setLoadingExport(true);
@@ -523,7 +524,7 @@ const CivilIDNameList = () => {
               {/* Left Section: Import / Export / Delete */}
               <div className="col-xl-6 col-lg-4 col-md-12">
                 <div className="d-flex flex-wrap align-items-center gap-2">
-                   <button
+                  <button
                     className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
                     onClick={handleShow}
                   >New</button>
@@ -711,7 +712,7 @@ const CivilIDNameList = () => {
                         <span>No.</span>
                       </div>
                     </th>
-                      {tableColumns.map((column) => (
+                    {tableColumns.map((column) => (
                       isColumnVisible(column.id) && (
                         <th
                           key={column.id}
@@ -734,7 +735,7 @@ const CivilIDNameList = () => {
                         >
                           Action <Icon icon="mdi:table-column" width="20" className='icone' />
                         </button>
-                          {showColumnDropdown && (
+                        {showColumnDropdown && (
                           <div className="position-absolute bg-white border rounded shadow-sm p-2 show-dropdowns-header">
                             {tableColumns.map((column) => (
                               <div

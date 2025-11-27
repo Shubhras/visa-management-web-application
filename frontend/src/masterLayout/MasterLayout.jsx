@@ -18,10 +18,20 @@ const MasterLayout = ({ children }) => {
   const [searchAllowedModules] = useState([
     "City",
     "Department",
+    "Employee Type",
+    "Company Type",
+    "Ownership Type",
+    "Stakeholder Category",
+    "Stakeholder Type",
+    "Accreditation Category",
+    "Accreditation Name",
+    "Bank Account Type",
+    "License Name",
     "District",
     "State",
     "Country",
     "Gender",
+    "Lead Source",
     "Continents",
     "Factor For",
     "Study : Age Group",
@@ -38,8 +48,52 @@ const MasterLayout = ({ children }) => {
     "Visa Eligibility Type",
     "Visa Status",
     "Possibility Level",
-    "Visa Name"
+    "Visa Name",
+    "Study : Language Ability Group",
+    "Study : Entrance Test Ability Group",
+    "Study Factor : Age",
+    "Marital Status",
+    "Education Level Code",
+    "Education Level",
+    "Study Main Area",
+    "Study Major Area",
+    "Academic Result Type",
+    "Education Type",
+    "Study Specialisation",
+    "Degree Awarded By",
+    "Academic Result",
+    "Degree Awarded Institute",
+    "Compare : Academic Result To Result",
+    "ECA Awarding Body",
+    "Medium of Education",
+    "Language Name(Test)",
+    "Language Test Name",
+    "Lead Source",
+    "Interest Level",
+    "Priority",
+    "Tags",
+    "Activity Type",
+    "Lost Reason (B2C)",
+    "Lost Reason (B2B)",
+    "Language Test Module Name",
+    "Language Banchmark Level",
+    "CLB Level",
+    "Entrance Test Name",
+    "Entrance Test Module Name",
+    "Entrance Test Result",
+    "Language Test Result",
+    "Institute Type",
+    "Institute Group Name",
+    "Institute Status",
+    "Institute Priority",
+    "Institute Department",
+    "Bank Account For",
+    "When Commission Issue"
+
+
   ]);
+
+
 
   // Global Search State - Har page pe same rahega
   const { globalSearch, setGlobalSearch } = useGlobalSearch();
@@ -109,8 +163,8 @@ const MasterLayout = ({ children }) => {
             { name: "Ownership Type", path: "/ownership-type" },
             { name: "Stakeholder Category", path: "/stakeholder-list" },
             { name: "Stakeholder Type", path: "/stakeholder-type" },
-            { name: "Accrediation Category", path: "/accrediation-category" },
-            { name: "Accrediation Name", path: "/accrediation-name" },
+            { name: "Accreditation Category", path: "/accrediation-category" },
+            { name: "Accreditation Name", path: "/accrediation-name" },
             { name: "Bank Account Type", path: "/bank-ccount-type" },
             { name: "License Name", path: "/license-name" },
           ],
@@ -266,6 +320,9 @@ const MasterLayout = ({ children }) => {
             { name: "Study : Academic Result Group", path: "/academic-result-group" },
             { name: "Study : Gap Group", path: "/gap-group" },
             { name: "Study : Backlogs Group", path: "/backlogs-group" },
+            { name: "Study : Language Ability Group", path: "/language-ability-group" },
+            { name: "Study : Entrance Test Ability Group", path: "/entrance-test-ability-group" },
+            { name: "Study Factor : Age", path: "/age" },
           ],
         },
 
@@ -345,6 +402,8 @@ const MasterLayout = ({ children }) => {
   // }, [location.pathname]);
 
   useEffect(() => {
+    // when changes pathname than blank GlobalSearch
+    setGlobalSearch('');
     // Current path के basis पर menu item ढूंढो
     const findMenuItemByPath = (items, currentPath) => {
       for (const item of items) {

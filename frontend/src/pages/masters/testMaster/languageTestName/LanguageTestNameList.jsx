@@ -5,12 +5,125 @@ import MasterLayout from "../../../../masterLayout/MasterLayout";
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { Link } from 'react-router-dom';
 import { toast } from "react-toastify";
-import { languageTestNameList, languageTestNameDelete, languageTestNameExportData } from '../../../../store/master/testMaster/action';
+import { languageTestNameList, languageTestNameDelete, languageTestNameExportData, languageNameTestList } from '../../../../store/master/testMaster/action';
 import AddImportLanguageTestNameModal from './AddImportLanguageTestNameModal';
 import AddEditLanguageTestNameModal from './AddEditLanguageTestNameModal';
 import { formatDateDDMMYYYY, formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
+import { useGlobalSearch } from '../../../../components/comman/GlobalSearchContext';
 const LanguageTestNameList = () => {
     const dispatch = useDispatch();
+    const { globalSearch, setGlobalSearch } = useGlobalSearch();
+    const [columnFilters, setColumnFilters] = useState({
+        languageNameTest: [],
+    });
+    const [activeFilterColumn, setActiveFilterColumn] = useState(null);
+    const [filterDropdownData, setFilterDropdownData] = useState({});
+    const [filterSearchTerms, setFilterSearchTerms] = useState({});
+    const filterDropdownRef = useRef(null);
+    useEffect(() => {
+        fetchLanguageNameTestDropdown();
+    }, []);
+
+    const fetchLanguageNameTestDropdown = () => {
+        const params = {
+            page: 1,
+            limit: 2000,
+            search: "",
+            sortBy: "name",
+            sortOrder: "asc"
+        };
+        dispatch(languageNameTestList(params, (response, error) => {
+            if (response?.statusCode === 200 && response?.status === true) {
+                const options = (response.data || []).map(item => ({
+                    id: item.uuid || item.id,
+                    name: String(item.name ?? "")
+                }));
+                // Sort A–Z by name, numeric safe
+                const sortedOptions = options.sort((a, b) =>
+                    String(a.name).localeCompare(String(b.name), undefined, { numeric: true })
+                );
+                // Store in dropdown filter data
+                setFilterDropdownData({
+                    languageNameTest: sortedOptions
+                });
+
+            }
+        }));
+    };
+
+    const toggleFilterDropdown = (e, columnField) => {
+        e.stopPropagation()
+        setActiveFilterColumn(activeFilterColumn === columnField ? null : columnField)
+        setFilterSearchTerms(prev => ({ ...prev, [columnField]: '' }))
+    }
+    const handleFilterCheckboxChange = (columnField, value, checked) => {
+        setColumnFilters(prev => {
+            const current = prev[columnField] || []
+            const updated = checked ? [...current, value] : current.filter(v => v !== value)
+            return { ...prev, [columnField]: updated }
+        })
+    }
+
+    const handleFilterSelectAll = (columnField) => {
+        const searchTerm = String(filterSearchTerms[columnField] || '').toLowerCase()
+        const available = (filterDropdownData[columnField] || [])
+            .filter(o => String(o.name).toLowerCase().includes(searchTerm))
+            .map(o => o.id)
+        setColumnFilters(prev => ({ ...prev, [columnField]: available }))
+    }
+
+
+    const handleFilterClearAll = (columnField) => {
+        setColumnFilters(prev => ({ ...prev, [columnField]: [] }))
+    }
+
+    const getFilteredOptions = (columnField) => {
+        const searchTerm = String(filterSearchTerms[columnField] || '').toLowerCase()
+        const options = filterDropdownData[columnField] || []
+        return options.filter(o =>
+            String(o.name ?? '').toLowerCase().includes(searchTerm)
+        )
+    }
+
+    const clearAllOnlyHeaderFilters = () => setColumnFilters({ languageNameTest: [] })
+    const hasActiveFilters = () => Object.values(columnFilters).some(list => list.length > 0)
+    // Close filter when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (filterDropdownRef.current && !filterDropdownRef.current.contains(event.target)) {
+                setActiveFilterColumn(null);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+    // Sort ascending (Smallest to Largest)
+    const applySortAsc = (field) => {
+        setTableState(prev => {
+            let newSort = [...prev.sort]
+            const existingIndex = newSort.findIndex(s => s.field === field)
+            if (existingIndex === -1) newSort.push({ field, order: 'asc' })
+            else newSort[existingIndex].order = 'asc'
+            return { ...prev, sort: newSort, page: 1 }
+        })
+    }
+
+    // Sort descending (Largest to Smallest)
+    const applySortDesc = (field) => {
+        setTableState(prev => {
+            let newSort = [...prev.sort]
+            const existingIndex = newSort.findIndex(s => s.field === field)
+            if (existingIndex === -1) newSort.push({ field, order: 'desc' })
+            else newSort[existingIndex].order = 'desc'
+            return { ...prev, sort: newSort, page: 1 }
+        })
+    }
+
+
+
+
+
+
     const [modalState, setModalState] = useState({
         show: false,
         mode: 'add', // 'add' or 'edit'
@@ -53,11 +166,11 @@ const LanguageTestNameList = () => {
 
     // Table columns configuration
     const [tableColumns] = useState([
-        { id: 'languageNameTest', label: 'Language Name (Test)', field: 'languageNameTest', visible: true, required: true },
-        { id: 'languageTestName', label: 'Language Test Name', field: 'languageTestName', visible: true, required: true },
-        { id: 'languageTestFullName', label: 'Language Test Full Name', field: 'languageTestFullName', visible: true, required: false },
-        { id: 'description', label: 'Description', field: 'description', visible: true, required: false },
-        { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false },
+        { id: 'languageNameTest', label: 'Language Name (Test)', field: 'languageNameTest', visible: true, required: false, filterable: true },
+        { id: 'languageTestName', label: 'Language Test Name', field: 'languageTestName', visible: true, required: false, filterable: false },
+        { id: 'languageTestFullName', label: 'Language Test Full Name', field: 'languageTestFullName', visible: false, required: false, filterable: false },
+        { id: 'description', label: 'Description', field: 'description', visible: true, required: false, filterable: false },
+        { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false, filterable: false },
     ]);
 
     const [visibleColumns, setVisibleColumns] = useState(
@@ -106,15 +219,20 @@ const LanguageTestNameList = () => {
         limit: 25,
         search: '',
         status: '',
-        sortBy: 'created_at', // Field to sort by
-        sortOrder: 'desc', // 'asc' or 'desc'
+        sortBy: '', // Field to sort by
+        sortOrder: '', // 'asc' or 'desc'
+        sort: [
+            { field: "created_at", order: "desc" }
+        ],
         total: 0,
         totalPages: 0,
         currentPage: 1,
         hasNext: false,
         hasPrevious: false
     });
-
+    useEffect(() => {
+        setTableState(prev => ({ ...prev, search: globalSearch, page: 1 }));
+    }, [globalSearch]);
     useEffect(() => {
         const timer = setTimeout(() => {
             if (tableState.search !== undefined) {
@@ -127,7 +245,7 @@ const LanguageTestNameList = () => {
 
     useEffect(() => {
         fetchDepartmentList();
-    }, [tableState.page, tableState.limit, tableState.status, tableState.sortBy, tableState.sortOrder]);
+    }, [tableState.page, tableState.limit, tableState.status, tableState.sort, columnFilters]);
 
     const fetchDepartmentList = () => {
         setLoading(true);
@@ -137,7 +255,9 @@ const LanguageTestNameList = () => {
             search: tableState.search || '',
             status: tableState.status || '',
             sortBy: tableState.sortBy || '',
-            sortOrder: tableState.sortOrder || ''
+            sortOrder: tableState.sortOrder || '',
+            sort: tableState.sort,
+            languageNameTest: columnFilters.languageNameTest.length > 0 ? columnFilters.languageNameTest : null,
         };
 
         dispatch(languageTestNameList(params, (response, error) => {
@@ -178,28 +298,55 @@ const LanguageTestNameList = () => {
     // Handle sorting
     const handleSort = (field) => {
         setTableState(prev => {
-            // If clicking the same field, toggle between asc -> desc -> no sort
-            if (prev.sortBy === field) {
-                if (prev.sortOrder === 'asc') {
-                    return { ...prev, sortOrder: 'desc', page: 1 };
-                } else if (prev.sortOrder === 'desc') {
-                    return { ...prev, sortBy: '', sortOrder: '', page: 1 };
+            let newSort = [...prev.sort];
+            const existingIndex = newSort.findIndex(s => s.field === field);
+            if (existingIndex === -1) {
+                newSort.push({ field, order: "asc" });
+            }
+            else {
+                const existing = newSort[existingIndex];
+                if (existing.order === "asc") {
+                    newSort[existingIndex].order = "desc";
+                }
+                else if (existing.order === "desc") {
+                    newSort.splice(existingIndex, 1);
                 }
             }
-            // If clicking a new field, start with asc
-            return { ...prev, sortBy: field, sortOrder: 'asc', page: 1 };
+            return { ...prev, sort: newSort, page: 1 };
         });
     };
 
-    // Get sort icon for a column
     const getSortIcon = (field) => {
-        if (tableState.sortBy !== field) {
-            return <Icon icon="ri:sort-desc" className='sorting-th-icone' />;
+        const sortObj = tableState.sort.find(s => s.field === field);
+        if (!sortObj) {
+            return <Icon icon="ri:menu-line" className="sorting-th-icone" />;
         }
-        if (tableState.sortOrder === 'asc') {
-            return <Icon icon="ri:sort-asc" className='sorting-th-icone' />;
+        if (sortObj.order === "asc") {
+            return <Icon icon="ri:sort-asc" className="sorting-th-icone" />;
         }
-        return <Icon icon="ri:sort-desc" className='sorting-th-icone' />;
+        return <Icon icon="ri:sort-desc" className="sorting-th-icone" />;
+    };
+
+    const clearAllFilters = () => {
+        setTableState(prev => ({
+            ...prev,
+            page: 1,
+            limit: 25,
+            search: '',
+            status: '',
+            sortBy: '',
+            sortOrder: '',
+            sort: [
+                { field: "created_at", order: "desc" }   // default sort
+            ],
+            total: 0,
+            totalPages: 0,
+            currentPage: 1,
+            hasNext: false,
+            hasPrevious: false
+        }));
+        // Reset Global Search
+        setGlobalSearch('');
     };
 
     const handleSearchChange = (value) => {
@@ -428,6 +575,10 @@ const LanguageTestNameList = () => {
             file: "xlsx",
             fields: fieldsString,
             uuids: selectAllOrNot === "all" ? [] : selectedRows,
+            search: tableState.search || '', // Add search parameter
+            sort: tableState.sort, // Add sort parameter
+            languageNameTest: columnFilters.languageNameTest.length > 0 ? columnFilters.languageNameTest : null,
+
         };
         setLoadingExport(true);
         dispatch(languageTestNameExportData(sendPayload, (response, error) => {
@@ -464,21 +615,6 @@ const LanguageTestNameList = () => {
     const startIndex = (tableState.currentPage - 1) * tableState.limit;
     const statusOptions = ['All', 'Active', 'Inactive'];
 
-    const formatDateTime = (dateString) => {
-        const date = new Date(dateString);
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const year = date.getFullYear();
-        let hours = date.getHours();
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        const seconds = String(date.getSeconds()).padStart(2, '0');
-        const ampm = hours >= 12 ? 'PM' : 'AM';
-        hours = hours % 12 || 12;
-        hours = String(hours).padStart(2, '0');
-        return `${day}-${month}-${year} ${hours}:${minutes}:${seconds} ${ampm}`
-    };
-
-
     return (
         <>
             <MasterLayout>
@@ -489,6 +625,10 @@ const LanguageTestNameList = () => {
                             {/* Left Section: Import / Export / Delete */}
                             <div className="col-xl-6 col-lg-4 col-md-12">
                                 <div className="d-flex flex-wrap align-items-center gap-2">
+                                    <button
+                                        className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
+                                        onClick={handleShow}
+                                    >New</button>
                                     <button
                                         className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
                                         onClick={handleShowImport}
@@ -524,9 +664,17 @@ const LanguageTestNameList = () => {
                                             </button>
                                         </>
                                     )}
+                                    {hasActiveFilters() && (
+                                        <button onClick={clearAllOnlyHeaderFilters} className="btn btn-sm py-1 comman-inactive-btn">
+                                            <Icon icon="mdi:filter-off" width="16" /> Clear Filters
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={clearAllFilters}
+                                        className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
+                                    >Reset </button>
                                 </div>
                             </div>
-
                             {/* Right Section: Select / Search / +Add New */}
                             <div className="col-xl-6 col-lg-8 col-md-12">
                                 <div className="d-flex flex-wrap align-items-center justify-content-end gap-2">
@@ -540,44 +688,112 @@ const LanguageTestNameList = () => {
                                         <option value={50}>50</option>
                                         <option value={100}>100</option>
                                     </select>
-                                    <div className="position-relative flex-grow-1 search-filter-div">
-                                        <Icon
-                                            icon="ion:search-outline"
-                                            className="position-absolute search-filter-icone"
-                                        />
-                                        <input
-                                            type="text"
-                                            className="form-control form-control-sm ps-5 search-filter-input"
-                                            placeholder="Search..."
-                                            value={tableState.search}
-                                            onChange={(e) => handleSearchChange(e.target.value)}
-                                        />
-                                        {tableState.search && tableState.search.length > 0 && (
-                                            <span
-                                                className="position-absolute"
-                                                style={{
-                                                    right: '10px',
-                                                    top: '50%',
-                                                    transform: 'translateY(-50%)',
-                                                    cursor: 'pointer',
-                                                    zIndex: 999,
-                                                    fontSize: '20px',
-                                                    color: '#6c757d',
-                                                    lineHeight: 1
-                                                }}
-                                                onClick={() => {
-
-                                                    handleSearchChange('');
-                                                }}
-                                            >
-                                                ×
-                                            </span>
-                                        )}
-                                    </div>
-                                    <button
-                                        className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
-                                        onClick={handleShow}
-                                    >New</button>
+                                    {tableState.total > 0 && (
+                                        <div className="d-flex justify-content-between align-items-center px-4 py-0">
+                                            <div className="showing-total-page">
+                                                {startIndex + 1}-{" "}
+                                                {Math.min(startIndex + tableState.limit, tableState.total)}{" "}
+                                                of {tableState.total}
+                                            </div>
+                                            <nav>
+                                                <ul className="pagination mb-0 gap-4px">
+                                                    <li className={`page-item ${!tableState.hasPrevious ? 'disabled' : ''}`}>
+                                                        <button
+                                                            className="border-0 bg-transparent"
+                                                            onClick={() => goToPage(1)}
+                                                            disabled={!tableState.hasPrevious}
+                                                            style={{
+                                                                padding: '0px 8px',
+                                                                color: !tableState.hasPrevious ? '#ccc' : '#6c757d',
+                                                                fontSize: '18px',
+                                                                cursor: !tableState.hasPrevious ? 'not-allowed' : 'pointer'
+                                                            }}
+                                                        >
+                                                            «
+                                                        </button>
+                                                    </li>
+                                                    <li className={`page-item ${!tableState.hasPrevious ? 'disabled' : ''}`}>
+                                                        <button
+                                                            className="border-0 bg-transparent"
+                                                            onClick={() => goToPage(tableState.currentPage - 1)}
+                                                            disabled={!tableState.hasPrevious}
+                                                            style={{
+                                                                padding: '0px 8px',
+                                                                color: !tableState.hasPrevious ? '#ccc' : '#6c757d',
+                                                                fontSize: '18px',
+                                                                cursor: !tableState.hasPrevious ? 'not-allowed' : 'pointer'
+                                                            }}
+                                                        >
+                                                            ‹
+                                                        </button>
+                                                    </li>
+                                                    {getPaginationNumbers().map((page, idx) => (
+                                                        <li key={idx} className="page-item">
+                                                            {page === '...' ? (
+                                                                <span
+                                                                    className="border-0 bg-transparent"
+                                                                    style={{
+                                                                        padding: '0px 10px',
+                                                                        color: '#6c757d',
+                                                                        cursor: 'default'
+                                                                    }}
+                                                                >
+                                                                    ...
+                                                                </span>
+                                                            ) : (
+                                                                <button
+                                                                    className="border-0"
+                                                                    onClick={() => goToPage(page)}
+                                                                    style={{
+                                                                        padding: '0px 10px',
+                                                                        minWidth: '30px',
+                                                                        backgroundColor: page === tableState.currentPage ? '#5a6c5b' : 'transparent',
+                                                                        color: page === tableState.currentPage ? '#fff' : '#6c757d',
+                                                                        borderRadius: '4px',
+                                                                        fontWeight: page === tableState.currentPage ? '500' : '400',
+                                                                        cursor: 'pointer',
+                                                                        fontSize: "14px"
+                                                                    }}
+                                                                >
+                                                                    {page}
+                                                                </button>
+                                                            )}
+                                                        </li>
+                                                    ))}
+                                                    <li className={`page-item ${!tableState.hasNext ? 'disabled' : ''}`}>
+                                                        <button
+                                                            className="border-0 bg-transparent"
+                                                            onClick={() => goToPage(tableState.currentPage + 1)}
+                                                            disabled={!tableState.hasNext}
+                                                            style={{
+                                                                padding: '0px 8px',
+                                                                color: !tableState.hasNext ? '#ccc' : '#6c757d',
+                                                                fontSize: '18px',
+                                                                cursor: !tableState.hasNext ? 'not-allowed' : 'pointer'
+                                                            }}
+                                                        >
+                                                            ›
+                                                        </button>
+                                                    </li>
+                                                    <li className={`page-item ${!tableState.hasNext ? 'disabled' : ''}`}>
+                                                        <button
+                                                            className="border-0 bg-transparent"
+                                                            onClick={() => goToPage(tableState.totalPages)}
+                                                            disabled={!tableState.hasNext}
+                                                            style={{
+                                                                padding: '0px 8px',
+                                                                color: !tableState.hasNext ? '#ccc' : '#6c757d',
+                                                                fontSize: '18px',
+                                                                cursor: !tableState.hasNext ? 'not-allowed' : 'pointer'
+                                                            }}
+                                                        >
+                                                            »
+                                                        </button>
+                                                    </li>
+                                                </ul>
+                                            </nav>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -601,15 +817,167 @@ const LanguageTestNameList = () => {
                                         </th>
                                         {tableColumns.map((column) => (
                                             isColumnVisible(column.id) && (
-                                                <th
-                                                    key={column.id}
-                                                    scope="col"
-                                                    className='sorting-th'
-                                                    onClick={() => handleSort(column.field)}
-                                                >
-                                                    <div className="d-flex align-items-center">
-                                                        {column.label}
-                                                        {getSortIcon(column.field)}
+                                                <th key={column.id} scope="col" className="sorting-th">
+                                                    <div className="d-flex align-items-center justify-content-between position-relative">
+                                                        <div
+                                                            className="d-flex align-items-center flex-grow-1"
+                                                            onClick={() => handleSort(column.field)}
+                                                            style={{ cursor: 'pointer' }}
+                                                        >
+                                                            {column.label}
+                                                            {getSortIcon(column.field)}
+
+                                                            {column.filterable && (
+                                                                <div className="position-relative comman-filtter-all">
+                                                                    <Icon
+                                                                        icon={
+                                                                            columnFilters[column.field]?.length > 0
+                                                                                ? 'mdi:filter'
+                                                                                : 'mdi:filter-outline'
+                                                                        }
+                                                                        width="18"
+                                                                        className={`ms-2 ${columnFilters[column.field]?.length > 0 ? 'comman-btn-color' : ''
+                                                                            }`}
+                                                                        style={{ cursor: 'pointer' }}
+                                                                        onClick={(e) => toggleFilterDropdown(e, column.field)}
+                                                                    />
+
+                                                                    {activeFilterColumn === column.field && (
+                                                                        <div
+                                                                            ref={filterDropdownRef}
+                                                                            className="position-absolute bg-white border rounded shadow-sm p-3 main-div-dropdown"
+                                                                            onClick={(e) => e.stopPropagation()}
+                                                                        >
+                                                                            {/* Sort options */}
+                                                                            <div
+                                                                                className={`filter-menu-item px-3 py-2 d-flex align-items-center ${tableState.sort.find(
+                                                                                    (s) => s.field === column.field && s.order === 'asc'
+                                                                                )
+                                                                                    ? 'disabled-sort'
+                                                                                    : ''
+                                                                                    }`}
+                                                                                onClick={() => applySortAsc(column.field)}
+                                                                            >
+                                                                                <Icon
+                                                                                    icon="ri:arrow-up-line"
+                                                                                    className="me-2 text-muted"
+                                                                                    width="18"
+                                                                                />
+                                                                                Sort Smallest to Largest
+                                                                            </div>
+                                                                            <div
+                                                                                className={`filter-menu-item px-3 py-2 d-flex align-items-center ${tableState.sort.find(
+                                                                                    (s) => s.field === column.field && s.order === 'desc'
+                                                                                )
+                                                                                    ? 'disabled-sort'
+                                                                                    : ''
+                                                                                    }`}
+                                                                                onClick={() => applySortDesc(column.field)}
+                                                                            >
+                                                                                <Icon
+                                                                                    icon="ri:arrow-down-line"
+                                                                                    className="me-2 text-muted"
+                                                                                    width="18"
+                                                                                />
+                                                                                Sort Largest to Smallest
+                                                                            </div>
+
+                                                                            {/* Search box */}
+                                                                            <div className="mb-2">
+                                                                                <input
+                                                                                    type="text"
+                                                                                    className="form-control form-control-sm input-search"
+                                                                                    placeholder="Search..."
+                                                                                    value={filterSearchTerms[column.field] || ''}
+                                                                                    onChange={(e) =>
+                                                                                        setFilterSearchTerms((prev) => ({
+                                                                                            ...prev,
+                                                                                            [column.field]: e.target.value,
+                                                                                        }))
+                                                                                    }
+                                                                                />
+                                                                            </div>
+
+                                                                            {/* Select/Clear all */}
+                                                                            <div className="gap-2 mb-2 select-clear-all">
+                                                                                <button
+                                                                                    className="btn btn-sm py-1 btn-primary flex-grow-1 comman-btn-color mr-10"
+                                                                                    onClick={() => handleFilterSelectAll(column.field)}
+                                                                                >
+                                                                                    Select All
+                                                                                </button>
+                                                                                <button
+                                                                                    className="btn btn-sm py-1 btn-secondary flex-grow-1"
+                                                                                    onClick={() => handleFilterClearAll(column.field)}
+                                                                                >
+                                                                                    Clear All
+                                                                                </button>
+                                                                            </div>
+
+                                                                            {/* Option list */}
+                                                                            <div className="select-all-dropdown">
+                                                                                {getFilteredOptions(column.field).length > 0 ? (
+                                                                                    getFilteredOptions(column.field).map((option, idx) => (
+                                                                                        <div
+                                                                                            key={idx}
+                                                                                            className="bg-white rounded p-2 mb-2 d-flex align-items-center gap-2 form-check-div"
+
+                                                                                        >
+                                                                                            <input
+                                                                                                type="checkbox"
+                                                                                                id={`filter-${column.field}-${idx}`}
+                                                                                                checked={columnFilters[column.field]?.includes(
+                                                                                                    option.id
+                                                                                                )}
+                                                                                                onChange={(e) =>
+                                                                                                    handleFilterCheckboxChange(
+                                                                                                        column.field,
+                                                                                                        option.id,
+                                                                                                        e.target.checked
+                                                                                                    )
+                                                                                                }
+                                                                                                className="form-check-input"
+                                                                                            />
+                                                                                            <label
+                                                                                                htmlFor={`filter-${column.field}-${idx}`}
+                                                                                                className="mb-0 flex-grow-1 form-check-label"
+                                                                                                title={option.name}
+                                                                                                style={{
+                                                                                                    display: 'block',
+                                                                                                    whiteSpace: 'nowrap',
+                                                                                                    overflow: 'hidden',
+                                                                                                    textOverflow: 'ellipsis',
+                                                                                                    maxWidth: '220px',
+                                                                                                    cursor: 'pointer',
+                                                                                                }}
+
+                                                                                            >
+                                                                                                {option.name}
+                                                                                            </label>
+                                                                                        </div>
+                                                                                    ))
+                                                                                ) : (
+                                                                                    <div className="no-records-found">
+                                                                                        No options available
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
+
+                                                                            {/* Footer */}
+                                                                            <div className="d-flex gap-2 mt-2 pt-2 border-top justify-content-end">
+                                                                                <button
+                                                                                    className="btn btn-sm  py-1 btn-secondary flex-grow-1  mt-10"
+                                                                                    onClick={() => setActiveFilterColumn(null)}
+                                                                                    style={{ maxWidth: '80px' }}
+                                                                                >
+                                                                                    Cancel
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </th>
                                             )
@@ -710,111 +1078,6 @@ const LanguageTestNameList = () => {
                                     )}
                                 </tbody>
                             </table>
-
-                            {tableState.total > 0 && (
-                                <div className="d-flex justify-content-between align-items-center px-4 py-3" >
-                                    <div className='showing-total-page' >
-                                        Showing {startIndex + 1} to {Math.min(startIndex + tableState.limit, tableState.total)} of {tableState.total} entries
-                                    </div>
-                                    <nav>
-                                        <ul className="pagination mb-0" style={{ gap: '4px' }}>
-                                            <li className={`page-item ${!tableState.hasPrevious ? 'disabled' : ''}`}>
-                                                <button
-                                                    className="border-0 bg-transparent"
-                                                    onClick={() => goToPage(1)}
-                                                    disabled={!tableState.hasPrevious}
-                                                    style={{
-                                                        padding: '6px 10px',
-                                                        color: !tableState.hasPrevious ? '#ccc' : '#6c757d',
-                                                        fontSize: '18px',
-                                                        cursor: !tableState.hasPrevious ? 'not-allowed' : 'pointer'
-                                                    }}
-                                                >
-                                                    «
-                                                </button>
-                                            </li>
-                                            <li className={`page-item ${!tableState.hasPrevious ? 'disabled' : ''}`}>
-                                                <button
-                                                    className="border-0 bg-transparent"
-                                                    onClick={() => goToPage(tableState.currentPage - 1)}
-                                                    disabled={!tableState.hasPrevious}
-                                                    style={{
-                                                        padding: '6px 10px',
-                                                        color: !tableState.hasPrevious ? '#ccc' : '#6c757d',
-                                                        fontSize: '18px',
-                                                        cursor: !tableState.hasPrevious ? 'not-allowed' : 'pointer'
-                                                    }}
-                                                >
-                                                    ‹
-                                                </button>
-                                            </li>
-                                            {getPaginationNumbers().map((page, idx) => (
-                                                <li key={idx} className="page-item">
-                                                    {page === '...' ? (
-                                                        <span
-                                                            className="border-0 bg-transparent"
-                                                            style={{
-                                                                padding: '6px 12px',
-                                                                color: '#6c757d',
-                                                                cursor: 'default'
-                                                            }}
-                                                        >
-                                                            ...
-                                                        </span>
-                                                    ) : (
-                                                        <button
-                                                            className="border-0 "
-                                                            onClick={() => goToPage(page)}
-                                                            style={{
-                                                                padding: '6px 12px',
-                                                                minWidth: '36px',
-                                                                backgroundColor: page === tableState.currentPage ? '#5a6c5b' : 'transparent',
-                                                                color: page === tableState.currentPage ? '#fff' : '#6c757d',
-                                                                borderRadius: '4px',
-                                                                fontWeight: page === tableState.currentPage ? '500' : '400',
-                                                                cursor: 'pointer',
-                                                                fontSize: "16px"
-                                                            }}
-                                                        >
-                                                            {page}
-                                                        </button>
-                                                    )}
-                                                </li>
-                                            ))}
-                                            <li className={`page-item ${!tableState.hasNext ? 'disabled' : ''}`}>
-                                                <button
-                                                    className=" border-0 bg-transparent"
-                                                    onClick={() => goToPage(tableState.currentPage + 1)}
-                                                    disabled={!tableState.hasNext}
-                                                    style={{
-                                                        padding: '6px 10px',
-                                                        color: !tableState.hasNext ? '#ccc' : '#6c757d',
-                                                        fontSize: '18px',
-                                                        cursor: !tableState.hasNext ? 'not-allowed' : 'pointer'
-                                                    }}
-                                                >
-                                                    ›
-                                                </button>
-                                            </li>
-                                            <li className={`page-item ${!tableState.hasNext ? 'disabled' : ''}`}>
-                                                <button
-                                                    className="border-0 bg-transparent"
-                                                    onClick={() => goToPage(tableState.totalPages)}
-                                                    disabled={!tableState.hasNext}
-                                                    style={{
-                                                        padding: '6px 10px',
-                                                        color: !tableState.hasNext ? '#ccc' : '#6c757d',
-                                                        fontSize: '18px',
-                                                        cursor: !tableState.hasNext ? 'not-allowed' : 'pointer'
-                                                    }}
-                                                >
-                                                    »
-                                                </button>
-                                            </li>
-                                        </ul>
-                                    </nav>
-                                </div>
-                            )}
                         </div>
                     </div>
                 </div>

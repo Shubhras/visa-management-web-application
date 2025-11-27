@@ -7,6 +7,8 @@ from .models import Applicant
 from .serializers import ApplicantSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status, serializers 
+from uuid import UUID
+from django.shortcuts import get_object_or_404
 
 class ApplicantCreateAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -20,43 +22,97 @@ class ApplicantCreateAPIView(APIView):
                 applicant = serializer.save()
 
             return Response({
-                "status": "success",
-                "message": "Applicant created successfully.",
+                "status": True,
+                "statusCode": 201,
+                "message": "Applicant created successfully",
                 "data": ApplicantSerializer(applicant).data
             }, status=status.HTTP_201_CREATED)
 
         except serializers.ValidationError as ve:
-            # Handles DRF validation errors
             return Response({
-                "status": "error",
-                "message": "Validation failed.",
+                "status": False,
+                "statusCode": 400,
+                "message": "Validation failed",
                 "errors": ve.detail
             }, status=status.HTTP_400_BAD_REQUEST)
 
         except IntegrityError as ie:
-            # Handles database integrity errors (unique constraints etc)
             return Response({
-                "status": "error",
-                "message": "Database integrity error.",
+                "status": False,
+                "statusCode": 400,
+                "message": "Database integrity error",
                 "details": str(ie)
             }, status=status.HTTP_400_BAD_REQUEST)
 
         except ValidationError as ve:
-            # Handles Django model validation errors
             return Response({
-                "status": "error",
-                "message": "Validation failed.",
+                "status": False,
+                "statusCode": 400,
+                "message": "Validation failed",
                 "errors": ve.message_dict
             }, status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as e:
-            # Catch-all for any unexpected errors
             return Response({
-                "status": "error",
-                "message": "Something went wrong.",
+                "status": False,
+                "statusCode": 500,
+                "message": "Something went wrong",
                 "details": str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
+class ApplicantGetAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        applicants = Applicant.objects.all()
+
+        # UUID Filter Multiple
+        uuids = request.GET.get("uuids")
+        if uuids:
+            uuid_list = []
+            for u in uuids.split(","):
+                try:
+                    uuid_list.append(UUID(u.strip()))
+                except:
+                    return Response({
+                        "status": False,
+                        "message": f"Invalid UUID: {u}"
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+            applicants = applicants.filter(uuid__in=uuid_list)
+
+        serializer = ApplicantSerializer(applicants, many=True)
+        return Response({
+            "status": True,
+            "statusCode": 200,
+            "message": "Applicants fetched successfully",
+            "data": serializer.data
+        }, status=status.HTTP_200_OK)
+
+
+class ApplicantDetailAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, uuid):
+        try:
+            valid_uuid = UUID(str(uuid))
+        except:
+            return Response({
+                "status": False,
+                "statusCode": 400,
+                "message": "Invalid UUID format"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        applicant = get_object_or_404(Applicant, uuid=valid_uuid)
+        serializer = ApplicantSerializer(applicant)
+
+        return Response({
+            "status": True,
+            "statusCode": 200,
+            "message": "Applicant detail fetched successfully",
+            "data": serializer.data
+        }, status=status.HTTP_200_OK)
 
 
 class ApplicantUpdateAPIView(APIView):

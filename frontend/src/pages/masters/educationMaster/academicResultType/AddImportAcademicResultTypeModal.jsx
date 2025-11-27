@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
 import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
-import { exportToExcelDuplicate } from '../../../../helper/utils/commanHelper';
+import { exportToExcelDuplicate, exportToExcelWrongData } from '../../../../helper/utils/commanHelper';
 const AddImportAcademicResultTypeModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
@@ -89,7 +89,7 @@ const AddImportAcademicResultTypeModal = ({ show, handleClose }) => {
                     if (response?.duplicates?.length > 0) {
                         const prepareData = {
                             data: response.duplicates || [],
-                            headers: ["Academic Result Type","Data Type"],
+                            headers: ["Academic Result Type", "Data Type"],
                             sheetName: "AcademicResultType",
                             fileName: "AcademicResultType",
                         };
@@ -100,10 +100,24 @@ const AddImportAcademicResultTypeModal = ({ show, handleClose }) => {
                             prepareData.fileName
                         );
                     }
+                    if (response?.skipped_rows?.length > 0) {
+                        const prepareData = {
+                            data: response.skipped_rows || [],
+                            headers: ["Academic Result Type", "Data Type", "Reason"],
+                            sheetName: "AcademicResultType",
+                            fileName: "AcademicResultType",
+                        };
+                        exportToExcelWrongData(
+                            prepareData.data,
+                            prepareData.headers,
+                            prepareData.sheetName,
+                            prepareData.fileName
+                        );
+                    }
                     setFile(null);
                     setSheetNames([]);
                     setSelectedSheet('');
-                    handleClose();
+                    handleClose(true);
                 } else {
                     toast.error("Something went wrong.");
                 }
@@ -118,7 +132,7 @@ const AddImportAcademicResultTypeModal = ({ show, handleClose }) => {
         setError('');
         setSheetNames([]);
         setSelectedSheet('');
-        handleClose();
+        handleClose(false);
         setLoading(false);
     };
     const handleDownloadSample = () => {
@@ -243,9 +257,9 @@ const AddImportAcademicResultTypeModal = ({ show, handleClose }) => {
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
                     downloadFileName: "AcademicResultType",
-                    items: ["Academic Result Type","Data Type","Description"],
-                    selectedItems: ["Academic Result Type","Data Type"],
-                    ItemsRequired: ["Academic Result Type","Data Type"]
+                    items: ["Academic Result Type", "Data Type", "Description"],
+                    selectedItems: ["Academic Result Type", "Data Type"],
+                    ItemsRequired: ["Academic Result Type", "Data Type"]
                 }
                 } />
             )}

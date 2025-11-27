@@ -218,7 +218,7 @@ const GenderList = () => {
       sortBy: '',
       sortOrder: '',
       sort: [
-        { field: "created_at", order: "desc" }   // default sort
+        { field: "created_at", order: "desc" }  
       ],
       total: 0,
       totalPages: 0,
@@ -228,6 +228,7 @@ const GenderList = () => {
     }));
     // Reset Global Search
     setGlobalSearch('');
+    setSelectedRows([]);
   };
 
   const handlePageLengthChange = (value) => {
@@ -837,7 +838,7 @@ const GenderList = () => {
                               id={`item-${index}`}
                               checked={selectedItems.includes(item)}
                               onChange={(e) => handleCheckboxChange(item, e.target.checked)}
-                              disabled={ItemsRequired.includes(item)} // 🔒 Disable required item
+                              disabled={ItemsRequired.includes(item)} 
                               className="form-check-input"
                             />
                             <label htmlFor={`item-${index}`} className="mb-0 flex-grow-1">

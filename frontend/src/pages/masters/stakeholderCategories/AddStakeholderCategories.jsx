@@ -73,7 +73,7 @@ const AddStakeholderCategories = ({ show, handleClose }) => {
               description: '',
             });
             setErrors({});
-            handleClose();
+            handleClose(true);
           } else {
             toast.error("Something went wrong.");
           }
@@ -90,7 +90,7 @@ const AddStakeholderCategories = ({ show, handleClose }) => {
       description: '',
     });
     setErrors({});
-    handleClose();
+    handleClose(false);
     setLoading(false);
   };
 

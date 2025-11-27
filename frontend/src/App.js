@@ -354,7 +354,6 @@ import ActivityTypeList from "./pages/masters/salesMasters/activityType/Activity
 import LostReasonB2CList from "./pages/masters/salesMasters/lostReasonB2C/LostReasonB2CList";
 import LostReasonB2BList from "./pages/masters/salesMasters/lostReasonB2B/LostReasonB2BList";
 import InterestLevelList from "./pages/masters/salesMasters/interestLevel/InterestLevelList";
-import LeadsList from "./pages/leads/LeadsList";
 import BankAccountTypeList from "./pages/masters/companyMaster/bankAccountType/BankAccountTypeList";
 import GenderList from "./pages/masters/generalMaster/gender/GenderList";
 import MaritalStatusList from "./pages/masters/generalMaster/maritalStatus/MaritalStatusList";
@@ -467,6 +466,11 @@ import VisaEligibilityTypeList from "./pages/masters/visaMaster/visaEligibilityT
 import VisaStatusList from "./pages/masters/visaMaster/visaStatus/VisaStatusList";
 import PossibilityLevelList from "./pages/masters/visaMaster/possibilityLevel/PossibilityLevelList";
 import VisaNameList from "./pages/masters/visaMaster/visaName/VisaNameList";
+
+import EntranceTestAbilityGroupList from "./pages/masters/studyFactors/entranceTestAbilityGroup/EntranceTestAbilityGroupList";
+import LanguageAbilityGroupList from "./pages/masters/studyFactors/languageAbilityGroup/LanguageAbilityGroupList";
+import AgeList from "./pages/masters/studyFactors/age/AgeList";
+
 
 
 
@@ -691,7 +695,7 @@ function App() {
           <Route path='/wizard' element={<ProtectedRoute><WizardPage /></ProtectedRoute>} />
 
           {/* Master routes - Protected */}
-          <Route path='/leads' element={<ProtectedRoute><LeadsList /></ProtectedRoute>} />
+        
           <Route path='/lead-source' element={<ProtectedRoute><LeadSourceList /></ProtectedRoute>} />
           <Route path='/interest-level' element={<ProtectedRoute><InterestLevelList /></ProtectedRoute>} />
           <Route path='/priority-type' element={<ProtectedRoute><PriorityTypeList /></ProtectedRoute>} />
@@ -817,17 +821,6 @@ function App() {
           <Route path="/payment-to" element={<ProtectedRoute><PaymentToList /></ProtectedRoute>}></Route>
           <Route path="/payment-category" element={<ProtectedRoute><PaymentCategoryList /></ProtectedRoute>}></Route>
 
-
-          {/* Study Factors Master */}
-          <Route path="/factor-for" element={<ProtectedRoute><FactorForList /></ProtectedRoute>}></Route>
-          <Route path="/age-group" element={<ProtectedRoute><AgeGroupList /></ProtectedRoute>}></Route>
-          <Route path="/academic-result-group" element={<ProtectedRoute><AcademicResultGroupList /></ProtectedRoute>}></Route>
-          <Route path="/gap-group" element={<ProtectedRoute><GapGroupList /></ProtectedRoute>}></Route>
-          <Route path="/backlogs-group" element={<ProtectedRoute><BacklogsGroupList /></ProtectedRoute>}></Route>
-
-
-
-
           {/* Visa Master */}
           <Route path="/representing-country" element={<ProtectedRoute><RepresentingCountryList /></ProtectedRoute>}></Route>
           <Route path="/visa-major-category" element={<ProtectedRoute><VisaMajorCategoryList /></ProtectedRoute>}></Route>
@@ -836,7 +829,15 @@ function App() {
           <Route path="/visa-status" element={<ProtectedRoute><VisaStatusList /></ProtectedRoute>}></Route>
           <Route path="/possibility-level" element={<ProtectedRoute><PossibilityLevelList /></ProtectedRoute>}></Route>
           <Route path="/visa-name" element={<ProtectedRoute><VisaNameList /></ProtectedRoute>}></Route>
-
+          {/* Study Factors Master */}
+          <Route path="/factor-for" element={<ProtectedRoute><FactorForList /></ProtectedRoute>}></Route>
+          <Route path="/age-group" element={<ProtectedRoute><AgeGroupList /></ProtectedRoute>}></Route>
+          <Route path="/academic-result-group" element={<ProtectedRoute><AcademicResultGroupList /></ProtectedRoute>}></Route>
+          <Route path="/gap-group" element={<ProtectedRoute><GapGroupList /></ProtectedRoute>}></Route>
+          <Route path="/backlogs-group" element={<ProtectedRoute><BacklogsGroupList /></ProtectedRoute>}></Route>
+          <Route path="/language-ability-group" element={<ProtectedRoute><LanguageAbilityGroupList /></ProtectedRoute>}></Route>
+          <Route path="/entrance-test-ability-group" element={<ProtectedRoute><EntranceTestAbilityGroupList /></ProtectedRoute>}></Route>
+          <Route path="/age" element={<ProtectedRoute><AgeList /></ProtectedRoute>}></Route>
 
           {/* 404 Error Page */}
           <Route path='*' element={<ErrorPage />} />

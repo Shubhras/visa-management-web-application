@@ -1,36 +1,40 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
 import MasterLayout from "../../../../masterLayout/MasterLayout";
-import { Icon } from '@iconify/react/dist/iconify.js';
-import { Link } from 'react-router-dom';
+import { Icon } from "@iconify/react/dist/iconify.js";
+import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import AddImportLeadSourceModal from './AddImportLeadSourceModal';
 import AddEditLeadSourceModal from './AddEditLeadSourceModal';
 import { leadSourceList, leadSourceDelete, leadSourceExportData } from '../../../../store/master/salesMasters/actions';
 import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
-
+import { useGlobalSearch } from '../../../../components/comman/GlobalSearchContext';
 const LeadSourceList = () => {
   const dispatch = useDispatch();
+  const { globalSearch, setGlobalSearch } = useGlobalSearch();
   const [modalState, setModalState] = useState({
     show: false,
-    mode: 'add', // 'add' or 'edit'
-    rowData: null
-  })
+    mode: "add",
+    rowData: null,
+  });
   const handleShow = () => {
     setModalState({
       show: true,
-      mode: 'add',
-      rowData: null
+      mode: "add",
+      rowData: null,
     });
   };
   // For closing modal
-  const handleClose = () => {
+  const handleClose = (shouldRefresh = false) => {
     setModalState({
       show: false,
-      mode: 'add',
-      rowData: null
+      mode: "add",
+      rowData: null,
     });
-    fetchLeadSourceList();
+    if (shouldRefresh) {
+      fetchLeadSourceList();
+    }
+
   }
 
   const [showEdit, setShowEdit] = useState(false);
@@ -38,10 +42,12 @@ const LeadSourceList = () => {
   const [rowSelectData, setRowSelectData] = useState({});
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this lead source?");
+  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState(
+    "Are you sure you want to delete this lead source?"
+  );
   const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
-  const [selectAllOrNot, setSelectAllOrNot] = useState('');
+  const [selectAllOrNot, setSelectAllOrNot] = useState("");
   const [leadSourcesData, setLeadSources] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
@@ -50,24 +56,42 @@ const LeadSourceList = () => {
   const [ItemsRequired] = useState(["Lead Source"]);
   // Table columns configuration
   const [tableColumns] = useState([
-    { id: 'name', label: 'Lead Source', field: 'name', visible: true, required: false },
-    { id: 'description', label: 'Description', field: 'description', visible: true, required: false },
-    { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false },
+    {
+      id: "name",
+      label: "Lead Source",
+      field: "name",
+      visible: true,
+      required: false,
+    },
+    {
+      id: "description",
+      label: "Description",
+      field: "description",
+      visible: true,
+      required: false,
+    },
+    {
+      id: "updated_at",
+      label: "Modified On",
+      field: "updated_at",
+      visible: true,
+      required: false,
+    },
   ]);
 
   const [visibleColumns, setVisibleColumns] = useState(
-    tableColumns.filter(col => col.visible).map(col => col.id)
+    tableColumns.filter((col) => col.visible).map((col) => col.id)
   );
   const [showColumnDropdown, setShowColumnDropdown] = useState(false);
   const columnDropdownRef = useRef(null);
   // Column visibility toggle handler
   const toggleColumnVisibility = (columnId) => {
-    const column = tableColumns.find(col => col.id === columnId);
-    if (column?.required) return; // Don't allow hiding required columns
+    const column = tableColumns.find((col) => col.id === columnId);
+    if (column?.required) return;
 
-    setVisibleColumns(prev => {
+    setVisibleColumns((prev) => {
       if (prev.includes(columnId)) {
-        return prev.filter(id => id !== columnId);
+        return prev.filter((id) => id !== columnId);
       } else {
         return [...prev, columnId];
       }
@@ -81,17 +105,20 @@ const LeadSourceList = () => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (columnDropdownRef.current && !columnDropdownRef.current.contains(event.target)) {
+      if (
+        columnDropdownRef.current &&
+        !columnDropdownRef.current.contains(event.target)
+      ) {
         setShowColumnDropdown(false);
       }
     };
 
     if (showColumnDropdown) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showColumnDropdown]);
   // Updated state with sorting
@@ -100,14 +127,24 @@ const LeadSourceList = () => {
     limit: 25,
     search: '',
     status: '',
-    sortBy: 'created_at', // Field to sort by
-    sortOrder: 'desc', // 'asc' or 'desc'
+    sortBy: '', // Field to sort by
+    sortOrder: '', // 'asc' or 'desc'
+    sort: [
+      { field: "created_at", order: "desc" }
+    ],
     total: 0,
     totalPages: 0,
     currentPage: 1,
     hasNext: false,
-    hasPrevious: false
+    hasPrevious: false,
   });
+  useEffect(() => {
+    setTableState(prev => ({ ...prev, search: globalSearch, page: 1 }));
+  }, [globalSearch]);
+
+  useEffect(() => {
+    setTableState((prev) => ({ ...prev, search: globalSearch, page: 1 }));
+  }, [globalSearch]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -121,7 +158,7 @@ const LeadSourceList = () => {
 
   useEffect(() => {
     fetchLeadSourceList();
-  }, [tableState.page, tableState.limit, tableState.status, tableState.sortBy, tableState.sortOrder]);
+  }, [tableState.page, tableState.limit, tableState.status, tableState.sort]);
 
   const fetchLeadSourceList = () => {
     setLoading(true);
@@ -131,91 +168,122 @@ const LeadSourceList = () => {
       search: tableState.search || '',
       status: tableState.status || '',
       sortBy: tableState.sortBy || '',
-      sortOrder: tableState.sortOrder || ''
+      sortOrder: tableState.sortOrder || '',
+      sort: tableState.sort,
     };
 
-    dispatch(leadSourceList(params, (response, error) => {
-      setLoading(false);
-      if (response?.statusCode === 200 && response?.status === true) {
-        const paginationData = response?.pagination || {};
+    dispatch(
+      leadSourceList(params, (response, error) => {
+        setLoading(false);
+        if (response?.statusCode === 200 && response?.status === true) {
+          const paginationData = response?.pagination || {};
 
-        setLeadSources(response?.data || []);
-        setTableState(prev => ({
-          ...prev,
-          total: paginationData.totalItems || 0,
-          totalPages: paginationData.totalPages || 0,
-          currentPage: paginationData.currentPage || 1,
-          hasNext: paginationData.nextPage || false,
-          hasPrevious: paginationData.previousPage || false
-        }));
-        setSelectedRows(prev => {
-          const filtered = prev.filter(rowId =>
-            response?.data.some(rowItems => rowItems.uuid === rowId)
-          );
-          return filtered;
-        });
-      } else {
-        setLeadSources([]);
-        setTableState(prev => ({
-          ...prev,
-          total: 0,
-          totalPages: 0,
-          currentPage: 1,
-          hasNext: false,
-          hasPrevious: false
-        }));
-      }
-    }));
+          setLeadSources(response?.data || []);
+          setTableState((prev) => ({
+            ...prev,
+            total: paginationData.totalItems || 0,
+            totalPages: paginationData.totalPages || 0,
+            currentPage: paginationData.currentPage || 1,
+            hasNext: paginationData.nextPage || false,
+            hasPrevious: paginationData.previousPage || false,
+          }));
+          setSelectedRows((prev) => {
+            const filtered = prev.filter((rowId) =>
+              response?.data.some((rowItems) => rowItems.uuid === rowId)
+            );
+            return filtered;
+          });
+        } else {
+          setLeadSources([]);
+          setTableState((prev) => ({
+            ...prev,
+            total: 0,
+            totalPages: 0,
+            currentPage: 1,
+            hasNext: false,
+            hasPrevious: false,
+          }));
+        }
+      })
+    );
   };
 
   // Handle sorting
   const handleSort = (field) => {
     setTableState(prev => {
-      // If clicking the same field, toggle between asc -> desc -> no sort
-      if (prev.sortBy === field) {
-        if (prev.sortOrder === 'asc') {
-          return { ...prev, sortOrder: 'desc', page: 1 };
-        } else if (prev.sortOrder === 'desc') {
-          return { ...prev, sortBy: '', sortOrder: '', page: 1 };
+      let newSort = [...prev.sort];
+      const existingIndex = newSort.findIndex(s => s.field === field);
+      if (existingIndex === -1) {
+        newSort.push({ field, order: "asc" });
+      }
+      else {
+        const existing = newSort[existingIndex];
+        if (existing.order === "asc") {
+          newSort[existingIndex].order = "desc";
+        }
+        else if (existing.order === "desc") {
+          newSort.splice(existingIndex, 1);
         }
       }
-      // If clicking a new field, start with asc
-      return { ...prev, sortBy: field, sortOrder: 'asc', page: 1 };
+      return { ...prev, sort: newSort, page: 1 };
     });
   };
 
-  // Get sort icon for a column
   const getSortIcon = (field) => {
-    if (tableState.sortBy !== field) {
-      return <Icon icon="ri:sort-desc" className='sorting-th-icone' />;
+    const sortObj = tableState.sort.find(s => s.field === field);
+    if (!sortObj) {
+      return <Icon icon="ri:menu-line" className="sorting-th-icone" />;
     }
-    if (tableState.sortOrder === 'asc') {
-      return <Icon icon="ri:sort-asc" className='sorting-th-icone' />;
+    if (sortObj.order === "asc") {
+      return <Icon icon="ri:sort-asc" className="sorting-th-icone" />;
     }
-    return <Icon icon="ri:sort-desc" className='sorting-th-icone' />;
+    return <Icon icon="ri:sort-desc" className="sorting-th-icone" />;
+  };
+
+  const clearAllFilters = () => {
+    setTableState(prev => ({
+      ...prev,
+      page: 1,
+      limit: 25,
+      search: '',
+      status: '',
+      sortBy: '',
+      sortOrder: '',
+      sort: [
+        { field: "created_at", order: "desc" }   // default sort
+      ],
+      total: 0,
+      totalPages: 0,
+      currentPage: 1,
+      hasNext: false,
+      hasPrevious: false
+    }));
+    // Reset Global Search
+    setGlobalSearch('');
+     setSelectedRows([]);
   };
 
   const handleSearchChange = (value) => {
-    setTableState(prev => ({
+    setTableState((prev) => ({
       ...prev,
       search: value,
-      page: 1
+      page: 1,
     }));
   };
 
   const handleStatusChange = (value) => {
-    setTableState(prev => ({
+    setTableState((prev) => ({
       ...prev,
-      status: value === 'All' ? '' : value,
-      page: 1
+      status: value === "All" ? "" : value,
+      page: 1,
     }));
   };
 
   const handlePageLengthChange = (value) => {
-    setTableState(prev => ({
+    setTableState((prev) => ({
       ...prev,
       limit: Number(value),
-      page: 1
+      page: 1,
     }));
   };
 
@@ -224,38 +292,39 @@ const LeadSourceList = () => {
     if (isAllSelected) {
       setSelectedRows([]);
     } else {
-      setSelectedRows(leadSourcesData.map(Item => Item.uuid));
+      setSelectedRows(leadSourcesData.map((Item) => Item.uuid));
     }
   };
   // For checkbox in table header
   const handleSelectAll = (e) => {
     const checked = e.target.checked;
     if (checked) {
-      setSelectedRows(leadSourcesData.map(Item => Item.uuid));
+      setSelectedRows(leadSourcesData.map((Item) => Item.uuid));
     } else {
       setSelectedRows([]);
-      setSelectAllOrNot('');
+      setSelectAllOrNot("");
     }
   };
 
   const handleRowSelect = (uuid) => {
-    setSelectedRows(prev => {
+    setSelectedRows((prev) => {
       if (prev.includes(uuid)) {
-        return prev.filter(rowId => rowId !== uuid);
+        return prev.filter((rowId) => rowId !== uuid);
       } else {
         return [...prev, uuid];
       }
     });
   };
 
-  const isAllSelected = leadSourcesData.length > 0 &&
-    leadSourcesData.every(Item => selectedRows.includes(Item.uuid));
+  const isAllSelected =
+    leadSourcesData.length > 0 &&
+    leadSourcesData.every((Item) => selectedRows.includes(Item.uuid));
 
   const goToPage = (page) => {
     if (page >= 1 && page <= tableState.totalPages) {
-      setTableState(prev => ({
+      setTableState((prev) => ({
         ...prev,
-        page: page
+        page: page,
       }));
     }
   };
@@ -273,17 +342,17 @@ const LeadSourceList = () => {
     } else {
       if (currentPage <= 3) {
         for (let i = 1; i <= 4; i++) pages.push(i);
-        pages.push('...');
+        pages.push("...");
         pages.push(totalPages);
       } else if (currentPage >= totalPages - 2) {
         pages.push(1);
-        pages.push('...');
+        pages.push("...");
         for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i);
       } else {
         pages.push(1);
-        pages.push('...');
+        pages.push("...");
         for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i);
-        pages.push('...');
+        pages.push("...");
         pages.push(totalPages);
       }
     }
@@ -298,17 +367,19 @@ const LeadSourceList = () => {
   const handleShowEdit = (rowData) => {
     setModalState({
       show: true,
-      mode: 'edit',
-      rowData: rowData
+      mode: "edit",
+      rowData: rowData,
     });
   };
   const handleSelectAllOrNot = (a) => {
     setSelectAllOrNot(a);
-  }
+  };
   const handleDelete = (uuid) => {
     setDeleteId(uuid);
     setShowDeleteConfirm(true);
-    setDeleteConfirmMessage(`Are you sure you want to delete this lead source?`);
+    setDeleteConfirmMessage(
+      `Are you sure you want to delete this lead source?`
+    );
   };
 
   const handleBulkDelete = () => {
@@ -317,49 +388,64 @@ const LeadSourceList = () => {
       return;
     }
     // Choose message based on delete type
-    const message = selectAllOrNot === "all" ? `${tableState.total} all lead source` : `${selectedRows.length} selected lead source`;
-    setDeleteConfirmMessage(`Are you sure you want to delete this lead source (${message})?`);
+    const message =
+      selectAllOrNot === "all"
+        ? `${tableState.total} all lead source`
+        : `${selectedRows.length} selected lead source`;
+    setDeleteConfirmMessage(
+      `Are you sure you want to delete this lead source (${message})?`
+    );
     setShowDeleteConfirm(true);
   };
 
   const confirmDelete = () => {
     // const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
-    const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
+    const sendPayload =
+      selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
     if (!sendPayload || sendPayload.length === 0) {
       toast.error("No lead source selected for deletion.");
       return;
     }
-    dispatch(leadSourceDelete(sendPayload, (response, error) => {
-      if (error) {
-        toast.error(error?.response?.data?.message || "server error");
-      } else {
-        if (response?.statusCode === 200 && response?.status === true) {
-          toast.success(response?.message);
-          setLeadSources(prevRowItems => prevRowItems.filter(Item => Item.uuid !== deleteId));
-          setSelectedRows(prevSelected => prevSelected.filter(rowId => rowId !== deleteId));
-          setShowDeleteConfirm(false);
-          setSelectedRows([]);
-          setSelectAllOrNot('');
-          setDeleteId(null);
-          fetchLeadSourceList();
+    dispatch(
+      leadSourceDelete(sendPayload, (response, error) => {
+        if (error) {
+          toast.error(error?.response?.data?.message || "server error");
         } else {
-          toast.error("Something went wrong.");
+          if (response?.statusCode === 200 && response?.status === true) {
+            toast.success(response?.message);
+            setLeadSources((prevRowItems) =>
+              prevRowItems.filter((Item) => Item.uuid !== deleteId)
+            );
+            setSelectedRows((prevSelected) =>
+              prevSelected.filter((rowId) => rowId !== deleteId)
+            );
+            setShowDeleteConfirm(false);
+            setSelectedRows([]);
+            setSelectAllOrNot("");
+            setDeleteId(null);
+            fetchLeadSourceList();
+          } else {
+            toast.error("Something went wrong.");
+          }
         }
-      }
-    }));
+      })
+    );
   };
 
   const cancelDelete = () => {
     setShowDeleteConfirm(false);
     setDeleteId(null);
-    setSelectedRows([])
-    setDeleteConfirmMessage('');
-    setSelectAllOrNot('');
+    setSelectedRows([]);
+    setDeleteConfirmMessage("");
+    setSelectAllOrNot("");
   };
 
-  const handleCloseImport = () => {
+  const handleCloseImport = (shouldRefresh = false) => {
     setShowImport(false);
-    fetchLeadSourceList();
+    if (shouldRefresh) {
+      fetchLeadSourceList();
+    }
+
   };
 
   const handleShowImport = () => {
@@ -368,12 +454,11 @@ const LeadSourceList = () => {
 
   const handleExportTest = () => {
     setShowExportPopop(true);
-  }
+  };
 
   const cancelExportTest = () => {
     setShowExportPopop(false);
   };
-
 
   const handleDragStart = (e, index) => {
     e.dataTransfer.setData("dragIndex", index);
@@ -405,58 +490,64 @@ const LeadSourceList = () => {
   const handleExport = () => {
     if (selectedItems.length == 0) {
       toast.error("Please select at least one field");
-      return
+      return;
     }
     // Map frontend labels to backend field names
     const fieldMapping = {
       "Lead Source": "name",
       "Modified On": "updated_at",
-      "Description": "description",
+      Description: "description",
     };
     // Convert selectedItems to backend field names
-    const mappedFields = selectedItems.map((item) => fieldMapping[item] || item);
+    const mappedFields = selectedItems.map(
+      (item) => fieldMapping[item] || item
+    );
     // Convert to comma-separated string
     const fieldsString = mappedFields.join(",");
     const sendPayload = {
       file: "xlsx",
       fields: fieldsString,
       uuids: selectAllOrNot === "all" ? [] : selectedRows,
+      search: tableState.search || '', // Add search parameter
+      sort: tableState.sort, // Add sort parameter
+
     };
 
     setLoadingExport(true);
-    dispatch(leadSourceExportData(sendPayload, (response, error) => {
-      if (error) {
-        setLoadingExport(false);
-        toast.error(error?.response?.message || "server error");
-      } else {
-        setLoadingExport(false);
-        if (response?.status === 200) {
-          const blob = new Blob([response.data], {
-            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-          });
-
-          const url = window.URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = `LeadSource.xlsx`;
-          document.body.appendChild(link);
-          link.click();
-          link.remove();
-          window.URL.revokeObjectURL(url);
-          toast.success("Export successful");
-          cancelExportTest();
-          setSelectedRows([]);
-          setSelectAllOrNot('');
-          setDeleteId(null);
+    dispatch(
+      leadSourceExportData(sendPayload, (response, error) => {
+        if (error) {
+          setLoadingExport(false);
+          toast.error(error?.response?.message || "server error");
         } else {
-          toast.error("Something went wrong.");
+          setLoadingExport(false);
+          if (response?.status === 200) {
+            const blob = new Blob([response.data], {
+              type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            });
+
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = `LeadSource.xlsx`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+            toast.success("Export successful");
+            cancelExportTest();
+            setSelectedRows([]);
+            setSelectAllOrNot("");
+            setDeleteId(null);
+          } else {
+            toast.error("Something went wrong.");
+          }
         }
-      }
-    }));
+      })
+    );
   };
 
   const startIndex = (tableState.currentPage - 1) * tableState.limit;
-  const statusOptions = ['All', 'Active', 'Inactive'];
 
   return (
     <>
@@ -464,15 +555,20 @@ const LeadSourceList = () => {
         <div className="card basic-data-table main-container-data">
           <div className="card-body container-data">
             <div className="row align-items-center gy-3 gx-2 flex-wrap filter-action-btn">
-              {/* Left Section: Import / Export / Delete */}
+              {/* LEFT SECTION – New / Import / Export / Delete */}
               <div className="col-xl-6 col-lg-4 col-md-12">
                 <div className="d-flex flex-wrap align-items-center gap-2">
+                  <button
+                    className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
+                    onClick={handleShow}
+                  >New</button>
                   <button
                     className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
                     onClick={handleShowImport}
                   >
                     Import
                   </button>
+
                   <button
                     className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
                     onClick={handleExportTest}
@@ -480,6 +576,7 @@ const LeadSourceList = () => {
                   >
                     Export
                   </button>
+
                   <button
                     onClick={handleBulkDelete}
                     className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
@@ -502,9 +599,12 @@ const LeadSourceList = () => {
                       </button>
                     </>
                   )}
+                  <button
+                    onClick={clearAllFilters}
+                    className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
+                  >Reset </button>
                 </div>
               </div>
-
               {/* Right Section: Select / Search / +Add New */}
               <div className="col-xl-6 col-lg-8 col-md-12">
                 <div className="d-flex flex-wrap align-items-center justify-content-end gap-2">
@@ -518,90 +618,189 @@ const LeadSourceList = () => {
                     <option value={50}>50</option>
                     <option value={100}>100</option>
                   </select>
-                  <div className="position-relative flex-grow-1 search-filter-div">
-                    <Icon
-                      icon="ion:search-outline"
-                      className="position-absolute search-filter-icone"
-                    />
-                    <input
-                      type="text"
-                      className="form-control form-control-sm ps-5 search-filter-input"
-                      placeholder="Search..."
-                      value={tableState.search}
-                      onChange={(e) => handleSearchChange(e.target.value)}
-                    />
-                    {tableState.search && tableState.search.length > 0 && (
-                      <span
-                        className="position-absolute"
-                        style={{
-                          right: '10px',
-                          top: '50%',
-                          transform: 'translateY(-50%)',
-                          cursor: 'pointer',
-                          zIndex: 999,
-                          fontSize: '20px',
-                          color: '#6c757d',
-                          lineHeight: 1
-                        }}
-                        onClick={() => {
-
-                          handleSearchChange('');
-                        }}
-                      >
-                        ×
-                      </span>
-                    )}
-                  </div>
-                  <button
-                    className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
-                    onClick={handleShow}
-                  >New</button>
+                  {tableState.total > 0 && (
+                    <div className="d-flex justify-content-between align-items-center px-4 py-0">
+                      <div className="showing-total-page">
+                        {startIndex + 1}-{" "}
+                        {Math.min(startIndex + tableState.limit, tableState.total)}{" "}
+                        of {tableState.total}
+                      </div>
+                      <nav>
+                        <ul className="pagination mb-0 gap-4px">
+                          <li className={`page-item ${!tableState.hasPrevious ? 'disabled' : ''}`}>
+                            <button
+                              className="border-0 bg-transparent"
+                              onClick={() => goToPage(1)}
+                              disabled={!tableState.hasPrevious}
+                              style={{
+                                padding: '0px 8px',
+                                color: !tableState.hasPrevious ? '#ccc' : '#6c757d',
+                                fontSize: '18px',
+                                cursor: !tableState.hasPrevious ? 'not-allowed' : 'pointer'
+                              }}
+                            >
+                              «
+                            </button>
+                          </li>
+                          <li className={`page-item ${!tableState.hasPrevious ? 'disabled' : ''}`}>
+                            <button
+                              className="border-0 bg-transparent"
+                              onClick={() => goToPage(tableState.currentPage - 1)}
+                              disabled={!tableState.hasPrevious}
+                              style={{
+                                padding: '0px 8px',
+                                color: !tableState.hasPrevious ? '#ccc' : '#6c757d',
+                                fontSize: '18px',
+                                cursor: !tableState.hasPrevious ? 'not-allowed' : 'pointer'
+                              }}
+                            >
+                              ‹
+                            </button>
+                          </li>
+                          {getPaginationNumbers().map((page, idx) => (
+                            <li key={idx} className="page-item">
+                              {page === '...' ? (
+                                <span
+                                  className="border-0 bg-transparent"
+                                  style={{
+                                    padding: '0px 10px',
+                                    color: '#6c757d',
+                                    cursor: 'default'
+                                  }}
+                                >
+                                  ...
+                                </span>
+                              ) : (
+                                <button
+                                  className="border-0"
+                                  onClick={() => goToPage(page)}
+                                  style={{
+                                    padding: '0px 10px',
+                                    minWidth: '30px',
+                                    backgroundColor: page === tableState.currentPage ? '#5a6c5b' : 'transparent',
+                                    color: page === tableState.currentPage ? '#fff' : '#6c757d',
+                                    borderRadius: '4px',
+                                    fontWeight: page === tableState.currentPage ? '500' : '400',
+                                    cursor: 'pointer',
+                                    fontSize: "14px"
+                                  }}
+                                >
+                                  {page}
+                                </button>
+                              )}
+                            </li>
+                          ))}
+                          <li className={`page-item ${!tableState.hasNext ? 'disabled' : ''}`}>
+                            <button
+                              className="border-0 bg-transparent"
+                              onClick={() => goToPage(tableState.currentPage + 1)}
+                              disabled={!tableState.hasNext}
+                              style={{
+                                padding: '0px 8px',
+                                color: !tableState.hasNext ? '#ccc' : '#6c757d',
+                                fontSize: '18px',
+                                cursor: !tableState.hasNext ? 'not-allowed' : 'pointer'
+                              }}
+                            >
+                              ›
+                            </button>
+                          </li>
+                          <li className={`page-item ${!tableState.hasNext ? 'disabled' : ''}`}>
+                            <button
+                              className="border-0 bg-transparent"
+                              onClick={() => goToPage(tableState.totalPages)}
+                              disabled={!tableState.hasNext}
+                              style={{
+                                padding: '0px 8px',
+                                color: !tableState.hasNext ? '#ccc' : '#6c757d',
+                                fontSize: '18px',
+                                cursor: !tableState.hasNext ? 'not-allowed' : 'pointer'
+                              }}
+                            >
+                              »
+                            </button>
+                          </li>
+                        </ul>
+                      </nav>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
           </div>
-          <div className="card-body pt-0 container-table" >
-            <div className='container-table-div'>
 
+          <div className="card-body pt-0 container-table">
+            <div className="container-table-div">
               <table className="table mb-0">
                 <thead>
                   <tr>
-                    <th scope="col" className='sl-numbar-th'>
+                    <th scope="col" className="sl-numbar-th">
                       <div className="d-flex align-items-center gap-2">
-                        <input className="form-check-input" type="checkbox" checked={isAllSelected} onChange={handleSelectAll}
-                          disabled={leadSourcesData.length === 0} />
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          checked={isAllSelected}
+                          onChange={handleSelectAll}
+                          disabled={leadSourcesData.length === 0}
+                        />
                         <span>No.</span>
                       </div>
                     </th>
-                    {tableColumns.map((column) => (
-                      isColumnVisible(column.id) && (
-                        <th key={column.id} scope="col" className='sorting-th' onClick={() => handleSort(column.field)}
-                        >
-                          <div className="d-flex align-items-center">
-                            {column.label}
-                            {getSortIcon(column.field)}
-                          </div>
-                        </th>
-                      )
-                    ))}
-                    <th scope="col" className='action-th'>
-                      <div className="position-relative table-header-hide-show" ref={columnDropdownRef}>
-                        <button className="position-relative table-header-hide-show" onClick={() =>
-                          setShowColumnDropdown(!showColumnDropdown)}
+                    {tableColumns.map(
+                      (column) =>
+                        isColumnVisible(column.id) && (
+                          <th
+                            key={column.id}
+                            scope="col"
+                            className="sorting-th"
+                            onClick={() => handleSort(column.field)}
+                          >
+                            <div className="d-flex align-items-center">
+                              {column.label}
+                              {getSortIcon(column.field)}
+                            </div>
+                          </th>
+                        )
+                    )}
+                    <th scope="col" className="action-th">
+                      <div
+                        className="position-relative table-header-hide-show"
+                        ref={columnDropdownRef}
+                      >
+                        <button
+                          className="position-relative table-header-hide-show"
+                          onClick={() =>
+                            setShowColumnDropdown(!showColumnDropdown)
+                          }
                         >
                           Action
-                          <Icon icon="mdi:table-column" width="20" className='icone' />
+                          <Icon
+                            icon="mdi:table-column"
+                            width="20"
+                            className="icone"
+                          />
                         </button>
                         {showColumnDropdown && (
                           <div className="position-absolute bg-white border rounded shadow-sm p-2 show-dropdowns-header">
                             {tableColumns.map((column) => (
-                              <div key={column.id} className="bg-white p-2 mb-2 d-flex align-items-center gap-2">
-                                <input type="checkbox" id={`column-${column.id}`} checked={isColumnVisible(column.id)} onChange={() =>
-                                  toggleColumnVisibility(column.id)}
+                              <div
+                                key={column.id}
+                                className="bg-white p-2 mb-2 d-flex align-items-center gap-2"
+                              >
+                                <input
+                                  type="checkbox"
+                                  id={`column-${column.id}`}
+                                  checked={isColumnVisible(column.id)}
+                                  onChange={() =>
+                                    toggleColumnVisibility(column.id)
+                                  }
                                   disabled={column.required}
                                   className="form-check-input"
                                 />
-                                <label htmlFor={`column-${column.id}`} className="mb-0 flex-grow-1 form-label">
+                                <label
+                                  htmlFor={`column-${column.id}`}
+                                  className="mb-0 flex-grow-1 form-label"
+                                >
                                   {column.label}
                                 </label>
                               </div>
@@ -615,9 +814,15 @@ const LeadSourceList = () => {
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan={visibleColumns.length + 2} className='loding-data'>
+                      <td
+                        colSpan={visibleColumns.length + 2}
+                        className="loding-data"
+                      >
                         <div className="d-flex justify-content-center align-items-center gap-2">
-                          <div className="spinner-border spinner-border-sm" role="status">
+                          <div
+                            className="spinner-border spinner-border-sm"
+                            role="status"
+                          >
                             <span className="visually-hidden">Loading...</span>
                           </div>
                           Loading...
@@ -629,29 +834,60 @@ const LeadSourceList = () => {
                       <tr key={rowItem.uuid}>
                         <td>
                           <div className="d-flex align-items-center gap-2">
-                            <input className="form-check-input" type="checkbox" checked={selectedRows.includes(rowItem.uuid)}
+                            <input
+                              className="form-check-input"
+                              type="checkbox"
+                              checked={selectedRows.includes(rowItem.uuid)}
                               onChange={() => handleRowSelect(rowItem.uuid)}
                             />
-                            <span>{String(startIndex + index + 1).padStart(2, '0')}</span>
+                            <span>
+                              {String(startIndex + index + 1).padStart(2, "0")}
+                            </span>
                           </div>
                         </td>
-                        {isColumnVisible('name') && (
-                          <td><span>{rowItem.name}</span></td>
+                        {isColumnVisible("name") && (
+                          <td>
+                            <span>{rowItem.name}</span>
+                          </td>
                         )}
 
-                        {isColumnVisible('description') && (
-                          <td><span>{rowItem.description}</span></td>
+                        {isColumnVisible("description") && (
+                          <td>
+                            <span>{rowItem.description}</span>
+                          </td>
                         )}
-                        {isColumnVisible('updated_at') && (
-                          <td><span>{formatDateDDMMYYYYTime(rowItem.updated_at)}</span></td>
+                        {isColumnVisible("updated_at") && (
+                          <td>
+                            <span>
+                              {formatDateDDMMYYYYTime(rowItem.updated_at)}
+                            </span>
+                          </td>
                         )}
-                        <td className='action-td'>
+                        <td className="action-td">
                           <div className="d-flex align-items-end gap-2">
-                            <Link to="#" className='edit-btn-icone' onClick={(e) => { e.preventDefault(); handleShowEdit(rowItem); }}>
-                              <Icon icon="lucide:edit" width="18" className='icone' />
+                            <Link
+                              to="#"
+                              className="edit-btn-icone"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                handleShowEdit(rowItem);
+                              }}
+                            >
+                              <Icon
+                                icon="lucide:edit"
+                                width="18"
+                                className="icone"
+                              />
                             </Link>
-                            <button onClick={() => handleDelete(rowItem.uuid)} className='delete-btn-icone'>
-                              <Icon icon="mingcute:delete-2-line" width="18" className='icone' />
+                            <button
+                              onClick={() => handleDelete(rowItem.uuid)}
+                              className="delete-btn-icone"
+                            >
+                              <Icon
+                                icon="mingcute:delete-2-line"
+                                width="18"
+                                className="icone"
+                              />
                             </button>
                           </div>
                         </td>
@@ -659,117 +895,16 @@ const LeadSourceList = () => {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={visibleColumns.length + 2} className='no-records-found'>
+                      <td
+                        colSpan={visibleColumns.length + 2}
+                        className="no-records-found"
+                      >
                         No records found
                       </td>
                     </tr>
                   )}
                 </tbody>
               </table>
-              {tableState.total > 0 && (
-                <div className="d-flex justify-content-between align-items-center px-4 py-3" >
-                  <div className='showing-total-page' >
-                    Showing {startIndex + 1} to {Math.min(startIndex + tableState.limit, tableState.total)} of {tableState.total} entries
-                  </div>
-                  <nav>
-                    <ul className="pagination mb-0" style={{ gap: '4px' }}>
-                      <li className={`page-item ${!tableState.hasPrevious ? 'disabled' : ''}`}>
-                        <button
-                          className="border-0 bg-transparent"
-                          onClick={() => goToPage(1)}
-                          disabled={!tableState.hasPrevious}
-                          style={{
-                            padding: '6px 10px',
-                            color: !tableState.hasPrevious ? '#ccc' : '#6c757d',
-                            fontSize: '18px',
-                            cursor: !tableState.hasPrevious ? 'not-allowed' : 'pointer'
-                          }}
-                        >
-                          «
-                        </button>
-                      </li>
-                      <li className={`page-item ${!tableState.hasPrevious ? 'disabled' : ''}`}>
-                        <button
-                          className="border-0 bg-transparent"
-                          onClick={() => goToPage(tableState.currentPage - 1)}
-                          disabled={!tableState.hasPrevious}
-                          style={{
-                            padding: '6px 10px',
-                            color: !tableState.hasPrevious ? '#ccc' : '#6c757d',
-                            fontSize: '18px',
-                            cursor: !tableState.hasPrevious ? 'not-allowed' : 'pointer'
-                          }}
-                        >
-                          ‹
-                        </button>
-                      </li>
-                      {getPaginationNumbers().map((page, idx) => (
-                        <li key={idx} className="page-item">
-                          {page === '...' ? (
-                            <span
-                              className="border-0 bg-transparent"
-                              style={{
-                                padding: '6px 12px',
-                                color: '#6c757d',
-                                cursor: 'default'
-                              }}
-                            >
-                              ...
-                            </span>
-                          ) : (
-                            <button
-                              className="border-0 "
-                              onClick={() => goToPage(page)}
-                              style={{
-                                padding: '6px 12px',
-                                minWidth: '36px',
-                                backgroundColor: page === tableState.currentPage ? '#5a6c5b' : 'transparent',
-                                color: page === tableState.currentPage ? '#fff' : '#6c757d',
-                                borderRadius: '4px',
-                                fontWeight: page === tableState.currentPage ? '500' : '400',
-                                cursor: 'pointer',
-                                fontSize: "16px"
-                              }}
-                            >
-                              {page}
-                            </button>
-                          )}
-                        </li>
-                      ))}
-                      <li className={`page-item ${!tableState.hasNext ? 'disabled' : ''}`}>
-                        <button
-                          className=" border-0 bg-transparent"
-                          onClick={() => goToPage(tableState.currentPage + 1)}
-                          disabled={!tableState.hasNext}
-                          style={{
-                            padding: '6px 10px',
-                            color: !tableState.hasNext ? '#ccc' : '#6c757d',
-                            fontSize: '18px',
-                            cursor: !tableState.hasNext ? 'not-allowed' : 'pointer'
-                          }}
-                        >
-                          ›
-                        </button>
-                      </li>
-                      <li className={`page-item ${!tableState.hasNext ? 'disabled' : ''}`}>
-                        <button
-                          className="border-0 bg-transparent"
-                          onClick={() => goToPage(tableState.totalPages)}
-                          disabled={!tableState.hasNext}
-                          style={{
-                            padding: '6px 10px',
-                            color: !tableState.hasNext ? '#ccc' : '#6c757d',
-                            fontSize: '18px',
-                            cursor: !tableState.hasNext ? 'not-allowed' : 'pointer'
-                          }}
-                        >
-                          »
-                        </button>
-                      </li>
-                    </ul>
-                  </nav>
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -780,14 +915,22 @@ const LeadSourceList = () => {
           rowData={modalState.rowData}
         />
         {showImport && (
-          <AddImportLeadSourceModal show={showImport} handleClose={handleCloseImport} />)}
+          <AddImportLeadSourceModal
+            show={showImport}
+            handleClose={handleCloseImport}
+          />
+        )}
         {showDeleteConfirm && (
           <div className="modal fade show common-ctl-popup">
             <div className="modal-dialog modal-dialog-centered">
-              <div className="modal-content" style={{ borderRadius: '10px' }}>
+              <div className="modal-content" style={{ borderRadius: "10px" }}>
                 <div className="modal-header">
                   <h6 className="modal-title text-danger">Confirm Delete</h6>
-                  <button type="button" className="btn-close" onClick={cancelDelete}></button>
+                  <button
+                    type="button"
+                    className="btn-close"
+                    onClick={cancelDelete}
+                  ></button>
                 </div>
                 <div className="modal-body">
                   <p className="mb-0">{deleteConfirmMessage}</p>
@@ -818,7 +961,10 @@ const LeadSourceList = () => {
             tabIndex={-1}
             role="dialog"
           >
-            <div className="modal-dialog modal-xl modal-dialog-centered" role="document">
+            <div
+              className="modal-dialog modal-xl modal-dialog-centered"
+              role="document"
+            >
               <div className="modal-content radius-16 bg-base">
                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
                   <h1 className="modal-title fs-5">Export Lead Source</h1>
@@ -832,8 +978,10 @@ const LeadSourceList = () => {
                 <div className="modal-body p-24">
                   <div className="row">
                     <div className="col-12 col-md-6">
-                      <h3 className="text-sm font-semibold mb-3 text-gray-700">Available fields</h3>
-                      <div className="border rounded-lg p-3 bg-gray-50 export-file-left" >
+                      <h3 className="text-sm font-semibold mb-3 text-gray-700">
+                        Available fields
+                      </h3>
+                      <div className="border rounded-lg p-3 bg-gray-50 export-file-left">
                         {items.map((item, index) => (
                           <div
                             key={index}
@@ -843,11 +991,16 @@ const LeadSourceList = () => {
                               type="checkbox"
                               id={`item-${index}`}
                               checked={selectedItems.includes(item)}
-                              onChange={(e) => handleCheckboxChange(item, e.target.checked)}
-                              disabled={ItemsRequired.includes(item)} // 🔒 Disable required item
+                              onChange={(e) =>
+                                handleCheckboxChange(item, e.target.checked)
+                              }
+                              disabled={ItemsRequired.includes(item)}
                               className="form-check-input"
                             />
-                            <label htmlFor={`item-${index}`} className="mb-0 flex-grow-1">
+                            <label
+                              htmlFor={`item-${index}`}
+                              className="mb-0 flex-grow-1"
+                            >
                               {item}
                             </label>
                           </div>
@@ -858,7 +1011,7 @@ const LeadSourceList = () => {
                       <h3 className="text-sm font-semibold mb-3 text-gray-700">
                         Selected fields ({selectedItems.length})
                       </h3>
-                      <div className="border rounded-lg p-3 bg-blue-50 export-file-righit" >
+                      <div className="border rounded-lg p-3 bg-blue-50 export-file-righit">
                         {selectedItems.length === 0 ? (
                           <div className="text-center text-muted py-5">
                             No fields selected
@@ -872,13 +1025,17 @@ const LeadSourceList = () => {
                               onDrop={(e) => handleDrop(e, index)}
                               onDragOver={handleDragOver}
                               className="bg-white border border-primary rounded p-2 mb-2 d-flex align-items-center gap-2 export-file"
-                              style={{ cursor: 'grab' }}
+                              style={{ cursor: "grab" }}
                             >
-                              <span className="text-muted move-drop-icone">☰</span>
+                              <span className="text-muted move-drop-icone">
+                                ☰
+                              </span>
                               <span className="flex-grow-1">{item}</span>
                               {!ItemsRequired.includes(item) && (
                                 <button
-                                  onClick={() => handleCheckboxChange(item, false)}
+                                  onClick={() =>
+                                    handleCheckboxChange(item, false)
+                                  }
                                   className="btn btn-sm btn-link text-danger p-0 close-icone"
                                 >
                                   ×
@@ -901,11 +1058,19 @@ const LeadSourceList = () => {
                     >
                       Cancel
                     </button>
-                    <button onClick={handleExport} type="button"
+                    <button
+                      onClick={handleExport}
+                      type="button"
                       className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
-                      disabled={loadingExport}>{loadingExport ? (
+                      disabled={loadingExport}
+                    >
+                      {loadingExport ? (
                         <>
-                          <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                          <span
+                            className="spinner-border spinner-border-sm me-2"
+                            role="status"
+                            aria-hidden="true"
+                          ></span>
                           Submit...
                         </>
                       ) : (

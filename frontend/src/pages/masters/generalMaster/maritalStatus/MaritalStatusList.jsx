@@ -233,6 +233,7 @@ const MaritalStatusList = () => {
     }));
     // Reset Global Search
     setGlobalSearch('');
+    setSelectedRows([]);
   };
   const handlePageLengthChange = (value) => {
     setTableState(prev => ({
@@ -433,6 +434,7 @@ const MaritalStatusList = () => {
       file: "xlsx",
       fields: fieldsString,
       uuids: selectAllOrNot === "all" ? [] : selectedRows,
+      search: tableState.search || '',
       sort: tableState.sort,
     };
 

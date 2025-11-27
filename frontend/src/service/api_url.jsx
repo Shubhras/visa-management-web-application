@@ -791,12 +791,12 @@ export const DELETE_PROCESS_SUB_STATUS_NAME_API = "/api/v1/master/processsubstat
 export const EXPORT_PROCESS_SUB_STATUS_NAME_API = "/api/v1/master/processsubstatusname/export/";
 export const IMPORT_PROCESS_SUB_STATUS_NAME_API = "/api/v1/master/processsubstatusname/import/";
 // Process Type
-export const GET_PROCESS_TYPE_LIST = "/api/v1/master/processtype/";
-export const ADD_PROCESS_TYPE_API = "/api/v1/master/processtype/create/";
-export const EDIT_PROCESS_TYPE_API = "/api/v1/master/processtype/";
-export const DELETE_PROCESS_TYPE_API = "/api/v1/master/processtype/";
-export const EXPORT_PROCESS_TYPE_API = "/api/v1/master/processtype/export/";
-export const IMPORT_PROCESS_TYPE_API = "/api/v1/master/processtype/import/";
+export const GET_PROCESS_TYPE_LIST = "/api/v1/master/process-type/";
+export const ADD_PROCESS_TYPE_API = "/api/v1/master/process-type/create/";
+export const EDIT_PROCESS_TYPE_API = "/api/v1/master/process-type/";
+export const DELETE_PROCESS_TYPE_API = "/api/v1/master/process-type/";
+export const EXPORT_PROCESS_TYPE_API = "/api/v1/master/process-type/export/";
+export const IMPORT_PROCESS_TYPE_API = "/api/v1/master/process-type/import/";
 // Payment To
 export const GET_PAYMENT_TO_LIST = "/api/v1/master/payment-to/";
 export const ADD_PAYMENT_TO_API = "/api/v1/master/payment-to/create/";
@@ -915,7 +915,29 @@ export const IMPORT_VISA_NAME_API = "/api/v1/master/visaname/import/";
 
 
 
+// Language Ability Group – API Endpoints
+export const GET_LANGUAGE_ABILITY_GROUP_LIST = "/api/v1/master/language-ability-group/list/";
+export const ADD_LANGUAGE_ABILITY_GROUP_API = "/api/v1/master/language-ability-group/create/";
+export const EDIT_LANGUAGE_ABILITY_GROUP_API = "/api/v1/master/language-ability-group/";      // +uuid/update/
+export const DELETE_LANGUAGE_ABILITY_GROUP_API = "/api/v1/master/language-ability-group/";    // +delete/
+export const EXPORT_LANGUAGE_ABILITY_GROUP_API = "/api/v1/master/language-ability-group/export/";
+export const IMPORT_LANGUAGE_ABILITY_GROUP_API = "/api/v1/master/language-ability-group/import/";
 
+// Entrance Test Ability Group – API Endpoints
+export const GET_ENTRANCE_TEST_ABILITY_GROUP_LIST = "/api/v1/master/entrance-test-ability-group/list/";
+export const ADD_ENTRANCE_TEST_ABILITY_GROUP_API = "/api/v1/master/entrance-test-ability-group/create/";
+export const EDIT_ENTRANCE_TEST_ABILITY_GROUP_API = "/api/v1/master/entrance-test-ability-group/";     // +uuid/update/
+export const DELETE_ENTRANCE_TEST_ABILITY_GROUP_API = "/api/v1/master/entrance-test-ability-group/";   // +delete/
+export const EXPORT_ENTRANCE_TEST_ABILITY_GROUP_API = "/api/v1/master/entrance-test-ability-group/export/";
+export const IMPORT_ENTRANCE_TEST_ABILITY_GROUP_API = "/api/v1/master/entrance-test-ability-group/import/";
+
+// Age – API Endpoints
+export const GET_AGE_LIST = "/api/v1/master/study-factor-age/list/";
+export const ADD_AGE_API = "/api/v1/master/study-factor-age/create/";
+export const EDIT_AGE_API = "/api/v1/master/study-factor-age/";      // +uuid/update/
+export const DELETE_AGE_API = "/api/v1/master/study-factor-age/";    // +delete/
+export const EXPORT_AGE_API = "/api/v1/master/study-factor-age/export/";
+export const IMPORT_AGE_API = "/api/v1/master/study-factor-age/import/";
 
 
 

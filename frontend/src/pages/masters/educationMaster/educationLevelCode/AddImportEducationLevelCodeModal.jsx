@@ -89,7 +89,7 @@ const AddImportEducationLevelCodeModal = ({ show, handleClose }) => {
                     if (response?.duplicates?.length > 0) {
                         const prepareData = {
                             data: response.duplicates || [],
-                            headers: ["Education level code"],
+                            headers: ["Education Level Code"],
                             sheetName: "EducationLevelCode",
                             fileName: "EducationLevelCode",
                         };
@@ -117,7 +117,7 @@ const AddImportEducationLevelCodeModal = ({ show, handleClose }) => {
                     setFile(null);
                     setSheetNames([]);
                     setSelectedSheet('');
-                    handleClose();
+                    handleClose(true);
                 } else {
                     toast.error("Something went wrong.");
                 }
@@ -132,7 +132,7 @@ const AddImportEducationLevelCodeModal = ({ show, handleClose }) => {
         setError('');
         setSheetNames([]);
         setSelectedSheet('');
-        handleClose();
+        handleClose(false);
         setLoading(false);
     };
     const handleDownloadSample = () => {

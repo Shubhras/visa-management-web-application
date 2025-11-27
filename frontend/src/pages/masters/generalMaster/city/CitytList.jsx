@@ -244,8 +244,8 @@ const CityList = () => {
       limit: tableState.limit,
       search: tableState.search || '',
       status: tableState.status || '',
-      // sortBy: tableState.sortBy || '',
-      // sortOrder: tableState.sortOrder || '',
+      sortBy: '',
+      sortOrder: '',
       sort: tableState.sort,
       // Send country, state and district IDs
       country: columnFilters.countryId.length > 0 ? columnFilters.countryId : null,
@@ -436,6 +436,7 @@ const CityList = () => {
     }));
     // Reset global search
     setGlobalSearch('');
+    setSelectedRows([]);
   };
 
 
@@ -654,7 +655,7 @@ const CityList = () => {
     setShowImport(false);
     // Only call API when data was successfully imported
     if (shouldRefresh) {
-     fetchCityList();
+      fetchCityList();
     }
   };
 

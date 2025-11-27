@@ -61,7 +61,7 @@ const AddEditEducationLevelCodeModal = ({ show, handleClose, mode = 'add', rowDa
     let isValid = true;
 
     // Department Name validation
-    if (!formData.departmentName.trim()) {
+    if (!formData?.departmentName) {
       newErrors.departmentName = 'Education level code is required';
       isValid = false;
     }
@@ -98,7 +98,7 @@ const AddEditEducationLevelCodeModal = ({ show, handleClose, mode = 'add', rowDa
           if (response?.statusCode === 200 && response?.status === true) {
             toast.success(response?.message);
             resetForm();
-            handleClose();
+            handleClose(true);
           } else {
             toast.error("Something went wrong.");
           }
@@ -121,7 +121,7 @@ const AddEditEducationLevelCodeModal = ({ show, handleClose, mode = 'add', rowDa
   const onClose = () => {
     resetForm();
     setLoading(false);
-    handleClose();
+    handleClose(false);
   };
 
   // Conditional return after all hooks

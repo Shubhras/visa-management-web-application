@@ -154,8 +154,8 @@ const StateList = () => {
       limit: tableState.limit,
       search: tableState.search || '',
       status: tableState.status || '',
-      // sortBy: tableState.sortBy || '',
-      // sortOrder: tableState.sortOrder || ''
+      sortBy: '',
+      sortOrder: '',
       sort: tableState.sort,
       // Send country, state and district IDs
       country: columnFilters.countryId.length > 0 ? columnFilters.countryId : null,
@@ -302,6 +302,7 @@ const StateList = () => {
     }));
     // Reset global search
     setGlobalSearch('');
+    setSelectedRows([]);
   };
 
   // Check if any filters are active

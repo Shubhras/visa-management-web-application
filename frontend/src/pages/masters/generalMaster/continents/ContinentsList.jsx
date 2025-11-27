@@ -242,6 +242,7 @@ const ContinentsList = () => {
     }));
     // Reset Global Search
     setGlobalSearch('');
+    setSelectedRows([]);
   };
 
   const handlePageLengthChange = (value) => {
@@ -458,6 +459,7 @@ const ContinentsList = () => {
       file: "xlsx",
       fields: fieldsString,
       uuids: selectAllOrNot === "all" ? [] : selectedRows,
+      search: tableState.search || '',
       sort: tableState.sort,
     };
     setLoadingExport(true);

@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
 import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
+import { exportToExcelWrongData,exportToExcelDuplicate } from '../../../../helper/utils/commanHelper';
 const AddImportAcademicResultToResultModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
@@ -86,12 +87,37 @@ const AddImportAcademicResultToResultModal = ({ show, handleClose }) => {
                         }
                     );
                     if (response?.duplicates?.length > 0) {
-                        handleExportToExcel(response.duplicates)
+                        const prepareData = {
+                            data: response.duplicates || [],
+                            headers: ["Academic Result Type", "Academic Result", "Compare : Academic Result Type", "Compare : Academic Result"],
+                            sheetName: "Compare:AcademicResultToResult",
+                            fileName: "Compare:AcademicResultToResult",
+                        };
+                        exportToExcelDuplicate(
+                            prepareData.data,
+                            prepareData.headers,
+                            prepareData.sheetName,
+                            prepareData.fileName
+                        );
+                    }
+                    if (response?.skipped_rows?.length > 0) {
+                        const prepareData = {
+                            data: response.skipped_rows || [],
+                            headers: ["Academic Result Type", "Academic Result", "Compare : Academic Result Type", "Compare : Academic Result", "Reason"],
+                            sheetName: "Compare:AcademicResultToResult",
+                            fileName: "Compare:AcademicResultToResult",
+                        };
+                        exportToExcelWrongData(
+                            prepareData.data,
+                            prepareData.headers,
+                            prepareData.sheetName,
+                            prepareData.fileName
+                        );
                     }
                     setFile(null);
                     setSheetNames([]);
                     setSelectedSheet('');
-                    handleClose();
+                    handleClose(true);
                 } else {
                     toast.error("Something went wrong.");
                 }
@@ -99,32 +125,13 @@ const AddImportAcademicResultToResultModal = ({ show, handleClose }) => {
         }));
     };
 
-    const handleExportToExcel = (duplicatesData) => {
-        const header = ["Compare : Academic Result To Result"];
-        const duplicates = duplicatesData //["test1", "test3", "test3"];
-        const worksheetData = [header, ...duplicates.map((item) => [item])];
-        const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Compare:AcademicResultToResult");
-
-        const excelBuffer = XLSX.write(workbook, {
-            bookType: "xlsx",
-            type: "array",
-        });
-
-        const blob = new Blob([excelBuffer], {
-            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        });
-
-        saveAs(blob, `Compare:AcademicResultToResult-Duplicate-Data.xlsx`);
-    };
     // Handle modal close
     const onClose = () => {
         setFile(null);
         setError('');
         setSheetNames([]);
         setSelectedSheet('');
-        handleClose();
+        handleClose(false);
         setLoading(false);
     };
     const handleDownloadSample = () => {
@@ -242,9 +249,9 @@ const AddImportAcademicResultToResultModal = ({ show, handleClose }) => {
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
                     downloadFileName: "Compare:AcademicResultToResult",
-                    items: ["Academic Result Type", "Academic Result","Compare : Academic Result Type","Compare : Academic Result","Description"],
-                    selectedItems: ["Academic Result Type", "Academic Result","Compare : Academic Result Type","Compare : Academic Result"],
-                    ItemsRequired: ["Academic Result Type", "Academic Result","Compare : Academic Result Type","Compare : Academic Result"]
+                    items: ["Academic Result Type", "Academic Result", "Compare : Academic Result Type", "Compare : Academic Result", "Description"],
+                    selectedItems: ["Academic Result Type", "Academic Result", "Compare : Academic Result Type", "Compare : Academic Result"],
+                    ItemsRequired: ["Academic Result Type", "Academic Result", "Compare : Academic Result Type", "Compare : Academic Result"]
                 }
                 } />
             )}
