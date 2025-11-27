@@ -1,394 +1,136 @@
 import React, { useState, useRef } from 'react';
 import { Icon } from '@iconify/react/dist/iconify.js';
 
-const PrincipalApplicant = () => {
-    // Education Data
-    const [educations, setEducations] = useState([
-        {
-            id: 1,
-            educationLevel: 'Bachelors',
-            duration: '48',
-            studyMainArea: 'Engineering',
-            eduType: 'Full-Time',
-            startDate: '16/07/2000',
-            endDate: '02/04/2004',
-            result: '67.04%'
-        },
-        {
-            id: 2,
-            educationLevel: 'Masters',
-            duration: '24',
-            studyMainArea: 'Computer Science',
-            eduType: 'Full-Time',
-            startDate: '01/08/2004',
-            endDate: '30/06/2006',
-            result: '78.50%'
-        }
-    ]);
+const ReusableTable = ({
+    title,
+    data,
+    setData,
+    columns,
+    visibleColumns,
+    setVisibleColumns,
+    tableSize = 'small',
+    enableSorting = true // New prop to enable/disable sorting
+}) => {
+    const [selectedRows, setSelectedRows] = useState([]);
+    const [showDropdown, setShowDropdown] = useState(false);
+    const dropdownRef = useRef(null);
 
-    // Work Experience Data
-    const [workExperiences, setWorkExperiences] = useState([
-        {
-            id: 1,
-            employerName: 'ABCD Corporation',
-            occupation: 'Sales Manager',
-            jobType: 'Full-Time',
-            startDate: '01/01/2023',
-            endDate: '15/07/2025',
-            salary: '27,000'
-        },
-        {
-            id: 2,
-            employerName: 'XYZ Technologies',
-            occupation: 'Senior Developer',
-            jobType: 'Full-Time',
-            startDate: '15/03/2020',
-            endDate: '31/12/2022',
-            salary: '45,000'
-        }
-    ]);
+    // Sorting state
+    const [sortState, setSortState] = useState([]);
 
-    // Language Ability Data
-    const [languageAbilities, setLanguageAbilities] = useState([
-        {
-            id: 1,
-            language: 'English',
-            testName: 'IELTS',
-            testLevel: 'First',
-            listening: '7.5',
-            speaking: '8.0',
-            reading: '7.0',
-            writing: '7.5',
-            overall: '7.5',
-            testDate: '15/03/2024'
-        }
-    ]);
+    const isAllSelected = data.length > 0 && data.every(item => selectedRows.includes(item.id));
 
-    // Entrance Test Data
-    const [entranceTests, setEntranceTests] = useState([
-        {
-            id: 1,
-            entranceTestName: 'GRE',
-            module01: '160',
-            module02: '155',
-            module03: '4.5',
-            module04: 'N/A',
-            total: '319.5',
-            testDate: '20/02/2024'
-        }
-    ]);
+    // Sorting functions
+    const handleSort = (field) => {
+        if (!enableSorting) return;
 
-    const [appearedEntranceTest, setAppearedEntranceTest] = useState('Yes');
-    const [selectedEducationRows, setSelectedEducationRows] = useState([]);
-    const [selectedWorkRows, setSelectedWorkRows] = useState([]);
-    const [selectedLanguageRows, setSelectedLanguageRows] = useState([]);
-    const [selectedEntranceRows, setSelectedEntranceRows] = useState([]);
+        setSortState(prev => {
+            let newSort = [...prev];
+            const existingIndex = newSort.findIndex(s => s.field === field);
 
-    // Table columns configuration
-    const educationColumns = [
-        { id: 'educationLevel', label: 'Education Level', field: 'educationLevel', visible: true, required: false },
-        { id: 'duration', label: 'Duration', field: 'duration', visible: true, required: false },
-        { id: 'studyMainArea', label: 'Study Main Area', field: 'studyMainArea', visible: true, required: false },
-        { id: 'eduType', label: 'Edu. Type', field: 'eduType', visible: true, required: false },
-        { id: 'startDate', label: 'Start Date', field: 'startDate', visible: true, required: false },
-        { id: 'endDate', label: 'End Date', field: 'endDate', visible: true, required: false },
-        { id: 'result', label: 'Result', field: 'result', visible: true, required: false }
-    ];
-
-    const workExperienceColumns = [
-        { id: 'employerName', label: 'Employer Name', field: 'employerName', visible: true, required: false },
-        { id: 'occupation', label: 'Occupation', field: 'occupation', visible: true, required: false },
-        { id: 'jobType', label: 'Job Type', field: 'jobType', visible: true, required: false },
-        { id: 'startDate', label: 'Start Date', field: 'startDate', visible: true, required: false },
-        { id: 'endDate', label: 'End date', field: 'endDate', visible: true, required: false },
-        { id: 'salary', label: 'Salary', field: 'salary', visible: true, required: false }
-    ];
-
-    const languageAbilityColumns = [
-        { id: 'language', label: 'Language', field: 'language', visible: true, required: false },
-        { id: 'testName', label: 'Test Name', field: 'testName', visible: true, required: false },
-        { id: 'testLevel', label: 'Test Level', field: 'testLevel', visible: true, required: false },
-        { id: 'listening', label: 'Listening', field: 'listening', visible: true, required: false },
-        { id: 'speaking', label: 'Speaking', field: 'speaking', visible: true, required: false },
-        { id: 'reading', label: 'Reading', field: 'reading', visible: true, required: false },
-        { id: 'writing', label: 'Writing', field: 'writing', visible: true, required: false },
-        { id: 'overall', label: 'Overall', field: 'overall', visible: true, required: false },
-        { id: 'testDate', label: 'Test Date', field: 'testDate', visible: true, required: false }
-    ];
-
-    const entranceTestColumns = [
-        { id: 'entranceTestName', label: 'Entrance Test Name', field: 'entranceTestName', visible: true, required: false },
-        { id: 'module01', label: 'Module-01', field: 'module01', visible: true, required: false },
-        { id: 'module02', label: 'Module-02', field: 'module02', visible: true, required: false },
-        { id: 'module03', label: 'Module-03', field: 'module03', visible: true, required: false },
-        { id: 'module04', label: 'Module-04', field: 'module04', visible: true, required: false },
-        { id: 'total', label: 'Total', field: 'total', visible: true, required: false },
-        { id: 'testDate', label: 'Test Date', field: 'testDate', visible: true, required: false }
-    ];
-
-    // Column visibility states
-    const [educationVisibleColumns, setEducationVisibleColumns] = useState(
-        educationColumns.filter(col => col.visible).map(col => col.id)
-    );
-    const [workVisibleColumns, setWorkVisibleColumns] = useState(
-        workExperienceColumns.filter(col => col.visible).map(col => col.id)
-    );
-    const [languageVisibleColumns, setLanguageVisibleColumns] = useState(
-        languageAbilityColumns.filter(col => col.visible).map(col => col.id)
-    );
-    const [entranceVisibleColumns, setEntranceVisibleColumns] = useState(
-        entranceTestColumns.filter(col => col.visible).map(col => col.id)
-    );
-
-    // Column dropdown refs
-    const educationDropdownRef = useRef(null);
-    const workDropdownRef = useRef(null);
-    const languageDropdownRef = useRef(null);
-    const entranceDropdownRef = useRef(null);
-
-    // Column dropdown visibility states
-    const [showEducationDropdown, setShowEducationDropdown] = useState(false);
-    const [showWorkDropdown, setShowWorkDropdown] = useState(false);
-    const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
-    const [showEntranceDropdown, setShowEntranceDropdown] = useState(false);
-
-    // Column visibility toggle handlers
-    const toggleEducationColumnVisibility = (columnId) => {
-        const column = educationColumns.find(col => col.id === columnId);
-        if (column?.required) return;
-
-        setEducationVisibleColumns(prev => {
-            if (prev.includes(columnId)) {
-                return prev.filter(id => id !== columnId);
+            if (existingIndex === -1) {
+                newSort.push({ field, order: "asc" });
             } else {
-                return [...prev, columnId];
+                const existing = newSort[existingIndex];
+                if (existing.order === "asc") {
+                    newSort[existingIndex].order = "desc";
+                } else if (existing.order === "desc") {
+                    newSort.splice(existingIndex, 1);
+                }
             }
+            return newSort;
         });
     };
 
-    const toggleWorkColumnVisibility = (columnId) => {
-        const column = workExperienceColumns.find(col => col.id === columnId);
-        if (column?.required) return;
+    const getSortIcon = (field) => {
+        if (!enableSorting) return null;
 
-        setWorkVisibleColumns(prev => {
-            if (prev.includes(columnId)) {
-                return prev.filter(id => id !== columnId);
-            } else {
-                return [...prev, columnId];
-            }
-        });
-    };
-
-    const toggleLanguageColumnVisibility = (columnId) => {
-        const column = languageAbilityColumns.find(col => col.id === columnId);
-        if (column?.required) return;
-
-        setLanguageVisibleColumns(prev => {
-            if (prev.includes(columnId)) {
-                return prev.filter(id => id !== columnId);
-            } else {
-                return [...prev, columnId];
-            }
-        });
-    };
-
-    const toggleEntranceColumnVisibility = (columnId) => {
-        const column = entranceTestColumns.find(col => col.id === columnId);
-        if (column?.required) return;
-
-        setEntranceVisibleColumns(prev => {
-            if (prev.includes(columnId)) {
-                return prev.filter(id => id !== columnId);
-            } else {
-                return [...prev, columnId];
-            }
-        });
-    };
-
-    // Check if column is visible
-    const isEducationColumnVisible = (columnId) => educationVisibleColumns.includes(columnId);
-    const isWorkColumnVisible = (columnId) => workVisibleColumns.includes(columnId);
-    const isLanguageColumnVisible = (columnId) => languageVisibleColumns.includes(columnId);
-    const isEntranceColumnVisible = (columnId) => entranceVisibleColumns.includes(columnId);
-
-    // Row selection handlers
-    const handleEducationSelectAll = (e) => {
-        const checked = e.target.checked;
-        if (checked) {
-            setSelectedEducationRows(educations.map(edu => edu.id));
-        } else {
-            setSelectedEducationRows([]);
+        const sortObj = sortState.find(s => s.field === field);
+        if (!sortObj) {
+            return <Icon icon="ri:menu-line" className="sorting-th-icone" />;
         }
-    };
-
-    const handleWorkSelectAll = (e) => {
-        const checked = e.target.checked;
-        if (checked) {
-            setSelectedWorkRows(workExperiences.map(work => work.id));
-        } else {
-            setSelectedWorkRows([]);
+        if (sortObj.order === "asc") {
+            return <Icon icon="ri:sort-asc" className="sorting-th-icone" />;
         }
+        return <Icon icon="ri:sort-desc" className="sorting-th-icone" />;
     };
 
-    const handleLanguageSelectAll = (e) => {
-        const checked = e.target.checked;
-        if (checked) {
-            setSelectedLanguageRows(languageAbilities.map(lang => lang.id));
-        } else {
-            setSelectedLanguageRows([]);
-        }
-    };
+    // Sort data based on sortState
+    const getSortedData = () => {
+        if (sortState.length === 0) return data;
 
-    const handleEntranceSelectAll = (e) => {
-        const checked = e.target.checked;
-        if (checked) {
-            setSelectedEntranceRows(entranceTests.map(test => test.id));
-        } else {
-            setSelectedEntranceRows([]);
-        }
-    };
+        return [...data].sort((a, b) => {
+            for (const sort of sortState) {
+                const { field, order } = sort;
+                const aValue = a[field];
+                const bValue = b[field];
 
-    const handleEducationRowSelect = (id) => {
-        setSelectedEducationRows(prev => {
-            if (prev.includes(id)) {
-                return prev.filter(rowId => rowId !== id);
-            } else {
-                return [...prev, id];
+                // Handle different data types
+                if (typeof aValue === 'string' && typeof bValue === 'string') {
+                    const comparison = aValue.localeCompare(bValue);
+                    if (comparison !== 0) {
+                        return order === 'asc' ? comparison : -comparison;
+                    }
+                } else {
+                    // For numbers and other types
+                    if (aValue < bValue) return order === 'asc' ? -1 : 1;
+                    if (aValue > bValue) return order === 'asc' ? 1 : -1;
+                }
             }
+            return 0;
         });
     };
 
-    const handleWorkRowSelect = (id) => {
-        setSelectedWorkRows(prev => {
-            if (prev.includes(id)) {
-                return prev.filter(rowId => rowId !== id);
-            } else {
-                return [...prev, id];
-            }
+    const sortedData = getSortedData();
+
+    const toggleColumn = (colId) => {
+        setVisibleColumns(prev =>
+            prev.includes(colId) ? prev.filter(id => id !== colId) : [...prev, colId]
+        );
+    };
+
+    const handleSelectAll = (e) => {
+        setSelectedRows(e.target.checked ? data.map(d => d.id) : []);
+    };
+
+    const handleRowSelect = (id) => {
+        setSelectedRows(prev =>
+            prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+        );
+    };
+
+    const handleDelete = (id) => {
+        setData(prev => prev.filter(item => item.id !== id));
+        setSelectedRows(prev => prev.filter(rowId => rowId !== id));
+    };
+
+    const handleAddNew = () => {
+        const newId = data.length ? Math.max(...data.map(d => d.id)) + 1 : 1;
+        const newRow = { id: newId };
+        columns.forEach(col => {
+            newRow[col.field] = col.field.includes('Date') ? 'DD/MM/YYYY' : '—';
         });
+        setData([...data, newRow]);
     };
 
-    const handleLanguageRowSelect = (id) => {
-        setSelectedLanguageRows(prev => {
-            if (prev.includes(id)) {
-                return prev.filter(rowId => rowId !== id);
-            } else {
-                return [...prev, id];
-            }
-        });
-    };
-
-    const handleEntranceRowSelect = (id) => {
-        setSelectedEntranceRows(prev => {
-            if (prev.includes(id)) {
-                return prev.filter(rowId => rowId !== id);
-            } else {
-                return [...prev, id];
-            }
-        });
-    };
-
-    // Check if all rows are selected
-    const isAllEducationSelected = educations.length > 0 && educations.every(edu => selectedEducationRows.includes(edu.id));
-    const isAllWorkSelected = workExperiences.length > 0 && workExperiences.every(work => selectedWorkRows.includes(work.id));
-    const isAllLanguageSelected = languageAbilities.length > 0 && languageAbilities.every(lang => selectedLanguageRows.includes(lang.id));
-    const isAllEntranceSelected = entranceTests.length > 0 && entranceTests.every(test => selectedEntranceRows.includes(test.id));
-
-    // Delete handlers
-    const handleDeleteEducation = (id) => {
-        setEducations(educations.filter(edu => edu.id !== id));
-        setSelectedEducationRows(prev => prev.filter(rowId => rowId !== id));
-    };
-
-    const handleDeleteWork = (id) => {
-        setWorkExperiences(workExperiences.filter(work => work.id !== id));
-        setSelectedWorkRows(prev => prev.filter(rowId => rowId !== id));
-    };
-
-    const handleDeleteLanguage = (id) => {
-        setLanguageAbilities(languageAbilities.filter(lang => lang.id !== id));
-        setSelectedLanguageRows(prev => prev.filter(rowId => rowId !== id));
-    };
-
-    const handleDeleteEntrance = (id) => {
-        setEntranceTests(entranceTests.filter(test => test.id !== id));
-        setSelectedEntranceRows(prev => prev.filter(rowId => rowId !== id));
-    };
-
-    // Add new row handlers
-    const handleAddEducation = () => {
-        const newEducation = {
-            id: educations.length + 1,
-            educationLevel: 'New Education',
-            duration: '00',
-            studyMainArea: 'Field of Study',
-            eduType: 'Full-Time',
-            startDate: 'DD/MM/YYYY',
-            endDate: 'DD/MM/YYYY',
-            result: '0.00%'
-        };
-        setEducations([...educations, newEducation]);
-    };
-
-    const handleAddWork = () => {
-        const newWork = {
-            id: workExperiences.length + 1,
-            employerName: 'New Employer',
-            occupation: 'Position',
-            jobType: 'Full-Time',
-            startDate: 'DD/MM/YYYY',
-            endDate: 'DD/MM/YYYY',
-            salary: '0,000'
-        };
-        setWorkExperiences([...workExperiences, newWork]);
-    };
-
-    const handleAddLanguage = () => {
-        const newLanguage = {
-            id: languageAbilities.length + 1,
-            language: 'New Language',
-            testName: 'Test Name',
-            testLevel: 'First',
-            listening: '0.0',
-            speaking: '0.0',
-            reading: '0.0',
-            writing: '0.0',
-            overall: '0.0',
-            testDate: 'DD/MM/YYYY'
-        };
-        setLanguageAbilities([...languageAbilities, newLanguage]);
-    };
-
-    const handleAddEntrance = () => {
-        const newEntrance = {
-            id: entranceTests.length + 1,
-            entranceTestName: 'New Test',
-            module01: '0',
-            module02: '0',
-            module03: '0',
-            module04: '0',
-            total: '0',
-            testDate: 'DD/MM/YYYY'
-        };
-        setEntranceTests([...entranceTests, newEntrance]);
-    };
-
-    // Render table function
-    const renderTable = (data, columns, visibleColumns, isColumnVisible, selectedRows,
-        handleSelectAll, handleRowSelect, isAllSelected, handleDelete,
-        handleAdd, dropdownRef, showDropdown, setShowDropdown,
-        toggleColumnVisibility, sectionTitle) => (
-        <div className="card basic-data-table main-container-data mb-4">
-            {/* Title at the top of the table */}
-            <div className="card-header">
-                <h6 className="mb-0" style={{ color: "#5a6c5b" }}>{sectionTitle}</h6>
+    return (
+        <div className={`${tableSize}-table-container`}>
+            <div className="card-header d-flex justify-content-between align-items-center py-3 px-4 border-bottom">
+                <h6 className="mb-0 fw-semibold" style={{ color: '#5a6c5b' }}>{title}</h6>
+                <button
+                    onClick={handleAddNew}
+                    className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
+                >
+                    New
+                </button>
             </div>
+
             <div className="card-body pt-0 container-table">
-                <div className='container-table-div'>
+                <div className="principle-table-div">
                     <table className="table mb-0">
                         <thead>
                             <tr>
-                                <th scope="col" className='sl-numbar-th'>
+                                <th scope="col" className="sl-numbar-th">
                                     <div className="d-flex align-items-center gap-2">
                                         <input
                                             className="form-check-input"
@@ -400,45 +142,44 @@ const PrincipalApplicant = () => {
                                         <span>No.</span>
                                     </div>
                                 </th>
-                                {columns.map((column) => (
-                                    isColumnVisible(column.id) && (
+                                {columns.map(col => (
+                                    visibleColumns.includes(col.id) && (
                                         <th
-                                            key={column.id}
+                                            key={col.id}
                                             scope="col"
-                                            className='sorting-th'
+                                            className="sorting-th"
+                                            onClick={() => handleSort(col.field)}
+                                            style={{
+                                                cursor: enableSorting ? 'pointer' : 'default',
+                                                userSelect: 'none'
+                                            }}
                                         >
                                             <div className="d-flex align-items-center">
-                                                {column.label}
+                                                {col.label}
+                                                {enableSorting && getSortIcon(col.field)}
                                             </div>
                                         </th>
                                     )
                                 ))}
-                                <th scope="col" className='action-th'>
+                                <th scope="col" className="action-th">
                                     <div className="position-relative table-header-hide-show" ref={dropdownRef}>
                                         <button
-                                            className="position-relative table-header-hide-show"
+                                            className="border-0 bg-transparent"
                                             onClick={() => setShowDropdown(!showDropdown)}
                                         >
-                                            Action <Icon icon="mdi:table-column" width="20" className='icone' />
+                                            Action <Icon icon="mdi:table-column" width="20" className="icone" />
                                         </button>
                                         {showDropdown && (
-                                            <div className="position-absolute bg-white border rounded shadow-sm p-2 show-dropdowns-header">
-                                                {columns.map((column) => (
-                                                    <div
-                                                        key={column.id}
-                                                        className="bg-white p-2 mb-2 d-flex align-items-center gap-2"
-                                                    >
+                                            <div className="position-absolute bg-white border rounded shadow-sm p-2 show-dropdowns-header" style={{ zIndex: 999, right: 0 }}>
+                                                {columns.map(col => (
+                                                    <div key={col.id} className="d-flex align-items-center gap-2 mb-1">
                                                         <input
                                                             type="checkbox"
-                                                            id={`column-${column.id}`}
-                                                            checked={isColumnVisible(column.id)}
-                                                            onChange={() => toggleColumnVisibility(column.id)}
-                                                            disabled={column.required}
                                                             className="form-check-input"
+                                                            checked={visibleColumns.includes(col.id)}
+                                                            onChange={() => toggleColumn(col.id)}
                                                         />
-                                                        <label htmlFor={`column-${column.id}`} className="mb-0 flex-grow-1 form-label">
-                                                            {column.label}
-                                                        </label>
+                                                        <label className="form-label mb-0 small">{col.label}</label>
                                                     </div>
                                                 ))}
                                             </div>
@@ -448,43 +189,46 @@ const PrincipalApplicant = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {data.length > 0 ? (
-                                data.map((rowItem, index) => (
-                                    <tr key={rowItem.id}>
+                            {sortedData.length === 0 ? (
+                                <tr>
+                                    <td colSpan={visibleColumns.length + 2} className="no-records-found text-center py-4">
+                                        No records found
+                                    </td>
+                                </tr>
+                            ) : (
+                                sortedData.map((row, index) => (
+                                    <tr key={row.id}>
                                         <td>
                                             <div className="d-flex align-items-center gap-2">
                                                 <input
                                                     className="form-check-input"
                                                     type="checkbox"
-                                                    checked={selectedRows.includes(rowItem.id)}
-                                                    onChange={() => handleRowSelect(rowItem.id)}
+                                                    checked={selectedRows.includes(row.id)}
+                                                    onChange={() => handleRowSelect(row.id)}
                                                 />
                                                 <span>{String(index + 1).padStart(2, '0')}</span>
                                             </div>
                                         </td>
-                                        {columns.map((column) => (
-                                            isColumnVisible(column.id) && (
-                                                <td key={column.id}><span>{rowItem[column.field]}</span></td>
+                                        {columns.map(col => (
+                                            visibleColumns.includes(col.id) && (
+                                                <td key={col.id}><span>{row[col.field] || '—'}</span></td>
                                             )
                                         ))}
-                                        <td className='action-td'>
-                                            <div className="d-flex align-items-end gap-2">
-                                                <button className='edit-btn-icone' onClick={() => console.log('Edit', rowItem.id)}>
-                                                    <Icon icon="lucide:edit" width="18" className='icone' />
+                                        <td className="action-td">
+                                            <div className="d-flex align-items-center gap-2">
+                                                <button className="edit-btn-icone border-0 bg-transparent">
+                                                    <Icon icon="lucide:edit" width="18" className="icone" />
                                                 </button>
-                                                <button onClick={() => handleDelete(rowItem.id)} className='delete-btn-icone'>
-                                                    <Icon icon="mingcute:delete-2-line" width="18" className='icone' />
+                                                <button
+                                                    onClick={() => handleDelete(row.id)}
+                                                    className="delete-btn-icone border-0 bg-transparent"
+                                                >
+                                                    <Icon icon="mingcute:delete-2-line" width="18" className="icone" />
                                                 </button>
                                             </div>
                                         </td>
                                     </tr>
                                 ))
-                            ) : (
-                                <tr>
-                                    <td colSpan={visibleColumns.length + 2} className='no-records-found'>
-                                        No records found
-                                    </td>
-                                </tr>
                             )}
                         </tbody>
                     </table>
@@ -492,83 +236,176 @@ const PrincipalApplicant = () => {
             </div>
         </div>
     );
+};
+const PrincipalApplicantTables = () => {
+
+    const [educations, setEducations] = useState([
+        { id: 1, educationLevel: 'Bachelors', duration: '48', studyMainArea: 'Engineering', eduType: 'Full-Time', startDate: '16/07/2000', endDate: '02/04/2004', result: '67.04%' },
+        { id: 2, educationLevel: 'Masters', duration: '24', studyMainArea: 'Computer Science', eduType: 'Full-Time', startDate: '01/08/2004', endDate: '30/06/2006', result: '78.50%' }
+    ]);
+
+    const [workExperiences, setWorkExperiences] = useState([
+        { id: 1, employerName: 'ABCD Corporation', occupation: 'Sales Manager', jobType: 'Full-Time', startDate: '01/01/2023', endDate: '15/07/2025', salary: '27,000' },
+        { id: 2, employerName: 'XYZ Technologies', occupation: 'Senior Developer', jobType: 'Full-Time', startDate: '15/03/2020', endDate: '31/12/2022', salary: '45,000' }
+    ]);
+
+    const [languageAbilities, setLanguageAbilities] = useState([
+        { id: 1, language: 'English', testName: 'IELTS', testLevel: 'First', listening: '7.5', speaking: '8.0', reading: '7.0', writing: '7.5', overall: '7.5', testDate: '15/03/2024' }
+    ]);
+
+    const [entranceTests, setEntranceTests] = useState([
+        { id: 1, entranceTestName: 'GRE', module01: '160', module02: '155', module03: '4.5', module04: 'N/A', total: '319.5', testDate: '20/02/2024' }
+    ]);
+
+    const [appearedEntranceTest, setAppearedEntranceTest] = useState('Yes');
+
+    // Column Definitions
+    const educationColumns = [
+        { id: 'educationLevel', label: 'Education Level', field: 'educationLevel' },
+        { id: 'duration', label: 'Duration (Months)', field: 'duration' },
+        { id: 'studyMainArea', label: 'Study Main Area', field: 'studyMainArea' },
+        { id: 'eduType', label: 'Edu. Type', field: 'eduType' },
+        { id: 'startDate', label: 'Start Date', field: 'startDate' },
+        { id: 'endDate', label: 'End Date', field: 'endDate' },
+        { id: 'result', label: 'Result', field: 'result' }
+    ];
+
+    const workColumns = [
+        { id: 'employerName', label: 'Employer Name', field: 'employerName' },
+        { id: 'occupation', label: 'Occupation', field: 'occupation' },
+        { id: 'jobType', label: 'Job Type', field: 'jobType' },
+        { id: 'startDate', label: 'Start Date', field: 'startDate' },
+        { id: 'endDate', label: 'End Date', field: 'endDate' },
+        { id: 'salary', label: 'Salary', field: 'salary' }
+    ];
+
+    const languageColumns = [
+        { id: 'language', label: 'Language', field: 'language' },
+        { id: 'testName', label: 'Test Name', field: 'testName' },
+        { id: 'testLevel', label: 'Test Level', field: 'testLevel' },
+        { id: 'listening', label: 'Listening', field: 'listening' },
+        { id: 'speaking', label: 'Speaking', field: 'speaking' },
+        { id: 'reading', label: 'Reading', field: 'reading' },
+        { id: 'writing', label: 'Writing', field: 'writing' },
+        { id: 'overall', label: 'Overall', field: 'overall' },
+        { id: 'testDate', label: 'Test Date', field: 'testDate' }
+    ];
+
+    const entranceColumns = [
+        { id: 'entranceTestName', label: 'Entrance Test Name', field: 'entranceTestName' },
+        { id: 'module01', label: 'Module 01', field: 'module01' },
+        { id: 'module02', label: 'Module 02', field: 'module02' },
+        { id: 'module03', label: 'Module 03', field: 'module03' },
+        { id: 'module04', label: 'Module 04', field: 'module04' },
+        { id: 'total', label: 'Total', field: 'total' },
+        { id: 'testDate', label: 'Test Date', field: 'testDate' }
+    ];
+
+    // Visibility States
+    const [eduVisible, setEduVisible] = useState(educationColumns.map(c => c.id));
+    const [workVisible, setWorkVisible] = useState(workColumns.map(c => c.id));
+    const [langVisible, setLangVisible] = useState(languageColumns.map(c => c.id));
+    const [entranceVisible, setEntranceVisible] = useState(entranceColumns.map(c => c.id));
 
     return (
         <div className="section-block">
-            <div className="row">
-                <div className="col-12">
-                    {/* Education Table */}
-                    {renderTable(
-                        educations, educationColumns, educationVisibleColumns, isEducationColumnVisible,
-                        selectedEducationRows, handleEducationSelectAll, handleEducationRowSelect,
-                        isAllEducationSelected, handleDeleteEducation, handleAddEducation,
-                        educationDropdownRef, showEducationDropdown, setShowEducationDropdown,
-                        toggleEducationColumnVisibility, "Education (PA)"
-                    )}
+            <style>{`
+  .small-table-container .principle-table-div {
+    max-height: 300px !important;
+    min-height: 150px !important;
+    overflow-y: auto;
+    position: relative;
+    background-color: white;
+    // border-radius: 8px;
+  }
 
-                    {/* Work Experience Table */}
-                    {renderTable(
-                        workExperiences, workExperienceColumns, workVisibleColumns, isWorkColumnVisible,
-                        selectedWorkRows, handleWorkSelectAll, handleWorkRowSelect,
-                        isAllWorkSelected, handleDeleteWork, handleAddWork,
-                        workDropdownRef, showWorkDropdown, setShowWorkDropdown,
-                        toggleWorkColumnVisibility, "Work Experience (PA)"
-                    )}
+  
+`}</style>
 
-                    {/* Language Ability Table */}
-                    {renderTable(
-                        languageAbilities, languageAbilityColumns, languageVisibleColumns, isLanguageColumnVisible,
-                        selectedLanguageRows, handleLanguageSelectAll, handleLanguageRowSelect,
-                        isAllLanguageSelected, handleDeleteLanguage, handleAddLanguage,
-                        languageDropdownRef, showLanguageDropdown, setShowLanguageDropdown,
-                        toggleLanguageColumnVisibility, "Language Ability (PA)"
-                    )}
+            <div className="container-fluid">
+                {/* Education - Small Table */}
+                <ReusableTable
+                    title="Education (PA)"
+                    data={educations}
+                    setData={setEducations}
+                    columns={educationColumns}
+                    visibleColumns={eduVisible}
+                    setVisibleColumns={setEduVisible}
+                    tableSize="small"
+                    enableSorting={true}
+                />
 
-                    {/* Entrance Test Section */}
-                    <div className="card basic-data-table main-container-data mb-4">
-                        <div className="card-header">
-                            <h6 className="mb-0" style={{ color: "#5a6c5b" }}>Entrance Test Ability (PA)</h6>
-                        </div>
-                        <div className="card-body">
-                            <div className="row mb-3">
-                                <div className="col-md-6">
-                                    <label className="form-label">Appeared Any Entrance Test?</label>
+                {/* Work Experience - Small Table */}
+                <ReusableTable
+                    title="Work Experience (PA)"
+                    data={workExperiences}
+                    setData={setWorkExperiences}
+                    columns={workColumns}
+                    visibleColumns={workVisible}
+                    setVisibleColumns={setWorkVisible}
+                    tableSize="small"
+                    enableSorting={true}
+                />
 
-                                    <select
-                                        className="form-select form-select-sm"
-                                        value={appearedEntranceTest}
-                                        onChange={(e) => setAppearedEntranceTest(e.target.value)}
-                                    >
-                                        <option value="">Select Option</option>
-                                        <option value="Yes">Yes</option>
-                                        <option value="No">No</option>
+
+                <ReusableTable
+                    title="Language Ability (PA)"
+                    data={languageAbilities}
+                    setData={setLanguageAbilities}
+                    columns={languageColumns}
+                    visibleColumns={langVisible}
+                    setVisibleColumns={setLangVisible}
+                    tableSize="small"
+                    enableSorting={true}
+                />
+
+
+                <div className="mb-4 small-table-container">
+                    <div className="card-header py-3 px-4 ">
+                        <h6 className="mb-0 fw-semibold" style={{ color: '#5a6c5b' }}>Entrance Test Ability (PA)</h6>
+                    </div>
+                    <div className="mt-1">
+                        <div className="row g-3 align-items-end">
+                            <div className="col-md-4">
+                                <label className="form-label fw-medium">Appeared Any Entrance Test?</label>
+                                <select
+                                    className="form-select form-select-sm"
+                                    value={appearedEntranceTest}
+                                    onChange={(e) => setAppearedEntranceTest(e.target.value)}
+                                >
+                                    <option value="">Select</option>
+                                    <option value="Yes">Yes</option>
+                                    <option value="No">No</option>
+                                </select>
+                            </div>
+                            {appearedEntranceTest === "Yes" && (
+                                <div className="col-md-4">
+                                    <label className="form-label fw-medium">Entrance Test Name</label>
+                                    <select className="form-select form-select-sm">
+                                        <option>Select Test</option>
+                                        <option>GRE</option>
+                                        <option>GMAT</option>
+                                        <option>SAT</option>
+                                        <option>ACT</option>
                                     </select>
                                 </div>
-
-                                {appearedEntranceTest === "Yes" && (
-                                    <div className="col-md-6">
-                                        <label className="form-label">Entrance Test Name</label>
-                                        <select className="form-select form-select-sm">
-                                            <option>Select Entrance Test Name</option>
-                                            <option>IELTS</option>
-                                            <option>TOEFL</option>
-                                            <option>PTE</option>
-                                            <option>GRE</option>
-                                            <option>GMAT</option>
-                                        </select>
-                                    </div>
-                                )}
-                            </div>
-
-
-                            {appearedEntranceTest === 'Yes' && renderTable(
-                                entranceTests, entranceTestColumns, entranceVisibleColumns, isEntranceColumnVisible,
-                                selectedEntranceRows, handleEntranceSelectAll, handleEntranceRowSelect,
-                                isAllEntranceSelected, handleDeleteEntrance, handleAddEntrance,
-                                entranceDropdownRef, showEntranceDropdown, setShowEntranceDropdown,
-                                toggleEntranceColumnVisibility, "Entrance Test Results"
                             )}
                         </div>
+
+                        {appearedEntranceTest === "Yes" && (
+                            <div className="mt-4">
+                                <ReusableTable
+                                    title="Entrance Test Results"
+                                    data={entranceTests}
+                                    setData={setEntranceTests}
+                                    columns={entranceColumns}
+                                    visibleColumns={entranceVisible}
+                                    setVisibleColumns={setEntranceVisible}
+                                    tableSize="small"
+                                    enableSorting={true}
+                                />
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -576,4 +413,4 @@ const PrincipalApplicant = () => {
     );
 };
 
-export default PrincipalApplicant;
+export default PrincipalApplicantTables;

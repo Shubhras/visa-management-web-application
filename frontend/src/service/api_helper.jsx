@@ -2675,7 +2675,7 @@ export const exportLanguageTestNameAPI = (payload) => {
             .map(item => `${item.field}:${item.order}`)
             .join(",");
     }
-    const apiUrl = `${url.EXPORT_LANGUAGE_TEST_NAME_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+    const apiUrl = `${url.EXPORT_LANGUAGE_TEST_NAME_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&languageNameTest=${payload?.languageNameTest}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -2943,7 +2943,7 @@ export const exportEntranceTestModuleNameAPI = (payload) => {
             .map(item => `${item.field}:${item.order}`)
             .join(",");
     }
-  const apiUrl = `${url.EXPORT_ENTRANCE_TEST_MODULE_NAME_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+  const apiUrl = `${url.EXPORT_ENTRANCE_TEST_MODULE_NAME_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&entranceTestName=${payload?.entranceTestName}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -2997,7 +2997,7 @@ export const exportEntranceTestResultAPI = (payload) => {
             .map(item => `${item.field}:${item.order}`)
             .join(",");
     }
-  const apiUrl = `${url.EXPORT_ENTRANCE_TEST_RESULT_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+  const apiUrl = `${url.EXPORT_ENTRANCE_TEST_RESULT_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&entranceTestName=${payload?.entranceTestName}&entranceTestModuleName=${payload?.entranceTestModuleName}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -3056,7 +3056,7 @@ export const exportLanguageTestResultAPI = (payload) => {
             .map(item => `${item.field}:${item.order}`)
             .join(",");
     }
-  const apiUrl = `${url.EXPORT_LANGUAGE_TEST_RESULT_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+  const apiUrl = `${url.EXPORT_LANGUAGE_TEST_RESULT_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&languageNameTest=${payload?.languageNameTest}&languageTestName=${payload?.languageTestName}&languageModuleName=${payload?.languageModuleName}&languageBanchMarkLevel=${payload?.languageBanchMarkLevel}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 

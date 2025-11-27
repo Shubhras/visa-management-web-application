@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useDispatch } from "react-redux";
 import MasterLayout from "../../../masterLayout/MasterLayout";
 import { Icon } from '@iconify/react/dist/iconify.js';
@@ -13,6 +13,7 @@ import Documents from "./components/Documents";
 const LeadB2CForm = () => {
     const dispatch = useDispatch();
     const [leadFor, setLeadFor] = useState(null);
+    const scrollRef = useRef(null);
     const [activeMainTab, setActiveMainTab] = useState("basic");
     const leadForOptions = [
         { value: "visa", label: "Visa" },
@@ -20,9 +21,17 @@ const LeadB2CForm = () => {
         { value: "visa_coaching", label: "Visa & Coaching" }
     ];
 
+    const scrollLeft = () => {
+        scrollRef.current.scrollBy({ left: -100, behavior: "smooth" });
+    };
+
+    const scrollRight = () => {
+        scrollRef.current.scrollBy({ left: 100, behavior: "smooth" });
+    };
+
 
     const mainTabBtnClass = (tab) =>
-        `btn border border-primary-600 text-md px-16 py-6 radius-6 ${activeMainTab === tab ? "comman-btn-color text-white" : "bg-white text-primary-600"
+        `btn border border-primary-600 text-md px-16 py-6  ${activeMainTab === tab ? "comman-btn-color text-white" : "bg-white text-primary-600"
         }`;
 
     const renderActiveTab = () => {
@@ -49,11 +58,6 @@ const LeadB2CForm = () => {
 
             <style jsx>{`
 
-.top-stats-container {
-    display: flex;
-    justify-content: center;
-}
-
 .lead-stat-box {
     border: 1px solid #d5d5d5;
     padding: 8px 12px;
@@ -64,141 +68,54 @@ const LeadB2CForm = () => {
     border-radius: 4px;
 }
 
-.lead-stat-count {
-    font-weight: 600;
-    font-size: 16px;
-    color: #5a6c5b;
-}
-
-
-
-/* Section blocks */
 .section-block {
-    
     padding: 10px 12px;
-    background-color: #fff;
-}
-
-/* Tabs container row */
-.main-tabs-row {
-    padding: 6px 8px;
-}
-
-/* Correct spacing between ALL buttons */
-.main-tabs-row .btn-group {
-    display: flex;
-    align-items: center;
-    gap: 8px; /* BEST spacing */
+   
 }
 
 
-.nav-arrow-btn {
-    background-color: #ffffff;
-    padding: 4px 8px;
-    height: 36px;
-    width: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 6px;
-    border: 1px solid #5a6c5b;
-    cursor: pointer;
-}
-
-
-
-/* Main tab + sub tab styles unified */
-.main-tabs-row .btn,
-.sub-tab-btn,
-.tab-btn {
-    font-weight: 500;
-    min-width: 150px;
-    height: 36px;          
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 6px;
-    border: 1px solid #5a6c5b;
-    background: #fff;
-    cursor: pointer;
-}
-
-/* Active tab */
-.btn.comman-btn-color,
-.main-tabs-row .btn.active,
-.sub-tab-btn.active {
-    background-color: #5a6c5b !important;
-    color: white !important;
-    border-color: #5a6c5b !important;
-}
-
-/* Hover */
-.main-tabs-row .btn:hover,
-.sub-tab-btn:hover {
-    background-color: #4a5a4b;
-    color: white;
-    border-color: #4a5a4b;
-}
-
-.text-md { font-size: 13px; }
-.px-16 { padding-left: 16px !important; padding-right: 16px !important; }
-.py-6 { padding-top: 6px !important; padding-bottom: 6px !important; }
-.radius-6 { border-radius: 6px !important; }
-.border-primary-600 { border-color: #5a6c5b !important; }
-.text-primary-600 { color: #5a6c5b !important; }
-
-
-
-
-/* Checkboxes */
-.form-check-input {
-    width: 20px;
-    height: 20px;
-    cursor: pointer;
-}
-
-.form-check-input:checked {
-    background-color: #4a5a4b;
-    border-color: #4a5a4b;
-}
 `}</style>
-
 
             <div className="card basic-data-table main-container-data">
                 <div className="card-body container-data">
-                    <div className="top-stats-container">
-                        <div className="row justify-content-center w-100">
-                            <div className="col-auto">
-                                <div className="lead-stat-box">
-                                    <input type="checkbox" className="form-check-input me-2" />
-                                    <span className="lead-stat-count">04</span>
-                                    <span className="">Quick Assessment</span>
-                                </div>
+                    <div className="d-flex flex-wrap align-items-center justify-content-between w-100 gap-3">
+
+                        {/* LEFT BUTTON GROUP */}
+                        <div className="d-flex align-items-center gap-2 flex-wrap">
+                            <button className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color">
+                                Create Inquiry
+                            </button>
+
+                            <button className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color">
+                                Lost
+                            </button>
+
+                            <button className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color">
+                                Save
+                            </button>
+                        </div>
+
+                        {/* RIGHT STATUS BOXES */}
+                        <div className="d-flex align-items-center gap-2 flex-wrap">
+                            <div className="lead-stat-box">
+                                <span>Quick Assessment</span>
                             </div>
 
-                            <div className="col-auto">
-                                <div className="lead-stat-box">
-                                    <input type="checkbox" className="form-check-input me-2" />
-                                    <span className="lead-stat-count">02</span>
-                                    <span className="">Schedule Meeting</span>
-                                </div>
+                            <div className="lead-stat-box">
+                                <span>Schedule Meeting</span>
                             </div>
 
-                            <div className="col-auto">
-                                <div className="lead-stat-box">
-                                    <input type="checkbox" className="form-check-input me-2" />
-                                    <span className="lead-stat-count">12</span>
-                                    <span className="">Follow Ups</span>
-                                </div>
+                            <div className="lead-stat-box">
+                                <span>Follow Ups</span>
                             </div>
                         </div>
+
                     </div>
                 </div>
 
+
                 <div className="card-body pt-0 container-table">
                     <div className='container-table-div'>
-
-                        {/* Lead header info */}
                         <div className="section-block mb-3">
                             <div className="row g-3">
                                 <div className="col-md-4">
@@ -277,74 +194,78 @@ const LeadB2CForm = () => {
                         </div>
 
 
-                        {/* Main tabs */}
-                        <div className="d-flex align-items-center mb-3 main-tabs-row">
-                            <div className="btn-group" role="group">
-
-                                {/* Left arrow */}
-                                <button
-                                    type="button"
-                                    className="btn btn-sm nav-arrow-btn"
-                                >
-                                    <Icon icon="mdi:chevron-left" />
+                        <div className="d-flex align-items-center justify-content-center border-top border-bottom py-3">
+                            <div role="group" className="d-flex align-items-center">
+                                <button type="button" className="btn btn-sm me-1" onClick={scrollLeft}>
+                                    <Icon icon="mdi:chevron-left" width="25" height="25" />
                                 </button>
 
-                                {/* Main tabs */}
-                                <button
-                                    type="button"
-                                    className={mainTabBtnClass("basic")}
-                                    onClick={() => setActiveMainTab("basic")}
-                                >
-                                    Basic Details
-                                </button>
+                                <div
+                                    ref={scrollRef}
+                                    className="d-flex overflow-auto flex-nowrap"
+                                    style={{ scrollbarWidth: "thin" }}
 
-                                <button
-                                    type="button"
-                                    className={mainTabBtnClass("principal")}
-                                    onClick={() => setActiveMainTab("principal")}
                                 >
-                                    Principal Applicant
-                                </button>
+                                    <button
+                                        type="button"
+                                        className={`${mainTabBtnClass("basic")} me-1`}
+                                        onClick={() => setActiveMainTab("basic")}
+                                    >
+                                        Basic Details
+                                    </button>
 
-                                <button
-                                    type="button"
-                                    className={mainTabBtnClass("additional")}
-                                    onClick={() => setActiveMainTab("additional")}
-                                >
-                                    Additional Details
-                                </button>
+                                    <button
+                                        type="button"
+                                        className={`${mainTabBtnClass("principal")} me-1`}
+                                        onClick={() => setActiveMainTab("principal")}
+                                    >
+                                        Principal Applicant
+                                    </button>
 
-                                {/* Sub tabs */}
-                                <button
-                                    type="button"
-                                    className={mainTabBtnClass("spouse")}
-                                    onClick={() => setActiveMainTab("spouse")}
-                                >
-                                    Spouse Details
-                                </button>
+                                    <button
+                                        type="button"
+                                        className={`${mainTabBtnClass("additional")} me-1`}
+                                        onClick={() => setActiveMainTab("additional")}
+                                    >
+                                        Additional Details
+                                    </button>
 
-                                <button
-                                    type="button"
-                                    className={mainTabBtnClass("quick")}
-                                    onClick={() => setActiveMainTab("quick")}
-                                >
-                                    Quick Assessment
-                                </button>
+                                    <button
+                                        type="button"
+                                        className={`${mainTabBtnClass("spouse")} me-1`}
+                                        onClick={() => setActiveMainTab("spouse")}
+                                    >
+                                        Spouse Details
+                                    </button>
 
-                                <button
-                                    type="button"
-                                    className={mainTabBtnClass("documents")}
-                                    onClick={() => setActiveMainTab("documents")}
-                                >
-                                    Documents
-                                </button>
+                                    <button
+                                        type="button"
+                                        className={`${mainTabBtnClass("quick")} me-1`}
+                                        onClick={() => setActiveMainTab("quick")}
+                                    >
+                                        Quick Assessment
+                                    </button>
 
-                                {/* Right arrow */}
+                                    <button
+                                        type="button"
+                                        className={`${mainTabBtnClass("documents")} me-1`}
+                                        onClick={() => setActiveMainTab("documents")}
+                                    >
+                                        Documents
+                                    </button>
+                                </div>
+
+                                <button type="button" className="btn btn-sm" onClick={scrollRight}>
+                                    <Icon icon="mdi:chevron-right" width="25" height="25" />
+                                </button>
+                            </div>
+                            <div>
                                 <button
                                     type="button"
-                                    className="btn btn-sm nav-arrow-btn"
+
+                                    className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
                                 >
-                                    <Icon icon="mdi:chevron-right" />
+                                    Save
                                 </button>
 
                             </div>
@@ -352,27 +273,27 @@ const LeadB2CForm = () => {
 
                         {renderActiveTab()}
 
-
-
-                        <div className="d-flex justify-content-center py-3">
+                        <div className="d-flex justify-content-end py-3 px-3">
                             <div className="d-flex gap-2">
                                 <button
                                     type="button"
-                                    className="btn btn-sm comman-btn-color border border-primary-600 text-md px-16 py-6 radius-6"
+                                    className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
                                 >
                                     Back
                                 </button>
 
                                 <button
                                     type="button"
-                                    className="btn btn-sm comman-btn-color border border-primary-600 text-md px-16 py-6 radius-6"
+                                    // className="btn btn-sm comman-btn-color border border-primary-600 text-md px-16 py-6 radius-6"
+                                    className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
                                 >
                                     Next
                                 </button>
 
                                 <button
                                     type="button"
-                                    className="btn btn-sm comman-btn-color border border-primary-600 text-md px-16 py-6 radius-6"
+                                    // className="btn btn-sm comman-btn-color border border-primary-600 text-md px-16 py-6 radius-6"
+                                    className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
                                 >
                                     Save
                                 </button>
@@ -381,6 +302,7 @@ const LeadB2CForm = () => {
 
                     </div>
                 </div>
+
             </div>
         </MasterLayout>
     );
