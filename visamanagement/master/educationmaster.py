@@ -2472,61 +2472,6 @@ class StudymainareaDeleteAPIView(APIView):
 
 
 # -------------------- EXPORT API --------------------
-# class StudymainareaExportAPIView(APIView):
-#     def get(self, request):
-#         format_type = request.GET.get('format', 'xlsx').lower()
-#         fields = request.GET.get('fields')
-#         custom_sort = request.GET.get('customSort')
-#         search = request.GET.get('search', '').strip()
-#         uuids_param = request.GET.get('uuids', '')
-#         uuids = [u.strip() for u in uuids_param.split(',') if u]
-
-#         field_header_map = {
-#             'uuid': 'UUID',
-#             'name': 'Study Main Area',
-#             'description': 'Description',
-#             'is_deleted': 'Deleted',
-#             'created_at': 'Created On',
-#             'updated_at': 'Modified On',
-#         }
-
-#         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
-
-#         queryset = Studymainarea.objects.filter(is_deleted=False)
-#         if uuids:
-#             queryset = queryset.filter(uuid__in=uuids)
-#         queryset = queryset.order_by('-created_at')
-
-#         dataset = Dataset()
-#         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-#         dataset.title = 'StudyMainArea'
-
-#         for area in queryset:
-#             row = []
-#             for field in field_list:
-#                 value = getattr(area, field, '')
-#                 if field in ['created_at', 'updated_at'] and value:
-#                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-#                 elif isinstance(value, bool):
-#                     value = int(value)
-#                 row.append(value if value is not None else '')
-#             dataset.append(row)
-
-#         if format_type == 'csv':
-#             file_data = dataset.export('csv')
-#             content_type = 'text/csv'
-#             file_name = 'studymainareas.csv'
-#         else:
-#             file_data = io.BytesIO(dataset.export('xlsx'))
-#             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-#             file_name = 'studymainareas.xlsx'
-
-#         response = HttpResponse(
-#             file_data if format_type == 'csv' else file_data.getvalue(),
-#             content_type=content_type
-#         )
-#         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
-#         return response
 
 class StudymainareaExportAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -2823,35 +2768,6 @@ class StudymainareaImportAPIView(APIView):
 
 # -------------------- Studymajor -------------------- #
 
-# class StudyMajorAreaListAPIView(APIView):
-#     permission_classes = [IsAuthenticated]
-
-#     def get(self, request):
-#         search = request.GET.get('search', '').strip()
-#         sort_by = request.GET.get('sortBy', 'created_at')
-#         sort_order = request.GET.get('sortOrder', 'desc')
-
-#         allowed_sort_fields = ['majorarea', 'description', 'updated_at']
-#         if sort_by not in allowed_sort_fields:
-#             sort_by = 'created_at'
-#         if sort_order == 'desc':
-#             sort_by = f'-{sort_by}'
-
-#         queryset = Studymajorarea.objects.filter(is_deleted=False)
-
-#         if search:
-#             queryset = queryset.filter(
-#                 Q(majorarea__istartswith=search) 
-#             )
-
-#         queryset = queryset.order_by(sort_by)
-
-#         paginator = CustomPagination()
-#         result_page = paginator.paginate_queryset(queryset, request)
-#         serializer = StudyMajorAreaSerializer(result_page, many=True)
-
-#         return paginator.get_paginated_response(serializer.data)
-
 
 class StudyMajorAreaListAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -3137,62 +3053,6 @@ class StudyMajorAreaDeleteAPIView(APIView):
 
 
 # ------------------ Export API ------------------
-# class StudyMajorAreaExportAPIView(APIView):
-#     permission_classes = [IsAuthenticated, IsAdminUser]
-
-#     def get(self, request):
-#         format_type = request.GET.get('format', 'xlsx').lower()
-#         fields = request.GET.get('fields')
-#         uuids_param = request.GET.get('uuids', '')
-#         uuids = [u.strip() for u in uuids_param.split(',') if u]
-
-#         field_header_map = {
-#             'uuid': 'UUID',
-#             'mainarea': 'Study Main Area',
-#             'majorarea': 'Study Major Area',
-#             'description': 'Description',
-#             'is_deleted': 'Deleted',
-#             'created_at': 'Created On',
-#             'updated_at': 'Modified On',
-#         }
-
-#         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
-
-#         queryset = Studymajorarea.objects.filter(is_deleted=False)
-#         if uuids:
-#             queryset = queryset.filter(uuid__in=uuids)
-#         queryset = queryset.order_by('-created_at')
-
-#         dataset = Dataset()
-#         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-#         dataset.title = 'StudyMajorArea'
-
-#         for obj in queryset:
-#             row = []
-#             for field in field_list:
-#                 if field == 'mainarea_name':
-#                     value = obj.mainarea.name if obj.mainarea else ''
-#                 else:
-#                     value = getattr(obj, field, '')
-#                 if field in ['created_at', 'updated_at'] and value:
-#                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-#                 elif isinstance(value, bool):
-#                     value = int(value)
-#                 row.append(value if value is not None else '')
-#             dataset.append(row)
-
-#         if format_type == 'csv':
-#             file_data = dataset.export('csv')
-#             content_type = 'text/csv'
-#             file_name = 'study_major_areas.csv'
-#         else:
-#             file_data = io.BytesIO(dataset.export('xlsx'))
-#             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-#             file_name = 'study_major_areas.xlsx'
-
-#         response = io.BytesIO(file_data) if format_type == 'csv' else HttpResponse(file_data.getvalue(), content_type=content_type)
-#         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
-#         return response
 
 class StudyMajorAreaExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -3533,36 +3393,6 @@ class StudyMajorAreaImportAPIView(APIView):
         }, status=200)
 
 # -------------------- Studyspecialisation -------------------- #
-
-
-# class StudySpecialisationListAPIView(APIView):
-#     permission_classes = [IsAuthenticated]
-
-#     def get(self, request):
-#         search = request.GET.get('search', '').strip()
-#         sort_by = request.GET.get('sortBy', 'created_at')
-#         sort_order = request.GET.get('sortOrder', 'desc')
-
-#         allowed_sort_fields = ['studyspecialisation', 'description', 'updated_at']
-#         if sort_by not in allowed_sort_fields:
-#             sort_by = 'created_at'
-#         if sort_order == 'desc':
-#             sort_by = f'-{sort_by}'
-
-#         queryset = StudySpecialisation.objects.filter(is_deleted=False)
-
-#         if search:
-#             queryset = queryset.filter(
-#                 Q(studyspecialisation__istartswith=search) 
-#             )
-
-#         queryset = queryset.order_by(sort_by)
-
-#         paginator = CustomPagination()
-#         result_page = paginator.paginate_queryset(queryset, request)
-#         serializer = StudySpecialisationSerializer(result_page, many=True)
-
-#         return paginator.get_paginated_response(serializer.data)
 
 
 class StudySpecialisationListAPIView(APIView):
@@ -4082,30 +3912,6 @@ class StudyMajorAreaByMainUUIDAPIView(APIView):
 
 
 # -------------------- AcademicResultType -------------------- 
-# class AcademicResultTypeListAPIView(APIView):
-#     def get(self, request):
-#         search = request.GET.get('search', '').strip()
-#         sort_by = request.GET.get('sortBy', 'created_at')
-#         sort_order = request.GET.get('sortOrder', 'desc')
-
-#         allowed_sort_fields = ['name', 'description', 'updated_at']
-#         if sort_by not in allowed_sort_fields:
-#             sort_by = 'created_at'
-#         if sort_order == 'desc':
-#             sort_by = f'-{sort_by}'
-
-#         queryset = AcademicResultType.objects.filter(is_deleted=False)
-#         if search:
-#             queryset = queryset.filter(
-#                 Q(name__istartswith=search)
-#             )
-
-#         queryset = queryset.order_by(sort_by)
-
-#         paginator = CustomPagination()
-#         result_page = paginator.paginate_queryset(queryset, request)
-#         serializer = AcademicResultTypeSerializer(result_page, many=True)
-#         return paginator.get_paginated_response(serializer.data)
 
 
 class AcademicResultTypeListAPIView(APIView):
@@ -4213,34 +4019,7 @@ class AcademicResultTypeListAPIView(APIView):
 
 
 # --------------------- Create API ---------------------
-# class AcademicResultTypeCreateAPIView(APIView):
-#     permission_classes = [IsAuthenticated, IsAdminUser]
 
-#     def post(self, request):
-#         name = request.data.get("name", "").strip()
-#         if AcademicResultType.objects.filter(name__iexact=name, is_deleted=False).exists():
-#             return Response({
-#                 "statusCode": 400,
-#                 "status": False,
-#                 "message": "Academic Result Type with this name already exists."
-#             }, status=status.HTTP_400_BAD_REQUEST)
-
-#         serializer = AcademicResultTypeSerializer(data=request.data)
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response({
-#                 "statusCode": 200,
-#                 "status": True,
-#                 "message": "Academic Result Type created successfully",
-#                 "data": serializer.data
-#             }, status=status.HTTP_200_OK)
-
-#         message_text = " ".join([str(msg) for msgs in serializer.errors.values() for msg in msgs])
-#         return Response({
-#             "statusCode": 400,
-#             "status": False,
-#             "message": message_text
-#         }, status=status.HTTP_400_BAD_REQUEST)
 
 class AcademicResultTypeCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -4443,72 +4222,210 @@ class AcademicResultTypeDeleteAPIView(APIView):
 
 
 # --------------------- Export API ---------------------
+# class AcademicResultTypeExportAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+ 
+#     def get(self, request):
+#         format_type = request.GET.get('format', 'xlsx').lower()
+#         fields = request.GET.get('fields')
+#         uuids_param = request.GET.get('uuids', '')
+#         uuids = [u.strip() for u in uuids_param.split(',') if u]
+ 
+#         field_header_map = {
+#             'uuid': 'UUID',
+#             'name': 'Academic Result Type',
+#             'description': 'Description',
+#             'is_deleted': 'Deleted',
+#             'datatype':'Data Type',
+#             'updated_at': 'Modified On',
+#             'created_at': 'Created On',
+#         }
+ 
+#         # field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+        
+#         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+#         # force mapping data_type → datatype
+#         field_list = [
+#             'datatype' if f.lower().replace('-', '_') in ['data_type', 'datatype', 'data type'] else f
+#             for f in field_list
+#         ]
+
+ 
+#         queryset = AcademicResultType.objects.filter(is_deleted=False)
+#         if uuids:
+#             queryset = queryset.filter(uuid__in=uuids)
+#         queryset = queryset.order_by('-created_at')
+ 
+#         dataset = Dataset()
+#         dataset.headers = [field_header_map.get(f, f) for f in field_list]
+#         dataset.title = 'AcademicResultType'
+ 
+#         for obj in queryset:
+#             row = []
+#             for field in field_list:
+#                 value = getattr(obj, field, '')
+#                 if field in ['created_at', 'updated_at'] and value:
+#                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+#                 elif isinstance(value, bool):
+#                     value = int(value)
+#                 row.append(value if value is not None else '')
+#             dataset.append(row)
+ 
+#         if format_type == 'csv':
+#             file_data = dataset.export('csv')
+#             content_type = 'text/csv'
+#             file_name = 'academic_result_types.csv'
+#         else:
+#             file_data = io.BytesIO(dataset.export('xlsx'))
+#             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+#             file_name = 'academic_result_types.xlsx'
+ 
+#         response = HttpResponse(
+#             file_data if format_type == 'csv' else file_data.getvalue(),
+#             content_type=content_type
+#         )
+#         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+#         return response
+ 
+
 class AcademicResultTypeExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
- 
+
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')
+        search = request.GET.get('search', '').strip()
+        custom_sort = request.GET.get('customSort')
         uuids_param = request.GET.get('uuids', '')
         uuids = [u.strip() for u in uuids_param.split(',') if u]
- 
+
         field_header_map = {
             'uuid': 'UUID',
             'name': 'Academic Result Type',
             'description': 'Description',
             'is_deleted': 'Deleted',
-            'datatype':'Data Type',
+            'datatype': 'Data Type',
             'updated_at': 'Modified On',
             'created_at': 'Created On',
         }
- 
-        # field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
-        
+
+        # Field list
         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
-        # force mapping data_type → datatype
+        # Normalize datatype alias
         field_list = [
             'datatype' if f.lower().replace('-', '_') in ['data_type', 'datatype', 'data type'] else f
             for f in field_list
         ]
 
- 
+        # Base queryset
         queryset = AcademicResultType.objects.filter(is_deleted=False)
+
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
- 
+
+        if search:
+            queryset = queryset.filter(
+                Q(name__istartswith=search) |
+                Q(name__icontains=search)
+            )
+
+        # ---------------------------
+        # Custom Sorting
+        # ---------------------------
+        sort_field_map = {
+            'uuid': 'uuid',
+            'name': 'name',
+            'description': 'description',
+            'dataType': 'datatype',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+
+        sort_fields = []
+        annotations = {}
+
+        if custom_sort:
+            for idx, rule in enumerate(custom_sort.split(',')):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        return Response({
+                            "status": False,
+                            "statusCode": 400,
+                            "message": f"Invalid sort field: {field}"
+                        }, status=400)
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sorting for strings
+                    if field in ['name', 'description', 'datatype']:
+                        ann_name = f"sort_key_{idx}"
+                        annotations[ann_name] = Lower(orm_field)
+                        sort_fields.append(ann_name if order == 'asc' else f"-{ann_name}")
+                    else:
+                        sort_fields.append(orm_field if order == 'asc' else f"-{orm_field}")
+
+                except ValueError:
+                    return Response({
+                        "status": False,
+                        "statusCode": 400,
+                        "message": f"Invalid sorting rule format: {rule}"
+                    }, status=400)
+
+        # Apply annotation if needed
+        if annotations:
+            queryset = queryset.annotate(**annotations)
+
+        # Default sort
+        if not sort_fields:
+            sort_fields = ['-created_at']
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # ---------------------------
+        # Prepare Dataset
+        # ---------------------------
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = 'AcademicResultType'
- 
+
         for obj in queryset:
             row = []
             for field in field_list:
                 value = getattr(obj, field, '')
+
                 if field in ['created_at', 'updated_at'] and value:
-                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                    value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
                     value = int(value)
+
                 row.append(value if value is not None else '')
+
             dataset.append(row)
- 
+
+        # ---------------------------
+        # Export File
+        # ---------------------------
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
             file_name = 'academic_result_types.csv'
+            file_output = file_data
         else:
-            file_data = io.BytesIO(dataset.export('xlsx'))
+            file_buffer = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'academic_result_types.xlsx'
- 
-        response = HttpResponse(
-            file_data if format_type == 'csv' else file_data.getvalue(),
-            content_type=content_type
-        )
+            file_output = file_buffer.getvalue()
+
+        response = HttpResponse(file_output, content_type=content_type)
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
- 
+
  
 # --------------------- Import API ---------------------
 # class AcademicResultTypeImportAPIView(APIView):
