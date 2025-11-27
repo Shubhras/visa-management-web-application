@@ -12298,7 +12298,6 @@ class InterestLevelDeleteAPIView(APIView):
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         }, status=status.HTTP_200_OK)
 
-
 class InterestLevelExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -12325,10 +12324,15 @@ class InterestLevelExportAPIView(APIView):
 
         # --- Fetch queryset ---
         queryset = InterestLevel.objects.filter(is_deleted=False)
+
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
+
         if search:
-            queryset = queryset.filter(Q(name__icontains=search) | Q(description__icontains=search))
+            queryset = queryset.filter(
+                Q(name__icontains=search) |
+                Q(description__icontains=search)
+            )
 
         # --- Custom sorting ---
         sort_field_map = {
@@ -12340,14 +12344,17 @@ class InterestLevelExportAPIView(APIView):
         }
 
         sort_fields = []
+
         if custom_sort:
             for rule in custom_sort.split(','):
                 try:
                     field, order = rule.split(':')
                     field = field.strip()
                     order = order.strip().lower()
+
                     if field not in sort_field_map:
                         continue
+
                     orm_field = sort_field_map[field]
 
                     # Case-insensitive sorting for string fields
@@ -12356,14 +12363,21 @@ class InterestLevelExportAPIView(APIView):
                     else:
                         f = F(orm_field)
 
-                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+                    if order == 'asc':
+                        sort_fields.append(f.asc(nulls_last=True))
+                    else:
+                        sort_fields.append(f.desc(nulls_last=True))
+
                 except ValueError:
                     continue
+
         else:
             # Default sort: created_at desc
             sort_order = request.GET.get('sortOrder', 'desc')
             f = F('created_at')
-            sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
+            sort_fields = [
+                f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)
+            ]
 
         queryset = queryset.order_by(*sort_fields)
 
@@ -12376,11 +12390,15 @@ class InterestLevelExportAPIView(APIView):
             row = []
             for field in field_list:
                 value = getattr(obj, field, '')
+
                 if field in ['created_at', 'updated_at'] and value:
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+
                 elif isinstance(value, bool):
                     value = int(value)
+
                 row.append(value if value is not None else '')
+
             dataset.append(row)
 
         # --- Export data ---
@@ -12388,12 +12406,13 @@ class InterestLevelExportAPIView(APIView):
             file_data = dataset.export('csv')
             content_type = 'text/csv; charset=utf-8'
             file_name = 'InterestLevel.csv'
+
         else:
             file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'InterestLevel.xlsx'
 
-        response = HttpResponse(file_data if format_type != 'csv' else file_data, content_type=content_type)
+        response = HttpResponse(file_data, content_type=content_type)
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
@@ -13806,6 +13825,7 @@ class ActivityTypeDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+
 class ActivityTypeExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -13813,12 +13833,11 @@ class ActivityTypeExportAPIView(APIView):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')
         uuids_param = request.GET.get('uuids', '')
-        custom_sort = request.GET.get('customSort')  # e.g., name:asc,updated_at:desc
+        custom_sort = request.GET.get('customSort')
         search = request.GET.get('search', '').strip()
 
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
-        # --- Field headers ---
         field_header_map = {
             'uuid': 'UUID',
             'name': 'Activity Type',
@@ -13830,15 +13849,13 @@ class ActivityTypeExportAPIView(APIView):
 
         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
-        # --- Fetch queryset ---
         queryset = ActivityType.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
+
         if search:
-            # Case-insensitive search on name and description
             queryset = queryset.filter(Q(name__icontains=search) | Q(description__icontains=search))
 
-        # --- Custom sorting ---
         sort_field_map = {
             'name': 'name',
             'description': 'description',
@@ -13854,28 +13871,28 @@ class ActivityTypeExportAPIView(APIView):
                     field, order = rule.split(':')
                     field = field.strip()
                     order = order.strip().lower()
+
                     if field not in sort_field_map:
                         continue
+
                     orm_field = sort_field_map[field]
 
-                    # Case-insensitive sorting for string fields
                     if field in ['name', 'description']:
-                        f = Lower(orm_field)
+                        f = Lower(F(orm_field))  # FIXED
                     else:
                         f = F(orm_field)
 
-                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
                 except ValueError:
                     continue
         else:
-            # Default sort: created_at desc
-            sort_order = request.GET.get('sortOrder', 'desc')
             f = F('created_at')
-            sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
+            sort_fields = [f.desc(nulls_last=True)]
 
         queryset = queryset.order_by(*sort_fields)
 
-        # --- Prepare dataset ---
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = 'ActivityType'
@@ -13884,14 +13901,15 @@ class ActivityTypeExportAPIView(APIView):
             row = []
             for field in field_list:
                 value = getattr(obj, field, '')
+
                 if field in ['created_at', 'updated_at'] and value:
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
                     value = int(value)
-                row.append(value if value is not None else '')
+
+                row.append(value if value is not None else "")
             dataset.append(row)
 
-        # --- Export data ---
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
@@ -13903,11 +13921,10 @@ class ActivityTypeExportAPIView(APIView):
 
         response = HttpResponse(
             file_data if format_type == 'csv' else file_data.getvalue(),
-            content_type=content_type
+            content_type=content_type,
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
-
 
 class ActivityTypeImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
