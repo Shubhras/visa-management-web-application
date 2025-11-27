@@ -4983,7 +4983,7 @@ class AcademicResultListAPIView(APIView):
         # ----------------------
         if search:
             queryset = queryset.filter(
-                Q(Academicresult__icontains=search)
+                Q(Academicresult__istartswith=search)
             )
 
         # ----------------------
@@ -8456,13 +8456,14 @@ class DegreeAwardedInstituteListAPIView(APIView):
         # Allowed sort fields mapping
         # -----------------------
         sort_field_map = {
-            'name': 'name',
+            'name': 'name', 
             'created_at': 'created_at',
             'updated_at': 'updated_at',
             'country': 'country__name',
             'state': 'state__stateName',
             'educationLevel': 'education_level__educationlevel',
-            'degreeAwardedBy': 'degree_awarded_by__degree_name'
+            'degreeAwardedBy': 'degree_awarded_by__degree_name',
+            'description': 'description'
         }
 
         # -----------------------
@@ -8523,7 +8524,7 @@ class DegreeAwardedInstituteListAPIView(APIView):
                     orm_field = sort_field_map[field]
 
                     # Case-insensitive sorting for string fields
-                    if field in ['name', 'country', 'state', 'educationLevel', 'degreeAwardedBy']:
+                    if field in ['name', 'country', 'state', 'educationLevel', 'degreeAwardedBy', 'description']:
                         f = Lower(orm_field)
                     else:
                         f = F(orm_field)
@@ -8743,15 +8744,84 @@ class DegreeAwardedInstituteDeleteAPIView(APIView):
 
 
 # -------------------- EXPORT API --------------------
+# class DegreeAwardedInstituteExportAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def get(self, request):
+#         format_type = request.GET.get('format', 'xlsx').lower()
+#         fields = request.GET.get('fields')
+#         uuids_param = request.GET.get('uuids', '')
+#         uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+#         field_header_map = {
+#             'uuid': 'UUID',
+#             'country': 'Country',
+#             'state': 'State',
+#             'education_level': 'Education Level',
+#             'degree_awarded_by': 'Degree Awarded By',
+#             'name': 'Degree Awarded Institute',
+#             'description': 'Description',
+#             'created_at': 'Created On',
+#             'updated_at': 'Updated On'
+#         }
+
+#         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+#         queryset = DegreeAwardedInstitute.objects.all()
+#         if uuids:
+#             queryset = queryset.filter(uuid__in=uuids)
+#         queryset = queryset.order_by('-created_at')
+
+#         dataset = Dataset()
+#         dataset.headers = [field_header_map.get(f, f) for f in field_list]
+#         dataset.title = 'DegreeAwardedInstitute'
+
+#         for obj in queryset:
+#             row = []
+#             for field in field_list:
+#                 value = getattr(obj, field, '')
+#                 if field in ['created_at', 'updated_at'] and value:
+#                     value = value.strftime("%d-%m-%Y %I:%M:%S %p")
+#                 elif field == 'country' and obj.country:
+#                     value = obj.country.name
+#                 elif field == 'state' and obj.state:
+#                     value = obj.state.stateName
+#                 elif field == 'education_level' and obj.education_level:
+#                     value = obj.education_level.educationlevel
+#                 elif field == 'degree_awarded_by' and obj.degree_awarded_by:
+#                     value = obj.degree_awarded_by.degree_name
+#                 elif isinstance(value, bool):
+#                     value = int(value)
+#                 row.append(value if value is not None else '')
+#             dataset.append(row)
+
+#         if format_type == 'csv':
+#             file_data = dataset.export('csv')
+#             content_type = 'text/csv'
+#             file_name = 'degree_awarded_institutes.csv'
+#         else:
+#             file_data = io.BytesIO(dataset.export('xlsx'))
+#             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+#             file_name = 'degree_awarded_institutes.xlsx'
+
+#         response = HttpResponse(
+#             file_data if format_type == 'csv' else file_data.getvalue(),
+#             content_type=content_type
+#         )
+#         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+#         return response
+
+
 class DegreeAwardedInstituteExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')
-        uuids_param = request.GET.get('uuids', '')
-        uuids = [u.strip() for u in uuids_param.split(',') if u]
+        search = request.GET.get("search", "").strip()
+        custom_sort = request.GET.get('customSort')
 
+        # ------------------ Field Mapping ------------------
         field_header_map = {
             'uuid': 'UUID',
             'country': 'Country',
@@ -8764,13 +8834,117 @@ class DegreeAwardedInstituteExportAPIView(APIView):
             'updated_at': 'Updated On'
         }
 
-        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+        field_list = (
+            [f.strip() for f in fields.split(',')]
+            if fields else list(field_header_map.keys())
+        )
 
-        queryset = DegreeAwardedInstitute.objects.all()
-        if uuids:
-            queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
+        # ------------------ Allowed Sorting Fields ------------------
+        allowed_sort_fields = {
+            "uuid": "uuid",
+            "country": "country__name",
+            "state": "state__stateName",
+            "educationLevel": "education_level__educationlevel",
+            "degreeAwardedBy": "degree_awarded_by__degree_name",
+            "name": "name",
+            "description": "description",
+            "created_at": "created_at",
+            "updated_at": "updated_at",
+        }
 
+        # ------------------ Parse Helper ------------------
+        def parse_ids(param_name):
+            raw = request.GET.get(param_name, '')
+            if raw:
+                items = [x.strip() for x in raw.split(',') if x.strip()]
+            else:
+                items = request.GET.getlist(param_name)
+            return items
+
+        def validate_uuid_list(uuid_list):
+            valid = []
+            for u in uuid_list:
+                try:
+                    valid.append(UUID(u))
+                except:
+                    pass
+            return valid
+
+        try:
+            uuids_list = validate_uuid_list(parse_ids("uuids"))
+            country_list = validate_uuid_list(parse_ids("country"))
+            state_list = validate_uuid_list(parse_ids("state"))
+            education_level_list = validate_uuid_list(parse_ids("educationLevel"))
+            degree_awarded_by_list = validate_uuid_list(parse_ids("degreeAwardedBy"))
+        except ValueError as e:
+            return Response({
+                "status": False,
+                "statusCode": 400,
+                "message": f"Invalid UUID: {e}"
+            }, status=400)
+
+        # ------------------ Queryset ------------------
+        queryset = DegreeAwardedInstitute.objects.select_related(
+            "country", "state", "education_level", "degree_awarded_by"
+        )
+
+        if uuids_list:
+            queryset = queryset.filter(uuid__in=uuids_list)
+
+        if country_list:
+            queryset = queryset.filter(country__uuid__in=country_list)
+
+        if state_list:
+            queryset = queryset.filter(state__uuid__in=state_list)
+
+        if education_level_list:
+            queryset = queryset.filter(education_level__uuid__in=education_level_list)
+
+        if degree_awarded_by_list:
+            queryset = queryset.filter(degree_awarded_by__uuid__in=degree_awarded_by_list)
+
+        # ------------------ Search ------------------
+        if search:
+            queryset = queryset.filter(
+                Q(name__istartswith=search)
+            )
+
+        # ------------------ Custom Sort ------------------
+        sort_fields = []
+
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in allowed_sort_fields:
+                        continue
+
+                    orm_field = allowed_sort_fields[field]
+
+                    text_fields = [
+                        "country", "state", "educationLevel",
+                        "degreeAwardedBy", "name", "description"
+                    ]
+                    is_text = field in text_fields
+
+                    sort_expr = Lower(orm_field) if is_text else F(orm_field)
+
+                    sort_fields.append(
+                        sort_expr.asc(nulls_last=True) if order == "asc"
+                        else sort_expr.desc(nulls_last=True)
+                    )
+
+                except ValueError:
+                    continue
+        else:
+            sort_fields = [F("created_at").desc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # ------------------ Dataset ------------------
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = 'DegreeAwardedInstitute'
@@ -8778,37 +8952,53 @@ class DegreeAwardedInstituteExportAPIView(APIView):
         for obj in queryset:
             row = []
             for field in field_list:
-                value = getattr(obj, field, '')
-                if field in ['created_at', 'updated_at'] and value:
-                    value = value.strftime("%d-%m-%Y %I:%M:%S %p")
-                elif field == 'country' and obj.country:
-                    value = obj.country.name
-                elif field == 'state' and obj.state:
-                    value = obj.state.stateName
-                elif field == 'education_level' and obj.education_level:
-                    value = obj.education_level.educationlevel
-                elif field == 'degree_awarded_by' and obj.degree_awarded_by:
-                    value = obj.degree_awarded_by.degree_name
-                elif isinstance(value, bool):
-                    value = int(value)
-                row.append(value if value is not None else '')
+
+                if field == "country":
+                    value = obj.country.name if obj.country else ""
+
+                elif field == "state":
+                    value = obj.state.stateName if obj.state else ""
+
+                elif field == "education_level":
+                    value = (
+                        obj.education_level.educationlevel
+                        if obj.education_level else ""
+                    )
+
+                elif field == "degree_awarded_by":
+                    value = (
+                        obj.degree_awarded_by.degree_name
+                        if obj.degree_awarded_by else ""
+                    )
+
+                elif field in ["created_at", "updated_at"]:
+                    dt = getattr(obj, field)
+                    value = dt.strftime("%d-%m-%Y %I:%M:%S %p") if dt else ""
+
+                else:
+                    value = getattr(obj, field, "")
+
+                row.append(value if value is not None else "")
+
             dataset.append(row)
 
+        # ------------------ Export File ------------------
         if format_type == 'csv':
             file_data = dataset.export('csv')
-            content_type = 'text/csv'
-            file_name = 'degree_awarded_institutes.csv'
+            response = HttpResponse(file_data, content_type='text/csv')
+            filename = "degree_awarded_institute.csv"
+
         else:
             file_data = io.BytesIO(dataset.export('xlsx'))
-            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'degree_awarded_institutes.xlsx'
+            response = HttpResponse(
+                file_data.getvalue(),
+                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
+            filename = "degree_awarded_institute.xlsx"
 
-        response = HttpResponse(
-            file_data if format_type == 'csv' else file_data.getvalue(),
-            content_type=content_type
-        )
-        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
         return response
+
 
 
 class DegreeAwardedInstituteImportAPIView(APIView):
