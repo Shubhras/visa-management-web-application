@@ -1277,7 +1277,7 @@ export const exportEducationLevelDataAPI = (payload) => {
             .map(item => `${item.field}:${item.order}`)
             .join(",");
     }
-    const apiUrl = `${url.EXPORT_EDUCATION_LEVEL_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+    const apiUrl = `${url.EXPORT_EDUCATION_LEVEL_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&educationLevelCode=${payload?.educationLevelCode}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -1848,7 +1848,7 @@ export const exportStudyMajorAreaDataAPI = (payload) => {
             .map(item => `${item.field}:${item.order}`)
             .join(",");
     }
-    const apiUrl = `${url.EXPORT_STUDY_MAJOR_AREA_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+    const apiUrl = `${url.EXPORT_STUDY_MAJOR_AREA_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&studyMainArea=${payload?.studyMainArea}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -2018,7 +2018,7 @@ export const exportStudySpecialisationDataAPI = (payload) => {
             .map(item => `${item.field}:${item.order}`)
             .join(",");
     }
-    const apiUrl = `${url.EXPORT_STUDY_SPECIALISATION_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+    const apiUrl = `${url.EXPORT_STUDY_SPECIALISATION_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&studyMainArea=${payload.studyMainArea}&studyMajorArea=${payload.studyMajorArea}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -2072,7 +2072,7 @@ export const exportDegreeAwardedByDataAPI = (payload) => {
             .map(item => `${item.field}:${item.order}`)
             .join(",");
     }
-    const apiUrl = `${url.EXPORT_DEGREE_AWARDED_BY_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+    const apiUrl = `${url.EXPORT_DEGREE_AWARDED_BY_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&country=${payload?.country}&educationLevel=${payload?.educationLevel}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -2130,7 +2130,7 @@ export const exportAcademicResultDataAPI = (payload) => {
             .map(item => `${item.field}:${item.order}`)
             .join(",");
     }
-    const apiUrl = `${url.EXPORT_ACADEMIC_RESULT_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+    const apiUrl = `${url.EXPORT_ACADEMIC_RESULT_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&academicResultType=${payload?.academicResultType}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -2184,7 +2184,7 @@ export const exportDegreeAwardedInstituteDataAPI = (payload) => {
             .map(item => `${item.field}:${item.order}`)
             .join(",");
     }
-    const apiUrl = `${url.EXPORT_DEGREE_AWARDED_INSTITUTE_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+    const apiUrl = `${url.EXPORT_DEGREE_AWARDED_INSTITUTE_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&country=${payload?.country}&state=${payload?.state}&educationLevel=${payload?.educationLevel}&degreeAwardedBy=${payload?.degreeAwardedBy}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -2238,7 +2238,7 @@ export const exportAcademicResultToResultAPI = (payload) => {
             .map(item => `${item.field}:${item.order}`)
             .join(",");
     }
-    const apiUrl = `${url.EXPORT_ACADEMIC_RESULT_TO_RESULT_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+    const apiUrl = `${url.EXPORT_ACADEMIC_RESULT_TO_RESULT_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&academicResultType=${payload?.academicResultType}&academicResult=${payload?.academicResult}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
@@ -2456,7 +2456,7 @@ export const exportEcaAwardingBodyAPI = (payload) => {
             .map(item => `${item.field}:${item.order}`)
             .join(",");
     }
-    const apiUrl = `${url.EXPORT_ECA_AWARDING_BODY_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+    const apiUrl = `${url.EXPORT_ECA_AWARDING_BODY_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&country=${payload?.country}&ecaFor=${payload?.ecaFor}&customSort=${customSort}`;
     return getExportData(apiUrl, payload);
 };
 
