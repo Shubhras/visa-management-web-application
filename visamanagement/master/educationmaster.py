@@ -7376,11 +7376,13 @@ class DegreeAwardedByListAPIView(APIView):
             from django.db.models import F
 
             field_map = {
-                'degree_name': 'degree_name',
-                'created_at': 'created_at',
-                'updated_at': 'updated_at',
-                'name': 'country__name',
-                'education_level_name': 'education_level__educationlevel'
+                "uuid": "uuid",
+                "country": "country__name",
+                "educationLevel": "education_level__educationlevel",
+                "degree_name": "degree_name",
+                "description": "description",
+                "created_at": "created_at",
+                "updated_at": "updated_at",
             }
             for rule in custom_sort.split(','):
                 try:
@@ -7394,7 +7396,7 @@ class DegreeAwardedByListAPIView(APIView):
                     orm_field = field_map[field]
 
                     # Case-insensitive sorting for text fields
-                    if field in ['degree_name', 'country', 'education_level']:
+                    if field in ['degree_name', 'country', 'educationLevel', 'description']:
                         expression = Lower(orm_field)
                     else:
                         expression = F(orm_field)
@@ -7701,6 +7703,7 @@ class DegreeAwardedByDeleteAPIView(APIView):
 #         response = HttpResponse(response_data, content_type=content_type)
 #         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
 #         return response
+
 
 
 class DegreeAwardedByExportAPIView(APIView):
