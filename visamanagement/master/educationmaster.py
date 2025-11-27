@@ -2894,11 +2894,12 @@ class StudyMajorAreaListAPIView(APIView):
         # Sort field mapping
         # --------------------------------------------------
         sort_field_map = {
-            "majorarea": "majorarea",
-            "description": "description",
-            "created_at": "created_at",
-            "updated_at": "updated_at",
-            "mainarea_name": "mainarea__name"
+            'uuid': 'uuid',
+            'studyMainArea': 'mainarea__name',
+            'majorarea': 'majorarea',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
         }
 
         sort_fields = []
@@ -2919,7 +2920,7 @@ class StudyMajorAreaListAPIView(APIView):
                     orm_field = sort_field_map[field]
 
                     # Case-insensitive ordering for string fields
-                    if field in ["majorarea", "mainarea_name", "description"]:
+                    if field in ["majorarea", "studyMainArea", "description"]:
                         f = Lower(orm_field)
                     else:
                         f = F(orm_field)
