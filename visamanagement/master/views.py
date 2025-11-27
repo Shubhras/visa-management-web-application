@@ -2809,10 +2809,10 @@ class StateByCountryAPIView(APIView):
         data = [
             {
                 "uuid": str(state.uuid),
-                "name": state.stateName or "",
-                "shortName": state.stateshortName or "",
-                "fullName": state.description or "",
-                "country": state.countryName.name or ""
+                "name": state.stateName if state.stateName else "",
+                "shortName": state.stateshortName if state.stateshortName else "",
+                "fullName": state.description if state.description else "",
+                "country": state.countryName.name if state.countryName else ""
             }
             for state in result_page
         ]
