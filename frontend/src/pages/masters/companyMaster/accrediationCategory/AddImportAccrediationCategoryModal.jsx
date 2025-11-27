@@ -164,7 +164,7 @@ const AddImportAccrediationCategoryModal = ({ show, handleClose }) => {
                             />
                         </div>
 
-                        <div className="modal-body p-24">
+                        <div className="modal-body p-24 pt-10">
                             <div className='text-md-end text-end'>
                                 <button
                                     type="button"
@@ -175,8 +175,8 @@ const AddImportAccrediationCategoryModal = ({ show, handleClose }) => {
                             </div>
                             <form onSubmit={handleSubmit}>
                                 <div className="row">
-                                    <div className="col-12 mb-20">
-                                        <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                                    <div className="col-12 mb-10">
+                                        <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                                             Upload file <span className="text-danger">*</span>
                                         </label>
                                         <input
@@ -189,8 +189,8 @@ const AddImportAccrediationCategoryModal = ({ show, handleClose }) => {
                                         {error && !sheetNames.length && <div className="text-danger text-sm mt-1">{error}</div>}
                                     </div>
                                     {sheetNames.length > 0 && (
-                                        <div className="col-12 mb-20">
-                                            <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                                        <div className="col-12 mb-10">
+                                            <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                                                 Select name <span className="text-danger">*</span>
                                             </label>
                                             <div className="d-flex flex-column gap-2">

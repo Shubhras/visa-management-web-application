@@ -173,12 +173,12 @@ const AddEditSpouseVisaCategoryModal = ({ show, handleClose, mode = 'add', rowDa
                         />
                     </div>
 
-                    <div className="modal-body p-24">
+                    <div className="modal-body p-24 pt-10">
                         <form onSubmit={handleSubmit}>
                             <div className="row">
                                 {/* Department Name */}
-                                <div className="col-12 mb-20">
-                                    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                                <div className="col-12 mb-10">
+                                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                                         Spouse Visa Category <span className="text-danger">*</span>
                                     </label>
                                     {/* <input
@@ -227,10 +227,10 @@ const AddEditSpouseVisaCategoryModal = ({ show, handleClose, mode = 'add', rowDa
                                 </div>
 
                                 {/* Description */}
-                                <div className="col-12 mb-20">
+                                <div className="col-12 mb-10">
                                     <label
                                         htmlFor="desc"
-                                        className="form-label fw-semibold text-primary-light text-sm mb-8"
+                                        className="form-label fw-semibold text-primary-light text-sm mb-0"
                                     >
                                         Description
                                     </label>

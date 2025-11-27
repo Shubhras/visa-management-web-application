@@ -240,13 +240,13 @@ const AddEditECAAwardingBodyModal = ({ show, handleClose, mode = 'add', rowData 
             />
           </div>
 
-          <div className="modal-body p-24">
+          <div className="modal-body p-24 pt-10">
             <form onSubmit={handleSubmit}>
               <div className="row">
                 {/* Department Name */}
 
-                <div className="col-12 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                <div className="col-12 mb-10">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Country<span className="text-danger">*</span>
                   </label>
                   <Select
@@ -286,8 +286,8 @@ const AddEditECAAwardingBodyModal = ({ show, handleClose, mode = 'add', rowData 
                     </div>
                   )}
                 </div>
-                <div className="col-12 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                <div className="col-12 mb-10">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     ECA For <span className="text-danger">*</span>
                   </label>
                   <Select
@@ -326,8 +326,8 @@ const AddEditECAAwardingBodyModal = ({ show, handleClose, mode = 'add', rowData 
                     </div>
                   )}
                 </div>
-                <div className="col-12 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                <div className="col-12 mb-10">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     ECA Body Full Name <span className="text-danger">*</span>
                   </label>
                   <input
@@ -344,8 +344,8 @@ const AddEditECAAwardingBodyModal = ({ show, handleClose, mode = 'add', rowData 
                     </div>
                   )}
                 </div>
-                <div className="col-12 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                <div className="col-12 mb-10">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     ECA Body Short Name <span className="text-danger">*</span>
                   </label>
                   <input
@@ -362,8 +362,8 @@ const AddEditECAAwardingBodyModal = ({ show, handleClose, mode = 'add', rowData 
                     </div>
                   )}
                 </div>
-                <div className="col-12 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                <div className="col-12 mb-10">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     ECA Valid Period
                   </label>
                   <div className="row gx-2">
@@ -400,10 +400,10 @@ const AddEditECAAwardingBodyModal = ({ show, handleClose, mode = 'add', rowData 
                 </div>
 
                 {/* Description */}
-                <div className="col-12 mb-20">
+                <div className="col-12 mb-10">
                   <label
                     htmlFor="desc"
-                    className="form-label fw-semibold text-primary-light text-sm mb-8"
+                    className="form-label fw-semibold text-primary-light text-sm mb-0"
                   >
                     Description
                   </label>

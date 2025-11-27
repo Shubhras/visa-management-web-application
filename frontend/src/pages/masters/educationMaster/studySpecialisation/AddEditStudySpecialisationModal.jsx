@@ -213,12 +213,12 @@
 //                         />
 //                     </div>
 
-//                     <div className="modal-body p-24">
+//                     <div className="modal-body p-24 pt-10">
 //                         <form onSubmit={handleSubmit}>
 //                             <div className="row">
 //                                 {/* Department Name */}
-//                                 <div className="col-12 mb-20">
-//                                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+//                                 <div className="col-12 mb-10">
+//                                     <label className="form-label fw-semibold text-primary-light text-sm mb-0">
 //                                         Study Main Area <span className="text-danger">*</span>
 //                                     </label>
 //                                     <Select
@@ -258,8 +258,8 @@
 //                                         </div>
 //                                     )}
 //                                 </div>
-//                                 <div className="col-12 mb-20">
-//                                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+//                                 <div className="col-12 mb-10">
+//                                     <label className="form-label fw-semibold text-primary-light text-sm mb-0">
 //                                         Study Major Area <span className="text-danger">*</span>
 //                                     </label>
 //                                     <Select
@@ -299,8 +299,8 @@
 //                                         </div>
 //                                     )}
 //                                 </div>
-//                                 <div className="col-12 mb-20">
-//                                     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+//                                 <div className="col-12 mb-10">
+//                                     <label className="form-label fw-semibold text-primary-light text-sm mb-0">
 //                                         Study Specialisation <span className="text-danger">*</span>
 //                                     </label>
 //                                     <input
@@ -320,10 +320,10 @@
 
 
 //                                 {/* Description */}
-//                                 <div className="col-12 mb-20">
+//                                 <div className="col-12 mb-10">
 //                                     <label
 //                                         htmlFor="desc"
-//                                         className="form-label fw-semibold text-primary-light text-sm mb-8"
+//                                         className="form-label fw-semibold text-primary-light text-sm mb-0"
 //                                     >
 //                                         Description
 //                                     </label>
@@ -614,12 +614,12 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
                         />
                     </div>
 
-                    <div className="modal-body p-24">
+                    <div className="modal-body p-24 pt-10">
                         <form onSubmit={handleSubmit}>
                             <div className="row">
                                 {/* Study Main Area */}
-                                <div className="col-12 mb-20">
-                                    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                                <div className="col-12 mb-10">
+                                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                                         Study Main Area <span className="text-danger">*</span>
                                     </label>
                                     <Select
@@ -653,8 +653,8 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
                                 </div>
 
                                 {/* Study Major Area */}
-                                <div className="col-12 mb-20">
-                                    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                                <div className="col-12 mb-10">
+                                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                                         Study Major Area <span className="text-danger">*</span>
                                     </label>
                                     <Select
@@ -696,8 +696,8 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
                                 </div>
 
                                 {/* Study Specialisation */}
-                                <div className="col-12 mb-20">
-                                    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                                <div className="col-12 mb-10">
+                                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                                         Study Specialisation <span className="text-danger">*</span>
                                     </label>
                                     <input
@@ -716,10 +716,10 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
                                 </div>
 
                                 {/* Description */}
-                                <div className="col-12 mb-20">
+                                <div className="col-12 mb-10">
                                     <label
                                         htmlFor="desc"
-                                        className="form-label fw-semibold text-primary-light text-sm mb-8"
+                                        className="form-label fw-semibold text-primary-light text-sm mb-0"
                                     >
                                         Description
                                     </label>

@@ -289,12 +289,12 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
             />
           </div>
 
-          <div className="modal-body p-24">
+          <div className="modal-body p-24 pt-10">
             <form onSubmit={handleSubmit}>
               <div className="row">
                 {/* Country */}
-                <div className="col-12 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                <div className="col-12 mb-10">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Country <span className="text-danger">*</span>
                   </label>
                   {/* <select
@@ -336,8 +336,8 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
                 </div>
 
                 {/* LicenceName */}
-                <div className="col-12 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                <div className="col-12 mb-10">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     License Full Name<span className="text-danger">*</span>
                   </label>
                   <input
@@ -355,8 +355,8 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
                   )}
                 </div>
 
-                <div className="col-12 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                <div className="col-12 mb-10">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     License Short Name<span className="text-danger">*</span>
                   </label>
                   <input
@@ -373,8 +373,8 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
                     </div>
                   )}
                 </div>
-                <div className="col-12 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                <div className="col-12 mb-10">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     License Issuing Authority Name
                   </label>
                   <input
@@ -386,8 +386,8 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
                     placeholder="Enter licence issuing authority name"
                   />
                 </div>
-                <div className="col-12 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                <div className="col-12 mb-10">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     License Valid Upto
                   </label>
                   <div className="row g-2">
@@ -464,10 +464,10 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
                 </div>
 
                 {/* Description */}
-                <div className="col-12 mb-20">
+                <div className="col-12 mb-10">
                   <label
                     htmlFor="desc"
-                    className="form-label fw-semibold text-primary-light text-sm mb-8"
+                    className="form-label fw-semibold text-primary-light text-sm mb-0"
                   >
                     Description
                   </label>

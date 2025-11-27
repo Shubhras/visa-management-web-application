@@ -149,12 +149,12 @@ const AddEditMaritalStatusModal = ({ show, handleClose, mode = 'add', rowData = 
             />
           </div>
 
-          <div className="modal-body p-24">
+          <div className="modal-body p-24 pt-10">
             <form onSubmit={handleSubmit}>
               <div className="row">
                 {/* Marital Status Name */}
-                <div className="col-12 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                <div className="col-12 mb-10">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Marital Status <span className="text-danger">*</span>
                   </label>
                   <input
@@ -173,10 +173,10 @@ const AddEditMaritalStatusModal = ({ show, handleClose, mode = 'add', rowData = 
                 </div>
 
                 {/* Description */}
-                <div className="col-12 mb-20">
+                <div className="col-12 mb-10">
                   <label
                     htmlFor="desc"
-                    className="form-label fw-semibold text-primary-light text-sm mb-8"
+                    className="form-label fw-semibold text-primary-light text-sm mb-0"
                   >
                     Description
                   </label>

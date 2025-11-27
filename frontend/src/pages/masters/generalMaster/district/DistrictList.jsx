@@ -855,7 +855,7 @@
 //                     aria-label="Close"
 //                   />
 //                 </div>
-//                 <div className="modal-body p-24">
+//                 <div className="modal-body p-24 pt-10">
 //                   <div className="row">
 //                     <div className="col-12 col-md-6">
 //                       <h3 className="text-sm font-semibold mb-3 text-gray-700">Available fields</h3>
@@ -1659,7 +1659,7 @@ const DistrictList = () => {
                   <h1 className="modal-title fs-5">Export District</h1>
                   <button type="button" className="btn-close" onClick={cancelExportTest} aria-label="Close" />
                 </div>
-                <div className="modal-body p-24">
+                <div className="modal-body p-24 pt-10">
                   <div className="row">
                     <div className="col-12 col-md-6">
                       <h3 className="text-sm font-semibold mb-3 text-gray-700">Available fields</h3>

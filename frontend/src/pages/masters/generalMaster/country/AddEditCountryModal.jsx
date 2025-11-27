@@ -220,12 +220,12 @@ const AddEditCountryModal = ({
             />
           </div>
 
-          <div className="modal-body p-24">
+          <div className="modal-body p-24 pt-10">
             <form onSubmit={handleSubmit}>
               {/* Row 1 */}
               <div className="row">
-                <div className="col-md-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                <div className="col-md-6 mb-10">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Country Name <span className="text-danger">*</span>
                   </label>
                   <input
@@ -244,8 +244,8 @@ const AddEditCountryModal = ({
                   )}
                 </div>
 
-                <div className="col-md-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                <div className="col-md-6 mb-10">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Continent <span className="text-danger">*</span>
                   </label>
 
@@ -283,8 +283,8 @@ const AddEditCountryModal = ({
 
               {/* Row 2 */}
               <div className="row">
-                <div className="col-md-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                <div className="col-md-6 mb-10">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Country Official Name
                   </label>
                   <input
@@ -297,8 +297,8 @@ const AddEditCountryModal = ({
                   />
                 </div>
 
-                <div className="col-md-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                <div className="col-md-6 mb-10">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Country Short Name
                   </label>
                   <input
@@ -314,8 +314,8 @@ const AddEditCountryModal = ({
 
               {/* Row 3 */}
               <div className="row">
-                <div className="col-md-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                <div className="col-md-6 mb-10">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Capital City
                   </label>
                   <input
@@ -328,8 +328,8 @@ const AddEditCountryModal = ({
                   />
                 </div>
 
-                <div className="col-md-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                <div className="col-md-6 mb-10">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Currency Full Name
                   </label>
                   <input
@@ -345,8 +345,8 @@ const AddEditCountryModal = ({
 
               {/* Row 4 */}
               <div className="row">
-                <div className="col-md-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                <div className="col-md-6 mb-10">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Currency Short Name
                   </label>
                   <input
@@ -359,8 +359,8 @@ const AddEditCountryModal = ({
                   />
                 </div>
 
-                <div className="col-md-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                <div className="col-md-6 mb-10">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Currency Code
                   </label>
                   <input
@@ -376,8 +376,8 @@ const AddEditCountryModal = ({
 
               {/* Row 5 */}
               <div className="row">
-                <div className="col-md-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                <div className="col-md-6 mb-10">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Country Calling Code
                   </label>
                   <input
@@ -390,8 +390,8 @@ const AddEditCountryModal = ({
                   />
                 </div>
 
-                <div className="col-md-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                <div className="col-md-6 mb-10">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Description
                   </label>
                   <textarea
