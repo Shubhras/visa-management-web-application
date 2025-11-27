@@ -10,6 +10,9 @@ import {
   addLanguageAbilityGroupAPI,
   addStudyFactorAcademicResultAPI,
   addStudyFactorBacklogsAPI,
+  addStudyFactorEntranceTestAbilityAPI,
+  addStudyFactorGapAPI,
+  addStudyFactorLanguageAbilityAPI,
   deleteAcademicResultGroupAPI,
   deleteAgeAPI,
   deleteAgeGroupAPI,
@@ -20,6 +23,9 @@ import {
   deleteLanguageAbilityGroupAPI,
   deleteStudyFactorAcademicResultAPI,
   deleteStudyFactorBacklogsAPI,
+  deleteStudyFactorEntranceTestAbilityAPI,
+  deleteStudyFactorGapAPI,
+  deleteStudyFactorLanguageAbilityAPI,
   editAcademicResultGroupAPI,
   editAgeAPI,
   editAgeGroupAPI,
@@ -30,6 +36,9 @@ import {
   editLanguageAbilityGroupAPI,
   editStudyFactorAcademicResultAPI,
   editStudyFactorBacklogsAPI,
+  editStudyFactorEntranceTestAbilityAPI,
+  editStudyFactorGapAPI,
+  editStudyFactorLanguageAbilityAPI,
   exportAcademicResultGroupAPI,
   exportAgeAPI,
   exportAgeGroupAPI,
@@ -40,6 +49,9 @@ import {
   exportLanguageAbilityGroupAPI,
   exportStudyFactorAcademicResultAPI,
   exportStudyFactorBacklogsAPI,
+  exportStudyFactorEntranceTestAbilityAPI,
+  exportStudyFactorGapAPI,
+  exportStudyFactorLanguageAbilityAPI,
   getAcademicResultGroupListAPI,
   getAgeGroupListAPI,
   getAgeListAPI,
@@ -50,6 +62,9 @@ import {
   getLanguageAbilityGroupListAPI,
   getStudyFactorAcademicResultListAPI,
   getStudyFactorBacklogsListAPI,
+  getStudyFactorEntranceTestAbilityListAPI,
+  getStudyFactorGapListAPI,
+  getStudyFactorLanguageAbilityListAPI,
   importAcademicResultGroupAPI,
   importAgeAPI,
   importAgeGroupAPI,
@@ -60,6 +75,9 @@ import {
   importLanguageAbilityGroupAPI,
   importStudyFactorAcademicResultAPI,
   importStudyFactorBacklogsAPI,
+  importStudyFactorEntranceTestAbilityAPI,
+  importStudyFactorGapAPI,
+  importStudyFactorLanguageAbilityAPI,
 } from "../../../service/api_helper";
 import {
   ACADEMIC_RESULT_GROUP_LIST,
@@ -73,6 +91,9 @@ import {
   ADD_LANGUAGE_ABILITY_GROUP,
   ADD_STUDY_FACTOR_ACADEMIC_RESULT,
   ADD_STUDY_FACTOR_BACKLOGS,
+  ADD_STUDY_FACTOR_ENTRANCE_TEST_ABILITY,
+  ADD_STUDY_FACTOR_GAP,
+  ADD_STUDY_FACTOR_LANGUAGE_ABILITY,
   AGE_GROUP_LIST,
   AGE_LIST,
   BACKLOGS_GROUP_LIST,
@@ -86,6 +107,9 @@ import {
   DELETE_LANGUAGE_ABILITY_GROUP,
   DELETE_STUDY_FACTOR_ACADEMIC_RESULT,
   DELETE_STUDY_FACTOR_BACKLOGS,
+  DELETE_STUDY_FACTOR_ENTRANCE_TEST_ABILITY,
+  DELETE_STUDY_FACTOR_GAP,
+  DELETE_STUDY_FACTOR_LANGUAGE_ABILITY,
   EDIT_ACADEMIC_RESULT_GROUP,
   EDIT_AGE,
   EDIT_AGE_GROUP,
@@ -96,6 +120,9 @@ import {
   EDIT_LANGUAGE_ABILITY_GROUP,
   EDIT_STUDY_FACTOR_ACADEMIC_RESULT,
   EDIT_STUDY_FACTOR_BACKLOGS,
+  EDIT_STUDY_FACTOR_ENTRANCE_TEST_ABILITY,
+  EDIT_STUDY_FACTOR_GAP,
+  EDIT_STUDY_FACTOR_LANGUAGE_ABILITY,
   ENTRANCE_TEST_ABILITY_GROUP_LIST,
   EXPORT_ACADEMIC_RESULT_GROUP,
   EXPORT_AGE,
@@ -107,6 +134,9 @@ import {
   EXPORT_LANGUAGE_ABILITY_GROUP,
   EXPORT_STUDY_FACTOR_ACADEMIC_RESULT,
   EXPORT_STUDY_FACTOR_BACKLOGS,
+  EXPORT_STUDY_FACTOR_ENTRANCE_TEST_ABILITY,
+  EXPORT_STUDY_FACTOR_GAP,
+  EXPORT_STUDY_FACTOR_LANGUAGE_ABILITY,
   FACTOR_FOR_LIST,
   GAP_GROUP_LIST,
   IMPORT_ACADEMIC_RESULT_GROUP,
@@ -119,9 +149,15 @@ import {
   IMPORT_LANGUAGE_ABILITY_GROUP,
   IMPORT_STUDY_FACTOR_ACADEMIC_RESULT,
   IMPORT_STUDY_FACTOR_BACKLOGS,
+  IMPORT_STUDY_FACTOR_ENTRANCE_TEST_ABILITY,
+  IMPORT_STUDY_FACTOR_GAP,
+  IMPORT_STUDY_FACTOR_LANGUAGE_ABILITY,
   LANGUAGE_ABILITY_GROUP_LIST,
   STUDY_FACTOR_ACADEMIC_RESULT_LIST,
   STUDY_FACTOR_BACKLOGS_LIST,
+  STUDY_FACTOR_ENTRANCE_TEST_ABILITY_LIST,
+  STUDY_FACTOR_GAP_LIST,
+  STUDY_FACTOR_LANGUAGE_ABILITY_LIST,
 } from "./actionType";
 
 //Factor For
@@ -695,6 +731,172 @@ function* studyFactorBacklogsImportSaga(action) {
   }
 }
 
+// Study Factor – GAP Sagas
+function* studyFactorGapListSaga(action) {
+  try {
+    const response = yield call(getStudyFactorGapListAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* studyFactorGapAddSaga(action) {
+  try {
+    const response = yield call(addStudyFactorGapAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* studyFactorGapEditSaga(action) {
+  try {
+    const response = yield call(editStudyFactorGapAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* studyFactorGapDeleteSaga(action) {
+  try {
+    const response = yield call(deleteStudyFactorGapAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* studyFactorGapExportSaga(action) {
+  try {
+    const response = yield call(exportStudyFactorGapAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* studyFactorGapImportSaga(action) {
+  try {
+    const response = yield call(importStudyFactorGapAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+// Study Factor – Language Ability Sagas
+function* studyFactorLanguageAbilityListSaga(action) {
+  try {
+    const response = yield call(getStudyFactorLanguageAbilityListAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* studyFactorLanguageAbilityAddSaga(action) {
+  try {
+    const response = yield call(addStudyFactorLanguageAbilityAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* studyFactorLanguageAbilityEditSaga(action) {
+  try {
+    const response = yield call(editStudyFactorLanguageAbilityAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* studyFactorLanguageAbilityDeleteSaga(action) {
+  try {
+    const response = yield call(deleteStudyFactorLanguageAbilityAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* studyFactorLanguageAbilityExportSaga(action) {
+  try {
+    const response = yield call(exportStudyFactorLanguageAbilityAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* studyFactorLanguageAbilityImportSaga(action) {
+  try {
+    const response = yield call(importStudyFactorLanguageAbilityAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+// Study Factor – Entrance Test Ability Sagas
+function* studyFactorEntranceTestAbilityListSaga(action) {
+  try {
+    const response = yield call(getStudyFactorEntranceTestAbilityListAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* studyFactorEntranceTestAbilityAddSaga(action) {
+  try {
+    const response = yield call(addStudyFactorEntranceTestAbilityAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* studyFactorEntranceTestAbilityEditSaga(action) {
+  try {
+    const response = yield call(editStudyFactorEntranceTestAbilityAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* studyFactorEntranceTestAbilityDeleteSaga(action) {
+  try {
+    const response = yield call(deleteStudyFactorEntranceTestAbilityAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* studyFactorEntranceTestAbilityExportSaga(action) {
+  try {
+    const response = yield call(exportStudyFactorEntranceTestAbilityAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* studyFactorEntranceTestAbilityImportSaga(action) {
+  try {
+    const response = yield call(importStudyFactorEntranceTestAbilityAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+
 function* studyFactorsMasterSaga() {
   yield takeEvery(FACTOR_FOR_LIST, factorForListSaga);
   yield takeEvery(ADD_FACTOR_FOR, factorForAddSaga);
@@ -806,5 +1008,60 @@ function* studyFactorsMasterSaga() {
   yield takeEvery(DELETE_STUDY_FACTOR_BACKLOGS, studyFactorBacklogsDeleteSaga);
   yield takeEvery(EXPORT_STUDY_FACTOR_BACKLOGS, studyFactorBacklogsExportSaga);
   yield takeEvery(IMPORT_STUDY_FACTOR_BACKLOGS, studyFactorBacklogsImportSaga);
+  yield takeEvery(STUDY_FACTOR_GAP_LIST, studyFactorGapListSaga);
+  yield takeEvery(ADD_STUDY_FACTOR_GAP, studyFactorGapAddSaga);
+  yield takeEvery(EDIT_STUDY_FACTOR_GAP, studyFactorGapEditSaga);
+  yield takeEvery(DELETE_STUDY_FACTOR_GAP, studyFactorGapDeleteSaga);
+  yield takeEvery(EXPORT_STUDY_FACTOR_GAP, studyFactorGapExportSaga);
+  yield takeEvery(IMPORT_STUDY_FACTOR_GAP, studyFactorGapImportSaga);
+yield takeEvery(
+  STUDY_FACTOR_LANGUAGE_ABILITY_LIST,
+  studyFactorLanguageAbilityListSaga
+);
+yield takeEvery(
+  ADD_STUDY_FACTOR_LANGUAGE_ABILITY,
+  studyFactorLanguageAbilityAddSaga
+);
+yield takeEvery(
+  EDIT_STUDY_FACTOR_LANGUAGE_ABILITY,
+  studyFactorLanguageAbilityEditSaga
+);
+yield takeEvery(
+  DELETE_STUDY_FACTOR_LANGUAGE_ABILITY,
+  studyFactorLanguageAbilityDeleteSaga
+);
+yield takeEvery(
+  EXPORT_STUDY_FACTOR_LANGUAGE_ABILITY,
+  studyFactorLanguageAbilityExportSaga
+);
+yield takeEvery(
+  IMPORT_STUDY_FACTOR_LANGUAGE_ABILITY,
+  studyFactorLanguageAbilityImportSaga
+);
+yield takeEvery(
+  STUDY_FACTOR_ENTRANCE_TEST_ABILITY_LIST,
+  studyFactorEntranceTestAbilityListSaga
+);
+yield takeEvery(
+  ADD_STUDY_FACTOR_ENTRANCE_TEST_ABILITY,
+  studyFactorEntranceTestAbilityAddSaga
+);
+yield takeEvery(
+  EDIT_STUDY_FACTOR_ENTRANCE_TEST_ABILITY,
+  studyFactorEntranceTestAbilityEditSaga
+);
+yield takeEvery(
+  DELETE_STUDY_FACTOR_ENTRANCE_TEST_ABILITY,
+  studyFactorEntranceTestAbilityDeleteSaga
+);
+yield takeEvery(
+  EXPORT_STUDY_FACTOR_ENTRANCE_TEST_ABILITY,
+  studyFactorEntranceTestAbilityExportSaga
+);
+yield takeEvery(
+  IMPORT_STUDY_FACTOR_ENTRANCE_TEST_ABILITY,
+  studyFactorEntranceTestAbilityImportSaga
+);
+
 }
 export default studyFactorsMasterSaga;

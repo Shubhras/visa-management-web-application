@@ -7,10 +7,10 @@ import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 import { countryDemoList } from '../../../../store/master/companyMasters/actions';
 import { useGlobalSearch, } from '../../../../components/comman/GlobalSearchContext';
 import MasterLayout from '../../../../masterLayout/MasterLayout';
-import AddEditAgeModal from './AddEditAgeModal';
-import AddImportAgeModal from './AddImportAgeModal';
-import { ageDelete, ageExportData, ageList } from '../../../../store/actions';
-const AgeList = () => {
+import {  studyFactorLanguageAbilityDelete, studyFactorLanguageAbilityExportData, studyFactorLanguageAbilityList } from '../../../../store/actions';
+import AddEditStudyFactorLanguageAbilityModal from './AddEditLanguageAbilityModal';
+import AddImportStudyFactorLanguageAbilityModal from './AddImportLanguageAbilityModal';
+const StudyFactorLanguageAbilityList = () => {
   const dispatch = useDispatch();
   const { globalSearch, setGlobalSearch } = useGlobalSearch();
   const [modalState, setModalState] = useState({
@@ -42,7 +42,7 @@ const AgeList = () => {
       rowData: null
     });
     if (shouldRefresh) {
-      fetchDepartmentList();
+      fetchGapList();
     }
 
   }
@@ -58,20 +58,21 @@ const AgeList = () => {
   const [stateListData, setStateListData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [items] = useState(["Factor For", "Study Age Group", "Minimum Age","Maximum Age","Country", "Course Level", "Description", "Modified On"]);
-  const [selectedItems, setSelectedItems] = useState(["Factor For", "Study Age Group", "Minimum Age","Maximum Age","Country", "Course Level",]);
-  const [ItemsRequired] = useState(["Factor For", "Study Age Group", "Minimum Age","Maximum Age","Country", "Course Level",]);
+  const [items] = useState(["Factor For", "Study Language Ability Group","Language Test Name","Module Name", "Mimimum Overall Score",,"In No. of Modules","Not Less Than", "Description", "Modified On"]);
+  const [selectedItems, setSelectedItems] = useState(["Factor For",  "Study Language Ability Group","Language Test Name","Module Name", "Mimimum Overall Score",,"In No. of Modules",,]);
+  const [ItemsRequired] = useState(["Factor For", "Study Language Ability Group", "Language Test Name","Module Name","Mimimum Overall Score",,"In No. of Modules",]);
   const [countryListData, setCountryListData] = useState([]);
   // Table columns configuration
   const [tableColumns] = useState([
       { id: 'factorForName', label: 'Factor For', field: 'factorForName', visible: true, required: false, filterable: false },
-      { id: 'studyAgeGroup', label: 'Study Age Group', field: 'studyAgeGroup', visible: true, required: false, filterable: false },
-      { id: 'minimumAge', label: 'Minimum Age(Months)', field: 'minimumAge', visible: true, required: false, filterable: false },
-      { id: 'maximumAge', label: 'Maximum Age(Months)', field: 'maximumAge', visible: true, required: false, filterable: false },
-      { id: 'countryName', label: 'Country', field: 'countryId', visible: true, required: false, filterable: true },
-    { id: 'courseLevel', label: 'Course Level', field: 'courseLevel', visible: true, required: false, filterable: false },
-    { id: 'description', label: 'Description', field: 'description', visible: false, required: false, filterable: false },
-    { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false, filterable: false },
+      { id: 'studyLanguageAbility', label: 'Study Language Ability', field: 'studyLanguageAbility', visible: true, required: false, filterable: false },
+      { id: 'languageTestName', label: 'Language Test Name', field: 'languageTestName', visible: true, required: false, filterable: false },
+      { id: 'moduleName', label: 'Module Name', field: 'moduleName', visible: true, required: false, filterable: false },
+      { id: 'minimumOverallScore', label: 'Mimimum Overall Score', field: 'minimumOverallScore', visible: true, required: false, filterable: false },
+      { id: 'inNoOfModules', label: 'In No. of Modules', field: 'inNoOfModules', visible: true, required: false, filterable: false },
+      { id: 'notLessThan', label: 'Not Less Than', field: 'notLessThan', visible: true, required: false, filterable: false },
+      { id: 'description', label: 'Description', field: 'description', visible: false, required: false, filterable: false },
+      { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false, filterable: false },
   ]);
 
   const [visibleColumns, setVisibleColumns] = useState(
@@ -142,14 +143,14 @@ const AgeList = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (tableState.search !== undefined) {
-        fetchDepartmentList();
+        fetchGapList();
       }
     }, 500);
 
     return () => clearTimeout(timer);
   }, [tableState.search]);
 
-  const fetchDepartmentList = () => {
+  const fetchGapList = () => {
     setLoading(true);
     const params = {
       page: tableState.page,
@@ -163,7 +164,7 @@ const AgeList = () => {
       country: columnFilters.countryId.length > 0 ? columnFilters.countryId : null,
     };
 
-    dispatch(ageList(params, (response, error) => {
+    dispatch(studyFactorLanguageAbilityList(params, (response, error) => {
       setLoading(false);
       if (response?.statusCode === 200 && response?.status === true) {
         const paginationData = response?.pagination || {};
@@ -197,7 +198,7 @@ const AgeList = () => {
     }));
   };
   useEffect(() => {
-    fetchDepartmentList();
+    fetchGapList();
   }, [tableState.page, tableState.limit, tableState.status, tableState.sort, columnFilters]);
   // Prepare country and state filter options
   useEffect(() => {
@@ -477,7 +478,7 @@ const AgeList = () => {
 
   // const handleCloseEdit = () => {
   //   setShowEdit(false);
-  //   fetchDepartmentList();
+  //   fetchGapList();
   // };
 
   const handleShowEdit = (rowData) => {
@@ -493,7 +494,7 @@ const AgeList = () => {
   const handleDelete = (uuid) => {
     setDeleteId(uuid);
     setShowDeleteConfirm(true);
-    setDeleteConfirmMessage(`Are you sure you want to delete this state?`);
+    setDeleteConfirmMessage(`Are you sure you want to delete this language ability?`);
   };
 
   const handleBulkDelete = () => {
@@ -502,8 +503,8 @@ const AgeList = () => {
       return;
     }
     // Choose message based on delete type
-    const message = selectAllOrNot === "all" ? `${tableState.total} all state` : `${selectedRows.length} selected state`;
-    setDeleteConfirmMessage(`Are you sure you want to delete this state (${message})?`);
+    const message = selectAllOrNot === "all" ? `${tableState.total} all language ability` : `${selectedRows.length} selected language ability`;
+    setDeleteConfirmMessage(`Are you sure you want to delete this language ability (${message})?`);
     setShowDeleteConfirm(true);
   };
 
@@ -511,10 +512,10 @@ const AgeList = () => {
     // const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
     const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
     if (!sendPayload || sendPayload.length === 0) {
-      toast.error("No state selected for deletion.");
+      toast.error("No gap selected for deletion.");
       return;
     }
-    dispatch(ageDelete(sendPayload, (response, error) => {
+    dispatch(studyFactorLanguageAbilityDelete(sendPayload, (response, error) => {
       if (error) {
         toast.error(error?.response?.data?.message || "server error");
       } else {
@@ -526,7 +527,7 @@ const AgeList = () => {
           setSelectedRows([]);
           setSelectAllOrNot('');
           setDeleteId(null);
-          fetchDepartmentList();
+          fetchGapList();
         } else {
           toast.error("Something went wrong.");
         }
@@ -545,7 +546,7 @@ const AgeList = () => {
   const handleCloseImport = (shouldRefresh = false) => {
     setShowImport(false);
     if (shouldRefresh) {
-      fetchDepartmentList();
+      fetchGapList();
     }
   };
 
@@ -597,12 +598,14 @@ const AgeList = () => {
     // Map frontend labels to State field names
 
     const fieldMapping = {
-      "Country": "country",
       "Factor For": "factor_for",
-      "Study Age Group": "study_age_group",
-      "Minimum Age": "minimum_age_months",
-      "Maximum Age":"maximum_age_months",
-      "Course Level":"course_level",
+      "Study Language Ability": "Study_Language_Ability",
+      "Language Test Name":"language_test_name",
+      "Module Name":"module_name",
+      "Mimimum Overall Score": "Mimimum_Overall_Score",
+      "Maximum Age Accepted(Months)": "maximum_age_accepted",
+      "In No. of Modules":"In_No_of_Modules",
+      "Not Less Than": "not_less_than",
       "Description": "description",
       "Modified On": "updated_at",
     };
@@ -620,7 +623,7 @@ const AgeList = () => {
     };
 
     setLoadingExport(true);
-    dispatch(ageExportData(sendPayload, (response, error) => {
+    dispatch(studyFactorLanguageAbilityExportData(sendPayload, (response, error) => {
       if (error) {
         setLoadingExport(false);
         toast.error(error?.response?.message || "server error");
@@ -634,7 +637,7 @@ const AgeList = () => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `Age.xlsx`;
+          link.download = `Language Ability.xlsx`;
           document.body.appendChild(link);
           link.click();
           link.remove();
@@ -1050,20 +1053,24 @@ const AgeList = () => {
                         {isColumnVisible('factorForName') && (
                           <td><span>{rowItem.factor_for_name}</span></td>
                         )}
-                        {isColumnVisible('studyAgeGroup') && (
-                          <td><span>{rowItem.study_age_group_name}</span></td>
+                        {isColumnVisible('studyLanguageAbility') && (
+                          <td><span>{rowItem.studyLanguageAbility}</span></td>
                         )}
-                        {isColumnVisible('minimumAge') && (
-                          <td><span>{rowItem.minimum_age_months}</span></td>
+                        {isColumnVisible('languageTestName') && (
+                          <td><span>{rowItem.languageTestName}</span></td>
                         )}
-                        {isColumnVisible('maximumAge') && (
-                          <td><span>{rowItem.maximum_age_months}</span></td>
-                        )} {isColumnVisible('countryName') && (
-                            <td><span>{Array.isArray(rowItem.country_names) ? rowItem.country_names.join(", ") : rowItem.countryName}</span></td>
+                        {isColumnVisible('moduleName') && (
+                          <td><span>{rowItem.moduleName}</span></td>
                         )}
-                        {isColumnVisible('courseLevel') && (
-                          <td><span>{Array.isArray(rowItem.course_level_names) ? rowItem.course_level_names.join(", ") : rowItem.courseLevel}</span></td>
+                        {isColumnVisible('minimumOverallScore') && (
+                          <td><span>{rowItem.minimumOverallScore}</span></td>
                         )}
+                        {isColumnVisible('inNoOfModules') && (
+                          <td><span>{rowItem.inNoOfModules}</span></td>
+                        )}  
+                        {isColumnVisible('notLessThan') && (
+                          <td><span>{rowItem.notLessThan}</span></td>
+                        )} 
                         {isColumnVisible('description') && (
                           <td><span>{rowItem.description}</span></td>
                         )}
@@ -1094,14 +1101,14 @@ const AgeList = () => {
             </div>
           </div>
         </div>
-        <AddEditAgeModal
+        <AddEditStudyFactorLanguageAbilityModal
           show={modalState.show}
           handleClose={handleClose}
           mode={modalState.mode}
           rowData={modalState.rowData}
         />
         {showImport && (
-          <AddImportAgeModal show={showImport} handleClose={handleCloseImport} />)}
+          <AddImportStudyFactorLanguageAbilityModal show={showImport} handleClose={handleCloseImport} />)}
         {showDeleteConfirm && (
           <div className="modal fade show common-ctl-popup">
             <div className="modal-dialog modal-dialog-centered">
@@ -1143,7 +1150,7 @@ const AgeList = () => {
             <div className="modal-dialog modal-xl modal-dialog-centered" role="document">
               <div className="modal-content radius-16 bg-base">
                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                  <h1 className="modal-title fs-5">Export Age</h1>
+                  <h1 className="modal-title fs-5">Export Language Ability</h1>
                   <button
                     type="button"
                     className="btn-close"
@@ -1248,4 +1255,4 @@ const AgeList = () => {
   );
 };
 
-export default AgeList;
+export default StudyFactorLanguageAbilityList;

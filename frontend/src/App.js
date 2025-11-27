@@ -472,6 +472,9 @@ import LanguageAbilityGroupList from "./pages/masters/studyFactors/languageAbili
 import AgeList from "./pages/masters/studyFactors/age/AgeList";
 import StudyFactorAcademicResultList from "./pages/masters/studyFactors/academicResult/StudyFactorAcademicResultList";
 import StudyFactorBacklogsList from "./pages/masters/studyFactors/backlogs/StudyFactorBacklogsList";
+import StudyFactorGapList from "./pages/masters/studyFactors/gap/StudyFactorGapList";
+import StudyFactorLanguageAbilityList from "./pages/masters/studyFactors/languageAbility/StudyFactorLanguageAbilityList";
+import StudyFactorEntranceTestAbilityList from "./pages/masters/studyFactors/entranceTestAbility/StudyFactorEntranceTestAbilityList";
 
 
 
@@ -843,6 +846,10 @@ function App() {
           <Route path="/age" element={<ProtectedRoute><AgeList /></ProtectedRoute>}></Route>
           <Route path="/study-factor-academic-result" element={<ProtectedRoute><StudyFactorAcademicResultList /></ProtectedRoute>}></Route>
           <Route path="/study-factor-backlogs" element={<ProtectedRoute><StudyFactorBacklogsList /></ProtectedRoute>}></Route>
+          <Route path="/study-factor-gap" element={<ProtectedRoute><StudyFactorGapList /></ProtectedRoute>}></Route>
+          <Route path="/study-factor-language-ability" element={<ProtectedRoute><StudyFactorLanguageAbilityList /></ProtectedRoute>}></Route>
+          <Route path="/study-factor-entrance-test-ability" element={<ProtectedRoute><StudyFactorEntranceTestAbilityList /></ProtectedRoute>}></Route>
+          
 
           {/* 404 Error Page */}
           <Route path='*' element={<ErrorPage />} />

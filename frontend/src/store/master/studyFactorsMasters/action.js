@@ -10,6 +10,9 @@ import {
   ADD_LANGUAGE_ABILITY_GROUP,
   ADD_STUDY_FACTOR_ACADEMIC_RESULT,
   ADD_STUDY_FACTOR_BACKLOGS,
+  ADD_STUDY_FACTOR_ENTRANCE_TEST_ABILITY,
+  ADD_STUDY_FACTOR_GAP,
+  ADD_STUDY_FACTOR_LANGUAGE_ABILITY,
   AGE_GROUP_LIST,
   AGE_LIST,
   BACKLOGS_GROUP_LIST,
@@ -23,6 +26,9 @@ import {
   DELETE_LANGUAGE_ABILITY_GROUP,
   DELETE_STUDY_FACTOR_ACADEMIC_RESULT,
   DELETE_STUDY_FACTOR_BACKLOGS,
+  DELETE_STUDY_FACTOR_ENTRANCE_TEST_ABILITY,
+  DELETE_STUDY_FACTOR_GAP,
+  DELETE_STUDY_FACTOR_LANGUAGE_ABILITY,
   EDIT_ACADEMIC_RESULT_GROUP,
   EDIT_AGE,
   EDIT_AGE_GROUP,
@@ -33,6 +39,9 @@ import {
   EDIT_LANGUAGE_ABILITY_GROUP,
   EDIT_STUDY_FACTOR_ACADEMIC_RESULT,
   EDIT_STUDY_FACTOR_BACKLOGS,
+  EDIT_STUDY_FACTOR_ENTRANCE_TEST_ABILITY,
+  EDIT_STUDY_FACTOR_GAP,
+  EDIT_STUDY_FACTOR_LANGUAGE_ABILITY,
   ENTRANCE_TEST_ABILITY_GROUP_LIST,
   EXPORT_ACADEMIC_RESULT_GROUP,
   EXPORT_AGE,
@@ -44,6 +53,9 @@ import {
   EXPORT_LANGUAGE_ABILITY_GROUP,
   EXPORT_STUDY_FACTOR_ACADEMIC_RESULT,
   EXPORT_STUDY_FACTOR_BACKLOGS,
+  EXPORT_STUDY_FACTOR_ENTRANCE_TEST_ABILITY,
+  EXPORT_STUDY_FACTOR_GAP,
+  EXPORT_STUDY_FACTOR_LANGUAGE_ABILITY,
   FACTOR_FOR_LIST,
   GAP_GROUP_LIST,
   IMPORT_ACADEMIC_RESULT_GROUP,
@@ -56,9 +68,15 @@ import {
   IMPORT_LANGUAGE_ABILITY_GROUP,
   IMPORT_STUDY_FACTOR_ACADEMIC_RESULT,
   IMPORT_STUDY_FACTOR_BACKLOGS,
+  IMPORT_STUDY_FACTOR_ENTRANCE_TEST_ABILITY,
+  IMPORT_STUDY_FACTOR_GAP,
+  IMPORT_STUDY_FACTOR_LANGUAGE_ABILITY,
   LANGUAGE_ABILITY_GROUP_LIST,
   STUDY_FACTOR_ACADEMIC_RESULT_LIST,
   STUDY_FACTOR_BACKLOGS_LIST,
+  STUDY_FACTOR_ENTRANCE_TEST_ABILITY_LIST,
+  STUDY_FACTOR_GAP_LIST,
+  STUDY_FACTOR_LANGUAGE_ABILITY_LIST,
 } from "./actionType";
 
 // FACTOR_FOR
@@ -423,6 +441,116 @@ export const studyFactorBacklogsImportData = (data, callback) => ({
   data,
   callback,
 });
+
+export const studyFactorGapList = (data, callback) => ({
+  type: STUDY_FACTOR_GAP_LIST,
+  data,
+  callback,
+});
+
+export const studyFactorGapAdd = (data, callback) => ({
+  type: ADD_STUDY_FACTOR_GAP,
+  data,
+  callback,
+});
+
+export const studyFactorGapEdit = (data, callback) => ({
+  type: EDIT_STUDY_FACTOR_GAP,
+  data,
+  callback,
+});
+
+export const studyFactorGapDelete = (data, callback) => ({
+  type: DELETE_STUDY_FACTOR_GAP,
+  data,
+  callback,
+});
+
+export const studyFactorGapExportData = (data, callback) => ({
+  type: EXPORT_STUDY_FACTOR_GAP,
+  data,
+  callback,
+});
+
+export const studyFactorGapImportData = (data, callback) => ({
+  type: IMPORT_STUDY_FACTOR_GAP,
+  data,
+  callback,
+});
+
+export const studyFactorLanguageAbilityList = (data, callback) => ({
+  type: STUDY_FACTOR_LANGUAGE_ABILITY_LIST,
+  data,
+  callback,
+});
+
+export const studyFactorLanguageAbilityAdd = (data, callback) => ({
+  type: ADD_STUDY_FACTOR_LANGUAGE_ABILITY,
+  data,
+  callback,
+});
+
+export const studyFactorLanguageAbilityEdit = (data, callback) => ({
+  type: EDIT_STUDY_FACTOR_LANGUAGE_ABILITY,
+  data,
+  callback,
+});
+
+export const studyFactorLanguageAbilityDelete = (data, callback) => ({
+  type: DELETE_STUDY_FACTOR_LANGUAGE_ABILITY,
+  data,
+  callback,
+});
+
+export const studyFactorLanguageAbilityExportData = (data, callback) => ({
+  type: EXPORT_STUDY_FACTOR_LANGUAGE_ABILITY,
+  data,
+  callback,
+});
+
+export const studyFactorLanguageAbilityImportData = (data, callback) => ({
+  type: IMPORT_STUDY_FACTOR_LANGUAGE_ABILITY,
+  data,
+  callback,
+});
+
+export const studyFactorEntranceTestAbilityList = (data, callback) => ({
+  type: STUDY_FACTOR_ENTRANCE_TEST_ABILITY_LIST,
+  data,
+  callback,
+});
+
+export const studyFactorEntranceTestAbilityAdd = (data, callback) => ({
+  type: ADD_STUDY_FACTOR_ENTRANCE_TEST_ABILITY,
+  data,
+  callback,
+});
+
+export const studyFactorEntranceTestAbilityEdit = (data, callback) => ({
+  type: EDIT_STUDY_FACTOR_ENTRANCE_TEST_ABILITY,
+  data,
+  callback,
+});
+
+export const studyFactorEntranceTestAbilityDelete = (data, callback) => ({
+  type: DELETE_STUDY_FACTOR_ENTRANCE_TEST_ABILITY,
+  data,
+  callback,
+});
+
+export const studyFactorEntranceTestAbilityExportData = (data, callback) => ({
+  type: EXPORT_STUDY_FACTOR_ENTRANCE_TEST_ABILITY,
+  data,
+  callback,
+});
+
+export const studyFactorEntranceTestAbilityImportData = (data, callback) => ({
+  type: IMPORT_STUDY_FACTOR_ENTRANCE_TEST_ABILITY,
+  data,
+  callback,
+});
+
+
 
 
 

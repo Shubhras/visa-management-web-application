@@ -5386,4 +5386,101 @@ export const importStudyFactorBacklogsAPI = (payload) => {
   return post(url.IMPORT_STUDY_FACTOR_BACKLOGS_API, payload);
 };
 
+// Study Factor – GAP
+export const getStudyFactorGapListAPI = (data) => {
+  const apiUrl = `${url.GET_STUDY_FACTOR_GAP_LIST}?search=${data?.search}&page=${
+    data?.page
+  }&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
 
+export const addStudyFactorGapAPI = (payload) => {
+  return post(url.ADD_STUDY_FACTOR_GAP_API, payload);
+};
+
+export const editStudyFactorGapAPI = (payload) => {
+  const apiUrl = `${url.EDIT_STUDY_FACTOR_GAP_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+
+export const deleteStudyFactorGapAPI = (payload) => {
+  const apiUrl = `${url.DELETE_STUDY_FACTOR_GAP_API}delete/`;
+  return delWithPayload(apiUrl, { id: payload });
+};
+
+export const exportStudyFactorGapAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_STUDY_FACTOR_GAP_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+
+export const importStudyFactorGapAPI = (payload) => {
+  return post(url.IMPORT_STUDY_FACTOR_GAP_API, payload);
+};
+
+// Study Factor – Language Ability APIs
+export const getStudyFactorLanguageAbilityListAPI = (data) => {
+  const apiUrl = `${url.GET_STUDY_FACTOR_LANGUAGE_ABILITY_LIST}?search=${
+    data?.search
+  }&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${
+    data?.sortOrder
+  }`;
+
+  return get(apiUrl);
+};
+
+export const addStudyFactorLanguageAbilityAPI = (payload) => {
+  return post(url.ADD_STUDY_FACTOR_LANGUAGE_ABILITY_API, payload);
+};
+
+export const editStudyFactorLanguageAbilityAPI = (payload) => {
+  const apiUrl = `${url.EDIT_STUDY_FACTOR_LANGUAGE_ABILITY_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+
+export const deleteStudyFactorLanguageAbilityAPI = (payload) => {
+  const apiUrl = `${url.DELETE_STUDY_FACTOR_LANGUAGE_ABILITY_API}delete/`;
+  return delWithPayload(apiUrl, { id: payload });
+};
+
+export const exportStudyFactorLanguageAbilityAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_STUDY_FACTOR_LANGUAGE_ABILITY_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+
+export const importStudyFactorLanguageAbilityAPI = (payload) => {
+  return post(url.IMPORT_STUDY_FACTOR_LANGUAGE_ABILITY_API, payload);
+};
+
+// Study Factor – Entrance Test Ability APIs
+export const getStudyFactorEntranceTestAbilityListAPI = (data) => {
+  const apiUrl = `${url.GET_STUDY_FACTOR_ENTRANCE_TEST_ABILITY_LIST}?search=${
+    data?.search
+  }&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${
+    data?.sortOrder
+  }`;
+
+  return get(apiUrl);
+};
+
+export const addStudyFactorEntranceTestAbilityAPI = (payload) => {
+  return post(url.ADD_STUDY_FACTOR_ENTRANCE_TEST_ABILITY_API, payload);
+};
+
+export const editStudyFactorEntranceTestAbilityAPI = (payload) => {
+  const apiUrl = `${url.EDIT_STUDY_FACTOR_ENTRANCE_TEST_ABILITY_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+
+export const deleteStudyFactorEntranceTestAbilityAPI = (payload) => {
+  const apiUrl = `${url.DELETE_STUDY_FACTOR_ENTRANCE_TEST_ABILITY_API}delete/`;
+  return delWithPayload(apiUrl, { id: payload });
+};
+
+export const exportStudyFactorEntranceTestAbilityAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_STUDY_FACTOR_ENTRANCE_TEST_ABILITY_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+
+export const importStudyFactorEntranceTestAbilityAPI = (payload) => {
+  return post(url.IMPORT_STUDY_FACTOR_ENTRANCE_TEST_ABILITY_API, payload);
+};

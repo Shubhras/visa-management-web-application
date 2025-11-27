@@ -54,6 +54,9 @@ const MasterLayout = ({ children }) => {
     "Study Factor : Age",
     "Study Factor : Academic Result",
     "Study Factor : Backlogs",
+    "Study Factor : Gap",
+    "Study Factor : Language Ability",
+    "Study Factor : Entrance Test Ability",
     "Marital Status",
     "Education Level Code",
     "Education Level",
@@ -327,6 +330,10 @@ const MasterLayout = ({ children }) => {
             { name: "Study Factor : Age", path: "/age" },
             { name: "Study Factor : Academic Result", path: "/study-factor-academic-result" },
             { name: "Study Factor : Backlogs", path: "/study-factor-backlogs" },
+            { name: "Study Factor : Gap", path: "/study-factor-gap" },
+            { name: "Study Factor : Language Ability", path: "/study-factor-language-ability" },
+            { name: "Study Factor : Entrance Test Ability", path: "/study-factor-entrance-test-ability" },
+            
           ],
         },
 

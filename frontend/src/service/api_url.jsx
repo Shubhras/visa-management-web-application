@@ -1239,7 +1239,7 @@ export const IMPORT_ENTRANCE_TEST_ABILITY_GROUP_API =
   "/api/v1/master/entrance-test-ability-group/import/";
 
 // Age – API Endpoints
-export const GET_AGE_LIST = "/api/v1/master/study-factor-age/list/";
+export const GET_AGE_LIST = "/api/v1/master/study-factor-age/";
 export const ADD_AGE_API = "/api/v1/master/study-factor-age/create/";
 export const EDIT_AGE_API = "/api/v1/master/study-factor-age/"; // +uuid/update/
 export const DELETE_AGE_API = "/api/v1/master/study-factor-age/"; // +delete/
@@ -1247,12 +1247,18 @@ export const EXPORT_AGE_API = "/api/v1/master/study-factor-age/export/";
 export const IMPORT_AGE_API = "/api/v1/master/study-factor-age/import/";
 
 // Study Factor – Academic Result API Endpoints
-export const GET_STUDY_FACTOR_ACADEMIC_RESULT_LIST = "/api/v1/master/academic-result/list/";
-export const ADD_STUDY_FACTOR_ACADEMIC_RESULT_API = "/api/v1/master/academic-result/create/";
-export const EDIT_STUDY_FACTOR_ACADEMIC_RESULT_API = "/api/v1/master/academic-result/"; // +uuid/update/
-export const DELETE_STUDY_FACTOR_ACADEMIC_RESULT_API = "/api/v1/master/academic-result/"; // +delete/
-export const EXPORT_STUDY_FACTOR_ACADEMIC_RESULT_API = "/api/v1/master/academic-result/export/";
-export const IMPORT_STUDY_FACTOR_ACADEMIC_RESULT_API = "/api/v1/master/academic-result/import/";
+export const GET_STUDY_FACTOR_ACADEMIC_RESULT_LIST =
+  "/api/v1/master/academic-result/list/";
+export const ADD_STUDY_FACTOR_ACADEMIC_RESULT_API =
+  "/api/v1/master/academic-result/create/";
+export const EDIT_STUDY_FACTOR_ACADEMIC_RESULT_API =
+  "/api/v1/master/academic-result/"; // +uuid/update/
+export const DELETE_STUDY_FACTOR_ACADEMIC_RESULT_API =
+  "/api/v1/master/academic-result/"; // +delete/
+export const EXPORT_STUDY_FACTOR_ACADEMIC_RESULT_API =
+  "/api/v1/master/academic-result/export/";
+export const IMPORT_STUDY_FACTOR_ACADEMIC_RESULT_API =
+  "/api/v1/master/academic-result/import/";
 
 // Study Factor – Backlogs API Endpoints
 export const GET_STUDY_FACTOR_BACKLOGS_LIST =
@@ -1272,3 +1278,57 @@ export const EXPORT_STUDY_FACTOR_BACKLOGS_API =
 
 export const IMPORT_STUDY_FACTOR_BACKLOGS_API =
   "/api/v1/master/study-factor-backlogs/import/";
+
+// Study Factor – GAP API Endpoints
+export const GET_STUDY_FACTOR_GAP_LIST = "/api/v1/master/study-factor-gap/list/";
+
+export const ADD_STUDY_FACTOR_GAP_API =
+  "/api/v1/master/study-factor-gap/create/";
+
+export const EDIT_STUDY_FACTOR_GAP_API = "/api/v1/master/study-factor-gap/"; // +uuid/update/
+
+export const DELETE_STUDY_FACTOR_GAP_API = "/api/v1/master/study-factor-gap/"; // +delete/
+
+export const EXPORT_STUDY_FACTOR_GAP_API =
+  "/api/v1/master/study-factor-gap/export/";
+
+export const IMPORT_STUDY_FACTOR_GAP_API =
+  "/api/v1/master/study-factor-gap/import/";
+
+// Study Factor – Language Ability API Endpoints
+export const GET_STUDY_FACTOR_LANGUAGE_ABILITY_LIST =
+  "/api/v1/master/study-factor-language-ability/list/";
+
+export const ADD_STUDY_FACTOR_LANGUAGE_ABILITY_API =
+  "/api/v1/master/study-factor-language-ability/create/";
+
+export const EDIT_STUDY_FACTOR_LANGUAGE_ABILITY_API =
+  "/api/v1/master/study-factor-language-ability/"; // +uuid/update/
+
+export const DELETE_STUDY_FACTOR_LANGUAGE_ABILITY_API =
+  "/api/v1/master/study-factor-language-ability/"; // +delete/
+
+export const EXPORT_STUDY_FACTOR_LANGUAGE_ABILITY_API =
+  "/api/v1/master/study-factor-language-ability/export/";
+
+export const IMPORT_STUDY_FACTOR_LANGUAGE_ABILITY_API =
+  "/api/v1/master/study-factor-language-ability/import/";
+
+// Study Factor – Entrance Test Ability API Endpoints
+export const GET_STUDY_FACTOR_ENTRANCE_TEST_ABILITY_LIST =
+  "/api/v1/master/study-factor-entrance-test-ability/list/";
+
+export const ADD_STUDY_FACTOR_ENTRANCE_TEST_ABILITY_API =
+  "/api/v1/master/study-factor-entrance-test-ability/create/";
+
+export const EDIT_STUDY_FACTOR_ENTRANCE_TEST_ABILITY_API =
+  "/api/v1/master/study-factor-entrance-test-ability/"; // +uuid/update/
+
+export const DELETE_STUDY_FACTOR_ENTRANCE_TEST_ABILITY_API =
+  "/api/v1/master/study-factor-entrance-test-ability/"; // +delete/
+
+export const EXPORT_STUDY_FACTOR_ENTRANCE_TEST_ABILITY_API =
+  "/api/v1/master/study-factor-entrance-test-ability/export/";
+
+export const IMPORT_STUDY_FACTOR_ENTRANCE_TEST_ABILITY_API =
+  "/api/v1/master/study-factor-entrance-test-ability/import/";
