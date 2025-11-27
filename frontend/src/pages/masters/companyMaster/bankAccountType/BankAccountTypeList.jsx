@@ -14,6 +14,7 @@ import {
 } from "../../../../store/master/companyMasters/actions";
 import { formatDateDDMMYYYYTime } from "../../../../helper/utils/commanHelper";
 import { useGlobalSearch } from "../../../../components/comman/GlobalSearchContext";
+import ResetButton from "../../../../components/comman/ResetButton";
 
 const BankAccountTypeList = () => {
   const dispatch = useDispatch();
@@ -615,12 +616,11 @@ const BankAccountTypeList = () => {
                       </>
                     )}
 
-                  <button
+                  <ResetButton
                     onClick={clearAllFilters}
-                    className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
-                  >
-                    Reset
-                  </button>
+                    tableState={tableState}
+                    globalSearch={globalSearch}
+                  />
                 </div>
               </div>
 

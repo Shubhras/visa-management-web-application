@@ -1,80 +1,151 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
 import MasterLayout from "../../../../masterLayout/MasterLayout";
-import { Icon } from '@iconify/react/dist/iconify.js';
-import { Link } from 'react-router-dom';
+import { Icon } from "@iconify/react/dist/iconify.js";
+import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
-import AddImportCivilIDNameModal from './AddImportCivilIDNameModal';
-import AddEditCivilIDNameModal from './AddEditCivilIDNameModal';
-import { civilIdNameList, civilIdNameDelete, civilIdNameExportData } from '../../../../store/master/generalMasters/actions';
-import { formatDateDDMMYYYY, formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
-import { useGlobalSearch } from '../../../../components/comman/GlobalSearchContext';
+import AddImportCivilIDNameModal from "./AddImportCivilIDNameModal";
+import AddEditCivilIDNameModal from "./AddEditCivilIDNameModal";
+import {
+  civilIdNameList,
+  civilIdNameDelete,
+  civilIdNameExportData,
+} from "../../../../store/master/generalMasters/actions";
+import {
+  formatDateDDMMYYYY,
+  formatDateDDMMYYYYTime,
+} from "../../../../helper/utils/commanHelper";
+import { useGlobalSearch } from "../../../../components/comman/GlobalSearchContext";
+import ResetButton from "../../../../components/comman/ResetButton";
 const CivilIDNameList = () => {
   const dispatch = useDispatch();
   const { globalSearch, setGlobalSearch } = useGlobalSearch();
   const [modalState, setModalState] = useState({
     show: false,
-    mode: 'add', // 'add' or 'edit'
-    rowData: null
-  })
+    mode: "add", // 'add' or 'edit'
+    rowData: null,
+  });
   const handleShow = () => {
     setModalState({
       show: true,
-      mode: 'add',
-      rowData: null
+      mode: "add",
+      rowData: null,
     });
   };
   // For closing modal
   const handleClose = () => {
     setModalState({
       show: false,
-      mode: 'add',
-      rowData: null
+      mode: "add",
+      rowData: null,
     });
     fetchCivilIDNameList();
-  }
+  };
 
   // const [showEdit, setShowEdit] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this civil ID name?");
+  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState(
+    "Are you sure you want to delete this civil ID name?"
+  );
   const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
-  const [selectAllOrNot, setSelectAllOrNot] = useState('');
+  const [selectAllOrNot, setSelectAllOrNot] = useState("");
   const [civilIDNameData, setCivilIDNameData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [items] = useState(["Civil ID Name", "Authority Full Name", "Authority Short Name", "Civil ID Valid Upto", "Description", "Modified On"]);
+  const [items] = useState([
+    "Civil ID Name",
+    "Authority Full Name",
+    "Authority Short Name",
+    "Civil ID Valid Upto",
+    "Description",
+    "Modified On",
+  ]);
   const [selectedItems, setSelectedItems] = useState(["Civil ID Name"]);
   const [ItemsRequired] = useState(["Civil ID Name"]);
 
   // Table columns configuration
   const [tableColumns] = useState([
-    { id: 'civil_id_name', label: 'Civil ID Name', field: 'civil_id_name', visible: true, required: false },
-    { id: 'authority_full_name', label: 'Authority Full Name', field: 'authority_full_name', visible: true, required: false },
-    { id: 'authority_short_name', label: 'Authority Short Name', field: 'authority_short_name', visible: false, required: false },
-    { id: 'valid_type', label: 'Civil ID Valid Upto', field: 'valid_type', visible: false, required: false },
-    { id: 'valid_date', label: 'Civil ID Valid Date', field: 'valid_date', visible: false, required: false },
-    { id: 'valid_duration_value', label: 'Civil ID Valid Duration Value', field: 'valid_duration_value', visible: false, required: false },
-    { id: 'valid_duration_unit', label: 'Civil ID Valid Duration Unit', field: 'valid_duration_unit', visible: false, required: false },
-    { id: 'description', label: 'Description', field: 'description', visible: false, required: false },
-    { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false },
+    {
+      id: "civil_id_name",
+      label: "Civil ID Name",
+      field: "civil_id_name",
+      visible: true,
+      required: false,
+    },
+    {
+      id: "authority_full_name",
+      label: "Authority Full Name",
+      field: "authority_full_name",
+      visible: true,
+      required: false,
+    },
+    {
+      id: "authority_short_name",
+      label: "Authority Short Name",
+      field: "authority_short_name",
+      visible: false,
+      required: false,
+    },
+    {
+      id: "valid_type",
+      label: "Civil ID Valid Upto",
+      field: "valid_type",
+      visible: false,
+      required: false,
+    },
+    {
+      id: "valid_date",
+      label: "Civil ID Valid Date",
+      field: "valid_date",
+      visible: false,
+      required: false,
+    },
+    {
+      id: "valid_duration_value",
+      label: "Civil ID Valid Duration Value",
+      field: "valid_duration_value",
+      visible: false,
+      required: false,
+    },
+    {
+      id: "valid_duration_unit",
+      label: "Civil ID Valid Duration Unit",
+      field: "valid_duration_unit",
+      visible: false,
+      required: false,
+    },
+    {
+      id: "description",
+      label: "Description",
+      field: "description",
+      visible: false,
+      required: false,
+    },
+    {
+      id: "updated_at",
+      label: "Modified On",
+      field: "updated_at",
+      visible: true,
+      required: false,
+    },
   ]);
 
   const [visibleColumns, setVisibleColumns] = useState(
-    tableColumns.filter(col => col.visible).map(col => col.id)
+    tableColumns.filter((col) => col.visible).map((col) => col.id)
   );
   const [showColumnDropdown, setShowColumnDropdown] = useState(false);
   const columnDropdownRef = useRef(null);
   // Column visibility toggle handler
   const toggleColumnVisibility = (columnId) => {
-    const column = tableColumns.find(col => col.id === columnId);
+    const column = tableColumns.find((col) => col.id === columnId);
     if (column?.required) return; // Don't allow hiding required columns
 
-    setVisibleColumns(prev => {
+    setVisibleColumns((prev) => {
       if (prev.includes(columnId)) {
-        return prev.filter(id => id !== columnId);
+        return prev.filter((id) => id !== columnId);
       } else {
         return [...prev, columnId];
       }
@@ -88,17 +159,20 @@ const CivilIDNameList = () => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (columnDropdownRef.current && !columnDropdownRef.current.contains(event.target)) {
+      if (
+        columnDropdownRef.current &&
+        !columnDropdownRef.current.contains(event.target)
+      ) {
         setShowColumnDropdown(false);
       }
     };
 
     if (showColumnDropdown) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showColumnDropdown]);
 
@@ -106,21 +180,19 @@ const CivilIDNameList = () => {
   const [tableState, setTableState] = useState({
     page: 1,
     limit: 25,
-    search: '',
-    status: '',
-    sortBy: '', // Field to sort by
-    sortOrder: '', // 'asc' or 'desc'
-    sort: [
-      { field: "created_at", order: "desc" }
-    ],
+    search: "",
+    status: "",
+    sortBy: "", // Field to sort by
+    sortOrder: "", // 'asc' or 'desc'
+    sort: [{ field: "created_at", order: "desc" }],
     total: 0,
     totalPages: 0,
     currentPage: 1,
     hasNext: false,
-    hasPrevious: false
+    hasPrevious: false,
   });
   useEffect(() => {
-    setTableState(prev => ({ ...prev, search: globalSearch, page: 1 }));
+    setTableState((prev) => ({ ...prev, search: globalSearch, page: 1 }));
   }, [globalSearch]);
 
   useEffect(() => {
@@ -142,62 +214,62 @@ const CivilIDNameList = () => {
     const params = {
       page: tableState.page,
       limit: tableState.limit,
-      search: tableState.search || '',
-      status: tableState.status || '',
-      sortBy: tableState.sortBy || '',
-      sortOrder: tableState.sortOrder || '',
+      search: tableState.search || "",
+      status: tableState.status || "",
+      sortBy: tableState.sortBy || "",
+      sortOrder: tableState.sortOrder || "",
       sort: tableState.sort,
     };
 
-    dispatch(civilIdNameList(params, (response, error) => {
-      setLoading(false);
-      if (response?.statusCode === 200 && response?.status === true) {
-        const paginationData = response?.pagination || {};
+    dispatch(
+      civilIdNameList(params, (response, error) => {
+        setLoading(false);
+        if (response?.statusCode === 200 && response?.status === true) {
+          const paginationData = response?.pagination || {};
 
-        setCivilIDNameData(response?.data || []);
-        setTableState(prev => ({
-          ...prev,
-          total: paginationData.totalItems || 0,
-          totalPages: paginationData.totalPages || 0,
-          currentPage: paginationData.currentPage || 1,
-          hasNext: paginationData.nextPage || false,
-          hasPrevious: paginationData.previousPage || false
-        }));
+          setCivilIDNameData(response?.data || []);
+          setTableState((prev) => ({
+            ...prev,
+            total: paginationData.totalItems || 0,
+            totalPages: paginationData.totalPages || 0,
+            currentPage: paginationData.currentPage || 1,
+            hasNext: paginationData.nextPage || false,
+            hasPrevious: paginationData.previousPage || false,
+          }));
 
-        setSelectedRows(prev => {
-          const filtered = prev.filter(rowId =>
-            response?.data.some(rowItems => rowItems.uuid === rowId)
-          );
-          return filtered;
-        });
-      } else {
-        setCivilIDNameData([]);
-        setTableState(prev => ({
-          ...prev,
-          total: 0,
-          totalPages: 0,
-          currentPage: 1,
-          hasNext: false,
-          hasPrevious: false
-        }));
-      }
-    }));
+          setSelectedRows((prev) => {
+            const filtered = prev.filter((rowId) =>
+              response?.data.some((rowItems) => rowItems.uuid === rowId)
+            );
+            return filtered;
+          });
+        } else {
+          setCivilIDNameData([]);
+          setTableState((prev) => ({
+            ...prev,
+            total: 0,
+            totalPages: 0,
+            currentPage: 1,
+            hasNext: false,
+            hasPrevious: false,
+          }));
+        }
+      })
+    );
   };
 
   // Handle sorting
   const handleSort = (field) => {
-    setTableState(prev => {
+    setTableState((prev) => {
       let newSort = [...prev.sort];
-      const existingIndex = newSort.findIndex(s => s.field === field);
+      const existingIndex = newSort.findIndex((s) => s.field === field);
       if (existingIndex === -1) {
         newSort.push({ field, order: "asc" });
-      }
-      else {
+      } else {
         const existing = newSort[existingIndex];
         if (existing.order === "asc") {
           newSort[existingIndex].order = "desc";
-        }
-        else if (existing.order === "desc") {
+        } else if (existing.order === "desc") {
           newSort.splice(existingIndex, 1);
         }
       }
@@ -206,7 +278,7 @@ const CivilIDNameList = () => {
   };
 
   const getSortIcon = (field) => {
-    const sortObj = tableState.sort.find(s => s.field === field);
+    const sortObj = tableState.sort.find((s) => s.field === field);
     if (!sortObj) {
       return <Icon icon="ri:menu-line" className="sorting-th-icone" />;
     }
@@ -218,49 +290,49 @@ const CivilIDNameList = () => {
 
   // Clear all filters
   const clearAllFilters = () => {
-    setTableState(prev => ({
+    setTableState((prev) => ({
       ...prev,
       page: 1,
       limit: 25,
-      search: '',
-      status: '',
-      sortBy: '',
-      sortOrder: '',
+      search: "",
+      status: "",
+      sortBy: "",
+      sortOrder: "",
       sort: [
-        { field: "created_at", order: "desc" }   // default sort
+        { field: "created_at", order: "desc" }, // default sort
       ],
       total: 0,
       totalPages: 0,
       currentPage: 1,
       hasNext: false,
-      hasPrevious: false
+      hasPrevious: false,
     }));
     // Reset Global Search
-    setGlobalSearch('');
+    setGlobalSearch("");
     setSelectedRows([]);
   };
 
   const handleSearchChange = (value) => {
-    setTableState(prev => ({
+    setTableState((prev) => ({
       ...prev,
       search: value,
-      page: 1
+      page: 1,
     }));
   };
 
   const handleStatusChange = (value) => {
-    setTableState(prev => ({
+    setTableState((prev) => ({
       ...prev,
-      status: value === 'All' ? '' : value,
-      page: 1
+      status: value === "All" ? "" : value,
+      page: 1,
     }));
   };
 
   const handlePageLengthChange = (value) => {
-    setTableState(prev => ({
+    setTableState((prev) => ({
       ...prev,
       limit: Number(value),
-      page: 1
+      page: 1,
     }));
   };
 
@@ -269,38 +341,39 @@ const CivilIDNameList = () => {
     if (isAllSelected) {
       setSelectedRows([]);
     } else {
-      setSelectedRows(civilIDNameData.map(Item => Item.uuid));
+      setSelectedRows(civilIDNameData.map((Item) => Item.uuid));
     }
   };
   // For checkbox in table header
   const handleSelectAll = (e) => {
     const checked = e.target.checked;
     if (checked) {
-      setSelectedRows(civilIDNameData.map(Item => Item.uuid));
+      setSelectedRows(civilIDNameData.map((Item) => Item.uuid));
     } else {
       setSelectedRows([]);
-      setSelectAllOrNot('');
+      setSelectAllOrNot("");
     }
   };
 
   const handleRowSelect = (uuid) => {
-    setSelectedRows(prev => {
+    setSelectedRows((prev) => {
       if (prev.includes(uuid)) {
-        return prev.filter(rowId => rowId !== uuid);
+        return prev.filter((rowId) => rowId !== uuid);
       } else {
         return [...prev, uuid];
       }
     });
   };
 
-  const isAllSelected = civilIDNameData.length > 0 &&
-    civilIDNameData.every(Item => selectedRows.includes(Item.uuid));
+  const isAllSelected =
+    civilIDNameData.length > 0 &&
+    civilIDNameData.every((Item) => selectedRows.includes(Item.uuid));
 
   const goToPage = (page) => {
     if (page >= 1 && page <= tableState.totalPages) {
-      setTableState(prev => ({
+      setTableState((prev) => ({
         ...prev,
-        page: page
+        page: page,
       }));
     }
   };
@@ -318,17 +391,17 @@ const CivilIDNameList = () => {
     } else {
       if (currentPage <= 3) {
         for (let i = 1; i <= 4; i++) pages.push(i);
-        pages.push('...');
+        pages.push("...");
         pages.push(totalPages);
       } else if (currentPage >= totalPages - 2) {
         pages.push(1);
-        pages.push('...');
+        pages.push("...");
         for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i);
       } else {
         pages.push(1);
-        pages.push('...');
+        pages.push("...");
         for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i);
-        pages.push('...');
+        pages.push("...");
         pages.push(totalPages);
       }
     }
@@ -338,18 +411,20 @@ const CivilIDNameList = () => {
   const handleShowEdit = (rowData) => {
     setModalState({
       show: true,
-      mode: 'edit',
-      rowData: rowData
+      mode: "edit",
+      rowData: rowData,
     });
   };
 
   const handleSelectAllOrNot = (a) => {
     setSelectAllOrNot(a);
-  }
+  };
   const handleDelete = (uuid) => {
     setDeleteId(uuid);
     setShowDeleteConfirm(true);
-    setDeleteConfirmMessage(`Are you sure you want to delete this civil ID name?`);
+    setDeleteConfirmMessage(
+      `Are you sure you want to delete this civil ID name?`
+    );
   };
 
   const handleBulkDelete = () => {
@@ -358,44 +433,56 @@ const CivilIDNameList = () => {
       return;
     }
     // Choose message based on delete type
-    const message = selectAllOrNot === "all" ? `${tableState.total} all civil ID name` : `${selectedRows.length} selected civil ID name`;
-    setDeleteConfirmMessage(`Are you sure you want to delete this civil ID name (${message})?`);
+    const message =
+      selectAllOrNot === "all"
+        ? `${tableState.total} all civil ID name`
+        : `${selectedRows.length} selected civil ID name`;
+    setDeleteConfirmMessage(
+      `Are you sure you want to delete this civil ID name (${message})?`
+    );
     setShowDeleteConfirm(true);
   };
 
   const confirmDelete = () => {
     // const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
-    const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
+    const sendPayload =
+      selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
     if (!sendPayload || sendPayload.length === 0) {
       toast.error("No civil ID name selected for deletion.");
       return;
     }
-    dispatch(civilIdNameDelete(sendPayload, (response, error) => {
-      if (error) {
-        toast.error(error?.response?.data?.message || "server error");
-      } else {
-        if (response?.statusCode === 200 && response?.status === true) {
-          toast.success(response?.message);
-          setCivilIDNameData(prevRowItems => prevRowItems.filter(Item => Item.uuid !== deleteId));
-          setSelectedRows(prevSelected => prevSelected.filter(rowId => rowId !== deleteId));
-          setShowDeleteConfirm(false);
-          setSelectedRows([]);
-          setSelectAllOrNot('');
-          setDeleteId(null);
-          fetchCivilIDNameList();
+    dispatch(
+      civilIdNameDelete(sendPayload, (response, error) => {
+        if (error) {
+          toast.error(error?.response?.data?.message || "server error");
         } else {
-          toast.error("Something went wrong.");
+          if (response?.statusCode === 200 && response?.status === true) {
+            toast.success(response?.message);
+            setCivilIDNameData((prevRowItems) =>
+              prevRowItems.filter((Item) => Item.uuid !== deleteId)
+            );
+            setSelectedRows((prevSelected) =>
+              prevSelected.filter((rowId) => rowId !== deleteId)
+            );
+            setShowDeleteConfirm(false);
+            setSelectedRows([]);
+            setSelectAllOrNot("");
+            setDeleteId(null);
+            fetchCivilIDNameList();
+          } else {
+            toast.error("Something went wrong.");
+          }
         }
-      }
-    }));
+      })
+    );
   };
 
   const cancelDelete = () => {
     setShowDeleteConfirm(false);
     setDeleteId(null);
-    setSelectedRows([])
-    setDeleteConfirmMessage('');
-    setSelectAllOrNot('');
+    setSelectedRows([]);
+    setDeleteConfirmMessage("");
+    setSelectAllOrNot("");
   };
 
   const handleCloseImport = () => {
@@ -409,12 +496,11 @@ const CivilIDNameList = () => {
 
   const handleExportTest = () => {
     setShowExportPopop(true);
-  }
+  };
 
   const cancelExportTest = () => {
     setShowExportPopop(false);
   };
-
 
   const handleDragStart = (e, index) => {
     e.dataTransfer.setData("dragIndex", index);
@@ -446,7 +532,7 @@ const CivilIDNameList = () => {
   const handleExport = () => {
     if (selectedItems.length == 0) {
       toast.error("Please select at least one field");
-      return
+      return;
     }
     // Map frontend labels to backend field names
     const fieldMapping = {
@@ -458,13 +544,17 @@ const CivilIDNameList = () => {
       "Civil ID Valid Duration Unit": "valid_duration_unit",
       "Civil ID Valid Date": "valid_date",
       "Modified On": "updated_at",
-      "Description": "description",
+      Description: "description",
     };
     let mappedFields = selectedItems.map((item) => fieldMapping[item] || item);
 
     // 👉 If "License Valid Upto" is selected, add related fields too
     if (mappedFields.includes("valid_type")) {
-      mappedFields.push("valid_date", "valid_duration_value", "valid_duration_unit");
+      mappedFields.push(
+        "valid_date",
+        "valid_duration_value",
+        "valid_duration_unit"
+      );
     }
 
     // Remove duplicates (optional)
@@ -475,44 +565,45 @@ const CivilIDNameList = () => {
       file: "xlsx",
       fields: fieldsString,
       uuids: selectAllOrNot === "all" ? [] : selectedRows,
-      search: tableState.search || '',
+      search: tableState.search || "",
       sort: tableState.sort,
     };
     setLoadingExport(true);
-    dispatch(civilIdNameExportData(sendPayload, (response, error) => {
-      if (error) {
-        setLoadingExport(false);
-        toast.error(error?.response?.message || "server error");
-      } else {
-        setLoadingExport(false);
-        if (response?.status === 200) {
-          const blob = new Blob([response.data], {
-            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-          });
-
-          const url = window.URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = `CivilIDName.xlsx`;
-          document.body.appendChild(link);
-          link.click();
-          link.remove();
-          window.URL.revokeObjectURL(url);
-          toast.success("Export successful");
-          cancelExportTest();
-          setSelectedRows([]);
-          setSelectAllOrNot('');
-          setDeleteId(null);
+    dispatch(
+      civilIdNameExportData(sendPayload, (response, error) => {
+        if (error) {
+          setLoadingExport(false);
+          toast.error(error?.response?.message || "server error");
         } else {
-          toast.error("Something went wrong.");
+          setLoadingExport(false);
+          if (response?.status === 200) {
+            const blob = new Blob([response.data], {
+              type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            });
+
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = `CivilIDName.xlsx`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+            toast.success("Export successful");
+            cancelExportTest();
+            setSelectedRows([]);
+            setSelectAllOrNot("");
+            setDeleteId(null);
+          } else {
+            toast.error("Something went wrong.");
+          }
         }
-      }
-    }));
+      })
+    );
   };
 
   const startIndex = (tableState.currentPage - 1) * tableState.limit;
-  const statusOptions = ['All', 'Active', 'Inactive'];
-
+  const statusOptions = ["All", "Active", "Inactive"];
 
   return (
     <>
@@ -527,7 +618,9 @@ const CivilIDNameList = () => {
                   <button
                     className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
                     onClick={handleShow}
-                  >New</button>
+                  >
+                    New
+                  </button>
                   <button
                     className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
                     onClick={handleShowImport}
@@ -547,26 +640,36 @@ const CivilIDNameList = () => {
                   >
                     Delete
                   </button>
-                  {(selectedRows?.length > 0 && selectedRows?.length === civilIDNameData?.length) && (
-                    <>
-                      <button
-                        onClick={() => handleSelectAllOrNot("onlySelected")}
-                        className={`btn btn-sm py-1 fw-medium ${selectAllOrNot === "onlySelected" ? "comman-btn-color" : "comman-inactive-btn"}`}
-                      >
-                        {`Select (${selectedRows.length})`}
-                      </button>
-                      <button
-                        onClick={() => handleSelectAllOrNot("all")}
-                        className={`btn btn-sm py-1 fw-medium ${selectAllOrNot === "all" ? "comman-btn-color" : "comman-inactive-btn"}`}
-                      >
-                        {`Select All (${tableState.total})`}
-                      </button>
-                    </>
-                  )}
-                  <button
+                  {selectedRows?.length > 0 &&
+                    selectedRows?.length === civilIDNameData?.length && (
+                      <>
+                        <button
+                          onClick={() => handleSelectAllOrNot("onlySelected")}
+                          className={`btn btn-sm py-1 fw-medium ${
+                            selectAllOrNot === "onlySelected"
+                              ? "comman-btn-color"
+                              : "comman-inactive-btn"
+                          }`}
+                        >
+                          {`Select (${selectedRows.length})`}
+                        </button>
+                        <button
+                          onClick={() => handleSelectAllOrNot("all")}
+                          className={`btn btn-sm py-1 fw-medium ${
+                            selectAllOrNot === "all"
+                              ? "comman-btn-color"
+                              : "comman-inactive-btn"
+                          }`}
+                        >
+                          {`Select All (${tableState.total})`}
+                        </button>
+                      </>
+                    )}
+                  <ResetButton
                     onClick={clearAllFilters}
-                    className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
-                  >Reset </button>
+                    tableState={tableState}
+                    globalSearch={globalSearch}
+                  />
                 </div>
               </div>
 
@@ -587,36 +690,57 @@ const CivilIDNameList = () => {
                     <div className="d-flex justify-content-between align-items-center px-4 py-0">
                       <div className="showing-total-page">
                         {startIndex + 1}-{" "}
-                        {Math.min(startIndex + tableState.limit, tableState.total)}{" "}
+                        {Math.min(
+                          startIndex + tableState.limit,
+                          tableState.total
+                        )}{" "}
                         of {tableState.total}
                       </div>
                       <nav>
                         <ul className="pagination mb-0 gap-4px">
-                          <li className={`page-item ${!tableState.hasPrevious ? 'disabled' : ''}`}>
+                          <li
+                            className={`page-item ${
+                              !tableState.hasPrevious ? "disabled" : ""
+                            }`}
+                          >
                             <button
                               className="border-0 bg-transparent"
                               onClick={() => goToPage(1)}
                               disabled={!tableState.hasPrevious}
                               style={{
-                                padding: '0px 8px',
-                                color: !tableState.hasPrevious ? '#ccc' : '#6c757d',
-                                fontSize: '18px',
-                                cursor: !tableState.hasPrevious ? 'not-allowed' : 'pointer'
+                                padding: "0px 8px",
+                                color: !tableState.hasPrevious
+                                  ? "#ccc"
+                                  : "#6c757d",
+                                fontSize: "18px",
+                                cursor: !tableState.hasPrevious
+                                  ? "not-allowed"
+                                  : "pointer",
                               }}
                             >
                               «
                             </button>
                           </li>
-                          <li className={`page-item ${!tableState.hasPrevious ? 'disabled' : ''}`}>
+                          <li
+                            className={`page-item ${
+                              !tableState.hasPrevious ? "disabled" : ""
+                            }`}
+                          >
                             <button
                               className="border-0 bg-transparent"
-                              onClick={() => goToPage(tableState.currentPage - 1)}
+                              onClick={() =>
+                                goToPage(tableState.currentPage - 1)
+                              }
                               disabled={!tableState.hasPrevious}
                               style={{
-                                padding: '0px 8px',
-                                color: !tableState.hasPrevious ? '#ccc' : '#6c757d',
-                                fontSize: '18px',
-                                cursor: !tableState.hasPrevious ? 'not-allowed' : 'pointer'
+                                padding: "0px 8px",
+                                color: !tableState.hasPrevious
+                                  ? "#ccc"
+                                  : "#6c757d",
+                                fontSize: "18px",
+                                cursor: !tableState.hasPrevious
+                                  ? "not-allowed"
+                                  : "pointer",
                               }}
                             >
                               ‹
@@ -624,13 +748,13 @@ const CivilIDNameList = () => {
                           </li>
                           {getPaginationNumbers().map((page, idx) => (
                             <li key={idx} className="page-item">
-                              {page === '...' ? (
+                              {page === "..." ? (
                                 <span
                                   className="border-0 bg-transparent"
                                   style={{
-                                    padding: '0px 10px',
-                                    color: '#6c757d',
-                                    cursor: 'default'
+                                    padding: "0px 10px",
+                                    color: "#6c757d",
+                                    cursor: "default",
                                   }}
                                 >
                                   ...
@@ -640,14 +764,23 @@ const CivilIDNameList = () => {
                                   className="border-0"
                                   onClick={() => goToPage(page)}
                                   style={{
-                                    padding: '0px 10px',
-                                    minWidth: '30px',
-                                    backgroundColor: page === tableState.currentPage ? '#5a6c5b' : 'transparent',
-                                    color: page === tableState.currentPage ? '#fff' : '#6c757d',
-                                    borderRadius: '4px',
-                                    fontWeight: page === tableState.currentPage ? '500' : '400',
-                                    cursor: 'pointer',
-                                    fontSize: "14px"
+                                    padding: "0px 10px",
+                                    minWidth: "30px",
+                                    backgroundColor:
+                                      page === tableState.currentPage
+                                        ? "#5a6c5b"
+                                        : "transparent",
+                                    color:
+                                      page === tableState.currentPage
+                                        ? "#fff"
+                                        : "#6c757d",
+                                    borderRadius: "4px",
+                                    fontWeight:
+                                      page === tableState.currentPage
+                                        ? "500"
+                                        : "400",
+                                    cursor: "pointer",
+                                    fontSize: "14px",
                                   }}
                                 >
                                   {page}
@@ -655,31 +788,45 @@ const CivilIDNameList = () => {
                               )}
                             </li>
                           ))}
-                          <li className={`page-item ${!tableState.hasNext ? 'disabled' : ''}`}>
+                          <li
+                            className={`page-item ${
+                              !tableState.hasNext ? "disabled" : ""
+                            }`}
+                          >
                             <button
                               className="border-0 bg-transparent"
-                              onClick={() => goToPage(tableState.currentPage + 1)}
+                              onClick={() =>
+                                goToPage(tableState.currentPage + 1)
+                              }
                               disabled={!tableState.hasNext}
                               style={{
-                                padding: '0px 8px',
-                                color: !tableState.hasNext ? '#ccc' : '#6c757d',
-                                fontSize: '18px',
-                                cursor: !tableState.hasNext ? 'not-allowed' : 'pointer'
+                                padding: "0px 8px",
+                                color: !tableState.hasNext ? "#ccc" : "#6c757d",
+                                fontSize: "18px",
+                                cursor: !tableState.hasNext
+                                  ? "not-allowed"
+                                  : "pointer",
                               }}
                             >
                               ›
                             </button>
                           </li>
-                          <li className={`page-item ${!tableState.hasNext ? 'disabled' : ''}`}>
+                          <li
+                            className={`page-item ${
+                              !tableState.hasNext ? "disabled" : ""
+                            }`}
+                          >
                             <button
                               className="border-0 bg-transparent"
                               onClick={() => goToPage(tableState.totalPages)}
                               disabled={!tableState.hasNext}
                               style={{
-                                padding: '0px 8px',
-                                color: !tableState.hasNext ? '#ccc' : '#6c757d',
-                                fontSize: '18px',
-                                cursor: !tableState.hasNext ? 'not-allowed' : 'pointer'
+                                padding: "0px 8px",
+                                color: !tableState.hasNext ? "#ccc" : "#6c757d",
+                                fontSize: "18px",
+                                cursor: !tableState.hasNext
+                                  ? "not-allowed"
+                                  : "pointer",
                               }}
                             >
                               »
@@ -694,13 +841,12 @@ const CivilIDNameList = () => {
             </div>
           </div>
 
-          <div className="card-body pt-0 container-table" >
-            <div className='container-table-div'>
-              <table className="table mb-0"  >
-
+          <div className="card-body pt-0 container-table">
+            <div className="container-table-div">
+              <table className="table mb-0">
                 <thead>
                   <tr>
-                    <th scope="col" className='sl-numbar-th'>
+                    <th scope="col" className="sl-numbar-th">
                       <div className="d-flex align-items-center gap-2">
                         <input
                           className="form-check-input"
@@ -712,28 +858,39 @@ const CivilIDNameList = () => {
                         <span>No.</span>
                       </div>
                     </th>
-                    {tableColumns.map((column) => (
-                      isColumnVisible(column.id) && (
-                        <th
-                          key={column.id}
-                          scope="col"
-                          className='sorting-th'
-                          onClick={() => handleSort(column.field)}
-                        >
-                          <div className="d-flex align-items-center">
-                            {column.label}
-                            {getSortIcon(column.field)}
-                          </div>
-                        </th>
-                      )
-                    ))}
-                    <th scope="col" className='action-th'>
-                      <div className="position-relative table-header-hide-show" ref={columnDropdownRef}>
+                    {tableColumns.map(
+                      (column) =>
+                        isColumnVisible(column.id) && (
+                          <th
+                            key={column.id}
+                            scope="col"
+                            className="sorting-th"
+                            onClick={() => handleSort(column.field)}
+                          >
+                            <div className="d-flex align-items-center">
+                              {column.label}
+                              {getSortIcon(column.field)}
+                            </div>
+                          </th>
+                        )
+                    )}
+                    <th scope="col" className="action-th">
+                      <div
+                        className="position-relative table-header-hide-show"
+                        ref={columnDropdownRef}
+                      >
                         <button
                           className="position-relative table-header-hide-show"
-                          onClick={() => setShowColumnDropdown(!showColumnDropdown)}
+                          onClick={() =>
+                            setShowColumnDropdown(!showColumnDropdown)
+                          }
                         >
-                          Action <Icon icon="mdi:table-column" width="20" className='icone' />
+                          Action{" "}
+                          <Icon
+                            icon="mdi:table-column"
+                            width="20"
+                            className="icone"
+                          />
                         </button>
                         {showColumnDropdown && (
                           <div className="position-absolute bg-white border rounded shadow-sm p-2 show-dropdowns-header">
@@ -746,11 +903,16 @@ const CivilIDNameList = () => {
                                   type="checkbox"
                                   id={`column-${column.id}`}
                                   checked={isColumnVisible(column.id)}
-                                  onChange={() => toggleColumnVisibility(column.id)}
+                                  onChange={() =>
+                                    toggleColumnVisibility(column.id)
+                                  }
                                   disabled={column.required}
                                   className="form-check-input"
                                 />
-                                <label htmlFor={`column-${column.id}`} className="mb-0 flex-grow-1 form-label">
+                                <label
+                                  htmlFor={`column-${column.id}`}
+                                  className="mb-0 flex-grow-1 form-label"
+                                >
                                   {column.label}
                                 </label>
                               </div>
@@ -764,9 +926,15 @@ const CivilIDNameList = () => {
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan={visibleColumns.length + 2} className='loding-data'>
+                      <td
+                        colSpan={visibleColumns.length + 2}
+                        className="loding-data"
+                      >
                         <div className="d-flex justify-content-center align-items-center gap-2">
-                          <div className="spinner-border spinner-border-sm" role="status">
+                          <div
+                            className="spinner-border spinner-border-sm"
+                            role="status"
+                          >
                             <span className="visually-hidden">Loading...</span>
                           </div>
                           Loading...
@@ -784,54 +952,92 @@ const CivilIDNameList = () => {
                               checked={selectedRows.includes(rowItem.uuid)}
                               onChange={() => handleRowSelect(rowItem.uuid)}
                             />
-                            <span>{String(startIndex + index + 1).padStart(2, '0')}</span>
+                            <span>
+                              {String(startIndex + index + 1).padStart(2, "0")}
+                            </span>
                           </div>
                         </td>
-                        {isColumnVisible('civil_id_name') && (
-                          <td><span>{rowItem.civil_id_name}</span></td>
+                        {isColumnVisible("civil_id_name") && (
+                          <td>
+                            <span>{rowItem.civil_id_name}</span>
+                          </td>
                         )}
-                        {isColumnVisible('authority_full_name') && (
-                          <td><span>{rowItem.authority_full_name}</span></td>
+                        {isColumnVisible("authority_full_name") && (
+                          <td>
+                            <span>{rowItem.authority_full_name}</span>
+                          </td>
                         )}
-                        {isColumnVisible('authority_short_name') && (
-                          <td><span>{rowItem.authority_short_name}</span></td>
+                        {isColumnVisible("authority_short_name") && (
+                          <td>
+                            <span>{rowItem.authority_short_name}</span>
+                          </td>
                         )}
 
-                        {isColumnVisible('valid_type') && (
-                          <td><span>{rowItem.valid_type}</span></td>
+                        {isColumnVisible("valid_type") && (
+                          <td>
+                            <span>{rowItem.valid_type}</span>
+                          </td>
                         )}
-                        {isColumnVisible('valid_date') && (
+                        {isColumnVisible("valid_date") && (
                           <td>
                             <span>
-                              {rowItem?.valid_date != null && rowItem?.valid_date !== ""
+                              {rowItem?.valid_date != null &&
+                              rowItem?.valid_date !== ""
                                 ? formatDateDDMMYYYY(rowItem.valid_date)
                                 : ""}
                             </span>
                           </td>
                         )}
 
-                        {isColumnVisible('valid_duration_value') && (
-                          <td><span>{rowItem.valid_duration_value}</span></td>
+                        {isColumnVisible("valid_duration_value") && (
+                          <td>
+                            <span>{rowItem.valid_duration_value}</span>
+                          </td>
                         )}
-                        {isColumnVisible('valid_duration_unit') && (
-                          <td><span>{rowItem.valid_duration_unit}</span></td>
-                        )}
-
-
-                        {isColumnVisible('description') && (
-                          <td><span>{rowItem.description}</span></td>
-                        )}
-                        {isColumnVisible('updated_at') && (
-                          <td><span>{formatDateDDMMYYYYTime(rowItem.updated_at)}</span></td>
+                        {isColumnVisible("valid_duration_unit") && (
+                          <td>
+                            <span>{rowItem.valid_duration_unit}</span>
+                          </td>
                         )}
 
-                        <td className='action-td'>
+                        {isColumnVisible("description") && (
+                          <td>
+                            <span>{rowItem.description}</span>
+                          </td>
+                        )}
+                        {isColumnVisible("updated_at") && (
+                          <td>
+                            <span>
+                              {formatDateDDMMYYYYTime(rowItem.updated_at)}
+                            </span>
+                          </td>
+                        )}
+
+                        <td className="action-td">
                           <div className="d-flex align-items-end gap-2">
-                            <Link to="#" className='edit-btn-icone' onClick={(e) => { e.preventDefault(); handleShowEdit(rowItem); }}>
-                              <Icon icon="lucide:edit" width="18" className='icone' />
+                            <Link
+                              to="#"
+                              className="edit-btn-icone"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                handleShowEdit(rowItem);
+                              }}
+                            >
+                              <Icon
+                                icon="lucide:edit"
+                                width="18"
+                                className="icone"
+                              />
                             </Link>
-                            <button onClick={() => handleDelete(rowItem.uuid)} className='delete-btn-icone'>
-                              <Icon icon="mingcute:delete-2-line" width="18" className='icone' />
+                            <button
+                              onClick={() => handleDelete(rowItem.uuid)}
+                              className="delete-btn-icone"
+                            >
+                              <Icon
+                                icon="mingcute:delete-2-line"
+                                width="18"
+                                className="icone"
+                              />
                             </button>
                           </div>
                         </td>
@@ -839,7 +1045,10 @@ const CivilIDNameList = () => {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={visibleColumns.length + 2} className='no-records-found'>
+                      <td
+                        colSpan={visibleColumns.length + 2}
+                        className="no-records-found"
+                      >
                         No records found
                       </td>
                     </tr>
@@ -856,14 +1065,22 @@ const CivilIDNameList = () => {
           rowData={modalState.rowData}
         />
         {showImport && (
-          <AddImportCivilIDNameModal show={showImport} handleClose={handleCloseImport} />)}
+          <AddImportCivilIDNameModal
+            show={showImport}
+            handleClose={handleCloseImport}
+          />
+        )}
         {showDeleteConfirm && (
           <div className="modal fade show common-ctl-popup">
             <div className="modal-dialog modal-dialog-centered">
-              <div className="modal-content" style={{ borderRadius: '10px' }}>
+              <div className="modal-content" style={{ borderRadius: "10px" }}>
                 <div className="modal-header">
                   <h6 className="modal-title text-danger">Confirm Delete</h6>
-                  <button type="button" className="btn-close" onClick={cancelDelete}></button>
+                  <button
+                    type="button"
+                    className="btn-close"
+                    onClick={cancelDelete}
+                  ></button>
                 </div>
                 <div className="modal-body">
                   <p className="mb-0">{deleteConfirmMessage}</p>
@@ -894,7 +1111,10 @@ const CivilIDNameList = () => {
             tabIndex={-1}
             role="dialog"
           >
-            <div className="modal-dialog modal-xl modal-dialog-centered" role="document">
+            <div
+              className="modal-dialog modal-xl modal-dialog-centered"
+              role="document"
+            >
               <div className="modal-content radius-16 bg-base">
                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
                   <h1 className="modal-title fs-5">Export Civil ID Name</h1>
@@ -908,8 +1128,10 @@ const CivilIDNameList = () => {
                 <div className="modal-body p-24 pt-10">
                   <div className="row">
                     <div className="col-12 col-md-6">
-                      <h3 className="text-sm font-semibold mb-3 text-gray-700">Available fields</h3>
-                      <div className="border rounded-lg p-3 bg-gray-50 export-file-left" >
+                      <h3 className="text-sm font-semibold mb-3 text-gray-700">
+                        Available fields
+                      </h3>
+                      <div className="border rounded-lg p-3 bg-gray-50 export-file-left">
                         {items.map((item, index) => (
                           <div
                             key={index}
@@ -919,11 +1141,16 @@ const CivilIDNameList = () => {
                               type="checkbox"
                               id={`item-${index}`}
                               checked={selectedItems.includes(item)}
-                              onChange={(e) => handleCheckboxChange(item, e.target.checked)}
+                              onChange={(e) =>
+                                handleCheckboxChange(item, e.target.checked)
+                              }
                               disabled={ItemsRequired.includes(item)} // 🔒 Disable required item
                               className="form-check-input"
                             />
-                            <label htmlFor={`item-${index}`} className="mb-0 flex-grow-1">
+                            <label
+                              htmlFor={`item-${index}`}
+                              className="mb-0 flex-grow-1"
+                            >
                               {item}
                             </label>
                           </div>
@@ -934,7 +1161,7 @@ const CivilIDNameList = () => {
                       <h3 className="text-sm font-semibold mb-3 text-gray-700">
                         Selected fields ({selectedItems.length})
                       </h3>
-                      <div className="border rounded-lg p-3 bg-blue-50 export-file-righit" >
+                      <div className="border rounded-lg p-3 bg-blue-50 export-file-righit">
                         {selectedItems.length === 0 ? (
                           <div className="text-center text-muted py-5">
                             No fields selected
@@ -948,13 +1175,17 @@ const CivilIDNameList = () => {
                               onDrop={(e) => handleDrop(e, index)}
                               onDragOver={handleDragOver}
                               className="bg-white border border-primary rounded p-2 mb-2 d-flex align-items-center gap-2 export-file"
-                              style={{ cursor: 'grab' }}
+                              style={{ cursor: "grab" }}
                             >
-                              <span className="text-muted move-drop-icone">☰</span>
+                              <span className="text-muted move-drop-icone">
+                                ☰
+                              </span>
                               <span className="flex-grow-1">{item}</span>
                               {!ItemsRequired.includes(item) && (
                                 <button
-                                  onClick={() => handleCheckboxChange(item, false)}
+                                  onClick={() =>
+                                    handleCheckboxChange(item, false)
+                                  }
                                   className="btn btn-sm btn-link text-danger p-0 close-icone"
                                 >
                                   ×
@@ -982,14 +1213,19 @@ const CivilIDNameList = () => {
                       type="button"
                       className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                       disabled={loadingExport}
-                    >{loadingExport ? (
-                      <>
-                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                        Submit...
-                      </>
-                    ) : (
-                      "Submit"
-                    )}
+                    >
+                      {loadingExport ? (
+                        <>
+                          <span
+                            className="spinner-border spinner-border-sm me-2"
+                            role="status"
+                            aria-hidden="true"
+                          ></span>
+                          Submit...
+                        </>
+                      ) : (
+                        "Submit"
+                      )}
                     </button>
                   </div>
                 </div>
