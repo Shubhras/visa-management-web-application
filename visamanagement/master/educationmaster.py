@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from .serializers import  *
 from django.core.paginator import Paginator
-from django.db.models import Q, F, IntegerField
+from django.db.models import Q, F, IntegerField, Case, When
 import re
 from django.db.models.functions import Lower, Cast
 from rest_framework.permissions import IsAuthenticated ,AllowAny ,BasePermission 
@@ -5479,35 +5479,118 @@ class AcademicResultComparisonExportAPIView(APIView):
 
 # -------------------- EducationType CRUD -------------------- #
 
+# class EducationTypeListAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def get(self, request):
+#         search = request.GET.get('search', '').strip()
+#         sort_by = request.GET.get('sortBy', 'created_at')
+#         sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
+
+#         allowed_sort_fields = ['educationType', 'Perticulars', 'created_at']
+#         if sort_by not in allowed_sort_fields:
+#             sort_by = 'created_at'
+
+#         # Apply descending order for 'desc'
+#         if sort_order == 'desc':
+#             sort_by = f'-{sort_by}'
+
+#         queryset = EducationType.objects.filter(is_deleted=False)
+
+#         if search:
+#             queryset = queryset.filter(
+#                 Q(educationType__istartswith=search)
+#             )
+
+#         queryset = queryset.order_by(sort_by)
+#         paginator = CustomPagination()
+#         result_page = paginator.paginate_queryset(queryset, request)
+#         serializer = EducationTypeSerializer(result_page, many=True)
+#         return paginator.get_paginated_response(serializer.data)
+    
+
 class EducationTypeListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
+        custom_sort = request.GET.get('customSort')
         sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
+        sort_order = request.GET.get('sortOrder', 'desc')
 
+        # Allowed fields
         allowed_sort_fields = ['educationType', 'Perticulars', 'created_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
 
-        # Apply descending order for 'desc'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        # Mapping for ORM
+        sort_field_map = {
+            'educationType': 'educationType',
+            'Perticulars': 'Perticulars',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
 
+        # Initial queryset
         queryset = EducationType.objects.filter(is_deleted=False)
 
+        # Apply search
         if search:
             queryset = queryset.filter(
-                Q(educationType__istartswith=search)
+                Q(educationType__icontains=search)
             )
 
-        queryset = queryset.order_by(sort_by)
+        sort_fields = []
+
+        # -----------------------------
+        # CUSTOM SORT (same style as AcademicResultListAPIView)
+        # -----------------------------
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive on string fields
+                    if field in ['educationType', 'Perticulars']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+        else:
+            # -----------------------------
+            # DEFAULT SORT (unchanged)
+            # -----------------------------
+            if sort_by not in allowed_sort_fields:
+                sort_by = 'created_at'
+
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+            f = F(orm_field)
+
+            sort_fields = [
+                f.asc(nulls_last=True) if sort_order.lower() == 'asc' else f.desc(nulls_last=True)
+            ]
+
+        # Apply ordering
+        queryset = queryset.order_by(*sort_fields)
+
+        # Pagination + Serialization
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = EducationTypeSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
-    
+
+
+
 
 class EducationTypeCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -5630,15 +5713,82 @@ class EducationTypeDeleteAPIView(APIView):
         })
 
 
+# class EducationTypeExportAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+ 
+#     def get(self, request):
+#         format_type = request.GET.get('format', 'xlsx').lower()
+#         fields = request.GET.get('fields')
+#         uuids_param = request.GET.get('uuids', '')
+#         uuids = [u.strip() for u in uuids_param.split(',') if u]
+ 
+#         field_header_map = {
+#             'uuid': 'UUID',
+#             'educationType': 'Education Type',
+#             'Perticulars': 'Particulars',
+#             'is_deleted': 'Deleted',
+#             'created_at': 'Created On',
+#             'updated_at': 'Updated On',
+#         }
+ 
+#         if fields:
+#             field_list = [f.strip() for f in fields.split(',')]
+#         else:
+#             field_list = list(field_header_map.keys())
+ 
+#         queryset = EducationType.objects.filter(is_deleted=False)
+#         if uuids:
+#             queryset = queryset.filter(uuid__in=uuids)
+#         queryset = queryset.order_by('-created_at')
+ 
+#         dataset = Dataset()
+#         dataset.headers = [field_header_map.get(f, f) for f in field_list]
+#         dataset.title = 'EducationType'
+ 
+#         for obj in queryset:
+#             row = []
+#             for field in field_list:
+#                 value = getattr(obj, field, '')
+ 
+#                 if field in ['created_at', 'updated_at'] and value:
+#                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+#                 elif isinstance(value, bool):
+#                     value = int(value)
+ 
+#                 row.append(value if value is not None else '')
+ 
+#             dataset.append(row)
+ 
+#         if format_type == 'csv':
+#             file_data = dataset.export('csv')
+#             content_type = 'text/csv'
+#             file_name = 'education-type.csv'
+#         else:
+#             file_data = io.BytesIO(dataset.export('xlsx'))
+#             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+#             file_name = 'education-type.xlsx'
+ 
+#         response = HttpResponse(
+#             file_data if format_type == 'csv' else file_data.getvalue(),
+#             content_type=content_type
+#         )
+#         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+#         return response
+ 
 class EducationTypeExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
- 
+
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')
+        search = request.GET.get('search', '').strip()
+        custom_sort = request.GET.get('customSort')
         uuids_param = request.GET.get('uuids', '')
         uuids = [u.strip() for u in uuids_param.split(',') if u]
- 
+
+        # -----------------------------
+        # Field Header Mapping
+        # -----------------------------
         field_header_map = {
             'uuid': 'UUID',
             'educationType': 'Education Type',
@@ -5647,52 +5797,123 @@ class EducationTypeExportAPIView(APIView):
             'created_at': 'Created On',
             'updated_at': 'Updated On',
         }
- 
-        if fields:
-            field_list = [f.strip() for f in fields.split(',')]
-        else:
-            field_list = list(field_header_map.keys())
- 
+
+        # Final export fields
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+        # -----------------------------
+        # Base Queryset
+        # -----------------------------
         queryset = EducationType.objects.filter(is_deleted=False)
+
+        # UUID Filtering
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
- 
+
+        # Search Filtering
+        if search:
+            queryset = queryset.filter(
+                Q(educationType__icontains=search) |
+                Q(Perticulars__icontains=search)
+            )
+
+        # -----------------------------
+        # Sorting Logic (Same as AcademicResultTypeExportAPIView)
+        # -----------------------------
+        sort_field_map = {
+            'uuid': 'uuid',
+            'educationType': 'educationType',
+            'Perticulars': 'Perticulars',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+
+        sort_fields = []
+        annotations = {}
+
+        if custom_sort:
+            # Example: ?customSort=educationType:asc,Perticulars:desc
+            for idx, rule in enumerate(custom_sort.split(',')):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        return Response({
+                            "status": False,
+                            "statusCode": 400,
+                            "message": f"Invalid sort field: {field}"
+                        }, status=400)
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sorting for text
+                    if field in ['educationType', 'Perticulars']:
+                        ann_name = f"sort_key_{idx}"
+                        annotations[ann_name] = Lower(orm_field)
+                        sort_fields.append(ann_name if order == 'asc' else f"-{ann_name}")
+                    else:
+                        sort_fields.append(orm_field if order == 'asc' else f"-{orm_field}")
+
+                except ValueError:
+                    return Response({
+                        "status": False,
+                        "statusCode": 400,
+                        "message": f"Invalid sorting rule format: {rule}"
+                    }, status=400)
+
+        # Apply annotations if required
+        if annotations:
+            queryset = queryset.annotate(**annotations)
+
+        # Default fallback sort
+        if not sort_fields:
+            sort_fields = ['-created_at']
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # -----------------------------
+        # Generate Export Dataset
+        # -----------------------------
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = 'EducationType'
- 
+
         for obj in queryset:
             row = []
             for field in field_list:
                 value = getattr(obj, field, '')
- 
+
                 if field in ['created_at', 'updated_at'] and value:
-                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                    value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
                     value = int(value)
- 
+
                 row.append(value if value is not None else '')
- 
+
             dataset.append(row)
- 
+
+        # -----------------------------
+        # File Output
+        # -----------------------------
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
             file_name = 'education-type.csv'
+            output = file_data
         else:
-            file_data = io.BytesIO(dataset.export('xlsx'))
+            buffer = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'education-type.xlsx'
- 
-        response = HttpResponse(
-            file_data if format_type == 'csv' else file_data.getvalue(),
-            content_type=content_type
-        )
+            output = buffer.getvalue()
+
+        response = HttpResponse(output, content_type=content_type)
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
- 
- 
+
+
+
 class EducationTypeImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
