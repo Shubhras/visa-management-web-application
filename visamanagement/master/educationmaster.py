@@ -3288,6 +3288,9 @@ class StudyMajorAreaExportAPIView(APIView):
             # ---------------------------
             # Sorting Logic (CustomSort)
             # ---------------------------
+            # ---------------------------
+            # Sorting Logic (CustomSort)
+            # ---------------------------
             sort_field_map = {
                 'uuid': 'uuid',
                 'studyMainArea': 'mainarea__name',
@@ -3298,9 +3301,10 @@ class StudyMajorAreaExportAPIView(APIView):
             }
 
             sort_fields = []
+            annotations = {}
 
             if custom_sort:
-                for rule in custom_sort.split(','):
+                for idx, rule in enumerate(custom_sort.split(',')):
                     try:
                         field, order = rule.split(':')
                         field = field.strip()
@@ -3315,24 +3319,15 @@ class StudyMajorAreaExportAPIView(APIView):
 
                         orm_field = sort_field_map[field]
 
-                        if order not in ['asc', 'desc']:
-                            return Response({
-                                "status": False,
-                                "statusCode": 400,
-                                "message": f"Invalid sort order: {order}"
-                            }, status=400)
-
-                        # Use case-insensitive for
-                        # Study Main Area & Major Area & Description
+                        # Case-insensitive sorting for string fields
                         if field in ['studyMainArea', 'majorarea', 'description']:
-                            f = Lower(orm_field)
+                            ann_name = f"sort_key_{idx}"
+                            annotations[ann_name] = Lower(orm_field)
+                            sort_fields.append(ann_name if order == 'asc' else f"-{ann_name}")
                         else:
-                            f = F(orm_field)
-
-                        sort_fields.append(
-                            f.asc(nulls_last=True) if order == 'asc'
-                            else f.desc(nulls_last=True)
-                        )
+                            sort_fields.append(
+                                orm_field if order == 'asc' else f"-{orm_field}"
+                            )
 
                     except ValueError:
                         return Response({
@@ -3341,11 +3336,16 @@ class StudyMajorAreaExportAPIView(APIView):
                             "message": f"Invalid sorting rule format: {rule}"
                         }, status=400)
 
-            else:
-                # Default sorting
-                sort_fields = [F('created_at').desc(nulls_last=True)]
+            # Apply annotation
+            if annotations:
+                queryset = queryset.annotate(**annotations)
+
+            # Default sort if none provided
+            if not sort_fields:
+                sort_fields = ['-created_at']
 
             queryset = queryset.order_by(*sort_fields)
+
 
             # ---------------------------
             # Prepare Dataset
