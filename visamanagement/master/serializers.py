@@ -2860,6 +2860,14 @@ class StudyFactorAgeSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
 
+# class StudyFactorAgeSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = StudyFactorAge
+#         fields = "__all__"
+#         read_only_fields = ("uuid", "created_at", "updated_at")
+
+
+
 class StudyFactorAcademicResultSerializer(serializers.ModelSerializer):
     factor_for_name = serializers.CharField(source='factor_for.name', read_only=True)
     academic_result_group_name = serializers.CharField(source='academic_result_group.name', read_only=True)
