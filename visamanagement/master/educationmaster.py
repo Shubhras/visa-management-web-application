@@ -3245,10 +3245,11 @@ class StudyMajorAreaExportAPIView(APIView):
             # ---------------------------
             def parse_ids(param_name):
                 raw = request.GET.get(param_name, '')
-                print(f"--------------Parsing IDs for {param_name}: {raw}")
                 if raw:
-                    return [x.strip() for x in raw.split(',') if x.strip()]
-                return request.GET.getlist(param_name)
+                    items = [x.strip() for x in raw.split(',') if x.strip()]
+                else:
+                    items = request.GET.getlist(param_name)
+                return items
 
             def validate_uuid_list(uuid_list):
                 valid = []
@@ -3256,31 +3257,39 @@ class StudyMajorAreaExportAPIView(APIView):
                     try:
                         valid.append(UUID(u))
                     except:
-                        return Response({
-                            "status": False,
-                            "statusCode": 400,
-                            "message": f"Invalid UUID: {u}"
-                        }, status=400)
+                        pass
                 return valid
 
-            studyMainArea_list = validate_uuid_list(parse_ids('studyMainArea'))
-            print("------studyMainArea_list------------", studyMainArea_list)
-            uuids_list = validate_uuid_list(parse_ids('uuids'))
-            print("------uuids_list------------", uuids_list)
+            try:
+                studyMainArea_list = validate_uuid_list(parse_ids('studyMainArea'))
+                uuids_list = validate_uuid_list(parse_ids('uuids'))
+            except ValueError as e:
+                return Response({
+                    "status": False,
+                    "statusCode": 400,
+                    "message": str(e)
+                }, status=400)
 
             # ---------------------------
             # Base Queryset
             # ---------------------------
             queryset = Studymajorarea.objects.filter(is_deleted=False)
-
-            if studyMainArea_list:
-                print("Filtering by studyMainArea_list")
-                queryset = queryset.filter(mainarea__uuid__in=studyMainArea_list)
-                print(f"Post-filter  studyMainArea_list count: {queryset.count()}")
-            elif uuids_list:
-                print("Filtering by uuids_list")
-                queryset = queryset.filter(uuid__in=uuids_list)
-                print(f"Post-filter uuids_list count: {queryset.count()}")
+            
+            try:
+                if studyMainArea_list:
+                    print("Filtering by studyMainArea_list")
+                    queryset = queryset.filter(mainarea__uuid__in=studyMainArea_list)
+                    print(f"Post-filter  studyMainArea_list count: {queryset.count()}")
+                elif uuids_list:
+                    print("Filtering by uuids_list")
+                    queryset = queryset.filter(uuid__in=uuids_list)
+                    print(f"Post-filter uuids_list count: {queryset.count()}")
+            except Exception as e:
+                return Response({
+                    "status": False,
+                    "statusCode": 400,
+                    "message": f"Error during UUID filtering: {str(e)}"
+                }, status=400)
 
             # ---------------------------
             # Search Logic (icontains + istartswith)
