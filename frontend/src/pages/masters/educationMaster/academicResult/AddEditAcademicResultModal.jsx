@@ -193,14 +193,14 @@ const AddEditAcademicResultModal = ({ show, handleClose, mode = 'add', rowData =
                   <Select
                     options={educationLevelListData.map((option) => ({
                       value: option.uuid,
-                      label: option.name,
+                      label: `${option.name} (${option.datatype})`,
                     }))}
                     value={
                       formData.category
                         ? educationLevelListData
                           .map((option) => ({
                             value: option.uuid,
-                            label: option.name,
+                            label: `${option.name} (${option.datatype})`,
                           }))
                           .find((opt) => opt.value === formData.category)
                         : null

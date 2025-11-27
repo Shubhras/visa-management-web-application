@@ -749,33 +749,49 @@ class VisaMajorAdmin(admin.ModelAdmin):
 @admin.register(VisaName)
 class VisaNameAdmin(admin.ModelAdmin):
     list_display = (
+        'id',
+        'uuid',
         'full_name',
         'short_name',
         'country',
         'visamain',
         'visamajor',
-        'description',
         'is_deleted',
         'created_at',
-        'updated_at'
+    )
+
+    list_filter = (
+        'country',
+        'visamain',
+        'visamajor',
+        'is_deleted',
+        'created_at',
     )
 
     search_fields = (
         'full_name',
         'short_name',
-        'country__country_name',
+        'uuid',
+        'country__name',
         'visamain__name',
         'visamajor__name',
     )
 
-    list_filter = (
-        'is_deleted',
-        'country',
-        'visamain',
-        'visamajor',
-    )
+    readonly_fields = ('uuid', 'created_at', 'updated_at')
 
-    ordering = ('full_name',)
+    ordering = ('-created_at',)
+
+    # Optional: Show soft-deleted items differently
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.order_by('-created_at')
+
+    # Optional: Make full_name and short_name searchable even with OR behavior
+    def get_search_results(self, request, queryset, search_term):
+        queryset, use_distinct = super().get_search_results(
+            request, queryset, search_term
+        )
+        return queryset, use_distinct
 
 
 @admin.register(ApplicantType)
@@ -1270,49 +1286,6 @@ class ScholorshipBasedOnAdmin(admin.ModelAdmin):
     
         
 
-
-
-# @admin.register(Language)
-# class LanguageAdmin(admin.ModelAdmin):
-#     list_display = ('id', 'uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at')
-#     search_fields = ('name', 'description')
-#     list_filter = ('is_deleted', 'created_at', 'updated_at')
-
-
-# @admin.register(LanguageTest)
-# class LanguageTestAdmin(admin.ModelAdmin):
-#     list_display = ('id', 'uuid', 'name', 'fullname', 'language', 'description', 'is_deleted', 'created_at', 'updated_at')
-#     search_fields = ('name', 'fullname', 'description', 'language__name')
-#     list_filter = ('is_deleted', 'created_at', 'updated_at', 'language')
-
-
-
-
-# @admin.register(LanguagetestmoduleName)
-# class LanguagetestmoduleNameAdmin(admin.ModelAdmin):
-#     list_display = ('id', 'uuid','name', 'description', 'is_deleted', 'created_at', 'updated_at')
-#     search_fields = ('name', 'description')
-#     list_filter = ('is_deleted', 'created_at', 'updated_at')
-#     readonly_fields = ('created_at', 'updated_at')
-
-
-# @admin.register(CLBLevel)
-# class CLBLevelAdmin(admin.ModelAdmin):
-#     list_display = ('id', 'name', 'description', 'is_deleted', 'created_at', 'updated_at')
-#     search_fields = ('name', 'description')
-#     list_filter = ('is_deleted', 'created_at', 'updated_at')
-#     readonly_fields = ('created_at', 'updated_at')
-
-
-# @admin.register(StudyLanguageBanchmark)
-# class StudyLanguageBanchmarkAdmin(admin.ModelAdmin):
-#     list_display = ('id', 'uuid','name', 'description', 'is_deleted', 'created_at', 'updated_at')
-#     search_fields = ('name', 'description')
-#     list_filter = ('is_deleted', 'created_at', 'updated_at')
-#     readonly_fields = ('created_at', 'updated_at')
-
-
-
 @admin.register(FactorFor)
 class FactorForAdmin(admin.ModelAdmin):
     list_display = ('id', 'uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at')
@@ -1321,7 +1294,7 @@ class FactorForAdmin(admin.ModelAdmin):
 
 @admin.register(LanguageTest)
 class LanguageTestAdmin(admin.ModelAdmin):
-    list_display = ('id', 'uuid', 'name', 'fullname', 'language', 'description', 'is_deleted', 'created_at', 'updated_at')
+    list_display = ('uuid', 'name', 'fullname', 'language', 'description', 'is_deleted', 'created_at', 'updated_at')
     search_fields = ('name', 'fullname', 'description', 'language__name')
     list_filter = ('is_deleted', 'created_at', 'updated_at', 'language')
 
@@ -1330,7 +1303,7 @@ class LanguageTestAdmin(admin.ModelAdmin):
 
 @admin.register(LanguagetestmoduleName)
 class LanguagetestmoduleNameAdmin(admin.ModelAdmin):
-    list_display = ('id', 'uuid','name', 'description', 'is_deleted', 'created_at', 'updated_at')
+    list_display = ('uuid','name', 'description', 'is_deleted', 'created_at', 'updated_at')
     search_fields = ('name', 'description')
     readonly_fields = ('uuid', 'created_at', 'updated_at')
     

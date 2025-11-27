@@ -5,7 +5,7 @@ import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
 import { bankAccountTypeImportData } from '../../../../store/master/companyMasters/actions';
 import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
-import { exportToExcelDuplicate } from '../../../../helper/utils/commanHelper';
+import { exportToExcelDuplicate ,exportToExcelWrongData} from '../../../../helper/utils/commanHelper';
 const AddImportBankAccountTypeModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
@@ -100,10 +100,24 @@ const AddImportBankAccountTypeModal = ({ show, handleClose }) => {
                             prepareData.fileName
                         );
                     }
+                    if (response?.skipped_rows?.length > 0) {
+                        const prepareData = {
+                            data: response.skipped_rows || [],
+                            headers: ["Bank Account Type", "Reason"],
+                            sheetName: "BankAccountType",
+                            fileName: "BankAccountType",
+                        };
+                        exportToExcelWrongData(
+                            prepareData.data,
+                            prepareData.headers,
+                            prepareData.sheetName,
+                            prepareData.fileName
+                        );
+                    }
                     setFile(null);
                     setSheetNames([]);
                     setSelectedSheet('');
-                    handleClose();
+                    handleClose(true);
                 } else {
                     toast.error("Something went wrong.");
                 }
@@ -116,7 +130,7 @@ const AddImportBankAccountTypeModal = ({ show, handleClose }) => {
         setError('');
         setSheetNames([]);
         setSelectedSheet('');
-        handleClose();
+        handleClose(false);
         setLoading(false);
     };
     const handleDownloadSample = () => {

@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
 import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
+import { exportToExcelWrongData, exportToExcelDuplicate } from '../../../../helper/utils/commanHelper';
 const AddImportECAAwardingBodyModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
@@ -86,7 +87,32 @@ const AddImportECAAwardingBodyModal = ({ show, handleClose }) => {
                         }
                     );
                     if (response?.duplicates?.length > 0) {
-                        handleExportToExcel(response.duplicates)
+                        const prepareData = {
+                            data: response.duplicates || [],
+                            headers: ["Country", "ECA For", "ECA Body Full Name", "ECA Body Short Name"],
+                            sheetName: "ECAAwardingBody",
+                            fileName: "ECAAwardingBody",
+                        };
+                        exportToExcelDuplicate(
+                            prepareData.data,
+                            prepareData.headers,
+                            prepareData.sheetName,
+                            prepareData.fileName
+                        );
+                    }
+                    if (response?.skipped_rows?.length > 0) {
+                        const prepareData = {
+                            data: response.skipped_rows || [],
+                            headers: ["Country", "ECA For", "ECA Body Full Name", "ECA Body Short Name", "Reason"],
+                            sheetName: "ECAAwardingBody",
+                            fileName: "ECAAwardingBody",
+                        };
+                        exportToExcelWrongData(
+                            prepareData.data,
+                            prepareData.headers,
+                            prepareData.sheetName,
+                            prepareData.fileName
+                        );
                     }
                     setFile(null);
                     setSheetNames([]);
@@ -97,26 +123,6 @@ const AddImportECAAwardingBodyModal = ({ show, handleClose }) => {
                 }
             }
         }));
-    };
-
-    const handleExportToExcel = (duplicatesData) => {
-        const header = ["ECA Awarding Body"];
-        const duplicates = duplicatesData //["test1", "test3", "test3"];
-        const worksheetData = [header, ...duplicates.map((item) => [item])];
-        const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "ECAAwardingBody");
-
-        const excelBuffer = XLSX.write(workbook, {
-            bookType: "xlsx",
-            type: "array",
-        });
-
-        const blob = new Blob([excelBuffer], {
-            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        });
-
-        saveAs(blob, `ECAAwardingBody-Duplicate-Data.xlsx`);
     };
     // Handle modal close
     const onClose = () => {
@@ -241,12 +247,12 @@ const AddImportECAAwardingBodyModal = ({ show, handleClose }) => {
             </div>
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
-                    downloadFileName:"ECAAwardingBody",
+                    downloadFileName: "ECAAwardingBody",
                     items: ["Country", "ECA For", "ECA Body Full Name", "ECA Body Short Name", "ECA Valid Period", "Description", "Modified On"],
                     selectedItems: ["Country", "ECA For", "ECA Body Full Name", "ECA Body Short Name"],
-                    ItemsRequired:["Country", "ECA For", "ECA Body Full Name", "ECA Body Short Name"]
+                    ItemsRequired: ["Country", "ECA For", "ECA Body Full Name", "ECA Body Short Name"]
 
-                    
+
                 }
                 } />
             )}

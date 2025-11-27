@@ -965,7 +965,7 @@ const StudyMajorAreaList = () => {
                                                                             {/* Footer */}
                                                                             <div className="d-flex gap-2 mt-2 pt-2 border-top justify-content-end">
                                                                                 <button
-                                                                                    className="btn btn-sm py-1 btn-secondary"
+                                                                                    className="btn btn-sm  py-1 btn-secondary flex-grow-1  mt-10"
                                                                                     onClick={() => setActiveFilterColumn(null)}
                                                                                     style={{ maxWidth: '80px' }}
                                                                                 >

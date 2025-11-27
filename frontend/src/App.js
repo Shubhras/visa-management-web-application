@@ -354,7 +354,6 @@ import ActivityTypeList from "./pages/masters/salesMasters/activityType/Activity
 import LostReasonB2CList from "./pages/masters/salesMasters/lostReasonB2C/LostReasonB2CList";
 import LostReasonB2BList from "./pages/masters/salesMasters/lostReasonB2B/LostReasonB2BList";
 import InterestLevelList from "./pages/masters/salesMasters/interestLevel/InterestLevelList";
-import LeadsList from "./pages/leads/LeadsList";
 import BankAccountTypeList from "./pages/masters/companyMaster/bankAccountType/BankAccountTypeList";
 import GenderList from "./pages/masters/generalMaster/gender/GenderList";
 import MaritalStatusList from "./pages/masters/generalMaster/maritalStatus/MaritalStatusList";
@@ -471,6 +470,8 @@ import VisaNameList from "./pages/masters/visaMaster/visaName/VisaNameList";
 import EntranceTestAbilityGroupList from "./pages/masters/studyFactors/entranceTestAbilityGroup/EntranceTestAbilityGroupList";
 import LanguageAbilityGroupList from "./pages/masters/studyFactors/languageAbilityGroup/LanguageAbilityGroupList";
 import AgeList from "./pages/masters/studyFactors/age/AgeList";
+import LeadsB2CList from "./pages/sales/leadsB2C/LeadsB2CList";
+import LeadB2CForm from "./pages/sales/leadsB2C/LeadB2CForm";
 
 
 
@@ -696,7 +697,7 @@ function App() {
           <Route path='/wizard' element={<ProtectedRoute><WizardPage /></ProtectedRoute>} />
 
           {/* Master routes - Protected */}
-          <Route path='/leads' element={<ProtectedRoute><LeadsList /></ProtectedRoute>} />
+        
           <Route path='/lead-source' element={<ProtectedRoute><LeadSourceList /></ProtectedRoute>} />
           <Route path='/interest-level' element={<ProtectedRoute><InterestLevelList /></ProtectedRoute>} />
           <Route path='/priority-type' element={<ProtectedRoute><PriorityTypeList /></ProtectedRoute>} />
@@ -839,6 +840,12 @@ function App() {
           <Route path="/language-ability-group" element={<ProtectedRoute><LanguageAbilityGroupList /></ProtectedRoute>}></Route>
           <Route path="/entrance-test-ability-group" element={<ProtectedRoute><EntranceTestAbilityGroupList /></ProtectedRoute>}></Route>
           <Route path="/age" element={<ProtectedRoute><AgeList /></ProtectedRoute>}></Route>
+
+
+            {/*Sales*/}
+            <Route path="/leads-B2C" element={<ProtectedRoute><LeadsB2CList /></ProtectedRoute>}></Route>
+            <Route path="/leads-form" element={<ProtectedRoute><LeadB2CForm /></ProtectedRoute>}></Route>
+
 
           {/* 404 Error Page */}
           <Route path='*' element={<ErrorPage />} />

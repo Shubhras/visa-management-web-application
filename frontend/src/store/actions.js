@@ -15,3 +15,5 @@ export * from "./master/visaProcessMaster/action";
 export * from "./master/studyFactorsMasters/action";
 export * from "./master/visaMaster/action";
 
+export * from "./sales/leadsB2C/action";
+

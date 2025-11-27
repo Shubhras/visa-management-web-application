@@ -231,6 +231,7 @@ const InterestLevelList = () => {
     }));
     // Reset Global Search
     setGlobalSearch('');
+    setSelectedRows([]);
   };
 
 

@@ -13,6 +13,7 @@ import visaConditionsMasterReducer from "./master/visaConditionsMaster/reducer";
 import visaProcessMasterReducer from "./master/visaProcessMaster/reducer";
 import studyFactorsMasterReducer from "./master/studyFactorsMasters/reducer";
 import visaMasterReducer from "./master/visaMaster/reducer";
+import salesReducer from "./sales/leadsB2C/reducer";
 
 
 const rootReducer = combineReducers({
@@ -29,6 +30,7 @@ const rootReducer = combineReducers({
     visaProcessMasterReducer,
     studyFactorsMasterReducer,
     visaMasterReducer,
+    salesReducer,
 
 });
 

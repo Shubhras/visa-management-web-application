@@ -74,7 +74,22 @@ const MasterLayout = ({ children }) => {
     "Tags",
     "Activity Type",
     "Lost Reason (B2C)",
-    "Lost Reason (B2B)"
+    "Lost Reason (B2B)",
+    "Language Test Module Name",
+    "Language Banchmark Level",
+    "CLB Level",
+    "Entrance Test Name",
+    "Entrance Test Module Name",
+    "Entrance Test Result",
+    "Language Test Result",
+    "Institute Type",
+    "Institute Group Name",
+    "Institute Status",
+    "Institute Priority",
+    "Institute Department",
+    "Bank Account For",
+    "When Commission Issue",
+    "Leads B2C"
 
 
   ]);
@@ -91,8 +106,11 @@ const MasterLayout = ({ children }) => {
     },
     {
       name: "Sales",
-      path: "/",
-      submenu: [],
+      submenu: [
+        {  name: "Leads B2C", path: "/leads-B2C"},
+        {  name: "InquiryB2C", path: "/inquiryB2C"},
+      ],
+
     },
     {
       name: "Clients",
