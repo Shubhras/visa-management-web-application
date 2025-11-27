@@ -3272,8 +3272,7 @@ class StudyMajorAreaExportAPIView(APIView):
 
             if studyMainArea_list:
                 queryset = queryset.filter(mainarea__uuid__in=studyMainArea_list)
-
-            if uuids_list:
+            else:
                 queryset = queryset.filter(uuid__in=uuids_list)
 
             # ---------------------------
