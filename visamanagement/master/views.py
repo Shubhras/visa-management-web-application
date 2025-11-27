@@ -12298,54 +12298,57 @@ class InterestLevelDeleteAPIView(APIView):
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         }, status=status.HTTP_200_OK)
 
+
 class InterestLevelExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
+
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
-        fields = request.GET.get('fields')  
+        fields = request.GET.get('fields')
         uuids_param = request.GET.get('uuids', '')
         search = request.GET.get('search', '').strip()
-
         custom_sort = request.GET.get('customSort')  # e.g., name:asc,created_at:desc
 
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
-        # Mapping fields to readable headers
+        # --- Field headers ---
         field_header_map = {
             'uuid': 'UUID',
             'name': 'Interest Level',
             'description': 'Description',
             'is_deleted': 'Deleted',
+            'created_at': 'Created On',
             'updated_at': 'Modified On',
-            
         }
 
-        if fields:
-            field_list = [f.strip() for f in fields.split(',')]
-        else:
-            field_list = list(field_header_map.keys())
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
-
+        # --- Fetch queryset ---
         queryset = InterestLevel.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-
         if search:
-            queryset = queryset.filter(Q(name__istartswith=search))   
+            queryset = queryset.filter(Q(name__icontains=search) | Q(description__icontains=search))
 
+        # --- Custom sorting ---
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'is_deleted': 'is_deleted',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
 
         sort_fields = []
-
         if custom_sort:
             for rule in custom_sort.split(','):
                 try:
                     field, order = rule.split(':')
                     field = field.strip()
                     order = order.strip().lower()
-                    if field not in field_header_map:
+                    if field not in sort_field_map:
                         continue
-
-                    orm_field = field_header_map[field]
+                    orm_field = sort_field_map[field]
 
                     # Case-insensitive sorting for string fields
                     if field in ['name', 'description']:
@@ -12354,47 +12357,45 @@ class InterestLevelExportAPIView(APIView):
                         f = F(orm_field)
 
                     sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
-
                 except ValueError:
                     continue
         else:
-            # Default sort by created_at desc
+            # Default sort: created_at desc
             sort_order = request.GET.get('sortOrder', 'desc')
             f = F('created_at')
-            sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]    
+            sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
 
-        queryset = queryset.order_by('-created_at')
+        queryset = queryset.order_by(*sort_fields)
 
+        # --- Prepare dataset ---
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title="InterestLevel"
+        dataset.title = "InterestLevel"
 
-
-        for inte in queryset:
+        for obj in queryset:
             row = []
             for field in field_list:
-                value = getattr(inte, field, '')
-                if field in ['updated_at'] and value:
+                value = getattr(obj, field, '')
+                if field in ['created_at', 'updated_at'] and value:
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
                     value = int(value)
-
                 row.append(value if value is not None else '')
             dataset.append(row)
 
-        if format_type == 'xlsx':
-            data = XLSX().export_data(dataset)
-            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'InterestLevel.xlsx'
-        else:
-            data = CSV().export_data(dataset)
+        # --- Export data ---
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
             content_type = 'text/csv; charset=utf-8'
             file_name = 'InterestLevel.csv'
+        else:
+            file_data = io.BytesIO(dataset.export('xlsx'))
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'InterestLevel.xlsx'
 
-        response = HttpResponse(data, content_type=content_type)
+        response = HttpResponse(file_data if format_type != 'csv' else file_data, content_type=content_type)
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
-
 
 
 class InterestLevelImportAPIView(APIView):
@@ -13067,60 +13068,79 @@ class TagsCreateAPIView(APIView):
                 "message": message_text,
             }, status=status.HTTP_400_BAD_REQUEST)
 
-class TagsListAPIView(APIView):  
-    permission_classes = [IsAuthenticated, IsAdminUser]  
+class TagsListAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
     def get(self, request):
         search = request.GET.get('search', '').strip()
+        custom_sort = request.GET.get('customSort')  # e.g., name:asc,updated_at:desc
         sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
-        custom_sort = request.GET.get('customSort') 
+        sort_order = request.GET.get('sortOrder', 'desc')  # fallback
 
-        allowed_sort_fields = ['name', 'description', 'updated_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-
-        # Apply descending order for 'desc'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        allowed_sort_fields = ['name', 'description', 'created_at', 'updated_at']
 
         queryset = Tags.objects.filter(is_deleted=False)
 
+        # ---------------------------
+        # Search Filter
+        # ---------------------------
         if search:
-            queryset = queryset.filter(
-                Q(name__istartswith=search)
-            )
+            queryset = queryset.filter(Q(name__istartswith=search))
 
-        # --- Sorting ---
+        # ---------------------------
+        # Sorting Mapping
+        # ---------------------------
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+
         sort_fields = []
 
-        # Custom sort takes priority
+        # ---------------------------
+        # Custom Sorting
+        # ---------------------------
         if custom_sort:
             for rule in custom_sort.split(','):
-                if ':' in rule:
+                try:
                     field, order = rule.split(':')
                     field = field.strip()
                     order = order.strip().lower()
-                    if field not in allowed_sort_fields:
+
+                    if field not in sort_field_map:
                         continue
 
-                    # Case-insensitive for string fields
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sorting for string fields
                     if field in ['name', 'description']:
-                        f = Lower(field)
+                        f = Lower(orm_field)
                     else:
-                        f = F(field)
+                        f = F(orm_field)
 
-                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
-        else:
-            # Fallback sorting
-            if sort_by not in allowed_sort_fields:
-                sort_by = 'created_at'
-            f = F(sort_by)
-            sort_fields = [f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)]
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
 
-    
+        # ---------------------------
+        # Fallback Sorting
+        # ---------------------------
+        if not sort_fields:
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+            f = F(orm_field)
+            sort_fields.append(
+                f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)
+            )
 
-        queryset = queryset.order_by(sort_by)
+        queryset = queryset.order_by(*sort_fields)
 
+        # ---------------------------
+        # Pagination
+        # ---------------------------
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = TagsSerializer(result_page, many=True)
@@ -13307,7 +13327,7 @@ class TagsExportAPIView(APIView):
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
         if search:
-            queryset = queryset.filter(name__icontains=search)
+            queryset = queryset.filter(Q(name__istartswith=search))
 
         # --- Custom sorting ---
         sort_field_map = {
@@ -13329,9 +13349,9 @@ class TagsExportAPIView(APIView):
                         continue
                     orm_field = sort_field_map[field]
 
-                    # Use Lower() for string fields for case-insensitive sorting
+                    # Case-insensitive sorting for string fields
                     if field in ['name', 'description']:
-                        f = Lower(orm_field)
+                        f = Lower(F(orm_field))
                     else:
                         f = F(orm_field)
 
@@ -13340,9 +13360,8 @@ class TagsExportAPIView(APIView):
                     continue
         else:
             # Default sort: created_at desc
-            sort_order = request.GET.get('sortOrder', 'desc')
             f = F('created_at')
-            sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
+            sort_fields = [f.desc(nulls_last=True)]
 
         queryset = queryset.order_by(*sort_fields)
 
@@ -13378,7 +13397,6 @@ class TagsExportAPIView(APIView):
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
-
 class TagsImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
     def post(self, request):
@@ -14342,7 +14360,7 @@ class LostReasonExportAPIView(APIView):
             queryset = queryset.filter(uuid__in=uuids)
         if search:
             # Case-insensitive search on name and description
-            queryset = queryset.filter(Q(name__icontains=search) | Q(description__icontains=search))
+            queryset = queryset.filter(Q(name__istartswith=search))
 
         # --- Custom sorting ---
         sort_field_map = {
@@ -14833,7 +14851,7 @@ class LostReasonB2BExportAPIView(APIView):
             queryset = queryset.filter(uuid__in=uuids)
         if search:
             # Case-insensitive search on name and description
-            queryset = queryset.filter(Q(name__icontains=search) | Q(description__icontains=search))
+            queryset = queryset.filter(Q(name__istartswith=search))
 
         # --- Custom sorting ---
         sort_field_map = {
