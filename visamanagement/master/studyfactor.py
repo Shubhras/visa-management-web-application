@@ -5,7 +5,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from .serializers import  *
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Q, F
+from django.db.models.functions import Lower, Cast
 import uuid
 from rest_framework.permissions import IsAuthenticated ,AllowAny ,BasePermission 
 from django.shortcuts import get_object_or_404
@@ -2748,37 +2749,125 @@ class EntranceTestAbilityGroupImportAPIView(APIView):
 
 
 # -------------------- Age List API --------------------
+# class StudyFactorAgeListAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def get(self, request):
+#         search = request.GET.get('search', '').strip()
+#         sort_by = request.GET.get('sortBy', 'created_at')
+#         sort_order = request.GET.get('sortOrder', 'desc')
+
+#         allowed_sort_fields = [
+#             'minimum_age_months', 
+#             'maximum_age_months',
+#             'updated_at'
+#         ]
+        
+#         if sort_by not in allowed_sort_fields:
+#             sort_by = 'created_at'
+
+#         if sort_order == 'desc':
+#             sort_by = f'-{sort_by}'
+
+#         queryset = StudyFactorAge.objects.filter(is_deleted=False)
+
+#         if search:
+#             queryset = queryset.filter(
+#                 Q(study_age_group__name__istartswith=search) |
+#                 Q(factor_for__name__istartswith=search)
+#             )
+
+#         queryset = queryset.order_by(sort_by)
+#         paginator = CustomPagination()
+#         result_page = paginator.paginate_queryset(queryset, request)
+#         serializer = StudyFactorAgeSerializer(result_page, many=True)
+
+#         return paginator.get_paginated_response(serializer.data)
+
+
 class StudyFactorAgeListAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
+        custom_sort = request.GET.get('customSort')  # e.g., minimum_age_months:asc,updated_at:desc
 
+        # Allowed sortable fields (same pattern as Department)
         allowed_sort_fields = [
-            'minimum_age_months', 
+            'minimum_age_months',
             'maximum_age_months',
+            'created_at',
             'updated_at'
         ]
-        
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
 
         queryset = StudyFactorAge.objects.filter(is_deleted=False)
 
+        # -------------------------------------
+        # SEARCH (ONLY on factor_for.name)
+        # -------------------------------------
         if search:
             queryset = queryset.filter(
-                Q(study_age_group__name__istartswith=search) |
                 Q(factor_for__name__istartswith=search)
             )
 
-        queryset = queryset.order_by(sort_by)
+        # Mapping sortable fields to ORM fields
+        sort_field_map = {
+            'minimum_age_months': 'minimum_age_months',
+            'maximum_age_months': 'maximum_age_months',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+
+        sort_fields = []
+
+        # -------------------------------------
+        # CUSTOM SORT LOGIC (Exactly same as Department)
+        # -------------------------------------
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # If the field is string (none here), use Lower
+                    if field in []:  # No string fields in StudyFactorAge sorting
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc'
+                        else f.desc(nulls_last=True)
+                    )
+
+                except ValueError:
+                    continue
+
+        else:
+            # Fallback sorting (same as Department)
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'desc')
+
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+            f = F(orm_field)
+
+            sort_fields = [
+                f.asc(nulls_last=True) if sort_order == 'asc'
+                else f.desc(nulls_last=True)
+            ]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # Pagination (same as Department)
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
+
         serializer = StudyFactorAgeSerializer(result_page, many=True)
 
         return paginator.get_paginated_response(serializer.data)
@@ -2786,6 +2875,138 @@ class StudyFactorAgeListAPIView(APIView):
 
 
 # -------------------- Age Create API --------------------
+
+# class StudyFactorAgeCreateAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     @transaction.atomic
+#     def post(self, request):
+#         try:
+#             data = request.data
+
+#             # Required fields validation
+#             factor_for_uuid = data.get("factor_for")
+#             age_group_uuid = data.get("study_age_group")
+#             min_age = data.get("minimum_age_months")
+#             max_age = data.get("maximum_age_months")
+#             country_uuids = data.get("country", [])
+#             course_level_uuids = data.get("course_level", [])
+
+#             missing_fields = []
+#             if not factor_for_uuid:
+#                 missing_fields.append("factor_for")
+#             if not age_group_uuid:
+#                 missing_fields.append("study_age_group")
+#             if min_age is None:
+#                 missing_fields.append("minimum_age_months")
+#             if max_age is None:
+#                 missing_fields.append("maximum_age_months")
+
+#             if missing_fields:
+#                 return Response({
+#                     "statusCode": 400,
+#                     "status": False,
+#                     "message": f"Missing required fields: {', '.join(missing_fields)}"
+#                 }, status=400)
+
+#             # Convert ages safely
+#             try:
+#                 min_age = int(min_age)
+#                 max_age = int(max_age)
+#             except ValueError:
+#                 return Response({
+#                     "statusCode": 400,
+#                     "status": False,
+#                     "message": "minimum_age_months and maximum_age_months must be integers."
+#                 }, status=400)
+
+#             # Fetch FK using UUIDs
+#             try:
+#                 factor_for = FactorFor.objects.get(uuid=factor_for_uuid, is_deleted=False)
+#             except FactorFor.DoesNotExist:
+#                 return Response({
+#                     "statusCode": 400,
+#                     "status": False,
+#                     "message": "Invalid factor_for UUID"
+#                 }, status=400)
+
+#             try:
+#                 age_group = AgeGroup.objects.get(uuid=age_group_uuid, is_deleted=False)
+#             except AgeGroup.DoesNotExist:
+#                 return Response({
+#                     "statusCode": 400,
+#                     "status": False,
+#                     "message": "Invalid study_age_group UUID"
+#                 }, status=400)
+
+#             # Duplicate check
+#             if StudyFactorAge.objects.filter(
+#                 factor_for=factor_for,
+#                 study_age_group=age_group,
+#                 minimum_age_months=min_age,
+#                 maximum_age_months=max_age,
+#                 is_deleted=False
+#             ).exists():
+#                 return Response({
+#                     "statusCode": 400,
+#                     "status": False,
+#                     "message": "Age entry already exists with these details."
+#                 }, status=400)
+
+#             # Atomic transaction begins
+#             with transaction.atomic():
+
+#                 obj = StudyFactorAge.objects.create(
+#                     factor_for=factor_for,
+#                     study_age_group=age_group,
+#                     minimum_age_months=min_age,
+#                     maximum_age_months=max_age,
+#                     description=data.get("description", "")
+#                 )
+
+#                 # Assign Countries
+#                 if country_uuids:
+#                     valid_countries = Country.objects.filter(uuid__in=country_uuids)
+#                     if valid_countries.count() != len(country_uuids):
+#                         return Response({
+#                             "statusCode": 400,
+#                             "status": False,
+#                             "message": "One or more country UUIDs are invalid."
+#                         }, status=400)
+#                     obj.country.set(valid_countries)
+
+#                 # Assign Course Levels
+#                 if course_level_uuids:
+#                     valid_levels = CourseLevel.objects.filter(uuid__in=course_level_uuids)
+#                     if valid_levels.count() != len(course_level_uuids):
+#                         return Response({
+#                             "statusCode": 400,
+#                             "status": False,
+#                             "message": "One or more course_level UUIDs are invalid."
+#                         }, status=400)
+#                     obj.course_level.set(valid_levels)
+
+#                 obj.save()
+
+#             # Final response
+#             serializer = StudyFactorAgeSerializer(obj)
+
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": "Age created successfully",
+#                 "data": serializer.data
+#             })
+
+#         except Exception as e:
+#             # Debug-friendly but safe
+#             return Response({
+#                 "statusCode": 500,
+#                 "status": False,
+#                 "message": "Internal server error",
+#                 "error": str(e)  
+#             }, status=500)
+
 
 class StudyFactorAgeCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -2918,85 +3139,122 @@ class StudyFactorAgeCreateAPIView(APIView):
                 "error": str(e)  
             }, status=500)
 
-
 # -------------------- Age Retrieve API --------------------
+
+# class StudyFactorAgeRetrieveAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def get(self, request):
+#         try:
+#             search = request.GET.get('search', '').strip()
+#             sort_by = request.GET.get('sortBy', 'created_at')
+#             sort_order = request.GET.get('sortOrder', 'desc')
+
+#             # Allowed sort fields
+#             allowed_sort_fields = [
+#                 'minimum_age_months',
+#                 'maximum_age_months',
+#                 'created_at',
+#                 'updated_at',
+#             ]
+
+#             # Validate sortBy
+#             if sort_by not in allowed_sort_fields:
+#                 sort_by = 'created_at'
+
+#             # Apply desc/asc
+#             if sort_order == 'desc':
+#                 sort_by = f'-{sort_by}'
+
+#             # Base queryset
+#             queryset = StudyFactorAge.objects.filter(is_deleted=False)
+
+#             # Search
+#             if search:
+#                 queryset = queryset.filter(
+#                     Q(study_age_group__name__icontains=search) |
+#                     Q(factor_for__name__icontains=search)
+#                 )
+
+#             # Sorting
+#             queryset = queryset.order_by(sort_by)
+
+#             # Pagination
+#             paginator = CustomPagination()
+#             paginated_queryset = paginator.paginate_queryset(queryset, request)
+
+#             # Serialization
+#             serializer = StudyFactorAgeSerializer(paginated_queryset, many=True)
+
+#             return paginator.get_paginated_response(serializer.data)
+
+#         except ValidationError as ve:
+#             return Response({
+#                 "status": False,
+#                 "message": "Validation error",
+#                 "error": str(ve),
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         except DatabaseError as db_err:
+#             return Response({
+#                 "status": False,
+#                 "message": "Database error occurred",
+#                 "error": str(db_err),
+#             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+#         except Exception as e:
+#             # Catch-all for unexpected issues
+#             return Response({
+#                 "status": False,
+#                 "message": "Something went wrong",
+#                 "error": str(e),
+#             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class StudyFactorAgeRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
-        try:
-            search = request.GET.get('search', '').strip()
-            sort_by = request.GET.get('sortBy', 'created_at')
-            sort_order = request.GET.get('sortOrder', 'desc')
+        search = request.GET.get('search', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_order = request.GET.get('sortOrder', 'desc')
 
-            # Allowed sort fields
-            allowed_sort_fields = [
-                'minimum_age_months',
-                'maximum_age_months',
-                'created_at',
-                'updated_at',
-            ]
+        allowed_sort_fields = [
+            'minimum_age_months',
+            'maximum_age_months',
+            'created_at',
+            'updated_at',
+        ]
 
-            # Validate sortBy
-            if sort_by not in allowed_sort_fields:
-                sort_by = 'created_at'
+        if sort_by not in allowed_sort_fields:
+            sort_by = 'created_at'
 
-            # Apply desc/asc
-            if sort_order == 'desc':
-                sort_by = f'-{sort_by}'
+        if sort_order == 'desc':
+            sort_by = f'-{sort_by}'
 
-            # Base queryset
-            queryset = StudyFactorAge.objects.filter(is_deleted=False)
+        queryset = StudyFactorAge.objects.filter(is_deleted=False)
 
-            # Search
-            if search:
-                queryset = queryset.filter(
-                    Q(study_age_group__name__icontains=search) |
-                    Q(factor_for__name__icontains=search)
-                )
+        if search:
+            queryset = queryset.filter(
+                Q(study_age_group__name__icontains=search) |
+                Q(factor_for__name__icontains=search)
+            )
 
-            # Sorting
-            queryset = queryset.order_by(sort_by)
+        queryset = queryset.order_by(sort_by)
 
-            # Pagination
-            paginator = CustomPagination()
-            paginated_queryset = paginator.paginate_queryset(queryset, request)
+        paginator = CustomPagination()
+        paginated_queryset = paginator.paginate_queryset(queryset, request)
 
-            # Serialization
-            serializer = StudyFactorAgeSerializer(paginated_queryset, many=True)
-
-            return paginator.get_paginated_response(serializer.data)
-
-        except ValidationError as ve:
-            return Response({
-                "status": False,
-                "message": "Validation error",
-                "error": str(ve),
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        except DatabaseError as db_err:
-            return Response({
-                "status": False,
-                "message": "Database error occurred",
-                "error": str(db_err),
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        except Exception as e:
-            # Catch-all for unexpected issues
-            return Response({
-                "status": False,
-                "message": "Something went wrong",
-                "error": str(e),
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+        serializer = StudyFactorAgeSerializer(paginated_queryset, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
 
 # -------------------- Age Update API--------------------
-
 # class StudyFactorAgeUpdateAPIView(APIView):
 #     permission_classes = [IsAuthenticated, IsAdminUser]
 
-#     def put(self, request, uuid):
+#     @transaction.atomic
+#     def patch(self, request, uuid):
+#         # Fetch object
 #         try:
 #             obj = StudyFactorAge.objects.get(uuid=uuid, is_deleted=False)
 #         except StudyFactorAge.DoesNotExist:
@@ -3007,9 +3265,21 @@ class StudyFactorAgeRetrieveAPIView(APIView):
 #                 "data": None
 #             }, status=404)
 
-#         serializer = StudyFactorAgeSerializer(obj, data=request.data)
+#         # Partial update
+#         serializer = StudyFactorAgeSerializer(obj, data=request.data, partial=True)
+
 #         if serializer.is_valid():
-#             serializer.save()
+#             try:
+#                 serializer.save()  # atomic
+#             except Exception as e:
+#                 transaction.set_rollback(True)
+#                 return Response({
+#                     "statusCode": 500,
+#                     "status": False,
+#                     "message": f"Update failed: {str(e)}",
+#                     "data": None
+#                 }, status=500)
+
 #             return Response({
 #                 "statusCode": 200,
 #                 "status": True,
@@ -3017,76 +3287,75 @@ class StudyFactorAgeRetrieveAPIView(APIView):
 #                 "data": serializer.data
 #             })
 
-#         messages = []
+#         # Flatten validation errors
+#         errors = []
 #         for field, msgs in serializer.errors.items():
-#             messages.extend(msgs)
+#             errors.extend(msgs)
 
 #         return Response({
 #             "statusCode": 400,
 #             "status": False,
-#             "message": " ".join(messages),
+#             "message": " ".join(errors),
 #             "data": None
 #         }, status=400)
+    
 
 class StudyFactorAgeUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     @transaction.atomic
     def patch(self, request, uuid):
-        # Fetch object
         try:
             obj = StudyFactorAge.objects.get(uuid=uuid, is_deleted=False)
         except StudyFactorAge.DoesNotExist:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "Age entry not found",
-                "data": None
+                "message": "Age entry not found."
             }, status=404)
 
-        # Partial update
         serializer = StudyFactorAgeSerializer(obj, data=request.data, partial=True)
 
         if serializer.is_valid():
             try:
-                serializer.save()  # atomic
+                serializer.save()
             except Exception as e:
                 transaction.set_rollback(True)
                 return Response({
                     "statusCode": 500,
                     "status": False,
-                    "message": f"Update failed: {str(e)}",
-                    "data": None
+                    "message": f"Update failed: {str(e)}"
                 }, status=500)
 
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "Age updated successfully",
+                "message": "Age updated successfully.",
                 "data": serializer.data
-            })
+            }, status=200)
 
-        # Flatten validation errors
-        errors = []
+        # Format validation error messages same as Department API
+        error_list = []
         for field, msgs in serializer.errors.items():
-            errors.extend(msgs)
+            error_list.extend(msgs)
 
         return Response({
             "statusCode": 400,
             "status": False,
-            "message": " ".join(errors),
-            "data": None
+            "message": " ".join(error_list)
         }, status=400)
     
+
 # -------------------- Age Delete API --------------------
+
 
 class StudyFactorAgeDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
-        ids = request.data.get('id', None)
+        ids = request.data.get("id", None)
 
-        # ---------------- SINGLE DELETE ----------------
+        # ---------- SINGLE DELETE ----------
         if uuid:
             try:
                 obj = StudyFactorAge.objects.get(uuid=uuid)
@@ -3094,45 +3363,40 @@ class StudyFactorAgeDeleteAPIView(APIView):
                 return Response({
                     "statusCode": 204,
                     "status": True,
-                    "message": "Age entry permanently deleted.",
-                    "data": None
+                    "message": "Age entry permanently deleted."
                 }, status=204)
             except StudyFactorAge.DoesNotExist:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "Age entry not found.",
-                    "data": None
+                    "message": "Age entry not found."
                 }, status=404)
 
-        # ---------------- DELETE ALL ----------------
+        # ---------- DELETE ALL ----------
         if ids == "all":
-            objs = StudyFactorAge.objects.all()
-            count = objs.count()
+            qs = StudyFactorAge.objects.all()
+            count = qs.count()
 
             if count == 0:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "No Age entries found to delete.",
-                    "data": None
+                    "message": "No Age entries found to delete."
                 }, status=404)
 
-            objs.delete()
+            qs.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} Age entries permanently deleted.",
-                "data": None
-            })
+                "message": f"All {count} Age entries permanently deleted."
+            }, status=200)
 
-        # ---------------- MULTIPLE DELETE ----------------
+        # ---------- MULTIPLE DELETE ----------
         if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Provide list of UUIDs in 'id' field or 'all'.",
-                "data": None
+                "message": "Provide list of UUIDs in 'id' field or 'all'."
             }, status=400)
 
         valid_uuids = []
@@ -3152,8 +3416,8 @@ class StudyFactorAgeDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids}
             }, status=400)
 
-        objs = StudyFactorAge.objects.filter(uuid__in=valid_uuids)
-        count = objs.count()
+        qs = StudyFactorAge.objects.filter(uuid__in=valid_uuids)
+        count = qs.count()
 
         if count == 0:
             return Response({
@@ -3163,14 +3427,14 @@ class StudyFactorAgeDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
             }, status=404)
 
-        objs.delete()
+        qs.delete()
 
         return Response({
             "statusCode": 200,
             "status": True,
             "message": f"{count} Age entries permanently deleted.",
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        })
+        }, status=200)
 
 
 # ---------------- Age EXPORT ----------------
@@ -3178,11 +3442,17 @@ class StudyFactorAgeExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
+
+        # --- Query params ---
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')
         uuids_param = request.GET.get('uuids', '')
+        search = request.GET.get('search', '').strip()
+        custom_sort = request.GET.get('customSort')
+
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
+        # --- Field → Header Mapping ---
         field_header_map = {
             'uuid': 'UUID',
             'factor_for': 'Factor For',
@@ -3193,74 +3463,135 @@ class StudyFactorAgeExportAPIView(APIView):
             'course_level': 'Course Level',
             'description': 'Description',
             'is_deleted': 'Deleted',
+            'created_at': 'Created On',
             'updated_at': 'Modified On',
         }
 
-        # determine which fields to export
+        # --- Determine Export Fields ---
         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
+        # --- Base Queryset ---
         queryset = StudyFactorAge.objects.filter(is_deleted=False)
+
+        # --- UUID filter ---
         if uuids:
-            # validate uuids
             valid_uuids = []
             for u in uuids:
                 try:
                     valid_uuids.append(UUID(u))
-                except Exception:
-                    # ignore invalid uuid strings
+                except:
                     pass
             if valid_uuids:
                 queryset = queryset.filter(uuid__in=valid_uuids)
 
-        queryset = queryset.order_by('-created_at')
+        # --- Search ---
+        if search:
+            queryset = queryset.filter(
+                Q(factor_for__name__icontains=search) |
+                Q(study_age_group__name__icontains=search) |
+                Q(description__icontains=search)
+            )
 
+        # --- SORTING LOGIC (exactly like DepartmentExport) ---
+        sort_field_map = {
+            'factor_for': 'factor_for__name',
+            'study_age_group': 'study_age_group__name',
+            'minimum_age_months': 'minimum_age_months',
+            'maximum_age_months': 'maximum_age_months',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+
+        sort_fields = []
+
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    if field in ['factor_for', 'study_age_group', 'description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == "asc" else f.desc(nulls_last=True)
+                    )
+
+                except:
+                    continue
+
+        else:
+            # Default created_at desc
+            f = F('created_at')
+            sort_fields = [f.desc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # --- Prepare Dataset ---
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'Age'
+        dataset.title = "Study Factor Age"
+
+        india_tz = pytz.timezone("Asia/Kolkata")
 
         for obj in queryset:
             row = []
             for field in field_list:
-                # handle special fields
-                if field == 'factor_for':
-                    value = obj.factor_for.name if obj.factor_for else ''
-                elif field == 'study_age_group':
-                    value = obj.study_age_group.name if obj.study_age_group else ''
-                elif field == 'country':
-                    # M2M -> comma separated names
-                    value = ", ".join([c.name for c in obj.country.all()]) if obj.country.exists() else ''
-                elif field == 'course_level':
-                    value = ", ".join([cl.name for cl in obj.course_level.all()]) if obj.course_level.exists() else ''
-                else:
-                    value = getattr(obj, field, '')
 
+                if field == "factor_for":
+                    value = obj.factor_for.name if obj.factor_for else ""
+                elif field == "study_age_group":
+                    value = obj.study_age_group.name if obj.study_age_group else ""
+                elif field == "country":
+                    value = ", ".join([c.name for c in obj.country.all()])
+                elif field == "course_level":
+                    value = ", ".join([c.name for c in obj.course_level.all()])
+                else:
+                    value = getattr(obj, field, "")
+
+                # --- Date formatting ---
                 if field in ['created_at', 'updated_at'] and value:
                     try:
                         value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-                    except Exception:
-                        # fallback to string representation
+                    except:
                         value = str(value)
-                elif isinstance(value, bool):
+
+                # --- Boolean → 0/1 ---
+                if isinstance(value, bool):
                     value = int(value)
 
-                row.append(value if value is not None else '')
+                row.append(value if value is not None else "")
+
             dataset.append(row)
 
+        # --- Export file ---
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
-            file_name = 'age.csv'
+            file_name = 'StudyFactorAge.csv'
             response_content = file_data
+
         else:
             file_data = io.BytesIO(dataset.export('xlsx'))
-            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'age.xlsx'
+            content_type = (
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
+            file_name = 'StudyFactorAge.xlsx'
             response_content = file_data.getvalue()
 
         response = HttpResponse(response_content, content_type=content_type)
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
-
+    
 
 # ---------------- Age IMPORT ----------------
 class StudyFactorAgeImportAPIView(APIView):
@@ -3276,20 +3607,23 @@ class StudyFactorAgeImportAPIView(APIView):
         format_type = file.name.split(".")[-1].lower()
         duplicates = []
         skipped_rows = []
-        # required headers (lowercase) as per your confirmation
+
+        # ---- REQUIRED HEADERS (lowercase exactly like Excel) ----
         required_headers = {
             "factor for",
             "study age group",
             "minimum age",
             "maximum age",
             "country",
-            "course level"
+            "course level",
         }
+
         optional_headers = {"description"}
 
         try:
             data = []
 
+            # ======================== XLSX ========================
             if format_type == "xlsx":
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
@@ -3302,11 +3636,12 @@ class StudyFactorAgeImportAPIView(APIView):
 
                 if sheet_name not in available_sheets:
                     return Response({
-                        "error": f'Sheet "{sheet_name}" not found',
+                        "error": f'Sheet "{sheet_name}" not found in uploaded file',
                         "available_sheets": available_sheets,
                     }, status=400)
 
                 ws = wb[sheet_name]
+
                 if ws.max_row <= 1:
                     return Response({
                         "statusCode": 400,
@@ -3314,14 +3649,24 @@ class StudyFactorAgeImportAPIView(APIView):
                         "message": f'Sheet "{sheet_name}" is empty.'
                     }, status=400)
 
-                headers = [str(cell.value).strip().lower() if cell.value else "" for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                # Read header row
+                headers = [
+                    str(cell.value).strip().lower() if cell.value else ""
+                    for cell in next(ws.iter_rows(min_row=1, max_row=1))
+                ]
+
+                # Validate required headers
                 if not required_headers.issubset(set(headers)):
                     return Response({
                         "statusCode": 400,
                         "status": False,
-                        "message": f"Missing required headers. Required: {required_headers}, Found: {set(headers)}"
+                        "message": (
+                            f"Missing required headers. Required: {required_headers}, "
+                            f"Found: {set(headers)}"
+                        )
                     }, status=400)
 
+                # Extract data rows
                 for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     if not any(row):
                         continue
@@ -3329,19 +3674,26 @@ class StudyFactorAgeImportAPIView(APIView):
                     row_dict["_row_number"] = idx
                     data.append(row_dict)
 
+            # ======================== CSV ========================
             elif format_type == "csv":
-                decoded_file = file.read().decode("utf-8")
+                decoded = file.read().decode("utf-8")
                 dataset = Dataset()
-                dataset.load(decoded_file, format="csv")
+                dataset.load(decoded, format="csv")
+
                 for idx, row in enumerate(dataset.dict, start=2):
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
                     row_lower["_row_number"] = idx
+
                     if not required_headers.issubset(set(row_lower.keys())):
                         return Response({
                             "statusCode": 400,
                             "status": False,
-                            "message": f"Missing required headers. Required: {', '.join(required_headers)}. Found: {', '.join(row_lower.keys())}."
+                            "message": (
+                                f"Missing required headers. Required: {', '.join(required_headers)}. "
+                                f"Found headers in file: {', '.join(row_lower.keys())}."
+                            )
                         }, status=400)
+
                     data.append(row_lower)
 
             else:
@@ -3351,88 +3703,100 @@ class StudyFactorAgeImportAPIView(APIView):
                     "message": "Unsupported file format. Use .xlsx or .csv",
                 }, status=400)
 
+            # ======================== PROCESS ROWS ========================
             imported_count = 0
 
-            # iterate reversed to keep same import behavior as your other modules
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
 
+                # -------- FKs ----------
                 factor_for_name = str(row.get("factor for")).strip() if row.get("factor for") else None
-                study_age_group_name = str(row.get("study age group")).strip() if row.get("study age group") else None
+                age_group_name = str(row.get("study age group")).strip() if row.get("study age group") else None
 
-                # numeric fields - try to coerce to int
+                # -------- Numeric Fields ----------
                 try:
-                    minimum_age = int(row.get("minimum age (months)")) if row.get("minimum age (months)") not in (None, "") else None
-                except Exception:
+                    minimum_age = int(row.get("minimum age")) if row.get("minimum age") not in (None, "") else None
+                except:
                     minimum_age = None
+
                 try:
-                    maximum_age = int(row.get("maximum age (months)")) if row.get("maximum age (months)") not in (None, "") else None
-                except Exception:
+                    maximum_age = int(row.get("maximum age")) if row.get("maximum age") not in (None, "") else None
+                except:
                     maximum_age = None
 
-                countries_raw = str(row.get("country")).strip() if row.get("country") else ""
-                course_levels_raw = str(row.get("course level")).strip() if row.get("course level") else ""
+                # -------- M2M Fields ----------
+                country_raw = str(row.get("country")).strip() if row.get("country") else ""
+                course_level_raw = str(row.get("course level")).strip() if row.get("course level") else ""
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
-                # basic validations
+                # -------- VALIDATION ----------
                 if not factor_for_name:
                     skipped_rows.append({"Row": row_number, "Reason": "Missing factor for"})
                     continue
-                if not study_age_group_name:
+
+                if not age_group_name:
                     skipped_rows.append({"Row": row_number, "Reason": "Missing study age group"})
                     continue
+
                 if minimum_age is None:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing or invalid minimum age (months)"})
-                    continue
-                if maximum_age is None:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing or invalid maximum age (months)"})
+                    skipped_rows.append({"Row": row_number, "Reason": "Invalid minimum age"})
                     continue
 
-                # lookup foreign keys by name (case-insensitive)
+                if maximum_age is None:
+                    skipped_rows.append({"Row": row_number, "Reason": "Invalid maximum age"})
+                    continue
+
+                # -------- Lookup FKs ----------
                 factor_for_obj = FactorFor.objects.filter(name__iexact=factor_for_name).first()
                 if not factor_for_obj:
                     skipped_rows.append({"Row": row_number, "Reason": f'FactorFor "{factor_for_name}" not found'})
                     continue
 
-                study_age_group_obj = AgeGroup.objects.filter(name__iexact=study_age_group_name).first()
-                if not study_age_group_obj:
-                    skipped_rows.append({"Row": row_number, "Reason": f'AgeGroup "{study_age_group_name}" not found'})
+                age_group_obj = AgeGroup.objects.filter(name__iexact=age_group_name).first()
+                if not age_group_obj:
+                    skipped_rows.append({"Row": row_number, "Reason": f'AgeGroup "{age_group_name}" not found'})
                     continue
 
-                # parse M2M names and resolve objects
-                country_names = [c.strip() for c in countries_raw.split(",") if c.strip()]
-                course_level_names = [cl.strip() for cl in course_levels_raw.split(",") if cl.strip()]
+                # -------- Resolve M2M ----------
+                country_list = [c.strip() for c in country_raw.split(",") if c.strip()]
+                course_level_list = [c.strip() for c in course_level_raw.split(",") if c.strip()]
 
                 country_objs = []
                 missing_countries = []
-                for cn in country_names:
-                    co = Country.objects.filter(name__iexact=cn).first()
-                    if co:
-                        country_objs.append(co)
+                for cname in country_list:
+                    obj = Country.objects.filter(name__iexact=cname).first()
+                    if obj:
+                        country_objs.append(obj)
                     else:
-                        missing_countries.append(cn)
-
-                course_level_objs = []
-                missing_course_levels = []
-                for cln in course_level_names:
-                    clo = CourseLevel.objects.filter(name__iexact=cln).first()
-                    if clo:
-                        course_level_objs.append(clo)
-                    else:
-                        missing_course_levels.append(cln)
+                        missing_countries.append(cname)
 
                 if missing_countries:
-                    skipped_rows.append({"Row": row_number, "Reason": f"Countries not found: {', '.join(missing_countries)}"})
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Reason": f"Countries not found: {', '.join(missing_countries)}"
+                    })
                     continue
 
-                if missing_course_levels:
-                    skipped_rows.append({"Row": row_number, "Reason": f"Course Levels not found: {', '.join(missing_course_levels)}"})
+                course_objs = []
+                missing_levels = []
+                for lvl in course_level_list:
+                    obj = CourseLevel.objects.filter(name__iexact=lvl).first()
+                    if obj:
+                        course_objs.append(obj)
+                    else:
+                        missing_levels.append(lvl)
+
+                if missing_levels:
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Reason": f"Course levels not found: {', '.join(missing_levels)}"
+                    })
                     continue
 
-                # duplicate detection:
+                # -------- Duplicate Detection ----------
                 existing = StudyFactorAge.objects.filter(
-                    factor_for__id=factor_for_obj.id,
-                    study_age_group__id=study_age_group_obj.id,
+                    factor_for=factor_for_obj,
+                    study_age_group=age_group_obj,
                     minimum_age_months=minimum_age,
                     maximum_age_months=maximum_age
                 ).first()
@@ -3442,49 +3806,49 @@ class StudyFactorAgeImportAPIView(APIView):
                         duplicates.append({
                             "Row": row_number,
                             "Factor For": factor_for_name,
-                            "Study Age Group": study_age_group_name,
+                            "Study Age Group": age_group_name,
                             "Reason": "Already exists"
                         })
                         continue
-                    else:
-                        # revive soft deleted record & update fields
-                        existing.description = description
-                        existing.is_deleted = False
-                        existing.save()
-                        # update m2m
-                        if country_objs:
-                            existing.country.set(country_objs)
-                        if course_level_objs:
-                            existing.course_level.set(course_level_objs)
-                        imported_count += 1
-                        continue
 
-                # create new Age record
-                age_obj = StudyFactorAge.objects.create(
+                    # revive deleted record
+                    existing.description = description
+                    existing.is_deleted = False
+                    existing.save()
+                    existing.country.set(country_objs)
+                    existing.course_level.set(course_objs)
+                    imported_count += 1
+                    continue
+
+                # -------- Create New ----------
+                new_obj = StudyFactorAge.objects.create(
                     factor_for=factor_for_obj,
-                    study_age_group=study_age_group_obj,
+                    study_age_group=age_group_obj,
                     minimum_age_months=minimum_age,
                     maximum_age_months=maximum_age,
                     description=description,
                     is_deleted=False
                 )
-                if country_objs:
-                    age_obj.country.set(country_objs)
-                if course_level_objs:
-                    age_obj.course_level.set(course_level_objs)
+                new_obj.country.set(country_objs)
+                new_obj.course_level.set(course_objs)
 
                 imported_count += 1
 
         except Exception as e:
-            return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": str(e)
+            }, status=400)
 
+        # ======================== RESPONSE ========================
         return Response({
             "statusCode": 200,
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
             "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "skipped_rows": skipped_rows,
         }, status=200)
 
 

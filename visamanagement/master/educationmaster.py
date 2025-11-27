@@ -3436,7 +3436,7 @@ class StudySpecialisationListAPIView(APIView):
         # SEARCH FILTER
         # ----------------------------------------
         if search:
-            queryset = queryset.filter(studyspecialisation__icontains=search)
+            queryset = queryset.filter(studyspecialisation__istartswith=search)
 
         # ----------------------------------------
         # SORT FIELD MAP
