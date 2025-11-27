@@ -374,14 +374,17 @@ const PrincipalApplicant = () => {
     };
 
     // Render table function
-    const renderTable = (data, columns, visibleColumns, isColumnVisible, selectedRows, 
-                        handleSelectAll, handleRowSelect, isAllSelected, handleDelete, 
-                        handleAdd, dropdownRef, showDropdown, setShowDropdown, 
-                        toggleColumnVisibility, sectionTitle, addButtonText) => (
+    const renderTable = (data, columns, visibleColumns, isColumnVisible, selectedRows,
+        handleSelectAll, handleRowSelect, isAllSelected, handleDelete,
+        handleAdd, dropdownRef, showDropdown, setShowDropdown,
+        toggleColumnVisibility, sectionTitle) => (
         <div className="card basic-data-table main-container-data mb-4">
+            {/* Title at the top of the table */}
+            <div className="card-header">
+                <h6 className="mb-0" style={{ color: "#5a6c5b" }}>{sectionTitle}</h6>
+            </div>
             <div className="card-body pt-0 container-table">
                 <div className='container-table-div'>
-                    <h6 className="mb-3" style={{color:"#5a6c5b"}}>{sectionTitle}</h6>
                     <table className="table mb-0">
                         <thead>
                             <tr>
@@ -483,7 +486,6 @@ const PrincipalApplicant = () => {
                                     </td>
                                 </tr>
                             )}
-                            
                         </tbody>
                     </table>
                 </div>
@@ -493,7 +495,7 @@ const PrincipalApplicant = () => {
 
     return (
         <div className="section-block">
-            <div className="row g-3">
+            <div className="row">
                 <div className="col-12">
                     {/* Education Table */}
                     {renderTable(
@@ -524,66 +526,47 @@ const PrincipalApplicant = () => {
 
                     {/* Entrance Test Section */}
                     <div className="card basic-data-table main-container-data mb-4">
+                        <div className="card-header">
+                            <h6 className="mb-0" style={{ color: "#5a6c5b" }}>Entrance Test Ability (PA)</h6>
+                        </div>
                         <div className="card-body">
-                            <h6 className="mb-3" style={{color:"#5a6c5b"}}>Entrance Test Ability (PA)</h6>
-                            
                             <div className="row mb-3">
                                 <div className="col-md-6">
                                     <label className="form-label">Appeared Any Entrance Test?</label>
-                                    <div className="d-flex gap-3">
-                                        <div className="form-check">
-                                            <input
-                                                className="form-check-input"
-                                                type="radio"
-                                                name="entranceTest"
-                                                id="entranceYes"
-                                                value="Yes"
-                                                checked={appearedEntranceTest === 'Yes'}
-                                                onChange={(e) => setAppearedEntranceTest(e.target.value)}
-                                            />
-                                            <label className="form-check-label" htmlFor="entranceYes">
-                                                Yes
-                                            </label>
-                                        </div>
-                                        <div className="form-check">
-                                            <input
-                                                className="form-check-input"
-                                                type="radio"
-                                                name="entranceTest"
-                                                id="entranceNo"
-                                                value="No"
-                                                checked={appearedEntranceTest === 'No'}
-                                                onChange={(e) => setAppearedEntranceTest(e.target.value)}
-                                            />
-                                            <label className="form-check-label" htmlFor="entranceNo">
-                                                No
-                                            </label>
-                                        </div>
-                                    </div>
+
+                                    <select
+                                        className="form-select form-select-sm"
+                                        value={appearedEntranceTest}
+                                        onChange={(e) => setAppearedEntranceTest(e.target.value)}
+                                    >
+                                        <option value="">Select Option</option>
+                                        <option value="Yes">Yes</option>
+                                        <option value="No">No</option>
+                                    </select>
                                 </div>
-                                
-                                {appearedEntranceTest === 'Yes' && (
+
+                                {appearedEntranceTest === "Yes" && (
                                     <div className="col-md-6">
                                         <label className="form-label">Entrance Test Name</label>
                                         <select className="form-select form-select-sm">
-                                            <option>Master (Entrance Test Name)</option>
+                                            <option>Select Entrance Test Name</option>
                                             <option>IELTS</option>
                                             <option>TOEFL</option>
                                             <option>PTE</option>
                                             <option>GRE</option>
                                             <option>GMAT</option>
                                         </select>
-                                        <small className="text-muted">Field - Entrance Test Short Name</small>
                                     </div>
                                 )}
                             </div>
+
 
                             {appearedEntranceTest === 'Yes' && renderTable(
                                 entranceTests, entranceTestColumns, entranceVisibleColumns, isEntranceColumnVisible,
                                 selectedEntranceRows, handleEntranceSelectAll, handleEntranceRowSelect,
                                 isAllEntranceSelected, handleDeleteEntrance, handleAddEntrance,
                                 entranceDropdownRef, showEntranceDropdown, setShowEntranceDropdown,
-                                
+                                toggleEntranceColumnVisibility, "Entrance Test Results"
                             )}
                         </div>
                     </div>

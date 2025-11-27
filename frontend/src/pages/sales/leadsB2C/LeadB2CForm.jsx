@@ -48,16 +48,7 @@ const LeadB2CForm = () => {
         <MasterLayout>
 
             <style jsx>{`
-/* Main container adjustments */
-.leads-b2c-form {
-    font-size: 12px;
-}
 
-.leads-b2c-form .card-body {
-    padding: 16px 18px;
-}
-
-/* Centered counters */
 .top-stats-container {
     display: flex;
     justify-content: center;
@@ -100,7 +91,7 @@ const LeadB2CForm = () => {
     gap: 8px; /* BEST spacing */
 }
 
-/* Arrow buttons */
+
 .nav-arrow-btn {
     background-color: #ffffff;
     padding: 4px 8px;
@@ -114,10 +105,7 @@ const LeadB2CForm = () => {
     cursor: pointer;
 }
 
-/* Hover effect */
-.nav-arrow-btn:hover {
-    background-color: #eef1ef;
-}
+
 
 /* Main tab + sub tab styles unified */
 .main-tabs-row .btn,
@@ -159,15 +147,8 @@ const LeadB2CForm = () => {
 .border-primary-600 { border-color: #5a6c5b !important; }
 .text-primary-600 { color: #5a6c5b !important; }
 
-/* Form controls */
-.form-control,
-.form-select {
-    font-size: 12px;
-}
 
-.text-danger {
-    color: #dc3545;
-}
+
 
 /* Checkboxes */
 .form-check-input {
