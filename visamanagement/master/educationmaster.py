@@ -2212,7 +2212,7 @@ class StudymainareaListAPIView(APIView):
         # SEARCH FILTER
         # ---------------------------
         if search:
-            queryset = queryset.filter(Q(name__icontains=search))
+            queryset = queryset.filter(Q(name__istartswith=search))
 
         # ---------------------------
         # SORT FIELD MAP
