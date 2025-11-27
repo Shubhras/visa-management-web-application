@@ -12330,8 +12330,8 @@ class InterestLevelExportAPIView(APIView):
 
         if search:
             queryset = queryset.filter(
-                Q(name__icontains=search) |
-                Q(description__icontains=search)
+                Q(name__istartswith=search)
+                
             )
 
         # --- Custom sorting ---
@@ -13854,7 +13854,7 @@ class ActivityTypeExportAPIView(APIView):
             queryset = queryset.filter(uuid__in=uuids)
 
         if search:
-            queryset = queryset.filter(Q(name__icontains=search) | Q(description__icontains=search))
+            queryset = queryset.filter(Q(name__istartswith=search))
 
         sort_field_map = {
             'name': 'name',
