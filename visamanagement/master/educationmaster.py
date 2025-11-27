@@ -4990,11 +4990,12 @@ class AcademicResultListAPIView(APIView):
         # Sort field mapping
         # ----------------------
         sort_field_map = {
-            'Academicresult': 'Academicresult',
-            'description': 'description',
-            'created_at': 'created_at',
-            'updated_at': 'updated_at',
-            'AcademicResulttype': 'AcademicResulttype__name', 
+            "uuid": "uuid",
+            "academicResultType": "AcademicResulttype__name",
+            "Academicresult": "Academicresult",
+            "description": "description",
+            "created_at": "created_at",
+            "updated_at": "updated_at",
         }
 
         sort_fields = []
@@ -5267,66 +5268,218 @@ class AcademicResultDeleteAPIView(APIView):
         })
 
 
+# class AcademicResultExportAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def get(self, request):
+#         format_type = request.GET.get('format', 'xlsx').lower()
+#         fields = request.GET.get('fields')
+#         uuids_param = request.GET.get('uuids', '')
+#         uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+#         # Field mapping for export headers
+#         field_header_map = {
+#             'uuid': 'UUID',
+#             'AcademicResulttype_id': 'Academic Result Type',
+#             'Academicresult': 'Academic Result',
+#             'description': 'Description',
+#             'is_deleted': 'Deleted',
+#             'created_at': 'Created On',
+#             'updated_at': 'Modified On',
+#         }
+
+#         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+#         queryset = AcademicResult.objects.filter(is_deleted=False)
+#         if uuids:
+#             queryset = queryset.filter(uuid__in=uuids)
+#         queryset = queryset.order_by('-created_at')
+
+#         dataset = Dataset()
+#         dataset.headers = [field_header_map.get(f, f) for f in field_list]
+#         dataset.title = 'AcademicResults'
+
+#         for obj in queryset:
+#             row = []
+#             for field in field_list:
+#                 if field == 'AcademicResulttype_id':
+#                     value = obj.AcademicResulttype.name if obj.AcademicResulttype else ''
+#                 else:
+#                     value = getattr(obj, field, '')
+#                 if field in ['created_at', 'updated_at'] and value:
+#                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+#                 elif isinstance(value, bool):
+#                     value = int(value)
+#                 row.append(value if value is not None else '')
+#             dataset.append(row)
+
+#         if format_type == 'csv':
+#             file_data = dataset.export('csv')
+#             content_type = 'text/csv'
+#             file_name = 'academic_results.csv'
+#         else:
+#             file_data = io.BytesIO(dataset.export('xlsx'))
+#             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+#             file_name = 'academic_results.xlsx'
+
+#         response = HttpResponse(
+#             file_data if format_type == 'csv' else file_data.getvalue(),
+#             content_type=content_type
+#         )
+#         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+#         return response
+
+
 class AcademicResultExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
-        format_type = request.GET.get('format', 'xlsx').lower()
-        fields = request.GET.get('fields')
-        uuids_param = request.GET.get('uuids', '')
-        uuids = [u.strip() for u in uuids_param.split(',') if u]
 
-        # Field mapping for export headers
+        format_type = request.GET.get("format", "xlsx").lower()
+        fields = request.GET.get("fields")
+        search = request.GET.get("search", "").strip()
+        custom_sort = request.GET.get("customSort")
+
+        # ------------------ Field Mapping ------------------
         field_header_map = {
-            'uuid': 'UUID',
-            'AcademicResulttype_id': 'Academic Result Type',
-            'Academicresult': 'Academic Result',
-            'description': 'Description',
-            'is_deleted': 'Deleted',
-            'created_at': 'Created On',
-            'updated_at': 'Modified On',
+            "uuid": "UUID",
+            "AcademicResulttype_id": "Academic Result Type",
+            "Academicresult": "Academic Result",
+            "description": "Description",
+            "created_at": "Created On",
+            "updated_at": "Modified On",
         }
 
-        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+        # Allowed sort field mapping
+        allowed_sort_fields = {
+            "uuid": "uuid",
+            "academicResultType": "AcademicResulttype__name",
+            "Academicresult": "Academicresult",
+            "description": "description",
+            "created_at": "created_at",
+            "updated_at": "updated_at",
+        }
 
-        queryset = AcademicResult.objects.filter(is_deleted=False)
-        if uuids:
-            queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
+        # Fields to export
+        field_list = (
+            [f.strip() for f in fields.split(",")]
+            if fields else list(field_header_map.keys())
+        )
 
+        # ---------------------------
+        # Helper: Parse & Validate UUIDs
+        # ---------------------------
+        def parse_ids(key):
+            raw = request.GET.get(key, "")
+            if raw:
+                return [x.strip() for x in raw.split(",") if x.strip()]
+            return request.GET.getlist(key)
+
+        def validate_uuid_list(items):
+            valid = []
+            for u in items:
+                try:
+                    valid.append(UUID(u))
+                except:
+                    pass
+            return valid
+
+        # Filters
+        uuids_list = validate_uuid_list(parse_ids("uuids"))
+        resulttype_list = validate_uuid_list(parse_ids("academicResultType"))
+
+        # ------------------ Queryset ------------------
+        queryset = AcademicResult.objects.select_related("AcademicResulttype")
+
+        if uuids_list:
+            queryset = queryset.filter(uuid__in=uuids_list)
+
+        if resulttype_list:
+            queryset = queryset.filter(AcademicResulttype__uuid__in=resulttype_list)
+
+        # ------------------ Search ------------------
+        if search:
+            queryset = queryset.filter(
+                Q(Academicresult__istartswith=search)
+            )
+
+        # ------------------ Custom Sort Logic ------------------
+        sort_fields = []
+
+        if custom_sort:
+            for rule in custom_sort.split(","):
+                try:
+                    field, order = rule.split(":")
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in allowed_sort_fields:
+                        continue
+
+                    orm_field = allowed_sort_fields[field]
+
+                    # Check text fields for case-insensitive sort
+                    text_fields = ["AcademicResulttype", "Academicresult", "description"]
+                    is_text = field in text_fields
+
+                    sort_expr = Lower(orm_field) if is_text else F(orm_field)
+
+                    sort_fields.append(
+                        sort_expr.asc(nulls_last=True)
+                        if order == "asc"
+                        else sort_expr.desc(nulls_last=True)
+                    )
+
+                except:
+                    continue
+
+        else:
+            # Default sorting
+            sort_fields = [F("created_at").desc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # ------------------ Dataset ------------------
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'AcademicResults'
+        dataset.title = "AcademicResults"
 
         for obj in queryset:
             row = []
             for field in field_list:
-                if field == 'AcademicResulttype_id':
-                    value = obj.AcademicResulttype.name if obj.AcademicResulttype else ''
+
+                if field == "AcademicResulttype_id":
+                    value = obj.AcademicResulttype.name if obj.AcademicResulttype else ""
+
+                elif field in ["created_at", "updated_at"]:
+                    field_value = getattr(obj, field)
+                    value = (
+                        timezone.localtime(field_value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                        if field_value else ""
+                    )
+
                 else:
-                    value = getattr(obj, field, '')
-                if field in ['created_at', 'updated_at'] and value:
-                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-                elif isinstance(value, bool):
-                    value = int(value)
-                row.append(value if value is not None else '')
+                    value = getattr(obj, field, "")
+
+                row.append("" if value is None else value)
+
             dataset.append(row)
 
-        if format_type == 'csv':
-            file_data = dataset.export('csv')
-            content_type = 'text/csv'
-            file_name = 'academic_results.csv'
+        # ------------------ Export ------------------
+        if format_type == "csv":
+            response = HttpResponse(dataset.export("csv"), content_type="text/csv")
+            filename = "academic_results.csv"
         else:
-            file_data = io.BytesIO(dataset.export('xlsx'))
-            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'academic_results.xlsx'
+            file_data = io.BytesIO(dataset.export("xlsx"))
+            response = HttpResponse(
+                file_data.getvalue(),
+                content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
+            filename = "academic_results.xlsx"
 
-        response = HttpResponse(
-            file_data if format_type == 'csv' else file_data.getvalue(),
-            content_type=content_type
-        )
-        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
         return response
+
 
 
 
