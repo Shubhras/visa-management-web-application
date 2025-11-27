@@ -3444,8 +3444,8 @@ class StudySpecialisationListAPIView(APIView):
         sort_field_map = {
             "studyspecialisation": "studyspecialisation",
             "description": "description",
-            "mainarea_name": "mainarea__name",
-            "majorarea_name": "majorarea__majorarea",
+            "studyMainArea": "mainarea__name",
+            "studyMajorArea": "majorarea__majorarea",
             "created_at": "created_at",
             "updated_at": "updated_at",
         }
@@ -3473,7 +3473,7 @@ class StudySpecialisationListAPIView(APIView):
                     # Case-insensitive fields
                     if field in [
                         "studyspecialisation", "description",
-                        "mainarea_name", "majorarea_name"
+                        "studyMainArea", "studyMajorArea"
                     ]:
                         f = Lower(orm_field)
                     else:
