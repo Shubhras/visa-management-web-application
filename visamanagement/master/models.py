@@ -90,7 +90,7 @@ class State(models.Model):
 
 
     def __str__(self):
-        return self.stateName
+        return self.stateName if self.stateName else "Unnamed stateName"
 
 
 class District(models.Model):
@@ -469,7 +469,7 @@ class EducationLevelCode(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     def __str__(self):
-        return self.name
+        return str(self.name)
 
     
 class EducationLevel(models.Model):
@@ -1395,7 +1395,7 @@ class RepresentingCountry(models.Model):
 
 
     def __str__(self):
-        return self.full_name
+        return self.full_name if self.full_name else "Unnamed Country"
     
 
 class VisaMain(models.Model):
@@ -1606,7 +1606,7 @@ class CivilIdName(models.Model):
     authority_full_name = models.CharField(max_length=255, blank=True, null=True)
     authority_short_name = models.CharField(max_length=255, blank=True, null=True)
 
-    valid_type = models.CharField(max_length=20, choices=VALID_TYPE_CHOICES)
+    valid_type = models.CharField(max_length=20, choices=VALID_TYPE_CHOICES,blank=True, null=True)
     valid_duration_value = models.IntegerField(blank=True, null=True)
     valid_duration_unit = models.CharField(max_length=20, choices=VALID_UNIT_CHOICES, blank=True, null=True)
     description = models.CharField(max_length=500, blank=True, null=True)

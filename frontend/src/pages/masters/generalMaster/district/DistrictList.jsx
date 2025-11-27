@@ -1239,6 +1239,7 @@ const DistrictList = () => {
     }));
     // Reset global search
     setGlobalSearch('');
+    setSelectedRows([]);
   };
 
 

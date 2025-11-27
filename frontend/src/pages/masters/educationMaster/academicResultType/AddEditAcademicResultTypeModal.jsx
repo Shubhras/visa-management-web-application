@@ -89,12 +89,12 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
         ? {
           uuid: formData.uuid,
           name: formData.departmentName,
-          dataType: formData.dataType,
+          datatype: formData.dataType,
           description: formData.description,
         }
         : {
           name: formData.departmentName,
-          dataType: formData.dataType,
+          datatype: formData.dataType,
           description: formData.description,
         };
 
@@ -193,8 +193,8 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
 
                   <Select
                     options={[
-                      { value: "text", label: "Text" },
-                      { value: "numeric", label: "Numeric" },
+                      { value: "Text", label: "Text" },
+                      { value: "Numeric", label: "Numeric" },
                     ]}
                     value={
                       formData.dataType

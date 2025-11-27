@@ -89,7 +89,7 @@ const AddImportEducationLevelCodeModal = ({ show, handleClose }) => {
                     if (response?.duplicates?.length > 0) {
                         const prepareData = {
                             data: response.duplicates || [],
-                            headers: ["Education level code"],
+                            headers: ["Education Level Code"],
                             sheetName: "EducationLevelCode",
                             fileName: "EducationLevelCode",
                         };

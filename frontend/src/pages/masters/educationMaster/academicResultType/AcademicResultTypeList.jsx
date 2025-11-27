@@ -779,7 +779,7 @@ const AcademicResultTypeList = () => {
                           <td><span>{rowItem.name}</span></td>
                         )}
                         {isColumnVisible('dataType') && (
-                          <td><span>{rowItem?.dataType}</span></td>
+                          <td><span>{rowItem?.datatype}</span></td>
                         )}
                         {isColumnVisible('description') && (
                           <td><span>{rowItem.description}</span></td>

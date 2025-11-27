@@ -242,6 +242,7 @@ const ContinentsList = () => {
     }));
     // Reset Global Search
     setGlobalSearch('');
+    setSelectedRows([]);
   };
 
   const handlePageLengthChange = (value) => {

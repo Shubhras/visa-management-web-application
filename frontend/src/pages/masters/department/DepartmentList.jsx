@@ -262,6 +262,7 @@ const DepartmentList = () => {
     }));
     // Reset Global Search
     setGlobalSearch("");
+    setSelectedRows([]);
   };
   
   const handlePageLengthChange = (value) => {
@@ -409,7 +410,7 @@ const DepartmentList = () => {
     setSelectAllOrNot("");
   };
 
-  // ✅ FIXED: For closing import modal - only refresh if shouldRefresh is true
+  // FIXED: For closing import modal - only refresh if shouldRefresh is true
   const handleCloseImport = (shouldRefresh = false) => {
     setShowImport(false);
     // Only call API when data was successfully imported

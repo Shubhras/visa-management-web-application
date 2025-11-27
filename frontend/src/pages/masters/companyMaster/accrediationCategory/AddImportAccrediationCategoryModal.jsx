@@ -5,7 +5,7 @@ import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
 import { accreditationCategoryImportData } from '../../../../store/master/companyMasters/actions';
 import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
-import { exportToExcelDuplicate } from '../../../../helper/utils/commanHelper';
+import { exportToExcelDuplicate, exportToExcelWrongData } from '../../../../helper/utils/commanHelper';
 const AddImportAccrediationCategoryModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
@@ -94,6 +94,20 @@ const AddImportAccrediationCategoryModal = ({ show, handleClose }) => {
                             fileName: "AccreditationCategory",
                         };
                         exportToExcelDuplicate(
+                            prepareData.data,
+                            prepareData.headers,
+                            prepareData.sheetName,
+                            prepareData.fileName
+                        );
+                    }
+                    if (response?.skipped_rows?.length > 0) {
+                        const prepareData = {
+                            data: response.skipped_rows || [],
+                            headers: ["Accreditation Category", "Reason"],
+                            sheetName: "AccreditationCategory",
+                            fileName: "AccreditationCategory",
+                        };
+                        exportToExcelWrongData(
                             prepareData.data,
                             prepareData.headers,
                             prepareData.sheetName,

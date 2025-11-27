@@ -8,6 +8,8 @@ const AddEditAcademicResultModal = ({ show, handleClose, mode = 'add', rowData =
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const [educationLevelListData, setEducationLevelListData] = useState([]);
+  const [selectedDatatype, setSelectedDatatype] = useState("");
+
 
   const [formData, setFormData] = useState({
     uuid: '',
@@ -191,26 +193,33 @@ const AddEditAcademicResultModal = ({ show, handleClose, mode = 'add', rowData =
                   <Select
                     options={educationLevelListData.map((option) => ({
                       value: option.uuid,
-                      label: option.name,
+                      label: `${option.name} (${option.datatype})`,
                     }))}
                     value={
                       formData.category
                         ? educationLevelListData
                           .map((option) => ({
                             value: option.uuid,
-                            label: option.name,
+                            label: `${option.name} (${option.datatype})`,
                           }))
                           .find((opt) => opt.value === formData.category)
                         : null
                     }
-                    onChange={(selectedOption) =>
+                    onChange={(selectedOption) => {
+                      const selected = educationLevelListData.find(
+                        (item) => item.uuid === selectedOption?.value
+                      );
+
+                      setSelectedDatatype(selected?.datatype || "Text");
+
                       handleChange({
                         target: {
                           name: "category",
                           value: selectedOption ? selectedOption.value : "",
                         },
-                      })
-                    }
+                      });
+                    }}
+
                     placeholder="Select academic result type"
                     isClearable
                     isSearchable
@@ -229,13 +238,18 @@ const AddEditAcademicResultModal = ({ show, handleClose, mode = 'add', rowData =
                     Academic Result <span className="text-danger">*</span>
                   </label>
                   <input
-                    type="text"
+                    type={selectedDatatype === "Numeric" ? "number" : "text"}
                     name="departmentName"
                     value={formData.departmentName}
                     onChange={handleChange}
                     className={`form-control radius-8 ${errors.departmentName ? 'is-invalid' : ''}`}
-                    placeholder="Enter academic result"
+                    placeholder={
+                      selectedDatatype === "Numeric"
+                        ? "Enter numeric value"
+                        : "Enter academic result"
+                    }
                   />
+
                   {errors.departmentName && (
                     <div className="text-danger text-sm mt-1">
                       {errors.departmentName}

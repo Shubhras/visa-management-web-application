@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
 import CommanSampleExcelDownloadModal from '../../../components/comman/CommanSampleExcelDownloadModal';
-import { exportToExcelDuplicate } from '../../../helper/utils/commanHelper';
+import { exportToExcelDuplicate, exportToExcelWrongData } from '../../../helper/utils/commanHelper';
 const AddImportDepartmentModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
@@ -86,7 +86,7 @@ const AddImportDepartmentModal = ({ show, handleClose }) => {
                             autoClose: 10000,
                         }
                     );
-                     if (response?.duplicates?.length > 0) {
+                    if (response?.duplicates?.length > 0) {
                         const prepareData = {
                             data: response.duplicates || [],
                             headers: ["Department"],
@@ -94,6 +94,20 @@ const AddImportDepartmentModal = ({ show, handleClose }) => {
                             fileName: "Department",
                         };
                         exportToExcelDuplicate(
+                            prepareData.data,
+                            prepareData.headers,
+                            prepareData.sheetName,
+                            prepareData.fileName
+                        );
+                    }
+                    if (response?.skipped_rows?.length > 0) {
+                        const prepareData = {
+                            data: response.skipped_rows || [],
+                            headers: ["Department", "Reason"],
+                            sheetName: "Department",
+                            fileName: "Department",
+                        };
+                        exportToExcelWrongData(
                             prepareData.data,
                             prepareData.headers,
                             prepareData.sheetName,
