@@ -1068,14 +1068,22 @@ urlpatterns = [
     path('children-visacategory/import/', ChildrenVisaCategoryImportAPIView.as_view()),
 
     
+    # path('study-factor-age/create/', StudyFactorAgeCreateAPIView.as_view(),name='age-create'),
+    # path('study-factor-age/list/', StudyFactorAgeListAPIView.as_view(),name='age-list'),
+    # path('study-factor-age/<uuid:uuid>/', StudyFactorAgeRetrieveAPIView.as_view(),name='age-retrieve'),
+    # path('study-factor-age/<uuid:uuid>/update/', StudyFactorAgeUpdateAPIView.as_view(),name='age-update'),
+    # path('study-factor-age/<uuid:uuid>/delete/', StudyFactorAgeDeleteAPIView.as_view(),name='age-delete'),
+    # path('study-factor-age/export/', StudyFactorAgeExportAPIView.as_view(),name='age-export'),
+    # path('study-factor-age/import/', StudyFactorAgeImportAPIView.as_view(),name='age-import'),
+
+
     path('study-factor-age/create/', StudyFactorAgeCreateAPIView.as_view(),name='age-create'),
-    path('study-factor-age/list/', StudyFactorAgeListAPIView.as_view(),name='age-list'),
+    path('study-factor-age/', StudyFactorAgeListAPIView.as_view(),name='age-list'),
     path('study-factor-age/<uuid:uuid>/', StudyFactorAgeRetrieveAPIView.as_view(),name='age-retrieve'),
     path('study-factor-age/<uuid:uuid>/update/', StudyFactorAgeUpdateAPIView.as_view(),name='age-update'),
     path('study-factor-age/<uuid:uuid>/delete/', StudyFactorAgeDeleteAPIView.as_view(),name='age-delete'),
     path('study-factor-age/export/', StudyFactorAgeExportAPIView.as_view(),name='age-export'),
     path('study-factor-age/import/', StudyFactorAgeImportAPIView.as_view(),name='age-import'),
-
 
 
     path('academic-result/list/', StudyFactorAcademicResultListAPIView.as_view(), name='academic-result-list'),

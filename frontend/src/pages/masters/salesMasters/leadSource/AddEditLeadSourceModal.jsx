@@ -149,12 +149,12 @@ const AddEditLeadSourceModal = ({ show, handleClose, mode = 'add', rowData = nul
             />
           </div>
 
-          <div className="modal-body p-24">
+          <div className="modal-body p-24 pt-10">
             <form onSubmit={handleSubmit}>
               <div className="row">
                 {/* Lead Source Name */}
-                <div className="col-12 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                <div className="col-12 mb-10">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Lead Source <span className="text-danger">*</span>
                   </label>
                   <input
@@ -173,10 +173,10 @@ const AddEditLeadSourceModal = ({ show, handleClose, mode = 'add', rowData = nul
                 </div>
 
                 {/* Description */}
-                <div className="col-12 mb-20">
+                <div className="col-12 mb-10">
                   <label
                     htmlFor="desc"
-                    className="form-label fw-semibold text-primary-light text-sm mb-8"
+                    className="form-label fw-semibold text-primary-light text-sm mb-0"
                   >
                     Description
                   </label>

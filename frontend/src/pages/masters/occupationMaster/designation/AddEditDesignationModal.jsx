@@ -267,12 +267,12 @@ const AddEditDesignationModal = ({
             />
           </div>
 
-          <div className="modal-body p-24">
+          <div className="modal-body p-24 pt-10">
             <form onSubmit={handleSubmit}>
               <div className="row">
                 {/* Department Name */}
                 <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Country<span className="text-danger">*</span>
                   </label>
                   <Select
@@ -318,7 +318,7 @@ const AddEditDesignationModal = ({
                   )}
                 </div>
                 <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Occupation Version<span className="text-danger">*</span>
                   </label>
                   <Select
@@ -361,7 +361,7 @@ const AddEditDesignationModal = ({
                   )}
                 </div>
                 <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Occupation Code<span className="text-danger">*</span>
                   </label>
                   <Select
@@ -404,7 +404,7 @@ const AddEditDesignationModal = ({
                   )}
                 </div>{" "}
                 <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Occupation Name<span className="text-danger">*</span>
                   </label>
                   <Select
@@ -447,10 +447,10 @@ const AddEditDesignationModal = ({
                   )}
                 </div>{" "}
                 {/* Description */}
-                <div className="col-12 mb-20">
+                <div className="col-12 mb-10">
                   <label
                     htmlFor="desc"
-                    className="form-label fw-semibold text-primary-light text-sm mb-8"
+                    className="form-label fw-semibold text-primary-light text-sm mb-0"
                   >
                     Designation
                   </label>
@@ -467,10 +467,10 @@ const AddEditDesignationModal = ({
                     placeholder="Designation Name"
                   />
                 </div>
-                <div className="col-12 mb-20">
+                <div className="col-12 mb-10">
                   <label
                     htmlFor="desc"
-                    className="form-label fw-semibold text-primary-light text-sm mb-8"
+                    className="form-label fw-semibold text-primary-light text-sm mb-0"
                   >
                     Description
                   </label>

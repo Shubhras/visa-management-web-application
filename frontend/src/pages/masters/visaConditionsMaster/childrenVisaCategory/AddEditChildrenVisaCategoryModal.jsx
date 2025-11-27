@@ -171,12 +171,12 @@ const AddEditChildrenVisaCategoryModal = ({ show, handleClose, mode = 'add', row
                         />
                     </div>
 
-                    <div className="modal-body p-24">
+                    <div className="modal-body p-24 pt-10">
                         <form onSubmit={handleSubmit}>
                             <div className="row">
                                 {/* Department Name */}
-                                <div className="col-12 mb-20">
-                                    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                                <div className="col-12 mb-10">
+                                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                                         Children Visa Category <span className="text-danger">*</span>
                                     </label>
                                     {/* <input
@@ -225,10 +225,10 @@ const AddEditChildrenVisaCategoryModal = ({ show, handleClose, mode = 'add', row
                                 </div>
 
                                 {/* Description */}
-                                <div className="col-12 mb-20">
+                                <div className="col-12 mb-10">
                                     <label
                                         htmlFor="desc"
-                                        className="form-label fw-semibold text-primary-light text-sm mb-8"
+                                        className="form-label fw-semibold text-primary-light text-sm mb-0"
                                     >
                                         Description
                                     </label>

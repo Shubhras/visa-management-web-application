@@ -574,6 +574,8 @@ class GenderImportAPIView(APIView):
                 if not name:
                     skipped_rows.append({
                         "Row": row_number,
+                        "Gender": "",
+                        "Description":description,
                         "Reason": "Missing gender name"
                     })
                     continue
@@ -616,8 +618,10 @@ class GenderImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            # "duplicates": duplicates,
+            "duplicates": reversed(duplicates),
+            # "skipped_rows": skipped_rows
+            "skipped_rows": reversed(skipped_rows),
         }, status=status.HTTP_200_OK)
 
 
@@ -1075,6 +1079,8 @@ class MaritalstatusImportAPIView(APIView):
                 if not name:
                     skipped_rows.append({
                         "Row": row_number,
+                        "Marital Status": "",
+                        "Description":description,
                         "Reason": "Missing marital status name"
                     })
                     continue
@@ -1117,8 +1123,10 @@ class MaritalstatusImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            # "duplicates": duplicates,
+            # "skipped_rows": skipped_rows
+            "duplicates": reversed(duplicates),
+            "skipped_rows": reversed(skipped_rows),
         }, status=status.HTTP_200_OK)
 
 
@@ -1523,6 +1531,8 @@ class ContinentImportAPIView(APIView):
                 if not name:
                     skipped_rows.append({
                         "Row": row_number,
+                        "Continent": "",
+                        "Description":description,
                         "Reason": "Missing continent name"
                     })
                     continue
@@ -1561,8 +1571,10 @@ class ContinentImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            # "duplicates": duplicates,
+            # "skipped_rows": skipped_rows
+            "duplicates": reversed(duplicates),
+            "skipped_rows": reversed(skipped_rows),
         }, status=status.HTTP_200_OK)
 
 
@@ -2053,14 +2065,34 @@ class CountryImportAPIView(APIView):
             # ---------------- Data Processing ----------------
             imported_count = 0
             for row in reversed(data):
+                # country_name = str(row.get('country name')).strip() if row.get('country name') else None
+                # if not country_name:
+                #     skipped_rows.append({
+                #         "Country Name": "",
+                #         "Reason": "Missing required field: country name"
+                #     })
+                #     continue
+                # continent_name = str(row.get('continent')).strip() if row.get('continent') else ''
                 country_name = str(row.get('country name')).strip() if row.get('country name') else None
+                continent_name = str(row.get('continent')).strip() if row.get('continent') else ''
+
+                # Required: Country Name
                 if not country_name:
                     skipped_rows.append({
-                        "Country Name": "Unknown",
+                        "Country Name": "",
+                        "Continent": continent_name,
                         "Reason": "Missing required field: country name"
                     })
                     continue
-                continent_name = str(row.get('continent')).strip() if row.get('continent') else ''
+
+                # Required: Continent
+                if not continent_name:
+                    skipped_rows.append({
+                        "Country Name": country_name,
+                        "Continent": "",
+                        "Reason": "Missing required field: continent"
+                    })
+                    continue
                 short_name = str(row.get('country short name')).strip() if row.get('country short name') else ''
                 full_name = str(row.get('country full name')).strip() if row.get('country full name') else ''
                 official_name = str(row.get('country official name')).strip() if row.get('country official name') else ''
@@ -2147,8 +2179,10 @@ class CountryImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": duplicate_names,
-            "skipped_rows": skipped_rows,
+            # "duplicates": duplicate_names,
+            # "skipped_rows": skipped_rows,
+            "duplicates": reversed(duplicate_names),
+            "skipped_rows": reversed(skipped_rows),
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=200)
@@ -2809,10 +2843,10 @@ class StateByCountryAPIView(APIView):
         data = [
             {
                 "uuid": str(state.uuid),
-                "name": state.stateName,
-                "shortName": state.stateshortName,
-                "fullName": state.description,
-                "country": state.countryName.name
+                "name": state.stateName if state.stateName else "",
+                "shortName": state.stateshortName if state.stateshortName else "",
+                "fullName": state.description if state.description else "",
+                "country": state.countryName.name if state.countryName else ""
             }
             for state in result_page
         ]
@@ -4079,174 +4113,348 @@ class CityExportAPIView(APIView):
 
 
 
+# class CityImportAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def post(self, request):
+#         file = request.FILES.get('file')
+#         sheet_name = request.data.get('sheet_name')
+
+#         if not file:
+#             return Response({'error': 'No file uploaded'}, status=400)
+
+#         format_type = file.name.split('.')[-1].lower()
+#         required_headers = {'city name', 'country name'}
+#         optional_headers = {'state name', 'district name', 'description'}
+
+#         try:
+#             # ------------------ Load file ------------------
+#             data = []
+
+#             if format_type == 'xlsx':
+#                 wb = openpyxl.load_workbook(file, read_only=True)
+#                 if not sheet_name or sheet_name not in wb.sheetnames:
+#                     return Response({
+#                         "error": f"Invalid sheet_name. Available: {wb.sheetnames}"
+#                     }, status=400)
+
+#                 ws = wb[sheet_name]
+#                 headers = [
+#                     str(cell.value).strip().lower() if cell.value else ''
+#                     for cell in next(ws.iter_rows(min_row=1, max_row=1))
+#                 ]
+#                 if not required_headers.issubset(set(headers)):
+#                     return Response({
+#                         "error": f"Missing required headers: {required_headers}. Found: {set(headers)}"
+#                     }, status=400)
+
+#                 for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+#                     if not any(row):
+#                         continue
+#                     row_dict = dict(zip(headers, row))
+#                     row_dict['_row_number'] = idx
+#                     data.append(row_dict)
+
+#             elif format_type == 'csv':
+#                 decoded = file.read().decode('utf-8')
+#                 reader = csv.DictReader(io.StringIO(decoded))
+#                 for idx, row in enumerate(reader, start=2):
+#                     row_lower = {k.strip().lower(): v for k, v in row.items()}
+#                     row_lower['_row_number'] = idx
+#                     if not required_headers.issubset(set(row_lower.keys())):
+#                         return Response({
+#                             "error": f"Missing required headers in CSV. Required: {required_headers}. Found: {set(row_lower.keys())}"
+#                         }, status=400)
+#                     data.append(row_lower)
+#             else:
+#                 return Response({'error': 'Unsupported file type. Use .xlsx or .csv'}, status=400)
+
+#             # ------------------ Preload related data ------------------
+#             countries = {c.name.lower(): c for c in Country.objects.all() if c is not None}
+#             states = {
+#                 (s.stateName.lower(), s.countryName.uuid): s
+#                 for s in State.objects.all() if s.countryName is not None
+#             }
+#             districts = {
+#                 (d.districtName.lower(), d.stateName.uuid, d.countryName.uuid): d
+#                 for d in District.objects.all() if d.stateName is not None and d.countryName is not None
+#             }
+
+#             # ------------------ Preload existing cities ------------------
+#             existing_city_keys = set(
+#                 (
+#                     c.cityName.lower(),
+#                     c.districtName_id,
+#                     c.stateName_id,
+#                     c.countryName_id
+#                 )
+#                 for c in City.objects.all()
+#             )
+
+#             # ------------------ Process rows ------------------
+#             to_create = []
+#             duplicates = []
+#             skipped_rows = []
+#             existing_in_file = set()
+
+#             for row in reversed(data):
+#                 row_number = row.get('_row_number', 'Unknown')
+#                 city_name = str(row.get("city name") or "").strip()
+#                 country_name = str(row.get("country name") or "").strip()
+#                 state_name = str(row.get("state name") or "").strip()
+#                 district_name = str(row.get("district name") or "").strip()
+#                 description = str(row.get("description") or "").strip()
+
+#                 # ------------------ Check required fields ------------------
+#                 missing_fields = []
+#                 if not city_name:
+#                     missing_fields.append("city name")
+#                 if not country_name:
+#                     missing_fields.append("country name")
+
+#                 if missing_fields:
+#                     skipped_rows.append({
+#                         "Row": row_number,
+#                         "City Name": city_name or "",
+#                         "State Name": state_name or "",
+#                         "District Name": district_name or "",
+#                         "Country Name": country_name or "",
+#                         "Reason": f"Missing required fields: {', '.join(missing_fields)}"
+#                     })
+#                     continue
+
+#                 # ------------------ Validate related objects ------------------
+#                 country_obj = countries.get(country_name.lower())
+#                 if not country_obj:
+#                     skipped_rows.append({
+#                         "Row": row_number,
+#                         "City Name": city_name,
+#                         "State Name": state_name or "",
+#                         "District Name": district_name or "",
+#                         "Country Name": country_name or "",
+#                         "Reason": f"Country '{country_name}' not found"
+#                     })
+#                     continue
+
+#                 state_obj = states.get((state_name.lower(), country_obj.uuid)) if state_name else None
+#                 if state_name and not state_obj:
+#                     skipped_rows.append({
+#                         "Row": row_number,
+#                         "City Name": city_name,
+#                         "State Name": state_name or "",
+#                         "District Name": district_name or "",
+#                         "Country Name": country_name or "",
+#                         "Reason": f"State '{state_name}' not found for country '{country_name}'"
+#                     })
+#                     continue
+
+#                 district_obj = districts.get((district_name.lower(), state_obj.uuid, country_obj.uuid)) if district_name and state_obj else None
+#                 if district_name and state_obj and not district_obj:
+#                     skipped_rows.append({
+#                         "Row": row_number,
+#                         "City Name": city_name,
+#                         "State Name": state_name or "",
+#                         "District Name": district_name or "",
+#                         "Country Name": country_name or "",
+#                         "Reason": f"District '{district_name}' not found for state '{state_name}'"
+#                     })
+#                     continue
+
+#                 # ------------------ Duplicate check (all 4 fields must match) ------------------
+#                 key = (
+#                     city_name.lower(),
+#                     district_obj.uuid if district_obj else None,
+#                     state_obj.uuid if state_obj else None,
+#                     country_obj.uuid
+#                 )
+
+#                 if key in existing_city_keys or key in existing_in_file:
+#                     duplicates.append({
+#                         "Row": row_number,
+#                         "City Name": city_name,
+#                         "District Name": district_name if district_obj else "",
+#                         "State Name": state_name if state_obj else "",
+#                         "Country Name": country_name,
+#                         "Reason": "Duplicate city (all fields match: city, district, state, country)"
+#                     })
+#                     continue
+
+#                 existing_in_file.add(key)
+
+#                 # ------------------ Prepare city object ------------------
+#                 to_create.append(
+#                     City(
+#                         cityName=city_name,
+#                         districtName=district_obj,
+#                         stateName=state_obj,
+#                         countryName=country_obj,
+#                         description=description,
+#                         is_deleted=False
+#                     )
+#                 )
+
+#             # ------------------ Bulk insert ------------------
+#             with transaction.atomic():
+#                 City.objects.bulk_create(to_create, ignore_conflicts=True, batch_size=500)
+
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "imported_count": len(to_create),
+#                 "duplicates": duplicates,
+#                 "skipped_rows": skipped_rows,
+#                 "message": f"Sheet '{sheet_name}' imported successfully" if sheet_name else "Import successful"
+#             }, status=200)
+
+#         except Exception as e:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": str(e)
+#             }, status=400)
+ 
+
 class CityImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
-
+ 
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')
-
+ 
         if not file:
             return Response({'error': 'No file uploaded'}, status=400)
-
+ 
         format_type = file.name.split('.')[-1].lower()
         required_headers = {'city name', 'country name'}
         optional_headers = {'state name', 'district name', 'description'}
-
+ 
         try:
             # ------------------ Load file ------------------
             data = []
-
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
-                if not sheet_name or sheet_name not in wb.sheetnames:
+                if sheet_name not in wb.sheetnames:
                     return Response({
-                        "error": f"Invalid sheet_name. Available: {wb.sheetnames}"
+                        "error": f"Invalid sheet_name. Available sheets: {wb.sheetnames}"
                     }, status=400)
-
                 ws = wb[sheet_name]
-                headers = [
-                    str(cell.value).strip().lower() if cell.value else ''
-                    for cell in next(ws.iter_rows(min_row=1, max_row=1))
-                ]
-                if not required_headers.issubset(set(headers)):
-                    return Response({
-                        "error": f"Missing required headers: {required_headers}. Found: {set(headers)}"
-                    }, status=400)
-
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
                 for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     if not any(row):
                         continue
                     row_dict = dict(zip(headers, row))
                     row_dict['_row_number'] = idx
                     data.append(row_dict)
-
+ 
             elif format_type == 'csv':
                 decoded = file.read().decode('utf-8')
                 reader = csv.DictReader(io.StringIO(decoded))
                 for idx, row in enumerate(reader, start=2):
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
                     row_lower['_row_number'] = idx
-                    if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({
-                            "error": f"Missing required headers in CSV. Required: {required_headers}. Found: {set(row_lower.keys())}"
-                        }, status=400)
                     data.append(row_lower)
             else:
                 return Response({'error': 'Unsupported file type. Use .xlsx or .csv'}, status=400)
-
+ 
             # ------------------ Preload related data ------------------
-            countries = {c.name.lower(): c for c in Country.objects.all() if c is not None}
-            states = {
-                (s.stateName.lower(), s.countryName.uuid): s
-                for s in State.objects.all() if s.countryName is not None
-            }
-            districts = {
-                (d.districtName.lower(), d.stateName.uuid, d.countryName.uuid): d
-                for d in District.objects.all() if d.stateName is not None and d.countryName is not None
-            }
-
+            countries = {c.name.strip().lower(): c for c in Country.objects.all()}
+            states = {(s.stateName.strip().lower(), s.countryName.uuid): s for s in State.objects.all() if s.countryName}
+            districts = {(d.districtName.strip().lower(), d.stateName.uuid, d.countryName.uuid): d for d in District.objects.all() if d.stateName and d.countryName}
+ 
             # ------------------ Preload existing cities ------------------
             existing_city_keys = set(
                 (
-                    c.cityName.lower(),
-                    c.districtName_id,
-                    c.stateName_id,
-                    c.countryName_id
+                    (c.cityName or "").strip().lower(),
+                    (c.stateName.stateName.lower() if c.stateName else ""),
+                    (c.countryName.name.lower() if c.countryName else ""),
+                    (c.districtName.districtName.lower() if c.districtName else None)
                 )
                 for c in City.objects.all()
             )
-
+ 
+ 
+ 
             # ------------------ Process rows ------------------
             to_create = []
             duplicates = []
             skipped_rows = []
             existing_in_file = set()
-
-            for row in reversed(data):
+ 
+            for row in data:
                 row_number = row.get('_row_number', 'Unknown')
-                city_name = str(row.get("city name") or "").strip()
-                country_name = str(row.get("country name") or "").strip()
-                state_name = str(row.get("state name") or "").strip()
-                district_name = str(row.get("district name") or "").strip()
-                description = str(row.get("description") or "").strip()
-
-                # ------------------ Check required fields ------------------
-                missing_fields = []
-                if not city_name:
-                    missing_fields.append("city name")
-                if not country_name:
-                    missing_fields.append("country name")
-
+                city_name = (row.get("city name") or "").strip()
+                country_name = (row.get("country name") or "").strip()
+                state_name = (row.get("state name") or "").strip()
+                district_name = (row.get("district name") or "").strip()
+                description = (row.get("description") or "").strip()
+ 
+                # ------------------ Skip missing required fields ------------------
+                missing_fields = [f for f, v in [('city name', city_name), ('country name', country_name)] if not v]
                 if missing_fields:
                     skipped_rows.append({
                         "Row": row_number,
-                        "City Name": city_name or "",
+                        "City Name": city_name or "Unknown",
                         "State Name": state_name or "",
                         "District Name": district_name or "",
-                        "Country Name": country_name or "",
+                        "Country Name": country_name or "Unknown",
                         "Reason": f"Missing required fields: {', '.join(missing_fields)}"
                     })
                     continue
-
+ 
                 # ------------------ Validate related objects ------------------
                 country_obj = countries.get(country_name.lower())
                 if not country_obj:
                     skipped_rows.append({
                         "Row": row_number,
                         "City Name": city_name,
-                        "State Name": state_name or "",
-                        "District Name": district_name or "",
-                        "Country Name": country_name or "",
                         "Reason": f"Country '{country_name}' not found"
                     })
                     continue
-
+ 
                 state_obj = states.get((state_name.lower(), country_obj.uuid)) if state_name else None
                 if state_name and not state_obj:
                     skipped_rows.append({
                         "Row": row_number,
                         "City Name": city_name,
-                        "State Name": state_name or "",
-                        "District Name": district_name or "",
-                        "Country Name": country_name or "",
                         "Reason": f"State '{state_name}' not found for country '{country_name}'"
                     })
                     continue
-
+ 
                 district_obj = districts.get((district_name.lower(), state_obj.uuid, country_obj.uuid)) if district_name and state_obj else None
-                if district_name and state_obj and not district_obj:
+                if district_name and state_name and not district_obj:
                     skipped_rows.append({
                         "Row": row_number,
                         "City Name": city_name,
-                        "State Name": state_name or "",
-                        "District Name": district_name or "",
-                        "Country Name": country_name or "",
                         "Reason": f"District '{district_name}' not found for state '{state_name}'"
                     })
                     continue
-
-                # ------------------ Duplicate check (all 4 fields must match) ------------------
+ 
+                # ------------------ Exact duplicate check ------------------
+                # ------------------ Exact duplicate check ------------------
+              # ------------------ Exact duplicate check ------------------
+                # Only consider duplicate if city, state, country, and district all match
                 key = (
                     city_name.lower(),
-                    district_obj.uuid if district_obj else None,
-                    state_obj.uuid if state_obj else None,
-                    country_obj.uuid
+                    state_name.lower() if state_name else "",
+                    country_name.lower(),
+                    district_name.lower() if district_name else None
                 )
-
+ 
                 if key in existing_city_keys or key in existing_in_file:
                     duplicates.append({
                         "Row": row_number,
                         "City Name": city_name,
-                        "District Name": district_name if district_obj else "",
-                        "State Name": state_name if state_obj else "",
+                        "District Name": district_name,
+                        "State Name": state_name,
                         "Country Name": country_name,
-                        "Reason": "Duplicate city (all fields match: city, district, state, country)"
+                        "Reason": "Duplicate city (exact match)"
                     })
                     continue
-
+ 
                 existing_in_file.add(key)
-
+ 
+ 
+ 
                 # ------------------ Prepare city object ------------------
                 to_create.append(
                     City(
@@ -4258,27 +4466,28 @@ class CityImportAPIView(APIView):
                         is_deleted=False
                     )
                 )
-
+ 
             # ------------------ Bulk insert ------------------
             with transaction.atomic():
                 City.objects.bulk_create(to_create, ignore_conflicts=True, batch_size=500)
-
+ 
             return Response({
                 "statusCode": 200,
                 "status": True,
                 "imported_count": len(to_create),
                 "duplicates": duplicates,
                 "skipped_rows": skipped_rows,
-                "message": f"Sheet '{sheet_name}' imported successfully" if sheet_name else "Import successful"
+                "message": f"Imported successfully ({len(to_create)} new cities)"
             }, status=200)
-
+ 
         except Exception as e:
             return Response({
                 "statusCode": 400,
                 "status": False,
                 "message": str(e)
             }, status=400)
- 
+        
+
 #---------------------------Realtion-----------------------
 class RelationListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -12298,7 +12507,6 @@ class InterestLevelDeleteAPIView(APIView):
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         }, status=status.HTTP_200_OK)
 
-
 class InterestLevelExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -12325,10 +12533,15 @@ class InterestLevelExportAPIView(APIView):
 
         # --- Fetch queryset ---
         queryset = InterestLevel.objects.filter(is_deleted=False)
+
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
+
         if search:
-            queryset = queryset.filter(Q(name__icontains=search) | Q(description__icontains=search))
+            queryset = queryset.filter(
+                Q(name__istartswith=search)
+                
+            )
 
         # --- Custom sorting ---
         sort_field_map = {
@@ -12340,14 +12553,17 @@ class InterestLevelExportAPIView(APIView):
         }
 
         sort_fields = []
+
         if custom_sort:
             for rule in custom_sort.split(','):
                 try:
                     field, order = rule.split(':')
                     field = field.strip()
                     order = order.strip().lower()
+
                     if field not in sort_field_map:
                         continue
+
                     orm_field = sort_field_map[field]
 
                     # Case-insensitive sorting for string fields
@@ -12356,14 +12572,21 @@ class InterestLevelExportAPIView(APIView):
                     else:
                         f = F(orm_field)
 
-                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+                    if order == 'asc':
+                        sort_fields.append(f.asc(nulls_last=True))
+                    else:
+                        sort_fields.append(f.desc(nulls_last=True))
+
                 except ValueError:
                     continue
+
         else:
             # Default sort: created_at desc
             sort_order = request.GET.get('sortOrder', 'desc')
             f = F('created_at')
-            sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
+            sort_fields = [
+                f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)
+            ]
 
         queryset = queryset.order_by(*sort_fields)
 
@@ -12376,11 +12599,15 @@ class InterestLevelExportAPIView(APIView):
             row = []
             for field in field_list:
                 value = getattr(obj, field, '')
+
                 if field in ['created_at', 'updated_at'] and value:
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+
                 elif isinstance(value, bool):
                     value = int(value)
+
                 row.append(value if value is not None else '')
+
             dataset.append(row)
 
         # --- Export data ---
@@ -12388,12 +12615,13 @@ class InterestLevelExportAPIView(APIView):
             file_data = dataset.export('csv')
             content_type = 'text/csv; charset=utf-8'
             file_name = 'InterestLevel.csv'
+
         else:
             file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'InterestLevel.xlsx'
 
-        response = HttpResponse(file_data if format_type != 'csv' else file_data, content_type=content_type)
+        response = HttpResponse(file_data, content_type=content_type)
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
@@ -13806,6 +14034,7 @@ class ActivityTypeDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+
 class ActivityTypeExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -13813,12 +14042,11 @@ class ActivityTypeExportAPIView(APIView):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')
         uuids_param = request.GET.get('uuids', '')
-        custom_sort = request.GET.get('customSort')  # e.g., name:asc,updated_at:desc
+        custom_sort = request.GET.get('customSort')
         search = request.GET.get('search', '').strip()
 
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
-        # --- Field headers ---
         field_header_map = {
             'uuid': 'UUID',
             'name': 'Activity Type',
@@ -13830,15 +14058,13 @@ class ActivityTypeExportAPIView(APIView):
 
         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
-        # --- Fetch queryset ---
         queryset = ActivityType.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        if search:
-            # Case-insensitive search on name and description
-            queryset = queryset.filter(Q(name__icontains=search) | Q(description__icontains=search))
 
-        # --- Custom sorting ---
+        if search:
+            queryset = queryset.filter(Q(name__istartswith=search))
+
         sort_field_map = {
             'name': 'name',
             'description': 'description',
@@ -13854,28 +14080,28 @@ class ActivityTypeExportAPIView(APIView):
                     field, order = rule.split(':')
                     field = field.strip()
                     order = order.strip().lower()
+
                     if field not in sort_field_map:
                         continue
+
                     orm_field = sort_field_map[field]
 
-                    # Case-insensitive sorting for string fields
                     if field in ['name', 'description']:
-                        f = Lower(orm_field)
+                        f = Lower(F(orm_field))  # FIXED
                     else:
                         f = F(orm_field)
 
-                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
                 except ValueError:
                     continue
         else:
-            # Default sort: created_at desc
-            sort_order = request.GET.get('sortOrder', 'desc')
             f = F('created_at')
-            sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
+            sort_fields = [f.desc(nulls_last=True)]
 
         queryset = queryset.order_by(*sort_fields)
 
-        # --- Prepare dataset ---
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = 'ActivityType'
@@ -13884,14 +14110,15 @@ class ActivityTypeExportAPIView(APIView):
             row = []
             for field in field_list:
                 value = getattr(obj, field, '')
+
                 if field in ['created_at', 'updated_at'] and value:
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
                     value = int(value)
-                row.append(value if value is not None else '')
+
+                row.append(value if value is not None else "")
             dataset.append(row)
 
-        # --- Export data ---
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
@@ -13903,11 +14130,10 @@ class ActivityTypeExportAPIView(APIView):
 
         response = HttpResponse(
             file_data if format_type == 'csv' else file_data.getvalue(),
-            content_type=content_type
+            content_type=content_type,
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
-
 
 class ActivityTypeImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]

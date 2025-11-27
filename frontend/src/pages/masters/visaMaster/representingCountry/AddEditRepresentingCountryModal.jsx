@@ -463,7 +463,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                         {errors.country_name && <div className="text-danger text-sm mt-1">{errors.country_name}</div>}
                                     </div>
                                     {/* Official Name */}
-                                    <div className="col-md-6 mb-20">
+                                    <div className="col-md-6 mb-10">
                                         <label className="form-label fw-semibold text-sm mb-8">
                                             Country Official Name <span className="text-danger">*</span>
                                         </label>
@@ -480,7 +480,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                     </div>
 
                                     {/* Short Name */}
-                                    <div className="col-md-6 mb-20">
+                                    <div className="col-md-6 mb-10">
                                         <label className="form-label fw-semibold text-sm mb-8">
                                             Country Short Name <span className="text-danger">*</span>
                                         </label>
@@ -497,7 +497,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                     </div>
 
                                     {/* Continent */}
-                                    <div className="col-md-6 mb-20">
+                                    <div className="col-md-6 mb-10">
                                         <label className="form-label fw-semibold text-sm mb-8">
                                             Continent <span className="text-danger">*</span>
                                         </label>
@@ -514,7 +514,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                     </div>
 
                                     {/* Capital City */}
-                                    <div className="col-md-6 mb-20">
+                                    <div className="col-md-6 mb-10">
                                         <label className="form-label fw-semibold text-sm mb-8">
                                             Capital City <span className="text-danger">*</span>
                                         </label>
@@ -531,7 +531,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                     </div>
 
                                     {/* Calling Code */}
-                                    <div className="col-md-6 mb-20">
+                                    <div className="col-md-6 mb-10">
                                         <label className="form-label fw-semibold text-sm mb-8">
                                             Calling Code <span className="text-danger">*</span>
                                         </label>
@@ -548,7 +548,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                     </div>
 
                                     {/* Currency Full Name */}
-                                    <div className="col-md-6 mb-20">
+                                    <div className="col-md-6 mb-10">
                                         <label className="form-label fw-semibold text-sm mb-8">
                                             Currency Full Name <span className="text-danger">*</span>
                                         </label>
@@ -565,7 +565,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                     </div>
 
                                     {/* Currency Short Name */}
-                                    <div className="col-md-6 mb-20">
+                                    <div className="col-md-6 mb-10">
                                         <label className="form-label fw-semibold text-sm mb-8">
                                             Currency Short Name <span className="text-danger">*</span>
                                         </label>
@@ -582,7 +582,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                     </div>
 
                                     {/* Currency Code */}
-                                    <div className="col-md-6 mb-20">
+                                    <div className="col-md-6 mb-10">
                                         <label className="form-label fw-semibold text-sm mb-8">Currency Code</label>
                                         <input
                                             disabled
@@ -596,7 +596,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                     </div>
 
                                     {/* No of States */}
-                                    <div className="col-md-6 mb-20">
+                                    <div className="col-md-6 mb-10">
                                         <label className="form-label fw-semibold text-sm mb-8">No. of States</label>
                                         <input
                                             type="number"
@@ -609,7 +609,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                     </div>
 
                                     {/* No of Territories */}
-                                    <div className="col-md-6 mb-20">
+                                    <div className="col-md-6 mb-10">
                                         <label className="form-label fw-semibold text-sm mb-8">No. of Territories</label>
                                         <input
                                             type="number"
@@ -622,7 +622,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                     </div>
 
                                     {/* Total States & Territories */}
-                                    <div className="col-md-6 mb-20">
+                                    <div className="col-md-6 mb-10">
                                         <label className="form-label fw-semibold text-sm mb-8">Total States & Territories</label>
                                         <input
                                             type="number"
@@ -635,7 +635,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                     </div>
 
                                     {/* Independence Day */}
-                                    <div className="col-md-6 mb-20">
+                                    <div className="col-md-6 mb-10">
                                         <label className="form-label fw-semibold text-sm mb-8">Independence Day</label>
                                         <input
                                             type="date"
@@ -647,7 +647,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                     </div>
 
                                     {/* Government Type */}
-                                    <div className="col-md-6 mb-20">
+                                    <div className="col-md-6 mb-10">
                                         <label className="form-label fw-semibold text-sm mb-8">Government Type</label>
                                         <input
                                             type="text"
@@ -660,7 +660,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                     </div>
 
                                     {/* Official Language */}
-                                    <div className="col-md-6 mb-20">
+                                    <div className="col-md-6 mb-10">
                                         <label className="form-label fw-semibold text-sm mb-8">Official Language</label>
                                         <input
                                             type="text"
@@ -673,7 +673,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                     </div>
 
                                     {/* Land Area */}
-                                    <div className="col-md-6 mb-20">
+                                    <div className="col-md-6 mb-10">
                                         <label className="form-label fw-semibold text-sm mb-8">Land Area (sq km)</label>
                                         <input
                                             type="number"
@@ -686,7 +686,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                     </div>
 
                                     {/* Water Area */}
-                                    <div className="col-md-6 mb-20">
+                                    <div className="col-md-6 mb-10">
                                         <label className="form-label fw-semibold text-sm mb-8">Water Area (sq km)</label>
                                         <input
                                             type="number"
@@ -699,7 +699,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                     </div>
 
                                     {/* Total Area */}
-                                    <div className="col-md-6 mb-20">
+                                    <div className="col-md-6 mb-10">
                                         <label className="form-label fw-semibold text-sm mb-8">Total Area (sq km)</label>
                                         <input
                                             type="number"
@@ -712,7 +712,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                     </div>
 
                                     {/* Population */}
-                                    <div className="col-md-6 mb-20">
+                                    <div className="col-md-6 mb-10">
                                         <label className="form-label fw-semibold text-sm mb-8">Population</label>
                                         <input
                                             type="number"
@@ -725,7 +725,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                     </div>
 
                                     {/* Religions */}
-                                    <div className="col-md-6 mb-20">
+                                    <div className="col-md-6 mb-10">
                                         <label className="form-label fw-semibold text-sm mb-8">Religions</label>
                                         <input
                                             type="text"
@@ -738,7 +738,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                     </div>
 
                                     {/* Monthly Living Cost */}
-                                    <div className="col-md-6 mb-20">
+                                    <div className="col-md-6 mb-10">
                                         <div className="row gx-2">
                                             <div className="col-12">
                                                 <label className="form-label fw-semibold text-sm mb-8">Monthly Living Cost</label>
@@ -772,7 +772,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                         </div>
                                     </div>
                                     {/* Largest State */}
-                                    <div className="col-md-6 mb-20">
+                                    <div className="col-md-6 mb-10">
                                         <label className="form-label fw-semibold text-sm mb-8">Largest State</label>
                                         <input
                                             type="text"
@@ -785,7 +785,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                     </div>
 
                                     {/* Smallest State */}
-                                    <div className="col-md-6 mb-20">
+                                    <div className="col-md-6 mb-10">
                                         <label className="form-label fw-semibold text-sm mb-8">Smallest State</label>
                                         <input
                                             type="text"
@@ -798,7 +798,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                     </div>
 
                                     {/* Major Cities */}
-                                    <div className="col-md-6 mb-20">
+                                    <div className="col-md-6 mb-10">
                                         <label className="form-label fw-semibold text-sm mb-8">Major Cities</label>
                                         <input
                                             type="text"
@@ -811,7 +811,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                     </div>
 
                                     {/* National Animal */}
-                                    <div className="col-md-6 mb-20">
+                                    <div className="col-md-6 mb-10">
                                         <label className="form-label fw-semibold text-sm mb-8">National Animal</label>
                                         <input
                                             type="text"
@@ -824,7 +824,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                     </div>
 
                                     {/* National Bird */}
-                                    <div className="col-md-6 mb-20">
+                                    <div className="col-md-6 mb-10">
                                         <label className="form-label fw-semibold text-sm mb-8">National Bird</label>
                                         <input
                                             type="text"
@@ -837,7 +837,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                     </div>
 
                                     {/* National Flower */}
-                                    <div className="col-md-6 mb-20">
+                                    <div className="col-md-6 mb-10">
                                         <label className="form-label fw-semibold text-sm mb-8">National Flower</label>
                                         <input
                                             type="text"
@@ -850,7 +850,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                     </div>
 
                                     {/* Unemployment */}
-                                    <div className="col-md-6 mb-20">
+                                    <div className="col-md-6 mb-10">
                                         <label className="form-label fw-semibold text-sm mb-8">Unemployment Rate (%)</label>
                                         <input
                                             type="number"
@@ -863,7 +863,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                     </div>
 
                                     {/* Skilled Shortages */}
-                                    <div className="col-md-6 mb-20">
+                                    <div className="col-md-6 mb-10">
                                         <label className="form-label fw-semibold text-sm mb-8">Skilled Shortages</label>
                                         <input
                                             type="text"
@@ -876,7 +876,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                     </div>
 
                                     {/* Border Countries */}
-                                    <div className="col-md-6 mb-20">
+                                    <div className="col-md-6 mb-10">
                                         <label className="form-label fw-semibold text-sm mb-8">Border Countries</label>
                                         <input
                                             type="text"
@@ -889,7 +889,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                     </div>
 
                                     {/* National Flag */}
-                                    <div className="col-md-6 mb-20">
+                                    <div className="col-md-6 mb-10">
                                         <label className="form-label fw-semibold text-sm mb-8">
                                             National Flag
                                         </label>
@@ -945,7 +945,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                     </div>
 
                                     {/* Country Map */}
-                                    <div className="col-md-6 mb-20">
+                                    <div className="col-md-6 mb-10">
                                         <label className="form-label fw-semibold text-sm mb-8">
                                             Country Map
                                         </label>
@@ -1001,7 +1001,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                     </div>
 
                                     {/* Description */}
-                                    <div className="col-12 mb-20">
+                                    <div className="col-12 mb-10">
                                         <label className="form-label fw-semibold  text-sm mb-8">
                                             Description
                                         </label>

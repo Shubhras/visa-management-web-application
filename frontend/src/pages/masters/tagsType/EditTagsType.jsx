@@ -132,12 +132,12 @@ const EditTagsType = ({ show, handleCloseEdit, rowSelectData }) => {
                             />
                         </div>
 
-                        <div className="modal-body p-24">
+                        <div className="modal-body p-24 pt-10">
                             <form onSubmit={handleSubmit}>
                                 <div className="row">
                                     {/*  Name */}
-                                    <div className="col-12 mb-20">
-                                        <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                                    <div className="col-12 mb-10">
+                                        <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                                             Tags <span className="text-danger">*</span>
                                         </label>
                                         <input
@@ -155,10 +155,10 @@ const EditTagsType = ({ show, handleCloseEdit, rowSelectData }) => {
                                         )}
                                     </div>
                                     {/* Description */}
-                                    <div className="col-12 mb-20">
+                                    <div className="col-12 mb-10">
                                         <label
                                             htmlFor="desc"
-                                            className="form-label fw-semibold text-primary-light text-sm mb-8"
+                                            className="form-label fw-semibold text-primary-light text-sm mb-0"
                                         >
                                             Description <span className="text-danger"></span>
                                         </label>

@@ -12529,7 +12529,7 @@ textarea:active {
 
 .form-select,
 .form-control:not(textarea) {
-  height: 2.75rem;
+  height: 2.5rem;
 }
 
 .form-control[type="file"] {
@@ -15715,6 +15715,7 @@ td.fc-header-center {
 
 .dashboard-main-body {
   padding: 0.9375rem;
+  padding-top: 0;
 }
 
 @media (min-width: 1400px) {
@@ -16050,7 +16051,7 @@ td.fc-header-center {
 
 
 .common-ctl-popup .custom-select-container .custom-select__control {
-  min-height: 44px;
+  min-height: 40px;
   border-radius: 8px;
   border-color: #dee2e6;
   box-shadow: none;
