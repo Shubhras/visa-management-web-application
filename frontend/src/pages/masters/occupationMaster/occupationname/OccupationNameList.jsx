@@ -1128,7 +1128,7 @@ const OccupationNameList = () => {
                     aria-label="Close"
                   />
                 </div>
-                <div className="modal-body p-24">
+                <div className="modal-body p-24 pt-10">
                   <div className="row">
                     <div className="col-12 col-md-6">
                       <h3 className="text-sm font-semibold mb-3 text-gray-700">

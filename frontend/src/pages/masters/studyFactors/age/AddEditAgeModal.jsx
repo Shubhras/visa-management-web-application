@@ -245,12 +245,12 @@ const AddEditAgeModal = ({ show, handleClose, mode = 'add', rowData = null }) =>
             <button type="button" className="btn-close" onClick={onClose} aria-label="Close" />
           </div>
 
-          <div className="modal-body p-24">
+          <div className="modal-body p-24 pt-10">
             <form onSubmit={handleSubmit}>
               <div className="row">
                 {/* Country Dropdown */}
-                {/* <div className="col-12 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                {/* <div className="col-12 mb-10">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Country Name <span className="text-danger">*</span>
                   </label>
                   <Select
@@ -292,7 +292,7 @@ const AddEditAgeModal = ({ show, handleClose, mode = 'add', rowData = null }) =>
                 </div> */}
 
                  <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Factor For <span className="text-danger">*</span>
                   </label>
                   <Select
@@ -334,7 +334,7 @@ const AddEditAgeModal = ({ show, handleClose, mode = 'add', rowData = null }) =>
                 </div>
 
                <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Study Age Group <span className="text-danger">*</span>
                   </label>
                   <Select
@@ -377,7 +377,7 @@ const AddEditAgeModal = ({ show, handleClose, mode = 'add', rowData = null }) =>
 
                 {/* State Name */}
                 <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Minimum Age <span className="text-danger">*</span>
                   </label>
                   <input
@@ -393,7 +393,7 @@ const AddEditAgeModal = ({ show, handleClose, mode = 'add', rowData = null }) =>
                   )}
                 </div>
                 <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Maximum Age <span className="text-danger">*</span>
                   </label>
                   <input
@@ -411,7 +411,7 @@ const AddEditAgeModal = ({ show, handleClose, mode = 'add', rowData = null }) =>
 
                 {/* State Short Name */}
                 <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Country Name <span className="text-danger">*</span>
                   </label>
                   <input
@@ -428,7 +428,7 @@ const AddEditAgeModal = ({ show, handleClose, mode = 'add', rowData = null }) =>
                 </div>
                 
                 <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Course Level <span className="text-danger">*</span>
                   </label>
                   <input
@@ -445,8 +445,8 @@ const AddEditAgeModal = ({ show, handleClose, mode = 'add', rowData = null }) =>
                 </div>
 
                 {/* Description */}
-                <div className="col-12 mb-20">
-                  <label htmlFor="desc" className="form-label fw-semibold text-primary-light text-sm mb-8">
+                <div className="col-12 mb-10">
+                  <label htmlFor="desc" className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Description
                   </label>
                   <textarea

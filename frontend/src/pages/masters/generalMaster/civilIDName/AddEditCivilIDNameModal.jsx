@@ -253,12 +253,12 @@ const AddEditCivilIDNameModal = ({ show, handleClose, mode = 'add', rowData = nu
             />
           </div>
 
-          <div className="modal-body p-24">
+          <div className="modal-body p-24 pt-10">
             <form onSubmit={handleSubmit}>
               <div className="row">
 
-                <div className="col-12 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                <div className="col-12 mb-10">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Civil ID Name<span className="text-danger">*</span>
                   </label>
                   <input
@@ -276,8 +276,8 @@ const AddEditCivilIDNameModal = ({ show, handleClose, mode = 'add', rowData = nu
                   )}
                 </div>
 
-                <div className="col-12 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                <div className="col-12 mb-10">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Authority Full Name
                   </label>
                   <input
@@ -290,8 +290,8 @@ const AddEditCivilIDNameModal = ({ show, handleClose, mode = 'add', rowData = nu
                   />
                 </div>
 
-                <div className="col-12 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                <div className="col-12 mb-10">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Authority Short Name
                   </label>
                   <input
@@ -304,8 +304,8 @@ const AddEditCivilIDNameModal = ({ show, handleClose, mode = 'add', rowData = nu
                   />
                 </div>
                 {/* Valid Upto */}
-                <div className="col-12 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                <div className="col-12 mb-10">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Civil ID Valid Upto
                   </label>
                   <div className="row g-2">
@@ -384,10 +384,10 @@ const AddEditCivilIDNameModal = ({ show, handleClose, mode = 'add', rowData = nu
                 </div>
 
                 {/* Description */}
-                <div className="col-12 mb-20">
+                <div className="col-12 mb-10">
                   <label
                     htmlFor="desc"
-                    className="form-label fw-semibold text-primary-light text-sm mb-8"
+                    className="form-label fw-semibold text-primary-light text-sm mb-0"
                   >
                     Description
                   </label>

@@ -302,11 +302,11 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
                         />
                     </div>
 
-                    <div className="modal-body p-24">
+                    <div className="modal-body p-24 pt-10">
                         <form onSubmit={handleSubmit}>
                             <div className="row">
-                                <div className="col-12 mb-20">
-                                    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                                <div className="col-12 mb-10">
+                                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                                         Country<span className="text-danger">*</span>
                                     </label>
                                     <Select
@@ -346,8 +346,8 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
                                     )}
                                 </div>
 
-                                <div className="col-12 mb-20">
-                                    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                                <div className="col-12 mb-10">
+                                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                                         State<span className="text-danger">*</span>
                                     </label>
                                     <Select
@@ -388,8 +388,8 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
                                     )}
                                 </div>
 
-                                <div className="col-12 mb-20">
-                                    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                                <div className="col-12 mb-10">
+                                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                                         Education Level <span className="text-danger">*</span>
                                     </label>
                                     <Select
@@ -429,8 +429,8 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
                                     )}
                                 </div>
 
-                                <div className="col-12 mb-20">
-                                    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                                <div className="col-12 mb-10">
+                                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                                         Degree Awarded By <span className="text-danger">*</span>
                                     </label>
                                     <Select
@@ -471,8 +471,8 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
                                     )}
                                 </div>
 
-                                <div className="col-12 mb-20">
-                                    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                                <div className="col-12 mb-10">
+                                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                                         Degree Awarded Institute <span className="text-danger">*</span>
                                     </label>
                                     <input
@@ -490,10 +490,10 @@ const AddEditDegreeAwardedInstituteModal = ({ show, handleClose, mode = 'add', r
                                     )}
                                 </div>
 
-                                <div className="col-12 mb-20">
+                                <div className="col-12 mb-10">
                                     <label
                                         htmlFor="desc"
-                                        className="form-label fw-semibold text-primary-light text-sm mb-8"
+                                        className="form-label fw-semibold text-primary-light text-sm mb-0"
                                     >
                                         Description
                                     </label>

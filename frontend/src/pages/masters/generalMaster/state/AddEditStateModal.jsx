@@ -206,12 +206,12 @@ const AddEditStateModal = ({ show, handleClose, mode = 'add', rowData = null }) 
             <button type="button" className="btn-close" onClick={onClose} aria-label="Close" />
           </div>
 
-          <div className="modal-body p-24">
+          <div className="modal-body p-24 pt-10">
             <form onSubmit={handleSubmit}>
               <div className="row">
                 {/* Country Dropdown */}
-                <div className="col-12 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                <div className="col-12 mb-10">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Country Name <span className="text-danger">*</span>
                   </label>
                   <Select
@@ -246,8 +246,8 @@ const AddEditStateModal = ({ show, handleClose, mode = 'add', rowData = null }) 
                 </div>
 
                 {/* State Name */}
-                <div className="col-12 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                <div className="col-12 mb-10">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     State Name <span className="text-danger">*</span>
                   </label>
                   <input
@@ -264,8 +264,8 @@ const AddEditStateModal = ({ show, handleClose, mode = 'add', rowData = null }) 
                 </div>
 
                 {/* State Short Name */}
-                <div className="col-12 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                <div className="col-12 mb-10">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     State Short Name
                   </label>
                   <input
@@ -277,8 +277,8 @@ const AddEditStateModal = ({ show, handleClose, mode = 'add', rowData = null }) 
                     placeholder="Enter short name"
                   />
                 </div>
-                <div className="col-12 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                <div className="col-12 mb-10">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     State / Territory <span className="text-danger">*</span>
                   </label>
                   <Select
@@ -311,8 +311,8 @@ const AddEditStateModal = ({ show, handleClose, mode = 'add', rowData = null }) 
                   )}
                 </div>
                 {/* Description */}
-                <div className="col-12 mb-20">
-                  <label htmlFor="desc" className="form-label fw-semibold text-primary-light text-sm mb-8">
+                <div className="col-12 mb-10">
+                  <label htmlFor="desc" className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Description
                   </label>
                   <textarea

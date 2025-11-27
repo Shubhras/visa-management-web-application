@@ -17,6 +17,7 @@ import {
 import AddImportStakeholderModal from "./AddImportStakeholderModal";
 import { formatDateDDMMYYYYTime } from "../../../helper/utils/commanHelper";
 import { useGlobalSearch } from "../../../components/comman/GlobalSearchContext";
+import ResetButton from "../../../components/comman/ResetButton";
 
 const StakeholderCategoriesList = () => {
   const dispatch = useDispatch();
@@ -590,32 +591,33 @@ const StakeholderCategoriesList = () => {
                       <>
                         <button
                           onClick={() => handleSelectAllOrNot("onlySelected")}
-                          className={`btn btn-sm py-1 fw-medium ${selectAllOrNot === "onlySelected"
+                          className={`btn btn-sm py-1 fw-medium ${
+                            selectAllOrNot === "onlySelected"
                               ? "comman-btn-color"
                               : "comman-inactive-btn"
-                            }`}
+                          }`}
                         >
                           {`Select (${selectedRows.length})`}
                         </button>
 
                         <button
                           onClick={() => handleSelectAllOrNot("all")}
-                          className={`btn btn-sm py-1 fw-medium ${selectAllOrNot === "all"
+                          className={`btn btn-sm py-1 fw-medium ${
+                            selectAllOrNot === "all"
                               ? "comman-btn-color"
                               : "comman-inactive-btn"
-                            }`}
+                          }`}
                         >
                           {`Select All (${tableState.total})`}
                         </button>
                       </>
                     )}
 
-                  <button
+                  <ResetButton
                     onClick={clearAllFilters}
-                    className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
-                  >
-                    Reset
-                  </button>
+                    tableState={tableState}
+                    globalSearch={globalSearch}
+                  />
                 </div>
               </div>
 
@@ -648,8 +650,9 @@ const StakeholderCategoriesList = () => {
                         <ul className="pagination mb-0" style={{ gap: "4px" }}>
                           {/* First */}
                           <li
-                            className={`page-item ${!tableState.hasPrevious ? "disabled" : ""
-                              }`}
+                            className={`page-item ${
+                              !tableState.hasPrevious ? "disabled" : ""
+                            }`}
                           >
                             <button
                               className="border-0 bg-transparent"
@@ -672,8 +675,9 @@ const StakeholderCategoriesList = () => {
 
                           {/* Prev */}
                           <li
-                            className={`page-item ${!tableState.hasPrevious ? "disabled" : ""
-                              }`}
+                            className={`page-item ${
+                              !tableState.hasPrevious ? "disabled" : ""
+                            }`}
                           >
                             <button
                               className="border-0 bg-transparent"
@@ -740,8 +744,9 @@ const StakeholderCategoriesList = () => {
 
                           {/* Next */}
                           <li
-                            className={`page-item ${!tableState.hasNext ? "disabled" : ""
-                              }`}
+                            className={`page-item ${
+                              !tableState.hasNext ? "disabled" : ""
+                            }`}
                           >
                             <button
                               className="border-0 bg-transparent"
@@ -764,8 +769,9 @@ const StakeholderCategoriesList = () => {
 
                           {/* Last */}
                           <li
-                            className={`page-item ${!tableState.hasNext ? "disabled" : ""
-                              }`}
+                            className={`page-item ${
+                              !tableState.hasNext ? "disabled" : ""
+                            }`}
                           >
                             <button
                               className="border-0 bg-transparent"
@@ -1039,7 +1045,7 @@ const StakeholderCategoriesList = () => {
                     aria-label="Close"
                   />
                 </div>
-                <div className="modal-body p-24">
+                <div className="modal-body p-24 pt-10">
                   <div className="row">
                     <div className="col-12 col-md-6">
                       <h3 className="text-sm font-semibold mb-3 text-gray-700">

@@ -17,6 +17,7 @@ import AddImportCountryModal from "./AddImportCountryModal";
 import MasterLayout from "../../../../masterLayout/MasterLayout";
 import { formatDateDDMMYYYYTime } from "../../../../helper/utils/commanHelper";
 import { useGlobalSearch } from "../../../../components/comman/GlobalSearchContext";
+import ResetButton from "../../../../components/comman/ResetButton";
 
 const CountryList = () => {
   const dispatch = useDispatch();
@@ -71,17 +72,94 @@ const CountryList = () => {
 
   // Table columns configuration (use field = id-for-filter, label for display)
   const [tableColumns] = useState([
-    { id: "name", label: "Country Name", field: "name", visible: true, required: false, filterable: false },
-    { id: "continent", label: "Continent", field: "continentId", visible: true, required: false, filterable: true },
-    { id: "officialName", label: "Country Official Name", field: "officialName", visible: true, required: false, filterable: false },
-    { id: "shortName", label: "Country Short Name", field: "shortName", visible: false, required: false, filterable: false },
-    { id: "capitalCity", label: "Capital City", field: "capitalCity", visible: false, required: false, filterable: false },
-    { id: "currencyfullname", label: "Currency Full Name", field: "currencyfullname", visible: false, required: false, filterable: false },
-    { id: "currencyshortname", label: "Currency Short Name", field: "currencyshortname", visible: false, required: false, filterable: false },
-    { id: "currencyCode", label: "Currency Code", field: "currencyCode", visible: false, required: false, filterable: false },
-    { id: "dialCodes", label: "Country Calling Code", field: "dialCodes", visible: false, required: false, filterable: false },
-    { id: "description", label: "Description", field: "description", visible: false, required: false, filterable: false },
-    { id: "updated_at", label: "Modified On", field: "updated_at", visible: true, required: false, filterable: false },
+    {
+      id: "name",
+      label: "Country Name",
+      field: "name",
+      visible: true,
+      required: false,
+      filterable: false,
+    },
+    {
+      id: "continent",
+      label: "Continent",
+      field: "continentId",
+      visible: true,
+      required: false,
+      filterable: true,
+    },
+    {
+      id: "officialName",
+      label: "Country Official Name",
+      field: "officialName",
+      visible: true,
+      required: false,
+      filterable: false,
+    },
+    {
+      id: "shortName",
+      label: "Country Short Name",
+      field: "shortName",
+      visible: false,
+      required: false,
+      filterable: false,
+    },
+    {
+      id: "capitalCity",
+      label: "Capital City",
+      field: "capitalCity",
+      visible: false,
+      required: false,
+      filterable: false,
+    },
+    {
+      id: "currencyfullname",
+      label: "Currency Full Name",
+      field: "currencyfullname",
+      visible: false,
+      required: false,
+      filterable: false,
+    },
+    {
+      id: "currencyshortname",
+      label: "Currency Short Name",
+      field: "currencyshortname",
+      visible: false,
+      required: false,
+      filterable: false,
+    },
+    {
+      id: "currencyCode",
+      label: "Currency Code",
+      field: "currencyCode",
+      visible: false,
+      required: false,
+      filterable: false,
+    },
+    {
+      id: "dialCodes",
+      label: "Country Calling Code",
+      field: "dialCodes",
+      visible: false,
+      required: false,
+      filterable: false,
+    },
+    {
+      id: "description",
+      label: "Description",
+      field: "description",
+      visible: false,
+      required: false,
+      filterable: false,
+    },
+    {
+      id: "updated_at",
+      label: "Modified On",
+      field: "updated_at",
+      visible: true,
+      required: false,
+      filterable: false,
+    },
   ]);
 
   const [visibleColumns, setVisibleColumns] = useState(
@@ -95,7 +173,9 @@ const CountryList = () => {
     const column = tableColumns.find((col) => col.id === columnId);
     if (column?.required) return;
     setVisibleColumns((prev) =>
-      prev.includes(columnId) ? prev.filter((id) => id !== columnId) : [...prev, columnId]
+      prev.includes(columnId)
+        ? prev.filter((id) => id !== columnId)
+        : [...prev, columnId]
     );
   };
   const isColumnVisible = (columnId) => visibleColumns.includes(columnId);
@@ -103,11 +183,17 @@ const CountryList = () => {
   // Close column dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (columnDropdownRef.current && !columnDropdownRef.current.contains(event.target)) {
+      if (
+        columnDropdownRef.current &&
+        !columnDropdownRef.current.contains(event.target)
+      ) {
         setShowColumnDropdown(false);
       }
       // close filter dropdown too
-      if (filterDropdownRef.current && !filterDropdownRef.current.contains(event.target)) {
+      if (
+        filterDropdownRef.current &&
+        !filterDropdownRef.current.contains(event.target)
+      ) {
         setActiveFilterColumn(null);
       }
     };
@@ -145,7 +231,13 @@ const CountryList = () => {
   // Fetch when paging / limit / status / sort / filters change
   useEffect(() => {
     fetchCountryList();
-  }, [tableState.page, tableState.limit, tableState.status, tableState.sort, columnFilters]);
+  }, [
+    tableState.page,
+    tableState.limit,
+    tableState.status,
+    tableState.sort,
+    columnFilters,
+  ]);
 
   // Fetch continents for filter dropdown on mount
   useEffect(() => {
@@ -154,7 +246,10 @@ const CountryList = () => {
 
   // Prepare filterDropdownData when continents load
   useEffect(() => {
-    if ((filterDropdownData.continentId || []).length === 0 && filterDropdownData.__init !== true) {
+    if (
+      (filterDropdownData.continentId || []).length === 0 &&
+      filterDropdownData.__init !== true
+    ) {
       // If we've got continent data via fetchContinentList, it will set filterDropdownData
       // No action needed here explicitly — fetchContinentList will call setFilterDropdownData
     }
@@ -168,10 +263,11 @@ const CountryList = () => {
       limit: tableState.limit,
       search: tableState.search || "",
       status: tableState.status || "",
-      sortBy: '',
-      sortOrder: '',
+      sortBy: "",
+      sortOrder: "",
       sort: tableState.sort,
-      continent: columnFilters.continentId.length > 0 ? columnFilters.continentId : null,
+      continent:
+        columnFilters.continentId.length > 0 ? columnFilters.continentId : null,
     };
 
     dispatch(
@@ -190,7 +286,9 @@ const CountryList = () => {
           }));
 
           // keep selected rows only if still present
-          setSelectedRows((prev) => prev.filter((rowId) => response?.data.some((r) => r.uuid === rowId)));
+          setSelectedRows((prev) =>
+            prev.filter((rowId) => response?.data.some((r) => r.uuid === rowId))
+          );
         } else {
           setCountries([]);
           setTableState((prev) => ({
@@ -236,14 +334,18 @@ const CountryList = () => {
   // --- Filter helpers (Continent) ---
   const toggleFilterDropdown = (e, columnField) => {
     e.stopPropagation();
-    setActiveFilterColumn((prev) => (prev === columnField ? null : columnField));
+    setActiveFilterColumn((prev) =>
+      prev === columnField ? null : columnField
+    );
     setFilterSearchTerms((prev) => ({ ...prev, [columnField]: "" }));
   };
 
   const handleFilterCheckboxChange = (columnField, value, checked) => {
     setColumnFilters((prev) => {
       const current = prev[columnField] || [];
-      const next = checked ? [...current, value] : current.filter((v) => v !== value);
+      const next = checked
+        ? [...current, value]
+        : current.filter((v) => v !== value);
       return { ...prev, [columnField]: next };
     });
   };
@@ -287,12 +389,15 @@ const CountryList = () => {
     setSelectedRows([]);
   };
 
-  const hasActiveFilters = () => Object.values(columnFilters).some((arr) => arr.length > 0);
+  const hasActiveFilters = () =>
+    Object.values(columnFilters).some((arr) => arr.length > 0);
 
   const getFilteredOptions = (columnField) => {
     const searchTerm = (filterSearchTerms[columnField] || "").toLowerCase();
     const options = filterDropdownData[columnField] || [];
-    return options.filter((option) => option.name.toLowerCase().includes(searchTerm));
+    return options.filter((option) =>
+      option.name.toLowerCase().includes(searchTerm)
+    );
   };
 
   // --- Sorting (multi-column) ---
@@ -312,8 +417,13 @@ const CountryList = () => {
 
   const getSortIcon = (field) => {
     const sortObj = tableState.sort.find((s) => s.field === field);
-    if (!sortObj) return <Icon icon="ri:menu-line" className="sorting-th-icone" />;
-    return sortObj.order === "asc" ? <Icon icon="ri:sort-asc" className="sorting-th-icone" /> : <Icon icon="ri:sort-desc" className="sorting-th-icone" />;
+    if (!sortObj)
+      return <Icon icon="ri:menu-line" className="sorting-th-icone" />;
+    return sortObj.order === "asc" ? (
+      <Icon icon="ri:sort-asc" className="sorting-th-icone" />
+    ) : (
+      <Icon icon="ri:sort-desc" className="sorting-th-icone" />
+    );
   };
 
   const applySortAsc = (field) => {
@@ -337,34 +447,64 @@ const CountryList = () => {
   };
 
   // --- Pagination / selection helpers ---
-  const handlePageLengthChange = (value) => setTableState((prev) => ({ ...prev, limit: Number(value), page: 1 }));
+  const handlePageLengthChange = (value) =>
+    setTableState((prev) => ({ ...prev, limit: Number(value), page: 1 }));
 
   const handleSelectAll = (e) => {
     const checked = e.target.checked;
     if (checked) setSelectedRows(countries.map((Item) => Item.uuid));
-    else { setSelectedRows([]); setSelectAllOrNot(""); }
+    else {
+      setSelectedRows([]);
+      setSelectAllOrNot("");
+    }
   };
 
-  const handleRowSelect = (uuid) => setSelectedRows((prev) => (prev.includes(uuid) ? prev.filter((id) => id !== uuid) : [...prev, uuid]));
+  const handleRowSelect = (uuid) =>
+    setSelectedRows((prev) =>
+      prev.includes(uuid) ? prev.filter((id) => id !== uuid) : [...prev, uuid]
+    );
 
-  const isAllSelected = countries.length > 0 && countries.every((Item) => selectedRows.includes(Item.uuid));
+  const isAllSelected =
+    countries.length > 0 &&
+    countries.every((Item) => selectedRows.includes(Item.uuid));
 
-  const goToPage = (page) => { if (page >= 1 && page <= tableState.totalPages) setTableState((prev) => ({ ...prev, page })); };
+  const goToPage = (page) => {
+    if (page >= 1 && page <= tableState.totalPages)
+      setTableState((prev) => ({ ...prev, page }));
+  };
 
   const getPaginationNumbers = () => {
-    const pages = []; const maxVisible = 5; const totalPages = tableState.totalPages; const currentPage = tableState.currentPage;
-    if (totalPages <= maxVisible) { for (let i = 1; i <= totalPages; i++) pages.push(i); }
-    else {
-      if (currentPage <= 3) { for (let i = 1; i <= 4; i++) pages.push(i); pages.push("..."); pages.push(totalPages); }
-      else if (currentPage >= totalPages - 2) { pages.push(1); pages.push("..."); for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i); }
-      else { pages.push(1); pages.push("..."); for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i); pages.push("..."); pages.push(totalPages); }
+    const pages = [];
+    const maxVisible = 5;
+    const totalPages = tableState.totalPages;
+    const currentPage = tableState.currentPage;
+    if (totalPages <= maxVisible) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) pages.push(i);
+        pages.push("...");
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push("...");
+        for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i);
+      } else {
+        pages.push(1);
+        pages.push("...");
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i);
+        pages.push("...");
+        pages.push(totalPages);
+      }
     }
     return pages;
   };
 
   // --- Add/Edit/Delete/Bulk delete ---
-  const handleShow = () => setModalState({ show: true, mode: "add", rowData: null });
-  const handleShowEdit = (rowData) => setModalState({ show: true, mode: "edit", rowData });
+  const handleShow = () =>
+    setModalState({ show: true, mode: "add", rowData: null });
+  const handleShowEdit = (rowData) =>
+    setModalState({ show: true, mode: "edit", rowData });
 
   const handleClose = (shouldRefresh = false) => {
     setModalState({ show: false, mode: "add", rowData: null });
@@ -374,45 +514,75 @@ const CountryList = () => {
   const handleSelectAllOrNot = (a) => setSelectAllOrNot(a);
 
   const handleDelete = (uuid) => {
-    setDeleteId(uuid); setShowDeleteConfirm(true); setDeleteConfirmMessage(`Are you sure you want to delete this country?`);
+    setDeleteId(uuid);
+    setShowDeleteConfirm(true);
+    setDeleteConfirmMessage(`Are you sure you want to delete this country?`);
   };
 
   const handleBulkDelete = () => {
-    if (selectedRows.length === 0) { toast.error("Please select at least one row to delete"); return; }
-    const message = selectAllOrNot === "all" ? `${tableState.total} all countries` : `${selectedRows.length} selected countries`;
-    setDeleteConfirmMessage(`Are you sure you want to delete this country (${message})?`);
+    if (selectedRows.length === 0) {
+      toast.error("Please select at least one row to delete");
+      return;
+    }
+    const message =
+      selectAllOrNot === "all"
+        ? `${tableState.total} all countries`
+        : `${selectedRows.length} selected countries`;
+    setDeleteConfirmMessage(
+      `Are you sure you want to delete this country (${message})?`
+    );
     setShowDeleteConfirm(true);
   };
 
   const confirmDelete = () => {
-    const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
-    if (!sendPayload || (Array.isArray(sendPayload) && sendPayload.length === 0)) { toast.error("No country selected for deletion."); return; }
-    dispatch(countryDelete(sendPayload, (response, error) => {
-      if (error) toast.error(error?.response?.data?.message || "server error");
-      else {
-        if (response?.statusCode === 200 && response?.status === true) {
-          toast.success(response?.message);
-          setCountries((prev) => prev.filter((i) => i.uuid !== deleteId));
-          setSelectedRows([]);
-          setSelectAllOrNot("");
-          setDeleteId(null);
-          setShowDeleteConfirm(false);
-          fetchCountryList();
-        } else toast.error("Something went wrong.");
-      }
-    }));
+    const sendPayload =
+      selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
+    if (
+      !sendPayload ||
+      (Array.isArray(sendPayload) && sendPayload.length === 0)
+    ) {
+      toast.error("No country selected for deletion.");
+      return;
+    }
+    dispatch(
+      countryDelete(sendPayload, (response, error) => {
+        if (error)
+          toast.error(error?.response?.data?.message || "server error");
+        else {
+          if (response?.statusCode === 200 && response?.status === true) {
+            toast.success(response?.message);
+            setCountries((prev) => prev.filter((i) => i.uuid !== deleteId));
+            setSelectedRows([]);
+            setSelectAllOrNot("");
+            setDeleteId(null);
+            setShowDeleteConfirm(false);
+            fetchCountryList();
+          } else toast.error("Something went wrong.");
+        }
+      })
+    );
   };
 
-  const cancelDelete = () => { setShowDeleteConfirm(false); setDeleteId(null); setSelectedRows([]); setDeleteConfirmMessage(""); setSelectAllOrNot(""); };
+  const cancelDelete = () => {
+    setShowDeleteConfirm(false);
+    setDeleteId(null);
+    setSelectedRows([]);
+    setDeleteConfirmMessage("");
+    setSelectAllOrNot("");
+  };
 
   // --- Import / Export ---
-  const handleCloseImport = (shouldRefresh = false) => { setShowImport(false); if (shouldRefresh) fetchCountryList(); };
+  const handleCloseImport = (shouldRefresh = false) => {
+    setShowImport(false);
+    if (shouldRefresh) fetchCountryList();
+  };
   const handleShowImport = () => setShowImport(true);
 
   const handleExportTest = () => setShowExportPopop(true);
   const cancelExportTest = () => setShowExportPopop(false);
 
-  const handleDragStart = (e, index) => e.dataTransfer.setData("dragIndex", index);
+  const handleDragStart = (e, index) =>
+    e.dataTransfer.setData("dragIndex", index);
   const handleDrop = (e, dropIndex) => {
     e.preventDefault();
     const dragIndex = parseInt(e.dataTransfer.getData("dragIndex"));
@@ -430,11 +600,14 @@ const CountryList = () => {
   };
 
   const handleExport = () => {
-    if (selectedItems.length === 0) { toast.error("Please select at least one field"); return; }
+    if (selectedItems.length === 0) {
+      toast.error("Please select at least one field");
+      return;
+    }
 
     const fieldMapping = {
       "Country Name": "name",
-      "Continent": "continent",
+      Continent: "continent",
       "Country Official Name": "officialName",
       "Country Short Name": "shortName",
       "Capital City": "capitalCity",
@@ -442,11 +615,13 @@ const CountryList = () => {
       "Currency Short Name": "currencyshortname",
       "Currency Code": "currencyCode",
       "Country Calling Code": "dialCodes",
-      "Description": "description",
+      Description: "description",
       "Modified On": "updated_at",
     };
 
-    const mappedFields = selectedItems.map((item) => fieldMapping[item] || item);
+    const mappedFields = selectedItems.map(
+      (item) => fieldMapping[item] || item
+    );
     const fieldsString = mappedFields.join(",");
 
     const sendPayload = {
@@ -455,30 +630,38 @@ const CountryList = () => {
       uuids: selectAllOrNot === "all" ? [] : selectedRows,
       search: tableState.search || "",
       sort: tableState.sort,
-      continent: columnFilters.continentId.length > 0 ? columnFilters.continentId : null,
+      continent:
+        columnFilters.continentId.length > 0 ? columnFilters.continentId : null,
     };
 
     setLoadingExport(true);
-    dispatch(countryExportData(sendPayload, (response, error) => {
-      setLoadingExport(false);
-      if (error) { toast.error(error?.response?.message || "Server error"); return; }
-      if (response?.status === 200) {
-        const blob = new Blob([response.data], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `Country.xlsx`;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        window.URL.revokeObjectURL(url);
-        toast.success("Export successful");
-        cancelExportTest();
-        setSelectedRows([]);
-        setSelectAllOrNot("");
-        setDeleteId(null);
-      } else toast.error("Something went wrong.");
-    }));
+    dispatch(
+      countryExportData(sendPayload, (response, error) => {
+        setLoadingExport(false);
+        if (error) {
+          toast.error(error?.response?.message || "Server error");
+          return;
+        }
+        if (response?.status === 200) {
+          const blob = new Blob([response.data], {
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          });
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = `Country.xlsx`;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          window.URL.revokeObjectURL(url);
+          toast.success("Export successful");
+          cancelExportTest();
+          setSelectedRows([]);
+          setSelectAllOrNot("");
+          setDeleteId(null);
+        } else toast.error("Something went wrong.");
+      })
+    );
   };
 
   const startIndex = (tableState.currentPage - 1) * tableState.limit;
@@ -495,7 +678,9 @@ const CountryList = () => {
                   <button
                     className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
                     onClick={handleShow}
-                  >New</button>
+                  >
+                    New
+                  </button>
                   <button
                     className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
                     onClick={handleShowImport}
@@ -515,33 +700,45 @@ const CountryList = () => {
                   >
                     Delete
                   </button>
-                  {(selectedRows?.length > 0 && selectedRows?.length === countries?.length) && (
-                    <>
-                      <button
-                        onClick={() => handleSelectAllOrNot("onlySelected")}
-                        className={`btn btn-sm py-1 fw-medium ${selectAllOrNot === "onlySelected" ? "comman-btn-color" : "comman-inactive-btn"}`}
-                      >
-                        {`Select (${selectedRows.length})`}
-                      </button>
-                      <button
-                        onClick={() => handleSelectAllOrNot("all")}
-                        className={`btn btn-sm py-1 fw-medium ${selectAllOrNot === "all" ? "comman-btn-color" : "comman-inactive-btn"}`}
-                      >
-                        {`Select All (${tableState.total})`}
-                      </button>
-                    </>
-                  )}
+                  {selectedRows?.length > 0 &&
+                    selectedRows?.length === countries?.length && (
+                      <>
+                        <button
+                          onClick={() => handleSelectAllOrNot("onlySelected")}
+                          className={`btn btn-sm py-1 fw-medium ${
+                            selectAllOrNot === "onlySelected"
+                              ? "comman-btn-color"
+                              : "comman-inactive-btn"
+                          }`}
+                        >
+                          {`Select (${selectedRows.length})`}
+                        </button>
+                        <button
+                          onClick={() => handleSelectAllOrNot("all")}
+                          className={`btn btn-sm py-1 fw-medium ${
+                            selectAllOrNot === "all"
+                              ? "comman-btn-color"
+                              : "comman-inactive-btn"
+                          }`}
+                        >
+                          {`Select All (${tableState.total})`}
+                        </button>
+                      </>
+                    )}
                   {hasActiveFilters() && (
                     <button
                       onClick={clearAllOnlyHeaderFilters}
-                      className="btn btn-sm py-1 comman-inactive-btn">
+                      className="btn btn-sm py-1 comman-inactive-btn"
+                    >
                       <Icon icon="mdi:filter-off" width="16" /> Clear Filters
                     </button>
                   )}
-                  <button
+                  <ResetButton
                     onClick={clearAllFilters}
-                    className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
-                  >Reset</button>
+                    tableState={tableState}
+                    columnFilters={columnFilters}
+                    globalSearch={globalSearch}
+                  />
                 </div>
               </div>
 
@@ -562,36 +759,57 @@ const CountryList = () => {
                     <div className="d-flex justify-content-between align-items-center px-4 py-0">
                       <div className="showing-total-page">
                         {startIndex + 1}-{" "}
-                        {Math.min(startIndex + tableState.limit, tableState.total)}{" "}
+                        {Math.min(
+                          startIndex + tableState.limit,
+                          tableState.total
+                        )}{" "}
                         of {tableState.total}
                       </div>
                       <nav>
                         <ul className="pagination mb-0 gap-4px">
-                          <li className={`page-item ${!tableState.hasPrevious ? 'disabled' : ''}`}>
+                          <li
+                            className={`page-item ${
+                              !tableState.hasPrevious ? "disabled" : ""
+                            }`}
+                          >
                             <button
                               className="border-0 bg-transparent"
                               onClick={() => goToPage(1)}
                               disabled={!tableState.hasPrevious}
                               style={{
-                                padding: '0px 8px',
-                                color: !tableState.hasPrevious ? '#ccc' : '#6c757d',
-                                fontSize: '18px',
-                                cursor: !tableState.hasPrevious ? 'not-allowed' : 'pointer'
+                                padding: "0px 8px",
+                                color: !tableState.hasPrevious
+                                  ? "#ccc"
+                                  : "#6c757d",
+                                fontSize: "18px",
+                                cursor: !tableState.hasPrevious
+                                  ? "not-allowed"
+                                  : "pointer",
                               }}
                             >
                               «
                             </button>
                           </li>
-                          <li className={`page-item ${!tableState.hasPrevious ? 'disabled' : ''}`}>
+                          <li
+                            className={`page-item ${
+                              !tableState.hasPrevious ? "disabled" : ""
+                            }`}
+                          >
                             <button
                               className="border-0 bg-transparent"
-                              onClick={() => goToPage(tableState.currentPage - 1)}
+                              onClick={() =>
+                                goToPage(tableState.currentPage - 1)
+                              }
                               disabled={!tableState.hasPrevious}
                               style={{
-                                padding: '0px 8px',
-                                color: !tableState.hasPrevious ? '#ccc' : '#6c757d',
-                                fontSize: '18px',
-                                cursor: !tableState.hasPrevious ? 'not-allowed' : 'pointer'
+                                padding: "0px 8px",
+                                color: !tableState.hasPrevious
+                                  ? "#ccc"
+                                  : "#6c757d",
+                                fontSize: "18px",
+                                cursor: !tableState.hasPrevious
+                                  ? "not-allowed"
+                                  : "pointer",
                               }}
                             >
                               ‹
@@ -599,13 +817,13 @@ const CountryList = () => {
                           </li>
                           {getPaginationNumbers().map((page, idx) => (
                             <li key={idx} className="page-item">
-                              {page === '...' ? (
+                              {page === "..." ? (
                                 <span
                                   className="border-0 bg-transparent"
                                   style={{
-                                    padding: '0px 10px',
-                                    color: '#6c757d',
-                                    cursor: 'default'
+                                    padding: "0px 10px",
+                                    color: "#6c757d",
+                                    cursor: "default",
                                   }}
                                 >
                                   ...
@@ -615,14 +833,23 @@ const CountryList = () => {
                                   className="border-0"
                                   onClick={() => goToPage(page)}
                                   style={{
-                                    padding: '0px 10px',
-                                    minWidth: '30px',
-                                    backgroundColor: page === tableState.currentPage ? '#5a6c5b' : 'transparent',
-                                    color: page === tableState.currentPage ? '#fff' : '#6c757d',
-                                    borderRadius: '4px',
-                                    fontWeight: page === tableState.currentPage ? '500' : '400',
-                                    cursor: 'pointer',
-                                    fontSize: "14px"
+                                    padding: "0px 10px",
+                                    minWidth: "30px",
+                                    backgroundColor:
+                                      page === tableState.currentPage
+                                        ? "#5a6c5b"
+                                        : "transparent",
+                                    color:
+                                      page === tableState.currentPage
+                                        ? "#fff"
+                                        : "#6c757d",
+                                    borderRadius: "4px",
+                                    fontWeight:
+                                      page === tableState.currentPage
+                                        ? "500"
+                                        : "400",
+                                    cursor: "pointer",
+                                    fontSize: "14px",
                                   }}
                                 >
                                   {page}
@@ -630,31 +857,45 @@ const CountryList = () => {
                               )}
                             </li>
                           ))}
-                          <li className={`page-item ${!tableState.hasNext ? 'disabled' : ''}`}>
+                          <li
+                            className={`page-item ${
+                              !tableState.hasNext ? "disabled" : ""
+                            }`}
+                          >
                             <button
                               className="border-0 bg-transparent"
-                              onClick={() => goToPage(tableState.currentPage + 1)}
+                              onClick={() =>
+                                goToPage(tableState.currentPage + 1)
+                              }
                               disabled={!tableState.hasNext}
                               style={{
-                                padding: '0px 8px',
-                                color: !tableState.hasNext ? '#ccc' : '#6c757d',
-                                fontSize: '18px',
-                                cursor: !tableState.hasNext ? 'not-allowed' : 'pointer'
+                                padding: "0px 8px",
+                                color: !tableState.hasNext ? "#ccc" : "#6c757d",
+                                fontSize: "18px",
+                                cursor: !tableState.hasNext
+                                  ? "not-allowed"
+                                  : "pointer",
                               }}
                             >
                               ›
                             </button>
                           </li>
-                          <li className={`page-item ${!tableState.hasNext ? 'disabled' : ''}`}>
+                          <li
+                            className={`page-item ${
+                              !tableState.hasNext ? "disabled" : ""
+                            }`}
+                          >
                             <button
                               className="border-0 bg-transparent"
                               onClick={() => goToPage(tableState.totalPages)}
                               disabled={!tableState.hasNext}
                               style={{
-                                padding: '0px 8px',
-                                color: !tableState.hasNext ? '#ccc' : '#6c757d',
-                                fontSize: '18px',
-                                cursor: !tableState.hasNext ? 'not-allowed' : 'pointer'
+                                padding: "0px 8px",
+                                color: !tableState.hasNext ? "#ccc" : "#6c757d",
+                                fontSize: "18px",
+                                cursor: !tableState.hasNext
+                                  ? "not-allowed"
+                                  : "pointer",
                               }}
                             >
                               »
@@ -677,153 +918,243 @@ const CountryList = () => {
                   <tr>
                     <th scope="col" className="sl-numbar-th">
                       <div className="d-flex align-items-center gap-2">
-                        <input className="form-check-input" type="checkbox" checked={isAllSelected} onChange={handleSelectAll} disabled={countries.length === 0} />
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          checked={isAllSelected}
+                          onChange={handleSelectAll}
+                          disabled={countries.length === 0}
+                        />
                         <span>No.</span>
                       </div>
                     </th>
 
-                    {tableColumns.map((column) => (
-                      isColumnVisible(column.id) && (
-                        <th
-                          key={column.id}
-                          scope="col"
-                          className='sorting-th'
-                        >
-                          <div className="d-flex align-items-center justify-content-between position-relative">
-                            <div
-                              className="d-flex align-items-center flex-grow-1"
-                              onClick={() => handleSort(column.field)}
-                              style={{ cursor: 'pointer' }}
-                            >
-                              {column.label}
-                              {getSortIcon(column.field)}
+                    {tableColumns.map(
+                      (column) =>
+                        isColumnVisible(column.id) && (
+                          <th
+                            key={column.id}
+                            scope="col"
+                            className="sorting-th"
+                          >
+                            <div className="d-flex align-items-center justify-content-between position-relative">
+                              <div
+                                className="d-flex align-items-center flex-grow-1"
+                                onClick={() => handleSort(column.field)}
+                                style={{ cursor: "pointer" }}
+                              >
+                                {column.label}
+                                {getSortIcon(column.field)}
 
-                              {column.filterable && (
-                                <div className="position-relative comman-filtter-all">
-                                  <Icon
-                                    icon={columnFilters[column.field]?.length > 0 ? "mdi:filter" : "mdi:filter-outline"}
-                                    width="18"
-                                    className={`ms-2 ${columnFilters[column.field]?.length > 0 ? 'comman-btn-color' : ''}`}
-                                    style={{ cursor: 'pointer' }}
-                                    onClick={(e) => toggleFilterDropdown(e, column.field)}
-                                  />
+                                {column.filterable && (
+                                  <div className="position-relative comman-filtter-all">
+                                    <Icon
+                                      icon={
+                                        columnFilters[column.field]?.length > 0
+                                          ? "mdi:filter"
+                                          : "mdi:filter-outline"
+                                      }
+                                      width="18"
+                                      className={`ms-2 ${
+                                        columnFilters[column.field]?.length > 0
+                                          ? "comman-btn-color"
+                                          : ""
+                                      }`}
+                                      style={{ cursor: "pointer" }}
+                                      onClick={(e) =>
+                                        toggleFilterDropdown(e, column.field)
+                                      }
+                                    />
 
-                                  {activeFilterColumn === column.field && (
-                                    <div
-                                      ref={filterDropdownRef}
-                                      className="position-absolute bg-white border rounded shadow-sm p-3 main-div-dropdown"
-
-                                      onClick={(e) => e.stopPropagation()}
-                                    >
-                                      {/* Sort Options */}
-                                      <div className={`filter-menu-item px-3 py-2 d-flex align-items-center ${tableState.sort.find(s => s.field === column.field)?.order === "asc"
-                                        ? "disabled-sort"
-                                        : ""
-                                        }`}
-                                        onClick={() => applySortAsc(column.field)}
+                                    {activeFilterColumn === column.field && (
+                                      <div
+                                        ref={filterDropdownRef}
+                                        className="position-absolute bg-white border rounded shadow-sm p-3 main-div-dropdown"
+                                        onClick={(e) => e.stopPropagation()}
                                       >
-                                        <Icon icon="ri:arrow-up-line" className="me-2 text-muted" width="18" />
-                                        Sort Smallest to Largest
-                                      </div>
-                                      <div className={`filter-menu-item px-3 py-2 d-flex align-items-center ${tableState.sort.find(s => s.field === column.field)?.order === "desc"
-                                        ? "disabled-sort"
-                                        : ""
-                                        }`}
-                                        onClick={() => applySortDesc(column.field)}
-                                      >
-                                        <Icon icon="ri:arrow-down-line" className="me-2 text-muted" width="18" />
-                                        Sort Largest to Smallest
-                                      </div>
-                                      <div className="mb-2 ">
-                                        <input
-                                          type="text"
-                                          className="form-control form-control-sm input-search"
-                                          placeholder="Search..."
-                                          value={filterSearchTerms[column.field] || ''}
-                                          onChange={(e) => setFilterSearchTerms(prev => ({
-                                            ...prev,
-                                            [column.field]: e.target.value
-                                          }))}
-                                        />
-                                      </div>
-
-                                      <div className="gap-2 mb-2 select-clear-all" >
-                                        <button
-                                          className="btn btn-sm py-1 btn-primary flex-grow-1 comman-btn-color mr-10"
-                                          onClick={() => handleFilterSelectAll(column.field)}>
-                                          Select All
-                                        </button>
-                                        <button
-                                          className="btn btn-sm py-1 btn-secondary flex-grow-1"
-                                          onClick={() => handleFilterClearAll(column.field)}
+                                        {/* Sort Options */}
+                                        <div
+                                          className={`filter-menu-item px-3 py-2 d-flex align-items-center ${
+                                            tableState.sort.find(
+                                              (s) => s.field === column.field
+                                            )?.order === "asc"
+                                              ? "disabled-sort"
+                                              : ""
+                                          }`}
+                                          onClick={() =>
+                                            applySortAsc(column.field)
+                                          }
                                         >
-                                          Clear All
-                                        </button>
-                                      </div>
+                                          <Icon
+                                            icon="ri:arrow-up-line"
+                                            className="me-2 text-muted"
+                                            width="18"
+                                          />
+                                          Sort Smallest to Largest
+                                        </div>
+                                        <div
+                                          className={`filter-menu-item px-3 py-2 d-flex align-items-center ${
+                                            tableState.sort.find(
+                                              (s) => s.field === column.field
+                                            )?.order === "desc"
+                                              ? "disabled-sort"
+                                              : ""
+                                          }`}
+                                          onClick={() =>
+                                            applySortDesc(column.field)
+                                          }
+                                        >
+                                          <Icon
+                                            icon="ri:arrow-down-line"
+                                            className="me-2 text-muted"
+                                            width="18"
+                                          />
+                                          Sort Largest to Smallest
+                                        </div>
+                                        <div className="mb-2 ">
+                                          <input
+                                            type="text"
+                                            className="form-control form-control-sm input-search"
+                                            placeholder="Search..."
+                                            value={
+                                              filterSearchTerms[column.field] ||
+                                              ""
+                                            }
+                                            onChange={(e) =>
+                                              setFilterSearchTerms((prev) => ({
+                                                ...prev,
+                                                [column.field]: e.target.value,
+                                              }))
+                                            }
+                                          />
+                                        </div>
 
-                                      <div className='select-all-dropdown' >
-                                        {/* Country and State filter - show names but store IDs */}
-                                        {getFilteredOptions(column.field).length > 0 ? (
-                                          getFilteredOptions(column.field).map((option, idx) => (
-                                            <>
-                                              <div
-                                                key={idx}
-                                                className="bg-white rounded p-2 mb-2 d-flex align-items-center gap-2 form-check-div"
-                                              >
-                                                <input
-                                                  type="checkbox"
-                                                  id={`filter-${column.field}-${idx}`}
-                                                  checked={columnFilters[column.field]?.includes(option.id)}
-                                                  onChange={(e) => handleFilterCheckboxChange(
-                                                    column.field,
-                                                    option.id,
-                                                    e.target.checked
-                                                  )}
-                                                  className="form-check-input"
-                                                />
-                                                <label htmlFor={`item-${idx}`} className="mb-0 flex-grow-1 form-check-label">
-                                                  {option.name}
-                                                </label>
-                                              </div>
-                                            </>
+                                        <div className="gap-2 mb-2 select-clear-all">
+                                          <button
+                                            className="btn btn-sm py-1 btn-primary flex-grow-1 comman-btn-color mr-10"
+                                            onClick={() =>
+                                              handleFilterSelectAll(
+                                                column.field
+                                              )
+                                            }
+                                          >
+                                            Select All
+                                          </button>
+                                          <button
+                                            className="btn btn-sm py-1 btn-secondary flex-grow-1"
+                                            onClick={() =>
+                                              handleFilterClearAll(column.field)
+                                            }
+                                          >
+                                            Clear All
+                                          </button>
+                                        </div>
 
-                                          ))
-                                        ) : (
-                                          <div className="no-records-found">
-                                            No options available
-                                          </div>
-                                        )}
-                                      </div>
+                                        <div className="select-all-dropdown">
+                                          {/* Country and State filter - show names but store IDs */}
+                                          {getFilteredOptions(column.field)
+                                            .length > 0 ? (
+                                            getFilteredOptions(
+                                              column.field
+                                            ).map((option, idx) => (
+                                              <>
+                                                <div
+                                                  key={idx}
+                                                  className="bg-white rounded p-2 mb-2 d-flex align-items-center gap-2 form-check-div"
+                                                >
+                                                  <input
+                                                    type="checkbox"
+                                                    id={`filter-${column.field}-${idx}`}
+                                                    checked={columnFilters[
+                                                      column.field
+                                                    ]?.includes(option.id)}
+                                                    onChange={(e) =>
+                                                      handleFilterCheckboxChange(
+                                                        column.field,
+                                                        option.id,
+                                                        e.target.checked
+                                                      )
+                                                    }
+                                                    className="form-check-input"
+                                                  />
+                                                  <label
+                                                    htmlFor={`item-${idx}`}
+                                                    className="mb-0 flex-grow-1 form-check-label"
+                                                  >
+                                                    {option.name}
+                                                  </label>
+                                                </div>
+                                              </>
+                                            ))
+                                          ) : (
+                                            <div className="no-records-found">
+                                              No options available
+                                            </div>
+                                          )}
+                                        </div>
 
-                                      <div className="d-flex gap-2 mt-2 pt-2 border-top justify-content-end">
-                                        <button
-                                          className="btn btn-sm  py-1 btn-secondary flex-grow-1  mt-10"
-                                          onClick={() => setActiveFilterColumn(null)}
-                                          style={{ maxWidth: "80px" }} >
-                                          Cancel
-                                        </button>
+                                        <div className="d-flex gap-2 mt-2 pt-2 border-top justify-content-end">
+                                          <button
+                                            className="btn btn-sm  py-1 btn-secondary flex-grow-1  mt-10"
+                                            onClick={() =>
+                                              setActiveFilterColumn(null)
+                                            }
+                                            style={{ maxWidth: "80px" }}
+                                          >
+                                            Cancel
+                                          </button>
+                                        </div>
                                       </div>
-                                    </div>
-                                  )}
-                                </div>
-                              )}
+                                    )}
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        </th>
-                      )
-                    ))}
+                          </th>
+                        )
+                    )}
 
                     <th scope="col" className="action-th">
-                      <div className="position-relative table-header-hide-show" ref={columnDropdownRef}>
-                        <button className="position-relative table-header-hide-show" onClick={() => setShowColumnDropdown(!showColumnDropdown)}>
-                          Action <Icon icon="mdi:table-column" width="20" className='icone' />
+                      <div
+                        className="position-relative table-header-hide-show"
+                        ref={columnDropdownRef}
+                      >
+                        <button
+                          className="position-relative table-header-hide-show"
+                          onClick={() =>
+                            setShowColumnDropdown(!showColumnDropdown)
+                          }
+                        >
+                          Action{" "}
+                          <Icon
+                            icon="mdi:table-column"
+                            width="20"
+                            className="icone"
+                          />
                         </button>
                         {showColumnDropdown && (
                           <div className="position-absolute bg-white border rounded shadow-sm p-2 show-dropdowns-header">
                             {tableColumns.map((column) => (
-                              <div key={column.id} className="bg-white p-2 mb-2 d-flex align-items-center gap-2">
-                                <input type="checkbox" id={`column-${column.id}`} checked={isColumnVisible(column.id)} onChange={() => toggleColumnVisibility(column.id)} disabled={column.required} className="form-check-input" />
-                                <label htmlFor={`column-${column.id}`} className="mb-0 flex-grow-1 form-label">{column.label}</label>
+                              <div
+                                key={column.id}
+                                className="bg-white p-2 mb-2 d-flex align-items-center gap-2"
+                              >
+                                <input
+                                  type="checkbox"
+                                  id={`column-${column.id}`}
+                                  checked={isColumnVisible(column.id)}
+                                  onChange={() =>
+                                    toggleColumnVisibility(column.id)
+                                  }
+                                  disabled={column.required}
+                                  className="form-check-input"
+                                />
+                                <label
+                                  htmlFor={`column-${column.id}`}
+                                  className="mb-0 flex-grow-1 form-label"
+                                >
+                                  {column.label}
+                                </label>
                               </div>
                             ))}
                           </div>
@@ -836,9 +1167,17 @@ const CountryList = () => {
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan={visibleColumns.length + 2} className="loding-data">
+                      <td
+                        colSpan={visibleColumns.length + 2}
+                        className="loding-data"
+                      >
                         <div className="d-flex justify-content-center align-items-center gap-2">
-                          <div className="spinner-border spinner-border-sm" role="status"><span className="visually-hidden">Loading...</span></div>
+                          <div
+                            className="spinner-border spinner-border-sm"
+                            role="status"
+                          >
+                            <span className="visually-hidden">Loading...</span>
+                          </div>
                           Loading...
                         </div>
                       </td>
@@ -848,30 +1187,101 @@ const CountryList = () => {
                       <tr key={rowItem.uuid}>
                         <td>
                           <div className="d-flex align-items-center gap-2">
-                            <input className="form-check-input" type="checkbox" checked={selectedRows.includes(rowItem.uuid)} onChange={() => handleRowSelect(rowItem.uuid)} />
-                            <span>{String(startIndex + index + 1).padStart(2, '0')}</span>
+                            <input
+                              className="form-check-input"
+                              type="checkbox"
+                              checked={selectedRows.includes(rowItem.uuid)}
+                              onChange={() => handleRowSelect(rowItem.uuid)}
+                            />
+                            <span>
+                              {String(startIndex + index + 1).padStart(2, "0")}
+                            </span>
                           </div>
                         </td>
 
-                        {isColumnVisible("name") && (<td><span>{rowItem.name}</span></td>)}
-                        {isColumnVisible("continent") && (<td><span>{rowItem.continent?.name || ""}</span></td>)}
-                        {isColumnVisible("officialName") && (<td><span>{rowItem.officialName}</span></td>)}
-                        {isColumnVisible("shortName") && (<td><span>{rowItem.shortName}</span></td>)}
-                        {isColumnVisible("capitalCity") && (<td><span>{rowItem.capitalCity}</span></td>)}
-                        {isColumnVisible("currencyfullname") && (<td><span>{rowItem.currencyfullname}</span></td>)}
-                        {isColumnVisible("currencyshortname") && (<td><span>{rowItem.currencyshortname}</span></td>)}
-                        {isColumnVisible("currencyCode") && (<td><span>{rowItem.currencyCode}</span></td>)}
-                        {isColumnVisible("dialCodes") && (<td><span>{rowItem.dialCodes}</span></td>)}
-                        {isColumnVisible("description") && (<td><span>{rowItem.description}</span></td>)}
-                        {isColumnVisible("updated_at") && (<td><span>{formatDateDDMMYYYYTime(rowItem.updated_at)}</span></td>)}
+                        {isColumnVisible("name") && (
+                          <td>
+                            <span>{rowItem.name}</span>
+                          </td>
+                        )}
+                        {isColumnVisible("continent") && (
+                          <td>
+                            <span>{rowItem.continent?.name || ""}</span>
+                          </td>
+                        )}
+                        {isColumnVisible("officialName") && (
+                          <td>
+                            <span>{rowItem.officialName}</span>
+                          </td>
+                        )}
+                        {isColumnVisible("shortName") && (
+                          <td>
+                            <span>{rowItem.shortName}</span>
+                          </td>
+                        )}
+                        {isColumnVisible("capitalCity") && (
+                          <td>
+                            <span>{rowItem.capitalCity}</span>
+                          </td>
+                        )}
+                        {isColumnVisible("currencyfullname") && (
+                          <td>
+                            <span>{rowItem.currencyfullname}</span>
+                          </td>
+                        )}
+                        {isColumnVisible("currencyshortname") && (
+                          <td>
+                            <span>{rowItem.currencyshortname}</span>
+                          </td>
+                        )}
+                        {isColumnVisible("currencyCode") && (
+                          <td>
+                            <span>{rowItem.currencyCode}</span>
+                          </td>
+                        )}
+                        {isColumnVisible("dialCodes") && (
+                          <td>
+                            <span>{rowItem.dialCodes}</span>
+                          </td>
+                        )}
+                        {isColumnVisible("description") && (
+                          <td>
+                            <span>{rowItem.description}</span>
+                          </td>
+                        )}
+                        {isColumnVisible("updated_at") && (
+                          <td>
+                            <span>
+                              {formatDateDDMMYYYYTime(rowItem.updated_at)}
+                            </span>
+                          </td>
+                        )}
 
                         <td className="action-td">
                           <div className="d-flex align-items-end gap-2">
-                            <Link to="#" className="edit-btn-icone" onClick={(e) => { e.preventDefault(); handleShowEdit(rowItem); }}>
-                              <Icon icon="lucide:edit" width="18" className="icone" />
+                            <Link
+                              to="#"
+                              className="edit-btn-icone"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                handleShowEdit(rowItem);
+                              }}
+                            >
+                              <Icon
+                                icon="lucide:edit"
+                                width="18"
+                                className="icone"
+                              />
                             </Link>
-                            <button onClick={() => handleDelete(rowItem.uuid)} className="delete-btn-icone">
-                              <Icon icon="mingcute:delete-2-line" width="18" className="icone" />
+                            <button
+                              onClick={() => handleDelete(rowItem.uuid)}
+                              className="delete-btn-icone"
+                            >
+                              <Icon
+                                icon="mingcute:delete-2-line"
+                                width="18"
+                                className="icone"
+                              />
                             </button>
                           </div>
                         </td>
@@ -879,7 +1289,12 @@ const CountryList = () => {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={visibleColumns.length + 2} className="no-records-found">No records found</td>
+                      <td
+                        colSpan={visibleColumns.length + 2}
+                        className="no-records-found"
+                      >
+                        No records found
+                      </td>
                     </tr>
                   )}
                 </tbody>
@@ -889,8 +1304,18 @@ const CountryList = () => {
         </div>
 
         {/* Modals */}
-        <AddEditCountryModal show={modalState.show} handleClose={handleClose} mode={modalState.mode} rowData={modalState.rowData} />
-        {showImport && <AddImportCountryModal show={showImport} handleClose={handleCloseImport} />}
+        <AddEditCountryModal
+          show={modalState.show}
+          handleClose={handleClose}
+          mode={modalState.mode}
+          rowData={modalState.rowData}
+        />
+        {showImport && (
+          <AddImportCountryModal
+            show={showImport}
+            handleClose={handleCloseImport}
+          />
+        )}
 
         {/* Delete Confirm */}
         {showDeleteConfirm && (
@@ -899,14 +1324,30 @@ const CountryList = () => {
               <div className="modal-content" style={{ borderRadius: "10px" }}>
                 <div className="modal-header">
                   <h6 className="modal-title text-danger">Confirm Delete</h6>
-                  <button type="button" className="btn-close" onClick={cancelDelete}></button>
+                  <button
+                    type="button"
+                    className="btn-close"
+                    onClick={cancelDelete}
+                  ></button>
                 </div>
                 <div className="modal-body">
                   <p className="mb-0">{deleteConfirmMessage}</p>
                 </div>
                 <div className="modal-footer">
-                  <button type="button" className="btn btn-secondary btn-sm" onClick={cancelDelete}>Cancel</button>
-                  <button type="button" className="btn btn-danger btn-sm" onClick={confirmDelete}>Delete</button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={cancelDelete}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-danger btn-sm"
+                    onClick={confirmDelete}
+                  >
+                    Delete
+                  </button>
                 </div>
               </div>
             </div>
@@ -915,58 +1356,138 @@ const CountryList = () => {
 
         {/* Export Modal */}
         {showExportPopop && (
-          <div className="modal fade show common-ctl-popup" tabIndex={-1} role="dialog">
-            <div className="modal-dialog modal-xl modal-dialog-centered" role="document">
+          <div
+            className="modal fade show common-ctl-popup"
+            tabIndex={-1}
+            role="dialog"
+          >
+            <div
+              className="modal-dialog modal-xl modal-dialog-centered"
+              role="document"
+            >
               <div className="modal-content radius-16 bg-base">
                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
                   <h1 className="modal-title fs-5">Export Country</h1>
-                  <button type="button" className="btn-close" onClick={cancelExportTest} aria-label="Close" />
+                  <button
+                    type="button"
+                    className="btn-close"
+                    onClick={cancelExportTest}
+                    aria-label="Close"
+                  />
                 </div>
-                <div className="modal-body p-24">
+                <div className="modal-body p-24 pt-10">
                   <div className="row">
                     <div className="col-12 col-md-6">
-                      <h3 className="text-sm font-semibold mb-3 text-gray-700">Available fields</h3>
+                      <h3 className="text-sm font-semibold mb-3 text-gray-700">
+                        Available fields
+                      </h3>
                       <div className="border rounded-lg p-3 bg-gray-50 export-file-left">
                         {items.map((item, index) => (
-                          <div key={index} className="bg-white border rounded p-2 mb-2 d-flex align-items-center gap-2 export-file">
-                            <input type="checkbox" id={`item-${index}`} checked={selectedItems.includes(item)} onChange={(e) => handleCheckboxChange(item, e.target.checked)} disabled={ItemsRequired.includes(item)} className="form-check-input" />
-                            <label htmlFor={`item-${index}`} className="mb-0 flex-grow-1">{item}</label>
+                          <div
+                            key={index}
+                            className="bg-white border rounded p-2 mb-2 d-flex align-items-center gap-2 export-file"
+                          >
+                            <input
+                              type="checkbox"
+                              id={`item-${index}`}
+                              checked={selectedItems.includes(item)}
+                              onChange={(e) =>
+                                handleCheckboxChange(item, e.target.checked)
+                              }
+                              disabled={ItemsRequired.includes(item)}
+                              className="form-check-input"
+                            />
+                            <label
+                              htmlFor={`item-${index}`}
+                              className="mb-0 flex-grow-1"
+                            >
+                              {item}
+                            </label>
                           </div>
                         ))}
                       </div>
                     </div>
 
                     <div className="col-12 col-md-6">
-                      <h3 className="text-sm font-semibold mb-3 text-gray-700">Selected fields ({selectedItems.length})</h3>
+                      <h3 className="text-sm font-semibold mb-3 text-gray-700">
+                        Selected fields ({selectedItems.length})
+                      </h3>
                       <div className="border rounded-lg p-3 bg-blue-50 export-file-righit">
-                        {selectedItems.length === 0 ? <div className="text-center text-muted py-5">No fields selected</div> :
+                        {selectedItems.length === 0 ? (
+                          <div className="text-center text-muted py-5">
+                            No fields selected
+                          </div>
+                        ) : (
                           selectedItems.map((item, index) => (
-                            <div key={index} draggable onDragStart={(e) => handleDragStart(e, index)} onDrop={(e) => handleDrop(e, index)} onDragOver={handleDragOver} className="bg-white border border-primary rounded p-2 mb-2 d-flex align-items-center gap-2 export-file" style={{ cursor: 'grab' }}>
-                              <span className="text-muted move-drop-icone">☰</span>
+                            <div
+                              key={index}
+                              draggable
+                              onDragStart={(e) => handleDragStart(e, index)}
+                              onDrop={(e) => handleDrop(e, index)}
+                              onDragOver={handleDragOver}
+                              className="bg-white border border-primary rounded p-2 mb-2 d-flex align-items-center gap-2 export-file"
+                              style={{ cursor: "grab" }}
+                            >
+                              <span className="text-muted move-drop-icone">
+                                ☰
+                              </span>
                               <span className="flex-grow-1">{item}</span>
-                              {!ItemsRequired.includes(item) && (<button onClick={() => handleCheckboxChange(item, false)} className="btn btn-sm btn-link text-danger p-0 close-icone">×</button>)}
+                              {!ItemsRequired.includes(item) && (
+                                <button
+                                  onClick={() =>
+                                    handleCheckboxChange(item, false)
+                                  }
+                                  className="btn btn-sm btn-link text-danger p-0 close-icone"
+                                >
+                                  ×
+                                </button>
+                              )}
                             </div>
                           ))
-                        }
+                        )}
                       </div>
-                      <small className="text-muted mt-2 d-block">💡 Drag items to reorder the export fields</small>
+                      <small className="text-muted mt-2 d-block">
+                        💡 Drag items to reorder the export fields
+                      </small>
                     </div>
                   </div>
 
                   <div className="d-flex align-items-center justify-content-center gap-3 mt-24">
-                    <button type="button" onClick={cancelExportTest} className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-16 py-4 radius-6">Cancel</button>
-                    <button onClick={handleExport} type="button" className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6" disabled={loadingExport}>{loadingExport ? (<><span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Submit...</>) : ("Submit")}</button>
+                    <button
+                      type="button"
+                      onClick={cancelExportTest}
+                      className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-16 py-4 radius-6"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleExport}
+                      type="button"
+                      className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
+                      disabled={loadingExport}
+                    >
+                      {loadingExport ? (
+                        <>
+                          <span
+                            className="spinner-border spinner-border-sm me-2"
+                            role="status"
+                            aria-hidden="true"
+                          ></span>{" "}
+                          Submit...
+                        </>
+                      ) : (
+                        "Submit"
+                      )}
+                    </button>
                   </div>
                 </div>
               </div>
             </div>
           </div>
         )}
-
       </MasterLayout>
     </>
   );
 };
 
 export default CountryList;
-
