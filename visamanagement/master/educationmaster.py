@@ -3136,62 +3136,266 @@ class StudyMajorAreaDeleteAPIView(APIView):
 
 
 # ------------------ Export API ------------------
+# class StudyMajorAreaExportAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def get(self, request):
+#         format_type = request.GET.get('format', 'xlsx').lower()
+#         fields = request.GET.get('fields')
+#         uuids_param = request.GET.get('uuids', '')
+#         uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+#         field_header_map = {
+#             'uuid': 'UUID',
+#             'mainarea': 'Study Main Area',
+#             'majorarea': 'Study Major Area',
+#             'description': 'Description',
+#             'is_deleted': 'Deleted',
+#             'created_at': 'Created On',
+#             'updated_at': 'Modified On',
+#         }
+
+#         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+#         queryset = Studymajorarea.objects.filter(is_deleted=False)
+#         if uuids:
+#             queryset = queryset.filter(uuid__in=uuids)
+#         queryset = queryset.order_by('-created_at')
+
+#         dataset = Dataset()
+#         dataset.headers = [field_header_map.get(f, f) for f in field_list]
+#         dataset.title = 'StudyMajorArea'
+
+#         for obj in queryset:
+#             row = []
+#             for field in field_list:
+#                 if field == 'mainarea_name':
+#                     value = obj.mainarea.name if obj.mainarea else ''
+#                 else:
+#                     value = getattr(obj, field, '')
+#                 if field in ['created_at', 'updated_at'] and value:
+#                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+#                 elif isinstance(value, bool):
+#                     value = int(value)
+#                 row.append(value if value is not None else '')
+#             dataset.append(row)
+
+#         if format_type == 'csv':
+#             file_data = dataset.export('csv')
+#             content_type = 'text/csv'
+#             file_name = 'study_major_areas.csv'
+#         else:
+#             file_data = io.BytesIO(dataset.export('xlsx'))
+#             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+#             file_name = 'study_major_areas.xlsx'
+
+#         response = io.BytesIO(file_data) if format_type == 'csv' else HttpResponse(file_data.getvalue(), content_type=content_type)
+#         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+#         return response
+
 class StudyMajorAreaExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
-        format_type = request.GET.get('format', 'xlsx').lower()
-        fields = request.GET.get('fields')
-        uuids_param = request.GET.get('uuids', '')
-        uuids = [u.strip() for u in uuids_param.split(',') if u]
+        try:
+            # ---------------------------
+            # Query Params
+            # ---------------------------
+            format_type = request.GET.get('format', 'xlsx').lower()
+            search = request.GET.get('search', '').strip()
+            fields = request.GET.get('fields')
+            custom_sort = request.GET.get('customSort')
 
-        field_header_map = {
-            'uuid': 'UUID',
-            'mainarea': 'Study Main Area',
-            'majorarea': 'Study Major Area',
-            'description': 'Description',
-            'is_deleted': 'Deleted',
-            'created_at': 'Created On',
-            'updated_at': 'Modified On',
-        }
+            # Validate format
+            if format_type not in ['xlsx', 'csv']:
+                return Response({
+                    "status": False,
+                    "statusCode": 400,
+                    "message": "Invalid format. Allowed: xlsx, csv"
+                }, status=400)
 
-        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+            # ---------------------------
+            # Field Mapping
+            # ---------------------------
+            field_header_map = {
+                'uuid': 'UUID',
+                'mainarea': 'Study Main Area',
+                'majorarea': 'Study Major Area',
+                'description': 'Description',
+                'is_deleted': 'Deleted',
+                'created_at': 'Created On',
+                'updated_at': 'Modified On',
+            }
 
-        queryset = Studymajorarea.objects.filter(is_deleted=False)
-        if uuids:
-            queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
+            # Field selection
+            if fields:
+                field_list = [f.strip() for f in fields.split(',')]
+                invalid = [f for f in field_list if f not in field_header_map]
+                if invalid:
+                    return Response({
+                        "status": False,
+                        "statusCode": 400,
+                        "message": f"Invalid fields: {invalid}",
+                    }, status=400)
+            else:
+                field_list = list(field_header_map.keys())
 
-        dataset = Dataset()
-        dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'StudyMajorArea'
+            # ---------------------------
+            # Helper: Parse & Validate UUIDs
+            # ---------------------------
+            def parse_ids(param_name):
+                raw = request.GET.get(param_name, '')
+                if raw:
+                    return [x.strip() for x in raw.split(',') if x.strip()]
+                return request.GET.getlist(param_name)
 
-        for obj in queryset:
-            row = []
-            for field in field_list:
-                if field == 'mainarea_name':
-                    value = obj.mainarea.name if obj.mainarea else ''
-                else:
-                    value = getattr(obj, field, '')
-                if field in ['created_at', 'updated_at'] and value:
-                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-                elif isinstance(value, bool):
-                    value = int(value)
-                row.append(value if value is not None else '')
-            dataset.append(row)
+            def validate_uuid_list(uuid_list):
+                valid = []
+                for u in uuid_list:
+                    try:
+                        valid.append(UUID(u))
+                    except:
+                        return Response({
+                            "status": False,
+                            "statusCode": 400,
+                            "message": f"Invalid UUID: {u}"
+                        }, status=400)
+                return valid
 
-        if format_type == 'csv':
-            file_data = dataset.export('csv')
-            content_type = 'text/csv'
-            file_name = 'study_major_areas.csv'
-        else:
-            file_data = io.BytesIO(dataset.export('xlsx'))
-            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'study_major_areas.xlsx'
+            studyMainArea_list = validate_uuid_list(parse_ids('studyMainArea'))
+            uuids_list = validate_uuid_list(parse_ids('uuids'))
 
-        response = io.BytesIO(file_data) if format_type == 'csv' else HttpResponse(file_data.getvalue(), content_type=content_type)
-        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
-        return response
+            # ---------------------------
+            # Base Queryset
+            # ---------------------------
+            queryset = Studymajorarea.objects.filter(is_deleted=False)
+
+            if studyMainArea_list:
+                queryset = queryset.filter(mainarea__uuid__in=studyMainArea_list)
+            else:
+                queryset = queryset.filter(uuid__in=uuids_list)
+
+            # ---------------------------
+            # Search Logic (icontains + istartswith)
+            # ---------------------------
+            if search:
+                queryset = queryset.filter(
+                    Q(majorarea__istartswith=search) |
+                    Q(majorarea__icontains=search)
+                )
+
+            # ---------------------------
+            # Sorting Logic (CustomSort)
+            # ---------------------------
+            # ---------------------------
+            # Sorting Logic (CustomSort)
+            # ---------------------------
+            sort_field_map = {
+                'uuid': 'uuid',
+                'studyMainArea': 'mainarea__name',
+                'majorarea': 'majorarea',
+                'description': 'description',
+                'created_at': 'created_at',
+                'updated_at': 'updated_at',
+            }
+
+            sort_fields = []
+            annotations = {}
+
+            if custom_sort:
+                for idx, rule in enumerate(custom_sort.split(',')):
+                    try:
+                        field, order = rule.split(':')
+                        field = field.strip()
+                        order = order.strip().lower()
+
+                        if field not in sort_field_map:
+                            return Response({
+                                "status": False,
+                                "statusCode": 400,
+                                "message": f"Invalid sort field: {field}"
+                            }, status=400)
+
+                        orm_field = sort_field_map[field]
+
+                        # Case-insensitive sorting for string fields
+                        if field in ['studyMainArea', 'majorarea', 'description']:
+                            ann_name = f"sort_key_{idx}"
+                            annotations[ann_name] = Lower(orm_field)
+                            sort_fields.append(ann_name if order == 'asc' else f"-{ann_name}")
+                        else:
+                            sort_fields.append(
+                                orm_field if order == 'asc' else f"-{orm_field}"
+                            )
+
+                    except ValueError:
+                        return Response({
+                            "status": False,
+                            "statusCode": 400,
+                            "message": f"Invalid sorting rule format: {rule}"
+                        }, status=400)
+
+            # Apply annotation
+            if annotations:
+                queryset = queryset.annotate(**annotations)
+
+            # Default sort if none provided
+            if not sort_fields:
+                sort_fields = ['-created_at']
+
+            queryset = queryset.order_by(*sort_fields)
+
+
+            # ---------------------------
+            # Prepare Dataset
+            # ---------------------------
+            dataset = Dataset()
+            dataset.headers = [field_header_map[f] for f in field_list]
+            dataset.title = 'StudyMajorArea'
+
+            for obj in queryset:
+                row = []
+                for field in field_list:
+                    if field == 'mainarea':
+                        value = obj.mainarea.name if obj.mainarea else ''
+                    else:
+                        value = getattr(obj, field, '')
+
+                    if field in ['created_at', 'updated_at'] and value:
+                        value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
+                    elif isinstance(value, bool):
+                        value = int(value)
+
+                    row.append(value or "")
+
+                dataset.append(row)
+
+            # ---------------------------
+            # Export File
+            # ---------------------------
+            if format_type == 'csv':
+                file_data = dataset.export('csv')
+                content_type = 'text/csv'
+                file_name = 'study_major_areas.csv'
+                response_content = file_data
+            else:
+                file_buffer = io.BytesIO(dataset.export('xlsx'))
+                content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                file_name = 'study_major_areas.xlsx'
+                response_content = file_buffer.getvalue()
+
+            response = HttpResponse(response_content, content_type=content_type)
+            response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+            return response
+
+        except Exception as e:
+            return Response({
+                "status": False,
+                "statusCode": 500,
+                "message": "Internal server error",
+                "error": str(e)
+            }, status=500)
+
 
 
 # ------------------ Import API ------------------
