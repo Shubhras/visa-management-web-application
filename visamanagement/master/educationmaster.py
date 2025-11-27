@@ -3245,6 +3245,7 @@ class StudyMajorAreaExportAPIView(APIView):
             # ---------------------------
             def parse_ids(param_name):
                 raw = request.GET.get(param_name, '')
+                print(f"--------------Parsing IDs for {param_name}: {raw}")
                 if raw:
                     return [x.strip() for x in raw.split(',') if x.strip()]
                 return request.GET.getlist(param_name)
@@ -3263,7 +3264,9 @@ class StudyMajorAreaExportAPIView(APIView):
                 return valid
 
             studyMainArea_list = validate_uuid_list(parse_ids('studyMainArea'))
+            print("------studyMainArea_list------------", studyMainArea_list)
             uuids_list = validate_uuid_list(parse_ids('uuids'))
+            print("------uuids_list------------", uuids_list)
 
             # ---------------------------
             # Base Queryset
@@ -3271,9 +3274,13 @@ class StudyMajorAreaExportAPIView(APIView):
             queryset = Studymajorarea.objects.filter(is_deleted=False)
 
             if studyMainArea_list:
+                print("Filtering by studyMainArea_list")
                 queryset = queryset.filter(mainarea__uuid__in=studyMainArea_list)
-            else:
+                print(f"Post-filter  studyMainArea_list count: {queryset.count()}")
+            elif uuids_list:
+                print("Filtering by uuids_list")
                 queryset = queryset.filter(uuid__in=uuids_list)
+                print(f"Post-filter uuids_list count: {queryset.count()}")
 
             # ---------------------------
             # Search Logic (icontains + istartswith)
