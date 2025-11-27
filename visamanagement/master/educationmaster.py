@@ -3756,17 +3756,6 @@ class StudySpecialisationExportAPIView(APIView):
         fields = request.GET.get('fields')
 
         # ----------------------------
-        # Multiple UUID filter params
-        # ----------------------------
-        uuids = request.GET.get('uuids', '')
-        study_main_uuids = request.GET.get('studyMainArea', '')
-        study_major_uuids = request.GET.get('studyMajorArea', '')
-
-        uuid_list = [u.strip() for u in uuids.split(',') if u]
-        mainarea_list = [u.strip() for u in study_main_uuids.split(',') if u]
-        majorarea_list = [u.strip() for u in study_major_uuids.split(',') if u]
-
-        # ----------------------------
         # Search and Sorting
         # ----------------------------
         search = request.GET.get('search', '').strip()
@@ -3785,6 +3774,38 @@ class StudySpecialisationExportAPIView(APIView):
 
         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
+
+        # ---------------------------
+        # Helper: Parse & Validate UUIDs
+        # ---------------------------
+        def parse_ids(param_name):
+            raw = request.GET.get(param_name, '')
+            if raw:
+                items = [x.strip() for x in raw.split(',') if x.strip()]
+            else:
+                items = request.GET.getlist(param_name)
+            return items
+
+        def validate_uuid_list(uuid_list):
+            valid = []
+            for u in uuid_list:
+                try:
+                    valid.append(UUID(u))
+                except:
+                    pass
+            return valid
+
+        try:
+            studyMajorArea_list = validate_uuid_list(parse_ids('studyMajorArea'))
+            studyMainArea_list = validate_uuid_list(parse_ids('studyMainArea'))
+            uuids_list = validate_uuid_list(parse_ids('uuids'))
+        except ValueError as e:
+            return Response({
+                "status": False,
+                "statusCode": 400,
+                "message": str(e)
+            }, status=400)
+        
         # ----------------------------
         # Base QuerySet
         # ----------------------------
@@ -3793,14 +3814,14 @@ class StudySpecialisationExportAPIView(APIView):
         # ----------------------------
         # Apply Filters Only If Given
         # ----------------------------
-        if uuid_list:
-            queryset = queryset.filter(uuid__in=uuid_list)
+        if uuids_list:
+            queryset = queryset.filter(uuid__in=uuids_list)
 
-        if mainarea_list:
-            queryset = queryset.filter(mainarea__uuid__in=mainarea_list)
+        if studyMainArea_list:
+            queryset = queryset.filter(mainarea__uuid__in=studyMainArea_list)
 
-        if majorarea_list:
-            queryset = queryset.filter(majorarea__uuid__in=majorarea_list)
+        if studyMajorArea_list:
+            queryset = queryset.filter(majorarea__uuid__in=studyMajorArea_list)
 
         # ----------------------------
         # Apply Search
