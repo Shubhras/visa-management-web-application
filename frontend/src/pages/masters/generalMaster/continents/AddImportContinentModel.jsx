@@ -5,7 +5,7 @@ import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import { continentImportData } from "../../../../store/master/generalMasters/actions";
 import CommanSampleExcelDownloadModal from "../../../../components/comman/CommanSampleExcelDownloadModal";
-import { exportToExcelDuplicate } from "../../../../helper/utils/commanHelper";
+import { exportToExcelDuplicate, exportToExcelWrongData } from "../../../../helper/utils/commanHelper";
 
 const AddImportContinentModal = ({ show, handleClose }) => {
   const dispatch = useDispatch();
@@ -99,6 +99,20 @@ const AddImportContinentModal = ({ show, handleClose }) => {
                 fileName: "Continent",
               };
               exportToExcelDuplicate(
+                prepareData.data,
+                prepareData.headers,
+                prepareData.sheetName,
+                prepareData.fileName
+              );
+            }
+            if (response?.skipped_rows?.length > 0) {
+              const prepareData = {
+                data: response.skipped_rows || [],
+                headers: ["Continent", "Description", "Reason"],
+                sheetName: "Continent",
+                fileName: "Continent",
+              };
+              exportToExcelWrongData(
                 prepareData.data,
                 prepareData.headers,
                 prepareData.sheetName,

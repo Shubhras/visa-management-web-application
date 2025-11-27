@@ -103,7 +103,7 @@ const AddImportGenderModal = ({ show, handleClose }) => {
                     if (response?.skipped_rows?.length > 0) {
                         const prepareData = {
                             data: response.skipped_rows || [],
-                            headers: ["Gender", "Reason"],
+                            headers: ["Gender", "Description","Reason"],
                             sheetName: "Gender",
                             fileName: "Gender",
                         };

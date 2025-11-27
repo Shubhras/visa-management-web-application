@@ -574,6 +574,8 @@ class GenderImportAPIView(APIView):
                 if not name:
                     skipped_rows.append({
                         "Row": row_number,
+                        "Gender": "",
+                        "Description":description,
                         "Reason": "Missing gender name"
                     })
                     continue
@@ -616,8 +618,10 @@ class GenderImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            # "duplicates": duplicates,
+            "duplicates": reversed(duplicates),
+            # "skipped_rows": skipped_rows
+            "skipped_rows": reversed(skipped_rows),
         }, status=status.HTTP_200_OK)
 
 
@@ -1075,6 +1079,8 @@ class MaritalstatusImportAPIView(APIView):
                 if not name:
                     skipped_rows.append({
                         "Row": row_number,
+                        "Marital Status": "",
+                        "Description":description,
                         "Reason": "Missing marital status name"
                     })
                     continue
@@ -1117,8 +1123,10 @@ class MaritalstatusImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            # "duplicates": duplicates,
+            # "skipped_rows": skipped_rows
+            "duplicates": reversed(duplicates),
+            "skipped_rows": reversed(skipped_rows),
         }, status=status.HTTP_200_OK)
 
 
@@ -1523,6 +1531,8 @@ class ContinentImportAPIView(APIView):
                 if not name:
                     skipped_rows.append({
                         "Row": row_number,
+                        "Continent": "",
+                        "Description":description,
                         "Reason": "Missing continent name"
                     })
                     continue
@@ -1561,8 +1571,10 @@ class ContinentImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            # "duplicates": duplicates,
+            # "skipped_rows": skipped_rows
+            "duplicates": reversed(duplicates),
+            "skipped_rows": reversed(skipped_rows),
         }, status=status.HTTP_200_OK)
 
 
@@ -2053,14 +2065,34 @@ class CountryImportAPIView(APIView):
             # ---------------- Data Processing ----------------
             imported_count = 0
             for row in reversed(data):
+                # country_name = str(row.get('country name')).strip() if row.get('country name') else None
+                # if not country_name:
+                #     skipped_rows.append({
+                #         "Country Name": "",
+                #         "Reason": "Missing required field: country name"
+                #     })
+                #     continue
+                # continent_name = str(row.get('continent')).strip() if row.get('continent') else ''
                 country_name = str(row.get('country name')).strip() if row.get('country name') else None
+                continent_name = str(row.get('continent')).strip() if row.get('continent') else ''
+
+                # Required: Country Name
                 if not country_name:
                     skipped_rows.append({
-                        "Country Name": "Unknown",
+                        "Country Name": "",
+                        "Continent": continent_name,
                         "Reason": "Missing required field: country name"
                     })
                     continue
-                continent_name = str(row.get('continent')).strip() if row.get('continent') else ''
+
+                # Required: Continent
+                if not continent_name:
+                    skipped_rows.append({
+                        "Country Name": country_name,
+                        "Continent": "",
+                        "Reason": "Missing required field: continent"
+                    })
+                    continue
                 short_name = str(row.get('country short name')).strip() if row.get('country short name') else ''
                 full_name = str(row.get('country full name')).strip() if row.get('country full name') else ''
                 official_name = str(row.get('country official name')).strip() if row.get('country official name') else ''
@@ -2147,8 +2179,10 @@ class CountryImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": duplicate_names,
-            "skipped_rows": skipped_rows,
+            # "duplicates": duplicate_names,
+            # "skipped_rows": skipped_rows,
+            "duplicates": reversed(duplicate_names),
+            "skipped_rows": reversed(skipped_rows),
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=200)
