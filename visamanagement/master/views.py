@@ -619,9 +619,9 @@ class GenderImportAPIView(APIView):
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
             # "duplicates": duplicates,
-            "duplicates": reversed(duplicates),
+            "duplicates": list(reversed(duplicates)),
             # "skipped_rows": skipped_rows
-            "skipped_rows": reversed(skipped_rows),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=status.HTTP_200_OK)
 
 
@@ -2711,9 +2711,10 @@ class StateImportAPIView(APIView):
 
                 if not state_name or not country_name or not state_type:
                     skipped_rows.append({
-                        "State Name": state_name or "Unknown",
-                        "Country Name": country_name or "Unknown",
-                        "State / Territory":state_type or "Unknown",
+                        "State Name": state_name or "",
+                        "Country Name": country_name or "",
+                        "State Short Name":short_name or "",
+                        "State / Territory":state_type or "",
                         "Reason": "Missing required field or Invalid state type: Use (State, Territory)"
                     })
                     continue
@@ -2722,7 +2723,8 @@ class StateImportAPIView(APIView):
                     skipped_rows.append({
                         "State Name": state_name,
                         "Country Name": country_name,
-                        "State / Territory":state_type or "Unknown",
+                        "State Short Name":short_name or "",
+                        "State / Territory":state_type or "",
                         "Reason": f'Invalid state type: Use (State, Territory)'
                     })
                     continue
@@ -2733,7 +2735,8 @@ class StateImportAPIView(APIView):
                     skipped_rows.append({
                         "State Name": state_name,
                         "Country Name": country_name,
-                        "State / Territory":state_type or "Unknown",
+                        "State Short Name":short_name or "",
+                        "State / Territory":state_type or "",
                         "Reason": "Country not found"
                     })
                     continue
@@ -2777,8 +2780,10 @@ class StateImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": duplicate_names,
-            "skipped_rows": skipped_rows,
+            # "duplicates": duplicate_names,
+            # "skipped_rows": skipped_rows,
+            "duplicates": reversed(duplicate_names),
+            "skipped_rows": reversed(skipped_rows),
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=200)
@@ -3455,8 +3460,10 @@ class DistrictImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": duplicate_names,
-            "skipped_rows": skipped_rows,
+            # "duplicates": duplicate_names,
+            # "skipped_rows": skipped_rows,
+            "duplicates": reversed(duplicate_names),
+            "skipped_rows": reversed(skipped_rows),
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=200)
@@ -4113,207 +4120,6 @@ class CityExportAPIView(APIView):
 
 
 
-# class CityImportAPIView(APIView):
-#     permission_classes = [IsAuthenticated, IsAdminUser]
-
-#     def post(self, request):
-#         file = request.FILES.get('file')
-#         sheet_name = request.data.get('sheet_name')
-
-#         if not file:
-#             return Response({'error': 'No file uploaded'}, status=400)
-
-#         format_type = file.name.split('.')[-1].lower()
-#         required_headers = {'city name', 'country name'}
-#         optional_headers = {'state name', 'district name', 'description'}
-
-#         try:
-#             # ------------------ Load file ------------------
-#             data = []
-
-#             if format_type == 'xlsx':
-#                 wb = openpyxl.load_workbook(file, read_only=True)
-#                 if not sheet_name or sheet_name not in wb.sheetnames:
-#                     return Response({
-#                         "error": f"Invalid sheet_name. Available: {wb.sheetnames}"
-#                     }, status=400)
-
-#                 ws = wb[sheet_name]
-#                 headers = [
-#                     str(cell.value).strip().lower() if cell.value else ''
-#                     for cell in next(ws.iter_rows(min_row=1, max_row=1))
-#                 ]
-#                 if not required_headers.issubset(set(headers)):
-#                     return Response({
-#                         "error": f"Missing required headers: {required_headers}. Found: {set(headers)}"
-#                     }, status=400)
-
-#                 for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
-#                     if not any(row):
-#                         continue
-#                     row_dict = dict(zip(headers, row))
-#                     row_dict['_row_number'] = idx
-#                     data.append(row_dict)
-
-#             elif format_type == 'csv':
-#                 decoded = file.read().decode('utf-8')
-#                 reader = csv.DictReader(io.StringIO(decoded))
-#                 for idx, row in enumerate(reader, start=2):
-#                     row_lower = {k.strip().lower(): v for k, v in row.items()}
-#                     row_lower['_row_number'] = idx
-#                     if not required_headers.issubset(set(row_lower.keys())):
-#                         return Response({
-#                             "error": f"Missing required headers in CSV. Required: {required_headers}. Found: {set(row_lower.keys())}"
-#                         }, status=400)
-#                     data.append(row_lower)
-#             else:
-#                 return Response({'error': 'Unsupported file type. Use .xlsx or .csv'}, status=400)
-
-#             # ------------------ Preload related data ------------------
-#             countries = {c.name.lower(): c for c in Country.objects.all() if c is not None}
-#             states = {
-#                 (s.stateName.lower(), s.countryName.uuid): s
-#                 for s in State.objects.all() if s.countryName is not None
-#             }
-#             districts = {
-#                 (d.districtName.lower(), d.stateName.uuid, d.countryName.uuid): d
-#                 for d in District.objects.all() if d.stateName is not None and d.countryName is not None
-#             }
-
-#             # ------------------ Preload existing cities ------------------
-#             existing_city_keys = set(
-#                 (
-#                     c.cityName.lower(),
-#                     c.districtName_id,
-#                     c.stateName_id,
-#                     c.countryName_id
-#                 )
-#                 for c in City.objects.all()
-#             )
-
-#             # ------------------ Process rows ------------------
-#             to_create = []
-#             duplicates = []
-#             skipped_rows = []
-#             existing_in_file = set()
-
-#             for row in reversed(data):
-#                 row_number = row.get('_row_number', 'Unknown')
-#                 city_name = str(row.get("city name") or "").strip()
-#                 country_name = str(row.get("country name") or "").strip()
-#                 state_name = str(row.get("state name") or "").strip()
-#                 district_name = str(row.get("district name") or "").strip()
-#                 description = str(row.get("description") or "").strip()
-
-#                 # ------------------ Check required fields ------------------
-#                 missing_fields = []
-#                 if not city_name:
-#                     missing_fields.append("city name")
-#                 if not country_name:
-#                     missing_fields.append("country name")
-
-#                 if missing_fields:
-#                     skipped_rows.append({
-#                         "Row": row_number,
-#                         "City Name": city_name or "",
-#                         "State Name": state_name or "",
-#                         "District Name": district_name or "",
-#                         "Country Name": country_name or "",
-#                         "Reason": f"Missing required fields: {', '.join(missing_fields)}"
-#                     })
-#                     continue
-
-#                 # ------------------ Validate related objects ------------------
-#                 country_obj = countries.get(country_name.lower())
-#                 if not country_obj:
-#                     skipped_rows.append({
-#                         "Row": row_number,
-#                         "City Name": city_name,
-#                         "State Name": state_name or "",
-#                         "District Name": district_name or "",
-#                         "Country Name": country_name or "",
-#                         "Reason": f"Country '{country_name}' not found"
-#                     })
-#                     continue
-
-#                 state_obj = states.get((state_name.lower(), country_obj.uuid)) if state_name else None
-#                 if state_name and not state_obj:
-#                     skipped_rows.append({
-#                         "Row": row_number,
-#                         "City Name": city_name,
-#                         "State Name": state_name or "",
-#                         "District Name": district_name or "",
-#                         "Country Name": country_name or "",
-#                         "Reason": f"State '{state_name}' not found for country '{country_name}'"
-#                     })
-#                     continue
-
-#                 district_obj = districts.get((district_name.lower(), state_obj.uuid, country_obj.uuid)) if district_name and state_obj else None
-#                 if district_name and state_obj and not district_obj:
-#                     skipped_rows.append({
-#                         "Row": row_number,
-#                         "City Name": city_name,
-#                         "State Name": state_name or "",
-#                         "District Name": district_name or "",
-#                         "Country Name": country_name or "",
-#                         "Reason": f"District '{district_name}' not found for state '{state_name}'"
-#                     })
-#                     continue
-
-#                 # ------------------ Duplicate check (all 4 fields must match) ------------------
-#                 key = (
-#                     city_name.lower(),
-#                     district_obj.uuid if district_obj else None,
-#                     state_obj.uuid if state_obj else None,
-#                     country_obj.uuid
-#                 )
-
-#                 if key in existing_city_keys or key in existing_in_file:
-#                     duplicates.append({
-#                         "Row": row_number,
-#                         "City Name": city_name,
-#                         "District Name": district_name if district_obj else "",
-#                         "State Name": state_name if state_obj else "",
-#                         "Country Name": country_name,
-#                         "Reason": "Duplicate city (all fields match: city, district, state, country)"
-#                     })
-#                     continue
-
-#                 existing_in_file.add(key)
-
-#                 # ------------------ Prepare city object ------------------
-#                 to_create.append(
-#                     City(
-#                         cityName=city_name,
-#                         districtName=district_obj,
-#                         stateName=state_obj,
-#                         countryName=country_obj,
-#                         description=description,
-#                         is_deleted=False
-#                     )
-#                 )
-
-#             # ------------------ Bulk insert ------------------
-#             with transaction.atomic():
-#                 City.objects.bulk_create(to_create, ignore_conflicts=True, batch_size=500)
-
-#             return Response({
-#                 "statusCode": 200,
-#                 "status": True,
-#                 "imported_count": len(to_create),
-#                 "duplicates": duplicates,
-#                 "skipped_rows": skipped_rows,
-#                 "message": f"Sheet '{sheet_name}' imported successfully" if sheet_name else "Import successful"
-#             }, status=200)
-
-#         except Exception as e:
-#             return Response({
-#                 "statusCode": 400,
-#                 "status": False,
-#                 "message": str(e)
-#             }, status=400)
- 
-
 class CityImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
  
@@ -4477,6 +4283,8 @@ class CityImportAPIView(APIView):
                 "imported_count": len(to_create),
                 "duplicates": duplicates,
                 "skipped_rows": skipped_rows,
+                # "duplicates": reversed(duplicates),
+                # "skipped_rows": reversed(skipped_rows),
                 "message": f"Imported successfully ({len(to_create)} new cities)"
             }, status=200)
  
@@ -4813,23 +4621,23 @@ class RelationImportAPIView(APIView):
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
-        duplicate_names = []
 
-        # Define required and optional headers
-        required_headers = {'relation'}       # must be present
-        optional_headers = {'description'}    # optional
+        duplicates = []
+        skipped_rows = []
+
+        required_headers = {'relation'}
+        optional_headers = {'description'}
 
         try:
             data = []
             headers = []
 
-            # ---------- XLSX Handling ----------
+            # ---------------- XLSX ----------------
             if format_type == 'xlsx':
                 import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
 
-                # Validate sheet name
                 if not sheet_name:
                     return Response({
                         'error': 'Please provide sheet_name',
@@ -4838,100 +4646,90 @@ class RelationImportAPIView(APIView):
 
                 if sheet_name not in available_sheets:
                     return Response({
-                        'error': f'Sheet "{sheet_name}" not found in uploaded file',
+                        'error': f'Sheet "{sheet_name}" not found',
                         'available_sheets': available_sheets
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 ws = wb[sheet_name]
+
                 if ws.max_row <= 1:
                     return Response({
                         "statusCode": 400,
                         "status": False,
-                        "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Please provide at least one data row.'
+                        "message": f'Sheet "{sheet_name}" is empty.'
                     }, status=status.HTTP_400_BAD_REQUEST)
 
-                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                headers = [
+                    str(cell.value).strip().lower() if cell.value else ''
+                    for cell in next(ws.iter_rows(min_row=1, max_row=1))
+                ]
 
-                # Validate required headers
-                if not required_headers.issubset(set(headers)):
-                    return Response({
-                        "statusCode": 400,
-                        "status": True,
-                        'message': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
-                    }, status=status.HTTP_400_BAD_REQUEST)
-
+                row_num = 1
                 for row in ws.iter_rows(min_row=2, values_only=True):
+                    row_num += 1
                     if not any(row):
                         continue
                     row_dict = dict(zip(headers, row))
+                    row_dict["_row_number"] = row_num
                     data.append(row_dict)
 
-                if not data:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Please provide at least one data row.'
-                    }, status=status.HTTP_400_BAD_REQUEST)
-
-            # ---------- CSV Handling ----------
+            # ---------------- CSV ----------------
             elif format_type == 'csv':
                 from tablib import Dataset
                 decoded_file = file.read().decode('utf-8')
                 dataset = Dataset()
                 dataset.load(decoded_file, format='csv')
 
+                row_num = 1
                 for row in dataset.dict:
+                    row_num += 1
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
-
-                    # Validate required headers
-                    if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({
-                            "statusCode": 400,
-                            "status": True,
-                            "message": (
-                                f'Missing required headers. Required: {", ".join(required_headers)}. '
-                                f'Found headers in the file: {", ".join(row_lower.keys())}.'
-                            )
-                        }, status=status.HTTP_400_BAD_REQUEST)
-
+                    row_lower["_row_number"] = row_num
                     data.append(row_lower)
-
-                if not data:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": "The uploaded CSV file is empty. Please provide at least one data row."
-                    }, status=status.HTTP_400_BAD_REQUEST)
 
             else:
                 return Response({
                     "statusCode": 400,
-                    "status": True,
-                    'error': 'Unsupported file format. Use .xlsx or .csv'
+                    "status": False,
+                    "message": 'Unsupported file format. Use .xlsx or .csv'
                 }, status=status.HTTP_400_BAD_REQUEST)
 
+            # ---------------- Process Rows ----------------
             imported_count = 0
 
-            # ---------- Import Rows ----------
-            for row in  reversed(data):
+            for row in reversed(data):
+                row_number = row.get("_row_number", "Unknown")
                 name = str(row.get('relation')).strip() if row.get('relation') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
+                # Missing Name
                 if not name:
-                    continue  # skip rows without relation name
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Relation": "",
+                        "Description": description,
+                        "Reason": "Missing relation name"
+                    })
+                    continue
 
                 existing = Relation.objects.filter(name__iexact=name).first()
 
                 if existing:
                     if not existing.is_deleted:
-                        duplicate_names.append(name)
+                        duplicates.append({
+                            "Row": row_number,
+                            "Relation": name,
+                            "Description": description,
+                            "Reason": "Already exists in database"
+                        })
                         continue
                     else:
-                        # Reactivate if previously deleted
+                        # Reactivate deleted
                         existing.description = description
                         existing.is_deleted = False
                         existing.save()
                         imported_count += 1
+
                 else:
                     Relation.objects.create(
                         name=name,
@@ -4943,18 +4741,19 @@ class RelationImportAPIView(APIView):
         except Exception as e:
             return Response({
                 "statusCode": 400,
-                "status": True,
-                'message': str(e)
+                "status": False,
+                "message": str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
 
+        # ---------------- Final Response (100% Gender Format) ----------------
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_names)),
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
-            "imported_count": imported_count
+            "imported_count": imported_count,
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=status.HTTP_200_OK)
-
 
 
 
@@ -5530,8 +5329,8 @@ class TimezoneImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": reversed(duplicates),
+            "skipped_rows": reversed(skipped_rows),
         }, status=status.HTTP_200_OK)
 
 
@@ -6034,7 +5833,7 @@ class CivilIdNameImportAPIView(APIView):
                             continue
                 if not civil_id_name:
                     skipped_rows.append({
-                        "Civil ID Name": civil_id_name or "Unknown",
+                        "Civil ID Name": civil_id_name or "",
                         "Reason": f"Missing required fields. Required: {', '.join(required_headers)}"
                     })
                     continue
@@ -6701,6 +6500,8 @@ class DepartmentImportAPIView(APIView):
                 if not name:
                     skipped_rows.append({
                         "Row": row_number,
+                        "Department": "",
+                        "Description":description,
                         "Reason": "Missing department name"
                     })
                     continue
@@ -6741,8 +6542,10 @@ class DepartmentImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows,
+            # "duplicates": duplicates,
+            # "skipped_rows": skipped_rows,
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=status.HTTP_200_OK)
 
 
@@ -7215,6 +7018,8 @@ class EmployeeTypeImportAPIView(APIView):
                 if not name:
                     skipped_rows.append({
                         "Row": row_number,
+                        "Employee Type": "",
+                        "Description":description,
                         "Reason": "Missing employee type name"
                     })
                     continue
@@ -7255,8 +7060,10 @@ class EmployeeTypeImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows,
+            # "duplicates": duplicates,
+            # "skipped_rows": skipped_rows,
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=status.HTTP_200_OK)
 
 
@@ -7733,6 +7540,8 @@ class CompanyTypeImportAPIView(APIView):
                 if not name:
                     skipped_rows.append({
                         "Row": row_number,
+                        "Company Type": "",
+                        "Description":description,
                         "Reason": "Missing company type name"
                     })
                     continue
@@ -7775,8 +7584,8 @@ class CompanyTypeImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows,
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=status.HTTP_200_OK)
 
 
@@ -8257,6 +8066,8 @@ class OwnershipTypeImportAPIView(APIView):
                 if not ownership_name:
                     skipped_rows.append({
                         "Row": row_number,
+                        "Company Type": company_type_name or " ",
+                        "Ownership Type": "",
                         "Reason": "Missing ownership type name"
                     })
                     continue
@@ -8264,6 +8075,7 @@ class OwnershipTypeImportAPIView(APIView):
                 if not company_type_name:
                     skipped_rows.append({
                         "Row": row_number,
+                        "Company Type":"",
                         "Ownership Type": ownership_name,
                         "Reason": "Missing company type"
                     })
@@ -8274,6 +8086,7 @@ class OwnershipTypeImportAPIView(APIView):
                 if not company_type:
                     skipped_rows.append({
                         "Row": row_number,
+                        "Company Type": company_type_name or " ",
                         "Ownership Type": ownership_name,
                         "Reason": f'Company Type "{company_type_name}" not found'
                     })
@@ -8290,7 +8103,7 @@ class OwnershipTypeImportAPIView(APIView):
                         duplicates.append({
                             "Row": row_number,
                             "Ownership Type": ownership_name,
-                            "Company Type": company_type_name or "N/A",
+                            "Company Type": company_type_name or " ",
                             "Reason": "Already exists in database"
                         })
                         continue
@@ -8323,8 +8136,10 @@ class OwnershipTypeImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows,
+            # "duplicates": duplicates,
+            # "skipped_rows": skipped_rows,
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=status.HTTP_200_OK)
 
 
@@ -8752,7 +8567,7 @@ class StakeholderCategoryImportAPIView(APIView):
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing stakeholder category name"})
+                    skipped_rows.append({"Row": row_number,"Stakeholder Category": "","Description":description, "Reason": "Missing stakeholder category name"})
                     continue
 
                 existing = StakeholderCategory.objects.filter(name__iexact=name).first()
@@ -8785,8 +8600,8 @@ class StakeholderCategoryImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=status.HTTP_200_OK)
 
 
@@ -9277,12 +9092,12 @@ class StakeholderTypeImportAPIView(APIView):
                     continue
 
                 if not category_name:
-                    skipped_rows.append({"Row": row_number, "Stakeholder Type": name, "Reason": "Missing stakeholder category"})
+                    skipped_rows.append({"Row": row_number, "Stakeholder Category": "", "Stakeholder Type": name, "Reason": "Missing stakeholder category"})
                     continue
 
                 category_obj = StakeholderCategory.objects.filter(name__iexact=category_name, is_deleted=False).first()
                 if not category_obj:
-                    skipped_rows.append({"Row": row_number, "Stakeholder Type": name, "Reason": f'Category "{category_name}" not found'})
+                    skipped_rows.append({"Row": row_number,"Stakeholder Category": "", "Stakeholder Type": name, "Reason": f'Category "{category_name}" not found'})
                     continue
 
                 existing = StakeholderType.objects.filter(
@@ -9322,8 +9137,8 @@ class StakeholderTypeImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=status.HTTP_200_OK)
 
 
@@ -9575,7 +9390,7 @@ class AccreditationCategoryExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Accrediation Category',
+            'name': 'Accreditation Category',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',
@@ -9683,7 +9498,7 @@ class AccreditationCategoryImportAPIView(APIView):
             return ''.join(c for c in str(h).lower() if c.isalnum())
 
         # Normalize required and optional headers
-        required_headers = {normalize_header('Accreditation Category')}
+        required_headers = {normalize_header('Accreditation Category')} 
         optional_headers = {normalize_header('description')}
 
         try:
@@ -9738,11 +9553,11 @@ class AccreditationCategoryImportAPIView(APIView):
             imported_count = 0
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get('accrediationcategory')).strip() if row.get('accrediationcategory') else None
+                name = str(row.get('accreditationcategory')).strip() if row.get('accreditationcategory') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Accreditation Category": name, "Reason": "Missing accreditation category name"})
+                    skipped_rows.append({"Row": row_number, "Accreditation Category": name, "Description":description, "Reason": "Missing accreditation category name"})
                     continue
 
                 existing = AccreditationCategory.objects.filter(name__iexact=name).first()
@@ -9767,8 +9582,8 @@ class AccreditationCategoryImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=200)  
 
 
@@ -10099,14 +9914,14 @@ class AccreditationNameExportAPIView(APIView):
         # --- Field headers ---
         field_header_map = {
             'uuid': 'UUID',
-            'category': 'Accrediation Category',
-            'full_name': 'Accrediation',
-            'short_name': 'Accrediation Short Name',
-            'issuing_authority': 'Accrediation Issuing Authority Name',
-            'valid_type': 'Accrediation Valid Upto',
-            'valid_duration_value': 'Accrediation Valid Duration Value',
-            'valid_duration_unit': 'Accrediation Valid Duration Unit',
-            'valid_date': 'Accrediation Valid Date',
+            'category': 'Accreditation Category',
+            'full_name': 'Accreditation Full Name',
+            'short_name': 'Accreditation Short Name',
+            'issuing_authority': 'Accreditation Issuing Authority Name',
+            'valid_type': 'Accreditation Valid Upto',
+            'valid_duration_value': 'Accreditation Valid Duration Value',
+            'valid_duration_unit': 'Accreditation Valid Duration Unit',
+            'valid_date': 'Accreditation Valid Date',
             'description': 'Description',
             'created_at': 'Created On',
             'updated_at': 'Modified On'
@@ -10233,15 +10048,16 @@ class AccreditationNameImportAPIView(APIView):
         skipped_rows = []
 
         # required_headers = {'accrediation full name', 'accrediation category'}
-        required_headers = {'Accreditation Category', 'Accreditation Full Name'}
+        # required_headers = {'Accreditation Category', 'Accreditation Full Name'}
+        required_headers = {'accreditation category', 'accreditation full name'}
         # required_headers = {'AccreditationCategory'}
         optional_headers = {
-            'accrediation short name',
-            'accrediation issuing authority name',
-            'accrediation valid upto',
-            'accrediation valid duration value',
-            'accrediation valid duration unit',
-            'accrediation valid date',
+            'accreditation short name',
+            'accreditation issuing authority name',
+            'accreditation valid upto',
+            'accreditation valid duration value',
+            'accreditation valid duration unit',
+            'accreditation valid date',
             'description'
         }
 
@@ -10313,15 +10129,15 @@ class AccreditationNameImportAPIView(APIView):
             imported_count = 0
 
             for row in reversed(data):
-                full_name = str(row.get('accrediation full name')).strip() if row.get('accrediation full name') else None
-                category_name = str(row.get('accrediation category')).strip() if row.get('accrediation category') else None
-                short_name = str(row.get('accrediation short name')).strip() if row.get('accrediation short name') else ''
-                issuing_authority = str(row.get('accrediation issuing authority name')).strip() if row.get('accrediation issuing authority name') else ''
+                full_name = str(row.get('accreditation full name')).strip() if row.get('accreditation full name') else None
+                category_name = str(row.get('accreditation category')).strip() if row.get('accreditation category') else None
+                short_name = str(row.get('accreditation short name')).strip() if row.get('accreditation short name') else ''
+                issuing_authority = str(row.get('accreditation issuing authority name')).strip() if row.get('accreditation issuing authority name') else ''
                 description = str(row.get('description')).strip() if row.get('description') else ''
-                valid_type = str(row.get('accrediation valid upto')).strip() if row.get('accrediation valid upto') else None
-                valid_duration_value = row.get('accrediation valid duration value')
-                valid_duration_unit = str(row.get('accrediation valid duration unit')).strip() if row.get('accrediation valid duration unit') else None
-                valid_date_raw = row.get('accrediation valid date')
+                valid_type = str(row.get('accreditation valid upto')).strip() if row.get('accreditation valid upto') else None
+                valid_duration_value = row.get('accreditation valid duration value')
+                valid_duration_unit = str(row.get('accreditation valid duration unit')).strip() if row.get('accreditation valid duration unit') else None
+                valid_date_raw = row.get('accreditation valid date')
                 valid_date = None
                 if valid_date_raw:
                     if isinstance(valid_date_raw, datetime):
@@ -10336,7 +10152,7 @@ class AccreditationNameImportAPIView(APIView):
                                 continue
                         if not valid_date:
                             skipped_rows.append({
-                                'Accrediation Full Name': full_name,
+                                'Accreditation Full Name': full_name,
                                 'category': category_name,
                                 'Reason': f"Invalid date format '{valid_date_raw}'. Expected formats: dd-mm-yyyy, dd/mm/yyyy "
                             })
@@ -10353,24 +10169,24 @@ class AccreditationNameImportAPIView(APIView):
 
                 if not full_name or not category_name:
                     skipped_rows.append({
-                        'Accrediation Full Name': full_name or 'Unknown',
-                        'Accrediation Category': category_name or 'Unknown',
+                        'Accreditation Full Name': full_name or 'Unknown',
+                        'Accreditation Category': category_name or 'Unknown',
                         'Reason': 'Missing required field(s)'
                     })
                     continue
 
                 if not category:
                     skipped_rows.append({
-                        'Accrediation Full Name': full_name,
-                        'Accrediation Category': category_name,
+                        'Accreditation Full Name': full_name,
+                        'Accreditation Category': category_name,
                         'Reason': f'Invalid country or category: /{category_name}'
                     })
                     continue
 
                 if valid_type and valid_type not in ALLOWED_VALID_TYPES:
                     skipped_rows.append({
-                        'Accrediation Full Name': full_name,
-                        'Accrediation Category': category_name,
+                        'Accreditation Full Name': full_name,
+                        'Accreditation Category': category_name,
                         'Reason': f"Invalid valid_type='{valid_type}'. Allowed: Permanent, Valid Upto, Date"
                     })
                     continue
@@ -10380,9 +10196,9 @@ class AccreditationNameImportAPIView(APIView):
                     # Check duration value
                     if valid_duration_value is None:
                         skipped_rows.append({
-                            'Accrediation Full Name': full_name,
-                            'Accrediation Category': category_name,
-                            'Reason': "Valid Upto type requires 'Accrediation Valid Duration' as numeric and 'Accrediation Valid Unit' as one of: Months, Weeks, Years"
+                            'Accreditation Full Name': full_name,
+                            'Accreditation Category': category_name,
+                            'Reason': "Valid Upto type requires 'Accreditation Valid Duration' as numeric and 'Accreditation Valid Unit' as one of: Months, Weeks, Years"
                         })
                         continue
 
@@ -10393,34 +10209,34 @@ class AccreditationNameImportAPIView(APIView):
                             raise ValueError
                     except (ValueError, TypeError):
                         skipped_rows.append({
-                            'Accrediation Full Name': full_name,
-                            'Accrediation Category': category_name,
-                            'Reason': "Invalid 'Accrediation Valid Duration'. Please use a positive numeric value."
+                            'Accreditation Full Name': full_name,
+                            'Accreditation Category': category_name,
+                            'Reason': "Invalid 'Accreditation Valid Duration'. Please use a positive numeric value."
                         })
                         continue
 
                     # Unit check
                     if not valid_duration_unit or valid_duration_unit not in ALLOWED_VALID_UNITS:
                         skipped_rows.append({
-                            'Accrediation Full Name': full_name,
-                            'Accrediation Category': category_name,
-                            'Reason': f"Invalid 'Accrediation Valid Unit'='{valid_duration_unit}'. Please use one of: Months, Weeks, Years"
+                            'Accreditation Full Name': full_name,
+                            'Accreditation Category': category_name,
+                            'Reason': f"Invalid 'Accreditation Valid Unit'='{valid_duration_unit}'. Please use one of: Months, Weeks, Years"
                         })
                         continue
 
                 elif valid_type == 'Date' and not valid_date:
                     skipped_rows.append({
-                        'Accrediation Full Name': full_name,
-                        'Accrediation Category': category_name,
-                        'Reason': "Accrediation Valid Date  requires valid_date formate DD-MM_YYY"
+                        'Accreditation Full Name': full_name,
+                        'Accreditation Category': category_name,
+                        'Reason': "Accreditation Valid Date  requires valid_date formate DD-MM_YYY"
                     })
                     continue
 
                 if valid_duration_unit and valid_duration_unit not in ALLOWED_VALID_UNITS:
                     skipped_rows.append({
-                        'Accrediation Full Name': full_name,
-                        'Accrediation Category': category_name,
-                        'Reason': f"Invalid 'Accrediation Valid Unit'='{valid_duration_unit}'. Please use one of: Months, Weeks, Years"
+                        'Accreditation Full Name': full_name, 
+                        'Accreditation Category': category_name,
+                        'Reason': f"Invalid 'Accreditation Valid Unit'='{valid_duration_unit}'. Please use one of: Months, Weeks, Years"
                     })
                     continue
 
@@ -10432,8 +10248,8 @@ class AccreditationNameImportAPIView(APIView):
                 if existing:
                     if not existing.is_deleted:
                         duplicate_names.append({
-                            'Accrediation Full Name': full_name,
-                            'Accrediation Category': category_name
+                            'Accreditation Full Name': full_name,
+                            'Accreditation Category': category_name
                         })
                         continue
                     else:
@@ -10467,8 +10283,8 @@ class AccreditationNameImportAPIView(APIView):
                     imported_count += 1
                 except IntegrityError:
                     duplicate_names.append({
-                        'Accrediation Full Name': full_name,
-                        'Accrediation Category': category_name
+                        'Accreditation Full Name': full_name,
+                        'Accreditation Category': category_name
                     })
 
         except Exception as e:
@@ -10477,8 +10293,10 @@ class AccreditationNameImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": duplicate_names,
-            "skipped_rows": skipped_rows,
+            # "duplicates": duplicate_names,
+            # "skipped_rows": skipped_rows,
+            "duplicates": list(reversed(duplicate_names)),
+            "skipped_rows": list(reversed(skipped_rows)),
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=status.HTTP_200_OK)
@@ -10913,7 +10731,7 @@ class BankAccountTypeImportAPIView(APIView):
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing bank account type name"})
+                    skipped_rows.append({"Row": row_number,"Bank Account Type": "","Description":description, "Reason": "Missing bank account type name"})
                     continue
 
                 existing = BankAccountType.objects.filter(name__iexact=name).first()
@@ -10938,8 +10756,8 @@ class BankAccountTypeImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=200)
 
 

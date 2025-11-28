@@ -103,7 +103,7 @@ const AddImportAccrediationCategoryModal = ({ show, handleClose }) => {
                     if (response?.skipped_rows?.length > 0) {
                         const prepareData = {
                             data: response.skipped_rows || [],
-                            headers: ["Accreditation Category", "Reason"],
+                            headers: ["Accreditation Category","Description","Reason"],
                             sheetName: "AccreditationCategory",
                             fileName: "AccreditationCategory",
                         };

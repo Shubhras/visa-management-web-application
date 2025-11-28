@@ -3,6 +3,7 @@ from rest_framework import serializers
 from .models import *
 from rest_framework_simplejwt.tokens import RefreshToken
 # from .process import*
+from uuid import UUID
 
 User = get_user_model()
 
@@ -769,10 +770,36 @@ class ECAForSerializer(serializers.ModelSerializer):
 
 
 
+# class ECAAwardingBodySerializer(serializers.ModelSerializer):
+#     name = serializers.CharField(source='country.name', read_only=True)
+#     eca_for_name = serializers.CharField(source='ecafor.name', read_only=True)
+#     eca_for_uuid = serializers.CharField(source='ecafor.uuid', read_only=True)
+
+#     country = serializers.SlugRelatedField(
+#         queryset=Country.objects.all(),
+#         slug_field='uuid'
+#     )
+#     ecafor = serializers.SlugRelatedField(
+#         queryset=ECAFor.objects.all(),
+#         slug_field='uuid'
+#     )
+
+#     class Meta:
+#         model = ECAAwardingBody
+#         fields = [
+#             'uuid', 'id', 'country', 'name',
+#             'ecafor', 'eca_for_uuid', 'eca_for_name',
+#             'description', 'valid_duration_value',
+#             'eca_body_full_name', 'eca_body_short_name',
+#             'eca_valid_period', 'created_at', 'updated_at'
+#         ]
+#         read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
+
 class ECAAwardingBodySerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='country.name', read_only=True)
     eca_for_name = serializers.CharField(source='ecafor.name', read_only=True)
-    eca_for_uuid = serializers.CharField(source='ecafor.uuid', read_only=True)
+    # eca_for_uuid = serializers.CharField(source='ecafor.uuid', read_only=True)
 
     country = serializers.SlugRelatedField(
         queryset=Country.objects.all(),
@@ -787,12 +814,13 @@ class ECAAwardingBodySerializer(serializers.ModelSerializer):
         model = ECAAwardingBody
         fields = [
             'uuid', 'id', 'country', 'name',
-            'ecafor', 'eca_for_uuid', 'eca_for_name',
+            'ecafor', 'eca_for_name',
             'description', 'valid_duration_value',
             'eca_body_full_name', 'eca_body_short_name',
             'eca_valid_period', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
 
 class DegreeAwardedBySerializer(serializers.ModelSerializer):
     country = serializers.SlugRelatedField(queryset=Country.objects.all(), slug_field='uuid')
@@ -2888,10 +2916,20 @@ class StudyFactorAcademicResultSerializer(serializers.ModelSerializer):
 
 
 
-
 class StudyFactorBacklogsSerializer(serializers.ModelSerializer):
     factor_for_name = serializers.CharField(source="factor_for.name", read_only=True)
     backlog_group_name = serializers.CharField(source="backlog_group.name", read_only=True)
+
+    #Accept UUID instead of PK (integer)
+    factor_for = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=FactorFor.objects.all()
+    )
+
+    backlog_group = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=BacklogsGroup.objects.all()
+    )
 
     class Meta:
         model = StudyFactorBacklogs
@@ -2908,16 +2946,14 @@ class StudyFactorBacklogsSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ("uuid", "created_at", "updated_at")
-
+        read_only_fields = ["uuid", "created_at", "updated_at"]
 
 
 class StudyFactorGAPSerializer(serializers.ModelSerializer):
     class Meta:
         model = StudyFactorGAP
         fields = "__all__"
-        read_only_fields = ("uuid", "created_at", "updated_at")
-
+        read_only_fields = ["uuid", "created_at", "updated_at"]
 
 
 class StudyFactorLanguageAbilitySerializer(serializers.ModelSerializer):
@@ -2950,11 +2986,31 @@ class StudyFactorLanguageAbilitySerializer(serializers.ModelSerializer):
 
         read_only_fields = ['uuid', 'created_at', 'updated_at']
 
+
+
 class StudyFactorEntranceTestAbilitySerializer(serializers.ModelSerializer):
+
+    factor_for = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=FactorFor.objects.all()
+    )
+    entrance_test_ability_group = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=EntranceTestAbilityGroup.objects.all()
+    )
+    entrance_test_name = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=EntranceTestName.objects.all()
+    )
+    minimum_score_required = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=EntranceTestResult.objects.all()
+    )
+
     factor_for_name = serializers.CharField(source='factor_for.name', read_only=True)
     entrance_test_ability_group_name = serializers.CharField(source='entrance_test_ability_group.name', read_only=True)
     entrance_test_name_name = serializers.CharField(source='entrance_test_name.name', read_only=True)
-    minimum_score_required_name = serializers.CharField(source='minimum_score_required.name', read_only=True)
+    minimum_score_required_name = serializers.CharField(source='minimum_score_required.testresult', read_only=True)
 
     class Meta:
         model = StudyFactorEntranceTestAbility
@@ -2967,4 +3023,5 @@ class StudyFactorEntranceTestAbilitySerializer(serializers.ModelSerializer):
             'description',
             'is_deleted', 'created_at', 'updated_at',
         ]
-        read_only_fields = ('id', 'uuid', 'is_deleted', 'created_at', 'updated_at')
+        read_only_fields = ['id', 'uuid', 'is_deleted', 'created_at', 'updated_at']
+
