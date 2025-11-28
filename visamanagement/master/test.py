@@ -2346,7 +2346,7 @@ class LanguageTestResultExportAPIView(APIView):
                 elif field == 'languagetest_module_name' and value:
                     value = value.moduleName
                 elif field == 'lb_level' and value:
-                    value = value.level_name
+                    value = value.name
 
                 # Datetime formatting
                 elif field in ['created_at', 'updated_at'] and value:
