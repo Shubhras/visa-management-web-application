@@ -2313,7 +2313,7 @@ class LanguageTestResultExportAPIView(APIView):
             'uuid': 'UUID',
             'language': 'Language Name (Test)',
             'language_test': 'Language Test Name',
-            'languagetest_module_name': 'Module Name',
+            'module_name': 'Module Name',
             'lb_level': 'Language Benchmark Level',
             'numeric_score': 'Language Test Result',
             'description': 'Description',
