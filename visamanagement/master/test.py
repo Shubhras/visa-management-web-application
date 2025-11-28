@@ -2326,7 +2326,7 @@ class LanguageTestResultExportAPIView(APIView):
         # -------------------------------------------------------------------
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'LanguageTestResults'
+        dataset.title = 'LanguageTestResult'
 
         india_tz = pytz.timezone("Asia/Kolkata")
 
@@ -2435,6 +2435,7 @@ class LanguageTestResultImportAPIView(APIView):
                 return Response({'error': 'Unsupported file format'}, status=400)
 
             for row in reversed(data):
+                row_number = row.get("_row_number", "Unknown")
                 language_name = str(row.get('language name (test)')).strip()
                 language_test_name = str(row.get('language test name')).strip()
                 module_name = str(row.get('module name')).strip()
@@ -2443,7 +2444,11 @@ class LanguageTestResultImportAPIView(APIView):
                 description = row.get('description', '')
 
                 if not (language_name and language_test_name and module_name and lb_level_name and numeric_score):
-                    skipped_rows.append({"row": row, "reason": "Required field(s) missing"})
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Description":description, 
+                        "Reason": "Required field(s) missing"
+                        })
                     continue
 
                 existing = LanguageTestResult.objects.filter(
