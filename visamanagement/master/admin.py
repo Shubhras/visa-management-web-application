@@ -1428,3 +1428,25 @@ class StudyFactorAgeAdmin(admin.ModelAdmin):
     filter_horizontal = ("country", "course_level")
 
     readonly_fields = ("uuid", "created_at", "updated_at")
+
+
+@admin.register(ECAFor)
+class ECAForAdmin(admin.ModelAdmin):
+    list_display = ("uuid",'name', 'description', 'is_deleted', 'created_at', 'updated_at')
+    search_fields = ('name', 'description')
+    list_filter = ('is_deleted', 'created_at')
+    ordering = ('-created_at',)
+    readonly_fields = ('uuid', 'created_at', 'updated_at')
+
+    fieldsets = (
+        ("Basic Information", {
+            "fields": ("name", "description")
+        }),
+        ("Status", {
+            "fields": ("is_deleted",)
+        }),
+        ("System Fields", {
+            "classes": ("collapse",),
+            "fields": ("uuid", "created_at", "updated_at")
+        }),
+    )
