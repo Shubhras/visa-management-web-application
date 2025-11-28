@@ -2916,10 +2916,20 @@ class StudyFactorAcademicResultSerializer(serializers.ModelSerializer):
 
 
 
-
 class StudyFactorBacklogsSerializer(serializers.ModelSerializer):
     factor_for_name = serializers.CharField(source="factor_for.name", read_only=True)
     backlog_group_name = serializers.CharField(source="backlog_group.name", read_only=True)
+
+    #Accept UUID instead of PK (integer)
+    factor_for = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=FactorFor.objects.all()
+    )
+
+    backlog_group = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=BacklogsGroup.objects.all()
+    )
 
     class Meta:
         model = StudyFactorBacklogs
@@ -2936,16 +2946,14 @@ class StudyFactorBacklogsSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ("uuid", "created_at", "updated_at")
-
+        read_only_fields = ["uuid", "created_at", "updated_at"]
 
 
 class StudyFactorGAPSerializer(serializers.ModelSerializer):
     class Meta:
         model = StudyFactorGAP
         fields = "__all__"
-        read_only_fields = ("uuid", "created_at", "updated_at")
-
+        read_only_fields = ["uuid", "created_at", "updated_at"]
 
 
 class StudyFactorLanguageAbilitySerializer(serializers.ModelSerializer):
@@ -2977,6 +2985,7 @@ class StudyFactorLanguageAbilitySerializer(serializers.ModelSerializer):
         ]
 
         read_only_fields = ['uuid', 'created_at', 'updated_at']
+
 
 
 class StudyFactorEntranceTestAbilitySerializer(serializers.ModelSerializer):
@@ -3014,5 +3023,5 @@ class StudyFactorEntranceTestAbilitySerializer(serializers.ModelSerializer):
             'description',
             'is_deleted', 'created_at', 'updated_at',
         ]
-        read_only_fields = ('id', 'uuid', 'is_deleted', 'created_at', 'updated_at')
+        read_only_fields = ['id', 'uuid', 'is_deleted', 'created_at', 'updated_at']
 

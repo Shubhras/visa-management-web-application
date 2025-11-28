@@ -1096,10 +1096,10 @@ urlpatterns = [
     
 
 
-
-    path('study-factor-backlogs/list/',StudyFactorBacklogsListAPIView.as_view(),name="study_factor_backlogs_list"),
+    path('study-factor-backlogs/',StudyFactorBacklogsListAPIView.as_view(),name="study_factor_backlogs_list"),
     path('study-factor-backlogs/create/',StudyFactorBacklogsCreateAPIView.as_view(),name="study_factor_backlogs_create"),
     path('study-factor-backlogs/<uuid:uuid>/',StudyFactorBacklogsRetrieveAPIView.as_view(),name="study_factor_backlogs_retrieve"),
+    path('study-factor-backlogs/<uuid:uuid>/update/', StudyFactorBacklogsUpdateAPIView.as_view(), name="study_factor_backlogs_update_bulk"),
     path('study-factor-backlogs/delete/', StudyFactorBacklogsDeleteAPIView.as_view(), name="study_factor_backlogs_delete_bulk"),
     path('study-factor-backlogs/export/', StudyFactorBacklogsExportAPIView.as_view(), name="study_factor_backlogs_export"),
     path('study-factor-backlogs/import/', StudyFactorBacklogsImportAPIView.as_view(), name="study_factor_backlogs_import"),
@@ -1112,6 +1112,7 @@ urlpatterns = [
     path('study-factor-gap/delete/<uuid:uuid>/', StudyFactorGAPDeleteAPIView.as_view(), name="study_factor_gap_delete"),
     path('study-factor-gap/export/', StudyFactorGAPExportAPIView.as_view(), name="study_factor_gap_export"),
     path('study-factor-gap/import/', StudyFactorGAPImportAPIView.as_view(), name="study_factor_gap_import"),
+
 
     path('study-factor-language-ability/', StudyFactorLanguageAbilityListAPIView.as_view()),
     path('study-factor-language-ability/create/', StudyFactorLanguageAbilityCreateAPIView.as_view()),
