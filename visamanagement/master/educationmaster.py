@@ -6380,7 +6380,7 @@ class MediumofEducationListAPIView(APIView):
         # -----------------------------
         sort_field_map = {
             "name": "name",
-            "perticulars": "Perticulars",
+            "perticulars": "perticulars",
             "created_at": "created_at",
             "updated_at": "updated_at",
         }
