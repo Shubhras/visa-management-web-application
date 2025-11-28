@@ -2711,9 +2711,10 @@ class StateImportAPIView(APIView):
 
                 if not state_name or not country_name or not state_type:
                     skipped_rows.append({
-                        "State Name": state_name or "Unknown",
-                        "Country Name": country_name or "Unknown",
-                        "State / Territory":state_type or "Unknown",
+                        "State Name": state_name or "",
+                        "Country Name": country_name or "",
+                        "State Short Name":short_name or "",
+                        "State / Territory":state_type or "",
                         "Reason": "Missing required field or Invalid state type: Use (State, Territory)"
                     })
                     continue
@@ -2722,7 +2723,8 @@ class StateImportAPIView(APIView):
                     skipped_rows.append({
                         "State Name": state_name,
                         "Country Name": country_name,
-                        "State / Territory":state_type or "Unknown",
+                        "State Short Name":short_name or "",
+                        "State / Territory":state_type or "",
                         "Reason": f'Invalid state type: Use (State, Territory)'
                     })
                     continue
@@ -2733,7 +2735,8 @@ class StateImportAPIView(APIView):
                     skipped_rows.append({
                         "State Name": state_name,
                         "Country Name": country_name,
-                        "State / Territory":state_type or "Unknown",
+                        "State Short Name":short_name or "",
+                        "State / Territory":state_type or "",
                         "Reason": "Country not found"
                     })
                     continue
@@ -2777,8 +2780,10 @@ class StateImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": duplicate_names,
-            "skipped_rows": skipped_rows,
+            # "duplicates": duplicate_names,
+            # "skipped_rows": skipped_rows,
+            "duplicates": reversed(duplicate_names),
+            "skipped_rows": reversed(skipped_rows),
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=200)
@@ -3455,8 +3460,10 @@ class DistrictImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": duplicate_names,
-            "skipped_rows": skipped_rows,
+            # "duplicates": duplicate_names,
+            # "skipped_rows": skipped_rows,
+            "duplicates": reversed(duplicate_names),
+            "skipped_rows": reversed(skipped_rows),
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=200)
@@ -4475,8 +4482,10 @@ class CityImportAPIView(APIView):
                 "statusCode": 200,
                 "status": True,
                 "imported_count": len(to_create),
-                "duplicates": duplicates,
-                "skipped_rows": skipped_rows,
+                # "duplicates": duplicates,
+                # "skipped_rows": skipped_rows,
+                "duplicates": reversed(duplicates),
+                "skipped_rows": reversed(skipped_rows),
                 "message": f"Imported successfully ({len(to_create)} new cities)"
             }, status=200)
  
