@@ -6518,15 +6518,99 @@ class MediumofEducationDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+# class MediumofEducationExportAPIView(APIView):
+
+#     def get(self, request):
+#         format_type = request.GET.get('format', 'xlsx').lower()
+#         fields = request.GET.get('fields')
+#         uuids_param = request.GET.get('uuids', '')
+#         uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+#         # Field to header mapping
+#         field_header_map = {
+#             'uuid': 'UUID',
+#             'name': 'Medium of Education',
+#             'perticulars': 'Perticulars',
+#             'is_deleted': 'Deleted',
+#             'created_at': 'Created On',
+#             'updated_at': 'Modified On',
+#         }
+
+#         # Fields to export
+#         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+#         queryset = MediumofEducation.objects.filter(is_deleted=False)
+#         if uuids:
+#             queryset = queryset.filter(uuid__in=uuids)
+#         queryset = queryset.order_by('-created_at')
+
+#         dataset = Dataset()
+#         dataset.headers = [field_header_map.get(f, f) for f in field_list]
+#         dataset.title = 'Medium of Education'
+
+#         for obj in queryset:
+#             row = []
+#             for field in field_list:
+#                 value = getattr(obj, field, '')
+
+#                 if field in ['created_at', 'updated_at'] and value:
+#                     # Convert the stored UTC datetime to IST and format it
+#                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+#                 elif isinstance(value, bool):
+#                     value = int(value)
+#                 row.append(value if value is not None else '')
+#             dataset.append(row)
+
+#         if format_type == 'csv':
+#             file_data = dataset.export('csv')
+#             content_type = 'text/csv'
+#             file_name = 'medium_of_education.csv'
+#         else:
+#             file_data = io.BytesIO(dataset.export('xlsx'))
+#             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+#             file_name = 'medium_of_education.xlsx'
+
+#         response = HttpResponse(
+#             file_data if format_type == 'csv' else file_data.getvalue(),
+#             content_type=content_type
+#         )
+#         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+#         return response
+
+
 class MediumofEducationExportAPIView(APIView):
 
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')
-        uuids_param = request.GET.get('uuids', '')
-        uuids = [u.strip() for u in uuids_param.split(',') if u]
+        search = request.GET.get('search', '').strip()
+        custom_sort = request.GET.get('customSort')
 
-        # Field to header mapping
+        # ---------------------------
+        # Helper: Parse & validate UUIDs
+        # ---------------------------
+        def parse_ids(param_name):
+            raw = request.GET.get(param_name, '')
+            if raw:
+                items = [x.strip() for x in raw.split(',') if x.strip()]
+            else:
+                items = request.GET.getlist(param_name)
+            return items
+
+        def validate_uuid_list(uuid_list):
+            valid = []
+            for u in uuid_list:
+                try:
+                    valid.append(UUID(u))
+                except:
+                    pass
+            return valid
+
+        uuids_list = validate_uuid_list(parse_ids('uuids'))
+
+        # ---------------------------
+        # Field Header Mapping
+        # ---------------------------
         field_header_map = {
             'uuid': 'UUID',
             'name': 'Medium of Education',
@@ -6535,15 +6619,74 @@ class MediumofEducationExportAPIView(APIView):
             'created_at': 'Created On',
             'updated_at': 'Modified On',
         }
-
-        # Fields to export
         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
+        # ---------------------------
+        # Base QuerySet
+        # ---------------------------
         queryset = MediumofEducation.objects.filter(is_deleted=False)
-        if uuids:
-            queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
+        if uuids_list:
+            queryset = queryset.filter(uuid__in=uuids_list)
 
+        if search:
+            queryset = queryset.filter(name__icontains=search)
+
+        # ---------------------------
+        # Sorting Logic
+        # ---------------------------
+        sort_field_map = {
+            'uuid': 'uuid',
+            'name': 'name',
+            'perticulars': 'perticulars',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+
+        sort_fields = []
+        annotations = {}
+
+        if custom_sort:
+            for idx, rule in enumerate(custom_sort.split(',')):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field not in sort_field_map:
+                        return Response({
+                            "status": False,
+                            "statusCode": 400,
+                            "message": f"Invalid sort field: {field}"
+                        }, status=400)
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sorting for string fields
+                    if field in ['name', 'perticulars']:
+                        ann_name = f"sort_key_{idx}"
+                        annotations[ann_name] = Lower(orm_field)
+                        sort_fields.append(ann_name if order == 'asc' else f"-{ann_name}")
+                    else:
+                        sort_fields.append(orm_field if order == 'asc' else f"-{orm_field}")
+
+                except ValueError:
+                    return Response({
+                        "status": False,
+                        "statusCode": 400,
+                        "message": f"Invalid sorting rule format: {rule}"
+                    }, status=400)
+
+        # Apply annotations
+        if annotations:
+            queryset = queryset.annotate(**annotations)
+
+        # Default sort
+        if not sort_fields:
+            sort_fields = ['-created_at']
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # ---------------------------
+        # Prepare Dataset
+        # ---------------------------
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = 'Medium of Education'
@@ -6554,29 +6697,126 @@ class MediumofEducationExportAPIView(APIView):
                 value = getattr(obj, field, '')
 
                 if field in ['created_at', 'updated_at'] and value:
-                    # Convert the stored UTC datetime to IST and format it
-                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                    value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
                     value = int(value)
                 row.append(value if value is not None else '')
             dataset.append(row)
 
+        # ---------------------------
+        # Export File
+        # ---------------------------
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
             file_name = 'medium_of_education.csv'
+            response = HttpResponse(file_data, content_type=content_type)
         else:
             file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'medium_of_education.xlsx'
+            response = HttpResponse(file_data.getvalue(), content_type=content_type)
 
-        response = HttpResponse(
-            file_data if format_type == 'csv' else file_data.getvalue(),
-            content_type=content_type
-        )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
+    
 
+
+# class MediumofEducationImportAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def post(self, request):
+#         file = request.FILES.get('file')
+#         sheet_name = request.data.get('sheet_name')
+
+#         if not file:
+#             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+
+#         format_type = file.name.split('.')[-1].lower()
+#         duplicate_names = []
+
+#         required_headers = {'medium of education'}
+#         optional_headers = {'perticulars'}
+
+#         try:
+#             data = []
+
+#             # ---------------- XLSX Handling ----------------
+#             if format_type == 'xlsx':
+#                 import openpyxl
+#                 wb = openpyxl.load_workbook(file, read_only=True)
+#                 sheets = wb.sheetnames
+
+#                 if not sheet_name:
+#                     return Response({'error': 'Please provide sheet_name', 'available_sheets': sheets}, status=status.HTTP_400_BAD_REQUEST)
+#                 if sheet_name not in sheets:
+#                     return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': sheets}, status=status.HTTP_400_BAD_REQUEST)
+
+#                 ws = wb[sheet_name]
+#                 if ws.max_row <= 1:
+#                     return Response({'error': f'Sheet "{sheet_name}" is empty'}, status=status.HTTP_400_BAD_REQUEST)
+
+#                 headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+#                 if not required_headers.issubset(set(headers)):
+#                     return Response({'error': f'Missing required headers: {required_headers - set(headers)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+#                 for row in ws.iter_rows(min_row=2, values_only=True):
+#                     if not any(row):
+#                         continue
+#                     row_dict = dict(zip(headers, row))
+#                     data.append(row_dict)
+
+#             # ---------------- CSV Handling ----------------
+#             elif format_type == 'csv':
+#                 decoded_file = file.read().decode('utf-8')
+#                 reader = csv.DictReader(io.StringIO(decoded_file))
+#                 for row in reader:
+#                     row_lower = {k.strip().lower(): v for k, v in row.items()}
+#                     if not required_headers.issubset(set(row_lower.keys())):
+#                         return Response({'error': f'Missing required headers: {required_headers - set(row_lower.keys())}'}, status=status.HTTP_400_BAD_REQUEST)
+#                     data.append(row_lower)
+
+#             else:
+#                 return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
+
+#             imported_count = 0
+
+#             # ---------------- Process Data ----------------
+#             for row in reversed(data):
+#                 name = str(row.get('Medium of Education')).strip() if row.get('Medium of Education') else None
+#                 perticulars = str(row.get('Perticulars') or '').strip()
+
+#                 if not name:
+#                     continue
+
+#                 existing = MediumofEducation.objects.filter(name__iexact=name).first()
+#                 if existing:
+#                     if not existing.is_deleted:
+#                         duplicate_names.append(name)
+#                         continue
+#                     else:
+#                         existing.Perticulars = perticulars
+#                         existing.is_deleted = False
+#                         existing.save()
+#                         imported_count += 1
+#                 else:
+#                     MediumofEducation.objects.create(
+#                         name=name,
+#                         Perticulars=perticulars,
+#                         is_deleted=False
+#                     )
+#                     imported_count += 1
+
+#         except Exception as e:
+#             return Response({'statusCode': 400, 'status': False, 'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+#         return Response({
+#             'statusCode': 200,
+#             'status': True,
+#             'duplicates': list(set(duplicate_names)),
+#             'message': f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+#             'imported_count': imported_count
+#         }, status=status.HTTP_200_OK)
 
 class MediumofEducationImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -6586,94 +6826,126 @@ class MediumofEducationImportAPIView(APIView):
         sheet_name = request.data.get('sheet_name')
 
         if not file:
-            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'statusCode': 400, 'status': False, 'message': 'No file uploaded'}, status=400)
 
         format_type = file.name.split('.')[-1].lower()
-        duplicate_names = []
-
         required_headers = {'medium of education'}
         optional_headers = {'perticulars'}
 
         try:
+            # ---------------- Load file ----------------
             data = []
-
-            # ---------------- XLSX Handling ----------------
             if format_type == 'xlsx':
-                import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
                 sheets = wb.sheetnames
 
                 if not sheet_name:
-                    return Response({'error': 'Please provide sheet_name', 'available_sheets': sheets}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({'statusCode': 400, 'status': False, 'message': 'Please provide sheet_name', 'available_sheets': sheets}, status=400)
                 if sheet_name not in sheets:
-                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': sheets}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({'statusCode': 400, 'status': False, 'message': f'Sheet "{sheet_name}" not found', 'available_sheets': sheets}, status=400)
 
                 ws = wb[sheet_name]
                 if ws.max_row <= 1:
-                    return Response({'error': f'Sheet "{sheet_name}" is empty'}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({'statusCode': 400, 'status': False, 'message': f'Sheet "{sheet_name}" is empty'}, status=400)
 
                 headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
                 if not required_headers.issubset(set(headers)):
-                    return Response({'error': f'Missing required headers: {required_headers - set(headers)}'}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({'statusCode': 400, 'status': False, 'message': f'Missing required headers: {required_headers - set(headers)}'}, status=400)
 
-                for row in ws.iter_rows(min_row=2, values_only=True):
-                    if not any(row):
-                        continue
+                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     row_dict = dict(zip(headers, row))
+                    row_dict['_row_number'] = idx
                     data.append(row_dict)
 
-            # ---------------- CSV Handling ----------------
             elif format_type == 'csv':
                 decoded_file = file.read().decode('utf-8')
                 reader = csv.DictReader(io.StringIO(decoded_file))
-                for row in reader:
+                for idx, row in enumerate(reader, start=2):
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    row_lower['_row_number'] = idx
                     if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({'error': f'Missing required headers: {required_headers - set(row_lower.keys())}'}, status=status.HTTP_400_BAD_REQUEST)
+                        return Response({'statusCode': 400, 'status': False, 'message': f'Missing required headers: {required_headers - set(row_lower.keys())}'}, status=400)
                     data.append(row_lower)
-
             else:
-                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'statusCode': 400, 'status': False, 'message': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
 
-            imported_count = 0
+            # ---------------- Process Rows ----------------
+            to_create = []
+            duplicates = []
+            skipped_rows = []
+            existing_in_file = set()
 
-            # ---------------- Process Data ----------------
-            for row in reversed(data):
-                name = str(row.get('medium of education')).strip() if row.get('medium of education') else None
-                perticulars = str(row.get('perticulars') or '').strip()
+            # Preload existing MediumofEducation
+            existing_mediums = {m.name.strip().lower(): m for m in MediumofEducation.objects.all()}
+
+            for row in data:
+                row_number = row.get('_row_number', 'Unknown')
+                name = (row.get('medium of education') or '').strip()
+                perticulars = (row.get('perticulars') or '').strip()
 
                 if not name:
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Medium of Education": name or "Unknown",
+                        "Reason": "Missing required field 'Medium of Education'"
+                    })
                     continue
 
-                existing = MediumofEducation.objects.filter(name__iexact=name).first()
-                if existing:
-                    if not existing.is_deleted:
-                        duplicate_names.append(name)
-                        continue
-                    else:
-                        existing.Perticulars = perticulars
-                        existing.is_deleted = False
-                        existing.save()
-                        imported_count += 1
+                key = name.lower()
+
+                # Check duplicates in DB and current file
+                existing_obj = existing_mediums.get(key)
+                if existing_obj and not existing_obj.is_deleted:
+                    duplicates.append({
+                        "Row": row_number,
+                        "Medium of Education": name,
+                        "Reason": "Duplicate medium of education"
+                    })
+                    continue
+                elif key in existing_in_file:
+                    duplicates.append({
+                        "Row": row_number,
+                        "Medium of Education": name,
+                        "Reason": "Duplicate in file"
+                    })
+                    continue
+
+                existing_in_file.add(key)
+
+                # Reactivate if soft-deleted
+                if existing_obj and existing_obj.is_deleted:
+                    existing_obj.Perticulars = perticulars
+                    existing_obj.is_deleted = False
+                    existing_obj.save()
                 else:
-                    MediumofEducation.objects.create(
-                        name=name,
-                        Perticulars=perticulars,
-                        is_deleted=False
+                    to_create.append(
+                        MediumofEducation(
+                            name=name,
+                            perticulars=perticulars,
+                            is_deleted=False
+                        )
                     )
-                    imported_count += 1
+
+            # ---------------- Bulk Insert ----------------
+            with transaction.atomic():
+                MediumofEducation.objects.bulk_create(to_create, ignore_conflicts=True, batch_size=500)
+
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "imported_count": len(to_create) + sum(1 for m in existing_mediums.values() if m.is_deleted == False),
+                "duplicates": duplicates,
+                "skipped_rows": skipped_rows,
+                "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
+            }, status=200)
 
         except Exception as e:
-            return Response({'statusCode': 400, 'status': False, 'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-        return Response({
-            'statusCode': 200,
-            'status': True,
-            'duplicates': list(set(duplicate_names)),
-            'message': f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
-            'imported_count': imported_count
-        }, status=status.HTTP_200_OK)
-
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": str(e)
+            }, status=400)
+        
 
 class ECAForListAPIView(APIView):
 
@@ -7413,6 +7685,7 @@ class ECAAwardingBodyExportAPIView(APIView):
             'eca_body_full_name': 'ECA Body Full Name',
             'eca_body_short_name': 'ECA Body Short Name',
             'eca_valid_period': 'ECA Valid Period',
+            'description': 'Description',
             'created_at': 'Created On',
             'updated_at': 'Modified On'
         }
@@ -7529,7 +7802,7 @@ class ECAAwardingBodyExportAPIView(APIView):
         # ----------------------------
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'ECA Awarding Body'
+        dataset.title = 'ECAAwardingBody'
 
         for eca in queryset:
             row = []
