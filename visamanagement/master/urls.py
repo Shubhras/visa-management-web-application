@@ -1081,7 +1081,7 @@ urlpatterns = [
     path('study-factor-age/', StudyFactorAgeListAPIView.as_view(),name='age-list'),
     path('study-factor-age/<uuid:uuid>/', StudyFactorAgeRetrieveAPIView.as_view(),name='age-retrieve'),
     path('study-factor-age/<uuid:uuid>/update/', StudyFactorAgeUpdateAPIView.as_view(),name='age-update'),
-    path('study-factor-age/<uuid:uuid>/delete/', StudyFactorAgeDeleteAPIView.as_view(),name='age-delete'),
+    path('study-factor-age/delete/', StudyFactorAgeDeleteAPIView.as_view(),name='age-delete'),
     path('study-factor-age/export/', StudyFactorAgeExportAPIView.as_view(),name='age-export'),
     path('study-factor-age/import/', StudyFactorAgeImportAPIView.as_view(),name='age-import'),
 
