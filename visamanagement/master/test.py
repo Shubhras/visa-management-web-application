@@ -310,8 +310,7 @@ class LanguageListAPIView(APIView):
        # queryset = Language.objects.filter(is_deleted=False)  
         if search:
             queryset = queryset.filter(
-                Q(name__istartswith=search) |
-                Q(description__istartswith=search)
+                Q(name__istartswith=search) 
             )
 
        # queryset = queryset.order_by(sort_by)
@@ -436,8 +435,7 @@ class LanguageExportAPIView(APIView):
         queryset = Language.objects.filter(is_deleted=False)
         if search:
             queryset = queryset.filter(
-                Q(name__istartswith=search) |
-                Q(description__istartswith=search)
+                Q(name__istartswith=search) 
             )
 
 
@@ -1334,8 +1332,7 @@ class LanguagetestmoduleNameListAPIView(APIView):
         queryset = LanguagetestmoduleName.objects.filter(is_deleted=False)
         if search:
             queryset = queryset.filter(
-                Q(name__istartswith=search) |
-                Q(description__istartswith=search)
+                Q(name__istartswith=search)
             )
 
         #sorting
@@ -1608,8 +1605,8 @@ class LanguagetestmoduleNameExportAPIView(APIView):
             queryset = queryset.filter(uuid__in=uuids)
         queryset = queryset.order_by('-created_at')
 
-        allowed_sort_fields = ['name','description', 'created_at', 'updated_at']
-        queryset = LanguageTest.objects.filter(is_deleted=False)
+        # allowed_sort_fields = ['name','description', 'created_at', 'updated_at']
+        # queryset = LanguageTest.objects.filter(is_deleted=False)
 
         #searching
         if search:
