@@ -2,17 +2,15 @@ import React, { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import Select from "react-select";
-import { countryDemoList } from "../../../../store/master/companyMasters/actions";
 import {
-  ageAdd,
-  ageEdit,
-  ageGroupList,
-  courseLevelList,
+  academicResultGroupList,
+  academicResultTypeList,
   factorForList,
-  representingCountryList,
+  studyFactorAcademicResultAdd,
+  studyFactorAcademicResultEdit,
 } from "../../../../store/actions";
 
-const AddEditAgeModal = ({
+const AddEditStudyFactorAcademicResultModal = ({
   show,
   handleClose,
   mode = "add",
@@ -20,31 +18,26 @@ const AddEditAgeModal = ({
 }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
-  const [countryListData, setCountryListData] = useState([]);
-  const [courseLevelData, setCourseLevelData] = useState([]);
   const [factorForData, setFactorForData] = useState([]);
-  const [ageGroupData, setAgeGroupData] = useState([]);
+  const [academicResultGroupData, setAcademicResultGroupData] = useState([]);
+  const [academicResultTypeData, setAcademicResultTypeData] = useState([]);
 
   // Form state
   const [formData, setFormData] = useState({
     uuid: "",
     factorForName: "",
-    studyAgeGroup: "",
-    minimumAge: "",
-    maximumAge: "",
-    countryName: [],
-    courseLevel: [],
+    studyAcademicResultGroup: "",
+    minimumAcademicResultType: "",
+    minimumAcademicResult: "",
     description: "",
   });
 
   // Validation errors state
   const [errors, setErrors] = useState({
     factorForName: "",
-    studyAgeGroup: "",
-    minimumAge: "",
-    maximumAge: "",
-    countryName: [],
-    courseLevel: [],
+    studyAcademicResultGroup: "",
+    minimumAcademicResultType: "",
+    minimumAcademicResult: "",
   });
 
   // Populate form data when in edit mode
@@ -53,11 +46,9 @@ const AddEditAgeModal = ({
       setFormData({
         uuid: rowData.uuid || "",
         factorForName: rowData.factor_for_uuid || "",
-        studyAgeGroup: rowData.study_age_group_uuid || "",
-        minimumAge: rowData.minimum_age_months || "",
-        maximumAge: rowData.maximum_age_months || "", //formData.state === "STATE" ? "State" : "Territory" || '',
-        countryName: rowData.countryName || "",
-        courseLevel: rowData.courseLevel || "",
+        studyAcademicResultGroup: rowData.studyAcademicResultGroup || "",
+        minimumAcademicResultType: rowData.minimumAcademicResultType || "",
+        minimumAcademicResult: rowData.minimumAcademicResult || "", //formData.state === "STATE" ? "State" : "Territory" || '',
         description: rowData.description || "",
       });
     } else {
@@ -79,22 +70,6 @@ const AddEditAgeModal = ({
     };
 
     dispatch(
-      countryDemoList(params, (response, error) => {
-        setLoading(false);
-        if (response?.statusCode === 200 && response?.status === true) {
-          setCountryListData(response?.data || []);
-        }
-      })
-    );
-    dispatch(
-      courseLevelList(params, (response, error) => {
-        setLoading(false);
-        if (response?.statusCode === 200 && response?.status === true) {
-          setCourseLevelData(response?.data || []);
-        }
-      })
-    );
-    dispatch(
       factorForList(params, (response, error) => {
         setLoading(false);
         if (response?.statusCode === 200 && response?.status === true) {
@@ -103,10 +78,18 @@ const AddEditAgeModal = ({
       })
     );
     dispatch(
-      ageGroupList(params, (response, error) => {
+      academicResultGroupList(params, (response, error) => {
         setLoading(false);
         if (response?.statusCode === 200 && response?.status === true) {
-          setAgeGroupData(response?.data || []);
+          setAcademicResultGroupData(response?.data || []);
+        }
+      })
+    );
+    dispatch(
+      academicResultTypeList(params, (response, error) => {
+        setLoading(false);
+        if (response?.statusCode === 200 && response?.status === true) {
+          setAcademicResultTypeData(response?.data || []);
         }
       })
     );
@@ -150,36 +133,26 @@ const AddEditAgeModal = ({
     const newErrors = {};
     let isValid = true;
 
-    // Country validation
-    if (!formData.countryName.length) {
-      newErrors.countryName = "Country is required";
-      isValid = false;
-    }
-
-    if (!formData.courseLevel.length) {
-      newErrors.courseLevel = "Course Level is required";
-      isValid = false;
-    }
-
     // State name validation
     if (!formData.factorForName.trim()) {
       newErrors.factorForName = "Factor For name is required";
       isValid = false;
     }
 
-    if (!formData.studyAgeGroup.trim()) {
-      newErrors.studyAgeGroup = "Study Age Group is required";
+    if (!formData.studyAcademicResultGroup.trim()) {
+      newErrors.studyAcademicResultGroup = "Academic Result Group is required";
       isValid = false;
     }
 
-    if (!formData.minimumAge.trim()) {
-      newErrors.minimumAge = "Minimum Age is required";
+    if (!formData.minimumAcademicResultType.trim()) {
+      newErrors.minimumAcademicResultType =
+        "Minimum Academic Result Type is required";
       isValid = false;
     }
 
     // State name validation
-    if (!formData.maximumAge.trim()) {
-      newErrors.maximumAge = "Maximum Age is required";
+    if (!formData.minimumAcademicResult.trim()) {
+      newErrors.minimumAcademicResult = "Minimum Academic Result is required";
       isValid = false;
     }
 
@@ -197,25 +170,24 @@ const AddEditAgeModal = ({
           ? {
               uuid: formData.uuid,
               factor_for: formData.factorForName,
-              study_age_group: formData.studyAgeGroup,
-              minimum_age_months: formData.minimumAge,
-              maximum_age_months: formData.maximumAge,
-              country: formData.countryName,
-              course_level: formData.courseLevel,
+              studyAcademicResultGroup: formData.studyAcademicResultGroup,
+              minimumAcademicResult: formData.minimumAcademicResult,
+              minimumAcademicResultType: formData.minimumAcademicResultType,
               description: formData.description.trim(),
             }
           : {
               factor_for: formData.factorForName,
-              study_age_group: formData.studyAgeGroup,
-              minimum_age_months: formData.minimumAge,
-              maximum_age_months: formData.maximumAge,
-              country: formData.countryName,
-              course_level: formData.courseLevel,
+              studyAcademicResultGroup: formData.studyAcademicResultGroup,
+              minimumAcademicResult: formData.minimumAcademicResult,
+              minimumAcademicResultType: formData.minimumAcademicResultType,
               description: formData.description.trim(),
             };
 
       setLoading(true);
-      const action = mode === "edit" ? ageEdit : ageAdd;
+      const action =
+        mode === "edit"
+          ? studyFactorAcademicResultEdit
+          : studyFactorAcademicResultAdd;
 
       dispatch(
         action(sendPayload, (response, error) => {
@@ -242,11 +214,9 @@ const AddEditAgeModal = ({
     setFormData({
       uuid: "",
       factorForName: "",
-      studyAgeGroup: "",
-      minimumAge: "",
-      maximumAge: "",
-      countryName: "",
-      courseLevel: "",
+      studyAcademicResultGroup: "",
+      minimumAcademicResultType: "",
+      minimumAcademicResult: "",
       description: "",
     });
     setErrors({});
@@ -287,12 +257,12 @@ const AddEditAgeModal = ({
             />
           </div>
 
-          <div className="modal-body p-24 pt-10">
+          <div className="modal-body p-24">
             <form onSubmit={handleSubmit}>
               <div className="row">
                 {/* Country Dropdown */}
-                {/* <div className="col-12 mb-10">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                {/* <div className="col-12 mb-20">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                     Country Name <span className="text-danger">*</span>
                   </label>
                   <Select
@@ -333,8 +303,8 @@ const AddEditAgeModal = ({
                   )}
                 </div> */}
 
-                 <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                <div className="col-12 mb-20">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                     Factor For <span className="text-danger">*</span>
                   </label>
                   <Select
@@ -376,191 +346,136 @@ const AddEditAgeModal = ({
                   )}
                 </div>
 
-               <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                    Study Age Group <span className="text-danger">*</span>
+                <div className="col-12 mb-20">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                    Study : Academic Result Group{" "}
+                    <span className="text-danger">*</span>
                   </label>
                   <Select
-                    options={ageGroupData.map((option) => ({
+                    options={academicResultGroupData.map((option) => ({
                       value: option.uuid,
                       label: option.name,
                     }))}
                     value={
-                      formData.studyAgeGroup
-                        ? ageGroupData
+                      formData.studyAcademicResultGroup
+                        ? academicResultGroupData
                             .map((option) => ({
                               value: option.uuid,
                               label: option.name,
                             }))
-                            .find((opt) => opt.value === formData.studyAgeGroup)
+                            .find(
+                              (opt) =>
+                                opt.value === formData.studyAcademicResultGroup
+                            )
                         : null
                     }
                     onChange={(selectedOption) =>
                       handleChange({
                         target: {
-                          name: "studyAgeGroup",
+                          name: "studyAcademicResultGroup",
                           value: selectedOption ? selectedOption.value : "",
                         },
                       })
                     }
                     filterOption={customFilterOption}
-                    placeholder="Select Study Age Group"
+                    placeholder="Select Academic Result Group"
                     isClearable
                     isSearchable
                     className={`custom-select-container ${
-                      errors.studyAgeGroup ? "is-invalid" : ""
+                      errors.studyAcademicResultGroup ? "is-invalid" : ""
                     }`}
                     classNamePrefix="custom-select"
                   />
-                  {errors.studyAgeGroup && (
+                  {errors.studyAcademicResultGroup && (
                     <div className="text-danger text-sm mt-1">
-                      {errors.studyAgeGroup}
+                      {errors.studyAcademicResultGroup}
                     </div>
                   )}
                 </div>
 
-                {/* State Name */}
-                <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                    Minimum Age <span className="text-danger">*</span>
+                <div className="col-12 mb-20">
+                  {/* Main Label */}
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                    Minimum Academic Result Required{" "}
+                    <span className="text-danger">*</span>
                   </label>
-                  <input
-                    type="number"
-                    name="minimumAge"
-                    value={formData.minimumAge}
-                    onChange={handleChange}
-                    className={`form-control radius-8 ${
-                      errors.minimumAge ? "is-invalid" : ""
-                    }`}
-                    placeholder="Enter Minimum Age"
-                  />
-                  {errors.minimumAge && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.minimumAge}
-                    </div>
-                  )}
-                </div>
-                <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                    Maximum Age <span className="text-danger">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    name="maximumAge"
-                    value={formData.maximumAge}
-                    onChange={handleChange}
-                    className={`form-control radius-8 ${
-                      errors.maximumAge ? "is-invalid" : ""
-                    }`}
-                    placeholder="Enter Maximum Age"
-                  />
-                  {errors.maximumAge && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.maximumAge}
-                    </div>
-                  )}
-                </div>
 
-                <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                    Country Name <span className="text-danger">*</span>
-                  </label>
-                  <Select
-                    options={countryListData.map((option) => ({
-                      value: option.uuid,
-                      label: option.name,
-                    }))}
-                    isMulti // ⬅ MULTI SELECT ADDED
-                    value={
-                      Array.isArray(formData.countryName)
-                        ? countryListData
-                            .map((option) => ({
-                              value: option.uuid,
-                              label: option.name,
-                            }))
-                            .filter((opt) =>
-                              formData.countryName.includes(opt.value)
-                            )
-                        : []
-                    }
-                    onChange={(selectedOptions) =>
-                      handleChange({
-                        target: {
-                          name: "countryName",
-                          value: selectedOptions
-                            ? selectedOptions.map((opt) => opt.value)
-                            : [],
-                        },
-                      })
-                    }
-                    filterOption={customFilterOption}
-                    placeholder="Select Country Name"
-                    isClearable
-                    isSearchable
-                    className={`custom-select-container ${
-                      errors.countryName ? "is-invalid" : ""
-                    }`}
-                    classNamePrefix="custom-select"
-                  />
+                  <div className="row">
+                    {/* Select Box */}
+                    <div className="col-6">
+                      <Select
+                        options={academicResultTypeData.map((option) => ({
+                          value: option.uuid,
+                          label: option.name,
+                        }))}
+                        value={
+                          formData.minimumAcademicResultType
+                            ? academicResultTypeData
+                                .map((option) => ({
+                                  value: option.uuid,
+                                  label: option.name,
+                                }))
+                                .find(
+                                  (opt) =>
+                                    opt.value ===
+                                    formData.minimumAcademicResultType
+                                )
+                            : null
+                        }
+                        onChange={(selectedOption) =>
+                          handleChange({
+                            target: {
+                              name: "minimumAcademicResultType",
+                              value: selectedOption ? selectedOption.value : "",
+                            },
+                          })
+                        }
+                        filterOption={customFilterOption}
+                        placeholder="Select Academic Result Type"
+                        isClearable
+                        isSearchable
+                        className={`custom-select-container ${
+                          errors.minimumAcademicResultType ? "is-invalid" : ""
+                        }`}
+                        classNamePrefix="custom-select"
+                      />
 
-                  {errors.countryName && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.countryName}
+                      {errors.minimumAcademicResultType && (
+                        <div className="text-danger text-sm mt-1">
+                          {errors.minimumAcademicResultType}
+                        </div>
+                      )}
                     </div>
-                  )}
+
+                    {/* Text Input */}
+                    <div className="col-6">
+                      <input
+                        type="text"
+                        id="desc"
+                        name="minimumAcademicResult"
+                        value={formData.minimumAcademicResult}
+                        onChange={handleChange}
+                        placeholder="Minimum Academic Result"
+                        className={`form-control custom-select-container ${
+                          errors.minimumAcademicResult ? "is-invalid" : ""
+                        }`}
+                      />
+
+                      {errors.minimumAcademicResult && (
+                        <div className="text-danger text-sm mt-1">
+                          {errors.minimumAcademicResult}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
-                <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                    Course Level <span className="text-danger">*</span>
-                  </label>
-                  <Select
-                    options={courseLevelData.map((option) => ({
-                      value: option.uuid,
-                      label: option.name,
-                    }))}
-                    isMulti // ⬅ MULTI SELECT ADDED
-                    value={
-                      Array.isArray(formData.courseLevel)
-                        ? courseLevelData
-                            .map((option) => ({
-                              value: option.uuid,
-                              label: option.name,
-                            }))
-                            .filter((opt) =>
-                              formData.courseLevel.includes(opt.value)
-                            )
-                        : []
-                    }
-                    onChange={(selectedOptions) =>
-                      handleChange({
-                        target: {
-                          name: "courseLevel",
-                          value: selectedOptions
-                            ? selectedOptions.map((opt) => opt.value)
-                            : [],
-                        },
-                      })
-                    }
-                    filterOption={customFilterOption}
-                    placeholder="Select Course Level"
-                    isClearable
-                    isSearchable
-                    className={`custom-select-container ${
-                      errors.courseLevel ? "is-invalid" : ""
-                    }`}
-                    classNamePrefix="custom-select"
-                  />
-
-                  {errors.courseLevel && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.courseLevel}
-                    </div>
-                  )}
-                </div>
                 {/* Description */}
-                <div className="col-12 mb-10">
-                  <label htmlFor="desc" className="form-label fw-semibold text-primary-light text-sm mb-0">
+                <div className="col-12 mb-20">
+                  <label
+                    htmlFor="desc"
+                    className="form-label fw-semibold text-primary-light text-sm mb-8"
+                  >
                     Description
                   </label>
                   <textarea
@@ -612,4 +527,4 @@ const AddEditAgeModal = ({
   );
 };
 
-export default AddEditAgeModal;
+export default AddEditStudyFactorAcademicResultModal;

@@ -9,10 +9,13 @@ import {
   ageGroupList,
   courseLevelList,
   factorForList,
+  instituteTypeList,
   representingCountryList,
+  studyFactorGapAdd,
+  studyFactorGapEdit,
 } from "../../../../store/actions";
 
-const AddEditAgeModal = ({
+const AddEditStudyFactorGapModal = ({
   show,
   handleClose,
   mode = "add",
@@ -24,16 +27,17 @@ const AddEditAgeModal = ({
   const [courseLevelData, setCourseLevelData] = useState([]);
   const [factorForData, setFactorForData] = useState([]);
   const [ageGroupData, setAgeGroupData] = useState([]);
+  const [instituteTypeData, setInstituteTypeData] = useState([]);
 
   // Form state
   const [formData, setFormData] = useState({
     uuid: "",
     factorForName: "",
     studyAgeGroup: "",
-    minimumAge: "",
-    maximumAge: "",
+    maximumAgeAccepted: "",
     countryName: [],
     courseLevel: [],
+    instituteType: [],
     description: "",
   });
 
@@ -41,10 +45,10 @@ const AddEditAgeModal = ({
   const [errors, setErrors] = useState({
     factorForName: "",
     studyAgeGroup: "",
-    minimumAge: "",
-    maximumAge: "",
+    maximumAgeAccepted: "",
     countryName: [],
     courseLevel: [],
+    instituteType: [],
   });
 
   // Populate form data when in edit mode
@@ -54,8 +58,8 @@ const AddEditAgeModal = ({
         uuid: rowData.uuid || "",
         factorForName: rowData.factor_for_uuid || "",
         studyAgeGroup: rowData.study_age_group_uuid || "",
-        minimumAge: rowData.minimum_age_months || "",
-        maximumAge: rowData.maximum_age_months || "", //formData.state === "STATE" ? "State" : "Territory" || '',
+        maximumAgeAccepted: rowData.maximumAgeAccepted || "",
+        instituteType: rowData.instituteType || "", //formData.state === "STATE" ? "State" : "Territory" || '',
         countryName: rowData.countryName || "",
         courseLevel: rowData.courseLevel || "",
         description: rowData.description || "",
@@ -110,6 +114,14 @@ const AddEditAgeModal = ({
         }
       })
     );
+    dispatch(
+      instituteTypeList(params, (response, error) => {
+        setLoading(false);
+        if (response?.statusCode === 200 && response?.status === true) {
+          setInstituteTypeData(response?.data || []);
+        }
+      })
+    );
   };
 
   // Handle input changes
@@ -161,6 +173,11 @@ const AddEditAgeModal = ({
       isValid = false;
     }
 
+    if (!formData.instituteType.length) {
+      newErrors.instituteType = "Institute Type is required";
+      isValid = false;
+    }
+
     // State name validation
     if (!formData.factorForName.trim()) {
       newErrors.factorForName = "Factor For name is required";
@@ -172,14 +189,8 @@ const AddEditAgeModal = ({
       isValid = false;
     }
 
-    if (!formData.minimumAge.trim()) {
-      newErrors.minimumAge = "Minimum Age is required";
-      isValid = false;
-    }
-
-    // State name validation
-    if (!formData.maximumAge.trim()) {
-      newErrors.maximumAge = "Maximum Age is required";
+    if (!formData.maximumAgeAccepted.trim()) {
+      newErrors.maximumAgeAccepted = "Minimum Age Accepted is required";
       isValid = false;
     }
 
@@ -197,25 +208,25 @@ const AddEditAgeModal = ({
           ? {
               uuid: formData.uuid,
               factor_for: formData.factorForName,
-              study_age_group: formData.studyAgeGroup,
-              minimum_age_months: formData.minimumAge,
-              maximum_age_months: formData.maximumAge,
-              country: formData.countryName,
-              course_level: formData.courseLevel,
+              gap_group: formData.studyAgeGroup,
+              maximum_gap_accepted: formData.maximumAgeAccepted,
+              institute_types: formData.instituteType,
+              countries: formData.countryName,
+              course_levels: formData.courseLevel,
               description: formData.description.trim(),
             }
           : {
               factor_for: formData.factorForName,
-              study_age_group: formData.studyAgeGroup,
-              minimum_age_months: formData.minimumAge,
-              maximum_age_months: formData.maximumAge,
-              country: formData.countryName,
-              course_level: formData.courseLevel,
+              gap_group: formData.studyAgeGroup,
+              maximum_gap_accepted: formData.maximumAgeAccepted,
+              institute_types: formData.instituteType,
+              countries: formData.countryName,
+              course_levels: formData.courseLevel,
               description: formData.description.trim(),
             };
 
       setLoading(true);
-      const action = mode === "edit" ? ageEdit : ageAdd;
+      const action = mode === "edit" ? studyFactorGapEdit : studyFactorGapAdd;
 
       dispatch(
         action(sendPayload, (response, error) => {
@@ -243,10 +254,10 @@ const AddEditAgeModal = ({
       uuid: "",
       factorForName: "",
       studyAgeGroup: "",
-      minimumAge: "",
-      maximumAge: "",
-      countryName: "",
-      courseLevel: "",
+      maximumAgeAccepted: "",
+      countryName: [],
+      courseLevel: [],
+      instituteType: [],
       description: "",
     });
     setErrors({});
@@ -277,7 +288,7 @@ const AddEditAgeModal = ({
         <div className="modal-content radius-16 bg-base">
           <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
             <h1 className="modal-title fs-5" id="AddEditStateModalLabel">
-              {mode === "edit" ? "Edit Age" : "Add Age"}
+              {mode === "edit" ? "Edit Gap" : "Add Gap"}
             </h1>
             <button
               type="button"
@@ -287,12 +298,12 @@ const AddEditAgeModal = ({
             />
           </div>
 
-          <div className="modal-body p-24 pt-10">
+          <div className="modal-body p-24">
             <form onSubmit={handleSubmit}>
               <div className="row">
                 {/* Country Dropdown */}
-                {/* <div className="col-12 mb-10">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                {/* <div className="col-12 mb-20">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                     Country Name <span className="text-danger">*</span>
                   </label>
                   <Select
@@ -333,8 +344,8 @@ const AddEditAgeModal = ({
                   )}
                 </div> */}
 
-                 <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                <div className="col-6 mb-20">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                     Factor For <span className="text-danger">*</span>
                   </label>
                   <Select
@@ -376,8 +387,8 @@ const AddEditAgeModal = ({
                   )}
                 </div>
 
-               <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                <div className="col-6 mb-20">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                     Study Age Group <span className="text-danger">*</span>
                   </label>
                   <Select
@@ -421,49 +432,30 @@ const AddEditAgeModal = ({
 
                 {/* State Name */}
                 <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                    Minimum Age <span className="text-danger">*</span>
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                    Minimum Age Accepted(Months)
+                    <span className="text-danger">*</span>
                   </label>
                   <input
                     type="number"
-                    name="minimumAge"
-                    value={formData.minimumAge}
+                    name="maximumAgeAccepted"
+                    value={formData.maximumAgeAccepted}
                     onChange={handleChange}
                     className={`form-control radius-8 ${
-                      errors.minimumAge ? "is-invalid" : ""
+                      errors.maximumAgeAccepted ? "is-invalid" : ""
                     }`}
-                    placeholder="Enter Minimum Age"
+                    placeholder="Enter Minimum Age Accepted"
                   />
-                  {errors.minimumAge && (
+                  {errors.maximumAgeAccepted && (
                     <div className="text-danger text-sm mt-1">
-                      {errors.minimumAge}
-                    </div>
-                  )}
-                </div>
-                <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                    Maximum Age <span className="text-danger">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    name="maximumAge"
-                    value={formData.maximumAge}
-                    onChange={handleChange}
-                    className={`form-control radius-8 ${
-                      errors.maximumAge ? "is-invalid" : ""
-                    }`}
-                    placeholder="Enter Maximum Age"
-                  />
-                  {errors.maximumAge && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.maximumAge}
+                      {errors.maximumAgeAccepted}
                     </div>
                   )}
                 </div>
 
                 <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                    Country Name <span className="text-danger">*</span>
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                    Country Name<span className="text-danger">*</span>
                   </label>
                   <Select
                     options={countryListData.map((option) => ({
@@ -511,8 +503,8 @@ const AddEditAgeModal = ({
                 </div>
 
                 <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                    Course Level <span className="text-danger">*</span>
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                    Course Level<span className="text-danger">*</span>
                   </label>
                   <Select
                     options={courseLevelData.map((option) => ({
@@ -558,9 +550,62 @@ const AddEditAgeModal = ({
                     </div>
                   )}
                 </div>
+
+                <div className="col-6 mb-20">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                    Institute Type<span className="text-danger">*</span>
+                  </label>
+                  <Select
+                    options={instituteTypeData.map((option) => ({
+                      value: option.uuid,
+                      label: option.name,
+                    }))}
+                    isMulti // ⬅ MULTI SELECT ADDED
+                    value={
+                      Array.isArray(formData.instituteType)
+                        ? instituteTypeData
+                            .map((option) => ({
+                              value: option.uuid,
+                              label: option.name,
+                            }))
+                            .filter((opt) =>
+                              formData.instituteType.includes(opt.value)
+                            )
+                        : []
+                    }
+                    onChange={(selectedOptions) =>
+                      handleChange({
+                        target: {
+                          name: "instituteType",
+                          value: selectedOptions
+                            ? selectedOptions.map((opt) => opt.value)
+                            : [],
+                        },
+                      })
+                    }
+                    filterOption={customFilterOption}
+                    placeholder="Select Institute Type"
+                    isClearable
+                    isSearchable
+                    className={`custom-select-container ${
+                      errors.instituteType ? "is-invalid" : ""
+                    }`}
+                    classNamePrefix="custom-select"
+                  />
+
+                  {errors.instituteType && (
+                    <div className="text-danger text-sm mt-1">
+                      {errors.instituteType}
+                    </div>
+                  )}
+                </div>
+
                 {/* Description */}
-                <div className="col-12 mb-10">
-                  <label htmlFor="desc" className="form-label fw-semibold text-primary-light text-sm mb-0">
+                <div className="col-12 mb-20">
+                  <label
+                    htmlFor="desc"
+                    className="form-label fw-semibold text-primary-light text-sm mb-8"
+                  >
                     Description
                   </label>
                   <textarea
@@ -612,4 +657,4 @@ const AddEditAgeModal = ({
   );
 };
 
-export default AddEditAgeModal;
+export default AddEditStudyFactorGapModal;

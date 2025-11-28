@@ -7,7 +7,7 @@ import CommanSampleExcelDownloadModal from '../../../../components/comman/Comman
 import { stateImportData } from '../../../../store/master/generalMasters/actions';
 import { exportToExcelDuplicate, exportToExcelWrongData } from '../../../../helper/utils/commanHelper';
 import { ageImportData } from '../../../../store/actions';
-const AddImportAgeModal = ({ show, handleClose }) => {
+const AddImportStudyFactorEntranceTestAbilityModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
     const [file, setFile] = useState(null);
@@ -90,9 +90,9 @@ const AddImportAgeModal = ({ show, handleClose }) => {
                     if (response?.duplicates?.length > 0) {
                         const prepareData = {
                             data: response.duplicates || [],
-                            headers: ["Factor For", "Study Age Group", "Minimum Age","Maximum Age","Country", "Course Level",],
-                            sheetName: "Study Factor Age",
-                            fileName: "Study Factor Age",
+                            headers: ["Factor For", "Study Age Group", "Maximum Age Accepted(Months)","Country","Intitude Type", "Course Level",],
+                            sheetName: "Study Factor Gap",
+                            fileName: "Study Factor Gap",
                         };
                         exportToExcelDuplicate(
                             prepareData.data,
@@ -104,9 +104,9 @@ const AddImportAgeModal = ({ show, handleClose }) => {
                      if (response?.skipped_rows?.length > 0) {
                         const prepareData = {
                             data: response.skipped_rows || [],
-                            headers: ["Factor For", "Study Age Group", "Minimum Age","Maximum Age","Country", "Course Level","Reason"],
-                            sheetName: "Study Factor Age",
-                            fileName: "Study Factor Age",
+                            headers: ["Factor For", "Study Age Group", "Maximum Age Accepted(Months)","Country","Intitude Type", "Course Level","Reason"],
+                            sheetName: "Study Factor Gap",
+                            fileName: "Study Factor Gap",
                         };
                         exportToExcelWrongData(
                             prepareData.data,
@@ -156,7 +156,7 @@ const AddImportAgeModal = ({ show, handleClose }) => {
                     <div className="modal-content radius-16 bg-base">
                         <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
                             <h1 className="modal-title fs-5" id="StateModalLabel">
-                                Upload Study Factor Age
+                                Upload Study Factor Gap
                             </h1>
                             <button
                                 type="button"
@@ -166,7 +166,7 @@ const AddImportAgeModal = ({ show, handleClose }) => {
                             />
                         </div>
 
-                        <div className="modal-body p-24 pt-10">
+                        <div className="modal-body p-24">
                             <div className='text-md-end text-end'>
                                 <button
                                     type="button"
@@ -177,8 +177,8 @@ const AddImportAgeModal = ({ show, handleClose }) => {
                             </div>
                             <form onSubmit={handleSubmit}>
                                 <div className="row">
-                                    <div className="col-12 mb-10">
-                                        <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                                    <div className="col-12 mb-20">
+                                        <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                                             Upload file <span className="text-danger">*</span>
                                         </label>
                                         <input
@@ -191,8 +191,8 @@ const AddImportAgeModal = ({ show, handleClose }) => {
                                         {error && !sheetNames.length && <div className="text-danger text-sm mt-1">{error}</div>}
                                     </div>
                                     {sheetNames.length > 0 && (
-                                        <div className="col-12 mb-10">
-                                            <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                                        <div className="col-12 mb-20">
+                                            <label className="form-label fw-semibold text-primary-light text-sm mb-8">
                                                 Select name <span className="text-danger">*</span>
                                             </label>
                                             <div className="d-flex flex-column gap-2">
@@ -256,10 +256,10 @@ const AddImportAgeModal = ({ show, handleClose }) => {
             </div>
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
-                    downloadFileName: "Study Factor Age",
-                    items: ["Factor For", "Study Age Group", "Minimum Age","Maximum Age","Country", "Course Level", "Description"],
-                    selectedItems: ["Factor For", "Study Age Group", "Minimum Age","Maximum Age","Country", "Course Level"],
-                    ItemsRequired: ["Factor For", "Study Age Group", "Minimum Age","Maximum Age","Country", "Course Level"]
+                    downloadFileName: "Study Factor Gap",
+                    items: ["Factor For", "Study Age Group", "Maximum Age Accepted(Months)","Country","Intitude Type", "Course Level", "Description"],
+                    selectedItems: ["Factor For", "Study Age Group", "Maximum Age Accepted(Months)","Country","Intitude Type", "Course Level",],
+                    ItemsRequired: ["Factor For", "Study Age Group", "Maximum Age Accepted(Months)","Country","Intitude Type", "Course Level",]
                 }
                 } />
             )}
@@ -267,4 +267,4 @@ const AddImportAgeModal = ({ show, handleClose }) => {
     );
 };
 
-export default AddImportAgeModal;
+export default AddImportStudyFactorEntranceTestAbilityModal;
