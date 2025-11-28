@@ -6308,35 +6308,124 @@ class EducationTypeImportAPIView(APIView):
 
 # -------------------- MediumofEducation CRUD -------------------- #
 
+# class MediumofEducationListAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def get(self, request):
+#         search = request.GET.get('search', '').strip()
+#         sort_by = request.GET.get('sortBy', 'created_at')
+#         sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
+
+#         allowed_sort_fields = ['name', 'perticulars', 'created_at']
+#         if sort_by not in allowed_sort_fields:
+#             sort_by = 'created_at'
+
+#         # Apply descending order for 'desc'
+#         if sort_order == 'desc':
+#             sort_by = f'-{sort_by}'
+
+#         queryset = MediumofEducation.objects.filter(is_deleted=False)
+
+#         if search:
+#             queryset = queryset.filter(
+#                 Q(name__istartswith=search) 
+#             )
+
+#         queryset = queryset.order_by(sort_by)
+#         paginator = CustomPagination()
+#         result_page = paginator.paginate_queryset(queryset, request)
+#         serializer = MediumofEducationSerializer(result_page, many=True)
+#         return paginator.get_paginated_response(serializer.data)
+
 class MediumofEducationListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
+        custom_sort = request.GET.get('customSort')
         sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
+        sort_order = request.GET.get('sortOrder', 'desc')
+        uuids_param = request.GET.get('uuids', '')
 
-        allowed_sort_fields = ['name', 'perticulars', 'created_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
+        # -----------------------------
+        # UUID filter
+        # -----------------------------
+        def parse_uuid_list(raw):
+            valid = []
+            if raw:
+                for u in raw.split(','):
+                    try:
+                        valid.append(UUID(u.strip()))
+                    except:
+                        pass
+            return valid
 
-        # Apply descending order for 'desc'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        uuid_list = parse_uuid_list(uuids_param)
 
+        # -----------------------------
+        # Base queryset
+        # -----------------------------
         queryset = MediumofEducation.objects.filter(is_deleted=False)
+        if uuid_list:
+            queryset = queryset.filter(uuid__in=uuid_list)
 
+        # -----------------------------
+        # Search filter
+        # -----------------------------
         if search:
-            queryset = queryset.filter(
-                Q(name__istartswith=search) 
-            )
+            queryset = queryset.filter(name__istartswith=search)
 
-        queryset = queryset.order_by(sort_by)
+        # -----------------------------
+        # Sorting
+        # -----------------------------
+        sort_field_map = {
+            "name": "name",
+            "perticulars": "Perticulars",
+            "created_at": "created_at",
+            "updated_at": "updated_at",
+        }
+        allowed_sort_fields = list(sort_field_map.keys())
+
+        sort_fields = []
+
+        if custom_sort:
+            for idx, rule in enumerate(custom_sort.split(',')):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive for string fields
+                    if field in ['name', 'perticulars']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+                except ValueError:
+                    continue
+        else:
+            if sort_by not in allowed_sort_fields:
+                sort_by = 'created_at'
+            orm_field = sort_field_map[sort_by]
+            f = F(orm_field)
+            sort_fields = [f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # -----------------------------
+        # Pagination + Response
+        # -----------------------------
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = MediumofEducationSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
-
+    
 
 class MediumofEducationCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -6629,7 +6718,7 @@ class MediumofEducationExportAPIView(APIView):
             queryset = queryset.filter(uuid__in=uuids_list)
 
         if search:
-            queryset = queryset.filter(name__icontains=search)
+            queryset = queryset.filter(name__istartswith=search)
 
         # ---------------------------
         # Sorting Logic
@@ -6689,7 +6778,7 @@ class MediumofEducationExportAPIView(APIView):
         # ---------------------------
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'Medium of Education'
+        dataset.title = 'MediumofEducation'
 
         for obj in queryset:
             row = []
@@ -6934,8 +7023,8 @@ class MediumofEducationImportAPIView(APIView):
                 "statusCode": 200,
                 "status": True,
                 "imported_count": len(to_create) + sum(1 for m in existing_mediums.values() if m.is_deleted == False),
-                "duplicates": duplicates,
-                "skipped_rows": skipped_rows,
+                "duplicates": reversed(duplicates),
+                "skipped_rows": reversed(skipped_rows),
                 "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
             }, status=200)
 
