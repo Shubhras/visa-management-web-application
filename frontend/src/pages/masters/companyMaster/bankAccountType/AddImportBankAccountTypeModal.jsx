@@ -103,7 +103,7 @@ const AddImportBankAccountTypeModal = ({ show, handleClose }) => {
                     if (response?.skipped_rows?.length > 0) {
                         const prepareData = {
                             data: response.skipped_rows || [],
-                            headers: ["Bank Account Type", "Reason"],
+                            headers: ["Bank Account Type","Description", "Reason"],
                             sheetName: "BankAccountType",
                             fileName: "BankAccountType",
                         };
