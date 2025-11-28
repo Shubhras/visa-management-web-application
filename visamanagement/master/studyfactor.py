@@ -5527,152 +5527,160 @@ class StudyFactorLanguageAbilityImportAPIView(APIView):
 
 #--------------------EntranctestAbility--------------------
 
-class StudyFactorEntranceTestAbilityCreateAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
+# class StudyFactorEntranceTestAbilityCreateAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
 
-    def post(self, request):
-        serializer = StudyFactorEntranceTestAbilitySerializer(data=request.data)
+#     def post(self, request):
+#         serializer = StudyFactorEntranceTestAbilitySerializer(data=request.data)
 
-        if serializer.is_valid():
-            serializer.save()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": "StudyFactorEntranceTestAbility created successfully",
-                "data": serializer.data
-            })
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": "StudyFactorEntranceTestAbility created successfully",
+#                 "data": serializer.data
+#             })
         
-        all_errors = []
-        for field, msgs in serializer.errors.items():
-            all_errors.extend(msgs)
+#         all_errors = []
+#         for field, msgs in serializer.errors.items():
+#             all_errors.extend(msgs)
 
-        return Response({
-            "statusCode": 400,
-            "status": False,
-            "message": " ".join(all_errors)
-        }, status=400)
+#         return Response({
+#             "statusCode": 400,
+#             "status": False,
+#             "message": " ".join(all_errors)
+#         }, status=400)
 
-class StudyFactorEntranceTestAbilityListAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
 
-    def get(self, request):
-        search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
+# class StudyFactorEntranceTestAbilityListAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
 
-        allowed_sort_fields = ['updated_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
+#     def get(self, request):
+#         search = request.GET.get('search', '').strip()
+#         sort_by = request.GET.get('sortBy', 'created_at')
+#         sort_order = request.GET.get('sortOrder', 'desc')
 
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+#         allowed_sort_fields = ['updated_at']
+#         if sort_by not in allowed_sort_fields:
+#             sort_by = 'created_at'
 
-        queryset = StudyFactorEntranceTestAbility.objects.filter(is_deleted=False)
+#         if sort_order == 'desc':
+#             sort_by = f'-{sort_by}'
 
-        if search:
-            queryset = queryset.filter(
-                Q(factor_for__name__istartswith=search) |
-                Q(entrance_test_name__name__istartswith=search)
-            )
+#         queryset = StudyFactorEntranceTestAbility.objects.filter(is_deleted=False)
 
-        queryset = queryset.order_by(sort_by)
-        paginator = CustomPagination()
-        page_obj = paginator.paginate_queryset(queryset, request)
-        serializer = StudyFactorEntranceTestAbilitySerializer(page_obj, many=True)
-        return paginator.get_paginated_response(serializer.data)
+#         if search:
+#             queryset = queryset.filter(
+#                 Q(factor_for__name__istartswith=search) |
+#                 Q(entrance_test_name__name__istartswith=search)
+#             )
 
-class StudyFactorEntranceTestAbilityRetrieveAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
+#         queryset = queryset.order_by(sort_by)
+#         paginator = CustomPagination()
+#         page_obj = paginator.paginate_queryset(queryset, request)
+#         serializer = StudyFactorEntranceTestAbilitySerializer(page_obj, many=True)
+#         return paginator.get_paginated_response(serializer.data)
 
-    def get(self, request, uuid):
-        try:
-            obj = StudyFactorEntranceTestAbility.objects.get(uuid=uuid, is_deleted=False)
-        except StudyFactorEntranceTestAbility.DoesNotExist:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "Record not found"
-            }, status=404)
 
-        serializer = StudyFactorEntranceTestAbilitySerializer(obj)
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": "Record retrieved successfully",
-            "data": serializer.data
-        })
+# class StudyFactorEntranceTestAbilityRetrieveAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
 
-class StudyFactorEntranceTestAbilityUpdateAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
+#     def get(self, request, uuid):
+#         try:
+#             obj = StudyFactorEntranceTestAbility.objects.get(uuid=uuid, is_deleted=False)
+#         except StudyFactorEntranceTestAbility.DoesNotExist:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "Record not found"
+#             }, status=404)
 
-    def put(self, request, uuid):
-        try:
-            obj = StudyFactorEntranceTestAbility.objects.get(uuid=uuid, is_deleted=False)
-        except StudyFactorEntranceTestAbility.DoesNotExist:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "Record not found"
-            }, status=404)
+#         serializer = StudyFactorEntranceTestAbilitySerializer(obj)
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": "Record retrieved successfully",
+#             "data": serializer.data
+#         })
 
-        serializer = StudyFactorEntranceTestAbilitySerializer(obj, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": "Record updated successfully",
-                "data": serializer.data
-            })
 
-        errors = []
-        for f, m in serializer.errors.items():
-            errors.extend(m)
 
-        return Response({
-            "statusCode": 400,
-            "status": False,
-            "message": " ".join(errors)
-        }, status=400)
+# class StudyFactorEntranceTestAbilityUpdateAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
 
-class StudyFactorEntranceTestAbilityDeleteAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
+#     def put(self, request, uuid):
+#         try:
+#             obj = StudyFactorEntranceTestAbility.objects.get(uuid=uuid, is_deleted=False)
+#         except StudyFactorEntranceTestAbility.DoesNotExist:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "Record not found"
+#             }, status=404)
 
-    def delete(self, request, uuid=None):
-        ids = request.data.get("id")
+#         serializer = StudyFactorEntranceTestAbilitySerializer(obj, data=request.data)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": "Record updated successfully",
+#                 "data": serializer.data
+#             })
 
-        if uuid:
-            try:
-                obj = StudyFactorEntranceTestAbility.objects.get(uuid=uuid)
-                obj.delete()
-                return Response({
-                    "statusCode": 204,
-                    "status": True,
-                    "message": "Deleted successfully"
-                }, status=204)
-            except StudyFactorEntranceTestAbility.DoesNotExist:
-                return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "Record not found"
-                }, status=404)
+#         errors = []
+#         for f, m in serializer.errors.items():
+#             errors.extend(m)
 
-        if ids == "all":
-            objects = StudyFactorEntranceTestAbility.objects.all()
-            count = objects.count()
-            objects.delete()
+#         return Response({
+#             "statusCode": 400,
+#             "status": False,
+#             "message": " ".join(errors)
+#         }, status=400)
 
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": f"All {count} records deleted"
-            })
 
-        return Response({
-            "statusCode": 400,
-            "status": False,
-            "message": "Invalid delete request"
-        }, status=400)
+
+# class StudyFactorEntranceTestAbilityDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request, uuid=None):
+#         ids = request.data.get("id")
+
+#         if uuid:
+#             try:
+#                 obj = StudyFactorEntranceTestAbility.objects.get(uuid=uuid)
+#                 obj.delete()
+#                 return Response({
+#                     "statusCode": 204,
+#                     "status": True,
+#                     "message": "Deleted successfully"
+#                 }, status=204)
+#             except StudyFactorEntranceTestAbility.DoesNotExist:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "Record not found"
+#                 }, status=404)
+
+#         if ids == "all":
+#             objects = StudyFactorEntranceTestAbility.objects.all()
+#             count = objects.count()
+#             objects.delete()
+
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} records deleted"
+#             })
+
+#         return Response({
+#             "statusCode": 400,
+#             "status": False,
+#             "message": "Invalid delete request"
+#         }, status=400)
+
+
 
 class StudyFactorEntranceTestAbilityExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -5778,3 +5786,677 @@ class StudyFactorEntranceTestAbilityImportAPIView(APIView):
             "message": "Import completed",
             "imported_count": imported
         })
+
+
+
+
+
+class StudyFactorEntranceTestAbilityCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        serializer = StudyFactorEntranceTestAbilitySerializer(data=request.data)
+
+        if serializer.is_valid():
+
+            # Duplicate Check
+            data = serializer.validated_data
+            exists = StudyFactorEntranceTestAbility.objects.filter(
+                factor_for=data["factor_for"],
+                entrance_test_ability_group=data["entrance_test_ability_group"],
+                entrance_test_name=data["entrance_test_name"],
+                minimum_score_required=data["minimum_score_required"],
+                is_deleted=False
+            ).first()
+
+            if exists:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "This record already exists."
+                }, status=400)
+
+            serializer.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "Record created successfully",
+                "data": serializer.data
+            })
+
+        return Response({
+            "statusCode": 400,
+            "status": False,
+            "message": " ".join([msg for msgs in serializer.errors.values() for msg in msgs])
+        }, status=400)
+    
+
+
+
+
+
+class StudyFactorEntranceTestAbilityListAPIView(APIView):
+    def get(self, request):
+        search = request.GET.get("search", "").strip()
+        custom_sort = request.GET.get("customSort")  # e.g., name:asc,created_at:desc
+
+        allowed_sort_fields = [
+            "entrance_test_ability_group",
+            "minimum_required_test_ability",
+            "description",
+            "created_at",
+            "updated_at",
+        ]
+
+        queryset = StudyFactorEntranceTestAbility.objects.filter(is_deleted=False)
+
+        #SEARCH — only on EntranceTest Ability Group name
+        if search:
+            queryset = queryset.filter(
+                Q(entrance_test_ability_group__name__istartswith=search)
+            )
+
+        # --------------------------
+        # SORTING FIELDS MAP
+        # --------------------------
+        sort_field_map = {
+            "entrance_test_ability_group": "entrance_test_ability_group__name",
+            "minimum_required_test_ability": "minimum_required_test_ability__name",
+            "description": "description",
+            "created_at": "created_at",
+            "updated_at": "updated_at",
+        }
+
+        sort_fields = []
+
+        # --------------------------
+        # CUSTOM SORT LOGIC
+        # --------------------------
+        if custom_sort:
+            for rule in custom_sort.split(","):
+                try:
+                    field, order = rule.split(":")
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive for string fields
+                    if field in [
+                        "entrance_test_ability_group",
+                        "minimum_required_test_ability",
+                        "description",
+                    ]:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True)
+                        if order == "asc"
+                        else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+        else:
+            # Default sorting
+            sort_by = request.GET.get("sortBy", "created_at")
+            sort_order = request.GET.get("sortOrder", "desc")
+            orm_field = sort_field_map.get(sort_by, "created_at")
+            f = F(orm_field)
+            sort_fields = [
+                f.asc(nulls_last=True)
+                if sort_order == "asc"
+                else f.desc(nulls_last=True)
+            ]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # Pagination
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = StudyFactorEntranceTestAbilitySerializer(result_page, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
+    
+
+
+class StudyFactorEntranceTestAbilityRetrieveAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request, uuid):
+        try:
+            obj = StudyFactorEntranceTestAbility.objects.get(uuid=uuid, is_deleted=False)
+        except StudyFactorEntranceTestAbility.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "Record not found"
+            }, status=404)
+
+        serializer = StudyFactorEntranceTestAbilitySerializer(obj)
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": "Record retrieved successfully",
+            "data": serializer.data
+        })
+    
+
+
+
+
+class StudyFactorEntranceTestAbilityUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def put(self, request, uuid):
+        try:
+            ability = StudyFactorEntranceTestAbility.objects.get(uuid=uuid, is_deleted=False)
+        except StudyFactorEntranceTestAbility.DoesNotExist:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "Record not found",
+                "data": None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = StudyFactorEntranceTestAbilitySerializer(ability, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "Record updated successfully",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK)
+
+        # Collect error messages in same style
+        errors = serializer.errors
+        messages = []
+        for field, msgs in errors.items():
+            messages.extend(msgs)
+        message_text = " ".join(messages)
+
+        return Response({
+            "statusCode": 400,
+            "status": False,
+            "message": message_text,
+            "data": None
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+
+
+class StudyFactorEntranceTestAbilityDeleteAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def delete(self, request, uuid=None):
+        ids = request.data.get("id", None)
+
+        # ----------------------------
+        # SINGLE DELETE
+        # ----------------------------
+        if uuid:
+            try:
+                ability = StudyFactorEntranceTestAbility.objects.get(uuid=uuid)
+                ability.delete()
+                return Response({
+                    "statusCode": 204,
+                    "status": True,
+                    "message": "Record permanently deleted.",
+                    "data": None
+                }, status=status.HTTP_204_NO_CONTENT)
+            except StudyFactorEntranceTestAbility.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "Record not found.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+
+        # ----------------------------
+        # DELETE ALL
+        # ----------------------------
+        if ids == "all":
+            objects = StudyFactorEntranceTestAbility.objects.all()
+            count = objects.count()
+
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No records found to delete.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+
+            objects.delete()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"All {count} record(s) permanently deleted.",
+                "data": None
+            }, status=status.HTTP_200_OK)
+
+        # ----------------------------
+        # BULK DELETE (LIST OF UUIDs)
+        # ----------------------------
+        if not ids or not isinstance(ids, list):
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        valid_uuids = []
+        invalid_uuids = []
+
+        for u in ids:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(u)
+
+        if not valid_uuids:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "No valid UUIDs provided.",
+                "data": {"invalid_uuids": invalid_uuids}
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Find matching records
+        objects = StudyFactorEntranceTestAbility.objects.filter(uuid__in=valid_uuids)
+        count = objects.count()
+
+        if count == 0:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "No matching records found.",
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        objects.delete()
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": f"{count} record(s) permanently deleted.",
+            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+        }, status=status.HTTP_200_OK)
+
+
+
+
+
+class StudyFactorEntranceTestAbilityExportAPIView(APIView):
+
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        # --- Query params ---
+        format_type = request.GET.get("format", "xlsx").lower()
+        fields = request.GET.get("fields")
+        search = request.GET.get("search", "").strip()
+        custom_sort = request.GET.get("customSort")
+        uuids_param = request.GET.get("uuids", "")
+        uuids = [u.strip() for u in uuids_param.split(",") if u]
+
+        # --- Field to header mapping ---
+        field_header_map = {
+            "uuid": "UUID",
+            "factor_for": "Factor For",
+            "entrance_test_ability_group": "Entrance Test Ability Group",
+            "entrance_test_name": "Entrance Test Name",
+            "minimum_score_required": "Minimum Score Required",
+            "description": "Description",
+            "created_at": "Created On",
+            "updated_at": "Modified On",
+        }
+
+        # --- Determine fields ---
+        field_list = (
+            [f.strip() for f in fields.split(",")] if fields else list(field_header_map.keys())
+        )
+
+        # --- Fetch data ---
+        queryset = StudyFactorEntranceTestAbility.objects.filter(is_deleted=False)
+
+        if uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+
+        # Search only by Entrance Test Ability Group name (per your requirement)
+        if search:
+            queryset = queryset.filter(
+                entrance_test_ability_group__name__istartswith=search
+            )
+
+        # --- Sorting mapping ---
+        sort_field_map = {
+            "factor_for": "factor_for__name",
+            "entrance_test_ability_group": "entrance_test_ability_group__name",
+            "entrance_test_name": "entrance_test_name__fullname",   # FIXED
+            "minimum_score_required": "minimum_score_required__numeric_score",  # FIXED
+            "description": "description",
+            "created_at": "created_at",
+            "updated_at": "updated_at",
+        }
+
+        sort_fields = []
+
+        # --- Custom sorting ---
+        if custom_sort:
+            for rule in custom_sort.split(","):
+                try:
+                    field, order = rule.split(":")
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sorting for text fields
+                    if field in [
+                        "factor_for",
+                        "entrance_test_ability_group",
+                        "entrance_test_name",
+                        "description",
+                    ]:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == "asc" else f.desc(nulls_last=True)
+                    )
+
+                except ValueError:
+                    continue
+        else:
+            # Default sort by created_at desc
+            sort_fields = [F("created_at").desc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # --- Prepare dataset ---
+        dataset = Dataset()
+        dataset.headers = [field_header_map.get(f, f) for f in field_list]
+        dataset.title = "StudyFactor Entrance Test Ability Data"
+
+        # --- Row building ---
+        for obj in queryset:
+            row = []
+            for field in field_list:
+
+                # --- Foreign Key & Special Field Handling ---
+                if field == "factor_for":
+                    value = getattr(obj.factor_for, "name", "")
+
+                elif field == "entrance_test_ability_group":
+                    value = getattr(obj.entrance_test_ability_group, "name", "")
+
+                elif field == "entrance_test_name":
+                    value = getattr(obj.entrance_test_name, "fullname", "")
+
+                elif field == "minimum_score_required":
+                    msr = obj.minimum_score_required
+
+                    if msr:
+                        # If numeric_score exists show it, otherwise fallback to string
+                        numeric = getattr(msr, "numeric_score", None)
+                        value = str(numeric) if numeric is not None else str(msr)
+                    else:
+                        value = ""
+
+                else:
+                    value = getattr(obj, field, None)
+
+                # --- Date formatting ---
+                if field in ["created_at", "updated_at"] and value:
+                    try:
+                        value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
+                    except:
+                        pass
+
+                row.append(value if value is not None else "")
+
+            dataset.append(row)
+
+        # --- Export generation ---
+        if format_type == "csv":
+            file_data = dataset.export("csv")
+            content_type = "text/csv"
+            file_name = "StudyFactorEntranceTestAbility.csv"
+            response_data = file_data
+        else:
+            file_data = dataset.export("xlsx")
+            output = io.BytesIO(file_data)
+            content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            file_name = "StudyFactorEntranceTestAbility.xlsx"
+            response_data = output.getvalue()
+
+        response = HttpResponse(response_data, content_type=content_type)
+        response["Content-Disposition"] = f'attachment; filename="{file_name}"'
+        return response
+
+
+
+
+class StudyFactorEntranceTestAbilityImportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        file = request.FILES.get('file')
+        sheet_name = request.data.get('sheet_name')
+
+        if not file:
+            return Response({'statusCode': 400, 'status': False, 'message': 'No file uploaded'}, status=400)
+
+        format_type = file.name.split('.')[-1].lower()
+
+        # Required & Optional Headers
+        required_headers = {
+            'factor for',
+            'entrance test ability group',
+            'entrance test name',
+            'minimum score required',
+        }
+
+        optional_headers = {
+            'description'
+        }
+
+        try:
+            # ---------------- Load file ----------------
+            data = []
+
+            if format_type == 'xlsx':
+                wb = openpyxl.load_workbook(file, read_only=True)
+                sheets = wb.sheetnames
+
+                if not sheet_name:
+                    return Response({
+                        'statusCode': 400,
+                        'status': False,
+                        'message': 'Please provide sheet_name',
+                        'available_sheets': sheets
+                    }, status=400)
+
+                if sheet_name not in sheets:
+                    return Response({
+                        'statusCode': 400,
+                        'status': False,
+                        'message': f'Sheet "{sheet_name}" not found',
+                        'available_sheets': sheets
+                    }, status=400)
+
+                ws = wb[sheet_name]
+
+                if ws.max_row <= 1:
+                    return Response({
+                        'statusCode': 400,
+                        'status': False,
+                        'message': f'Sheet "{sheet_name}" is empty'
+                    }, status=400)
+
+                headers = [
+                    str(cell.value).strip().lower() if cell.value else ''
+                    for cell in next(ws.iter_rows(min_row=1, max_row=1))
+                ]
+
+                if not required_headers.issubset(set(headers)):
+                    return Response({
+                        'statusCode': 400,
+                        'status': False,
+                        'message': f'Missing required headers: {required_headers - set(headers)}'
+                    }, status=400)
+
+                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+                    row_dict = dict(zip(headers, row))
+                    row_dict['_row_number'] = idx
+                    data.append(row_dict)
+
+            elif format_type == 'csv':
+                decoded_file = file.read().decode('utf-8')
+                reader = csv.DictReader(io.StringIO(decoded_file))
+
+                for idx, row in enumerate(reader, start=2):
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    row_lower['_row_number'] = idx
+
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({
+                            'statusCode': 400,
+                            'status': False,
+                            'message': f'Missing required headers: {required_headers - set(row_lower.keys())}'
+                        }, status=400)
+
+                    data.append(row_lower)
+
+            else:
+                return Response({
+                    'statusCode': 400,
+                    'status': False,
+                    'message': 'Unsupported file format. Use .xlsx or .csv'
+                }, status=400)
+
+            # ---------------- Preload Foreign Key Models ----------------
+            factor_for_map = {x.name.strip().lower(): x for x in FactorFor.objects.all()}
+            ability_group_map = {x.name.strip().lower(): x for x in EntranceTestAbilityGroup.objects.all()}
+            test_name_map = {x.fullname.strip().lower(): x for x in EntranceTestName.objects.all()}
+            min_score_map = {x.testresult.strip().lower(): x for x in EntranceTestResult.objects.all()}
+
+            # Preload existing objects for duplicate checking
+            existing_map = {
+                (
+                    obj.factor_for.name.strip().lower(),
+                    obj.entrance_test_ability_group.name.strip().lower(),
+                    obj.entrance_test_name.fullname.strip().lower(),
+                    obj.minimum_score_required.testresult.strip().lower(),
+                ): obj
+                for obj in StudyFactorEntranceTestAbility.objects.all()
+            }
+
+            # ---------------- Process Rows ----------------
+            to_create = []
+            duplicates = []
+            skipped_rows = []
+            existing_in_file = set()
+
+            for row in data:
+                row_number = row.get('_row_number')
+
+                factor_for_val = (row.get('factor for') or '').strip().lower()
+                ability_group_val = (row.get('entrance test ability group') or '').strip().lower()
+                test_name_val = (row.get('entrance test name') or '').strip().lower()
+                min_score_val = (row.get('minimum score required') or '').strip().lower()
+                description = (row.get('description') or '').strip()
+
+                # ---- Required field check ----
+                if not (factor_for_val and ability_group_val and test_name_val and min_score_val):
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Reason": "Missing one or more required fields"
+                    })
+                    continue
+
+                # ---- Resolve foreign keys ----
+                factor_obj = factor_for_map.get(factor_for_val)
+                group_obj = ability_group_map.get(ability_group_val)
+                test_obj = test_name_map.get(test_name_val)
+                min_score_obj = min_score_map.get(min_score_val)
+
+                if not factor_obj or not group_obj or not test_obj or not min_score_obj:
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Reason": "Foreign key value not found"
+                    })
+                    continue
+
+                key = (factor_for_val, ability_group_val, test_name_val, min_score_val)
+
+                # ---- Duplicate checks ----
+                if key in existing_map and not existing_map[key].is_deleted:
+                    duplicates.append({
+                        "Row": row_number,
+                        "Reason": "Duplicate entry already exists"
+                    })
+                    continue
+
+                if key in existing_in_file:
+                    duplicates.append({
+                        "Row": row_number,
+                        "Reason": "Duplicate inside file"
+                    })
+                    continue
+
+                existing_in_file.add(key)
+
+                # ---- Soft-delete reactivation ----
+                if key in existing_map and existing_map[key].is_deleted:
+                    obj = existing_map[key]
+                    obj.description = description
+                    obj.is_deleted = False
+                    obj.save()
+                    continue
+
+                # ---- Prepare new object ----
+                to_create.append(
+                    StudyFactorEntranceTestAbility(
+                        factor_for=factor_obj,
+                        entrance_test_ability_group=group_obj,
+                        entrance_test_name=test_obj,
+                        minimum_score_required=min_score_obj,
+                        description=description,
+                        is_deleted=False
+                    )
+                )
+
+            # ---------------- Bulk Create ----------------
+            with transaction.atomic():
+                StudyFactorEntranceTestAbility.objects.bulk_create(to_create, ignore_conflicts=True, batch_size=500)
+
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "imported_count": len(to_create),
+                "duplicates": list(reversed(duplicates)),
+                "skipped_rows": list(reversed(skipped_rows)),
+                "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
+            }, status=200)
+
+        except Exception as e:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": str(e)
+            }, status=400)
+
+
+
+
