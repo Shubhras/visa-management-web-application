@@ -486,7 +486,7 @@ class LanguageExportAPIView(APIView):
         # --- Prepare dataset ---
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'Language Name(Test)'
+        dataset.title = 'LanguageName(Test)'
 
         for lang in queryset:
             row = []
@@ -2329,7 +2329,7 @@ class LanguageTestResultExportAPIView(APIView):
         # -------------------------------------------------------------------
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'Language Test Results'
+        dataset.title = 'LanguageTestResults'
 
         india_tz = pytz.timezone("Asia/Kolkata")
 
@@ -2642,7 +2642,7 @@ class CLBLevelExportAPIView(APIView):
         # --- Prepare dataset ---
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'CLB Level'
+        dataset.title = 'CLBLevel'
 
         for obj in queryset:
             row = []
@@ -2969,7 +2969,7 @@ class StudyLanguageBenchmarkExportAPIView(APIView):
         # Prepare dataset
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'Language Benchmark Level'
+        dataset.title = 'LanguageBenchmarkLevel'
 
         for obj in queryset:
             row = []
@@ -3286,7 +3286,7 @@ class EntranceTestNameExportAPIView(APIView):
         # Prepare dataset
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'Entrance Test Name'
+        dataset.title = 'EntranceTestName'
 
         for obj in queryset:
             row = []
@@ -3588,7 +3588,7 @@ class EntranceTestModuleExportAPIView(APIView):
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'Entrance Test Modules'
+        dataset.title = 'EntranceTestModules'
 
         for obj in queryset:
             row = []
@@ -3926,7 +3926,7 @@ class EntranceTestResultExportAPIView(APIView):
         # Prepare dataset
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'Entrance Test Results'
+        dataset.title = 'EntranceTestResults'
 
         for obj in queryset:
             row = []
