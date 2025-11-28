@@ -6308,35 +6308,6 @@ class EducationTypeImportAPIView(APIView):
 
 # -------------------- MediumofEducation CRUD -------------------- #
 
-# class MediumofEducationListAPIView(APIView):
-#     permission_classes = [IsAuthenticated, IsAdminUser]
-
-#     def get(self, request):
-#         search = request.GET.get('search', '').strip()
-#         sort_by = request.GET.get('sortBy', 'created_at')
-#         sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
-
-#         allowed_sort_fields = ['name', 'perticulars', 'created_at']
-#         if sort_by not in allowed_sort_fields:
-#             sort_by = 'created_at'
-
-#         # Apply descending order for 'desc'
-#         if sort_order == 'desc':
-#             sort_by = f'-{sort_by}'
-
-#         queryset = MediumofEducation.objects.filter(is_deleted=False)
-
-#         if search:
-#             queryset = queryset.filter(
-#                 Q(name__istartswith=search) 
-#             )
-
-#         queryset = queryset.order_by(sort_by)
-#         paginator = CustomPagination()
-#         result_page = paginator.paginate_queryset(queryset, request)
-#         serializer = MediumofEducationSerializer(result_page, many=True)
-#         return paginator.get_paginated_response(serializer.data)
-
 class MediumofEducationListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -6607,66 +6578,6 @@ class MediumofEducationDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-# class MediumofEducationExportAPIView(APIView):
-
-#     def get(self, request):
-#         format_type = request.GET.get('format', 'xlsx').lower()
-#         fields = request.GET.get('fields')
-#         uuids_param = request.GET.get('uuids', '')
-#         uuids = [u.strip() for u in uuids_param.split(',') if u]
-
-#         # Field to header mapping
-#         field_header_map = {
-#             'uuid': 'UUID',
-#             'name': 'Medium of Education',
-#             'perticulars': 'Perticulars',
-#             'is_deleted': 'Deleted',
-#             'created_at': 'Created On',
-#             'updated_at': 'Modified On',
-#         }
-
-#         # Fields to export
-#         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
-
-#         queryset = MediumofEducation.objects.filter(is_deleted=False)
-#         if uuids:
-#             queryset = queryset.filter(uuid__in=uuids)
-#         queryset = queryset.order_by('-created_at')
-
-#         dataset = Dataset()
-#         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-#         dataset.title = 'Medium of Education'
-
-#         for obj in queryset:
-#             row = []
-#             for field in field_list:
-#                 value = getattr(obj, field, '')
-
-#                 if field in ['created_at', 'updated_at'] and value:
-#                     # Convert the stored UTC datetime to IST and format it
-#                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-#                 elif isinstance(value, bool):
-#                     value = int(value)
-#                 row.append(value if value is not None else '')
-#             dataset.append(row)
-
-#         if format_type == 'csv':
-#             file_data = dataset.export('csv')
-#             content_type = 'text/csv'
-#             file_name = 'medium_of_education.csv'
-#         else:
-#             file_data = io.BytesIO(dataset.export('xlsx'))
-#             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-#             file_name = 'medium_of_education.xlsx'
-
-#         response = HttpResponse(
-#             file_data if format_type == 'csv' else file_data.getvalue(),
-#             content_type=content_type
-#         )
-#         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
-#         return response
-
-
 class MediumofEducationExportAPIView(APIView):
 
     def get(self, request):
@@ -6810,103 +6721,6 @@ class MediumofEducationExportAPIView(APIView):
         return response
     
 
-
-# class MediumofEducationImportAPIView(APIView):
-#     permission_classes = [IsAuthenticated, IsAdminUser]
-
-#     def post(self, request):
-#         file = request.FILES.get('file')
-#         sheet_name = request.data.get('sheet_name')
-
-#         if not file:
-#             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
-
-#         format_type = file.name.split('.')[-1].lower()
-#         duplicate_names = []
-
-#         required_headers = {'medium of education'}
-#         optional_headers = {'perticulars'}
-
-#         try:
-#             data = []
-
-#             # ---------------- XLSX Handling ----------------
-#             if format_type == 'xlsx':
-#                 import openpyxl
-#                 wb = openpyxl.load_workbook(file, read_only=True)
-#                 sheets = wb.sheetnames
-
-#                 if not sheet_name:
-#                     return Response({'error': 'Please provide sheet_name', 'available_sheets': sheets}, status=status.HTTP_400_BAD_REQUEST)
-#                 if sheet_name not in sheets:
-#                     return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': sheets}, status=status.HTTP_400_BAD_REQUEST)
-
-#                 ws = wb[sheet_name]
-#                 if ws.max_row <= 1:
-#                     return Response({'error': f'Sheet "{sheet_name}" is empty'}, status=status.HTTP_400_BAD_REQUEST)
-
-#                 headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-#                 if not required_headers.issubset(set(headers)):
-#                     return Response({'error': f'Missing required headers: {required_headers - set(headers)}'}, status=status.HTTP_400_BAD_REQUEST)
-
-#                 for row in ws.iter_rows(min_row=2, values_only=True):
-#                     if not any(row):
-#                         continue
-#                     row_dict = dict(zip(headers, row))
-#                     data.append(row_dict)
-
-#             # ---------------- CSV Handling ----------------
-#             elif format_type == 'csv':
-#                 decoded_file = file.read().decode('utf-8')
-#                 reader = csv.DictReader(io.StringIO(decoded_file))
-#                 for row in reader:
-#                     row_lower = {k.strip().lower(): v for k, v in row.items()}
-#                     if not required_headers.issubset(set(row_lower.keys())):
-#                         return Response({'error': f'Missing required headers: {required_headers - set(row_lower.keys())}'}, status=status.HTTP_400_BAD_REQUEST)
-#                     data.append(row_lower)
-
-#             else:
-#                 return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=status.HTTP_400_BAD_REQUEST)
-
-#             imported_count = 0
-
-#             # ---------------- Process Data ----------------
-#             for row in reversed(data):
-#                 name = str(row.get('Medium of Education')).strip() if row.get('Medium of Education') else None
-#                 perticulars = str(row.get('Perticulars') or '').strip()
-
-#                 if not name:
-#                     continue
-
-#                 existing = MediumofEducation.objects.filter(name__iexact=name).first()
-#                 if existing:
-#                     if not existing.is_deleted:
-#                         duplicate_names.append(name)
-#                         continue
-#                     else:
-#                         existing.Perticulars = perticulars
-#                         existing.is_deleted = False
-#                         existing.save()
-#                         imported_count += 1
-#                 else:
-#                     MediumofEducation.objects.create(
-#                         name=name,
-#                         Perticulars=perticulars,
-#                         is_deleted=False
-#                     )
-#                     imported_count += 1
-
-#         except Exception as e:
-#             return Response({'statusCode': 400, 'status': False, 'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-#         return Response({
-#             'statusCode': 200,
-#             'status': True,
-#             'duplicates': list(set(duplicate_names)),
-#             'message': f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
-#             'imported_count': imported_count
-#         }, status=status.HTTP_200_OK)
-
 class MediumofEducationImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -7035,33 +6849,115 @@ class MediumofEducationImportAPIView(APIView):
                 "message": str(e)
             }, status=400)
         
+# -------------------- ECAFor CRUD -------------------- #
+
+# class ECAForListAPIView(APIView):
+
+#     def get(self, request):
+#         search = request.GET.get('search', '').strip()
+#         sort_by = request.GET.get('sortBy', 'created_at')
+#         sort_order = request.GET.get('sortOrder', 'desc')
+
+#         allowed_sort_fields = ['name', 'perticulars', 'updated_at']
+#         if sort_by not in allowed_sort_fields:
+#             sort_by = 'created_at'
+
+#         if sort_order == 'desc':
+#             sort_by = f'-{sort_by}'
+
+#         queryset = ECAFor.objects.filter(is_deleted=False)
+
+#         if search:
+#             queryset = queryset.filter(Q(name__istartswith=search))
+
+#         queryset = queryset.order_by(sort_by)
+#         paginator = CustomPagination()
+#         result_page = paginator.paginate_queryset(queryset, request)
+#         serializer = ECAForSerializer(result_page, many=True)
+
+#         return paginator.get_paginated_response(serializer.data)
 
 class ECAForListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
+        custom_sort = request.GET.get('customSort')
         sort_by = request.GET.get('sortBy', 'created_at')
         sort_order = request.GET.get('sortOrder', 'desc')
 
-        allowed_sort_fields = ['name', 'perticulars', 'updated_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
-
         queryset = ECAFor.objects.filter(is_deleted=False)
 
+        # -----------------------------------------------
+        # SEARCH FILTER
+        # -----------------------------------------------
         if search:
-            queryset = queryset.filter(Q(name__istartswith=search))
+            queryset = queryset.filter(name__istartswith=search)
 
-        queryset = queryset.order_by(sort_by)
+        # -----------------------------------------------
+        # SORTING MAP
+        # -----------------------------------------------
+        sort_field_map = {
+            "name": "name",
+            "description": "description",   # adjust if 'perticulars' field name is different
+            "created_at": "created_at",
+            "updated_at": "updated_at",
+        }
+
+        allowed_sort_fields = list(sort_field_map.keys())
+        sort_fields = []
+
+        # -----------------------------------------------
+        # CUSTOM SORT
+        # -----------------------------------------------
+        if custom_sort:
+            for rule in custom_sort.split(","):
+                try:
+                    field, order = rule.split(":")
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sorting for string fields
+                    if field in ["name", "perticulars"]:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True)
+                        if order == "asc" else f.desc(nulls_last=True)
+                    )
+
+                except ValueError:
+                    continue
+
+        else:
+            # -----------------------------------------------
+            # DEFAULT SORT
+            # -----------------------------------------------
+            if sort_by not in allowed_sort_fields:
+                sort_by = "created_at"
+
+            orm_field = sort_field_map.get(sort_by, "created_at")
+            f = F(orm_field)
+            sort_fields = [
+                f.asc(nulls_last=True) if sort_order == "asc" else f.desc(nulls_last=True)
+            ]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # -----------------------------------------------
+        # PAGINATION
+        # -----------------------------------------------
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = ECAForSerializer(result_page, many=True)
 
         return paginator.get_paginated_response(serializer.data)
-
 
 
 class ECAForCreateAPIView(APIView):
@@ -7232,60 +7128,200 @@ class ECAForDeleteAPIView(APIView):
 
 
 
+# class ECAForExportAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def get(self, request):
+#         format_type = request.GET.get('format', 'xlsx').lower()
+#         fields = request.GET.get('fields')
+#         uuids_param = request.GET.get('uuids', '')
+#         uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+#         field_header_map = {
+#             'uuid': 'UUID',
+#             'name': 'ECA For',
+#             'description': 'Description',
+#             'is_deleted': 'Deleted',
+#             'updated_at': 'Modified On',
+#         }
+
+#         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+#         queryset = ECAFor.objects.filter(is_deleted=False)
+#         if uuids:
+#             queryset = queryset.filter(uuid__in=uuids)
+#         queryset = queryset.order_by('-created_at')
+
+#         dataset = Dataset()
+#         dataset.headers = [field_header_map.get(f, f) for f in field_list]
+#         dataset.title='ECA For  '
+
+#         for obj in queryset:
+#             row = []
+#             for field in field_list:
+#                 value = getattr(obj, field, '')
+#                 if field in ['created_at', 'updated_at'] and value:
+#                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+#                 elif isinstance(value, bool):
+#                     value = int(value)
+#                 row.append(value if value is not None else '')
+#             dataset.append(row)
+
+#         if format_type == 'csv':
+#             file_data = dataset.export('csv')
+#             content_type = 'text/csv'
+#             file_name = 'esa_for.csv'
+#         else:
+#             file_data = io.BytesIO(dataset.export('xlsx'))
+#             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+#             file_name = 'esa_for.xlsx'
+
+#         response = HttpResponse(
+#             file_data if format_type == 'csv' else file_data.getvalue(),
+#             content_type=content_type
+#         )
+#         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+#         return response
+
 class ECAForExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
-        fields = request.GET.get('fields')
+
+        # ----------------------------
+        # Search & Custom Sort Params
+        # ----------------------------
+        search = request.GET.get('search', '').strip()
+        custom_sort = request.GET.get('customSort')
+        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_order = request.GET.get('sortOrder', 'desc')
+
+        # ----------------------------
+        # UUID Filtering
+        # ----------------------------
         uuids_param = request.GET.get('uuids', '')
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
+        # ----------------------------
+        # Export Field Mapping
+        # ----------------------------
         field_header_map = {
             'uuid': 'UUID',
             'name': 'ECA For',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',
+            'created_at': 'Created On',
         }
 
+        fields = request.GET.get('fields')
         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
+        # ----------------------------
+        # Queryset Base
+        # ----------------------------
         queryset = ECAFor.objects.filter(is_deleted=False)
+
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
 
+        if search:
+            queryset = queryset.filter(name__istartswith=search)
+
+        # ----------------------------
+        # Sort Field Map (matches List API)
+        # ----------------------------
+        sort_field_map = {
+            "name": "name",
+            "perticulars": "description",
+            "created_at": "created_at",
+            "updated_at": "updated_at",
+        }
+
+        allowed_sort_fields = list(sort_field_map.keys())
+        sort_fields = []
+
+        # ----------------------------
+        # Custom Sort
+        # ----------------------------
+        if custom_sort:
+            for rule in custom_sort.split(","):
+                try:
+                    field, order = rule.split(":")
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive for text fields
+                    if field in ["name", "perticulars"]:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == "asc" else f.desc(nulls_last=True)
+                    )
+
+                except ValueError:
+                    continue
+
+        else:
+            # Default Sort
+            if sort_by not in allowed_sort_fields:
+                sort_by = "created_at"
+
+            orm_field = sort_field_map.get(sort_by, "created_at")
+            f = F(orm_field)
+            sort_fields = [
+                f.asc(nulls_last=True) if sort_order == "asc" else f.desc(nulls_last=True)
+            ]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # ----------------------------
+        # Dataset Building
+        # ----------------------------
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title='ECA For  '
+        dataset.title = 'ECAFor'
 
         for obj in queryset:
             row = []
             for field in field_list:
                 value = getattr(obj, field, '')
+
                 if field in ['created_at', 'updated_at'] and value:
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+
                 elif isinstance(value, bool):
                     value = int(value)
+
                 row.append(value if value is not None else '')
             dataset.append(row)
 
+        # ----------------------------
+        # File Export
+        # ----------------------------
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
-            file_name = 'esa_for.csv'
+            file_name = 'eca_for.csv'
+            response = HttpResponse(file_data, content_type=content_type)
+
         else:
             file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'esa_for.xlsx'
+            file_name = 'eca_for.xlsx'
+            response = HttpResponse(file_data.getvalue(), content_type=content_type)
 
-        response = HttpResponse(
-            file_data if format_type == 'csv' else file_data.getvalue(),
-            content_type=content_type
-        )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
+
 
 
 class ECAForImportAPIView(APIView):
@@ -8047,8 +8083,8 @@ class ECAAwardingBodyImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_names)),
-            "skipped_rows": skipped_rows,
+            "duplicates": reversed(list(set(duplicate_names))),
+            "skipped_rows": reversed(skipped_rows),
             "imported_count": imported_count,
             "message": "Import completed"
         })
