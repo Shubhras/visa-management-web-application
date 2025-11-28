@@ -344,59 +344,131 @@ class EducationLevelCodeUpdateAPIView(APIView):
 
 # ------------------ Delete API ------------------
 
+# class EducationLevelCodeDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request):
+#         try:
+#             ids = request.data.get("id", None)
+
+#             # Validate if IDs are provided
+#             if not ids or not isinstance(ids, list):
+#                 return Response({
+#                     "statusCode": 400,
+#                     "status": False,
+#                     "message": "Please provide a list of UUIDs in the 'id' field.",
+#                     "data": None
+#                 }, status=status.HTTP_400_BAD_REQUEST)
+
+#             valid_uuids = []
+#             invalid_uuids = []
+
+#             # Validate UUIDs
+#             for u in ids:
+#                 try:
+#                     valid_uuids.append(UUID(u))
+#                 except (ValueError, TypeError):
+#                     invalid_uuids.append(u)
+
+#             if not valid_uuids:
+#                 return Response({
+#                     "statusCode": 400,
+#                     "status": False,
+#                     "message": "No valid UUIDs provided.",
+#                     "data": {"invalid_uuids": invalid_uuids}
+#                 }, status=status.HTTP_400_BAD_REQUEST)
+
+#             # Delete valid UUIDs
+#             queryset = EducationLevelCode.objects.filter(uuid__in=valid_uuids)
+#             count = queryset.count()
+#             queryset.delete()
+
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"{count} education level code(s) permanently deleted.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=status.HTTP_200_OK)
+
+#         except Exception as e:
+#             return Response({
+#                 "statusCode": 500,
+#                 "status": False,
+#                 "message": f"Internal server error: {str(e)}",
+#                 "data": None
+#             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class EducationLevelCodeDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request):
         try:
+            search = request.GET.get("search", "").strip()
+            delete_all = request.data.get("deleteAll", False)
             ids = request.data.get("id", None)
 
-            # Validate if IDs are provided
+            # Base queryset
+            queryset = EducationLevelCode.objects.filter(is_deleted=False)
+
+            # -----------------------------
+            # If SEARCH applied → filter
+            # -----------------------------
+            if search:
+                queryset = queryset.filter(
+                    Q(name__istartswith=search) |
+                    Q(description__istartswith=search)
+                )
+
+            # -----------------------------
+            # DELETE ALL MATCHING SEARCH
+            # -----------------------------
+            if delete_all:
+                count = queryset.count()
+                queryset.delete()
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} education level code(s) deleted based on search filter.",
+                })
+
+            # -----------------------------
+            # DELETE SPECIFIC UUIDs
+            # -----------------------------
             if not ids or not isinstance(ids, list):
                 return Response({
                     "statusCode": 400,
                     "status": False,
-                    "message": "Please provide a list of UUIDs in the 'id' field.",
-                    "data": None
-                }, status=status.HTTP_400_BAD_REQUEST)
+                    "message": "Please provide a list of UUIDs in the 'id' field."
+                }, status=400)
 
             valid_uuids = []
             invalid_uuids = []
 
-            # Validate UUIDs
             for u in ids:
                 try:
                     valid_uuids.append(UUID(u))
-                except (ValueError, TypeError):
+                except:
                     invalid_uuids.append(u)
 
-            if not valid_uuids:
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "No valid UUIDs provided.",
-                    "data": {"invalid_uuids": invalid_uuids}
-                }, status=status.HTTP_400_BAD_REQUEST)
-
-            # Delete valid UUIDs
-            queryset = EducationLevelCode.objects.filter(uuid__in=valid_uuids)
+            queryset = queryset.filter(uuid__in=valid_uuids)
             count = queryset.count()
             queryset.delete()
 
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"{count} education level code(s) permanently deleted.",
-                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=status.HTTP_200_OK)
+                "message": f"{count} education level code(s) deleted.",
+                "invalid_uuids": invalid_uuids if invalid_uuids else None
+            })
 
         except Exception as e:
             return Response({
                 "statusCode": 500,
                 "status": False,
-                "message": f"Internal server error: {str(e)}",
-                "data": None
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                "message": f"Internal server error: {str(e)}"
+            }, status=500)
+
+
 
 
 # ------------------ Export API ------------------
