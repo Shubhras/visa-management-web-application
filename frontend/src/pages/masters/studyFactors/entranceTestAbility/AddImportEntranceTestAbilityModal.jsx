@@ -2,11 +2,9 @@ import React, { useState } from 'react'
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
-import { saveAs } from "file-saver";
 import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
-import { stateImportData } from '../../../../store/master/generalMasters/actions';
 import { exportToExcelDuplicate, exportToExcelWrongData } from '../../../../helper/utils/commanHelper';
-import { ageImportData } from '../../../../store/actions';
+import { ageImportData, studyFactorEntranceTestAbilityImportData, studyFactorGapImportData, studyFactorLanguageAbilityImportData } from '../../../../store/actions';
 const AddImportStudyFactorEntranceTestAbilityModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
@@ -67,7 +65,7 @@ const AddImportStudyFactorEntranceTestAbilityModal = ({ show, handleClose }) => 
             formData.append('sheet_name', selectedSheet);
         }
         setLoading(true);
-        dispatch(ageImportData(formData, (response, error) => {
+        dispatch(studyFactorEntranceTestAbilityImportData(formData, (response, error) => {
             setLoading(false);
             if (error) {
                 toast.error(error?.response?.data?.message || "Server error");
@@ -90,9 +88,9 @@ const AddImportStudyFactorEntranceTestAbilityModal = ({ show, handleClose }) => 
                     if (response?.duplicates?.length > 0) {
                         const prepareData = {
                             data: response.duplicates || [],
-                            headers: ["Factor For", "Study Age Group", "Maximum Age Accepted(Months)","Country","Intitude Type", "Course Level",],
-                            sheetName: "Study Factor Gap",
-                            fileName: "Study Factor Gap",
+                            headers: ["Factor For", "Entrance Test Ability Group","Entrance Test Name","Minimum Score Required",],
+                            sheetName: "Entrance Test Ability",
+                            fileName: "Entrance Test Ability",
                         };
                         exportToExcelDuplicate(
                             prepareData.data,
@@ -104,9 +102,9 @@ const AddImportStudyFactorEntranceTestAbilityModal = ({ show, handleClose }) => 
                      if (response?.skipped_rows?.length > 0) {
                         const prepareData = {
                             data: response.skipped_rows || [],
-                            headers: ["Factor For", "Study Age Group", "Maximum Age Accepted(Months)","Country","Intitude Type", "Course Level","Reason"],
-                            sheetName: "Study Factor Gap",
-                            fileName: "Study Factor Gap",
+                            headers: ["Factor For", "Entrance Test Ability Group","Entrance Test Name","Minimum Score Required","Reason"],
+                            sheetName: "Entrance Test Ability",
+                            fileName: "Entrance Test Ability",
                         };
                         exportToExcelWrongData(
                             prepareData.data,
@@ -156,7 +154,7 @@ const AddImportStudyFactorEntranceTestAbilityModal = ({ show, handleClose }) => 
                     <div className="modal-content radius-16 bg-base">
                         <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
                             <h1 className="modal-title fs-5" id="StateModalLabel">
-                                Upload Study Factor Gap
+                                Upload Study Factor Language Ability
                             </h1>
                             <button
                                 type="button"
@@ -256,10 +254,10 @@ const AddImportStudyFactorEntranceTestAbilityModal = ({ show, handleClose }) => 
             </div>
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
-                    downloadFileName: "Study Factor Gap",
-                    items: ["Factor For", "Study Age Group", "Maximum Age Accepted(Months)","Country","Intitude Type", "Course Level", "Description"],
-                    selectedItems: ["Factor For", "Study Age Group", "Maximum Age Accepted(Months)","Country","Intitude Type", "Course Level",],
-                    ItemsRequired: ["Factor For", "Study Age Group", "Maximum Age Accepted(Months)","Country","Intitude Type", "Course Level",]
+                    downloadFileName: "Entrance Test Ability",
+                    items: ["Factor For", "Entrance Test Ability Group","Entrance Test Name","Minimum Score Required", "Description", ],
+                    selectedItems: ["Factor For", "Entrance Test Ability Group","Entrance Test Name","Minimum Score Required",],
+                    ItemsRequired: ["Factor For", "Entrance Test Ability Group","Entrance Test Name","Minimum Score Required",]
                 }
                 } />
             )}

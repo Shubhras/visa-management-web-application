@@ -8,6 +8,8 @@ import {
   factorForList,
   studyFactorAcademicResultAdd,
   studyFactorAcademicResultEdit,
+  studyFactorBacklogsAdd,
+  studyFactorBacklogsEdit,
 } from "../../../../store/actions";
 
 const AddEditStudyFactorBacklogsModal = ({
@@ -186,8 +188,8 @@ const AddEditStudyFactorBacklogsModal = ({
       setLoading(true);
       const action =
         mode === "edit"
-          ? studyFactorAcademicResultEdit
-          : studyFactorAcademicResultAdd;
+          ? studyFactorBacklogsEdit
+          : studyFactorBacklogsAdd;
 
       dispatch(
         action(sendPayload, (response, error) => {

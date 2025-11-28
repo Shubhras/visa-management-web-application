@@ -4,7 +4,7 @@ import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
 import { exportToExcelDuplicate, exportToExcelWrongData } from '../../../../helper/utils/commanHelper';
-import { ageImportData, studyFactorGapImportData } from '../../../../store/actions';
+import { ageImportData, studyFactorGapImportData, studyFactorLanguageAbilityImportData } from '../../../../store/actions';
 const AddImportStudyFactorLanguageAbilityModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
@@ -65,7 +65,7 @@ const AddImportStudyFactorLanguageAbilityModal = ({ show, handleClose }) => {
             formData.append('sheet_name', selectedSheet);
         }
         setLoading(true);
-        dispatch(studyFactorGapImportData(formData, (response, error) => {
+        dispatch(studyFactorLanguageAbilityImportData(formData, (response, error) => {
             setLoading(false);
             if (error) {
                 toast.error(error?.response?.data?.message || "Server error");
@@ -88,7 +88,7 @@ const AddImportStudyFactorLanguageAbilityModal = ({ show, handleClose }) => {
                     if (response?.duplicates?.length > 0) {
                         const prepareData = {
                             data: response.duplicates || [],
-                            headers: ["Factor For", "Study Language Ability Group","Language Test Name","Module Name", "Mimimum Overall Score",,"In No. of Modules",],
+                            headers: ["Factor For", "Language Ability Group","Language Test Name","Module Name", "Mimimum Overall Score","In No of Modules",],
                             sheetName: "Study Factor Language Ability",
                             fileName: "Study Factor Language Ability",
                         };
@@ -102,7 +102,7 @@ const AddImportStudyFactorLanguageAbilityModal = ({ show, handleClose }) => {
                      if (response?.skipped_rows?.length > 0) {
                         const prepareData = {
                             data: response.skipped_rows || [],
-                            headers: ["Factor For", "Study Language Ability Group","Language Test Name","Module Name", "Mimimum Overall Score",,"In No. of Modules","Reason"],
+                            headers: ["Factor For", "Language Ability Group","Language Test Name","Module Name", "Minimum Overall Score","In No of Modules","Reason"],
                             sheetName: "Study Factor Language Ability",
                             fileName: "Study Factor Language Ability",
                         };
@@ -255,9 +255,9 @@ const AddImportStudyFactorLanguageAbilityModal = ({ show, handleClose }) => {
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
                     downloadFileName: "Study Factor Language Ability",
-                    items: ["Factor For", "Study Language Ability Group","Language Test Name","Module Name", "Mimimum Overall Score","In No. of Modules","Not Less Than", "Description"],
-                    selectedItems: ["Factor For", "Study Language Ability Group","Language Test Name","Module Name", "Mimimum Overall Score",,"In No. of Modules"],
-                    ItemsRequired: ["Factor For", "Study Language Ability Group","Language Test Name","Module Name", "Mimimum Overall Score",,"In No. of Modules"]
+                    items: ["Factor For", "Language Ability Group","Language Test Name","Module Name", "Minimum Overall Score","In No. of Modules","Not Less Than", "Description"],
+                    selectedItems: ["Factor For", "Language Ability Group","Language Test Name","Module Name", "Minimum Overall Score","In No. of Modules"],
+                    ItemsRequired: ["Factor For", "Language Ability Group","Language Test Name","Module Name", "Minimum Overall Score","In No. of Modules"]
                 }
                 } />
             )}
