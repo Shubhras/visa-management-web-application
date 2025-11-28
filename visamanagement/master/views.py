@@ -4610,6 +4610,159 @@ class RelationExportAPIView(APIView):
         return response
 
 
+# class RelationImportAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def post(self, request):
+#         file = request.FILES.get('file')
+#         sheet_name = request.data.get('sheet_name')
+
+#         if not file:
+#             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+
+#         format_type = file.name.split('.')[-1].lower()
+#         duplicate_names = []
+
+#         # Define required and optional headers
+#         required_headers = {'relation'}       # must be present
+#         optional_headers = {'description'}    # optional
+
+#         try:
+#             data = []
+#             headers = []
+
+#             # ---------- XLSX Handling ----------
+#             if format_type == 'xlsx':
+#                 import openpyxl
+#                 wb = openpyxl.load_workbook(file, read_only=True)
+#                 available_sheets = wb.sheetnames
+
+#                 # Validate sheet name
+#                 if not sheet_name:
+#                     return Response({
+#                         'error': 'Please provide sheet_name',
+#                         'available_sheets': available_sheets
+#                     }, status=status.HTTP_400_BAD_REQUEST)
+
+#                 if sheet_name not in available_sheets:
+#                     return Response({
+#                         'error': f'Sheet "{sheet_name}" not found in uploaded file',
+#                         'available_sheets': available_sheets
+#                     }, status=status.HTTP_400_BAD_REQUEST)
+
+#                 ws = wb[sheet_name]
+#                 if ws.max_row <= 1:
+#                     return Response({
+#                         "statusCode": 400,
+#                         "status": False,
+#                         "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Please provide at least one data row.'
+#                     }, status=status.HTTP_400_BAD_REQUEST)
+
+#                 headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+
+#                 # Validate required headers
+#                 if not required_headers.issubset(set(headers)):
+#                     return Response({
+#                         "statusCode": 400,
+#                         "status": True,
+#                         'message': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
+#                     }, status=status.HTTP_400_BAD_REQUEST)
+
+#                 for row in ws.iter_rows(min_row=2, values_only=True):
+#                     if not any(row):
+#                         continue
+#                     row_dict = dict(zip(headers, row))
+#                     data.append(row_dict)
+
+#                 if not data:
+#                     return Response({
+#                         "statusCode": 400,
+#                         "status": False,
+#                         "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Please provide at least one data row.'
+#                     }, status=status.HTTP_400_BAD_REQUEST)
+
+#             # ---------- CSV Handling ----------
+#             elif format_type == 'csv':
+#                 from tablib import Dataset
+#                 decoded_file = file.read().decode('utf-8')
+#                 dataset = Dataset()
+#                 dataset.load(decoded_file, format='csv')
+
+#                 for row in dataset.dict:
+#                     row_lower = {k.strip().lower(): v for k, v in row.items()}
+
+#                     # Validate required headers
+#                     if not required_headers.issubset(set(row_lower.keys())):
+#                         return Response({
+#                             "statusCode": 400,
+#                             "status": True,
+#                             "message": (
+#                                 f'Missing required headers. Required: {", ".join(required_headers)}. '
+#                                 f'Found headers in the file: {", ".join(row_lower.keys())}.'
+#                             )
+#                         }, status=status.HTTP_400_BAD_REQUEST)
+
+#                     data.append(row_lower)
+
+#                 if not data:
+#                     return Response({
+#                         "statusCode": 400,
+#                         "status": False,
+#                         "message": "The uploaded CSV file is empty. Please provide at least one data row."
+#                     }, status=status.HTTP_400_BAD_REQUEST)
+
+#             else:
+#                 return Response({
+#                     "statusCode": 400,
+#                     "status": True,
+#                     'error': 'Unsupported file format. Use .xlsx or .csv'
+#                 }, status=status.HTTP_400_BAD_REQUEST)
+
+#             imported_count = 0
+
+#             # ---------- Import Rows ----------
+#             for row in  reversed(data):
+#                 name = str(row.get('relation')).strip() if row.get('relation') else None
+#                 description = str(row.get('description')).strip() if row.get('description') else ''
+
+#                 if not name:
+#                     continue  # skip rows without relation name
+
+#                 existing = Relation.objects.filter(name__iexact=name).first()
+
+#                 if existing:
+#                     if not existing.is_deleted:
+#                         duplicate_names.append(name)
+#                         continue
+#                     else:
+#                         # Reactivate if previously deleted
+#                         existing.description = description
+#                         existing.is_deleted = False
+#                         existing.save()
+#                         imported_count += 1
+#                 else:
+#                     Relation.objects.create(
+#                         name=name,
+#                         description=description,
+#                         is_deleted=False
+#                     )
+#                     imported_count += 1
+
+#         except Exception as e:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": True,
+#                 'message': str(e)
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "duplicates": list(set(duplicate_names)),
+#             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+#             "imported_count": imported_count
+#         }, status=status.HTTP_200_OK)
+
 class RelationImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -4621,23 +4774,23 @@ class RelationImportAPIView(APIView):
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
-        duplicate_names = []
 
-        # Define required and optional headers
-        required_headers = {'relation'}       # must be present
-        optional_headers = {'description'}    # optional
+        duplicates = []
+        skipped_rows = []
+
+        required_headers = {'relation'}
+        optional_headers = {'description'}
 
         try:
             data = []
             headers = []
 
-            # ---------- XLSX Handling ----------
+            # ---------------- XLSX ----------------
             if format_type == 'xlsx':
                 import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
 
-                # Validate sheet name
                 if not sheet_name:
                     return Response({
                         'error': 'Please provide sheet_name',
@@ -4646,100 +4799,90 @@ class RelationImportAPIView(APIView):
 
                 if sheet_name not in available_sheets:
                     return Response({
-                        'error': f'Sheet "{sheet_name}" not found in uploaded file',
+                        'error': f'Sheet "{sheet_name}" not found',
                         'available_sheets': available_sheets
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 ws = wb[sheet_name]
+
                 if ws.max_row <= 1:
                     return Response({
                         "statusCode": 400,
                         "status": False,
-                        "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Please provide at least one data row.'
+                        "message": f'Sheet "{sheet_name}" is empty.'
                     }, status=status.HTTP_400_BAD_REQUEST)
 
-                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                headers = [
+                    str(cell.value).strip().lower() if cell.value else ''
+                    for cell in next(ws.iter_rows(min_row=1, max_row=1))
+                ]
 
-                # Validate required headers
-                if not required_headers.issubset(set(headers)):
-                    return Response({
-                        "statusCode": 400,
-                        "status": True,
-                        'message': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
-                    }, status=status.HTTP_400_BAD_REQUEST)
-
+                row_num = 1
                 for row in ws.iter_rows(min_row=2, values_only=True):
+                    row_num += 1
                     if not any(row):
                         continue
                     row_dict = dict(zip(headers, row))
+                    row_dict["_row_number"] = row_num
                     data.append(row_dict)
 
-                if not data:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Please provide at least one data row.'
-                    }, status=status.HTTP_400_BAD_REQUEST)
-
-            # ---------- CSV Handling ----------
+            # ---------------- CSV ----------------
             elif format_type == 'csv':
                 from tablib import Dataset
                 decoded_file = file.read().decode('utf-8')
                 dataset = Dataset()
                 dataset.load(decoded_file, format='csv')
 
+                row_num = 1
                 for row in dataset.dict:
+                    row_num += 1
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
-
-                    # Validate required headers
-                    if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({
-                            "statusCode": 400,
-                            "status": True,
-                            "message": (
-                                f'Missing required headers. Required: {", ".join(required_headers)}. '
-                                f'Found headers in the file: {", ".join(row_lower.keys())}.'
-                            )
-                        }, status=status.HTTP_400_BAD_REQUEST)
-
+                    row_lower["_row_number"] = row_num
                     data.append(row_lower)
-
-                if not data:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": "The uploaded CSV file is empty. Please provide at least one data row."
-                    }, status=status.HTTP_400_BAD_REQUEST)
 
             else:
                 return Response({
                     "statusCode": 400,
-                    "status": True,
-                    'error': 'Unsupported file format. Use .xlsx or .csv'
+                    "status": False,
+                    "message": 'Unsupported file format. Use .xlsx or .csv'
                 }, status=status.HTTP_400_BAD_REQUEST)
 
+            # ---------------- Process Rows ----------------
             imported_count = 0
 
-            # ---------- Import Rows ----------
-            for row in  reversed(data):
+            for row in reversed(data):
+                row_number = row.get("_row_number", "Unknown")
                 name = str(row.get('relation')).strip() if row.get('relation') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
+                # Missing Name
                 if not name:
-                    continue  # skip rows without relation name
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Relation": "",
+                        "Description": description,
+                        "Reason": "Missing relation name"
+                    })
+                    continue
 
                 existing = Relation.objects.filter(name__iexact=name).first()
 
                 if existing:
                     if not existing.is_deleted:
-                        duplicate_names.append(name)
+                        duplicates.append({
+                            "Row": row_number,
+                            "Relation": name,
+                            "Description": description,
+                            "Reason": "Already exists in database"
+                        })
                         continue
                     else:
-                        # Reactivate if previously deleted
+                        # Reactivate deleted
                         existing.description = description
                         existing.is_deleted = False
                         existing.save()
                         imported_count += 1
+
                 else:
                     Relation.objects.create(
                         name=name,
@@ -4751,18 +4894,19 @@ class RelationImportAPIView(APIView):
         except Exception as e:
             return Response({
                 "statusCode": 400,
-                "status": True,
-                'message': str(e)
+                "status": False,
+                "message": str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
 
+        # ---------------- Final Response (100% Gender Format) ----------------
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_names)),
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
-            "imported_count": imported_count
+            "imported_count": imported_count,
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=status.HTTP_200_OK)
-
 
 
 
