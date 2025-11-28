@@ -4482,10 +4482,10 @@ class CityImportAPIView(APIView):
                 "statusCode": 200,
                 "status": True,
                 "imported_count": len(to_create),
-                # "duplicates": duplicates,
-                # "skipped_rows": skipped_rows,
-                "duplicates": reversed(duplicates),
-                "skipped_rows": reversed(skipped_rows),
+                "duplicates": duplicates,
+                "skipped_rows": skipped_rows,
+                # "duplicates": reversed(duplicates),
+                # "skipped_rows": reversed(skipped_rows),
                 "message": f"Imported successfully ({len(to_create)} new cities)"
             }, status=200)
  
@@ -6043,7 +6043,7 @@ class CivilIdNameImportAPIView(APIView):
                             continue
                 if not civil_id_name:
                     skipped_rows.append({
-                        "Civil ID Name": civil_id_name or "Unknown",
+                        "Civil ID Name": civil_id_name or "",
                         "Reason": f"Missing required fields. Required: {', '.join(required_headers)}"
                     })
                     continue
