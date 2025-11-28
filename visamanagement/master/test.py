@@ -2468,7 +2468,11 @@ class LanguageTestResultImportAPIView(APIView):
                 lb_obj = StudyLanguageBanchmark.objects.filter(name__iexact=lb_level_name).first()
 
                 if not (language_obj and language_test_obj and module_obj and lb_obj):
-                    skipped_rows.append({"row": row, "reason": "Invalid FK reference"})
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Description":description, 
+                        "Reason": "Required field(s) missing"
+                        })
                     continue
 
                 if existing and existing.is_deleted:
