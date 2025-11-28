@@ -3688,67 +3688,6 @@ class StudySpecialisationDeleteAPIView(APIView):
 
 
 # ------------------ Export API ------------------
-# class StudySpecialisationExportAPIView(APIView):
-
-#     def get(self, request):
-#         format_type = request.GET.get('format', 'xlsx').lower()
-#         fields = request.GET.get('fields')
-#         uuids_param = request.GET.get('uuids', '')
-#         uuids = [u.strip() for u in uuids_param.split(',') if u]
-
-#         field_header_map = {
-#             'uuid': 'UUID',
-#             'mainarea_name': 'Study Main Area',
-#             'majorarea_name': 'Study Major Area',
-#             'studyspecialisation': 'Study Specialisation',
-#             'description': 'Description',
-#             'is_deleted': 'Deleted',
-#             'created_at': 'Created On',
-#             'updated_at': 'Modified On',
-#         }
-
-#         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
-
-#         queryset = StudySpecialisation.objects.filter(is_deleted=False)
-#         if uuids:
-#             queryset = queryset.filter(uuid__in=uuids)
-#         queryset = queryset.order_by('-created_at')
-
-#         dataset = Dataset()
-#         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-#         dataset.title = 'StudySpecialisation'
-
-#         for obj in queryset:
-#             row = []
-#             for field in field_list:
-#                 if field == 'mainarea_name':
-#                     value = obj.mainarea.name if obj.mainarea else ''
-#                 elif field == 'majorarea_name':
-#                     value = obj.majorarea.majorarea if obj.majorarea else ''
-#                 else:
-#                     value = getattr(obj, field, '')
-#                 if field in ['created_at', 'updated_at'] and value:
-#                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-#                 elif isinstance(value, bool):
-#                     value = int(value)
-#                 row.append(value if value is not None else '')
-#             dataset.append(row)
-
-#         if format_type == 'csv':
-#             file_data = dataset.export('csv')
-#             content_type = 'text/csv'
-#             file_name = 'study_specialisations.csv'
-#         else:
-#             file_data = io.BytesIO(dataset.export('xlsx'))
-#             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-#             file_name = 'study_specialisations.xlsx'
-
-#         response = HttpResponse(
-#             file_data if format_type == 'csv' else file_data.getvalue(),
-#             content_type=content_type
-#         )
-#         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
-#         return response
 
 class StudySpecialisationExportAPIView(APIView):
     def get(self, request):
@@ -7073,58 +7012,200 @@ class ECAForImportAPIView(APIView):
         }, status=200)
 
 
-
-
 class ECAAwardingBodyListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
         search = request.GET.get('search', '').strip()
+        custom_sort = request.GET.get('customSort')
         sort_by = request.GET.get('sortBy', 'created_at')
         sort_order = request.GET.get('sortOrder', 'desc')
 
-        allowed_sort_fields = ['eca_body_full_name', 'eca_body_short_name', 'eca_valid_period', 'created_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        uuid_country = request.GET.get('country', '')
+        uuid_ecafor = request.GET.get('ecaFor', '')
 
         queryset = ECAAwardingBody.objects.all()
+
+        # ----------------------
+        # UUID FILTERING HELPERS
+        # ----------------------
+        def parse_uuid_list(raw):
+            valid = []
+            if raw:
+                for x in raw.split(','):
+                    try:
+                        valid.append(UUID(x.strip()))
+                    except:
+                        pass
+            return valid
+
+        country_list = parse_uuid_list(uuid_country)
+        ecafor_list = parse_uuid_list(uuid_ecafor)
+
+        if country_list:
+            queryset = queryset.filter(country__uuid__in=country_list)
+        if ecafor_list:
+            queryset = queryset.filter(ecafor__uuid__in=ecafor_list)
+
+        # ----------------------
+        # SEARCH FILTER
+        # ----------------------
         if search:
-            queryset = queryset.filter(
-                Q(eca_body_full_name__istartswith=search) 
-            )
+            queryset = queryset.filter(eca_body_full_name__istartswith=search)
 
-        queryset = queryset.order_by(sort_by)
+        # ----------------------
+        # SORT FIELD MAP
+        # ----------------------
+        sort_field_map = {
+            "uuid": "uuid",
+            "country": "country__name",
+            "ecaFor": "ecafor__name",
+            "eca_body_full_name": "eca_body_full_name",
+            "eca_body_short_name": "eca_body_short_name",
+            "eca_valid_period": "eca_valid_period",
+            "created_at": "created_at",
+            "updated_at": "updated_at",
+        }
 
+        allowed_sort_fields = list(sort_field_map.keys())
+        sort_fields = []
+
+        # ----------------------
+        # CUSTOM SORT LOGIC
+        # ----------------------
+        if custom_sort:
+            for rule in custom_sort.split(","):
+                try:
+                    field, order = rule.split(":")
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive fields
+                    if field in ["country", "ecafor", "eca_body_full_name", "eca_body_short_name", "eca_valid_period"]:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == "asc" else f.desc(nulls_last=True)
+                    )
+
+                except ValueError:
+                    continue
+
+        else:
+            # ----------------------
+            # DEFAULT SORT
+            # ----------------------
+            if sort_by not in allowed_sort_fields:
+                sort_by = "created_at"
+
+            orm_field = sort_field_map.get(sort_by, "created_at")
+            f = F(orm_field)
+            sort_fields = [
+                f.asc(nulls_last=True) if sort_order.lower() == "asc" else f.desc(nulls_last=True)
+            ]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # ----------------------
+        # PAGINATION
+        # ----------------------
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = ECAAwardingBodySerializer(result_page, many=True)
+
         return paginator.get_paginated_response(serializer.data)
+    
 
-
-# -------------------- CREATE API --------------------
 class ECAAwardingBodyCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
-        serializer = ECAAwardingBodySerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": "ECA Awarding Body created successfully",
-                "data": serializer.data
-            })
-        errors = serializer.errors
-        messages = []
-        for field, msgs in errors.items():
-            messages.extend(msgs)
-        return Response({
-            "statusCode": 400,
-            "status": False,
-            "message": " ".join(messages)
-        }, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            serializer = ECAAwardingBodySerializer(data=request.data)
 
+            # -----------------------------------
+            # Validate serializer fields first
+            # -----------------------------------
+            if not serializer.is_valid():
+                return Response({
+                    "status": False,
+                    "statusCode": 400,
+                    "message": "Validation error",
+                    "data": serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            data = serializer.validated_data
+
+            # -----------------------------------
+            # Extract foreign keys
+            # -----------------------------------
+            country_obj = data.get("country")
+            ecafor_obj = data.get("ecafor")
+            eca_body_full_name = (data.get("eca_body_full_name") or "").strip()
+
+            # -----------------------------------
+            # Duplicate check
+            # -----------------------------------
+            try:
+                if ECAAwardingBody.objects.filter(
+                    country=country_obj,            # <-- use instance
+                    ecafor=ecafor_obj,              # <-- use instance  
+                    eca_body_full_name__iexact=eca_body_full_name
+                ).exists():
+                    return Response({
+                        "status": False,
+                        "statusCode": 400,
+                        "message": "This ECA Awarding Body already exists.",
+                    }, status=status.HTTP_400_BAD_REQUEST)
+            except Exception as e:
+                return Response({
+                    "status": False,
+                    "statusCode": 400,
+                    "message": "Error during duplicate check.",
+                    "error": str(e)
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # -----------------------------------
+            # Save object
+            # -----------------------------------
+            obj = serializer.save()
+
+            return Response({
+                "status": True,
+                "statusCode": 200,
+                "message": "ECA Awarding Body created successfully.",
+                "data": ECAAwardingBodySerializer(obj).data
+            }, status=status.HTTP_201_CREATED)
+
+        # -----------------------------------
+        # Handle DB-level errors
+        # -----------------------------------
+        except IntegrityError as e:
+            return Response({
+                "status": False,
+                "statusCode": 400,
+                "message": "Duplicate entry or invalid foreign key reference.",
+                "error": str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # -----------------------------------
+        # Catch any unexpected error
+        # -----------------------------------
+        except Exception as e:
+            return Response({
+                "status": False,
+                "statusCode": 500,
+                "message": "Something went wrong while creating ECA Awarding Body.",
+                "error": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+     
 
 # -------------------- RETRIEVE API --------------------
 class ECAAwardingBodyRetrieveAPIView(APIView):
@@ -7250,13 +7331,80 @@ class ECAAwardingBodyDeleteAPIView(APIView):
 
 
 # -------------------- EXPORT API -------------------- 
+# class ECAAwardingBodyExportAPIView(APIView):
+#     def get(self, request):
+#         format_type = request.GET.get('format', 'xlsx').lower()
+#         fields = request.GET.get('fields')
+#         uuids_param = request.GET.get('uuids', '')
+#         uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+#         field_header_map = {
+#             'uuid': 'UUID',
+#             'country': 'Country',
+#             'ecafor': 'ECA For',
+#             'valid_duration_value': 'ECA Valid Duration',
+#             'eca_body_full_name': 'ECA Body Full Name',
+#             'eca_body_short_name': 'ECA Body Short Name',
+#             'eca_valid_period': 'ECA Valid Period',
+#             'created_at': 'Created On',
+#             'updated_at': 'Modified On'
+#         }
+
+#         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+#         queryset = ECAAwardingBody.objects.all()
+#         if uuids:
+#             queryset = queryset.filter(uuid__in=uuids)
+#         queryset = queryset.order_by('-created_at')
+
+#         dataset = Dataset()
+#         dataset.headers = [field_header_map.get(f, f) for f in field_list]
+#         dataset.title = 'ECA Awarding Body'
+
+#         for eca in queryset:
+#             row = []
+#             for field in field_list:
+#                 value = getattr(eca, field, '')
+#                 if field == 'country' and eca.country:
+#                     value = eca.country.name
+#                 elif isinstance(value, bool):
+#                     value = int(value)
+#                 elif field in ['created_at', 'updated_at'] and value:
+#                     value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
+#                 row.append(value if value is not None else '')
+#             dataset.append(row)
+
+#         if format_type == 'csv':
+#             file_data = dataset.export('csv')
+#             content_type = 'text/csv'
+#             file_name = 'eca_awarding_body.csv'
+#         else:
+#             file_data = io.BytesIO(dataset.export('xlsx'))
+#             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+#             file_name = 'eca_awarding_body.xlsx'
+
+#         response = HttpResponse(
+#             file_data if format_type == 'csv' else file_data.getvalue(),
+#             content_type=content_type
+#         )
+#         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+#         return response
+
+
 class ECAAwardingBodyExportAPIView(APIView):
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')
-        uuids_param = request.GET.get('uuids', '')
-        uuids = [u.strip() for u in uuids_param.split(',') if u]
 
+        # ----------------------------
+        # Filters & Search
+        # ----------------------------
+        search = request.GET.get('search', '').strip()
+        custom_sort = request.GET.get('customSort')
+
+
+        # ----------------------------
+        # Field headers
+        # ----------------------------
         field_header_map = {
             'uuid': 'UUID',
             'country': 'Country',
@@ -7270,11 +7418,115 @@ class ECAAwardingBodyExportAPIView(APIView):
         }
 
         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
-        queryset = ECAAwardingBody.objects.all()
-        if uuids:
-            queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
 
+
+        # ---------------------------
+        # Helper: Parse & Validate UUIDs
+        # ---------------------------
+        def parse_ids(param_name):
+            raw = request.GET.get(param_name, '')
+            if raw:
+                items = [x.strip() for x in raw.split(',') if x.strip()]
+            else:
+                items = request.GET.getlist(param_name)
+            return items
+
+        def validate_uuid_list(uuid_list):
+            valid = []
+            for u in uuid_list:
+                try:
+                    valid.append(UUID(u))
+                except:
+                    pass
+            return valid
+
+        try:
+            ecafor_list = validate_uuid_list(parse_ids('ecaFor'))
+            country_list = validate_uuid_list(parse_ids('country'))
+            uuids_list = validate_uuid_list(parse_ids('uuids'))
+        except ValueError as e:
+            return Response({
+                "status": False,
+                "statusCode": 400,
+                "message": str(e)
+            }, status=400)
+        
+        # ----------------------------
+        # Base QuerySet
+        # ----------------------------
+        queryset = ECAAwardingBody.objects.all()
+
+        if uuids_list:
+            queryset = queryset.filter(uuid__in=uuids_list)
+        if country_list:
+            queryset = queryset.filter(country__uuid__in=country_list)
+        if ecafor_list:
+            queryset = queryset.filter(ecafor__uuid__in=ecafor_list)
+        if search:
+            queryset = queryset.filter(Q(eca_body_full_name__istartswith=search))
+
+        # ----------------------------
+        # Sorting
+        # ----------------------------
+        sort_field_map = {
+            'uuid': 'uuid',
+            'country': 'country__name',
+            'ecaFor': 'ecafor__name',
+            'eca_body_full_name': 'eca_body_full_name',
+            'eca_body_short_name': 'eca_body_short_name',
+            'eca_valid_period': 'eca_valid_period',
+            'valid_duration_value': 'valid_duration_value',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at'
+        }
+
+        sort_fields = []
+        annotations = {}
+
+        if custom_sort:
+            for idx, rule in enumerate(custom_sort.split(',')):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        return Response({
+                            "status": False,
+                            "statusCode": 400,
+                            "message": f"Invalid sort field: {field}"
+                        }, status=400)
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive for string fields
+                    if field in ['country', 'ecafor', 'eca_body_full_name', 'eca_body_short_name', 'eca_valid_period']:
+                        ann_name = f"sort_key_{idx}"
+                        annotations[ann_name] = Lower(orm_field)
+                        sort_fields.append(ann_name if order == 'asc' else f"-{ann_name}")
+                    else:
+                        sort_fields.append(orm_field if order == 'asc' else f"-{orm_field}")
+
+                except ValueError:
+                    return Response({
+                        "status": False,
+                        "statusCode": 400,
+                        "message": f"Invalid sorting rule format: {rule}"
+                    }, status=400)
+
+        # Apply annotations if needed
+        if annotations:
+            queryset = queryset.annotate(**annotations)
+
+        if not sort_fields:
+            sort_fields = ['-created_at']
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # ----------------------------
+        # Prepare Dataset
+        # ----------------------------
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = 'ECA Awarding Body'
@@ -7285,30 +7537,32 @@ class ECAAwardingBodyExportAPIView(APIView):
                 value = getattr(eca, field, '')
                 if field == 'country' and eca.country:
                     value = eca.country.name
-                elif isinstance(value, bool):
-                    value = int(value)
+                elif field == 'ecafor' and eca.ecafor:
+                    value = eca.ecafor.name
                 elif field in ['created_at', 'updated_at'] and value:
                     value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
+                elif isinstance(value, bool):
+                    value = int(value)
                 row.append(value if value is not None else '')
             dataset.append(row)
 
+        # ----------------------------
+        # Export File
+        # ----------------------------
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
             file_name = 'eca_awarding_body.csv'
+            response = HttpResponse(file_data, content_type=content_type)
         else:
             file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'eca_awarding_body.xlsx'
+            response = HttpResponse(file_data.getvalue(), content_type=content_type)
 
-        response = HttpResponse(
-            file_data if format_type == 'csv' else file_data.getvalue(),
-            content_type=content_type
-        )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
-
-
+    
 
 class ECAAwardingBodyImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
