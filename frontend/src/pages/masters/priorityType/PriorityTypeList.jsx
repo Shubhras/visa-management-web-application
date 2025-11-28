@@ -590,6 +590,7 @@ const PriorityTypeList = () => {
                     onClick={clearAllFilters}
                     tableState={tableState}
                     globalSearch={globalSearch}
+                    selectedRows={selectedRows}
                   />
                 </div>
               </div>

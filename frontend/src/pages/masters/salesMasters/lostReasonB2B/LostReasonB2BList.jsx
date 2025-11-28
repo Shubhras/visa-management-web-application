@@ -242,6 +242,7 @@ const LostReasonB2BList = () => {
     }));
     // Reset Global Search
     setGlobalSearch("");
+    setSelectedRows([]);
   };
 
   const handleSearchChange = (value) => {
@@ -588,6 +589,7 @@ const LostReasonB2BList = () => {
                     onClick={clearAllFilters}
                     tableState={tableState}
                     globalSearch={globalSearch}
+                    selectedRows={selectedRows}
                   />
                 </div>
               </div>

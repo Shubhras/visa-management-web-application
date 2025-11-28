@@ -793,6 +793,7 @@ const OwnershipTypeList = () => {
                     tableState={tableState}
                     columnFilters={columnFilters}
                     globalSearch={globalSearch}
+                    selectedRows={selectedRows}
                   />
                 </div>
               </div>
