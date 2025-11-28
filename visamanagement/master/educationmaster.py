@@ -415,8 +415,7 @@ class EducationLevelCodeDeleteAPIView(APIView):
             # -----------------------------
             if search:
                 queryset = queryset.filter(
-                    Q(name__istartswith=search) |
-                    Q(description__istartswith=search)
+                    Q(name__istartswith=search) 
                 )
 
             # -----------------------------
@@ -900,7 +899,7 @@ class EducationLevelListAPIView(APIView):
         # ---------------------------
         if search:
             queryset = queryset.filter(
-                Q(educationlevel__icontains=search)
+                Q(educationlevel__istartswith=search)
             )
 
         # ---------------------------
