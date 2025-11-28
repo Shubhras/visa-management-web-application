@@ -52,7 +52,7 @@ const AddEditStudyMajorAreaModal = ({ show, handleClose, mode = 'add', rowData =
       limit: 2000,
       search: '',
       status: '',
-      sortBy: 'created_at', // Field to sort by
+      sortBy: 'name', // Field to sort by
       sortOrder: 'asc', // 'asc' or 'desc'
     };
 

@@ -10,6 +10,7 @@ import AddEditEducationLevelModal from './AddEditEducationLevelModal';
 import { educationLevelList, educationLevelDelete, educationLevelExportData, educationLevelCodeList } from "../../../../store/master/educationMaster/action";
 import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 import { useGlobalSearch } from '../../../../components/comman/GlobalSearchContext';
+import ResetButton from '../../../../components/comman/ResetButton';
 const EducationLevelList = () => {
     const dispatch = useDispatch();
     const { globalSearch, setGlobalSearch } = useGlobalSearch();
@@ -29,7 +30,7 @@ const EducationLevelList = () => {
             page: 1,
             limit: 2000,
             search: "",
-            sortBy: "name",
+            sortBy: "updated_at",
             sortOrder: "asc"
         };
         dispatch(educationLevelCodeList(params, (response, error) => {
@@ -685,10 +686,16 @@ const EducationLevelList = () => {
                                             <Icon icon="mdi:filter-off" width="16" /> Clear Filters
                                         </button>
                                     )}
-                                    <button
+                                    {/* <button
                                         onClick={clearAllFilters}
                                         className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
-                                    >Reset </button>
+                                    >Reset </button> */}
+                                    <ResetButton
+                                        onClick={clearAllFilters}
+                                        tableState={tableState}
+                                        columnFilters={columnFilters}
+                                        globalSearch={globalSearch}
+                                    />
                                 </div>
                             </div>
 

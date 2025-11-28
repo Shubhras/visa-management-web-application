@@ -60,8 +60,8 @@ const AddEditEntranceTestResultModal = ({ show, handleClose, mode = 'add', rowDa
             limit: 2000,
             search: '',
             status: '',
-            sortBy: 'updated_at', // Field to sort by
-            sortOrder: 'desc', // 'asc' or 'desc'
+            sortBy: 'shortname', // Field to sort by
+            sortOrder: 'asc', // 'asc' or 'desc'
         };
         dispatch(entranceTestNameList(params, (response, error) => {
             setLoading(false);
@@ -345,7 +345,7 @@ const AddEditEntranceTestResultModal = ({ show, handleClose, mode = 'add', rowDa
                                         Entrance Test Result <span className="text-danger">*</span>
                                     </label>
                                     <input
-                                        type="text"
+                                        type="number"
                                         name="result"
                                         value={formData.result}
                                         onChange={handleChange}

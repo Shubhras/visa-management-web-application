@@ -10,6 +10,7 @@ import AddImportEntranceTestResultModal from './AddImportEntranceTestResultModal
 import AddEditEntranceTestResultModal from './AddEditEntranceTestResultModal';
 import { formatDateDDMMYYYY, formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 import { useGlobalSearch } from '../../../../components/comman/GlobalSearchContext';
+import ResetButton from '../../../../components/comman/ResetButton';
 const EntranceTestResultList = () => {
     const dispatch = useDispatch();
     const { globalSearch, setGlobalSearch } = useGlobalSearch();
@@ -686,10 +687,12 @@ const EntranceTestResultList = () => {
                                             <Icon icon="mdi:filter-off" width="16" /> Clear Filters
                                         </button>
                                     )}
-                                    <button
+                                    <ResetButton
                                         onClick={clearAllFilters}
-                                        className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
-                                    >Reset </button>
+                                        tableState={tableState}
+                                        columnFilters={columnFilters}
+                                        globalSearch={globalSearch}
+                                    />
                                 </div>
                             </div>
                             {/* Right Section: Select / Search / +Add New */}
