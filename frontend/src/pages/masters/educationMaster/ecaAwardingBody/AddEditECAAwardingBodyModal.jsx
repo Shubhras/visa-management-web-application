@@ -46,7 +46,7 @@ const AddEditECAAwardingBodyModal = ({ show, handleClose, mode = 'add', rowData 
       setFormData({
         uuid: rowData.uuid || '',
         countryUuid: rowData.country || '',
-        ecaFor: rowData.selection_type_display || '',
+        ecaFor: rowData.ecafor || '',
         fullName: rowData.eca_body_full_name || '',
         shortName: rowData.eca_body_short_name || '',
         validPeriod: validNumber,
@@ -159,7 +159,7 @@ const AddEditECAAwardingBodyModal = ({ show, handleClose, mode = 'add', rowData 
           eca_body_full_name: formData.fullName,
           eca_body_short_name: formData.shortName,
           eca_valid_period: formattedValidPeriod,
-          valid_duration_value: formData.validPeriod,
+          valid_duration_value: formData.validPeriod || null,
           description: formData.description,
         }
         : {
@@ -168,7 +168,7 @@ const AddEditECAAwardingBodyModal = ({ show, handleClose, mode = 'add', rowData 
           eca_body_full_name: formData.fullName,
           eca_body_short_name: formData.shortName,
           eca_valid_period: formattedValidPeriod,
-          valid_duration_value: formData.validPeriod,
+          valid_duration_value: formData.validPeriod || null,
           description: formData.description,
 
         };

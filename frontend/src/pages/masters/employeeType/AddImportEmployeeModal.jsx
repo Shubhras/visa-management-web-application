@@ -103,7 +103,7 @@ const AddImportEmployeeModal = ({ show, handleClose }) => {
                     if (response?.skipped_rows?.length > 0) {
                         const prepareData = {
                             data: response.skipped_rows || [],
-                            headers: ["Employee Type", "Reason"],
+                            headers: ["Employee Type","Description", "Reason"],
                             sheetName: "EmployeetType",
                             fileName: "EmployeetType",
                         };

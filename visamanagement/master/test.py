@@ -5,7 +5,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from .serializers import  *
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Q, F
+from django.db.models.functions import Lower
 from rest_framework.permissions import IsAuthenticated ,AllowAny ,BasePermission 
 from django.shortcuts import get_object_or_404
 from .pagination import  *
@@ -215,6 +216,37 @@ class LanguageDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+# class LanguageListAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def get(self, request):
+#         search = request.GET.get('search', '').strip()
+#         sort_by = request.GET.get('sortBy', 'created_at')
+#         sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
+
+#         allowed_sort_fields = ['name', 'description', 'created_at']
+#         if sort_by not in allowed_sort_fields:
+#             sort_by = 'created_at'
+
+#         # Apply descending order for 'desc'
+#         if sort_order == 'desc':
+#             sort_by = f'-{sort_by}'
+
+#         queryset = Language.objects.filter(is_deleted=False)  
+#         if search:
+#             queryset = queryset.filter(
+#                 Q(name__istartswith=search) |
+#                 Q(description__istartswith=search)
+#             )
+
+#         queryset = queryset.order_by(sort_by)
+#         paginator = CustomPagination()
+#         result_page = paginator.paginate_queryset(queryset, request)
+#         serializer = LanguageSerializer(result_page, many=True)
+#         return paginator.get_paginated_response(serializer.data)
+
+
+
 class LanguageListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -222,30 +254,143 @@ class LanguageListAPIView(APIView):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'created_at')
         sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
+        custom_sort = request.GET.get('customSort') #Custom Sorting
 
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        allowed_sort_fields = ['name', 'description', 'created_at','updated_at']
+        queryset = Language.objects.filter(is_deleted=False)
+
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
+        
+        #sorting
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+        
+        sort_fields = []
+
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field,order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field not in sort_field_map:
+                        continue
+                    orm_field = sort_field_map[field]
+                    # Case-insensitive sorting for string fields
+                    if field in ['name','description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+        else:
+                # fallback sorting
+                sort_by = request.GET.get('sortBy','created_at')
+                sort_order = request.GET.get('sortOrder','asc')
+                orm_field = sort_field_map.get(sort_by,'created_at')
+                f = F(orm_field)
+                sort_fields =  [f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)]
+        queryset = queryset.order_by(*sort_fields)
+        print("SORT FIELDS:", sort_fields)
+
+
 
         # Apply descending order for 'desc'
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
 
-        queryset = Language.objects.filter(is_deleted=False)  
+       # queryset = Language.objects.filter(is_deleted=False)  
         if search:
             queryset = queryset.filter(
-                Q(name__istartswith=search) |
-                Q(description__istartswith=search)
+                Q(name__istartswith=search) 
             )
 
-        queryset = queryset.order_by(sort_by)
+       # queryset = queryset.order_by(sort_by)
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = LanguageSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
+    
 
 
 
+# class LanguageExportAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def get(self, request):
+#         # --- Get query params ---
+#         format_type = request.GET.get('format', 'xlsx').lower()
+#         fields = request.GET.get('fields')  # comma-separated fields
+#         uuids_param = request.GET.get('uuids', '')  # comma-separated UUIDs
+
+#         uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+#         # --- Field to header mapping ---
+#         field_header_map = {
+#             'uuid': 'UUID',
+#             'name': 'Language Name (Test)',
+#             'description': 'Description',
+#             'is_deleted': 'Deleted',
+#             'created_at': 'Created On',
+#             'updated_at': 'Modified On',
+#         }
+
+#         # --- Determine fields to export ---
+#         if fields:
+#             field_list = [f.strip() for f in fields.split(',')]
+#         else:
+#             field_list = list(field_header_map.keys())
+
+#         # --- Fetch queryset ---
+#         queryset = Language.objects.all()
+#         if uuids:
+#             queryset = queryset.filter(uuid__in=uuids)
+#         queryset = queryset.order_by('-created_at')
+
+#         # --- Prepare dataset ---
+#         dataset = Dataset()
+#         dataset.headers = [field_header_map.get(f, f) for f in field_list]
+#         dataset.title = 'Language Name(Test)'
+
+#         for lang in queryset:
+#             row = []
+#             for field in field_list:
+#                 value = getattr(lang, field, '')
+
+#                 # Convert datetime to IST
+#                 if field in ['created_at', 'updated_at'] and value:
+#                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+#                 elif isinstance(value, bool):
+#                     value = int(value)
+
+#                 row.append(value if value is not None else '')
+#             dataset.append(row)
+
+#         # --- Export logic ---
+#         if format_type == 'csv':
+#             file_data = dataset.export('csv')
+#             content_type = 'text/csv'
+#             file_name = 'languages.csv'
+#         else:
+#             file_data = io.BytesIO(dataset.export('xlsx'))
+#             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+#             file_name = 'languages.xlsx'
+
+#         # --- Return response ---
+#         response = HttpResponse(
+#             file_data if format_type == 'csv' else file_data.getvalue(),
+#             content_type=content_type
+#         )
+#         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+#         return response
 
 
 class LanguageExportAPIView(APIView):
@@ -256,7 +401,11 @@ class LanguageExportAPIView(APIView):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')  # comma-separated fields
         uuids_param = request.GET.get('uuids', '')  # comma-separated UUIDs
-
+        search = request.GET.get('search', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_order = request.GET.get('sortOrder', 'desc')
+        custom_sort = request.GET.get('customSort')
+        
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
         # --- Field to header mapping ---
@@ -274,17 +423,68 @@ class LanguageExportAPIView(APIView):
             field_list = [f.strip() for f in fields.split(',')]
         else:
             field_list = list(field_header_map.keys())
-
-        # --- Fetch queryset ---
+        
+         # --- Fetch queryset ---
         queryset = Language.objects.all()
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
         queryset = queryset.order_by('-created_at')
 
+       
+        allowed_sort_fields = ['name', 'description', 'created_at', 'updated_at']
+        queryset = Language.objects.filter(is_deleted=False)
+        if search:
+            queryset = queryset.filter(
+                Q(name__istartswith=search) 
+            )
+
+
+         #sorting
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+        sort_fields = []
+
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field,order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field not in sort_field_map:
+                        continue
+                    orm_field = sort_field_map[field]
+                    # Case-insensitive sorting for string fields
+                    if field in ['name','description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+        else:
+                # fallback sorting
+                sort_by = request.GET.get('sortBy','created_at')
+                sort_order = request.GET.get('sortOrder','asc')
+                orm_field = sort_field_map.get(sort_by,'created_at')
+                f = F(orm_field)
+                sort_fields =  [f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)]
+        queryset = queryset.order_by(*sort_fields)
+
+
+
+        
+       
+
         # --- Prepare dataset ---
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'Language Name(Test)'
+        dataset.title = 'LanguageName(Test)'
 
         for lang in queryset:
             row = []
@@ -317,6 +517,7 @@ class LanguageExportAPIView(APIView):
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
+
 
 
 class LanguageImportAPIView(APIView):
@@ -453,6 +654,34 @@ class LanguageImportAPIView(APIView):
 
 #--------------------language Test-------------------
 
+# class LanguageTestListAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def get(self, request):
+#         search = request.GET.get('search', '').strip()
+#         sort_by = request.GET.get('sortBy', 'created_at')
+#         sort_order = request.GET.get('sortOrder', 'desc')
+#         allowed_sort_fields = ['name', 'fullname', 'description', 'updated_at']
+
+#         if sort_by not in allowed_sort_fields:
+#             sort_by = 'created_at'
+#         if sort_order == 'desc':
+#             sort_by = f'-{sort_by}'
+
+#         queryset = LanguageTest.objects.filter(is_deleted=False)
+
+#         if search:
+#             queryset = queryset.filter(
+#                 Q(name__istartswith=search)
+#             )
+
+#         queryset = queryset.order_by(sort_by)
+#         paginator = CustomPagination()
+#         result_page = paginator.paginate_queryset(queryset, request)
+#         serializer = LanguageTestSerializer(result_page, many=True)
+#         return paginator.get_paginated_response(serializer.data)
+
+
 class LanguageTestListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -460,13 +689,14 @@ class LanguageTestListAPIView(APIView):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'created_at')
         sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['name', 'fullname', 'description', 'updated_at']
-
+        custom_sort = request.GET.get('customSort')
+        allowed_sort_fields = ['name', 'fullname', 'description', 'created_at','updated_at']
+        
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
         if sort_order == 'desc':
             sort_by = f'-{sort_by}'
-
+             
         queryset = LanguageTest.objects.filter(is_deleted=False)
 
         if search:
@@ -474,11 +704,47 @@ class LanguageTestListAPIView(APIView):
                 Q(name__istartswith=search)
             )
 
-        queryset = queryset.order_by(sort_by)
+        # sorting
+        sort_field_map = {
+            'name': 'name',
+            'fullname': 'fullname',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+        sort_fields = []
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field,order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field not in sort_field_map:
+                        continue
+                    orm_field = sort_field_map[field]
+
+                    if field in ['name','fullname','description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+        else:
+            sort_by = request.GET.get('sortBy','created_at')
+            sort_order = request.GET.get('sortOrder','asc')
+            orm_field = sort_field_map.get(sort_by , 'created_at')
+            f = F(orm_field)
+            sort_fields = [f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)]
+        queryset = queryset.order_by(*sort_fields)
+        #queryset = queryset.order_by(sort_by)
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = LanguageTestSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
+
 
 
 class LanguageTestCreateAPIView(APIView):
@@ -667,6 +933,86 @@ class LanguageTestDeleteAPIView(APIView):
 
 
 
+# class LanguageTestExportAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def get(self, request):
+#         # --- Get query params ---
+#         format_type = request.GET.get('format', 'xlsx').lower()
+#         fields = request.GET.get('fields')  # comma-separated fields
+#         uuids_param = request.GET.get('uuids', '')  # comma-separated UUIDs
+
+#         uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+#         # --- Field to header mapping ---
+#         field_header_map = {
+#             'uuid': 'UUID',
+#             'language': 'Language Name (Test)',
+#             'name': 'Language Test Name',
+#             'fullname': 'Language Test Full Name',
+#             'description': 'Description',
+#             'is_deleted': 'Deleted',
+#             'created_at': 'Created On',
+#             'updated_at': 'Modified On',
+#         }
+
+#         # --- Determine fields to export ---
+#         if fields:
+#             field_list = [f.strip() for f in fields.split(',')]
+#         else:
+#             field_list = list(field_header_map.keys())
+
+#         # --- Fetch queryset ---
+#         queryset = LanguageTest.objects.all()
+#         if uuids:
+#             queryset = queryset.filter(uuid__in=uuids)
+#         queryset = queryset.order_by('-created_at')
+
+#         # --- Prepare dataset ---
+#         dataset = Dataset()
+#         dataset.headers = [field_header_map.get(f, f) for f in field_list]
+#         dataset.title = 'LanguageTest'
+
+#         for obj in queryset:
+#             row = []
+#             for field in field_list:
+#                 value = getattr(obj, field, '')
+
+#                 # Special handling for language FK
+#                 if field == 'language' and obj.language:
+#                     value = obj.language.name
+
+#                 # Convert datetime to IST
+#                 elif field in ['created_at', 'updated_at'] and value:
+#                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+
+#                 # Boolean to int
+#                 elif isinstance(value, bool):
+#                     value = int(value)
+
+#                 row.append(value if value is not None else '')
+
+#             dataset.append(row)
+
+#         # --- Export logic ---
+#         if format_type == 'csv':
+#             file_data = dataset.export('csv')
+#             content_type = 'text/csv'
+#             file_name = 'language_tests.csv'
+#         else:
+#             file_data = io.BytesIO(dataset.export('xlsx'))
+#             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+#             file_name = 'language_tests.xlsx'
+
+#         # --- Return response ---
+#         response = HttpResponse(
+#             file_data if format_type == 'csv' else file_data.getvalue(),
+#             content_type=content_type
+#         )
+#         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+#         return response
+
+
 class LanguageTestExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -675,6 +1021,14 @@ class LanguageTestExportAPIView(APIView):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')  # comma-separated fields
         uuids_param = request.GET.get('uuids', '')  # comma-separated UUIDs
+        search = request.GET.get('search', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_order = request.GET.get('sortOrder', 'desc')
+        custom_sort = request.GET.get('customSort')
+        print("=== DEBUG EXPORT API ===")
+        print("Search term:", repr(search))
+        print("Search length:", len(search))
+        print("All params:", dict(request.GET))
 
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
@@ -697,11 +1051,66 @@ class LanguageTestExportAPIView(APIView):
             field_list = list(field_header_map.keys())
 
         # --- Fetch queryset ---
-        queryset = LanguageTest.objects.all()
+        queryset = LanguageTest.objects.filter(is_deleted=False) 
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
 
+        queryset = queryset.order_by('-created_at')
+        
+
+ 
+        allowed_sort_fields = ['name', 'language', 'fullname', 'description', 'created_at', 'updated_at']
+        queryset = LanguageTest.objects.filter(is_deleted=False)
+
+        #searching
+        if search:
+            queryset = queryset.filter(
+                    Q(name__istartswith=search)
+                ) 
+            
+        sort_field_map = {
+            'name': 'name',
+            'language': 'language__name', #ForeignKey
+            'fullname': 'fullname',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+        sort_fields = []
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field,order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+                    if field in ['name','fullname','description']:
+                        f = Lower(orm_field)
+                    elif field == 'language':
+                        f = Lower('language__name')
+                    else:
+                        f = F(orm_field)
+                    
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+        else:
+             sort_by = request.GET.get('sortBy','created_at')
+             sort_order = request.GET.get('sortOrder','asc')
+             orm_field = sort_field_map.get(sort_by,'created_at')
+             f = F(orm_field)
+             sort_fields =  [f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        print("SEARCH TERM:", search)
+                    
         # --- Prepare dataset ---
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
@@ -745,7 +1154,7 @@ class LanguageTestExportAPIView(APIView):
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
-
+    
 
 
 class LanguageTestImportAPIView(APIView):
@@ -877,6 +1286,34 @@ class LanguageTestImportAPIView(APIView):
 
 
 
+# class LanguagetestmoduleNameListAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def get(self, request):
+#         search = request.GET.get('search', '').strip()
+#         sort_by = request.GET.get('sortBy', 'created_at')
+#         sort_order = request.GET.get('sortOrder', 'desc')
+#         allowed_sort_fields = ['name', 'description', 'created_at']
+
+#         if sort_by not in allowed_sort_fields:
+#             sort_by = 'created_at'
+#         if sort_order == 'desc':
+#             sort_by = f'-{sort_by}'
+
+#         queryset = LanguagetestmoduleName.objects.filter(is_deleted=False)
+#         if search:
+#             queryset = queryset.filter(
+#                 Q(name__istartswith=search) |
+#                 Q(description__istartswith=search)
+#             )
+
+#         queryset = queryset.order_by(sort_by)
+#         paginator = CustomPagination()
+#         result_page = paginator.paginate_queryset(queryset, request)
+#         serializer = LanguagetestmoduleNameSerializer(result_page, many=True)
+#         return paginator.get_paginated_response(serializer.data)
+
+
 class LanguagetestmoduleNameListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -884,7 +1321,8 @@ class LanguagetestmoduleNameListAPIView(APIView):
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'created_at')
         sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['name', 'description', 'created_at']
+        custom_sort = request.GET.get('customSort')
+        allowed_sort_fields = ['name', 'description', 'created_at','updated_at']
 
         if sort_by not in allowed_sort_fields:
             sort_by = 'created_at'
@@ -894,15 +1332,53 @@ class LanguagetestmoduleNameListAPIView(APIView):
         queryset = LanguagetestmoduleName.objects.filter(is_deleted=False)
         if search:
             queryset = queryset.filter(
-                Q(name__istartswith=search) |
-                Q(description__istartswith=search)
+                Q(name__istartswith=search)
             )
 
-        queryset = queryset.order_by(sort_by)
+        #sorting
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+        sort_fields = []
+        if custom_sort:
+            for ruls in custom_sort.split(','):
+                try:
+                    field,order = ruls.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+                    orm_field = sort_field_map[field]
+                    #case insensitive sorting
+                    if field in ['name','description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+        else:
+            #fallback sorting
+             sort_by = request.GET.get('sortBy', 'created_at')
+             sort_order = request.GET.get('sortOrder', 'asc')
+             orm_field = sort_field_map.get(sort_by, 'created_at')
+             f = F(orm_field)
+             sort_fields = [f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)]
+
+        queryset =queryset.order_by(*sort_fields)
+
+        
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = LanguagetestmoduleNameSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
+    
 
 
 class LanguagetestmoduleNameCreateAPIView(APIView):
@@ -1043,6 +1519,64 @@ class LanguagetestmoduleNameDeleteAPIView(APIView):
 
 
         
+# class LanguagetestmoduleNameExportAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def get(self, request):
+#         format_type = request.GET.get('format', 'xlsx').lower()
+#         fields = request.GET.get('fields')
+#         uuids_param = request.GET.get('uuids', '')
+
+#         uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+#         field_header_map = {
+#             'uuid': 'UUID',
+#             'name': 'Language Test Module Name',
+#             'description': 'Description',
+#             'is_deleted': 'Deleted',
+#             'created_at': 'Created On',
+#             'updated_at': 'Modified On',
+#         }
+
+#         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+#         queryset = LanguagetestmoduleName.objects.all()
+#         if uuids:
+#             queryset = queryset.filter(uuid__in=uuids)
+#         queryset = queryset.order_by('-created_at')
+
+#         dataset = Dataset()
+#         dataset.headers = [field_header_map.get(f, f) for f in field_list]
+#         dataset.title = 'LanguagetestmoduleName'
+
+#         for obj in queryset:
+#             row = []
+#             for field in field_list:
+#                 value = getattr(obj, field, '')
+#                 if field in ['created_at', 'updated_at'] and value:
+#                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+#                 elif isinstance(value, bool):
+#                     value = int(value)
+#                 row.append(value if value is not None else '')
+#             dataset.append(row)
+
+#         if format_type == 'csv':
+#             file_data = dataset.export('csv')
+#             content_type = 'text/csv'
+#             file_name = 'modules.csv'
+#         else:
+#             file_data = io.BytesIO(dataset.export('xlsx'))
+#             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+#             file_name = 'modules.xlsx'
+
+#         response = HttpResponse(
+#             file_data if format_type == 'csv' else file_data.getvalue(),
+#             content_type=content_type
+#         )
+#         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+#         return response
+
+
 class LanguagetestmoduleNameExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -1050,6 +1584,8 @@ class LanguagetestmoduleNameExportAPIView(APIView):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')
         uuids_param = request.GET.get('uuids', '')
+        custom_sort = request.GET.get('customSort')
+        search = request.GET.get('search','').strip()
 
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
@@ -1069,6 +1605,51 @@ class LanguagetestmoduleNameExportAPIView(APIView):
             queryset = queryset.filter(uuid__in=uuids)
         queryset = queryset.order_by('-created_at')
 
+        # allowed_sort_fields = ['name','description', 'created_at', 'updated_at']
+        # queryset = LanguageTest.objects.filter(is_deleted=False)
+
+        #searching
+        if search:
+            queryset = queryset.filter(name__istartswith=search)
+
+        # custom_sorting login----------->
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at':'updated_at',
+        }
+
+        sort_fields = []
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                 try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field not in sort_field_map:
+                        continue
+                    orm_field = sort_field_map[field]
+                    # case -insensitive sorting for string field
+                    if field in ['name','description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+                 except ValueError:
+                      continue
+        else:
+             sort_by = request.GET.get('sortBy','created_at')
+             sort_order = request.GET.get('sortOrder','asc')
+             orm_field = sort_field_map.get(sort_by,'created_at')
+             f = F(orm_field)
+             sort_fields =  [f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+        
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = 'LanguagetestmoduleName'
@@ -1099,6 +1680,9 @@ class LanguagetestmoduleNameExportAPIView(APIView):
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
+
+
+
 
 
 class LanguagetestmoduleNameImportAPIView(APIView):
@@ -1227,34 +1811,173 @@ class LanguagetestmoduleNameImportAPIView(APIView):
 
 
 
+# class LanguageTestResultListAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def get(self, request):
+#         search = request.GET.get('search', '').strip()
+#         sort_by = request.GET.get('sortBy', 'created_at')
+#         sort_order = request.GET.get('sortOrder', 'desc')
+#         allowed_sort_fields = ['numeric_score', 'description', 'created_at']
+
+#         if sort_by not in allowed_sort_fields:
+#             sort_by = 'created_at'
+#         if sort_order == 'desc':
+#             sort_by = f'-{sort_by}'
+
+#         queryset = LanguageTestResult.objects.filter(is_deleted=False)
+#         if search:
+#             queryset = queryset.filter(
+#                 Q(numeric_score__istartswith=search) |
+#                 Q(description__istartswith=search) |
+#                 Q(language_test__name__istartswith=search) |
+#                 Q(languagetest_module_name__moduleName__istartswith=search)
+#             )
+
+#         queryset = queryset.order_by(sort_by)
+#         paginator = CustomPagination()
+#         result_page = paginator.paginate_queryset(queryset, request)
+#         serializer = LanguageTestResultSerializer(result_page, many=True)
+#         return paginator.get_paginated_response(serializer.data)
+
+
 class LanguageTestResultListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
+        custom_sort = request.GET.get('customSort')
         sort_by = request.GET.get('sortBy', 'created_at')
         sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['numeric_score', 'description', 'created_at']
 
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        # ---------------------------------------------------
+        # Helper: Parse UUID list safely
+        # ---------------------------------------------------
+        def parse_uuid_list(param):
+            raw = request.GET.get(param, '')
+            final_list = []
+            if raw:
+                for x in raw.split(','):
+                    try:
+                        final_list.append(UUID(x.strip()))
+                    except:
+                        pass
+            return final_list
+
+        # ---------------------------------------------------
+        # Filters (UUID and text-based)
+        # ---------------------------------------------------
+        language_test_ids = parse_uuid_list('languageNameTest')
+        benchmark_level_ids = parse_uuid_list('languageBenchmarkLevel')
+        uuids_list = parse_uuid_list('uuids')
+
+        language_test_names = parse_uuid_list('languageTestName')
+        language_module_names = parse_uuid_list('languageModuleName')
 
         queryset = LanguageTestResult.objects.filter(is_deleted=False)
+
+        # ---------------------------------------------------
+        # Apply filters
+        # ---------------------------------------------------
+        if uuids_list:
+            queryset = queryset.filter(uuid__in=uuids_list)
+
+        if language_test_ids:
+            queryset = queryset.filter(language__uuid__in=language_test_ids)
+
+        if benchmark_level_ids:
+            queryset = queryset.filter(lb_level__uuid__in=benchmark_level_ids)
+
+        if language_test_names:
+            queryset = queryset.filter(language_test__uuid__in=language_test_names)
+
+        if language_module_names:
+            queryset = queryset.filter(module_name__uuid__in=language_module_names)
+
+        # ---------------------------------------------------
+        # SEARCH block
+        # ---------------------------------------------------
         if search:
             queryset = queryset.filter(
-                Q(numeric_score__istartswith=search) |
-                Q(description__istartswith=search) |
-                Q(language_test__name__istartswith=search) |
-                Q(languagetest_module_name__moduleName__istartswith=search)
+                Q(numeric_score__istartswith=search)
             )
 
-        queryset = queryset.order_by(sort_by)
+        # ---------------------------------------------------
+        # Sorting Map
+        # ---------------------------------------------------
+        sort_field_map = {
+            "numeric_score": "numeric_score",
+            "description": "description",
+            "languageTestName": "language_test__name",
+            "languageModuleName": "languagetest_module_name__moduleName",
+            "languageBenchmarkLevel": "languagetestbenchmark_level__level_name",
+            "created_at": "created_at",
+            "updated_at": "updated_at",
+        }
+
+        allowed_sort_fields = list(sort_field_map.keys())
+        sort_fields = []
+
+        # ---------------------------------------------------
+        # CUSTOM SORT (like field:asc,field2:desc)
+        # ---------------------------------------------------
+        if custom_sort:
+            for rule in custom_sort.split(","):
+                try:
+                    field, order = rule.split(":")
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive for text sorting
+                    if field in [
+                        "numeric_score",
+                        "description",
+                        "languageTestName",
+                        "languageModuleName",
+                        "languageBenchmarkLevel"
+                    ]:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True)
+                        if order == "asc" else f.desc(nulls_last=True)
+                    )
+
+                except ValueError:
+                    continue
+
+        else:
+            # ---------------------------------------------------
+            # DEFAULT SORT
+            # ---------------------------------------------------
+            if sort_by not in allowed_sort_fields:
+                sort_by = "created_at"
+
+            orm_field = sort_field_map.get(sort_by, "created_at")
+            f = F(orm_field)
+
+            sort_fields = [
+                f.asc(nulls_last=True) if sort_order == "asc" else f.desc(nulls_last=True)
+            ]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # ---------------------------------------------------
+        # Pagination + Serialization
+        # ---------------------------------------------------
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = LanguageTestResultSerializer(result_page, many=True)
+
         return paginator.get_paginated_response(serializer.data)
+
 
 
 # -------------------- Create -------------------- #
@@ -1381,21 +2104,213 @@ class LanguageTestResultDeleteAPIView(APIView):
         return Response({"statusCode": 200, "status": True, "message": f"{count} result(s) deleted", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None})
 
 
+# class LanguageTestResultExportAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def get(self, request):
+#         format_type = request.GET.get('format', 'xlsx').lower()
+#         fields = request.GET.get('fields')
+#         uuids_param = request.GET.get('uuids', '')
+#         uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+#         # Field to header mapping
+#         field_header_map = {
+#             'uuid': 'UUID',
+#             'language': 'Language Name (Test)',
+#             'language_test': 'Language Test Name',
+#             'languagetest_module_name': 'Module Name',
+#             'lb_level': 'Language Benchmark Level',
+#             'numeric_score': 'Language Test Result',
+#             'description': 'Description',
+#             'is_deleted': 'Deleted',
+#             'created_at': 'Created On',
+#             'updated_at': 'Modified On',
+#         }
+
+#         # Fields to export
+#         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+#         # Fetch queryset
+#         queryset = LanguageTestResult.objects.filter(is_deleted=False)
+#         if uuids:
+#             queryset = queryset.filter(uuid__in=uuids)
+#         queryset = queryset.order_by('-created_at')
+
+#         # Prepare dataset
+#         dataset = Dataset()
+#         dataset.headers = [field_header_map.get(f, f) for f in field_list]
+#         dataset.title = 'Language Test Results'
+
+#         for obj in queryset:
+#             row = []
+#             for field in field_list:
+#                 value = getattr(obj, field, '')
+#                 # Foreign keys formatting
+#                 if field == 'language' and value:
+#                     value = value.name
+#                 elif field == 'language_test' and value:
+#                     value = value.name
+#                 elif field == 'languagetest_module_name' and value:
+#                     value = value.name
+#                 elif field == 'lb_level' and value:
+#                     value = value.name
+#                 # Datetime formatting
+#                 elif field in ['created_at', 'updated_at'] and value:
+#                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+#                 # Boolean formatting
+#                 elif isinstance(value, bool):
+#                     value = int(value)
+#                 row.append(value if value is not None else '')
+#             dataset.append(row)
+
+#         # Export data
+#         if format_type == 'csv':
+#             file_data = dataset.export('csv')
+#             content_type = 'text/csv'
+#             file_name = 'language_test_results.csv'
+#         else:
+#             file_data = io.BytesIO(dataset.export('xlsx'))
+#             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+#             file_name = 'language_test_results.xlsx'
+
+#         response = HttpResponse(
+#             file_data if format_type == 'csv' else file_data.getvalue(),
+#             content_type=content_type
+#         )
+#         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+#         return response
+
+
+
 class LanguageTestResultExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')
-        uuids_param = request.GET.get('uuids', '')
-        uuids = [u.strip() for u in uuids_param.split(',') if u]
+        search = request.GET.get('search', '').strip()
+        custom_sort = request.GET.get('customSort')
+        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_order = request.GET.get('sortOrder', 'desc')
 
+        # ---------------------------------------------------
+        # Helper: Safe UUID parser (re-used logic)
+        # ---------------------------------------------------
+        def parse_uuid_list(param):
+            raw = request.GET.get(param, '')
+            final_list = []
+            if raw:
+                for x in raw.split(','):
+                    try:
+                        final_list.append(UUID(x.strip()))
+                    except:
+                        pass
+            return final_list
+
+        # Filters (same as List API)
+        language_test_ids = parse_uuid_list('languageNameTest')
+        benchmark_level_ids = parse_uuid_list('languageBenchmarkLevel')
+        uuids_list = parse_uuid_list('uuids')
+        language_test_names = parse_uuid_list('languageTestName')
+        language_module_names = parse_uuid_list('languageModuleName')
+
+        # ---------------------------------------------------
+        # Base queryset
+        # ---------------------------------------------------
+        queryset = LanguageTestResult.objects.filter(is_deleted=False)
+
+        # Filters
+        if uuids_list:
+            queryset = queryset.filter(uuid__in=uuids_list)
+
+        if language_test_ids:
+            queryset = queryset.filter(language__uuid__in=language_test_ids)
+
+        if benchmark_level_ids:
+            queryset = queryset.filter(lb_level__uuid__in=benchmark_level_ids)
+
+        if language_test_names:
+            queryset = queryset.filter(language_test__uuid__in=language_test_names)
+
+        if language_module_names:
+            queryset = queryset.filter(languagetest_module_name__uuid__in=language_module_names)
+
+        # ---------------------------------------------------
+        # SEARCH
+        # ---------------------------------------------------
+        if search:
+            queryset = queryset.filter(
+                Q(numeric_score__istartswith=search)
+            )
+
+        # ---------------------------------------------------
+        # SORTING
+        # ---------------------------------------------------
+        sort_field_map = {
+            "numeric_score": "numeric_score",
+            "description": "description",
+            "languageTestName": "language_test__name",
+            "languageModuleName": "languagetest_module_name__moduleName",
+            "languageBenchmarkLevel": "lb_level__level_name",
+            "created_at": "created_at",
+            "updated_at": "updated_at",
+        }
+
+        allowed_sort_fields = list(sort_field_map.keys())
+        sort_fields = []
+
+        # Custom sorting
+        if custom_sort:
+            for rule in custom_sort.split(","):
+                try:
+                    field, order = rule.split(":")
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sort for strings
+                    if field in [
+                        "description",
+                        "languageTestName",
+                        "languageModuleName",
+                        "languageBenchmarkLevel"
+                    ]:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True)
+                        if order == "asc" else f.desc(nulls_last=True)
+                    )
+                except:
+                    continue
+        else:
+            # Default sort
+            if sort_by not in allowed_sort_fields:
+                sort_by = "created_at"
+
+            orm_field = sort_field_map.get(sort_by, "created_at")
+            f = F(orm_field)
+
+            sort_fields = [
+                f.asc(nulls_last=True) if sort_order == "asc" else f.desc(nulls_last=True)
+            ]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # -------------------------------------------------------------------
         # Field to header mapping
+        # -------------------------------------------------------------------
         field_header_map = {
             'uuid': 'UUID',
             'language': 'Language Name (Test)',
             'language_test': 'Language Test Name',
-            'languagetest_module_name': 'Module Name',
+            'module_name': 'Module Name',
             'lb_level': 'Language Benchmark Level',
             'numeric_score': 'Language Test Result',
             'description': 'Description',
@@ -1404,50 +2319,58 @@ class LanguageTestResultExportAPIView(APIView):
             'updated_at': 'Modified On',
         }
 
-        # Fields to export
         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
-        # Fetch queryset
-        queryset = LanguageTestResult.objects.filter(is_deleted=False)
-        if uuids:
-            queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
-
-        # Prepare dataset
+        # -------------------------------------------------------------------
+        # Prepare export dataset
+        # -------------------------------------------------------------------
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'Language Test Results'
+        dataset.title = 'LanguageTestResult'
+
+        india_tz = pytz.timezone("Asia/Kolkata")
 
         for obj in queryset:
             row = []
             for field in field_list:
                 value = getattr(obj, field, '')
-                # Foreign keys formatting
+
+                # FK formatting
                 if field == 'language' and value:
                     value = value.name
                 elif field == 'language_test' and value:
                     value = value.name
                 elif field == 'languagetest_module_name' and value:
-                    value = value.name
+                    value = value.moduleName
                 elif field == 'lb_level' and value:
                     value = value.name
+
                 # Datetime formatting
                 elif field in ['created_at', 'updated_at'] and value:
-                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-                # Boolean formatting
+                    value = timezone.localtime(value, india_tz).strftime(
+                        "%d-%m-%Y %I:%M:%S %p"
+                    )
+
+                # Boolean
                 elif isinstance(value, bool):
                     value = int(value)
+
                 row.append(value if value is not None else '')
+
             dataset.append(row)
 
-        # Export data
+        # -------------------------------------------------------------------
+        # EXPORT
+        # -------------------------------------------------------------------
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
             file_name = 'language_test_results.csv'
         else:
             file_data = io.BytesIO(dataset.export('xlsx'))
-            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            content_type = (
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
             file_name = 'language_test_results.xlsx'
 
         response = HttpResponse(
@@ -1456,7 +2379,9 @@ class LanguageTestResultExportAPIView(APIView):
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
-    
+
+
+
 # -------------------- Import -------------------- #
 class LanguageTestResultImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -1510,6 +2435,7 @@ class LanguageTestResultImportAPIView(APIView):
                 return Response({'error': 'Unsupported file format'}, status=400)
 
             for row in reversed(data):
+                row_number = row.get("_row_number", "Unknown")
                 language_name = str(row.get('language name (test)')).strip()
                 language_test_name = str(row.get('language test name')).strip()
                 module_name = str(row.get('module name')).strip()
@@ -1518,7 +2444,11 @@ class LanguageTestResultImportAPIView(APIView):
                 description = row.get('description', '')
 
                 if not (language_name and language_test_name and module_name and lb_level_name and numeric_score):
-                    skipped_rows.append({"row": row, "reason": "Required field(s) missing"})
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Description":description, 
+                        "Reason": "Required field(s) missing"
+                        })
                     continue
 
                 existing = LanguageTestResult.objects.filter(
@@ -1538,7 +2468,11 @@ class LanguageTestResultImportAPIView(APIView):
                 lb_obj = StudyLanguageBanchmark.objects.filter(name__iexact=lb_level_name).first()
 
                 if not (language_obj and language_test_obj and module_obj and lb_obj):
-                    skipped_rows.append({"row": row, "reason": "Invalid FK reference"})
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Description":description, 
+                        "Reason": "Required field(s) missing"
+                        })
                     continue
 
                 if existing and existing.is_deleted:
@@ -1714,7 +2648,7 @@ class CLBLevelExportAPIView(APIView):
         # --- Prepare dataset ---
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'CLB Level'
+        dataset.title = 'CLBLevel'
 
         for obj in queryset:
             row = []
@@ -2041,7 +2975,7 @@ class StudyLanguageBenchmarkExportAPIView(APIView):
         # Prepare dataset
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'Language Benchmark Level'
+        dataset.title = 'LanguageBenchmarkLevel'
 
         for obj in queryset:
             row = []
@@ -2358,7 +3292,7 @@ class EntranceTestNameExportAPIView(APIView):
         # Prepare dataset
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'Entrance Test Name'
+        dataset.title = 'EntranceTestName'
 
         for obj in queryset:
             row = []
@@ -2660,7 +3594,7 @@ class EntranceTestModuleExportAPIView(APIView):
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'Entrance Test Modules'
+        dataset.title = 'EntranceTestModules'
 
         for obj in queryset:
             row = []
@@ -2998,7 +3932,7 @@ class EntranceTestResultExportAPIView(APIView):
         # Prepare dataset
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'Entrance Test Results'
+        dataset.title = 'EntranceTestResults'
 
         for obj in queryset:
             row = []

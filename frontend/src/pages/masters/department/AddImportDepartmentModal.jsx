@@ -103,7 +103,7 @@ const AddImportDepartmentModal = ({ show, handleClose }) => {
                     if (response?.skipped_rows?.length > 0) {
                         const prepareData = {
                             data: response.skipped_rows || [],
-                            headers: ["Department", "Reason"],
+                            headers: ["Department","Description", "Reason"],
                             sheetName: "Department",
                             fileName: "Department",
                         };

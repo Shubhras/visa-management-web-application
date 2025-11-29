@@ -9,6 +9,7 @@ import AddImportEducationLevelCodeModal from './AddImportEducationLevelCodeModal
 import AddEditEducationLevelCodeModal from './AddEditEducationLevelCodeModal';
 import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 import { useGlobalSearch } from '../../../../components/comman/GlobalSearchContext';
+import ResetButton from '../../../../components/comman/ResetButton';
 const EducationLevelCodeList = () => {
     const dispatch = useDispatch();
     const { globalSearch, setGlobalSearch } = useGlobalSearch();
@@ -339,6 +340,7 @@ const EducationLevelCodeList = () => {
             toast.error("No education level code selected for deletion.");
             return;
         }
+        // console.log("sendPayload",sendPayload);
         dispatch(educationLevelCodeDelete(sendPayload, (response, error) => {
             if (error) {
                 toast.error(error?.response?.data?.message || "server error");
@@ -519,10 +521,15 @@ const EducationLevelCodeList = () => {
                                             </button>
                                         </>
                                     )}
-                                    <button
+                                    {/* <button
                                         onClick={clearAllFilters}
                                         className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
-                                    >Reset </button>
+                                    >Reset </button> */}
+                                    <ResetButton
+                                        onClick={clearAllFilters}
+                                        tableState={tableState}
+                                        globalSearch={globalSearch}
+                                    />
                                 </div>
                             </div>
 
@@ -923,6 +930,7 @@ const EducationLevelCodeList = () => {
                     </div>
                 )}
             </MasterLayout>
+
         </>
     );
 };

@@ -1,7 +1,7 @@
 import { useResetStatus } from "../../hook/useResetStatus";
 
-const ResetButton = ({ onClick, tableState, columnFilters, globalSearch }) => {
-  const active = useResetStatus({ tableState, columnFilters, globalSearch });
+const ResetButton = ({ onClick, tableState, columnFilters, globalSearch, selectedRows }) => {
+  const active = useResetStatus({ tableState, columnFilters, globalSearch, selectedRows });
 
   return (
     <button

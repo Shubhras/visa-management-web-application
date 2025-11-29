@@ -3,6 +3,7 @@ export const useResetStatus = ({
   tableState,
   columnFilters = {},
   globalSearch,
+  selectedRows = []
 }) => {
   // Check active filters ONLY if the component has filters
   const hasFilters =
@@ -17,5 +18,7 @@ export const useResetStatus = ({
     tableState.sort[0].order === "desc"
   );
 
-  return hasFilters || hasSearch || hasSort;
+  const hasSelection = Array.isArray(selectedRows) && selectedRows.length > 0;
+
+  return hasFilters || hasSearch || hasSort || hasSelection;
 };

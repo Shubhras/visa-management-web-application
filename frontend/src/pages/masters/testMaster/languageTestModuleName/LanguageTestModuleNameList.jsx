@@ -10,6 +10,7 @@ import AddImportLanguageTestModuleNameModal from './AddImportLanguageTestModuleN
 import AddEditLanguageTestModuleNameModal from './AddEditLanguageTestModuleNameModal';
 import { formatDateDDMMYYYY, formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 import { useGlobalSearch } from '../../../../components/comman/GlobalSearchContext';
+import ResetButton from '../../../../components/comman/ResetButton';
 const LanguageTestModuleNameList = () => {
     const dispatch = useDispatch();
     const { globalSearch, setGlobalSearch } = useGlobalSearch();
@@ -549,10 +550,11 @@ const LanguageTestModuleNameList = () => {
                                             </button>
                                         </>
                                     )}
-                                    <button
+                                    <ResetButton
                                         onClick={clearAllFilters}
-                                        className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
-                                    >Reset </button>
+                                        tableState={tableState}
+                                        globalSearch={globalSearch}
+                                    />
                                 </div>
                             </div>
                             {/* Right Section: Select / Search / +Add New */}

@@ -1,5 +1,9 @@
 import React, { useState, useRef } from 'react';
 import { Icon } from '@iconify/react/dist/iconify.js';
+import AddEditEducationModal from './AddEditEducationModal';
+import AddEditWorkExperienceModal from './AddEditWorkExperienceModal';
+// import AddEditLanguageAbilityModal from './AddEditLanguageAbilityModal';
+// import AddEditEntranceTestModal from './AddEditEntranceTestModal';
 
 const ReusableTable = ({
     title,
@@ -9,7 +13,9 @@ const ReusableTable = ({
     visibleColumns,
     setVisibleColumns,
     tableSize = 'small',
-    enableSorting = true // New prop to enable/disable sorting
+    enableSorting = true,
+    onEditClick,
+    onAddNew
 }) => {
     const [selectedRows, setSelectedRows] = useState([]);
     const [showDropdown, setShowDropdown] = useState(false);
@@ -105,12 +111,17 @@ const ReusableTable = ({
     };
 
     const handleAddNew = () => {
-        const newId = data.length ? Math.max(...data.map(d => d.id)) + 1 : 1;
-        const newRow = { id: newId };
-        columns.forEach(col => {
-            newRow[col.field] = col.field.includes('Date') ? 'DD/MM/YYYY' : '—';
-        });
-        setData([...data, newRow]);
+        if (onAddNew) {
+            onAddNew();
+        } else {
+            // Default behavior
+            const newId = data.length ? Math.max(...data.map(d => d.id)) + 1 : 1;
+            const newRow = { id: newId };
+            columns.forEach(col => {
+                newRow[col.field] = col.field.includes('Date') ? 'DD/MM/YYYY' : '—';
+            });
+            setData([...data, newRow]);
+        }
     };
 
     return (
@@ -216,7 +227,10 @@ const ReusableTable = ({
                                         ))}
                                         <td className="action-td">
                                             <div className="d-flex align-items-center gap-2">
-                                                <button className="edit-btn-icone border-0 bg-transparent">
+                                                <button 
+                                                    className="edit-btn-icone border-0 bg-transparent"
+                                                    onClick={() => onEditClick(row)}
+                                                >
                                                     <Icon icon="lucide:edit" width="18" className="icone" />
                                                 </button>
                                                 <button
@@ -237,8 +251,9 @@ const ReusableTable = ({
         </div>
     );
 };
-const PrincipalApplicantTables = () => {
 
+const PrincipalApplicantTables = () => {
+    // Data states
     const [educations, setEducations] = useState([
         { id: 1, educationLevel: 'Bachelors', duration: '48', studyMainArea: 'Engineering', eduType: 'Full-Time', startDate: '16/07/2000', endDate: '02/04/2004', result: '67.04%' },
         { id: 2, educationLevel: 'Masters', duration: '24', studyMainArea: 'Computer Science', eduType: 'Full-Time', startDate: '01/08/2004', endDate: '30/06/2006', result: '78.50%' }
@@ -258,6 +273,103 @@ const PrincipalApplicantTables = () => {
     ]);
 
     const [appearedEntranceTest, setAppearedEntranceTest] = useState('Yes');
+
+    // Modal states
+    const [educationModal, setEducationModal] = useState({
+        show: false,
+        mode: 'add',
+        rowData: null
+    });
+
+    const [workExperienceModal, setWorkExperienceModal] = useState({
+        show: false,
+        mode: 'add',
+        rowData: null
+    });
+
+    const [languageAbilityModal, setLanguageAbilityModal] = useState({
+        show: false,
+        mode: 'add',
+        rowData: null
+    });
+
+    const [entranceTestModal, setEntranceTestModal] = useState({
+        show: false,
+        mode: 'add',
+        rowData: null
+    });
+
+    // Education Modal Handlers
+    const handleEducationShow = (mode = 'add', rowData = null) => {
+        setEducationModal({ show: true, mode, rowData });
+    };
+
+    const handleEducationClose = (shouldRefresh = false) => {
+        setEducationModal({ show: false, mode: 'add', rowData: null });
+        if (shouldRefresh) console.log('Refresh education data');
+    };
+
+    const handleEducationEdit = (rowData) => {
+        handleEducationShow('edit', rowData);
+    };
+
+    const handleAddNewEducation = () => {
+        handleEducationShow('add');
+    };
+
+    // Work Experience Modal Handlers
+    const handleWorkExperienceShow = (mode = 'add', rowData = null) => {
+        setWorkExperienceModal({ show: true, mode, rowData });
+    };
+
+    const handleWorkExperienceClose = (shouldRefresh = false) => {
+        setWorkExperienceModal({ show: false, mode: 'add', rowData: null });
+        if (shouldRefresh) console.log('Refresh work experience data');
+    };
+
+    const handleWorkExperienceEdit = (rowData) => {
+        handleWorkExperienceShow('edit', rowData);
+    };
+
+    const handleAddNewWorkExperience = () => {
+        handleWorkExperienceShow('add');
+    };
+
+    // Language Ability Modal Handlers
+    const handleLanguageAbilityShow = (mode = 'add', rowData = null) => {
+        setLanguageAbilityModal({ show: true, mode, rowData });
+    };
+
+    const handleLanguageAbilityClose = (shouldRefresh = false) => {
+        setLanguageAbilityModal({ show: false, mode: 'add', rowData: null });
+        if (shouldRefresh) console.log('Refresh language ability data');
+    };
+
+    const handleLanguageAbilityEdit = (rowData) => {
+        handleLanguageAbilityShow('edit', rowData);
+    };
+
+    const handleAddNewLanguageAbility = () => {
+        handleLanguageAbilityShow('add');
+    };
+
+    // Entrance Test Modal Handlers
+    const handleEntranceTestShow = (mode = 'add', rowData = null) => {
+        setEntranceTestModal({ show: true, mode, rowData });
+    };
+
+    const handleEntranceTestClose = (shouldRefresh = false) => {
+        setEntranceTestModal({ show: false, mode: 'add', rowData: null });
+        if (shouldRefresh) console.log('Refresh entrance test data');
+    };
+
+    const handleEntranceTestEdit = (rowData) => {
+        handleEntranceTestShow('edit', rowData);
+    };
+
+    const handleAddNewEntranceTest = () => {
+        handleEntranceTestShow('add');
+    };
 
     // Column Definitions
     const educationColumns = [
@@ -310,17 +422,14 @@ const PrincipalApplicantTables = () => {
     return (
         <div className="section-block">
             <style>{`
-  .small-table-container .principle-table-div {
-    max-height: 300px !important;
-    min-height: 150px !important;
-    overflow-y: auto;
-    position: relative;
-    background-color: white;
-    // border-radius: 8px;
-  }
-
-  
-`}</style>
+                .small-table-container .principle-table-div {
+                    max-height: 300px !important;
+                    min-height: 150px !important;
+                    overflow-y: auto;
+                    position: relative;
+                    background-color: white;
+                }
+            `}</style>
 
             <div className="container-fluid">
                 {/* Education - Small Table */}
@@ -333,6 +442,8 @@ const PrincipalApplicantTables = () => {
                     setVisibleColumns={setEduVisible}
                     tableSize="small"
                     enableSorting={true}
+                    onEditClick={handleEducationEdit}
+                    onAddNew={handleAddNewEducation}
                 />
 
                 {/* Work Experience - Small Table */}
@@ -345,9 +456,11 @@ const PrincipalApplicantTables = () => {
                     setVisibleColumns={setWorkVisible}
                     tableSize="small"
                     enableSorting={true}
+                    onEditClick={handleWorkExperienceEdit}
+                    onAddNew={handleAddNewWorkExperience}
                 />
 
-
+                {/* Language Ability - Small Table */}
                 <ReusableTable
                     title="Language Ability (PA)"
                     data={languageAbilities}
@@ -357,9 +470,11 @@ const PrincipalApplicantTables = () => {
                     setVisibleColumns={setLangVisible}
                     tableSize="small"
                     enableSorting={true}
+                    onEditClick={handleLanguageAbilityEdit}
+                    onAddNew={handleAddNewLanguageAbility}
                 />
 
-
+                {/* Entrance Test Section */}
                 <div className="mb-4 small-table-container">
                     <div className="card-header py-3 px-4 ">
                         <h6 className="mb-0 fw-semibold" style={{ color: '#5a6c5b' }}>Entrance Test Ability (PA)</h6>
@@ -403,12 +518,43 @@ const PrincipalApplicantTables = () => {
                                     setVisibleColumns={setEntranceVisible}
                                     tableSize="small"
                                     enableSorting={true}
+                                    onEditClick={handleEntranceTestEdit}
+                                    onAddNew={handleAddNewEntranceTest}
                                 />
                             </div>
                         )}
                     </div>
                 </div>
             </div>
+
+            {/* All Modals */}
+            <AddEditEducationModal
+                show={educationModal.show}
+                handleClose={handleEducationClose}
+                mode={educationModal.mode}
+                rowData={educationModal.rowData}
+            />
+
+            <AddEditWorkExperienceModal
+                show={workExperienceModal.show}
+                handleClose={handleWorkExperienceClose}
+                mode={workExperienceModal.mode}
+                rowData={workExperienceModal.rowData}
+            />
+
+            {/* <AddEditLanguageAbilityModal
+                show={languageAbilityModal.show}
+                handleClose={handleLanguageAbilityClose}
+                mode={languageAbilityModal.mode}
+                rowData={languageAbilityModal.rowData}
+            />
+
+            <AddEditEntranceTestModal
+                show={entranceTestModal.show}
+                handleClose={handleEntranceTestClose}
+                mode={entranceTestModal.mode}
+                rowData={entranceTestModal.rowData}
+            />  */}
         </div>
     );
 };

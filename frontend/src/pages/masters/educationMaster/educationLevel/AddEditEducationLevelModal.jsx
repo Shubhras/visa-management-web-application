@@ -59,7 +59,7 @@ const AddEditEducationLevelModal = ({ show, handleClose, mode = 'add', rowData =
       search: '',
       status: '',
       sortBy: 'updated_at', // Field to sort by
-      sortOrder: 'desc', // 'asc' or 'desc'
+      sortOrder: 'asc', // 'asc' or 'desc'
     };
 
     dispatch(educationLevelCodeList(params, (response, error) => {
