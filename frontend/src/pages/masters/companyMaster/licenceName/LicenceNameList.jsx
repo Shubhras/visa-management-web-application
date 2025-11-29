@@ -358,6 +358,15 @@ const LicenceNameList = () => {
     );
   };
 
+  const hasActiveFilters = () =>
+    Object.values(columnFilters).some((arr) => arr.length > 0);
+
+  const clearAllOnlyHeaderFilters = () => {
+    setColumnFilters({
+      countryId: [],
+    });
+  };
+
   // Sorting
   const handleSort = (field) => {
     setTableState((prev) => {
@@ -835,11 +844,21 @@ const LicenceNameList = () => {
                       </>
                     )}
 
+                  {hasActiveFilters() && (
+                    <button
+                      onClick={clearAllOnlyHeaderFilters}
+                      className="btn btn-sm py-1 comman-inactive-btn"
+                    >
+                      <Icon icon="mdi:filter-off" width="16" /> Clear Filters
+                    </button>
+                  )}
+
                   <ResetButton
                     onClick={clearAllFilters}
                     tableState={tableState}
                     columnFilters={columnFilters}
                     globalSearch={globalSearch}
+                    selectedRows={selectedRows}
                   />
                 </div>
               </div>

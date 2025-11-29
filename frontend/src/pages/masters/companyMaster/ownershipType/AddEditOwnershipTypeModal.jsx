@@ -53,8 +53,8 @@ const AddEditOwnershipTypeModal = ({ show, handleClose, mode = 'add', rowData = 
       limit: 2000,
       search: '',
       status: '',
-      sortBy: 'updated_at',
-      sortOrder: 'desc',
+      sortBy: 'name',
+      sortOrder: 'asc',
     };
 
     dispatch(companyList(params, (response, error) => {
