@@ -478,6 +478,7 @@ import StudyFactorBacklogsList from "./pages/masters/studyFactors/backlogs/Study
 import StudyFactorGapList from "./pages/masters/studyFactors/gap/StudyFactorGapList";
 import StudyFactorLanguageAbilityList from "./pages/masters/studyFactors/languageAbility/StudyFactorLanguageAbilityList";
 import StudyFactorEntranceTestAbilityList from "./pages/masters/studyFactors/entranceTestAbility/StudyFactorEntranceTestAbilityList";
+import OccupationToOccupationList from "./pages/masters/occupationMaster/occupationToOccupation/OccupationToOccupationList";
 
 
 
@@ -779,6 +780,8 @@ function App() {
           <Route path="/designation" element={<ProtectedRoute><DesignationList /></ProtectedRoute>}></Route>
           <Route path="/job-prospect" element={<ProtectedRoute><JobProspectList /></ProtectedRoute>}></Route>
           <Route path="/related-occupation" element={<ProtectedRoute>< RelatedOccupationList /></ProtectedRoute>}></Route>
+          <Route path="/occupation-to-occupation" element={<ProtectedRoute>< OccupationToOccupationList /></ProtectedRoute>}></Route>
+
 
 
 
