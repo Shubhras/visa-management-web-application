@@ -413,6 +413,8 @@ urlpatterns = [
     path('language/import/', LanguageImportAPIView.as_view(), name='language-import'),
     path('language-tests-by-language/', LanguageTestsAPIView.as_view(), name='language-tests'),
     path('entrance-test-modules/', EntranceTestModulesAPIView.as_view(), name='entrance-test-modules'),
+    
+    
     # ---------------- LanguageTest ---------------- #
     path('language-tests/', LanguageTestListAPIView.as_view(), name='language-test-list'),
     path('language-tests/create/', LanguageTestCreateAPIView.as_view(), name='language-test-create'),
@@ -539,7 +541,6 @@ urlpatterns = [
     path('process-substatus-name/', ProcessSubStatusListAPIView.as_view(), name='process_sub_status_list'),
     path('process-substatus-name/<uuid:uuid>/', ProcessSubStatusRetrieveAPIView.as_view(), name='process_sub_status_retrieve'),    
     path("process-substatus-name/by-country/<uuid:representing_country_uuid>/",ProcessSubStatusByCountryAPIView.as_view(),name="process_sub_status_by_country"),
-
     path('process-substatus-name/<uuid:uuid>/update/', ProcessSubStatusUpdateAPIView.as_view(), name='process_sub_status_update'),
     path('process-substatus-name/delete/', ProcessSubStatusDeleteAPIView.as_view(), name='process_sub_status_delete'),
     path('process-substatus-name/export/', ProcessSubStatusExportAPIView.as_view(), name='process_sub_status_export'),
@@ -1073,39 +1074,40 @@ urlpatterns = [
 
     
     path('study-factor-age/create/', StudyFactorAgeCreateAPIView.as_view(),name='age-create'),
-    path('study-factor-age/list/', StudyFactorAgeListAPIView.as_view(),name='age-list'),
+    path('study-factor-age/', StudyFactorAgeListAPIView.as_view(),name='age-list'),
     path('study-factor-age/<uuid:uuid>/', StudyFactorAgeRetrieveAPIView.as_view(),name='age-retrieve'),
     path('study-factor-age/<uuid:uuid>/update/', StudyFactorAgeUpdateAPIView.as_view(),name='age-update'),
-    path('study-factor-age/<uuid:uuid>/delete/', StudyFactorAgeDeleteAPIView.as_view(),name='age-delete'),
+    path('study-factor-age/delete/', StudyFactorAgeDeleteAPIView.as_view(),name='age-delete'),
     path('study-factor-age/export/', StudyFactorAgeExportAPIView.as_view(),name='age-export'),
     path('study-factor-age/import/', StudyFactorAgeImportAPIView.as_view(),name='age-import'),
 
 
 
-    path('academic-result/list/', StudyFactorAcademicResultListAPIView.as_view(), name='academic-result-list'),
+    path('academic-result/', StudyFactorAcademicResultListAPIView.as_view(), name='academic-result-list'),
     path('academic-result/create/', StudyFactorAcademicResultCreateAPIView.as_view(), name='academic-result-create'),
-    path('academic-result/detail/<uuid:uuid>/', StudyFactorAcademicResultRetrieveAPIView.as_view(), name='academic-result-retrieve'),
+    path('academic-result/<uuid:uuid>/', StudyFactorAcademicResultRetrieveAPIView.as_view(), name='academic-result-retrieve'),
     path('academic-result/<uuid:uuid>/update/', StudyFactorAcademicResultUpdateAPIView.as_view(), name='academic-result-update'),
-    path('academic-result/<uuid:uuid>/delete/', StudyFactorAcademicResultDeleteAPIView.as_view(), name='academic-result-delete'),
-    path('academic-result/<uuid:uuid>/export/', StudyFactorAcademicResultExportAPIView.as_view(), name='academic-result-export'),
-    path('academic-result/<uuid:uuid>/import/', StudyFactorAcademicResultImportAPIView.as_view(), name='academic-result-import'),
+    path('academic-result/delete/', StudyFactorAcademicResultDeleteAPIView.as_view(), name='academic-result-delete'),
+    path('academic-result/export/', StudyFactorAcademicResultExportAPIView.as_view(), name='academic-result-export'),
+    path('academic-result/import/', StudyFactorAcademicResultImportAPIView.as_view(), name='academic-result-import'),
     
 
 
 
-    path('study-factor-backlogs/list/',StudyFactorBacklogsListAPIView.as_view(),name="study_factor_backlogs_list"),
+    path('study-factor-backlogs/',StudyFactorBacklogsListAPIView.as_view(),name="study_factor_backlogs_list"),
     path('study-factor-backlogs/create/',StudyFactorBacklogsCreateAPIView.as_view(),name="study_factor_backlogs_create"),
     path('study-factor-backlogs/<uuid:uuid>/',StudyFactorBacklogsRetrieveAPIView.as_view(),name="study_factor_backlogs_retrieve"),
+    path('study-factor-backlogs/<uuid:uuid>/update/', StudyFactorBacklogsUpdateAPIView.as_view(), name="study_factor_backlogs_update_bulk"),
     path('study-factor-backlogs/delete/', StudyFactorBacklogsDeleteAPIView.as_view(), name="study_factor_backlogs_delete_bulk"),
     path('study-factor-backlogs/export/', StudyFactorBacklogsExportAPIView.as_view(), name="study_factor_backlogs_export"),
     path('study-factor-backlogs/import/', StudyFactorBacklogsImportAPIView.as_view(), name="study_factor_backlogs_import"),
 
 
-    path('study-factor-gap/list/', StudyFactorGAPListAPIView.as_view(), name="study_factor_gap_list"),
+    path('study-factor-gap/', StudyFactorGAPListAPIView.as_view(), name="study_factor_gap_list"),
     path('study-factor-gap/create/', StudyFactorGAPCreateAPIView.as_view(), name="study_factor_gap_create"),
     path('study-factor-gap/<uuid:uuid>/', StudyFactorGAPRetrieveAPIView.as_view(), name="study_factor_gap_retrieve"),
-    path('study-factor-gap/update/<uuid:uuid>/', StudyFactorGAPUpdateAPIView.as_view(), name="study_factor_gap_update"),
-    path('study-factor-gap/delete/<uuid:uuid>/', StudyFactorGAPDeleteAPIView.as_view(), name="study_factor_gap_delete"),
+    path('study-factor-gap/<uuid:uuid>/update/', StudyFactorGAPUpdateAPIView.as_view(), name="study_factor_gap_update"),
+    path('study-factor-gap/delete/', StudyFactorGAPDeleteAPIView.as_view(), name="study_factor_gap_delete"),
     path('study-factor-gap/export/', StudyFactorGAPExportAPIView.as_view(), name="study_factor_gap_export"),
     path('study-factor-gap/import/', StudyFactorGAPImportAPIView.as_view(), name="study_factor_gap_import"),
 
@@ -1121,7 +1123,7 @@ urlpatterns = [
     path('study-factor-entrance-test-ability/', StudyFactorEntranceTestAbilityListAPIView.as_view()),
     path('study-factor-entrance-test-ability/create/', StudyFactorEntranceTestAbilityCreateAPIView.as_view()),
     path('study-factor-entrance-test-ability/<uuid:uuid>/', StudyFactorEntranceTestAbilityRetrieveAPIView.as_view()),
-    path('study-factor-entrance-test-ability/update/<uuid:uuid>/', StudyFactorEntranceTestAbilityUpdateAPIView.as_view()),
+    path('study-factor-entrance-test-ability/<uuid:uuid>/update/', StudyFactorEntranceTestAbilityUpdateAPIView.as_view()),
     path('study-factor-entrance-test-ability/delete/', StudyFactorEntranceTestAbilityDeleteAPIView.as_view()),
     path('study-factor-entrance-test-ability/export/', StudyFactorEntranceTestAbilityExportAPIView.as_view()),
     path('study-factor-entrance-test-ability/import/', StudyFactorEntranceTestAbilityImportAPIView.as_view()),

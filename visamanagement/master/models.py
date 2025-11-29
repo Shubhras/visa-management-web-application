@@ -1586,36 +1586,36 @@ class SpouseCanApplywithCandidate(models.Model):
         return self.name
     
 
-class CivilIdName(models.Model):
-    VALID_TYPE_CHOICES = (
-        ("Permanent", "Permanent"),
-        ("Valid Upto", "Valid Upto"),
-        ("Date","Date")
-    )
+# class CivilIdName(models.Model):
+#     VALID_TYPE_CHOICES = (
+#         ("Permanent", "Permanent"),
+#         ("Valid Upto", "Valid Upto"),
+#         ("Date","Date")
+#     )
  
-    VALID_UNIT_CHOICES = (
-        ("Months", "Months"),
-        ("Weeks","Weeks"),
-        ("Years", "Years"),
-    )
+#     VALID_UNIT_CHOICES = (
+#         ("Months", "Months"),
+#         ("Weeks","Weeks"),
+#         ("Years", "Years"),
+#     )
 
-    id = models.AutoField(primary_key=True)
-    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+#     id = models.AutoField(primary_key=True)
+#     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 
-    civil_id_name = models.CharField(max_length=255)
-    authority_full_name = models.CharField(max_length=255, blank=True, null=True)
-    authority_short_name = models.CharField(max_length=255, blank=True, null=True)
+#     civil_id_name = models.CharField(max_length=255)
+#     authority_full_name = models.CharField(max_length=255, blank=True, null=True)
+#     authority_short_name = models.CharField(max_length=255, blank=True, null=True)
 
-    valid_type = models.CharField(max_length=20, choices=VALID_TYPE_CHOICES,blank=True, null=True)
-    valid_duration_value = models.IntegerField(blank=True, null=True)
-    valid_duration_unit = models.CharField(max_length=20, choices=VALID_UNIT_CHOICES, blank=True, null=True)
-    description = models.CharField(max_length=500, blank=True, null=True)
-    is_deleted = models.BooleanField(default=False)
-    created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(auto_now=True)
+#     valid_type = models.CharField(max_length=20, choices=VALID_TYPE_CHOICES,blank=True, null=True)
+#     valid_duration_value = models.IntegerField(blank=True, null=True)
+#     valid_duration_unit = models.CharField(max_length=20, choices=VALID_UNIT_CHOICES, blank=True, null=True)
+#     description = models.CharField(max_length=500, blank=True, null=True)
+#     is_deleted = models.BooleanField(default=False)
+#     created_at = models.DateTimeField(default=timezone.now)
+#     updated_at = models.DateTimeField(auto_now=True)
 
-    def __str__(self):
-        return self.civil_id_name
+#     def __str__(self):
+#         return self.civil_id_name
 
 class SpouseVisaCategory(models.Model):
     id = models.AutoField(primary_key=True) 
@@ -2001,9 +2001,9 @@ class StudyFactorAge(models.Model):
 class StudyFactorAcademicResult(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    factor_for = models.ForeignKey(FactorFor, on_delete=models.CASCADE, related_name="academic_results")
-    academic_result_group = models.ForeignKey(AcademicResultGroup, on_delete=models.CASCADE, related_name="academic_results")
-    minimum_academic_result_required = models.ForeignKey(AcademicResultType, on_delete=models.CASCADE, related_name="academic_result_types")
+    factor_for = models.ForeignKey(FactorFor, on_delete=models.CASCADE, related_name="academic_results",to_field='uuid',db_column='factor_for_uuid')
+    academic_result_group = models.ForeignKey(AcademicResultGroup, on_delete=models.CASCADE, related_name="academic_results", to_field='uuid',db_column='academic_result_group_uuid')
+    minimum_academic_result_required = models.ForeignKey(AcademicResultType, on_delete=models.CASCADE, related_name="academic_result_types",to_field='uuid',db_column='minimum_academic_result_required_uuid')
     description = models.TextField(max_length=255,null=True, blank=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -2040,20 +2040,22 @@ class StudyFactorBacklogs(models.Model):
     
 
 class StudyFactorGAP(models.Model):
+    id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     factor_for = models.ForeignKey("FactorFor", on_delete=models.CASCADE)
-    gap_group = models.ForeignKey("GapGroup", on_delete=models.CASCADE)
+    study_gap_group = models.ForeignKey("GAPGroup", on_delete=models.CASCADE)
 
     maximum_gap_accepted = models.PositiveIntegerField(default=0)
 
-    countries = models.ManyToManyField("Country")               # Multiple
-    institute_types = models.ManyToManyField("InstituteType")   # Multiple
-    course_levels = models.ManyToManyField("CourseLevel")       # Multiple
+    country_for_admission = models.ManyToManyField('RepresentingCountry',related_name="study_factor_gaps")               # Multiple
+    
+    institute_type = models.ManyToManyField("InstituteType",related_name="study_factor_gaps")   # Multiple
+    course_level = models.ManyToManyField("CourseLevel",related_name="study_factor_gaps")       # Multiple
 
     description = models.TextField(blank=True, null=True)
 
     is_deleted = models.BooleanField(default=False)
-    created_at = models.DateTimeField(default=timezone.now)
+    created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):

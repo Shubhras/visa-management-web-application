@@ -1333,8 +1333,8 @@ class StudyFactorAcademicResultAdmin(admin.ModelAdmin):
 
 @admin.register(StudyFactorGAP)
 class StudyFactorGAPAdmin(admin.ModelAdmin):
-    list_display = ("factor_for", "gap_group", "maximum_gap_accepted", "is_deleted")
-    search_fields = ("factor_for__name", "gap_group__name")
+    list_display = ("factor_for", "study_gap_group", "maximum_gap_accepted", "is_deleted")
+    search_fields = ("factor_for__name", "study_gap_group")
     list_filter = ("is_deleted", "created_at")
     read_only_fields = ('uuid', 'created_at', 'updated_at')
     

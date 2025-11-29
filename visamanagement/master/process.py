@@ -199,73 +199,219 @@ class DocumentCategoryUpdateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
+# class DocumentCategoryDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request):
+#         ids = request.data.get('id', None)
+#         if not ids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide 'id' (UUID list or 'all')."
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         if ids == "all":
+#             categories = DocumentCategory.objects.filter(is_deleted=False)
+#             count = categories.count()
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No Document Categories found to delete."
+#                 }, status=status.HTTP_404_NOT_FOUND)
+#             categories.update(is_deleted=True)
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} Document Categories deleted successfully."
+#             }, status=status.HTTP_200_OK)
+
+#         if not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Provide list of UUIDs in 'id' field or 'all'."
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         valid_uuids, invalid_uuids = [], []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         if not valid_uuids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "No valid UUIDs provided.",
+#                 "data": {"invalid_uuids": invalid_uuids}
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         categories = DocumentCategory.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+#         count = categories.count()
+
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching Document Categories found."
+#             }, status=status.HTTP_404_NOT_FOUND)
+
+#         categories.delete()
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} Document Category(ies) deleted successfully.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         }, status=status.HTTP_200_OK)
+
+
 class DocumentCategoryDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request):
-        ids = request.data.get('id', None)
-        if not ids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Please provide 'id' (UUID list or 'all')."
-            }, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            search = request.GET.get("search", "").strip()
+            delete_all = request.data.get("deleteAll", False)
+            ids = request.data.get("id", None)
 
-        if ids == "all":
-            categories = DocumentCategory.objects.filter(is_deleted=False)
+            # -----------------------------------------
+            # Parse comma-separated UUID filter (optional)
+            # -----------------------------------------
+            def parse_uuid_list(param):
+                raw = request.GET.get(param, '')
+                result = []
+                if raw:
+                    for x in raw.split(','):
+                        try:
+                            result.append(UUID(x.strip()))
+                        except:
+                            pass
+                return result
+
+            category_ids = parse_uuid_list('categoryUuid')
+
+            # -----------------------------------------
+            # BASE QUERYSET
+            # -----------------------------------------
+            queryset = DocumentCategory.objects.filter(is_deleted=False)
+
+            applied_filters = []
+
+            # -----------------------------------------
+            # SEARCH FILTER
+            # -----------------------------------------
+            if search:
+                queryset = queryset.filter(category_name__istartswith=search)
+                applied_filters.append("search")
+
+            # -----------------------------------------
+            # UUID FILTER
+            # -----------------------------------------
+            if category_ids:
+                queryset = queryset.filter(uuid__in=category_ids)
+                applied_filters.append("categoryUuid")
+
+            # ===========================================================
+            # CASE 1 → id == "all" (delete entire table)
+            # ===========================================================
+            if ids == "all":
+                count = queryset.count()
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No Document Categories found to delete."
+                    }, status=404)
+
+                queryset.update(is_deleted=True)
+
+                # smart message
+                if not applied_filters:
+                    msg = f"All {count} Document Categories deleted successfully."
+                else:
+                    msg = f"{count} Document Categories deleted based on filter(s): {', '.join(applied_filters)}."
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": msg
+                }, status=200)
+
+            # ===========================================================
+            # CASE 2 → deleteAll = true (delete only filtered results)
+            # ===========================================================
+            if delete_all:
+                count = queryset.count()
+                queryset.update(is_deleted=True)
+
+                if not applied_filters:
+                    msg = f"All {count} Document Categories deleted."
+                elif applied_filters == ["search"]:
+                    msg = f"{count} categories deleted based on search filter."
+                elif applied_filters == ["categoryUuid"]:
+                    msg = f"{count} categories deleted based on UUID filter."
+                else:
+                    msg = f"{count} categories deleted based on multiple filters."
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": msg
+                }, status=200)
+
+            # ===========================================================
+            # CASE 3 → Delete selected UUID list only
+            # ===========================================================
+            if not ids or not isinstance(ids, list):
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Provide list of UUIDs in 'id' field or 'all'."
+                }, status=400)
+
+            valid_uuids, invalid_uuids = [], []
+            for u in ids:
+                try:
+                    valid_uuids.append(UUID(u))
+                except:
+                    invalid_uuids.append(u)
+
+            if not valid_uuids:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "No valid UUIDs provided.",
+                    "data": {"invalid_uuids": invalid_uuids}
+                }, status=400)
+
+            categories = queryset.filter(uuid__in=valid_uuids)
             count = categories.count()
+
             if count == 0:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "No Document Categories found to delete."
-                }, status=status.HTTP_404_NOT_FOUND)
+                    "message": "No matching Document Categories found."
+                }, status=404)
+
             categories.update(is_deleted=True)
+
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} Document Categories deleted successfully."
-            }, status=status.HTTP_200_OK)
+                "message": f"{count} Document Category(ies) deleted successfully.",
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+            }, status=200)
 
-        if not isinstance(ids, list):
+        except Exception as e:
             return Response({
-                "statusCode": 400,
+                "statusCode": 500,
                 "status": False,
-                "message": "Provide list of UUIDs in 'id' field or 'all'."
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        valid_uuids, invalid_uuids = [], []
-        for u in ids:
-            try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
-
-        if not valid_uuids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "No valid UUIDs provided.",
-                "data": {"invalid_uuids": invalid_uuids}
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        categories = DocumentCategory.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = categories.count()
-
-        if count == 0:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "No matching Document Categories found."
-            }, status=status.HTTP_404_NOT_FOUND)
-
-        categories.delete()
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"{count} Document Category(ies) deleted successfully.",
-            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        }, status=status.HTTP_200_OK)
+                "message": f"Internal server error: {str(e)}"
+            }, status=500)
 
 
 
@@ -592,8 +738,8 @@ class DocumentCategoryImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows,
+            "duplicates": reversed(duplicates),
+            "skipped_rows": reversed(skipped_rows),
         }, status=200)
 
 
@@ -777,51 +923,175 @@ class DocumentNameUpdateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
+# class DocumentNameDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request):
+#         ids = request.data.get('id')
+#         if not ids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide 'id' (UUID list or 'all')."
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         if ids == "all":
+#             objs = DocumentName.objects.filter(is_deleted=False)
+#             count = objs.count()
+#             objs.update(is_deleted=True)
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} Document Names deleted successfully."
+#             }, status=status.HTTP_200_OK)
+
+#         if not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Provide list of UUIDs in 'id' field or 'all'."
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         valid_uuids = []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 continue
+
+#         objs = DocumentName.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+#         count = objs.count()
+#         objs.update(is_deleted=True)
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} Document Name(s) deleted successfully."
+#         }, status=status.HTTP_200_OK)
+
+
+
 class DocumentNameDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request):
-        ids = request.data.get('id')
-        if not ids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Please provide 'id' (UUID list or 'all')."
-            }, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            ids = request.data.get('id')
+            search = request.GET.get("search", "").strip()
+            delete_all = request.data.get("deleteAll", False)
 
-        if ids == "all":
-            objs = DocumentName.objects.filter(is_deleted=False)
+            # -----------------------------------------
+            # Parse comma-separated UUID filter
+            # -----------------------------------------
+            def parse_uuid_list(param):
+                raw = request.GET.get(param, "")
+                result = []
+                if raw:
+                    for x in raw.split(","):
+                        try:
+                            result.append(UUID(x.strip()))
+                        except:
+                            pass
+                return result
+
+            name_uuids = parse_uuid_list("documentNameUuid")
+
+            # -----------------------------------------
+            # BASE QUERYSET
+            # -----------------------------------------
+            queryset = DocumentName.objects.filter(is_deleted=False)
+
+            applied_filters = []
+
+            # -----------------------------------------
+            # SEARCH FILTER (LIKE EducationLevelDeleteAPIView)
+            # -----------------------------------------
+            if search:
+                queryset = queryset.filter(document_name__istartswith=search)
+                applied_filters.append("search")
+
+            # -----------------------------------------
+            # UUID FILTER (documentNameUuid)
+            # -----------------------------------------
+            if name_uuids:
+                queryset = queryset.filter(uuid__in=name_uuids)
+                applied_filters.append("documentNameUuid")
+
+            # ===========================================================
+            # CASE 1 → id == "all": delete entire table OR filtered table
+            # ===========================================================
+            if ids == "all":
+                count = queryset.count()
+                queryset.update(is_deleted=True)
+
+                # smart message
+                if not applied_filters:
+                    msg = f"All {count} Document Names deleted successfully."
+                else:
+                    msg = f"{count} Document Names deleted based on filters: {', '.join(applied_filters)}."
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": msg
+                }, status=200)
+
+            # ===========================================================
+            # CASE 2 → deleteAll: delete ONLY filtered results
+            # ===========================================================
+            if delete_all:
+                count = queryset.count()
+                queryset.update(is_deleted=True)
+
+                if not applied_filters:
+                    msg = f"All {count} Document Names deleted."
+                elif applied_filters == ["search"]:
+                    msg = f"{count} Document Names deleted based on search filter."
+                elif applied_filters == ["documentNameUuid"]:
+                    msg = f"{count} Document Names deleted based on UUID filter."
+                else:
+                    msg = f"{count} Document Names deleted based on multiple filters."
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": msg
+                }, status=200)
+
+            # ===========================================================
+            # CASE 3 → DELETE SPECIFIC UUID LIST (your original logic)
+            # ===========================================================
+            if not ids or not isinstance(ids, list):
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Provide list of UUIDs in 'id' field or 'all'."
+                }, status=400)
+
+            valid_uuids, invalid_uuids = [], []
+            for u in ids:
+                try:
+                    valid_uuids.append(UUID(u))
+                except ValueError:
+                    invalid_uuids.append(u)
+
+            objs = queryset.filter(uuid__in=valid_uuids)
             count = objs.count()
             objs.update(is_deleted=True)
+
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} Document Names deleted successfully."
-            }, status=status.HTTP_200_OK)
+                "message": f"{count} Document Name(s) deleted successfully.",
+                "invalid_uuids": invalid_uuids if invalid_uuids else None
+            }, status=200)
 
-        if not isinstance(ids, list):
+        except Exception as e:
             return Response({
-                "statusCode": 400,
+                "statusCode": 500,
                 "status": False,
-                "message": "Provide list of UUIDs in 'id' field or 'all'."
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        valid_uuids = []
-        for u in ids:
-            try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                continue
-
-        objs = DocumentName.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = objs.count()
-        objs.update(is_deleted=True)
-
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"{count} Document Name(s) deleted successfully."
-        }, status=status.HTTP_200_OK)
+                "message": f"Internal server error: {str(e)}"
+            }, status=500)
 
 
 class DocumentNameExportAPIView(APIView):
@@ -1045,8 +1315,8 @@ class DocumentNameImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": reversed(duplicates),
+            "skipped_rows": reversed(skipped_rows)
         }, status=200)
 
 
@@ -1526,8 +1796,8 @@ class DocumentTypeImportAPIView(APIView):
             "status": True,
             "message": f'Sheet \"{sheet_name}\" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": reversed(duplicates),
+            "skipped_rows": reversed(skipped_rows)
         }, status=200)
 
 #--------------------Purpose of visite----------------------------
@@ -1991,8 +2261,8 @@ class PurposeOfVisitImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": reversed(duplicates),
+            "skipped_rows": reversed(skipped_rows)
         }, status=200)
 
 #-----------------------DocumentsFor--------------------------------
@@ -2458,8 +2728,8 @@ class DocumentsForImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows,
+            "duplicates": reversed(duplicates),
+            "skipped_rows": reversed(skipped_rows),
         }, status=status.HTTP_200_OK)
 
 
@@ -3011,8 +3281,8 @@ class RequiredDocumentImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows,
+            "duplicates": reversed(duplicates),
+            "skipped_rows": reversed(skipped_rows),
         }, status=200)
 
 
@@ -3485,8 +3755,8 @@ class ProcessStatusImportAPIView(APIView):
             "status": True,
             "message": "Import completed",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": reversed(duplicates),
+            "skipped_rows": reversed(skipped_rows)
         })
 
 
@@ -3996,8 +4266,8 @@ class ProcessSubStatusImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": reversed(duplicates),
+            "skipped_rows": reversed(skipped_rows)
         })
 
 
@@ -4349,8 +4619,8 @@ class ProcessTypeImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": reversed(duplicates),
+            "skipped_rows": reversed(skipped_rows)
         })
 
 
@@ -4820,8 +5090,8 @@ class PaymentToImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": reversed(duplicates),
+            "skipped_rows": reversed(skipped_rows)
         }, status=200)
 
 #--------------  Payment Category --------------
@@ -5275,8 +5545,8 @@ class PaymentCategoryImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows,
+            "duplicates": reversed(duplicates),
+            "skipped_rows": reversed(skipped_rows),
         }, status=status.HTTP_200_OK)
 
 

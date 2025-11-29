@@ -29,6 +29,8 @@ from django.utils import timezone
 import unicodedata
 from django.db.models import Q, F, Value
 from django.db.models.functions import Lower, Coalesce
+from django.db.models import Func
+
 
 india_tz = pytz.timezone('Asia/Kolkata')
 
@@ -6001,8 +6003,6 @@ class DepartmentListAPIView(APIView):
         return paginator.get_paginated_response(serializer.data)
 
 
-
-
 class DepartmentCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -6385,8 +6385,6 @@ class DepartmentExportAPIView(APIView):
         return response
 
 
-
-
 class DepartmentImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -6606,7 +6604,6 @@ class EmployeeTypeListAPIView(APIView):
         serializer = EmployeeTypeSerializer(result_page, many=True)
 
         return paginator.get_paginated_response(serializer.data)
-
 
 
 
@@ -7049,8 +7046,6 @@ class EmployeeTypeImportAPIView(APIView):
             "duplicates": duplicates,
             "skipped_rows": skipped_rows,
         }, status=status.HTTP_200_OK)
-
-
 
 
 
