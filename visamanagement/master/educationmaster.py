@@ -1102,7 +1102,7 @@ class EducationLevelDeleteAPIView(APIView):
             # SEARCH FILTER
             # ---------------------------------------------------
             if search:
-                queryset = queryset.filter(Q(name__istartswith=search))
+                queryset = queryset.filter(Q(educationlevel__istartswith=search))
                 applied_filters.append("search")
 
             # ---------------------------------------------------
