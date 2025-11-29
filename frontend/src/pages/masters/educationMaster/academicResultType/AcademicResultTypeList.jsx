@@ -10,6 +10,7 @@ import AddImportAcademicResultTypeModal from './AddImportAcademicResultTypeModal
 import AddEditAcademicResultTypeModal from './AddEditAcademicResultTypeModal';
 import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 import { useGlobalSearch } from '../../../../components/comman/GlobalSearchContext';
+import ResetButton from '../../../../components/comman/ResetButton';
 const AcademicResultTypeList = () => {
   const dispatch = useDispatch();
   const { globalSearch, setGlobalSearch } = useGlobalSearch();
@@ -134,9 +135,9 @@ const AcademicResultTypeList = () => {
     return () => clearTimeout(timer);
   }, [tableState.search]);
 
-   useEffect(() => {
-          fetchDepartmentList();
-      }, [tableState.page, tableState.limit, tableState.status, tableState.sort]);
+  useEffect(() => {
+    fetchDepartmentList();
+  }, [tableState.page, tableState.limit, tableState.status, tableState.sort]);
 
   const fetchDepartmentList = () => {
     setLoading(true);
@@ -554,10 +555,11 @@ const AcademicResultTypeList = () => {
                       </button>
                     </>
                   )}
-                  <button
+                  <ResetButton
                     onClick={clearAllFilters}
-                    className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
-                  >Reset </button>
+                    tableState={tableState}
+                    globalSearch={globalSearch}
+                  />
                 </div>
               </div>
               {/* Right Section: Select / Search / +Add New */}

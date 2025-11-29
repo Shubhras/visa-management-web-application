@@ -12,6 +12,7 @@ import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 import { useGlobalSearch } from '../../../../components/comman/GlobalSearchContext';
 import { countryList } from "../../../../store/master/generalMasters/actions";
 import { stateList } from '../../../../store/master/generalMasters/actions';
+import ResetButton from '../../../../components/comman/ResetButton';
 const DegreeAwardedInstituteList = () => {
     const dispatch = useDispatch();
     const { globalSearch, setGlobalSearch } = useGlobalSearch();
@@ -761,10 +762,12 @@ const DegreeAwardedInstituteList = () => {
                                             <Icon icon="mdi:filter-off" width="16" /> Clear Filters
                                         </button>
                                     )}
-                                    <button
+                                    <ResetButton
                                         onClick={clearAllFilters}
-                                        className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
-                                    >Reset </button>
+                                        tableState={tableState}
+                                        columnFilters={columnFilters}
+                                        globalSearch={globalSearch}
+                                    />
                                 </div>
                             </div>
                             {/* Right Section: Select / Search / +Add New */}

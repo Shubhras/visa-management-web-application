@@ -10,6 +10,7 @@ import AddImportStudyMajorAreaModal from './AddImportStudyMajorAreaModal';
 import AddEditStudyMajorAreaModal from './AddEditStudyMajorAreaModal';
 import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 import { useGlobalSearch } from '../../../../components/comman/GlobalSearchContext';
+import ResetButton from '../../../../components/comman/ResetButton';
 const StudyMajorAreaList = () => {
     const dispatch = useDispatch();
     const { globalSearch, setGlobalSearch } = useGlobalSearch();
@@ -667,10 +668,16 @@ const StudyMajorAreaList = () => {
                                             <Icon icon="mdi:filter-off" width="16" /> Clear Filters
                                         </button>
                                     )}
-                                    <button
+                                    {/* <button
                                         onClick={clearAllFilters}
                                         className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
-                                    >Reset </button>
+                                    >Reset </button> */}
+                                    <ResetButton
+                                        onClick={clearAllFilters}
+                                        tableState={tableState}
+                                        columnFilters={columnFilters}
+                                        globalSearch={globalSearch}
+                                    />
                                 </div>
                             </div>
 
