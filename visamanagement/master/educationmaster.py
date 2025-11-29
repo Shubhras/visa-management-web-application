@@ -727,8 +727,8 @@ class EducationLevelCodeImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=status.HTTP_200_OK)
 
 # -------------------- EducationLevel -------------------- #
@@ -1486,8 +1486,8 @@ class EducationLevelImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=200)
 
 
@@ -2541,8 +2541,8 @@ class StudymainareaImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=200)
 
 
@@ -3277,8 +3277,8 @@ class StudyMajorAreaImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=200)
 
 # -------------------- Studyspecialisation -------------------- #
@@ -6189,8 +6189,8 @@ class EducationTypeImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=200)
 
 

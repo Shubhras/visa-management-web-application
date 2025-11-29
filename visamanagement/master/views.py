@@ -6438,6 +6438,7 @@ class TimezoneImportAPIView(APIView):
                     skipped_rows.append({
                         "Row": row_number,
                         "Country": country_name,
+                        "Time Zone": tz_name or "",
                         "Reason": "Missing time zone"
                     })
                     continue
@@ -6446,7 +6447,8 @@ class TimezoneImportAPIView(APIView):
                 if not country_name:
                     skipped_rows.append({
                         "Row": row_number,
-                         "Country": "",
+                        "Time Zone": tz_name or "",
+                        "Country": "",
                         "Reason": "Invalid or missing country"
                     })
                     continue
@@ -6456,7 +6458,7 @@ class TimezoneImportAPIView(APIView):
                 if not country_obj:
                     skipped_rows.append({
                         "Row": row_number,
-                         "Country": country_name,
+                        "Country": country_name,
                         "Time Zone": tz_name,
                         "Reason": "Invalid or missing country"
                     })
@@ -13634,8 +13636,10 @@ class LeadSourceImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
+            # "duplicates": duplicates,
+            # "skipped_rows": skipped_rows
         }, status=status.HTTP_200_OK)
 
 
@@ -14090,6 +14094,8 @@ class InterestLevelImportAPIView(APIView):
                 if not name:
                     skipped_rows.append({
                         "Row": row_number,
+                        "Interest Level": name or "",
+                        "Description":description or "",
                         "Reason": "Missing interest level name"
                     })
                     continue
@@ -14099,7 +14105,8 @@ class InterestLevelImportAPIView(APIView):
                     if not existing.is_deleted:
                         duplicates.append({
                             "Row": row_number,
-                            "Interest Level": name,
+                            "Interest Level": name or "",
+                            "Description":description or "",
                             "Reason": "Already exists in database"
                         })
                         continue
@@ -14132,8 +14139,10 @@ class InterestLevelImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
+            # "duplicates": duplicates,
+            # "skipped_rows": skipped_rows
         }, status=status.HTTP_200_OK)
 
 
@@ -14582,6 +14591,8 @@ class PriorityImportAPIView(APIView):
                 if not name:
                     skipped_rows.append({
                         "Row": row_number,
+                        "Priority":name or "",
+                        "Description":description or "",
                         "Reason": "Missing priority name"
                     })
                     continue
@@ -14591,7 +14602,8 @@ class PriorityImportAPIView(APIView):
                     if not existing.is_deleted:
                         duplicates.append({
                             "Row": row_number,
-                            "Priority": name,
+                            "Priority":name or "",
+                            "Description":description or "",
                             "Reason": "Already exists in database"
                         })
                         continue
@@ -14624,8 +14636,10 @@ class PriorityImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            # "duplicates": duplicates,
+            # "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=status.HTTP_200_OK)
 
 
@@ -15089,6 +15103,8 @@ class TagsImportAPIView(APIView):
                 if not name:
                     skipped_rows.append({
                         "Row": row_number,
+                        "Tags":name or "",
+                        "Description":description or "",
                         "Reason": "Missing tag name"
                     })
                     continue
@@ -15098,7 +15114,8 @@ class TagsImportAPIView(APIView):
                     if not existing.is_deleted:
                         duplicates.append({
                             "Row": row_number,
-                            "Tags": name,
+                            "Tags":name or "",
+                            "Description":description or "",
                             "Reason": "Already exists in database"
                         })
                         continue
@@ -15131,8 +15148,8 @@ class TagsImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=status.HTTP_200_OK)
 
 #-------------------------------------------ActivityType---------------------------------
@@ -15604,6 +15621,8 @@ class ActivityTypeImportAPIView(APIView):
                 if not name:
                     skipped_rows.append({
                         "Row": row_number,
+                        "Activity Type":name or "",
+                        "Description":description or "",
                         "Reason": "Missing activity type name"
                     })
                     continue
@@ -15613,7 +15632,8 @@ class ActivityTypeImportAPIView(APIView):
                     if not existing.is_deleted:
                         duplicates.append({
                             "Row": row_number,
-                            "Activity Type": name,
+                            "Activity Type":name or "",
+                            "Description":description or "",
                             "Reason": "Already exists in database"
                         })
                         continue
@@ -15646,8 +15666,8 @@ class ActivityTypeImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=status.HTTP_200_OK)
 
 
@@ -16121,6 +16141,8 @@ class LostReasonImportAPIView(APIView):
                 if not name:
                     skipped_rows.append({
                         "Row": row_number,
+                        "Lost Reason (B2C)":name or "",
+                        "Description":description or "",
                         "Reason": "Missing lost reason name"
                     })
                     continue
@@ -16131,6 +16153,7 @@ class LostReasonImportAPIView(APIView):
                         duplicates.append({
                             "Row": row_number,
                             "Lost Reason (B2C)": name,
+                            "Description":description or "",
                             "Reason": "Already exists in database"
                         })
                         continue
@@ -16163,8 +16186,8 @@ class LostReasonImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=status.HTTP_200_OK)
 
 
@@ -16619,6 +16642,8 @@ class LostReasonB2BImportAPIView(APIView):
                 if not name:
                     skipped_rows.append({
                         "Row": row_number,
+                        "Lost Reason (B2B)": name or "",
+                        "Description":description or "",
                         "Reason": "Missing lost reason name"
                     })
                     continue
@@ -16629,6 +16654,7 @@ class LostReasonB2BImportAPIView(APIView):
                         duplicates.append({
                             "Row": row_number,
                             "Lost Reason (B2B)": name,
+                            "Description":description or "",
                             "Reason": "Already exists in database"
                         })
                         continue
@@ -16661,8 +16687,8 @@ class LostReasonB2BImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=status.HTTP_200_OK)
 
 
