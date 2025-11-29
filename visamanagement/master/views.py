@@ -2286,7 +2286,7 @@ class CountryDeleteAPIView(APIView):
 
     def delete(self, request):
         try:
-            ids = request.data.get('id')
+            ids = request.data.get('id', None)
             delete_all = request.data.get("deleteAll", False)
             search = request.GET.get("search", "").strip()
             raw_continents = request.GET.get("continent", "").strip()
@@ -2297,102 +2297,79 @@ class CountryDeleteAPIView(APIView):
                 for u in raw_continents.split(','):
                     try:
                         continent_uuids.append(UUID(u.strip()))
-                    except ValueError:
+                    except:
                         invalid_continents.append(u)
 
-
-            # Delete full table if id == "all"
+            # ----------------------------------
+            # If id == "all" → delete entire table
+            # ----------------------------------
             if ids == "all":
-                with transaction.atomic():
-                    queryset = Country.objects.all()
-                    count = queryset.count()
+                count = Country.objects.count()
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No countries found to delete.",
+                        "data": None
+                    }, status=404)
 
-                    if count == 0:
-                        return Response({
-                            "statusCode": 404,
-                            "status": False,
-                            "message": "No countries found to delete.",
-                            "data": None
-                        }, status=404)
-
-                    queryset.delete()
-
+                Country.objects.all().delete()
                 return Response({
                     "statusCode": 200,
                     "status": True,
-                    "message": f"All {count} country(s) deleted successfully.",
+                    "message": f"All {count} country(s) deleted from the table.",
                     "data": None
                 }, status=200)
 
-            # Base queryset
+            # ----------------------------------
+            # Base queryset (soft delete safety)
+            # ----------------------------------
             queryset = Country.objects.filter(is_deleted=False)
             applied_filters = []
 
-            # Apply search filter
+            # ----------------------------------
+            # Apply SEARCH filter
+            # ----------------------------------
             if search:
                 queryset = queryset.filter(Q(name__istartswith=search))
                 applied_filters.append("search")
 
-            # Apply continent filter
+            # ----------------------------------
+            # Apply CONTINENT filter (multiple UUIDs)
+            # ----------------------------------
             if continent_uuids:
                 queryset = queryset.filter(continent__uuid__in=continent_uuids)
                 applied_filters.append("continent")
 
-            # Filter based deleteAll block
-            if applied_filters and not delete_all:
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "To delete using filters, you must send 'deleteAll': true in request body.",
-                    "data": {"invalid_continent_uuids": invalid_continents} if invalid_continents else None
-                }, status=400)
-
-            # Perform delete using filters
+            # ----------------------------------
+            # DELETE ALL FILTERED RESULTS (only if deleteAll: true)
+            # ----------------------------------
             if delete_all and applied_filters:
-                try:
-                    with transaction.atomic():
-                        count = queryset.count()
-
-                        if count == 0:
-                            return Response({
-                                "statusCode": 404,
-                                "status": False,
-                                "message": "No countries found matching the applied filter(s).",
-                                "data": {"invalid_continent_uuids": invalid_continents} if invalid_continents else None
-                            }, status=404)
-
-                        queryset.delete()
-
-                    msg = f"{count} country(s) deleted based on {', '.join(applied_filters)} filter(s)."
+                count = queryset.count()
+                if count == 0:
                     return Response({
-                        "statusCode": 200,
-                        "status": True,
-                        "message": msg,
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No country(s) found matching the applied filter(s).",
                         "data": {"invalid_continent_uuids": invalid_continents} if invalid_continents else None
-                    }, status=200)
+                    }, status=404)
 
-                except IntegrityError:
-                    return Response({
-                        "statusCode": 409,
-                        "status": False,
-                        "message": "Countries cannot be deleted due to dependent records (foreign key constraints).",
-                        "data": None
-                    }, status=409)
+                queryset.delete()
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} country(s) deleted based on applied search and/or continent filters.",
+                    "data": {"invalid_continent_uuids": invalid_continents} if invalid_continents else None
+                }, status=200)
 
-                except DatabaseError as db_err:
-                    return Response({
-                        "statusCode": 500,
-                        "status": False,
-                        "message": "Database error occurred while deleting filtered countries.",
-                        "data": None
-                    }, status=500)
-
-            # Validate UUID list for bulk deletion
+            # ----------------------------------
+            # BULK DELETE BY UUID LIST
+            # ----------------------------------
             if not ids or not isinstance(ids, list):
                 return Response({
                     "statusCode": 400,
                     "status": False,
-                    "message": "Provide 'id' as UUID list or 'id: all' for full delete.",
+                    "message": "Send UUID list in 'id' or use 'id: all' to delete full table or 'deleteAll: true' for filtered delete.",
                     "data": None
                 }, status=400)
 
@@ -2400,74 +2377,55 @@ class CountryDeleteAPIView(APIView):
             for u in ids:
                 try:
                     valid_uuids.append(UUID(u))
-                except ValueError:
+                except:
                     invalid_uuids.append(u)
-
-            
 
             if not valid_uuids:
                 return Response({
                     "statusCode": 400,
                     "status": False,
-                    "message": "No valid country UUIDs provided.",
+                    "message": "No valid UUIDs provided.",
                     "data": {"invalid_uuids": invalid_uuids}
                 }, status=400)
 
-            # Perform bulk delete
-            try:
-                bulk_qs = queryset.filter(uuid__in=valid_uuids)
+            bulk_qs = queryset.filter(uuid__in=valid_uuids)
+            count = bulk_qs.count()
 
-                with transaction.atomic():
-                    count = bulk_qs.count()
-                    if count == 0:
-                        return Response({
-                            "statusCode": 404,
-                            "status": False,
-                            "message": "No matching countries found for provided UUID(s).",
-                            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-                        }, status=404)
-
-                    bulk_qs.delete()
-
+            if count == 0:
                 return Response({
-                    "statusCode": 200,
-                    "status": True,
-                    "message": f"{count} country(s) deleted successfully.",
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No matching countries found to delete.",
                     "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-                }, status=200)
+                }, status=404)
 
-            except IntegrityError:
-                return Response({
-                    "statusCode": 409,
-                    "status": False,
-                    "message": "Unable to delete country(s) because they are linked with other records.",
-                    "data": None
-                }, status=409)
+            bulk_qs.delete()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"{count} country(s) deleted successfully.",
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+            }, status=200)
 
-            except DatabaseError as db_err:
-                return Response({
-                    "statusCode": 500,
-                    "status": False,
-                    "message": "Database error occurred while deleting country(s).",
-                    "data": None
-                }, status=500)
-
-        except KeyError as key_err:
+        except IntegrityError as ie:
+            # FK constraint fail message
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Invalid request format. Required field missing.",
+                "message": "You can't delete this country because it is used in one or more related child tables. Delete operation is not allowed.",
                 "data": None
             }, status=400)
 
-        except Exception as err:
+        except Exception as e:
             return Response({
                 "statusCode": 500,
                 "status": False,
-                "message": f"An unexpected error occurred while deleting country(s): {str(err)}",
+                "message": f"An unexpected error occurred while deleting country(s): {str(e)}",
                 "data": None
             }, status=500)
+
         
+            
 
 
 class CountryExportAPIView(APIView):
