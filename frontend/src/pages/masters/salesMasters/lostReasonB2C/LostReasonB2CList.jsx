@@ -242,6 +242,7 @@ const LostReasonB2CList = () => {
     }));
     // Reset Global Search
     setGlobalSearch("");
+    setSelectedRows([]);
   };
 
   const handleSearchChange = (value) => {
@@ -587,6 +588,7 @@ const LostReasonB2CList = () => {
                     onClick={clearAllFilters}
                     tableState={tableState}
                     globalSearch={globalSearch}
+                    selectedRows={selectedRows}
                   />
                 </div>
               </div>
@@ -962,8 +964,6 @@ const LostReasonB2CList = () => {
                   ></button>
                 </div>
                 <div className="modal-body">
-                  {/* <p className="mb-0">Are you sure you want to delete this Activity?</p> */}
-                  {/* <p className="mb-0"> Are you sure you want to delete this Activity ({selectedRows.length})?</p> */}
                   <p className="mb-0">{deleteConfirmMessage}</p>
                 </div>
                 <div className="modal-footer">
@@ -1025,7 +1025,7 @@ const LostReasonB2CList = () => {
                               onChange={(e) =>
                                 handleCheckboxChange(item, e.target.checked)
                               }
-                              disabled={ItemsRequired.includes(item)} // 🔒 Disable required item
+                              disabled={ItemsRequired.includes(item)}
                               className="form-check-input"
                             />
                             <label

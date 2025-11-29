@@ -259,6 +259,7 @@ const StakeholderCategoriesList = () => {
     }));
     // Reset Global Search
     setGlobalSearch("");
+    setSelectedRows([]);
   };
 
   const handleSearchChange = (value) => {
@@ -617,6 +618,7 @@ const StakeholderCategoriesList = () => {
                     onClick={clearAllFilters}
                     tableState={tableState}
                     globalSearch={globalSearch}
+                    selectedRows={selectedRows}
                   />
                 </div>
               </div>
