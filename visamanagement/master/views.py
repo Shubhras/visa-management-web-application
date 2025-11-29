@@ -7,6 +7,7 @@ from .serializers import  *
 from django.core.paginator import Paginator
 from django.db.models import Q,F
 import uuid
+from django.db import DatabaseError, transaction, IntegrityError
 from rest_framework.permissions import IsAuthenticated ,AllowAny ,BasePermission 
 from django.shortcuts import get_object_or_404
 from .pagination import  *
@@ -2147,107 +2148,326 @@ class CountryUpdateAPIView(APIView):
 #         }, status=status.HTTP_200_OK)
 
 
+# class CountryDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request):
+#         try:
+#             ids = request.data.get('id')
+#             delete_all = request.data.get("deleteAll", False)
+#             search = request.GET.get("search", "").strip()
+#             raw_continents = request.GET.get("continent", "").strip()
+
+#             # Parse continent UUID list from params
+#             continent_uuids, invalid_continents = [], []
+#             if raw_continents:
+#                 for u in raw_continents.split(','):
+#                     try:
+#                         continent_uuids.append(UUID(u.strip()))
+#                     except:
+#                         invalid_continents.append(u)
+
+#             # Delete entire table if id == "all"
+#             if ids == "all":
+#                 queryset = Country.objects.all()
+#                 count = queryset.count()
+#                 if count == 0:
+#                     return Response({
+#                         "statusCode": 404,
+#                         "status": False,
+#                         "message": "No countries found to delete.",
+#                         "data": None
+#                     }, status=404)
+
+#                 queryset.delete()
+#                 return Response({
+#                     "statusCode": 200,
+#                     "status": True,
+#                     "message": f"All {count} country(s) deleted from the table.",
+#                     "data": None
+#                 }, status=200)
+
+#             # Base queryset
+#             queryset = Country.objects.filter(is_deleted=False)
+#             applied_filters = []
+
+#             # Apply search filter
+#             if search:
+#                 queryset = queryset.filter(Q(name__istartswith=search))
+#                 applied_filters.append("search")
+
+#             # Apply continent filter
+#             if continent_uuids:
+#                 queryset = queryset.filter(continent__uuid__in=continent_uuids)
+#                 applied_filters.append("continent")
+
+#             # Handle deleteAll for filtered deletion
+#             if delete_all and applied_filters:
+#                 count = queryset.count()
+#                 if count == 0:
+#                     return Response({
+#                         "statusCode": 404,
+#                         "status": False,
+#                         "message": "No countries found matching the applied filter(s).",
+#                         "data": {"invalid_continent_uuids": invalid_continents} if invalid_continents else None
+#                     }, status=404)
+
+#                 queryset.delete()
+
+#                 # Smart message
+#                 if applied_filters == ["search"]:
+#                     msg = f"{count} country(ies) deleted based on search filter."
+#                 elif applied_filters == ["continent"]:
+#                     msg = f"{count} country(ies) deleted based on continent filter."
+#                 else:
+#                     msg = f"{count} country(ies) deleted based on search + continent filter."
+
+#                 return Response({
+#                     "statusCode": 200,
+#                     "status": True,
+#                     "message": msg,
+#                     "data": {"invalid_continent_uuids": invalid_continents} if invalid_continents else None
+#                 }, status=200)
+
+#             # Bulk delete by UUID list
+#             if not ids or not isinstance(ids, list):
+#                 return Response({
+#                     "statusCode": 400,
+#                     "status": False,
+#                     "message": "Send UUID list in 'id' field or 'id: all' for full delete.",
+#                     "data": None
+#                 }, status=400)
+
+#             valid_uuids, invalid_uuids = [], []
+#             for u in ids:
+#                 try:
+#                     valid_uuids.append(UUID(u))
+#                 except:
+#                     invalid_uuids.append(u)
+
+#             if not valid_uuids:
+#                 return Response({
+#                     "statusCode": 400,
+#                     "status": False,
+#                     "message": "No valid UUIDs provided.",
+#                     "data": {"invalid_uuids": invalid_uuids}
+#                 }, status=400)
+
+#             bulk_qs = queryset.filter(uuid__in=valid_uuids)
+#             count = bulk_qs.count()
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No matching countries found to delete.",
+#                     "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#                 }, status=404)
+
+#             bulk_qs.delete()
+
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"{count} country(s) permanently deleted.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=200)
+
+#         except Exception as e:
+#             return Response({
+#                 "statusCode": 500,
+#                 "status": False,
+#                 "message": f"Internal server error: {str(e)}",
+#                 "data": None
+#             }, status=500)
+
+
 class CountryDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request):
-        ids = request.data.get('id', None)
-        search = request.GET.get("search", "").strip()
+        try:
+            ids = request.data.get('id')
+            delete_all = request.data.get("deleteAll", False)
+            search = request.GET.get("search", "").strip()
+            raw_continents = request.GET.get("continent", "").strip()
 
-        queryset = Country.objects.filter(is_deleted=False)
-        
-        if search:
-            if not request.data.get("deleteAll", False):
+            # Parse continent UUID list from params
+            continent_uuids, invalid_continents = [], []
+            if raw_continents:
+                for u in raw_continents.split(','):
+                    try:
+                        continent_uuids.append(UUID(u.strip()))
+                    except ValueError:
+                        invalid_continents.append(u)
+
+
+            # Delete full table if id == "all"
+            if ids == "all":
+                with transaction.atomic():
+                    queryset = Country.objects.all()
+                    count = queryset.count()
+
+                    if count == 0:
+                        return Response({
+                            "statusCode": 404,
+                            "status": False,
+                            "message": "No countries found to delete.",
+                            "data": None
+                        }, status=404)
+
+                    queryset.delete()
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"All {count} country(s) deleted successfully.",
+                    "data": None
+                }, status=200)
+
+            # Base queryset
+            queryset = Country.objects.filter(is_deleted=False)
+            applied_filters = []
+
+            # Apply search filter
+            if search:
+                queryset = queryset.filter(Q(name__istartswith=search))
+                applied_filters.append("search")
+
+            # Apply continent filter
+            if continent_uuids:
+                queryset = queryset.filter(continent__uuid__in=continent_uuids)
+                applied_filters.append("continent")
+
+            # Filter based deleteAll block
+            if applied_filters and not delete_all:
                 return Response({
                     "statusCode": 400,
                     "status": False,
-                    "message": "To delete based on search filter, you must send → 'deleteAll: true' in request body.",
+                    "message": "To delete using filters, you must send 'deleteAll': true in request body.",
+                    "data": {"invalid_continent_uuids": invalid_continents} if invalid_continents else None
+                }, status=400)
+
+            # Perform delete using filters
+            if delete_all and applied_filters:
+                try:
+                    with transaction.atomic():
+                        count = queryset.count()
+
+                        if count == 0:
+                            return Response({
+                                "statusCode": 404,
+                                "status": False,
+                                "message": "No countries found matching the applied filter(s).",
+                                "data": {"invalid_continent_uuids": invalid_continents} if invalid_continents else None
+                            }, status=404)
+
+                        queryset.delete()
+
+                    msg = f"{count} country(s) deleted based on {', '.join(applied_filters)} filter(s)."
+                    return Response({
+                        "statusCode": 200,
+                        "status": True,
+                        "message": msg,
+                        "data": {"invalid_continent_uuids": invalid_continents} if invalid_continents else None
+                    }, status=200)
+
+                except IntegrityError:
+                    return Response({
+                        "statusCode": 409,
+                        "status": False,
+                        "message": "Countries cannot be deleted due to dependent records (foreign key constraints).",
+                        "data": None
+                    }, status=409)
+
+                except DatabaseError as db_err:
+                    return Response({
+                        "statusCode": 500,
+                        "status": False,
+                        "message": "Database error occurred while deleting filtered countries.",
+                        "data": None
+                    }, status=500)
+
+            # Validate UUID list for bulk deletion
+            if not ids or not isinstance(ids, list):
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Provide 'id' as UUID list or 'id: all' for full delete.",
                     "data": None
                 }, status=400)
 
-            queryset = queryset.filter(Q(name__istartswith=search))
-            count = queryset.count()
+            valid_uuids, invalid_uuids = [], []
+            for u in ids:
+                try:
+                    valid_uuids.append(UUID(u))
+                except ValueError:
+                    invalid_uuids.append(u)
 
-            if count == 0:
+            
+
+            if not valid_uuids:
                 return Response({
-                    "statusCode": 404,
+                    "statusCode": 400,
                     "status": False,
-                    "message": "No countries found matching this search filter.",
-                    "data": None
-                }, status=404)
+                    "message": "No valid country UUIDs provided.",
+                    "data": {"invalid_uuids": invalid_uuids}
+                }, status=400)
 
-            queryset.delete()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": f"{count} country(ies) deleted based on search filter.",
-                "data": None
-            }, status=200)
-
-        if ids == "all":
-            count = queryset.count()
-            if count == 0:
-                return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "No countries found to delete.",
-                    "data": None
-                }, status=404)
-
-            queryset.delete()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": f"All {count} country(s) deleted successfully.",
-                "data": None
-            }, status=200)
-
-        
-        if not ids or not isinstance(ids, list):
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Send UUID list in 'id' field or use 'id: all' for full delete.",
-                "data": None
-            }, status=400)
-
-        valid_uuids = []
-        invalid_uuids = []
-
-        for u in ids:
+            # Perform bulk delete
             try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
+                bulk_qs = queryset.filter(uuid__in=valid_uuids)
 
-        if not valid_uuids:
+                with transaction.atomic():
+                    count = bulk_qs.count()
+                    if count == 0:
+                        return Response({
+                            "statusCode": 404,
+                            "status": False,
+                            "message": "No matching countries found for provided UUID(s).",
+                            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                        }, status=404)
+
+                    bulk_qs.delete()
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} country(s) deleted successfully.",
+                    "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                }, status=200)
+
+            except IntegrityError:
+                return Response({
+                    "statusCode": 409,
+                    "status": False,
+                    "message": "Unable to delete country(s) because they are linked with other records.",
+                    "data": None
+                }, status=409)
+
+            except DatabaseError as db_err:
+                return Response({
+                    "statusCode": 500,
+                    "status": False,
+                    "message": "Database error occurred while deleting country(s).",
+                    "data": None
+                }, status=500)
+
+        except KeyError as key_err:
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "No valid UUIDs provided.",
-                "data": {"invalid_uuids": invalid_uuids}
+                "message": "Invalid request format. Required field missing.",
+                "data": None
             }, status=400)
 
-        bulk_qs = queryset.filter(uuid__in=valid_uuids)
-        count = bulk_qs.count()
-
-        if count == 0:
+        except Exception as err:
             return Response({
-                "statusCode": 404,
+                "statusCode": 500,
                 "status": False,
-                "message": "No matching countries found to delete.",
-                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=404)
-
-        bulk_qs.delete()
-
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"{count} country(s) permanently deleted.",
-            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        }, status=200)
-
+                "message": f"An unexpected error occurred while deleting country(s): {str(err)}",
+                "data": None
+            }, status=500)
+        
 
 
 class CountryExportAPIView(APIView):
