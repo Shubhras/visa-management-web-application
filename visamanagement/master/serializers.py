@@ -1665,6 +1665,7 @@ class ApplicantTypeSerializer(serializers.ModelSerializer):
 
 
 
+
 class DocumentCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = DocumentCategory
@@ -1678,6 +1679,7 @@ class DocumentCategorySerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["uuid", "created_at", "updated_at"]
+
 
 
 class DocumentTypeSerializer(serializers.ModelSerializer):
@@ -2533,19 +2535,6 @@ class EntranceTestAbilityGroupSerializer(serializers.ModelSerializer):
 
 #--------------------------------------process master--------------------------
 
-class DocumentCategorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = DocumentCategory
-        fields = [
-            "id",
-            "uuid",
-            "name",
-            "description",
-            "is_deleted",
-            "created_at",
-            "updated_at",
-        ]
-        read_only_fields = ["uuid", "created_at", "updated_at"]
 
 
 class DocumentTypeSerializer(serializers.ModelSerializer):

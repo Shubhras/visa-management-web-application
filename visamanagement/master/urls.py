@@ -475,6 +475,8 @@ urlpatterns = [
     path('entrancetestresult/import/', EntranceTestResultImportAPIView.as_view(), name='entrancetestresult-import'),
 
    #----------------------- process.py------------------
+
+
     path("documentcategory/create/", DocumentCategoryCreateAPIView.as_view(), name='DocumentCategory-create'),
     path("documentcategory/", DocumentCategoryListAPIView.as_view(), name='DocumentCategory-list'),
     path("documentcategory/<uuid:uuid>/", DocumentCategoryRetrieveAPIView.as_view(), name='DocumentCategory-detail'),
@@ -482,6 +484,7 @@ urlpatterns = [
     path("documentcategory/delete/", DocumentCategoryDeleteAPIView.as_view(), name='DocumentCategory-delete'),
     path("documentcategory/export/", DocumentCategoryExportAPIView.as_view(), name='DocumentCategory-export'),
     path("documentcategory/import/", DocumentCategoryImportAPIView.as_view(), name='DocumentCategory-import'),
+    
 
     path('documenttype/create/', DocumentTypeCreateAPIView.as_view(), name='document_type_create'),
     path('documenttype/', DocumentTypeListAPIView.as_view(), name='document_type_list'),

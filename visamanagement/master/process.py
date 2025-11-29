@@ -2,7 +2,9 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
-from django.db.models import Q
+from django.db.models import Q, F
+from django.db.models.functions import Lower
+
 from uuid import UUID
 import datetime
 import openpyxl
@@ -53,31 +55,94 @@ class DocumentCategoryCreateAPIView(APIView):
 
 
 
+
 class DocumentCategoryListAPIView(APIView):
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
+        custom_sort = request.GET.get('customSort')
 
+        # Allowed fields to sort
         allowed_sort_fields = ['name', 'description', 'created_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
 
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        # Map to ORM fields
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'created_at': 'created_at'
+        }
 
+        sort_fields = []
+
+        # ------------------------------------------
+        #  CUSTOM SORT (Same Logic as City API)
+        # ------------------------------------------
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in allowed_sort_fields:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # case-insensitive sorting for text fields
+                    if field in ['name', 'description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+
+                except ValueError:
+                    continue
+
+        # ------------------------------------------
+        # DEFAULT SORT
+        # ------------------------------------------
+        else:
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'desc')
+
+            if sort_by not in allowed_sort_fields:
+                sort_by = 'created_at'
+
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+
+            f = F(orm_field)
+            sort_fields = [
+                f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)
+            ]
+
+        # ------------------------------------------
+        # BASE QUERY
+        # ------------------------------------------
         queryset = DocumentCategory.objects.filter(is_deleted=False)
 
+        # ------------------------------------------
+        # SEARCH
+        # ------------------------------------------
         if search:
-            queryset = queryset.filter(
-                Q(name__istartswith=search)     
-            )
+            queryset = queryset.filter(name__istartswith=search)
 
-        queryset = queryset.order_by(sort_by)
+        # ------------------------------------------
+        # APPLY SORT
+        # ------------------------------------------
+        queryset = queryset.order_by(*sort_fields)
+
+        # ------------------------------------------
+        # PAGINATION
+        # ------------------------------------------
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = DocumentCategorySerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
+    
+
 
 
 class DocumentCategoryRetrieveAPIView(APIView):
@@ -98,6 +163,7 @@ class DocumentCategoryRetrieveAPIView(APIView):
             "message": "Document Category retrieved successfully",
             "data": serializer.data
         }, status=status.HTTP_200_OK)
+
 
 
 class DocumentCategoryUpdateAPIView(APIView):
@@ -134,84 +200,183 @@ class DocumentCategoryUpdateAPIView(APIView):
             "status": False,
             "message": serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
+    
 
 
 class DocumentCategoryDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request):
-        ids = request.data.get('id', None)
-        if not ids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Please provide 'id' (UUID list or 'all')."
-            }, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            search = request.GET.get("search", "").strip()
+            delete_all = request.data.get("deleteAll", False)
+            ids = request.data.get("id", None)
 
-        if ids == "all":
-            categories = DocumentCategory.objects.filter(is_deleted=False)
+            # -----------------------------------------
+            # Parse comma-separated UUID filter (optional)
+            # -----------------------------------------
+            def parse_uuid_list(param):
+                raw = request.GET.get(param, '')
+                result = []
+                if raw:
+                    for x in raw.split(','):
+                        try:
+                            result.append(UUID(x.strip()))
+                        except:
+                            pass
+                return result
+
+            category_ids = parse_uuid_list('categoryUuid')
+
+            # -----------------------------------------
+            # BASE QUERYSET
+            # -----------------------------------------
+            queryset = DocumentCategory.objects.filter(is_deleted=False)
+
+            applied_filters = []
+
+            # -----------------------------------------
+            # SEARCH FILTER
+            # -----------------------------------------
+            if search:
+                queryset = queryset.filter(category_name__istartswith=search)
+                applied_filters.append("search")
+
+            # -----------------------------------------
+            # UUID FILTER
+            # -----------------------------------------
+            if category_ids:
+                queryset = queryset.filter(uuid__in=category_ids)
+                applied_filters.append("categoryUuid")
+
+            # ===========================================================
+            # CASE 1 → id == "all" (delete entire table)
+            # ===========================================================
+            if ids == "all":
+                count = queryset.count()
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No Document Categories found to delete."
+                    }, status=404)
+
+                queryset.update(is_deleted=True)
+
+                # smart message
+                if not applied_filters:
+                    msg = f"All {count} Document Categories deleted successfully."
+                else:
+                    msg = f"{count} Document Categories deleted based on filter(s): {', '.join(applied_filters)}."
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": msg
+                }, status=200)
+
+            # ===========================================================
+            # CASE 2 → deleteAll = true (delete only filtered results)
+            # ===========================================================
+            if delete_all:
+                count = queryset.count()
+                queryset.update(is_deleted=True)
+
+                if not applied_filters:
+                    msg = f"All {count} Document Categories deleted."
+                elif applied_filters == ["search"]:
+                    msg = f"{count} categories deleted based on search filter."
+                elif applied_filters == ["categoryUuid"]:
+                    msg = f"{count} categories deleted based on UUID filter."
+                else:
+                    msg = f"{count} categories deleted based on multiple filters."
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": msg
+                }, status=200)
+
+            # ===========================================================
+            # CASE 3 → Delete selected UUID list only
+            # ===========================================================
+            if not ids or not isinstance(ids, list):
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Provide list of UUIDs in 'id' field or 'all'."
+                }, status=400)
+
+            valid_uuids, invalid_uuids = [], []
+            for u in ids:
+                try:
+                    valid_uuids.append(UUID(u))
+                except:
+                    invalid_uuids.append(u)
+
+            if not valid_uuids:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "No valid UUIDs provided.",
+                    "data": {"invalid_uuids": invalid_uuids}
+                }, status=400)
+
+            categories = queryset.filter(uuid__in=valid_uuids)
             count = categories.count()
+
             if count == 0:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "No Document Categories found to delete."
-                }, status=status.HTTP_404_NOT_FOUND)
+                    "message": "No matching Document Categories found."
+                }, status=404)
+
             categories.update(is_deleted=True)
+
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} Document Categories deleted successfully."
-            }, status=status.HTTP_200_OK)
+                "message": f"{count} Document Category(ies) deleted successfully.",
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+            }, status=200)
 
-        if not isinstance(ids, list):
+        except Exception as e:
             return Response({
-                "statusCode": 400,
+                "statusCode": 500,
                 "status": False,
-                "message": "Provide list of UUIDs in 'id' field or 'all'."
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        valid_uuids, invalid_uuids = [], []
-        for u in ids:
-            try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
-
-        if not valid_uuids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "No valid UUIDs provided.",
-                "data": {"invalid_uuids": invalid_uuids}
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        categories = DocumentCategory.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = categories.count()
-
-        if count == 0:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "No matching Document Categories found."
-            }, status=status.HTTP_404_NOT_FOUND)
-
-        categories.delete()
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"{count} Document Category(ies) deleted successfully.",
-            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        }, status=status.HTTP_200_OK)
-
+                "message": f"Internal server error: {str(e)}"
+            }, status=500)
+        
 
 class DocumentCategoryExportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
-        fields = request.GET.get('fields')  # comma-separated fields
+        fields = request.GET.get('fields')
+
         uuids_param = request.GET.get('uuids', '')
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
+        search = request.GET.get('search', '').strip()
+        custom_sort = request.GET.get('customSort')
+
+        # -----------------------------------------
+        # Allowed sorting fields (same rules as City)
+        # -----------------------------------------
+        allowed_sort_fields = ['name', 'description', 'created_at']
+
+        # Mapping to ORM fields
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'created_at': 'created_at',
+        }
+
+        # -----------------------------------------
+        # Field header names for export
+        # -----------------------------------------
         field_header_map = {
             'uuid': 'UUID',
             'name': 'Document Category',
@@ -221,28 +386,89 @@ class DocumentCategoryExportAPIView(APIView):
             'updated_at': 'Modified On'
         }
 
+        # If fields not provided → export all
         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
+        # -----------------------------------------
+        # Base Query
+        # -----------------------------------------
         queryset = DocumentCategory.objects.filter(is_deleted=False)
-        if uuids:
-            queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
 
+        # UUID filtering
+        if uuids and "all" not in uuids:
+            queryset = queryset.filter(uuid__in=uuids)
+
+        # Search
+        if search:
+            queryset = queryset.filter(name__istartswith=search)
+
+        # -----------------------------------------
+        # Sorting
+        # -----------------------------------------
+        sort_fields = []
+
+        if custom_sort:
+            # Supports: ?customSort=name:asc,created_at:desc
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in allowed_sort_fields:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sorting for string fields
+                    if field in ['name', 'description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == "asc" else f.desc(nulls_last=True)
+                    )
+
+                except ValueError:
+                    continue
+        else:
+            # Default sorting
+            sort_order = request.GET.get('sortOrder', 'desc')
+            f = F('created_at')
+            sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # -----------------------------------------
+        # Export Logic
+        # -----------------------------------------
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = 'DocumentCategory'
+
+        india_tz = timezone.get_default_timezone()
 
         for category in queryset:
             row = []
             for field in field_list:
                 value = getattr(category, field, '')
+
+                # Format timestamps
                 if field in ['created_at', 'updated_at'] and value:
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-                elif isinstance(value, bool):
+
+                # Convert boolean to integer
+                if isinstance(value, bool):
                     value = int(value)
+
                 row.append(value if value is not None else '')
+
             dataset.append(row)
 
+        # -----------------------------------------
+        # Return file
+        # -----------------------------------------
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
@@ -258,6 +484,7 @@ class DocumentCategoryExportAPIView(APIView):
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
+    
 
 
 class DocumentCategoryImportAPIView(APIView):
@@ -445,9 +672,11 @@ class DocumentCategoryImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows,
+            "duplicates": reversed(duplicates),
+            "skipped_rows": reversed(skipped_rows),
         }, status=200)
+
+
 
 
 #----------------Document Name----------------
