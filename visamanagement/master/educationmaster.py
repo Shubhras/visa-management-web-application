@@ -8859,10 +8859,14 @@ class DegreeAwardedByImportAPIView(APIView):
             for row in data:
                 row_no = row.get("_row_number")
 
-                country_name = row.get("country", "").strip()
-                edu_level_name = row.get("education level", "").strip()
-                degree_name = row.get("degree awarded by", "").strip()
-                description = row.get("description", "")
+                # country_name = row.get("country", "").strip()
+                # edu_level_name = row.get("education level", "").strip()
+                # degree_name = row.get("degree awarded by", "").strip()
+                # description = row.get("description", "")
+                country_name = str(row.get("country") or "").strip()
+                edu_level_name = str(row.get("education level") or "").strip()
+                degree_name = str(row.get("degree awarded by") or "").strip()
+                description = str(row.get("description") or "").strip()
 
                 # Required Fields
                 if not country_name or not edu_level_name or not degree_name:
