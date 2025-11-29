@@ -3887,115 +3887,214 @@ class DistrictDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request):
+        try:
+            ids = request.data.get('id', None)
+            delete_all = request.data.get("deleteAll", False)
+            search = request.GET.get("search", "").strip()
+            raw_countries = request.GET.get("country", "").strip()
+            raw_states = request.GET.get("state", "").strip()
 
-        ids = request.data.get('id', None)
-        search = request.GET.get("search", "").strip()
+            # ----------------------------------------------------------
+            # ✅ Parse multiple country UUIDs from params (?country=uuid,uuid)
+            # ----------------------------------------------------------
+            country_uuids, invalid_countries = [], []
+            if raw_countries:
+                for u in raw_countries.split(','):
+                    try:
+                        country_uuids.append(UUID(u.strip()))
+                    except ValueError:
+                        invalid_countries.append(u)
 
-        # ---------------------------------------
-        # Base queryset (soft delete safety)
-        # ---------------------------------------
-        queryset = District.objects.filter(is_deleted=False)
+            # ----------------------------------------------------------
+            # ✅ Parse multiple state UUIDs from params (?state=uuid,uuid)
+            # ----------------------------------------------------------
+            state_uuids, invalid_states = [], []
+            if raw_states:
+                for u in raw_states.split(','):
+                    try:
+                        state_uuids.append(UUID(u.strip()))
+                    except ValueError:
+                        invalid_states.append(u)
 
-        # ---------------------------------------
-        # SEARCH BASED DELETE (only when deleteAll: true)
-        # ---------------------------------------
-        if search:
-            if not request.data.get("deleteAll", False):
+            # ----------------------------------------------------------
+            # ✅ CASE 1: deleteAll=false + ID LIST → delete only given UUIDs (ignore country/state/search filter)
+            # ----------------------------------------------------------
+            if delete_all is False and isinstance(ids, list):
+                valid_uuids, invalid_uuids = [], []
+                for u in ids:
+                    try:
+                        valid_uuids.append(UUID(u))
+                    except ValueError:
+                        invalid_uuids.append(u)
+
+                if not valid_uuids:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "No valid UUIDs provided.",
+                        "data": {"invalid_uuids": invalid_uuids}
+                    }, status=400)
+
+                bulk_qs = District.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+                count = bulk_qs.count()
+
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No matching district(s) found for provided UUID(s).",
+                        "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                    }, status=404)
+
+                with transaction.atomic():
+                    bulk_qs.delete()
+
                 return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "To delete based on search filter, you must send → 'deleteAll: true' in request body.",
-                    "data": None
-                }, status=400)
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} district(s) deleted successfully.",
+                    "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                }, status=200)
 
-            queryset = queryset.filter(Q(name__istartswith=search))
-            count = queryset.count()
+            # ----------------------------------------------------------
+            # ✅ CASE 2: id="all" + deleteAll=false → delete full district table safely (soft delete checked)
+            # ----------------------------------------------------------
+            if ids == "all" and delete_all is False:
+                qs_all = District.objects.filter(is_deleted=False)
+                count = qs_all.count()
 
-            if count == 0:
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No districts found to delete.",
+                        "data": None
+                    }, status=404)
+
+                skipped = []
+                deleted = []
+
+                for d in qs_all:
+                    try:
+                        d.delete()
+                        deleted.append(str(d.uuid))
+                    except IntegrityError:
+                        skipped.append(d.name)
+
                 return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "No district(s) found matching this search filter.",
-                    "data": None
-                }, status=404)
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"Delete completed. {len(deleted)} district(s) deleted. {len(skipped)} skipped because they are used in child tables.",
+                    "data": {"deleted": deleted, "skipped": skipped} if skipped else None
+                }, status=200)
 
-            queryset.delete()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": f"{count} district(s) deleted based on search filter.",
-                "data": None
-            }, status=200)
+            # ----------------------------------------------------------
+            # ✅ Filter based deletion only when deleteAll = true
+            # ----------------------------------------------------------
+            queryset = District.objects.filter(is_deleted=False)
+            applied_filters = []
 
-        # ---------------------------------------
-        # DELETE FULL TABLE when body contains → "id": "all"
-        # ---------------------------------------
-        if ids == "all":
-            count = queryset.count()
-            if count == 0:
+            # Apply search filter
+            if search:
+                queryset = queryset.filter(Q(name__istartswith=search))
+                applied_filters.append("search")
+
+            # Apply country filter
+            if country_uuids:
+                queryset = queryset.filter(state__country__uuid__in=country_uuids)
+                applied_filters.append("country")
+
+            # Apply state filter
+            if state_uuids:
+                queryset = queryset.filter(state__uuid__in=state_uuids)
+                applied_filters.append("state")
+
+            # ✅ CASES 3,4,5 → filtered delete
+            if delete_all and applied_filters:
+                count = queryset.count()
+                if count == 0:
+                    filters_msg = " + ".join(applied_filters)
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": f"No district(s) found matching applied {filters_msg} filter(s).",
+                        "data": {
+                            "invalid_country_uuids": invalid_countries,
+                            "invalid_state_uuids": invalid_states
+                        }
+                    }, status=404)
+
+                with transaction.atomic():
+                    queryset.delete()
+
+                filter_msg = " + ".join(applied_filters)
                 return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "No districts found to delete.",
-                    "data": None
-                }, status=404)
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} district(s) deleted based on applied {filter_msg} filter(s).",
+                    "data": {
+                        "invalid_country_uuids": invalid_countries,
+                        "invalid_state_uuids": invalid_states
+                    } if invalid_countries or invalid_states else None
+                }, status=200)
 
-            queryset.delete()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": f"All {count} district(s) permanently deleted from the table.",
-                "data": None
-            }, status=200)
+            # ----------------------------------------------------------
+            # ✅ NORMAL BULK DELETE (deleteAll=false but id list not empty)
+            # ----------------------------------------------------------
+            if isinstance(ids, list):
+                valid_uuids, invalid_uuids = [], []
+                for u in ids:
+                    try:
+                        valid_uuids.append(UUID(u))
+                    except:
+                        invalid_uuids.append(u)
 
-        # ---------------------------------------
-        # BULK DELETE via UUID list
-        # ---------------------------------------
-        if not ids or not isinstance(ids, list):
+                bulk_qs = queryset.filter(uuid__in=valid_uuids)
+                count = bulk_qs.count()
+
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No matching district(s) found to delete.",
+                        "data": None
+                    }, status=404)
+
+                with transaction.atomic():
+                    bulk_qs.delete()
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} district(s) deleted successfully.",
+                    "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                }, status=200)
+
+            # ❌ default fallback
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Send UUID list in 'id' field or use 'id: all' for full delete.",
+                "message": "Invalid delete request format.",
                 "data": None
             }, status=400)
 
-        valid_uuids = []
-        invalid_uuids = []
-
-        for u in ids:
-            try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
-
-        if not valid_uuids:
+        except IntegrityError:
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "No valid UUIDs provided.",
-                "data": {"invalid_uuids": invalid_uuids}
+                "message": "You can't delete this district because it is referenced in one or more child tables. Delete is not allowed.",
+                "data": None
             }, status=400)
 
-        bulk_qs = queryset.filter(uuid__in=valid_uuids)
-        count = bulk_qs.count()
-
-        if count == 0:
+        except Exception as e:
             return Response({
-                "statusCode": 404,
+                "statusCode": 500,
                 "status": False,
-                "message": "No matching district(s) found to delete.",
-                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=404)
+                "message": f"An unexpected error occurred: {str(e)}",
+                "data": None
+            }, status=500)
+        
 
-        bulk_qs.delete()
-
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"{count} district(s) permanently deleted.",
-            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        }, status=200)
-    
 
 class DistrictExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -4650,119 +4749,240 @@ class CityUpdateAPIView(APIView):
 #         }, status=status.HTTP_200_OK)
 
 
+
 class CityDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request):
-        ids = request.data.get('id', None)
-        search = request.GET.get("search", "").strip()  # ✅ search param support
+        try:
+            ids = request.data.get('id', None)
+            delete_all = request.data.get("deleteAll", False)
+            search = request.GET.get("search", "").strip()
+            raw_countries = request.GET.get("country", "").strip()
+            raw_states = request.GET.get("state", "").strip()
+            raw_districts = request.GET.get("district", "").strip()
 
-        # ---------------------------------------
-        # Base queryset (soft delete safety)
-        # ---------------------------------------
-        queryset = City.objects.filter(is_deleted=False)
+            # ----------------------------------------------------------
+            # ✅ Parse multiple country UUIDs (?country=uuid,uuid)
+            # ----------------------------------------------------------
+            country_uuids, invalid_countries = [], []
+            if raw_countries:
+                for u in raw_countries.split(','):
+                    try:
+                        country_uuids.append(UUID(u.strip()))
+                    except ValueError:
+                        invalid_countries.append(u)
 
-        # ---------------------------------------
-        # SEARCH BASED DELETE (ONLY when deleteAll: true)
-        # ---------------------------------------
-        if search:
-            if not request.data.get("deleteAll", False):  # ❗Protection check
+            # ----------------------------------------------------------
+            # ✅ Parse multiple state UUIDs (?state=uuid,uuid)
+            # ----------------------------------------------------------
+            state_uuids, invalid_states = [], []
+            if raw_states:
+                for u in raw_states.split(','):
+                    try:
+                        state_uuids.append(UUID(u.strip()))
+                    except ValueError:
+                        invalid_states.append(u)
+
+            # ----------------------------------------------------------
+            # ✅ Parse multiple district UUIDs (?district=uuid,uuid)
+            # ----------------------------------------------------------
+            district_uuids, invalid_districts = [], []
+            if raw_districts:
+                for u in raw_districts.split(','):
+                    try:
+                        district_uuids.append(UUID(u.strip()))
+                    except ValueError:
+                        invalid_districts.append(u)
+
+            # ----------------------------------------------------------
+            # ✅ CASE 1: deleteAll=false + ID list → Only delete given UUIDs (ignore filters)
+            # ----------------------------------------------------------
+            if delete_all is False and isinstance(ids, list):
+                valid_uuids, invalid_uuids = [], []
+                for u in ids:
+                    try:
+                        valid_uuids.append(UUID(u))
+                    except ValueError:
+                        invalid_uuids.append(u)
+
+                if not valid_uuids:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "No valid UUIDs provided.",
+                        "data": {"invalid_uuids": invalid_uuids}
+                    }, status=400)
+
+                bulk_qs = City.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+                count = bulk_qs.count()
+
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No matching city(s) found for provided UUID(s).",
+                        "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                    }, status=404)
+
+                with transaction.atomic():
+                    bulk_qs.delete()
+
                 return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "To delete based on search filter, you must send → 'deleteAll: true' in request body.",
-                    "data": None
-                }, status=400)
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} city(s) deleted successfully.",
+                    "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                }, status=200)
 
-            queryset = queryset.filter(Q(name__istartswith=search))
-            count = queryset.count()
+            # ----------------------------------------------------------
+            # ✅ CASE 2: id="all" + deleteAll=false → Delete entire City table (skip FK errors)
+            # ----------------------------------------------------------
+            if ids == "all" and delete_all is False:
+                qs_all = City.objects.filter(is_deleted=False)
+                count = qs_all.count()
 
-            if count == 0:
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No cities found to delete.",
+                        "data": None
+                    }, status=404)
+
+                skipped = []
+                deleted = []
+
+                for obj in qs_all:
+                    try:
+                        obj.delete()
+                        deleted.append(str(obj.uuid))
+                    except IntegrityError:
+                        skipped.append(obj.name)
+
                 return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "No city(s) found matching this search.",
-                    "data": None
-                }, status=404)
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"Delete completed. {len(deleted)} city(s) deleted. {len(skipped)} skipped because they are referenced in child tables.",
+                    "data": {"deleted": deleted, "skipped": skipped} if skipped else None
+                }, status=200)
 
-            queryset.delete()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": f"{count} city(s) deleted based on search filter.",
-                "data": None
-            }, status=200)
+            # ----------------------------------------------------------
+            # ✅ Apply filters only when deleteAll = true
+            # ----------------------------------------------------------
+            queryset = City.objects.filter(is_deleted=False)
+            applied_filters = []
 
-        # ---------------------------------------
-        # DELETE ENTIRE TABLE when "id": "all"
-        # ---------------------------------------
-        if ids == "all":
-            count = queryset.count()
-            if count == 0:
+            if search:
+                queryset = queryset.filter(Q(name__istartswith=search))
+                applied_filters.append("search")
+
+            if country_uuids:
+                queryset = queryset.filter(district__state__country__uuid__in=country_uuids)
+                applied_filters.append("country")
+
+            if state_uuids:
+                queryset = queryset.filter(district__state__uuid__in=state_uuids)
+                applied_filters.append("state")
+
+            if district_uuids:
+                queryset = queryset.filter(district__uuid__in=district_uuids)
+                applied_filters.append("district")
+
+            # ----------------------------------------------------------
+            # ✅ CASE 3/4/5: deleteAll=true + filters → delete filtered data
+            # ----------------------------------------------------------
+            if delete_all and applied_filters:
+                count = queryset.count()
+                if count == 0:
+                    filters_msg = " + ".join(applied_filters)
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": f"No city(s) found matching applied {filters_msg} filter(s).",
+                        "data": {
+                            "invalid_country_uuids": invalid_countries,
+                            "invalid_state_uuids": invalid_states,
+                            "invalid_district_uuids": invalid_districts
+                        }
+                    }, status=404)
+
+                with transaction.atomic():
+                    queryset.delete()
+
+                filter_msg = " + ".join(applied_filters)
                 return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "No cities found to delete.",
-                    "data": None
-                }, status=404)
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} city(s) deleted based on applied {filter_msg} filter(s).",
+                    "data": {
+                        "invalid_country_uuids": invalid_countries,
+                        "invalid_state_uuids": invalid_states,
+                        "invalid_district_uuids": invalid_districts
+                    } if invalid_countries or invalid_states or invalid_districts else None
+                }, status=200)
 
-            queryset.delete()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": f"All {count} city(s) permanently deleted from the table.",
-                "data": None
-            }, status=200)
+            # ----------------------------------------------------------
+            # ✅ Normal bulk delete (deleteAll=false but id provided incorrectly)
+            # ----------------------------------------------------------
+            if isinstance(ids, list):
+                valid_uuids, invalid_uuids = [], []
+                for u in ids:
+                    try:
+                        valid_uuids.append(UUID(u))
+                    except:
+                        invalid_uuids.append(u)
 
-        # ---------------------------------------
-        # BULK DELETE via UUID list
-        # ---------------------------------------
-        if not ids or not isinstance(ids, list):
+                bulk_qs = queryset.filter(uuid__in=valid_uuids)
+                count = bulk_qs.count()
+
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No matching city(s) found to delete.",
+                        "data": None
+                    }, status=404)
+
+                with transaction.atomic():
+                    bulk_qs.delete()
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} city(s) deleted successfully.",
+                    "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                }, status=200)
+
+            # ❌ fallback
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Send UUID list in 'id' or use 'id: all' for full delete.",
-                "data": None
+                "message": "Invalid delete request format.",
+                "data": {
+                    "invalid_country_uuids": invalid_countries,
+                    "invalid_state_uuids": invalid_states,
+                    "invalid_district_uuids": invalid_districts
+                } if applied_filters else None
             }, status=400)
 
-        valid_uuids = []
-        invalid_uuids = []
-        for u in ids:
-            try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
-
-        if not valid_uuids:
+        except IntegrityError:
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "No valid UUIDs provided.",
-                "data": {"invalid_uuids": invalid_uuids}
+                "message": "You can't delete this city because it is referenced in one or more child tables. Delete is not allowed.",
+                "data": None
             }, status=400)
 
-        bulk_qs = queryset.filter(uuid__in=valid_uuids)
-        count = bulk_qs.count()
-
-        if count == 0:
+        except Exception as e:
             return Response({
-                "statusCode": 404,
+                "statusCode": 500,
                 "status": False,
-                "message": "No matching city(s) found to delete.",
-                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=404)
+                "message": f"Unexpected error: {str(e)}",
+                "data": None
+            }, status=500)
 
-        bulk_qs.delete()
-
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"{count} city(s) deleted successfully.",
-            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        }, status=200)
-    
-    
-
+            
 
 class CityExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
