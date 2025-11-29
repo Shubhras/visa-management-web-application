@@ -3167,7 +3167,7 @@ class StateDeleteAPIView(APIView):
                 applied_filters = []
 
                 if search:
-                    queryset = queryset.filter(Q(name__istartswith=search))
+                    queryset = queryset.filter(Q(stateName__istartswith=search))
                     applied_filters.append("search")
 
                 if country_uuids:
@@ -3996,7 +3996,7 @@ class DistrictDeleteAPIView(APIView):
 
             # Apply search filter
             if search:
-                queryset = queryset.filter(Q(name__istartswith=search))
+                queryset = queryset.filter(Q(districtName__istartswith=search))
                 applied_filters.append("search")
 
             # Apply country filter
@@ -4874,7 +4874,7 @@ class CityDeleteAPIView(APIView):
             applied_filters = []
 
             if search:
-                queryset = queryset.filter(Q(name__istartswith=search))
+                queryset = queryset.filter(Q(cityName__istartswith=search))
                 applied_filters.append("search")
 
             if country_uuids:
