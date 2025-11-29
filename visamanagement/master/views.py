@@ -6245,8 +6245,15 @@ class CivilIdNameImportAPIView(APIView):
                                 continue
                         if not valid_date:
                             skipped_rows.append({
-                                "Row": row_number,
-                                "Civil ID Name": civil_id_name or " ",
+                                'Row': row_number,
+                                'Civil ID Name': civil_id_name or "",
+                                'Authority Full Name': authority_full_name or "",
+                                'Authority Short Name': authority_short_name or "",
+                                'Civil ID Valid Type': valid_type or "",
+                                'Civil ID Valid Duration Value': valid_duration_value or "",
+                                'Civil ID Valid Duration Unit': valid_duration_unit or "",
+                                'Civil ID Valid Date': valid_date_raw or "",
+                                'Description': description or "",
                                 "Reason": f"Invalid date format '{valid_date_raw}'. Expected formats: dd-mm-yyyy, dd/mm/yyyy, yyyy-mm-dd"
                             })
                             continue
@@ -6256,6 +6263,13 @@ class CivilIdNameImportAPIView(APIView):
                     skipped_rows.append({
                         "Row": row_number,
                         "Civil ID Name": "",
+                        'Authority Full Name': authority_full_name or "",
+                        'Authority Short Name': authority_short_name or "",
+                        'Civil ID Valid Type': valid_type or "",
+                        'Civil ID Valid Duration Value': valid_duration_value or "",
+                        'Civil ID Valid Duration Unit': valid_duration_unit or "",
+                        'Civil ID Valid Date': valid_date_raw or "",
+                        'Description': description or "",
                         "Reason": f"Missing required fields: {', '.join(required_headers)}"
                     })
                     continue
@@ -6264,7 +6278,14 @@ class CivilIdNameImportAPIView(APIView):
                 if valid_type and valid_type not in ALLOWED_VALID_TYPES:
                     skipped_rows.append({
                         "Row": row_number,
-                        "Civil ID Name": civil_id_name,
+                        "Civil ID Name": "",
+                        'Authority Full Name': authority_full_name or "",
+                        'Authority Short Name': authority_short_name or "",
+                        'Civil ID Valid Type': valid_type or "",
+                        'Civil ID Valid Duration Value': valid_duration_value or "",
+                        'Civil ID Valid Duration Unit': valid_duration_unit or "",
+                        'Civil ID Valid Date': valid_date_raw or "",
+                        'Description': description or "",
                         "Reason": f"Invalid valid_type='{valid_type}'. Allowed: {ALLOWED_VALID_TYPES}"
                     })
                     continue
@@ -6274,7 +6295,14 @@ class CivilIdNameImportAPIView(APIView):
                     if valid_duration_value is None:
                         skipped_rows.append({
                             "Row": row_number,
-                            "Civil ID Name": civil_id_name,
+                            "Civil ID Name": "",
+                            'Authority Full Name': authority_full_name or "",
+                            'Authority Short Name': authority_short_name or "",
+                            'Civil ID Valid Type': valid_type or "",
+                            'Civil ID Valid Duration Value': valid_duration_value or "",
+                            'Civil ID Valid Duration Unit': valid_duration_unit or "",
+                            'Civil ID Valid Date': valid_date_raw or "",
+                            'Description': description or "",
                             "Reason": "Valid Upto type requires numeric 'valid duration value' and 'valid duration unit'"
                         })
                         continue
@@ -6285,22 +6313,43 @@ class CivilIdNameImportAPIView(APIView):
                     except (ValueError, TypeError):
                         skipped_rows.append({
                             "Row": row_number,
-                            "Civil ID Name": civil_id_name,
+                            "Civil ID Name": "",
+                            'Authority Full Name': authority_full_name or "",
+                            'Authority Short Name': authority_short_name or "",
+                            'Civil ID Valid Type': valid_type or "",
+                            'Civil ID Valid Duration Value': valid_duration_value or "",
+                            'Civil ID Valid Duration Unit': valid_duration_unit or "",
+                            'Civil ID Valid Date': valid_date_raw or "",
+                            'Description': description or "",
                             "Reason": "Invalid 'valid duration value'. Use positive numeric value."
                         })
                         continue
                     if not valid_duration_unit or valid_duration_unit not in ALLOWED_VALID_UNITS:
                         skipped_rows.append({
                             "Row": row_number,
-                            "Civil ID Name": civil_id_name,
+                            "Civil ID Name": "",
+                            'Authority Full Name': authority_full_name or "",
+                            'Authority Short Name': authority_short_name or "",
+                            'Civil ID Valid Type': valid_type or "",
+                            'Civil ID Valid Duration Value': valid_duration_value or "",
+                            'Civil ID Valid Duration Unit': valid_duration_unit or "",
+                            'Civil ID Valid Date': valid_date_raw or "",
+                            'Description': description or "",
                             "Reason": f"Invalid 'valid duration unit'. Allowed: {ALLOWED_VALID_UNITS}"
                         })
                         continue
 
                 elif valid_type == "Date" and not valid_date:
                     skipped_rows.append({
-                        "Row": row_number,
-                        "Civil ID Name": civil_id_name,
+                            "Row": row_number,
+                            "Civil ID Name": "",
+                            'Authority Full Name': authority_full_name or "",
+                            'Authority Short Name': authority_short_name or "",
+                            'Civil ID Valid Type': valid_type or "",
+                            'Civil ID Valid Duration Value': valid_duration_value or "",
+                            'Civil ID Valid Duration Unit': valid_duration_unit or "",
+                            'Civil ID Valid Date': valid_date_raw or "",
+                            'Description': description or "",
                         "Reason": "Civil ID Valid Date requires valid date format"
                     })
                     continue
@@ -6311,7 +6360,14 @@ class CivilIdNameImportAPIView(APIView):
                     if not getattr(existing, "is_deleted", False):
                         duplicates.append({
                             "Row": row_number,
-                            "Civil ID Name": civil_id_name,
+                            "Civil ID Name": "",
+                            'Authority Full Name': authority_full_name or "",
+                            'Authority Short Name': authority_short_name or "",
+                            'Civil ID Valid Type': valid_type or "",
+                            'Civil ID Valid Duration Value': valid_duration_value or "",
+                            'Civil ID Valid Duration Unit': valid_duration_unit or "",
+                            'Civil ID Valid Date': valid_date_raw or "",
+                            'Description': description or "",
                             "Reason": "Duplicate civil id name (already exists)"
                         })
                         continue
@@ -6344,7 +6400,14 @@ class CivilIdNameImportAPIView(APIView):
                 except IntegrityError:
                     duplicates.append({
                         "Row": row_number,
-                        "Civil ID Name": civil_id_name,
+                        "Civil ID Name": "",
+                        'Authority Full Name': authority_full_name or "",
+                        'Authority Short Name': authority_short_name or "",
+                        'Civil ID Valid Type': valid_type or "",
+                        'Civil ID Valid Duration Value': valid_duration_value or "",
+                        'Civil ID Valid Duration Unit': valid_duration_unit or "",
+                        'Civil ID Valid Date': valid_date_raw or "",
+                        'Description': description or "",
                         "Reason": "Duplicate civil id name (IntegrityError)"
                     })
 
@@ -11850,7 +11913,8 @@ class LicenseNameImportAPIView(APIView):
             ALLOWED_VALID_UNITS = ['Months', 'Weeks', 'Years']
             imported_count = 0
 
-            for row in reversed(data):
+            for row in data:
+                row_number = row.get("_row_number", "Unknown")
                 full_name = str(row.get('license full name')).strip() if row.get('license full name') else None
                 country_name = str(row.get('country')).strip() if row.get('country') else None
                 short_name = str(row.get('license short name')).strip() if row.get('license short name') else ''
@@ -11875,16 +11939,32 @@ class LicenseNameImportAPIView(APIView):
                                 continue
                         if not valid_date:
                             skipped_rows.append({
-                                'License Full Name': full_name,
-                                'Country': country_name,
+                                'Row': row_number,
+                                'License Full Name': full_name or '',
+                                'Country': country_name or '',
+                                'License Short Name': short_name or '',
+                                'License Issuing Authority Name': issuing_authority or '',
+                                'Description': description or '',
+                                'License Valid Duration Value': valid_duration_value or '',
+                                'License Valid Duration Unit': valid_duration_unit or '',
+                                'License Valid Date': valid_date_raw or '',
+                                'License Valid Type': valid_type or '',
                                 'Reason': f"Invalid date format '{valid_date_raw}'. Expected formats: dd-mm-yyyy, dd/mm/yyyy "
                             })
                             continue
 
                 if not full_name or not country_name:
                     skipped_rows.append({
-                        'License Full Name': full_name or 'Unknown',
-                        'Country': country_name or 'Unknown',
+                        'Row': row_number,
+                        'License Full Name': full_name or '',
+                        'Country': country_name or '',
+                        'License Short Name': short_name or '',
+                        'License Issuing Authority Name': issuing_authority or '',
+                        'Description': description or '',
+                        'License Valid Duration Value': valid_duration_value or '',
+                        'License Valid Duration Unit': valid_duration_unit or '',
+                        'License Valid Date': valid_date_raw or '',
+                        'License Valid Type': valid_type or '',
                         'Reason': f"Missing required fields. Required: {', '.join(required_headers)}"
                     })
                     continue
@@ -11892,8 +11972,16 @@ class LicenseNameImportAPIView(APIView):
                 country_obj = Country.objects.filter(name__iexact=country_name).first()
                 if not country_obj:
                     skipped_rows.append({
-                        'License Full Name': full_name,
-                        'Country': country_name,
+                        'Row': row_number,
+                        'License Full Name': full_name or '',
+                        'Country': country_name or '',
+                        'License Short Name': short_name or '',
+                        'License Issuing Authority Name': issuing_authority or '',
+                        'Description': description or '',
+                        'License Valid Duration Value': valid_duration_value or '',
+                        'License Valid Duration Unit': valid_duration_unit or '',
+                        'License Valid Date': valid_date_raw or '',
+                        'License Valid Type': valid_type or '',
                         'Reason': 'Invalid country'
                     })
                     continue
@@ -11903,8 +11991,16 @@ class LicenseNameImportAPIView(APIView):
 
                 if valid_type and valid_type not in ALLOWED_VALID_TYPES:
                     skipped_rows.append({
-                        'License Full Name': full_name,
-                        'Country': country_name,
+                        'Row': row_number,
+                        'License Full Name': full_name or '',
+                        'Country': country_name or '',
+                        'License Short Name': short_name or '',
+                        'License Issuing Authority Name': issuing_authority or '',
+                        'Description': description or '',
+                        'License Valid Duration Value': valid_duration_value or '',
+                        'License Valid Duration Unit': valid_duration_unit or '',
+                        'License Valid Date': valid_date_raw or '',
+                        'License Valid Type': valid_type or '',
                         'Reason': f"Invalid valid_type='{valid_type}'. Allowed: {', '.join(ALLOWED_VALID_TYPES)}"
                     })
                     continue
@@ -11913,8 +12009,16 @@ class LicenseNameImportAPIView(APIView):
                 if valid_type == 'Valid Upto':
                     if valid_duration_value is None or not valid_duration_unit:
                         skipped_rows.append({
-                            'License Full Name': full_name,
-                            'Country': country_name,
+                            'Row': row_number,
+                            'License Full Name': full_name or '',
+                            'Country': country_name or '',
+                            'License Short Name': short_name or '',
+                            'License Issuing Authority Name': issuing_authority or '',
+                            'Description': description or '',
+                            'License Valid Duration Value': valid_duration_value or '',
+                            'License Valid Duration Unit': valid_duration_unit or '',
+                            'License Valid Date': valid_date_raw or '',
+                            'License Valid Type': valid_type or '',
                             'Reason': "'Valid Upto' type requires both valid_duration_value and valid_duration_unit"
                         })
                         continue
@@ -11925,24 +12029,48 @@ class LicenseNameImportAPIView(APIView):
                             raise ValueError
                     except (ValueError, TypeError):
                         skipped_rows.append({
-                            'License Full Name': full_name,
-                            'Country': country_name,
+                            'Row': row_number,
+                            'License Full Name': full_name or '',
+                            'Country': country_name or '',
+                            'License Short Name': short_name or '',
+                            'License Issuing Authority Name': issuing_authority or '',
+                            'Description': description or '',
+                            'License Valid Duration Value': valid_duration_value or '',
+                            'License Valid Duration Unit': valid_duration_unit or '',
+                            'License Valid Date': valid_date_raw or '',
+                            'License Valid Type': valid_type or '',
                             'Reason': "Invalid 'valid_duration_value'. Must be a positive number."
                         })
                         continue
 
                     if valid_duration_unit not in ALLOWED_VALID_UNITS:
                         skipped_rows.append({
-                            'License Full Name': full_name,
-                            'Country': country_name,
+                            'Row': row_number,
+                            'License Full Name': full_name or '',
+                            'Country': country_name or '',
+                            'License Short Name': short_name or '',
+                            'License Issuing Authority Name': issuing_authority or '',
+                            'Description': description or '',
+                            'License Valid Duration Value': valid_duration_value or '',
+                            'License Valid Duration Unit': valid_duration_unit or '',
+                            'License Valid Date': valid_date_raw or '',
+                            'License Valid Type': valid_type or '',
                             'Reason': f"Invalid 'valid_duration_unit'='{valid_duration_unit}'. Allowed: {', '.join(ALLOWED_VALID_UNITS)}"
                         })
                         continue
 
                 elif valid_type == 'Date' and not valid_date:
                     skipped_rows.append({
-                        'License Full Name': full_name,
-                        'Country': country_name,
+                        'Row': row_number,
+                        'License Full Name': full_name or '',
+                        'Country': country_name or '',
+                        'License Short Name': short_name or '',
+                        'License Issuing Authority Name': issuing_authority or '',
+                        'Description': description or '',
+                        'License Valid Duration Value': valid_duration_value or '',
+                        'License Valid Duration Unit': valid_duration_unit or '',
+                        'License Valid Date': valid_date_raw or '',
+                        'License Valid Type': valid_type or '',
                         'Reason': "Valid type 'Date' requires a valid 'license valid date'"
                     })
                     continue
@@ -11952,8 +12080,16 @@ class LicenseNameImportAPIView(APIView):
                 if existing:
                     if not existing.is_deleted:
                         duplicate_names.append({
-                            'Country': country_obj.name,
-                            'License Full Name': full_name
+                            'Row': row_number,
+                            'License Full Name': full_name or '',
+                            'Country': country_name or '',
+                            'License Short Name': short_name or '',
+                            'License Issuing Authority Name': issuing_authority or '',
+                            'Description': description or '',
+                            'License Valid Duration Value': valid_duration_value or '',
+                            'License Valid Duration Unit': valid_duration_unit or '',
+                            'License Valid Date': valid_date_raw or '',
+                            'License Valid Type': valid_type or '',
                         })
                         continue
                     else:
@@ -11987,8 +12123,16 @@ class LicenseNameImportAPIView(APIView):
                     imported_count += 1
                 except IntegrityError:
                     duplicate_names.append({
-                        'Country': country_obj.name,
-                        'License Full Name': full_name
+                        'Row': row_number,
+                        'License Full Name': full_name or '',
+                        'Country': country_name or '',
+                        'License Short Name': short_name or '',
+                        'License Issuing Authority Name': issuing_authority or '',
+                        'Description': description or '',
+                        'License Valid Duration Value': valid_duration_value or '',
+                        'License Valid Duration Unit': valid_duration_unit or '',
+                        'License Valid Date': valid_date_raw or '',
+                        'License Valid Type': valid_type or '',
                     })
 
         except Exception as e:
