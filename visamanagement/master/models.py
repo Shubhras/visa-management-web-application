@@ -2044,15 +2044,16 @@ class StudyFactorBacklogs(models.Model):
     
 
 class StudyFactorGAP(models.Model):
+    id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     factor_for = models.ForeignKey("FactorFor", on_delete=models.CASCADE)
-    gap_group = models.ForeignKey("GapGroup", on_delete=models.CASCADE)
+    study_gap_group = models.ForeignKey("GAPGroup", on_delete=models.CASCADE)
 
     maximum_gap_accepted = models.PositiveIntegerField(default=0)
 
-    countries = models.ManyToManyField("Country")               # Multiple
-    institute_types = models.ManyToManyField("InstituteType")   # Multiple
-    course_levels = models.ManyToManyField("CourseLevel")       # Multiple
+    country_for_admission = models.ManyToManyField('RepresentingCountry',related_name="study_factor_gaps")  
+    institute_type = models.ManyToManyField("InstituteType",related_name="study_factor_gaps")   # Multiple
+    course_level = models.ManyToManyField("CourseLevel",related_name="study_factor_gaps")       # Multiple
 
     description = models.TextField(blank=True, null=True)
 
@@ -2064,6 +2065,8 @@ class StudyFactorGAP(models.Model):
         return f"{self.factor_for} - GAP Rule"
     
     
+
+
 
 class StudyFactorLanguageAbility(models.Model):
     id = models.AutoField(primary_key=True)

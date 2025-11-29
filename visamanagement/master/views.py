@@ -304,51 +304,156 @@ class GenderUpdateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
+# class GenderDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request):
+#         ids = request.data.get('id', None)
+
+#         if not ids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide 'id' field (UUID list or 'all').",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         # If client requests all records to be deleted
+#         if ids == "all":
+#             genders = Gender.objects.filter(is_deleted=False)
+#             count = genders.count()
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No genders found to delete.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+#             genders.delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} gender(s) deleted successfully.",
+#                 "data": None
+#             }, status=status.HTTP_200_OK)
+
+#         # Otherwise, treat it as a list of UUIDs
+#         if not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         # Validate UUIDs
+#         valid_uuids = []
+#         invalid_uuids = []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         if not valid_uuids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "No valid UUIDs provided.",
+#                 "data": {"invalid_uuids": invalid_uuids}
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         genders = Gender.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+#         count = genders.count()
+
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching genders found.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=status.HTTP_404_NOT_FOUND)
+
+#         genders.delete()
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} gender(s) deleted successfully.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         }, status=status.HTTP_200_OK)
+
+
 class GenderDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request):
         ids = request.data.get('id', None)
+        search = request.GET.get("search", "").strip()
 
-        if not ids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Please provide 'id' field (UUID list or 'all').",
-                "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        # If client requests all records to be deleted
+        # ---------------------------------------
+        # DELETE FULL TABLE when id == "all"
+        # ---------------------------------------
         if ids == "all":
-            genders = Gender.objects.filter(is_deleted=False)
-            count = genders.count()
+            count = Gender.objects.count()
+            Gender.objects.all().delete()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"All {count} gender(s) deleted from the table.",
+                "data": None
+            }, status=200)
+
+        # ---------------------------------------
+        # Base queryset (soft delete safety)
+        # ---------------------------------------
+        queryset = Gender.objects.filter(is_deleted=False)
+
+        # ---------------------------------------
+        # SEARCH BASED DELETE (ONLY when deleteAll:true)
+        # ---------------------------------------
+        if search:
+            if not request.data.get("deleteAll", False):
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "To delete based on search, please send → 'deleteAll: true' in request body.",
+                    "data": None
+                }, status=400)
+
+            queryset = queryset.filter(Q(name__istartswith=search))
+            count = queryset.count()
+
             if count == 0:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "No genders found to delete.",
+                    "message": "No matching gender(s) found for this search filter.",
                     "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
-            genders.delete()
+                }, status=404)
+
+            queryset.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} gender(s) deleted successfully.",
+                "message": f"{count} gender(s) deleted based on search filter.",
                 "data": None
-            }, status=status.HTTP_200_OK)
+            }, status=200)
 
-        # Otherwise, treat it as a list of UUIDs
-        if not isinstance(ids, list):
+        # ---------------------------------------
+        # BULK DELETE via UUID LIST
+        # ---------------------------------------
+        if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+                "message": "Send UUID list in 'id' or send 'id: all'.",
                 "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=400)
 
-        # Validate UUIDs
         valid_uuids = []
         invalid_uuids = []
+
         for u in ids:
             try:
                 valid_uuids.append(UUID(u))
@@ -361,27 +466,28 @@ class GenderDeleteAPIView(APIView):
                 "status": False,
                 "message": "No valid UUIDs provided.",
                 "data": {"invalid_uuids": invalid_uuids}
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=400)
 
-        genders = Gender.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = genders.count()
+        bulk_qs = queryset.filter(uuid__in=valid_uuids)
+        count = bulk_qs.count()
 
         if count == 0:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "No matching genders found.",
+                "message": "No matching gender(s) found to delete.",
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=status.HTTP_404_NOT_FOUND)
+            }, status=404)
 
-        genders.delete()
+        bulk_qs.delete()
 
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f"{count} gender(s) deleted successfully.",
+            "message": f"{count} gender(s) deleted.",
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        }, status=status.HTTP_200_OK)
+        }, status=200)
+    
 
 
 class GenderExportAPIView(APIView):
@@ -809,56 +915,158 @@ class MaritalstatusUpdateAPIView(APIView):
             "data": None
         }, status=status.HTTP_400_BAD_REQUEST)
 
+# class MaritalstatusDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request):
+#         ids = request.data.get('id', None)
+
+#         if not ids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide 'id' field (UUID list or 'all').",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         # Delete all records
+#         if ids == "all":
+#             maritalstatuses = Maritalstatus.objects.filter(is_deleted=False)
+#             count = maritalstatuses.count()
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No marital statuses found to delete.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+
+#             maritalstatuses.delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} marital status(es) deleted successfully.",
+#                 "data": None
+#             }, status=status.HTTP_200_OK)
+
+#         # Otherwise, treat as list of UUIDs
+#         if not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         # Validate UUIDs
+#         valid_uuids = []
+#         invalid_uuids = []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         if not valid_uuids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "No valid UUIDs provided.",
+#                 "data": {"invalid_uuids": invalid_uuids}
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         maritalstatuses = Maritalstatus.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+#         count = maritalstatuses.count()
+
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching marital statuses found.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=status.HTTP_404_NOT_FOUND)
+
+#         maritalstatuses.delete()
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} marital status(es) deleted successfully.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         }, status=status.HTTP_200_OK)
+
+
 class MaritalstatusDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request):
         ids = request.data.get('id', None)
+        search = request.GET.get("search", "").strip()
 
-        if not ids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Please provide 'id' field (UUID list or 'all').",
-                "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
+        # Base queryset (soft delete safety)
+        queryset = Maritalstatus.objects.filter(is_deleted=False)
 
-        # Delete all records
+        # ----------------------------------
+        # DELETE FULL TABLE when id == "all"
+        # ----------------------------------
         if ids == "all":
-            maritalstatuses = Maritalstatus.objects.filter(is_deleted=False)
-            count = maritalstatuses.count()
+            count = Maritalstatus.objects.count()
+            Maritalstatus.objects.all().delete()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"All {count} marital status(es) deleted from the table.",
+                "data": None
+            }, status=200)
+
+        # ----------------------------------
+        # SEARCH BASED DELETE (ONLY when deleteAll:true)
+        # ----------------------------------
+        if search:
+            if not request.data.get("deleteAll", False):
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "To delete based on search filter please send 'deleteAll: true' in body.",
+                    "data": None
+                }, status=400)
+
+            queryset = queryset.filter(Q(name__istartswith=search))
+            count = queryset.count()
+
             if count == 0:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "No marital statuses found to delete.",
+                    "message": "No marital status(es) found matching search filter.",
                     "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
+                }, status=404)
 
-            maritalstatuses.delete()
+            queryset.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} marital status(es) deleted successfully.",
+                "message": f"{count} marital status(es) deleted based on search filter.",
                 "data": None
-            }, status=status.HTTP_200_OK)
+            }, status=200)
 
-        # Otherwise, treat as list of UUIDs
-        if not isinstance(ids, list):
+        # ----------------------------------
+        # BULK DELETE using UUID list
+        # ----------------------------------
+        if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+                "message": "Please provide UUID list in 'id' field, or send 'id: all'.",
                 "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=400)
 
-        # Validate UUIDs
         valid_uuids = []
         invalid_uuids = []
         for u in ids:
             try:
                 valid_uuids.append(UUID(u))
-            except ValueError:
+            except:
                 invalid_uuids.append(u)
 
         if not valid_uuids:
@@ -867,27 +1075,29 @@ class MaritalstatusDeleteAPIView(APIView):
                 "status": False,
                 "message": "No valid UUIDs provided.",
                 "data": {"invalid_uuids": invalid_uuids}
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=400)
 
-        maritalstatuses = Maritalstatus.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = maritalstatuses.count()
+        bulk_qs = queryset.filter(uuid__in=valid_uuids)
+        count = bulk_qs.count()
 
         if count == 0:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "No matching marital statuses found.",
+                "message": "No matching marital status(es) found to delete.",
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=status.HTTP_404_NOT_FOUND)
+            }, status=404)
 
-        maritalstatuses.delete()
+        bulk_qs.delete()
 
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f"{count} marital status(es) deleted successfully.",
+            "message": f"{count} marital status(es) deleted.",
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        }, status=status.HTTP_200_OK)
+        }, status=200)
+
+
 
 class MaritalstatusExportAPIView(APIView):
     """
@@ -1249,13 +1459,107 @@ class ContinentUpdateAPIView(APIView):
         return Response({"statusCode": 400, "status": False, "message": errors}, status=400)
 
 
+# class ContinentDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request, uuid=None):
+#         ids = request.data.get('id', None)
+
+#         # Single delete via URL parameter
+#         if uuid:
+#             try:
+#                 continent = Continents.objects.get(uuid=uuid)
+#                 continent.delete()
+#                 return Response({
+#                     "statusCode": 204,
+#                     "status": True,
+#                     "message": "Continent permanently deleted.",
+#                     "data": None
+#                 }, status=status.HTTP_204_NO_CONTENT)
+#             except Continents.DoesNotExist:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "Continent not found.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+
+#         # Delete all continents
+#         if ids == "all":
+#             continents = Continents.objects.all()
+#             count = continents.count()
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No continents found to delete.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+#             continents.delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} continent(s) permanently deleted.",
+#                 "data": None
+#             }, status=status.HTTP_200_OK)
+
+#         # Validate bulk UUIDs
+#         if not ids or not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         valid_uuids = []
+#         invalid_uuids = []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         if not valid_uuids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "No valid UUIDs provided.",
+#                 "data": {"invalid_uuids": invalid_uuids}
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         # Bulk delete
+#         continents = Continents.objects.filter(uuid__in=valid_uuids)
+#         count = continents.count()
+
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching continents found.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=status.HTTP_404_NOT_FOUND)
+
+#         continents.delete()
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} continent(s) permanently deleted.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         }, status=status.HTTP_200_OK)
+
+
 class ContinentDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
         ids = request.data.get('id', None)
+        search = request.GET.get("search", "").strip()
 
-        # Single delete via URL parameter
+        # ---------------------------------------
+        # SINGLE DELETE via URL param (no search restriction)
+        # ---------------------------------------
         if uuid:
             try:
                 continent = Continents.objects.get(uuid=uuid)
@@ -1274,36 +1578,64 @@ class ContinentDeleteAPIView(APIView):
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-        # Delete all continents
+        # ---------------------------------------
+        # DELETE FULL TABLE when body contains "id": "all"
+        # ---------------------------------------
         if ids == "all":
-            continents = Continents.objects.all()
-            count = continents.count()
-            if count == 0:
-                return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "No continents found to delete.",
-                    "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
-            continents.delete()
+            count = Continents.objects.count()
+            Continents.objects.all().delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
                 "message": f"All {count} continent(s) permanently deleted.",
                 "data": None
-            }, status=status.HTTP_200_OK)
+            }, status=200)
 
-        # Validate bulk UUIDs
+        # ---------------------------------------
+        # SEARCH BASED DELETE (only when deleteAll:true)
+        # ---------------------------------------
+        if search:
+            if not request.data.get("deleteAll", False):
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "To delete based on search filter, you must send → 'deleteAll: true' in request body.",
+                    "data": None
+                }, status=400)
+
+            queryset = Continents.objects.filter(is_deleted=False).filter(Q(name__istartswith=search))
+            count = queryset.count()
+
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No continents found matching this search filter.",
+                    "data": None
+                }, status=404)
+
+            queryset.delete()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"{count} continent(s) deleted based on search filter.",
+                "data": None
+            }, status=200)
+
+        # ---------------------------------------
+        # BULK DELETE via UUID list
+        # ---------------------------------------
         if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+                "message": "Send UUID list in 'id' field or use 'id: all' for full delete.",
                 "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=400)
 
         valid_uuids = []
         invalid_uuids = []
+
         for u in ids:
             try:
                 valid_uuids.append(UUID(u))
@@ -1316,28 +1648,29 @@ class ContinentDeleteAPIView(APIView):
                 "status": False,
                 "message": "No valid UUIDs provided.",
                 "data": {"invalid_uuids": invalid_uuids}
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=400)
 
-        # Bulk delete
-        continents = Continents.objects.filter(uuid__in=valid_uuids)
-        count = continents.count()
+        bulk_qs = Continents.objects.filter(is_deleted=False, uuid__in=valid_uuids)
+        count = bulk_qs.count()
 
         if count == 0:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "No matching continents found.",
+                "message": "No matching continents found to delete.",
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=status.HTTP_404_NOT_FOUND)
+            }, status=404)
 
-        continents.delete()
+        bulk_qs.delete()
 
         return Response({
             "statusCode": 200,
             "status": True,
             "message": f"{count} continent(s) permanently deleted.",
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        }, status=status.HTTP_200_OK)
+        }, status=200)
+    
+
 
 
 class ContinentExportAPIView(APIView):
@@ -1735,50 +2068,152 @@ class CountryUpdateAPIView(APIView):
         return Response({"statusCode": 400, "status": False, "message": errors}, status=400)
 
 
+# class CountryDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request):
+#         ids = request.data.get('id', None)
+
+#         if not ids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide 'id' field (UUID list or 'all').",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         # Delete all
+#         if ids == "all":
+#             countries = Country.objects.filter(is_deleted=False)
+#             count = countries.count()
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No countries found to delete.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+
+#             countries.delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} country(s) deleted successfully.",
+#                 "data": None
+#             }, status=status.HTTP_200_OK)
+
+#         # Validate list of UUIDs
+#         if not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         valid_uuids, invalid_uuids = [], []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         if not valid_uuids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "No valid UUIDs provided.",
+#                 "data": {"invalid_uuids": invalid_uuids}
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         countries = Country.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+#         count = countries.count()
+
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching countries found.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=status.HTTP_404_NOT_FOUND)
+
+#         countries.delete()
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} country(s) deleted successfully.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         }, status=status.HTTP_200_OK)
+
+
 class CountryDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request):
         ids = request.data.get('id', None)
+        search = request.GET.get("search", "").strip()
 
-        if not ids:
+        queryset = Country.objects.filter(is_deleted=False)
+        
+        if search:
+            if not request.data.get("deleteAll", False):
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "To delete based on search filter, you must send → 'deleteAll: true' in request body.",
+                    "data": None
+                }, status=400)
+
+            queryset = queryset.filter(Q(name__istartswith=search))
+            count = queryset.count()
+
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No countries found matching this search filter.",
+                    "data": None
+                }, status=404)
+
+            queryset.delete()
             return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Please provide 'id' field (UUID list or 'all').",
+                "statusCode": 200,
+                "status": True,
+                "message": f"{count} country(ies) deleted based on search filter.",
                 "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=200)
 
-        # Delete all
         if ids == "all":
-            countries = Country.objects.filter(is_deleted=False)
-            count = countries.count()
+            count = queryset.count()
             if count == 0:
                 return Response({
                     "statusCode": 404,
                     "status": False,
                     "message": "No countries found to delete.",
                     "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
+                }, status=404)
 
-            countries.delete()
+            queryset.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
                 "message": f"All {count} country(s) deleted successfully.",
                 "data": None
-            }, status=status.HTTP_200_OK)
+            }, status=200)
 
-        # Validate list of UUIDs
-        if not isinstance(ids, list):
+        
+        if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+                "message": "Send UUID list in 'id' field or use 'id: all' for full delete.",
                 "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=400)
 
-        valid_uuids, invalid_uuids = [], []
+        valid_uuids = []
+        invalid_uuids = []
+
         for u in ids:
             try:
                 valid_uuids.append(UUID(u))
@@ -1791,27 +2226,27 @@ class CountryDeleteAPIView(APIView):
                 "status": False,
                 "message": "No valid UUIDs provided.",
                 "data": {"invalid_uuids": invalid_uuids}
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=400)
 
-        countries = Country.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = countries.count()
+        bulk_qs = queryset.filter(uuid__in=valid_uuids)
+        count = bulk_qs.count()
 
         if count == 0:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "No matching countries found.",
+                "message": "No matching countries found to delete.",
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=status.HTTP_404_NOT_FOUND)
+            }, status=404)
 
-        countries.delete()
+        bulk_qs.delete()
 
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f"{count} country(s) deleted successfully.",
+            "message": f"{count} country(s) permanently deleted.",
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        }, status=status.HTTP_200_OK)
+        }, status=200)
 
 
 
@@ -2385,50 +2820,163 @@ class StateUpdateAPIView(APIView):
         return Response({"statusCode": 400, "status": False, "message": errors}, status=400)
 
 
+# class StateDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request):
+#         ids = request.data.get('id', None)
+
+#         if not ids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide 'id' field (UUID list or 'all').",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         # Delete all states
+#         if ids == "all":
+#             states = State.objects.filter(is_deleted=False)
+#             count = states.count()
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No states found to delete.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+
+#             states.delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} state(s) deleted successfully.",
+#                 "data": None
+#             }, status=status.HTTP_200_OK)
+
+#         # Validate list of UUIDs
+#         if not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         valid_uuids, invalid_uuids = [], []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         if not valid_uuids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "No valid UUIDs provided.",
+#                 "data": {"invalid_uuids": invalid_uuids}
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         states = State.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+#         count = states.count()
+
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching states found.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=status.HTTP_404_NOT_FOUND)
+
+#         states.delete()
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} state(s) deleted successfully.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         }, status=status.HTTP_200_OK)
+
+
 class StateDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request):
         ids = request.data.get('id', None)
+        search = request.GET.get("search", "").strip()
 
-        if not ids:
+        # ---------------------------------------
+        # Base queryset (soft delete safety)
+        # ---------------------------------------
+        queryset = State.objects.filter(is_deleted=False)
+
+        # ---------------------------------------
+        # SEARCH BASED DELETE (only when deleteAll: true)
+        # ---------------------------------------
+        if search:
+            if not request.data.get("deleteAll", False):
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "To delete based on search filter, you must send → 'deleteAll: true' in request body.",
+                    "data": None
+                }, status=400)
+
+            queryset = queryset.filter(Q(name__istartswith=search))
+            count = queryset.count()
+
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No states found matching this search filter.",
+                    "data": None
+                }, status=404)
+
+            queryset.delete()
             return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Please provide 'id' field (UUID list or 'all').",
+                "statusCode": 200,
+                "status": True,
+                "message": f"{count} state(s) deleted based on search filter.",
                 "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=200)
 
-        # Delete all states
+        # ---------------------------------------
+        # DELETE FULL TABLE when body contains → "id": "all"
+        # ---------------------------------------
         if ids == "all":
-            states = State.objects.filter(is_deleted=False)
-            count = states.count()
+            count = queryset.count()
             if count == 0:
                 return Response({
                     "statusCode": 404,
                     "status": False,
                     "message": "No states found to delete.",
                     "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
+                }, status=404)
 
-            states.delete()
+            queryset.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} state(s) deleted successfully.",
+                "message": f"All {count} state(s) permanently deleted from the table.",
                 "data": None
-            }, status=status.HTTP_200_OK)
+            }, status=200)
 
-        # Validate list of UUIDs
-        if not isinstance(ids, list):
+        # ---------------------------------------
+        # BULK DELETE via UUID list
+        # ---------------------------------------
+        if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+                "message": "Send UUID list in 'id' field or use 'id: all' for full delete.",
                 "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=400)
 
-        valid_uuids, invalid_uuids = [], []
+        valid_uuids = []
+        invalid_uuids = []
+
         for u in ids:
             try:
                 valid_uuids.append(UUID(u))
@@ -2441,27 +2989,29 @@ class StateDeleteAPIView(APIView):
                 "status": False,
                 "message": "No valid UUIDs provided.",
                 "data": {"invalid_uuids": invalid_uuids}
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=400)
 
-        states = State.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = states.count()
+        bulk_qs = queryset.filter(uuid__in=valid_uuids)
+        count = bulk_qs.count()
 
         if count == 0:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "No matching states found.",
+                "message": "No matching states found to delete.",
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=status.HTTP_404_NOT_FOUND)
+            }, status=404)
 
-        states.delete()
+        bulk_qs.delete()
 
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f"{count} state(s) deleted successfully.",
+            "message": f"{count} state(s) permanently deleted.",
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        }, status=status.HTTP_200_OK)
+        }, status=200)
+    
+
 
 
 class StateExportAPIView(APIView):
@@ -3039,50 +3589,164 @@ class DistrictUpdateAPIView(APIView):
         return Response({"statusCode": 400, "status": False, "message": errors}, status=400)
 
 
+# class DistrictDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request):
+#         ids = request.data.get('id', None)
+
+#         if not ids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide 'id' field (UUID list or 'all').",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         # Delete all districts
+#         if ids == "all":
+#             districts = District.objects.filter(is_deleted=False)
+#             count = districts.count()
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No districts found to delete.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+
+#             districts.delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} district(s) deleted successfully.",
+#                 "data": None
+#             }, status=status.HTTP_200_OK)
+
+#         # Validate list of UUIDs
+#         if not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         valid_uuids, invalid_uuids = [], []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         if not valid_uuids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "No valid UUIDs provided.",
+#                 "data": {"invalid_uuids": invalid_uuids}
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         districts = District.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+#         count = districts.count()
+
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching districts found.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=status.HTTP_404_NOT_FOUND)
+
+#         districts.delete()
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} district(s) deleted successfully.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         }, status=status.HTTP_200_OK)
+
+
 class DistrictDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request):
+
         ids = request.data.get('id', None)
+        search = request.GET.get("search", "").strip()
 
-        if not ids:
+        # ---------------------------------------
+        # Base queryset (soft delete safety)
+        # ---------------------------------------
+        queryset = District.objects.filter(is_deleted=False)
+
+        # ---------------------------------------
+        # SEARCH BASED DELETE (only when deleteAll: true)
+        # ---------------------------------------
+        if search:
+            if not request.data.get("deleteAll", False):
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "To delete based on search filter, you must send → 'deleteAll: true' in request body.",
+                    "data": None
+                }, status=400)
+
+            queryset = queryset.filter(Q(name__istartswith=search))
+            count = queryset.count()
+
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No district(s) found matching this search filter.",
+                    "data": None
+                }, status=404)
+
+            queryset.delete()
             return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Please provide 'id' field (UUID list or 'all').",
+                "statusCode": 200,
+                "status": True,
+                "message": f"{count} district(s) deleted based on search filter.",
                 "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=200)
 
-        # Delete all districts
+        # ---------------------------------------
+        # DELETE FULL TABLE when body contains → "id": "all"
+        # ---------------------------------------
         if ids == "all":
-            districts = District.objects.filter(is_deleted=False)
-            count = districts.count()
+            count = queryset.count()
             if count == 0:
                 return Response({
                     "statusCode": 404,
                     "status": False,
                     "message": "No districts found to delete.",
                     "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
+                }, status=404)
 
-            districts.delete()
+            queryset.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} district(s) deleted successfully.",
+                "message": f"All {count} district(s) permanently deleted from the table.",
                 "data": None
-            }, status=status.HTTP_200_OK)
+            }, status=200)
 
-        # Validate list of UUIDs
-        if not isinstance(ids, list):
+        # ---------------------------------------
+        # BULK DELETE via UUID list
+        # ---------------------------------------
+        if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+                "message": "Send UUID list in 'id' field or use 'id: all' for full delete.",
                 "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=400)
 
-        valid_uuids, invalid_uuids = [], []
+        valid_uuids = []
+        invalid_uuids = []
+
         for u in ids:
             try:
                 valid_uuids.append(UUID(u))
@@ -3095,28 +3759,28 @@ class DistrictDeleteAPIView(APIView):
                 "status": False,
                 "message": "No valid UUIDs provided.",
                 "data": {"invalid_uuids": invalid_uuids}
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=400)
 
-        districts = District.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = districts.count()
+        bulk_qs = queryset.filter(uuid__in=valid_uuids)
+        count = bulk_qs.count()
 
         if count == 0:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "No matching districts found.",
+                "message": "No matching district(s) found to delete.",
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=status.HTTP_404_NOT_FOUND)
+            }, status=404)
 
-        districts.delete()
+        bulk_qs.delete()
 
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f"{count} district(s) deleted successfully.",
+            "message": f"{count} district(s) permanently deleted.",
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        }, status=status.HTTP_200_OK)
-
+        }, status=200)
+    
 
 class DistrictExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -3692,50 +4356,162 @@ class CityUpdateAPIView(APIView):
 
 
 
+# class CityDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request):
+#         ids = request.data.get('id', None)
+
+#         if not ids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide 'id' field (UUID list or 'all').",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         # Delete all cities
+#         if ids == "all":
+#             cities = City.objects.filter(is_deleted=False)
+#             count = cities.count()
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No cities found to delete.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+
+#             cities.delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} city(s) deleted successfully.",
+#                 "data": None
+#             }, status=status.HTTP_200_OK)
+
+#         # Validate list of UUIDs
+#         if not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         valid_uuids, invalid_uuids = [], []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         if not valid_uuids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "No valid UUIDs provided.",
+#                 "data": {"invalid_uuids": invalid_uuids}
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         cities = City.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+#         count = cities.count()
+
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching cities found.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=status.HTTP_404_NOT_FOUND)
+
+#         cities.delete()
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} city(s) deleted successfully.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         }, status=status.HTTP_200_OK)
+
+
 class CityDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request):
         ids = request.data.get('id', None)
+        search = request.GET.get("search", "").strip()  # ✅ search param support
 
-        if not ids:
+        # ---------------------------------------
+        # Base queryset (soft delete safety)
+        # ---------------------------------------
+        queryset = City.objects.filter(is_deleted=False)
+
+        # ---------------------------------------
+        # SEARCH BASED DELETE (ONLY when deleteAll: true)
+        # ---------------------------------------
+        if search:
+            if not request.data.get("deleteAll", False):  # ❗Protection check
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "To delete based on search filter, you must send → 'deleteAll: true' in request body.",
+                    "data": None
+                }, status=400)
+
+            queryset = queryset.filter(Q(name__istartswith=search))
+            count = queryset.count()
+
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No city(s) found matching this search.",
+                    "data": None
+                }, status=404)
+
+            queryset.delete()
             return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Please provide 'id' field (UUID list or 'all').",
+                "statusCode": 200,
+                "status": True,
+                "message": f"{count} city(s) deleted based on search filter.",
                 "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=200)
 
-        # Delete all cities
+        # ---------------------------------------
+        # DELETE ENTIRE TABLE when "id": "all"
+        # ---------------------------------------
         if ids == "all":
-            cities = City.objects.filter(is_deleted=False)
-            count = cities.count()
+            count = queryset.count()
             if count == 0:
                 return Response({
                     "statusCode": 404,
                     "status": False,
                     "message": "No cities found to delete.",
                     "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
+                }, status=404)
 
-            cities.delete()
+            queryset.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} city(s) deleted successfully.",
+                "message": f"All {count} city(s) permanently deleted from the table.",
                 "data": None
-            }, status=status.HTTP_200_OK)
+            }, status=200)
 
-        # Validate list of UUIDs
-        if not isinstance(ids, list):
+        # ---------------------------------------
+        # BULK DELETE via UUID list
+        # ---------------------------------------
+        if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+                "message": "Send UUID list in 'id' or use 'id: all' for full delete.",
                 "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=400)
 
-        valid_uuids, invalid_uuids = [], []
+        valid_uuids = []
+        invalid_uuids = []
         for u in ids:
             try:
                 valid_uuids.append(UUID(u))
@@ -3748,27 +4524,30 @@ class CityDeleteAPIView(APIView):
                 "status": False,
                 "message": "No valid UUIDs provided.",
                 "data": {"invalid_uuids": invalid_uuids}
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=400)
 
-        cities = City.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = cities.count()
+        bulk_qs = queryset.filter(uuid__in=valid_uuids)
+        count = bulk_qs.count()
 
         if count == 0:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "No matching cities found.",
+                "message": "No matching city(s) found to delete.",
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=status.HTTP_404_NOT_FOUND)
+            }, status=404)
 
-        cities.delete()
+        bulk_qs.delete()
 
         return Response({
             "statusCode": 200,
             "status": True,
             "message": f"{count} city(s) deleted successfully.",
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        }, status=status.HTTP_200_OK)
+        }, status=200)
+    
+    
+
 
 class CityExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
