@@ -3523,6 +3523,70 @@ export const importRelatedOccupationAPI = (payload) => {
   return post(apiUrl, payload);
 };
 
+export const getOccupationToOccupationListAPI = (data) => {
+  const apiUrl = `${url.GET_OCCUPATION_TO_OCCUPATION_LIST}?search=${data?.search}&page=${
+    data?.page
+  }&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
+
+export const addOccupationToOccupationAPI = (payload) => {
+  const apiUrl = `${url.ADD_OCCUPATION_TO_OCCUPATION_API}`;
+  return post(apiUrl, payload);
+};
+
+export const editOccupationToOccupationAPI = (payload) => {
+  const apiUrl = `${url.EDIT_OCCUPATION_TO_OCCUPATION_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+
+export const deleteOccupationToOccupationAPI = (payload) => {
+  const preparedData = { id: payload };
+  const apiUrl = `${url.DELETE_OCCUPATION_TO_OCCUPATION_API}delete/`;
+  return delWithPayload(apiUrl, preparedData);
+};
+
+export const exportOccupationToOccupationAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_OCCUPATION_TO_OCCUPATION_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+
+export const importOccupationToOccupationAPI = (payload) => {
+  const apiUrl = `${url.IMPORT_OCCUPATION_TO_OCCUPATION_API}`;
+  return post(apiUrl, payload);
+};
+
+export const getEligibilityOccupationNameListAPI = (data) => {
+  const apiUrl = `${url.GET_ELIGIBILITY_OCCUPATION_NAME_LIST}?search=${data?.search}&page=${
+    data?.page
+  }&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  return get(apiUrl);
+};
+
+export const addEligibilityOccupationNameAPI = (payload) => {
+  return post(url.ADD_ELIGIBILITY_OCCUPATION_NAME_API, payload);
+};
+
+export const editEligibilityOccupationNameAPI = (payload) => {
+  const apiUrl = `${url.EDIT_ELIGIBILITY_OCCUPATION_NAME_API}${payload?.uuid}/update/`;
+  return put(apiUrl, payload);
+};
+
+export const deleteEligibilityOccupationNameAPI = (payload) => {
+  const apiUrl = `${url.DELETE_ELIGIBILITY_OCCUPATION_NAME_API}delete/`;
+  return delWithPayload(apiUrl, { id: payload });
+};
+
+export const exportEligibilityOccupationNameAPI = (payload) => {
+  const apiUrl = `${url.EXPORT_ELIGIBILITY_OCCUPATION_NAME_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  return getExportData(apiUrl, payload);
+};
+
+export const importEligibilityOccupationNameAPI = (payload) => {
+  return post(url.IMPORT_ELIGIBILITY_OCCUPATION_NAME_API, payload);
+};
+
+
 // Institute Type
 export const getInstituteTypeListDataAPI = (data) => {
    let customSort = "";

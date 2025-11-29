@@ -7,9 +7,10 @@ import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 import { countryDemoList } from '../../../../store/master/companyMasters/actions';
 import { useGlobalSearch, } from '../../../../components/comman/GlobalSearchContext';
 import MasterLayout from '../../../../masterLayout/MasterLayout';
-import {  studyFactorLanguageAbilityDelete, studyFactorLanguageAbilityExportData, studyFactorLanguageAbilityList } from '../../../../store/actions';
+import {  occupationCategoryExportData, occupationToOccupationDelete, occupationToOccupationList, studyFactorLanguageAbilityDelete, studyFactorLanguageAbilityExportData, studyFactorLanguageAbilityList } from '../../../../store/actions';
 import AddEditOccupationToOccupationModal from './AddEditOccupationToOccupationModal';
 import AddImportOccupationToOccupationModal from './AddImportOccupationToOccupation';
+import ResetButton from '../../../../components/comman/ResetButton';
 const OccupationToOccupationList = () => {
   const dispatch = useDispatch();
   const { globalSearch, setGlobalSearch } = useGlobalSearch();
@@ -58,22 +59,23 @@ const OccupationToOccupationList = () => {
   const [stateListData, setStateListData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [items] = useState(["Factor For", "Study Language Ability Group","Language Test Name","Module Name", "Minimum Overall Score","In No. of Modules","Not Less Than", "Description", "Modified On"]);
-  const [selectedItems, setSelectedItems] = useState(["Factor For",  "Study Language Ability Group","Language Test Name","Module Name", "Minimum Overall Score","In No. of Modules",]);
-  const [ItemsRequired] = useState(["Factor For", "Study Language Ability Group", "Language Test Name","Module Name","Minimum Overall Score","In No. of Modules",]);
+const [items] = useState(["Country","Occupation Version","Occupation Name","Occupation Code","Compare : Country","Compare : Occupation Version","Compare : Occupation Name","Compare : Occupation Code","Description","Modified On"]);
+  const [selectedItems, setSelectedItems] = useState([ "Country","Occupation Version","Occupation Name","Occupation Code","Compare : Country","Compare : Occupation Version","Compare : Occupation Name","Compare : Occupation Code",]);
+  const [ItemsRequired] = useState([ "Country","Occupation Version","Occupation Name","Occupation Code","Compare : Country","Compare : Occupation Version","Compare : Occupation Name","Compare : Occupation Code",]);
   const [countryListData, setCountryListData] = useState([]);
   // Table columns configuration
   const [tableColumns] = useState([
-      { id: 'factorForName', label: 'Factor For', field: 'factorForName', visible: true, required: false, filterable: false },
-      { id: 'studyLanguageAbilityGroup', label: 'Study Language Ability Group', field: 'studyLanguageAbilityGroup', visible: true, required: false, filterable: false },
-      { id: 'languageTestName', label: 'Language Test Name', field: 'languageTestName', visible: true, required: false, filterable: false },
-      { id: 'moduleName', label: 'Module Name', field: 'moduleName', visible: true, required: false, filterable: false },
-      { id: 'minimumOverallScore', label: 'Minimum Overall Score', field: 'minimumOverallScore', visible: true, required: false, filterable: false },
-      { id: 'inNoOfModules', label: 'In No. of Modules', field: 'inNoOfModules', visible: true, required: false, filterable: false },
-      { id: 'notLessThan', label: 'Not Less Than', field: 'notLessThan', visible: true, required: false, filterable: false },
-      { id: 'description', label: 'Description', field: 'description', visible: false, required: false, filterable: false },
-      { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false, filterable: false },
-  ]);
+  { id: 'country', label: 'Country', field: 'country', visible: true, required: true, filterable: false },
+  { id: 'occupationVersion', label: 'Occupation Version', field: 'occupationVersion', visible: true, required: true, filterable: false },
+  { id: 'occupationName', label: 'Occupation Name', field: 'occupationName', visible: true, required: true, filterable: false },
+  { id: 'occupationCode', label: 'Occupation Code', field: 'occupationCode', visible: true, required: true, filterable: false },
+  { id: 'compareCountry', label: 'Compare : Country', field: 'compareCountry', visible: true, required: false, filterable: false },
+  { id: 'compareOccupationVersion', label: 'Compare : Occupation Version', field: 'compareOccupationVersion', visible: true, required: false, filterable: false },
+  { id: 'compareOccupationName', label: 'Compare : Occupation Name', field: 'compareOccupationName', visible: true, required: false, filterable: false },
+  { id: 'compareOccupationCode', label: 'Compare : Occupation Code', field: 'compareOccupationCode', visible: true, required: false, filterable: false },
+  { id: 'description', label: 'Description', field: 'description', visible: false, required: false, filterable: false },
+  { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false, filterable: false }
+]);
 
   const [visibleColumns, setVisibleColumns] = useState(
     tableColumns.filter(col => col.visible).map(col => col.id)
@@ -164,7 +166,7 @@ const OccupationToOccupationList = () => {
       country: columnFilters.countryId.length > 0 ? columnFilters.countryId : null,
     };
 
-    dispatch(studyFactorLanguageAbilityList(params, (response, error) => {
+    dispatch(occupationToOccupationList(params, (response, error) => {
       setLoading(false);
       if (response?.statusCode === 200 && response?.status === true) {
         const paginationData = response?.pagination || {};
@@ -515,7 +517,7 @@ const OccupationToOccupationList = () => {
       toast.error("No gap selected for deletion.");
       return;
     }
-    dispatch(studyFactorLanguageAbilityDelete(sendPayload, (response, error) => {
+    dispatch(occupationToOccupationDelete(sendPayload, (response, error) => {
       if (error) {
         toast.error(error?.response?.data?.message || "server error");
       } else {
@@ -598,17 +600,18 @@ const OccupationToOccupationList = () => {
     // Map frontend labels to State field names
 
     const fieldMapping = {
-      "Factor For": "factor_for",
-      "Study Language Ability Group": "language_ability_group",
-      "Language Test Name":"language_test_name",
-      "Module Name":"module_name",
-      "Minimum Overall Score": "minimum_overall_score",
-      "Maximum Age Accepted(Months)": "maximum_age_accepted",
-      "In No. of Modules":"in_no_of_modules",
-      "Not Less Than": "not_less_than",
-      "Description": "description",
-      "Modified On": "updated_at",
+        "Country": "country",
+        "Occupation Version": "occupation_version",
+        "Occupation Name": "occupation_name",
+        "Occupation Code": "occupation_code",
+        "Compare : Country": "compare_country",
+        "Compare : Occupation Version": "compare_occupation_version",
+        "Compare : Occupation Name": "compare_occupation_name",
+        "Compare : Occupation Code": "compare_occupation_code",
+        "Description": "description",
+        "Modified On": "updated_at",
     };
+
     // Convert selectedItems to State field names
     const mappedFields = selectedItems.map((item) => fieldMapping[item] || item);
     // Convert to comma-separated string
@@ -623,7 +626,7 @@ const OccupationToOccupationList = () => {
     };
 
     setLoadingExport(true);
-    dispatch(studyFactorLanguageAbilityExportData(sendPayload, (response, error) => {
+    dispatch(occupationCategoryExportData(sendPayload, (response, error) => {
       if (error) {
         setLoadingExport(false);
         toast.error(error?.response?.message || "server error");
@@ -637,7 +640,7 @@ const OccupationToOccupationList = () => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `Language Ability.xlsx`;
+          link.download = `Occupation to Occupation.xlsx`;
           document.body.appendChild(link);
           link.click();
           link.remove();
@@ -713,10 +716,11 @@ const OccupationToOccupationList = () => {
                       <Icon icon="mdi:filter-off" width="16" /> Clear Filters
                     </button>
                   )}
-                  <button
+                 <ResetButton
                     onClick={clearAllFilters}
-                    className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
-                  >Reset</button>
+                    tableState={tableState}
+                    globalSearch={globalSearch}
+                    />
                 </div>
               </div>
 
@@ -1050,33 +1054,46 @@ const OccupationToOccupationList = () => {
                             <span>{String(startIndex + index + 1).padStart(2, '0')}</span>
                           </div>
                         </td>
-                        {isColumnVisible('factorForName') && (
-                          <td><span>{rowItem.factor_for_name}</span></td>
+                       {isColumnVisible('country') && (
+                        <td><span>{rowItem.country}</span></td>
                         )}
-                        {isColumnVisible('studyLanguageAbilityGroup') && (
-                          <td><span>{rowItem.language_ability_group_name}</span></td>
+
+                        {isColumnVisible('occupationVersion') && (
+                        <td><span>{rowItem.occupation_version}</span></td>
                         )}
-                        {isColumnVisible('languageTestName') && (
-                          <td><span>{rowItem.language_test_name_name}</span></td>
+
+                        {isColumnVisible('occupationName') && (
+                        <td><span>{rowItem.occupation_name}</span></td>
                         )}
-                        {isColumnVisible('moduleName') && (
-                          <td><span>{rowItem.module_name_name}</span></td>
+
+                        {isColumnVisible('occupationCode') && (
+                        <td><span>{rowItem.occupation_code}</span></td>
                         )}
-                        {isColumnVisible('minimumOverallScore') && (
-                          <td><span>{rowItem.minimum_overall_score}</span></td>
+
+                        {isColumnVisible('compareCountry') && (
+                        <td><span>{rowItem.compare_country}</span></td>
                         )}
-                        {isColumnVisible('inNoOfModules') && (
-                          <td><span>{rowItem.in_no_of_modules}</span></td>
-                        )}  
-                        {isColumnVisible('notLessThan') && (
-                          <td><span>{rowItem.not_less_than}</span></td>
-                        )} 
+
+                        {isColumnVisible('compareOccupationVersion') && (
+                        <td><span>{rowItem.compare_occupation_version}</span></td>
+                        )}
+
+                        {isColumnVisible('compareOccupationName') && (
+                        <td><span>{rowItem.compare_occupation_name}</span></td>
+                        )}
+
+                        {isColumnVisible('compareOccupationCode') && (
+                        <td><span>{rowItem.compare_occupation_code}</span></td>
+                        )}
+
                         {isColumnVisible('description') && (
-                          <td><span>{rowItem.description}</span></td>
+                        <td><span>{rowItem.description}</span></td>
                         )}
+
                         {isColumnVisible('updated_at') && (
-                          <td><span>{formatDateDDMMYYYYTime(rowItem.updated_at)}</span></td>
+                        <td><span>{formatDateDDMMYYYYTime(rowItem.updated_at)}</span></td>
                         )}
+
                         <td className='action-td'>
                           <div className="d-flex align-items-end gap-2">
                             <Link to="#" className='edit-btn-icone' onClick={(e) => { e.preventDefault(); handleShowEdit(rowItem); }}>

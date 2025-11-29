@@ -2,18 +2,14 @@ import React, { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import Select from "react-select";
-import { countryDemoList } from "../../../../store/master/companyMasters/actions";
 import {
-  factorForList,
-  languageAbilityGroupList,
-  languageTestModuleNameList,
-  languageTestNameList,
-  languageTestResultList,
+  occupationCodeList,
+  occupationNameList,
+  occupationToOccupationAdd,
+  occupationToOccupationEdit,
+  occupationVersionList,
   representingCountryList,
-  studyFactorLanguageAbilityAdd,
-  studyFactorLanguageAbilityEdit,
 } from "../../../../store/actions";
-import LanguageTestModuleNameList from "../../testMaster/languageTestModuleName/LanguageTestModuleNameList";
 
 const AddEditOccupationToOccupationModal = ({
   show,
@@ -23,35 +19,46 @@ const AddEditOccupationToOccupationModal = ({
 }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
-  const [factorForData, setFactorForData] = useState([]);
-  const [languageAbilityGroupData, setLanguageAbilityGroupData] = useState([]);
-  const [moduleNameData, setModuleNameData] = useState([]);
-  const [minimumOverallScoreData, setMinimumOverallScoreData] = useState([]);
-  const [notLessThanData, setNotLessThanData] = useState([]);
-  const [languageTestNameData, setLanguageTextNameData] = useState([]);
 
+  const [countryListData, setCountryListData] = useState([]);
+  const [occupationVersionListData, setOccupationVersionListData] = useState(
+    []
+  );
+  const [occupationNameListData, setOccupationNameListData] = useState([]);
+  const [occupationCodeListData, setOccupationCodeListData] = useState([]);
+  const [compareCountryListData, setCompareCountryListData] = useState([]);
+  const [
+    compareOccupationVersionListData,
+    setCompareOccupationVersionListData,
+  ] = useState([]);
+  const [compareOccupationNameListData, setCompareOccupationNameListData] =
+    useState([]);
+  const [compareOccupationCodeListData, setCompareOccupationCodeListData] =
+    useState([]);
   // Form state
   const [formData, setFormData] = useState({
     uuid: "",
-    factorForName: "",
-    studyLanguageAbilityGroup: "",
-    languageTestName: "",
-    moduleName: "",
-    minimumOverallScore: "",
-    notMoreThan: "",
-    inNoOfModules: "",
+    country: "",
+    occupationVersion: "",
+    occupationName: "",
+    occupationCode: "",
+    compareCountry: "",
+    compareOccupationVersion: "",
+    compareOccupationName: "",
+    compareOccupationCode: "",
     description: "",
   });
 
   // Validation errors state
   const [errors, setErrors] = useState({
-    factorForName: "",
-    studyLanguageAbilityGroup: "",
-    languageTestName: "",
-    moduleName: "",
-    minimumOverallScore: "",
-    notMoreThan: "",
-    inNoOfModules: "",
+    country: "",
+    occupationVersion: "",
+    occupationName: "",
+    occupationCode: "",
+    compareCountry: "",
+    compareOccupationVersion: "",
+    compareOccupationName: "",
+    compareOccupationCode: "",
   });
 
   // Populate form data when in edit mode
@@ -59,13 +66,14 @@ const AddEditOccupationToOccupationModal = ({
     if (mode === "edit" && rowData) {
       setFormData({
         uuid: rowData.uuid || "",
-        factorForName: rowData.factor_for_uuid || "",
-        studyLanguageAbilityGroup: rowData.language_ability_group_name || "",
-        languageTestName: rowData.language_test_name_name || "",
-        moduleName: rowData.module_name_name || "",
-        minimumOverallScore: rowData.minimum_overall_score || "",
-        notMoreThan: rowData.not_less_than || "", //formData.state === "STATE" ? "State" : "Territory" || '',
-        inNoOfModules: rowData.in_no_of_modules || "",
+        country: rowData.country || "",
+        occupationVersion: rowData.occupation_version || "",
+        occupationName: rowData.occupation_name || "",
+        occupationCode: rowData.occupation_code || "",
+        compareCountry: rowData.compare_country || "",
+        compareOccupationVersion: rowData.compare_occupation_version || "",
+        compareOccupationName: rowData.compare_occupation_name || "",
+        compareOccupationCode: rowData.compare_occupation_code || "",
         description: rowData.description || "",
       });
     } else {
@@ -87,43 +95,38 @@ const AddEditOccupationToOccupationModal = ({
     };
 
     dispatch(
-      factorForList(params, (response, error) => {
+      representingCountryList(params, (response, error) => {
         setLoading(false);
         if (response?.statusCode === 200 && response?.status === true) {
-          setFactorForData(response?.data || []);
+          setCountryListData(response?.data || []);
+          setCompareCountryListData(response?.data || []);
         }
       })
     );
     dispatch(
-      languageAbilityGroupList(params, (response, error) => {
+      occupationVersionList(params, (response, error) => {
         setLoading(false);
         if (response?.statusCode === 200 && response?.status === true) {
-          setLanguageAbilityGroupData(response?.data || []);
+          setOccupationVersionListData(response?.data || []);
+          setCompareOccupationVersionListData(response?.data || []);
         }
       })
     );
     dispatch(
-      languageTestModuleNameList(params, (response, error) => {
+      occupationNameList(params, (response, error) => {
         setLoading(false);
         if (response?.statusCode === 200 && response?.status === true) {
-          setModuleNameData(response?.data || []);
+          setOccupationNameListData(response?.data || []);
+          setCompareOccupationNameListData(response?.data || []);
         }
       })
     );
     dispatch(
-      languageTestResultList(params, (response, error) => {
+      occupationCodeList(params, (response, error) => {
         setLoading(false);
         if (response?.statusCode === 200 && response?.status === true) {
-          setMinimumOverallScoreData(response?.data || []);
-          setNotLessThanData(response?.data || []);
-        }
-      })
-    );
-    dispatch(
-      languageTestNameList(params, (response, error) => {
-        setLoading(false);
-        if (response?.statusCode === 200 && response?.status === true) {
-          setLanguageTextNameData(response?.data || []);
+          setOccupationCodeListData(response?.data || []);
+          setCompareOccupationCodeListData(response?.data || []);
         }
       })
     );
@@ -167,34 +170,46 @@ const AddEditOccupationToOccupationModal = ({
     const newErrors = {};
     let isValid = true;
 
-    if (!formData.factorForName) {
-      newErrors.factorForName = "Factor For name is required";
+    if (!formData.country) {
+      newErrors.country = "Country is required";
       isValid = false;
     }
 
-    if (!formData.studyLanguageAbilityGroup) {
-      newErrors.studyLanguageAbilityGroup =
-        "Study Language Ability Group is required";
+    if (!formData.occupationVersion) {
+      newErrors.occupationVersion = "Occupation Version is required";
       isValid = false;
     }
 
-    if (!formData.languageTestName) {
-      newErrors.languageTestName = "Language Test Name is required";
+    if (!formData.occupationName) {
+      newErrors.occupationName = "Occupation Name is required";
       isValid = false;
     }
-    if (!formData.moduleName) {
-      newErrors.moduleName = "Modules Name is required";
-      isValid = false;
-    }
-    if (!formData.minimumOverallScore) {
-      newErrors.minimumOverallScore = "Minimum Overall Score is required";
-      isValid = false;
-    }
-    
 
-    // State name validation
+    if (!formData.occupationCode) {
+      newErrors.occupationCode = "Occupation Code is required";
+      isValid = false;
+    }
 
-    // State name validation
+    if (!formData.compareCountry) {
+      newErrors.compareCountry = "Compare Country is required";
+      isValid = false;
+    }
+
+    if (!formData.compareOccupationVersion) {
+      newErrors.compareOccupationVersion =
+        "Compare Occupation Version is required";
+      isValid = false;
+    }
+
+    if (!formData.compareOccupationName) {
+      newErrors.compareOccupationName = "Compare Occupation Name is required";
+      isValid = false;
+    }
+
+    if (!formData.compareOccupationCode) {
+      newErrors.compareOccupationCode = "Compare Occupation Code is required";
+      isValid = false;
+    }
 
     setErrors(newErrors);
     return isValid;
@@ -202,7 +217,6 @@ const AddEditOccupationToOccupationModal = ({
 
   // Handle form submission
   const handleSubmit = (e) => {
-    console.log("clcik clcik")
     e.preventDefault();
 
     if (validateForm()) {
@@ -210,33 +224,33 @@ const AddEditOccupationToOccupationModal = ({
         mode === "edit"
           ? {
               uuid: formData.uuid,
-              factor_for: formData.factorForName,
-              language_ability_group:
-                formData.studyLanguageAbilityGroup,
-              language_test_name: formData.languageTestName,
-              module_name: formData.moduleName,
-              minimum_overall_score: formData.minimumOverallScore,
-              not_less_than: formData.notMoreThan.trim(),
-              in_no_of_modules: formData.inNoOfModules,
+              country: formData.country,
+              occupation_version: formData.occupationVersion,
+              occupation_name: formData.occupationName,
+              occupation_code: formData.occupationCode,
+              compare_country: formData.compareCountry,
+              compare_occupation_version: formData.compareOccupationVersion,
+              compare_occupation_name: formData.compareOccupationName,
+              compare_occupation_code: formData.compareOccupationCode,
               description: formData.description.trim(),
             }
           : {
-            factor_for: formData.factorForName,
-              language_ability_group:
-                formData.studyLanguageAbilityGroup,
-              language_test_name: formData.languageTestName,
-              module_name: formData.moduleName,
-              minimum_overall_score: formData.minimumOverallScore,
-              not_less_than: formData.notMoreThan,
-              in_no_of_modules: formData.inNoOfModules,
+              country: formData.country,
+              occupation_version: formData.occupationVersion,
+              occupation_name: formData.occupationName,
+              occupation_code: formData.occupationCode,
+              compare_country: formData.compareCountry,
+              compare_occupation_version: formData.compareOccupationVersion,
+              compare_occupation_name: formData.compareOccupationName,
+              compare_occupation_code: formData.compareOccupationCode,
               description: formData.description.trim(),
             };
 
       setLoading(true);
       const action =
         mode === "edit"
-          ? studyFactorLanguageAbilityEdit
-          : studyFactorLanguageAbilityAdd;
+          ? occupationToOccupationEdit
+          : occupationToOccupationAdd;
 
       dispatch(
         action(sendPayload, (response, error) => {
@@ -262,13 +276,14 @@ const AddEditOccupationToOccupationModal = ({
   const resetForm = () => {
     setFormData({
       uuid: "",
-      factorForName: "",
-      studyLanguageAbilityGroup: "",
-      languageTestName: "",
-      moduleName: "",
-      minimumOverallScore: "",
-      notMoreThan: "",
-      inNoOfModules: "",
+      country: "",
+      occupationVersion: "",
+      occupationName: "",
+      occupationCode: "",
+      compareCountry: "",
+      compareOccupationVersion: "",
+      compareOccupationName: "",
+      compareOccupationCode: "",
       description: "",
     });
     setErrors({});
@@ -314,24 +329,70 @@ const AddEditOccupationToOccupationModal = ({
           <div className="modal-body p-24">
             <form onSubmit={handleSubmit}>
               <div className="row">
-                {/* Country Dropdown */}
-                {/* <div className="col-12 mb-20">
+                {/* Country */}
+                <div className="col-6 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Country Name <span className="text-danger">*</span>
+                    Country<span className="text-danger">*</span>
                   </label>
                   <Select
                     options={countryListData.map((option) => ({
                       value: option.uuid,
-                      label: option.name + " (" + option?.continent?.name + ")",
+                      label: option.name,
                     }))}
                     value={
                       formData.country
                         ? countryListData
-                          .map((option) => ({
-                            value: option.uuid,
-                            label: option.name + " (" + option?.continent?.name + ")",
-                          }))
-                          .find((opt) => opt.value === formData.country)
+                            .map((option) => ({
+                              value: option.uuid,
+                              label: option.name,
+                            }))
+                            .find((opt) => opt.value === formData.country)
+                        : null
+                    }
+                    onChange={(selectedOption) =>
+                      handleChange({
+                        target: {
+                          name: "country",
+                          value: selectedOption ? selectedOption.value : "",
+                        },
+                      })
+                    }
+                    filterOption={customFilterOption}
+                    placeholder="Select Country"
+                    isClearable
+                    isSearchable
+                    className={`custom-select-container ${
+                      errors.country ? "is-invalid" : ""
+                    }`}
+                    classNamePrefix="custom-select"
+                  />
+                  {errors.country && (
+                    <div className="text-danger text-sm mt-1">
+                      {errors.country}
+                    </div>
+                  )}
+                </div>
+
+                {/* Occupation Version */}
+                <div className="col-6 mb-20">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                    Occupation Version<span className="text-danger">*</span>
+                  </label>
+                  <Select
+                    options={occupationVersionListData.map((option) => ({
+                      value: option.uuid,
+                      label: option.occupation_version,
+                    }))}
+                    value={
+                      formData.occupationVersion
+                        ? occupationVersionListData
+                            .map((option) => ({
+                              value: option.uuid,
+                              label: option.occupation_version,
+                            }))
+                            .find(
+                              (opt) => opt.value === formData.occupationVersion
+                            )
                         : null
                     }
                     onChange={(selectedOption) =>
@@ -343,298 +404,301 @@ const AddEditOccupationToOccupationModal = ({
                       })
                     }
                     filterOption={customFilterOption}
-                    placeholder="Select Country"
-                    isClearable
-                    isSearchable
-                    className={`custom-select-container ${errors.country ? "is-invalid" : ""
-                      }`}
-                    classNamePrefix="custom-select"
-                  />
-                  {errors.country && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.country}
-                    </div>
-                  )}
-                </div> */}
-                <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Factor For <span className="text-danger">*</span>
-                  </label>
-                  <Select
-                    options={factorForData.map((option) => ({
-                      value: option.uuid,
-                      label: option.name,
-                    }))}
-                    value={
-                      formData.factorForName
-                        ? factorForData
-                            .map((option) => ({
-                              value: option.uuid,
-                              label: option.name,
-                            }))
-                            .find((opt) => opt.value === formData.factorForName)
-                        : null
-                    }
-                    onChange={(selectedOption) =>
-                      handleChange({
-                        target: {
-                          name: "factorForName",
-                          value: selectedOption ? selectedOption.value : "",
-                        },
-                      })
-                    }
-                    filterOption={customFilterOption}
-                    placeholder="Select Factor For"
+                    placeholder="Select Occupation Version"
                     isClearable
                     isSearchable
                     className={`custom-select-container ${
-                      errors.factorForName ? "is-invalid" : ""
+                      errors.occupationVersion ? "is-invalid" : ""
                     }`}
                     classNamePrefix="custom-select"
                   />
-                  {errors.factorForName && (
+                  {errors.occupationVersion && (
                     <div className="text-danger text-sm mt-1">
-                      {errors.factorForName}
+                      {errors.occupationVersion}
                     </div>
                   )}
-                </div>
-                <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Study Factor Language Ability{" "}
-                    <span className="text-danger">*</span>
-                  </label>
-                  <Select
-                    options={languageAbilityGroupData.map((option) => ({
-                      value: option.uuid,
-                      label: option.name,
-                    }))}
-                    value={
-                      formData.studyLanguageAbilityGroup
-                        ? languageAbilityGroupData
-                            .map((option) => ({
-                              value: option.uuid,
-                              label: option.name,
-                            }))
-                            .find(
-                              (opt) =>
-                                opt.value === formData.studyLanguageAbilityGroup
-                            )
-                        : null
-                    }
-                    onChange={(selectedOption) =>
-                      handleChange({
-                        target: {
-                          name: "studyLanguageAbilityGroup",
-                          value: selectedOption ? selectedOption.value : "",
-                        },
-                      })
-                    }
-                    filterOption={customFilterOption}
-                    placeholder="Select language Ability Group"
-                    isClearable
-                    isSearchable
-                    className={`custom-select-container ${
-                      errors.studyLanguageAbilityGroup ? "is-invalid" : ""
-                    }`}
-                    classNamePrefix="custom-select"
-                  />
-                  {errors.studyLanguageAbilityGroup && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.studyLanguageAbilityGroup}
-                    </div>
-                  )}
-                </div>
-                <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Language Test Name {" "}
-                    <span className="text-danger">*</span>
-                  </label>
-                  <Select
-                    options={languageTestNameData.map((option) => ({
-                      value: option.uuid,
-                      label: option.name,
-                    }))}
-                    value={
-                      formData.languageTestName
-                        ? languageTestNameData
-                            .map((option) => ({
-                              value: option.uuid,
-                              label: option.name,
-                            }))
-                            .find(
-                              (opt) =>
-                                opt.value === formData.languageTestName
-                            )
-                        : null
-                    }
-                    onChange={(selectedOption) =>
-                      handleChange({
-                        target: {
-                          name: "languageTestName",
-                          value: selectedOption ? selectedOption.value : "",
-                        },
-                      })
-                    }
-                    filterOption={customFilterOption}
-                    placeholder="Select language Test Name"
-                    isClearable
-                    isSearchable
-                    className={`custom-select-container ${
-                      errors.languageTestName ? "is-invalid" : ""
-                    }`}
-                    classNamePrefix="custom-select"
-                  />
-                  {errors.languageTestName && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.languageTestName}
-                    </div>
-                  )}
-                </div>{" "}
-
-                <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Module Name{" "}
-                    <span className="text-danger">*</span>
-                  </label>
-                  <Select
-                    options={moduleNameData.map((option) => ({
-                      value: option.uuid,
-                      label: option.name,
-                    }))}
-                    value={
-                      formData.moduleName
-                        ? moduleNameData
-                            .map((option) => ({
-                              value: option.uuid,
-                              label: option.name,
-                            }))
-                            .find(
-                              (opt) =>
-                                opt.value === formData.moduleName
-                            )
-                        : null
-                    }
-                    onChange={(selectedOption) =>
-                      handleChange({
-                        target: {
-                          name: "moduleName",
-                          value: selectedOption ? selectedOption.value : "",
-                        },
-                      })
-                    }
-                    filterOption={customFilterOption}
-                    placeholder="Select Module Name"
-                    isClearable
-                    isSearchable
-                    className={`custom-select-container ${
-                      errors.moduleName ? "is-invalid" : ""
-                    }`}
-                    classNamePrefix="custom-select"
-                  />
-                  {errors.moduleName && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.moduleName}
-                    </div>
-                  )}
-                </div>{" "}
-                <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Minimum Overall Score{" "}
-                    <span className="text-danger">*</span>
-                  </label>
-                  <Select
-                    options={minimumOverallScoreData.map((option) => ({
-                      value: option.uuid,
-                      label: option.numeric_score,
-                    }))}
-                    value={
-                      formData.minimumOverallScore
-                        ? minimumOverallScoreData
-                            .map((option) => ({
-                              value: option.uuid,
-                              label: option.numeric_score,
-                            }))
-                            .find(
-                              (opt) =>
-                                opt.value === formData.minimumOverallScore
-                            )
-                        : null
-                    }
-                    onChange={(selectedOption) =>
-                      handleChange({
-                        target: {
-                          name: "minimumOverallScore",
-                          value: selectedOption ? selectedOption.value : "",
-                        },
-                      })
-                    }
-                    filterOption={customFilterOption}
-                    placeholder="Select Minimum Overall Score"
-                    isClearable
-                    isSearchable
-                    className={`custom-select-container ${
-                      errors.minimumOverallScore ? "is-invalid" : ""
-                    }`}
-                    classNamePrefix="custom-select"
-                  />
-                  {errors.minimumOverallScore && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.minimumOverallScore}
-                    </div>
-                  )}
-                </div>{" "}
-                <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Not Less Than{" "}
-                  </label>
-                  <Select
-                    options={notLessThanData.map((option) => ({
-                      value: option.uuid,
-                      label: option.numeric_score,
-                    }))}
-                    value={
-                      formData.notMoreThan
-                        ? notLessThanData
-                            .map((option) => ({
-                              value: option.uuid,
-                              label: option.numeric_score,
-                            }))
-                            .find(
-                              (opt) =>
-                                opt.value === formData.notMoreThan
-                            )
-                        : null
-                    }
-                    onChange={(selectedOption) =>
-                      handleChange({
-                        target: {
-                          name: "notMoreThan",
-                          value: selectedOption ? selectedOption.value : "",
-                        },
-                      })
-                    }
-                    filterOption={customFilterOption}
-                    placeholder="Select Not less Than"
-                    isClearable
-                    isSearchable
-                    className={`custom-select-container`}
-                    classNamePrefix="custom-select"
-                  />
-                 
                 </div>
 
-                 <div className="col-12 mb-20">
+                {/* Occupation Name */}
+                <div className="col-6 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    In No. of Modules 
+                    Occupation Name<span className="text-danger">*</span>
                   </label>
-                  <input
-                    type="number"
-                    name="inNoOfModules"
-                    value={formData.inNoOfModules}
-                    onChange={handleChange}
-                    className={`form-control radius-8`}
-                    placeholder="Enter Factor For"
+                  <Select
+                    options={occupationNameListData.map((option) => ({
+                      value: option.uuid,
+                      label: option.occupationname,
+                    }))}
+                    value={
+                      formData.occupationName
+                        ? occupationNameListData
+                            .map((option) => ({
+                              value: option.uuid,
+                              label: option.occupationname,
+                            }))
+                            .find(
+                              (opt) => opt.value === formData.occupationName
+                            )
+                        : null
+                    }
+                    onChange={(selectedOption) =>
+                      handleChange({
+                        target: {
+                          name: "occupationName",
+                          value: selectedOption ? selectedOption.value : "",
+                        },
+                      })
+                    }
+                    filterOption={customFilterOption}
+                    placeholder="Select Occupation Name"
+                    isClearable
+                    isSearchable
+                    className={`custom-select-container ${
+                      errors.occupationName ? "is-invalid" : ""
+                    }`}
+                    classNamePrefix="custom-select"
                   />
+                  {errors.occupationName && (
+                    <div className="text-danger text-sm mt-1">
+                      {errors.occupationName}
+                    </div>
+                  )}
+                </div>
+
+                {/* Occupation Code */}
+                <div className="col-6 mb-20">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                    Occupation Code<span className="text-danger">*</span>
+                  </label>
+                  <Select
+                    options={occupationCodeListData.map((option) => ({
+                      value: option.uuid,
+                      label: option.occupationcode,
+                    }))}
+                    value={
+                      formData.occupationCode
+                        ? occupationCodeListData
+                            .map((option) => ({
+                              value: option.uuid,
+                              label: option.occupationcode,
+                            }))
+                            .find(
+                              (opt) => opt.value === formData.occupationCode
+                            )
+                        : null
+                    }
+                    onChange={(selectedOption) =>
+                      handleChange({
+                        target: {
+                          name: "occupationCode",
+                          value: selectedOption ? selectedOption.value : "",
+                        },
+                      })
+                    }
+                    filterOption={customFilterOption}
+                    placeholder="Select Occupation Code"
+                    isClearable
+                    isSearchable
+                    className={`custom-select-container ${
+                      errors.occupationCode ? "is-invalid" : ""
+                    }`}
+                    classNamePrefix="custom-select"
+                  />
+                  {errors.occupationCode && (
+                    <div className="text-danger text-sm mt-1">
+                      {errors.occupationCode}
+                    </div>
+                  )}
+                </div>
+
+                {/* Compare Country */}
+                <div className="col-6 mb-20">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                    Compare Country<span className="text-danger">*</span>
+                  </label>
+                  <Select
+                    options={compareCountryListData.map((option) => ({
+                      value: option.uuid,
+                      label: option.name,
+                    }))}
+                    value={
+                      formData.compareCountry
+                        ? compareCountryListData
+                            .map((option) => ({
+                              value: option.uuid,
+                              label: option.name,
+                            }))
+                            .find(
+                              (opt) => opt.value === formData.compareCountry
+                            )
+                        : null
+                    }
+                    onChange={(selectedOption) =>
+                      handleChange({
+                        target: {
+                          name: "compareCountry",
+                          value: selectedOption ? selectedOption.value : "",
+                        },
+                      })
+                    }
+                    filterOption={customFilterOption}
+                    placeholder="Select Compare Country"
+                    isClearable
+                    isSearchable
+                    className={`custom-select-container ${
+                      errors.compareCountry ? "is-invalid" : ""
+                    }`}
+                    classNamePrefix="custom-select"
+                  />
+                  {errors.compareCountry && (
+                    <div className="text-danger text-sm mt-1">
+                      {errors.compareCountry}
+                    </div>
+                  )}
+                </div>
+
+                {/* Compare Occupation Version */}
+                <div className="col-6 mb-20">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                    Compare Occupation Version
+                    <span className="text-danger">*</span>
+                  </label>
+                  <Select
+                    options={compareOccupationVersionListData.map((option) => ({
+                      value: option.uuid,
+                      label: option.occupation_version,
+                    }))}
+                    value={
+                      formData.compareOccupationVersion
+                        ? compareOccupationVersionListData
+                            .map((option) => ({
+                              value: option.uuid,
+                              label: option.occupation_version,
+                            }))
+                            .find(
+                              (opt) =>
+                                opt.value === formData.compareOccupationVersion
+                            )
+                        : null
+                    }
+                    onChange={(selectedOption) =>
+                      handleChange({
+                        target: {
+                          name: "compareOccupationVersion",
+                          value: selectedOption ? selectedOption.value : "",
+                        },
+                      })
+                    }
+                    filterOption={customFilterOption}
+                    placeholder="Select Compare Occupation Version"
+                    isClearable
+                    isSearchable
+                    className={`custom-select-container ${
+                      errors.compareOccupationVersion ? "is-invalid" : ""
+                    }`}
+                    classNamePrefix="custom-select"
+                  />
+                  {errors.compareOccupationVersion && (
+                    <div className="text-danger text-sm mt-1">
+                      {errors.compareOccupationVersion}
+                    </div>
+                  )}
+                </div>
+
+                {/* Compare Occupation Name */}
+                <div className="col-6 mb-20">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                    Compare Occupation Name
+                    <span className="text-danger">*</span>
+                  </label>
+                  <Select
+                    options={compareOccupationNameListData.map((option) => ({
+                      value: option.uuid,
+                      label: option.occupationname,
+                    }))}
+                    value={
+                      formData.compareOccupationName
+                        ? compareOccupationNameListData
+                            .map((option) => ({
+                              value: option.uuid,
+                              label: option.occupationname,
+                            }))
+                            .find(
+                              (opt) =>
+                                opt.value === formData.compareOccupationName
+                            )
+                        : null
+                    }
+                    onChange={(selectedOption) =>
+                      handleChange({
+                        target: {
+                          name: "compareOccupationName",
+                          value: selectedOption ? selectedOption.value : "",
+                        },
+                      })
+                    }
+                    filterOption={customFilterOption}
+                    placeholder="Select Compare Occupation Name"
+                    isClearable
+                    isSearchable
+                    className={`custom-select-container ${
+                      errors.compareOccupationName ? "is-invalid" : ""
+                    }`}
+                    classNamePrefix="custom-select"
+                  />
+                  {errors.compareOccupationName && (
+                    <div className="text-danger text-sm mt-1">
+                      {errors.compareOccupationName}
+                    </div>
+                  )}
+                </div>
+
+                {/* Compare Occupation Code */}
+                <div className="col-6 mb-20">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                    Compare Occupation Code
+                    <span className="text-danger">*</span>
+                  </label>
+                  <Select
+                    options={compareOccupationCodeListData.map((option) => ({
+                      value: option.uuid,
+                      label: option.occupationcode,
+                    }))}
+                    value={
+                      formData.compareOccupationCode
+                        ? compareOccupationCodeListData
+                            .map((option) => ({
+                              value: option.uuid,
+                              label: option.occupationcode,
+                            }))
+                            .find(
+                              (opt) =>
+                                opt.value === formData.compareOccupationCode
+                            )
+                        : null
+                    }
+                    onChange={(selectedOption) =>
+                      handleChange({
+                        target: {
+                          name: "compareOccupationCode",
+                          value: selectedOption ? selectedOption.value : "",
+                        },
+                      })
+                    }
+                    filterOption={customFilterOption}
+                    placeholder="Select Compare Occupation Code"
+                    isClearable
+                    isSearchable
+                    className={`custom-select-container ${
+                      errors.compareOccupationCode ? "is-invalid" : ""
+                    }`}
+                    classNamePrefix="custom-select"
+                  />
+                  {errors.compareOccupationCode && (
+                    <div className="text-danger text-sm mt-1">
+                      {errors.compareOccupationCode}
+                    </div>
+                  )}
                 </div>
 
                 {/* Description */}
@@ -655,7 +719,6 @@ const AddEditOccupationToOccupationModal = ({
                     placeholder="Description"
                   />
                 </div>
-
                 {/* Buttons */}
                 <div className="d-flex align-items-center justify-content-center gap-3 mt-24">
                   <button

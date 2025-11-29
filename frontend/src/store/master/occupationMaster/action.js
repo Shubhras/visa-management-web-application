@@ -84,6 +84,18 @@ import {
   DELETE_RELATED_OCCUPATION,
   EXPORT_RELATED_OCCUPATION,
   IMPORT_RELATED_OCCUPATION,
+  IMPORT_ELIGIBILITY_OCCUPATION_NAME,
+  EXPORT_ELIGIBILITY_OCCUPATION_NAME,
+  DELETE_ELIGIBILITY_OCCUPATION_NAME,
+  EDIT_ELIGIBILITY_OCCUPATION_NAME,
+  ADD_ELIGIBILITY_OCCUPATION_NAME,
+  ELIGIBILITY_OCCUPATION_NAME_LIST,
+  IMPORT_OCCUPATION_TO_OCCUPATION,
+  EXPORT_OCCUPATION_TO_OCCUPATION,
+  DELETE_OCCUPATION_TO_OCCUPATION,
+  EDIT_OCCUPATION_TO_OCCUPATION,
+  ADD_OCCUPATION_TO_OCCUPATION,
+  OCCUPATION_TO_OCCUPATION_LIST,
 } from "./actionType";
 
 // Job Type Actions
@@ -599,4 +611,77 @@ export const relatedOccupationImportData = (data, callback) => ({
   data,
   callback,
 });
+
+export const occupationToOccupationList = (data, callback) => ({
+  type: OCCUPATION_TO_OCCUPATION_LIST,
+  data,
+  callback,
+});
+
+export const occupationToOccupationAdd = (data, callback) => ({
+  type: ADD_OCCUPATION_TO_OCCUPATION,
+  data,
+  callback,
+});
+
+export const occupationToOccupationEdit = (data, callback) => ({
+  type: EDIT_OCCUPATION_TO_OCCUPATION,
+  data,
+  callback,
+});
+
+export const occupationToOccupationDelete = (data, callback) => ({
+  type: DELETE_OCCUPATION_TO_OCCUPATION,
+  data,
+  callback,
+});
+
+export const occupationToOccupationExportData = (data, callback) => ({
+  type: EXPORT_OCCUPATION_TO_OCCUPATION,
+  data,
+  callback,
+});
+
+export const occupationToOccupationImportData = (data, callback) => ({
+  type: IMPORT_OCCUPATION_TO_OCCUPATION,
+  data,
+  callback,
+});
+
+export const eligibilityOccupationNameList = (data, callback) => ({
+  type: ELIGIBILITY_OCCUPATION_NAME_LIST,
+  data,
+  callback,
+});
+
+export const eligibilityOccupationNameAdd = (data, callback) => ({
+  type: ADD_ELIGIBILITY_OCCUPATION_NAME,
+  data,
+  callback,
+});
+
+export const eligibilityOccupationNameEdit = (data, callback) => ({
+  type: EDIT_ELIGIBILITY_OCCUPATION_NAME,
+  data,
+  callback,
+});
+
+export const eligibilityOccupationNameDelete = (data, callback) => ({
+  type: DELETE_ELIGIBILITY_OCCUPATION_NAME,
+  data,
+  callback,
+});
+
+export const eligibilityOccupationNameExportData = (data, callback) => ({
+  type: EXPORT_ELIGIBILITY_OCCUPATION_NAME,
+  data,
+  callback,
+});
+
+export const eligibilityOccupationNameImportData = (data, callback) => ({
+  type: IMPORT_ELIGIBILITY_OCCUPATION_NAME,
+  data,
+  callback,
+});
+
 
