@@ -10,6 +10,7 @@ import AddImportInstituteTypeModal from './AddImportInstituteTypeModal';
 import AddEditInstituteTypeModal from './AddEditInstituteTypeModal';
 import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 import { useGlobalSearch } from '../../../../components/comman/GlobalSearchContext';
+import ResetButton from '../../../../components/comman/ResetButton';
 const InstituteTypeList = () => {
     const dispatch = useDispatch();
     const { globalSearch, setGlobalSearch } = useGlobalSearch();
@@ -234,6 +235,7 @@ const InstituteTypeList = () => {
         }));
         // Reset Global Search
         setGlobalSearch('');
+        setSelectedRows([]);
     };
     const handleSearchChange = (value) => {
         setTableState(prev => ({
@@ -547,10 +549,12 @@ const InstituteTypeList = () => {
                                             </button>
                                         </>
                                     )}
-                                    <button
+                                    <ResetButton
                                         onClick={clearAllFilters}
-                                        className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
-                                    >Reset </button>
+                                        tableState={tableState}
+                                        globalSearch={globalSearch}
+                                        selectedRows={selectedRows}
+                                    />
                                 </div>
                             </div>
                             {/* Right Section: Select / Search / +Add New */}

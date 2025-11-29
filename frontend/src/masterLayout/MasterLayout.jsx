@@ -96,6 +96,15 @@ const MasterLayout = ({ children }) => {
     "When Commission Issue",
     "Leads B2C",
     "ECA For",
+    "Course Level Code",
+    "Course Divided In",
+    "Course Status",
+    "Intake Name",
+    "Course Status for Intake",
+    "Scholorship Based On",
+    "Course Level",
+    "Course Duration",
+    "Visa Main Category"
 
 
   ]);

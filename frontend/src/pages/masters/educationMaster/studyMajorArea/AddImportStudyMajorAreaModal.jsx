@@ -103,7 +103,7 @@ const AddImportStudyMajorAreaModal = ({ show, handleClose }) => {
                     if (response?.skipped_rows?.length > 0) {
                         const prepareData = {
                             data: response.skipped_rows || [],
-                            headers: ["Study Main Area","Study Major Area", "Reason"],
+                            headers: ["Study Main Area","Study Major Area","Description","Reason"],
                             sheetName: "EducationLevel",
                             fileName: "EducationLevel",
                         };

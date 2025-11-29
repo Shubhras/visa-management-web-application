@@ -102,7 +102,7 @@ const AddImportAcademicResultTypeModal = ({ show, handleClose }) => {
                     if (response?.skipped_rows?.length > 0) {
                         const prepareData = {
                             data: response.skipped_rows || [],
-                            headers: ["Education Type", "Reason"],
+                            headers: ["Education Type","Perticulars","Reason"],
                             sheetName: "EducationType",
                             fileName: "EducationType",
                         };

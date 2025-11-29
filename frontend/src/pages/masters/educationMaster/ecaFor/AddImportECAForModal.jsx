@@ -103,7 +103,7 @@ const AddImportECAForModal = ({ show, handleClose }) => {
                     if (response?.skipped_rows?.length > 0) {
                         const prepareData = {
                             data: response.skipped_rows || [],
-                            headers: ["ECA For", "Reason"],
+                            headers: ["ECA For","Description","Reason"],
                             sheetName: "ECAFor",
                             fileName: "ECAFor",
                         };

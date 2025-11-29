@@ -103,7 +103,7 @@ const AddImportStudySpecialisationModal = ({ show, handleClose }) => {
                     if (response?.skipped_rows?.length > 0) {
                         const prepareData = {
                             data: response.skipped_rows || [],
-                            headers: ["Study Main Area", "Study Major Area","Study Specialisation", "Reason"],
+                            headers: ["Study Main Area", "Study Major Area","Study Specialisation","Description","Reason"],
                             sheetName: "StudySpecialisation",
                             fileName: "StudySpecialisation",
                         };

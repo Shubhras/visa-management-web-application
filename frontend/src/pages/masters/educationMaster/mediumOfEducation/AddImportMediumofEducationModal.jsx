@@ -103,7 +103,7 @@ const AddImportMediumofEducationModal = ({ show, handleClose }) => {
                     if (response?.skipped_rows?.length > 0) {
                         const prepareData = {
                             data: response.skipped_rows || [],
-                            headers: ["Medium of Education", "Reason"],
+                            headers: ["Medium of Education","Perticulars","Reason"],
                             sheetName: "MediumOfEducation",
                             fileName: "MediumOfEducation",
                         };
