@@ -233,6 +233,7 @@ const EducationLevelCodeList = () => {
         }));
         // Reset Global Search
         setGlobalSearch('');
+        setSelectedRows([]);
     };
 
     const handlePageLengthChange = (value) => {
@@ -340,8 +341,13 @@ const EducationLevelCodeList = () => {
             toast.error("No education level code selected for deletion.");
             return;
         }
-        // console.log("sendPayload",sendPayload);
-        dispatch(educationLevelCodeDelete(sendPayload, (response, error) => {
+        const deleteAll = tableState.search?.trim() !== "";
+        const payloadSend = {
+            deleteAll: deleteAll,
+            id: deleteAll == true ? "" : sendPayload,
+            search: tableState.search || '',
+        };
+        dispatch(educationLevelCodeDelete(payloadSend, (response, error) => {
             if (error) {
                 toast.error(error?.response?.data?.message || "server error");
             } else {

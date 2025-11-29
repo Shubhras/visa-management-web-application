@@ -111,7 +111,7 @@ const AddImportLostReasonB2BModal = ({ show, handleClose }) => {
             if (response?.skipped_rows?.length > 0) {
               const prepareData = {
                 data: response.skipped_rows || [],
-                headers: ["Lost Reason (B2B)", "Reason"],
+                headers: ["Lost Reason (B2B)","Description", "Reason"],
                 sheetName: "LostReason(B2B)",
                 fileName: "LostReason(B2B)",
               };

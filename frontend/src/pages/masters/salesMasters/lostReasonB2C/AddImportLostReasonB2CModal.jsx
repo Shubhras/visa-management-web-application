@@ -108,7 +108,7 @@ const AddImportLostReasonB2CModal = ({ show, handleClose }) => {
             if (response?.skipped_rows?.length > 0) {
               const prepareData = {
                 data: response.skipped_rows || [],
-                headers: ["Lost Reason (B2C)", "Reason"],
+                headers: ["Lost Reason (B2C)","Description", "Reason"],
                 sheetName: "LostReason(B2C)",
                 fileName: "LostReason(B2C)",
               };

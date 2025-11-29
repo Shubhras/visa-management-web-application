@@ -719,24 +719,33 @@ const CityList = () => {
       toast.error("No city selected for deletion.");
       return;
     }
-    dispatch(
-      cityDelete(sendPayload, (response, error) => {
-        if (error) {
-          toast.error(error?.response?.data?.message || "server error");
-        } else {
-          if (response?.statusCode === 200 && response?.status === true) {
-            toast.success(response?.message);
-            setShowDeleteConfirm(false);
-            setSelectedRows([]);
-            setSelectAllOrNot("");
-            setDeleteId(null);
-            fetchCityList();
+    const deleteAll = selectAllOrNot === "all" && ((tableState.search && tableState.search.trim() !== '') || columnFilters.countryId.length > 0 || columnFilters.stateId.length > 0 || columnFilters.districtId.length > 0);
+    const payloadSend = {
+      deleteAll: deleteAll,
+      country: columnFilters.countryId.length > 0 ? columnFilters.countryId.length : '',
+      state: columnFilters.stateId.length > 0 ? columnFilters.stateId : '',
+      district: columnFilters.districtId.length > 0 ? columnFilters.districtId : '',
+      id: deleteAll == true ? "" : sendPayload,
+      search: tableState.search || '',
+    };
+      dispatch(
+        cityDelete(payloadSend, (response, error) => {
+          if (error) {
+            toast.error(error?.response?.data?.message || "server error");
           } else {
-            toast.error("Something went wrong.");
+            if (response?.statusCode === 200 && response?.status === true) {
+              toast.success(response?.message);
+              setShowDeleteConfirm(false);
+              setSelectedRows([]);
+              setSelectAllOrNot("");
+              setDeleteId(null);
+              fetchCityList();
+            } else {
+              toast.error("Something went wrong.");
+            }
           }
-        }
-      })
-    );
+        })
+      );
   };
 
   const cancelDelete = () => {
@@ -899,21 +908,19 @@ const CityList = () => {
                       <>
                         <button
                           onClick={() => handleSelectAllOrNot("onlySelected")}
-                          className={`btn btn-sm py-1 fw-medium ${
-                            selectAllOrNot === "onlySelected"
+                          className={`btn btn-sm py-1 fw-medium ${selectAllOrNot === "onlySelected"
                               ? "comman-btn-color"
                               : "comman-inactive-btn"
-                          }`}
+                            }`}
                         >
                           {`Select (${selectedRows.length})`}
                         </button>
                         <button
                           onClick={() => handleSelectAllOrNot("all")}
-                          className={`btn btn-sm py-1 fw-medium ${
-                            selectAllOrNot === "all"
+                          className={`btn btn-sm py-1 fw-medium ${selectAllOrNot === "all"
                               ? "comman-btn-color"
                               : "comman-inactive-btn"
-                          }`}
+                            }`}
                         >
                           {`Select All (${tableState.total})`}
                         </button>
@@ -962,9 +969,8 @@ const CityList = () => {
                       <nav>
                         <ul className="pagination mb-0 gap-4px">
                           <li
-                            className={`page-item ${
-                              !tableState.hasPrevious ? "disabled" : ""
-                            }`}
+                            className={`page-item ${!tableState.hasPrevious ? "disabled" : ""
+                              }`}
                           >
                             <button
                               className="border-0 bg-transparent"
@@ -985,9 +991,8 @@ const CityList = () => {
                             </button>
                           </li>
                           <li
-                            className={`page-item ${
-                              !tableState.hasPrevious ? "disabled" : ""
-                            }`}
+                            className={`page-item ${!tableState.hasPrevious ? "disabled" : ""
+                              }`}
                           >
                             <button
                               className="border-0 bg-transparent"
@@ -1052,9 +1057,8 @@ const CityList = () => {
                             </li>
                           ))}
                           <li
-                            className={`page-item ${
-                              !tableState.hasNext ? "disabled" : ""
-                            }`}
+                            className={`page-item ${!tableState.hasNext ? "disabled" : ""
+                              }`}
                           >
                             <button
                               className="border-0 bg-transparent"
@@ -1075,9 +1079,8 @@ const CityList = () => {
                             </button>
                           </li>
                           <li
-                            className={`page-item ${
-                              !tableState.hasNext ? "disabled" : ""
-                            }`}
+                            className={`page-item ${!tableState.hasNext ? "disabled" : ""
+                              }`}
                           >
                             <button
                               className="border-0 bg-transparent"
@@ -1146,11 +1149,10 @@ const CityList = () => {
                                           : "mdi:filter-outline"
                                       }
                                       width="18"
-                                      className={`ms-2 ${
-                                        columnFilters[column.field]?.length > 0
+                                      className={`ms-2 ${columnFilters[column.field]?.length > 0
                                           ? "comman-btn-color"
                                           : ""
-                                      }`}
+                                        }`}
                                       style={{ cursor: "pointer" }}
                                       onClick={(e) =>
                                         toggleFilterDropdown(e, column.field)
@@ -1165,13 +1167,12 @@ const CityList = () => {
                                       >
                                         {/* Sort Options */}
                                         <div
-                                          className={`filter-menu-item px-3 py-2 d-flex align-items-center ${
-                                            tableState.sort.find(
-                                              (s) => s.field === column.field
-                                            )?.order === "asc"
+                                          className={`filter-menu-item px-3 py-2 d-flex align-items-center ${tableState.sort.find(
+                                            (s) => s.field === column.field
+                                          )?.order === "asc"
                                               ? "disabled-sort"
                                               : ""
-                                          }`}
+                                            }`}
                                           onClick={() =>
                                             applySortAsc(column.field)
                                           }
@@ -1184,13 +1185,12 @@ const CityList = () => {
                                           Sort Smallest to Largest
                                         </div>
                                         <div
-                                          className={`filter-menu-item px-3 py-2 d-flex align-items-center ${
-                                            tableState.sort.find(
-                                              (s) => s.field === column.field
-                                            )?.order === "desc"
+                                          className={`filter-menu-item px-3 py-2 d-flex align-items-center ${tableState.sort.find(
+                                            (s) => s.field === column.field
+                                          )?.order === "desc"
                                               ? "disabled-sort"
                                               : ""
-                                          }`}
+                                            }`}
                                           onClick={() =>
                                             applySortDesc(column.field)
                                           }
