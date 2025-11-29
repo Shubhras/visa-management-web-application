@@ -55,8 +55,8 @@ const AddEditLanguageTestNameModal = ({ show, handleClose, mode = 'add', rowData
       limit: 2000,
       search: '',
       status: '',
-      sortBy: 'updated_at', // Field to sort by
-      sortOrder: 'desc', // 'asc' or 'desc'
+      sortBy: 'name', // Field to sort by
+      sortOrder: 'asc', // 'asc' or 'desc'
     };
 
     dispatch(languageNameTestList(params, (response, error) => {

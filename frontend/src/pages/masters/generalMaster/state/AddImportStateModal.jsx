@@ -89,7 +89,7 @@ const AddImportStateModal = ({ show, handleClose }) => {
                     if (response?.duplicates?.length > 0) {
                         const prepareData = {
                             data: response.duplicates || [],
-                            headers: ["Country Name", "State Name","State / Territory"],
+                            headers: ["Country Name", "State Name", "State Short Name", "State / Territory"],
                             sheetName: "State",
                             fileName: "State",
                         };
@@ -103,7 +103,7 @@ const AddImportStateModal = ({ show, handleClose }) => {
                      if (response?.skipped_rows?.length > 0) {
                         const prepareData = {
                             data: response.skipped_rows || [],
-                            headers: ["Country Name", "State Name","State / Territory","Reason"],
+                            headers: ["Country Name", "State Name", "State Short Name", "State / Territory","Reason"],
                             sheetName: "State",
                             fileName: "State",
                         };

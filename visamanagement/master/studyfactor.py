@@ -3857,56 +3857,123 @@ class StudyFactorAgeImportAPIView(APIView):
 
 
 # ---------------- LIST ----------------
+
+
 class StudyFactorAcademicResultListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
-
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
+        custom_sort = request.GET.get('customSort')  # e.g., academic_result_group_name:asc
 
-        allowed_sort_fields = [
-            'updated_at',
-        ]
+        # Allowed sort fields mapping
+        sort_field_map = {
+            'factor_for_name': 'factor_for__name',
+            'academic_result_group_name': 'academic_result_group__name',
+            'minimum_academic_result_required_name': 'minimum_academic_result_required__name',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
 
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
+        queryset = StudyFactorAcademicResult.objects.filter(is_deleted=False)
 
-        if sort_order == 'desc':
-            sort_by = f"-{sort_by}"
-
-        queryset = AcademicResult.objects.filter(is_deleted=False)
-
+        # --------------------------
+        # SEARCH BY academic_result_group only
+        # --------------------------
         if search:
             queryset = queryset.filter(
-                Q(factor_for__name__istartswith=search) |
                 Q(academic_result_group__name__istartswith=search)
             )
 
-        queryset = queryset.order_by(sort_by)
+        # --------------------------
+        # SORTING LOGIC
+        # --------------------------
+        sort_fields = []
 
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive for string fields
+                    if field in ['factor_for_name', 'academic_result_group_name', 'minimum_academic_result_required_name', 'description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+        else:
+            # Fallback sorting
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'desc')
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+            f = F(orm_field)
+            sort_fields = [
+                f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)
+            ]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # Pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
-        serializer = AcademicResultSerializer(result_page, many=True)
+        serializer = StudyFactorAcademicResultSerializer(result_page, many=True)
 
         return paginator.get_paginated_response(serializer.data)
-
+    
 
 # ---------------- CREATE ----------------
+
 class StudyFactorAcademicResultCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
+
         factor_for = request.data.get("factor_for")
         academic_result_group = request.data.get("academic_result_group")
-        min_result = request.data.get("minimum_academic_result_required")
+        minimum_academic_result_required = request.data.get("minimum_academic_result_required")
 
-        # Duplicate check
-        existing = AcademicResult.objects.filter(
+        # ---------- 1. Basic Required Validations ----------
+
+        if not factor_for:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "factor_for is required."
+            }, status=400)
+
+        if not academic_result_group:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "academic_result_group is required."
+            }, status=400)
+
+        if not minimum_academic_result_required:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "status": False,
+                "message": "minimum_academic_result_required (UUID) is required."
+            }, status=400)
+
+        # ---------- 2. Duplicate Check (Like Department API) ----------
+        existing = StudyFactorAcademicResult.objects.filter(
             factor_for_id=factor_for,
             academic_result_group_id=academic_result_group,
-            minimum_academic_result_required_id=min_result,
+            minimum_academic_result_required__uuid=minimum_academic_result_required,
             is_deleted=False
         ).first()
 
@@ -3914,83 +3981,87 @@ class StudyFactorAcademicResultCreateAPIView(APIView):
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Academic Result already exists with these details."
+                "message": "Record with these Factor For + Academic Result Group + Required Result already exists."
             }, status=400)
 
-        serializer = AcademicResultSerializer(data=request.data)
+        # ---------- 3. Insert (Same structure as Department API) ----------
+        serializer = StudyFactorAcademicResultSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "Academic Result created successfully",
+                "message": "Study Factor Academic Result created successfully",
                 "data": serializer.data
-            })
+            }, status=200)
 
-        errors = []
-        for field, msgs in serializer.errors.items():
-            errors.extend(msgs)
+        # ---------- 4. Collect Errors (Same style as Department API) ----------
+        errors = serializer.errors
+        messages = []
+        for field, msgs in errors.items():
+            messages.extend(msgs)
+        message_text = " ".join(messages)
 
         return Response({
             "statusCode": 400,
             "status": False,
-            "message": " ".join(errors)
+            "message": message_text,
         }, status=400)
-
+    
 
 # ---------------- RETRIEVE ----------------
+
 class StudyFactorAcademicResultRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request, uuid):
-
         try:
-            obj = AcademicResult.objects.get(uuid=uuid, is_deleted=False)
-        except AcademicResult.DoesNotExist:
+            obj = StudyFactorAcademicResult.objects.get(uuid=uuid, is_deleted=False)
+        except StudyFactorAcademicResult.DoesNotExist:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "Academic Result not found",
+                "message": "Study Factor Academic Result not found",
                 "data": None
-            }, status=404)
+            }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = AcademicResultSerializer(obj)
+        serializer = StudyFactorAcademicResultSerializer(obj)
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": "Academic Result retrieved successfully",
+            "message": "Study Factor Academic Result retrieved successfully",
             "data": serializer.data
         })
 
 
+
 # ---------------- UPDATE ----------------
+
 class StudyFactorAcademicResultUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def put(self, request, uuid):
-
         try:
-            obj = AcademicResult.objects.get(uuid=uuid, is_deleted=False)
-        except AcademicResult.DoesNotExist:
+            obj = StudyFactorAcademicResult.objects.get(uuid=uuid, is_deleted=False)
+        except StudyFactorAcademicResult.DoesNotExist:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "Academic Result not found",
+                "message": "Study Factor Academic Result not found",
                 "data": None
-            }, status=404)
+            }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = AcademicResultSerializer(obj, data=request.data)
+        serializer = StudyFactorAcademicResultSerializer(obj, data=request.data)
         if serializer.is_valid():
             serializer.save()
-
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "Academic Result updated successfully",
+                "message": "Study Factor Academic Result updated successfully",
                 "data": serializer.data
             })
 
+        # Collect all error messages
         errors = []
         for field, msgs in serializer.errors.items():
             errors.extend(msgs)
@@ -4000,131 +4071,184 @@ class StudyFactorAcademicResultUpdateAPIView(APIView):
             "status": False,
             "message": " ".join(errors),
             "data": None
-        }, status=400)
+        }, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 # ---------------- DELETE ----------------
+
 class StudyFactorAcademicResultDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
-
-        ids = request.data.get("id")
+        ids = request.data.get("id", None)
 
         # ---- SINGLE DELETE ----
         if uuid:
             try:
-                obj = AcademicResult.objects.get(uuid=uuid)
+                obj = StudyFactorAcademicResult.objects.get(uuid=uuid)
                 obj.delete()
                 return Response({
                     "statusCode": 204,
                     "status": True,
-                    "message": "Academic Result permanently deleted.",
+                    "message": "Study Factor Academic Result permanently deleted.",
                     "data": None
-                }, status=204)
-            except AcademicResult.DoesNotExist:
+                }, status=status.HTTP_204_NO_CONTENT)
+            except StudyFactorAcademicResult.DoesNotExist:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "Academic Result not found.",
+                    "message": "Study Factor Academic Result not found.",
                     "data": None
-                }, status=404)
+                }, status=status.HTTP_404_NOT_FOUND)
 
         # ---- DELETE ALL ----
         if ids == "all":
-            objs = AcademicResult.objects.all()
+            objs = StudyFactorAcademicResult.objects.all()
             count = objs.count()
-
             if count == 0:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "No Academic Results found to delete.",
+                    "message": "No Study Factor Academic Results found to delete.",
                     "data": None
-                }, status=404)
-
+                }, status=status.HTTP_404_NOT_FOUND)
             objs.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} Academic Results permanently deleted.",
+                "message": f"All {count} Study Factor Academic Result(s) permanently deleted.",
                 "data": None
-            })
+            }, status=status.HTTP_200_OK)
 
         # ---- MULTIPLE DELETE ----
         if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Provide list of UUIDs in 'id' field or 'all'.",
+                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
                 "data": None
-            }, status=400)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
-        valid = []
-        invalid = []
+        valid_uuids = []
+        invalid_uuids = []
 
-        for v in ids:
+        for u in ids:
             try:
-                valid.append(UUID(v))
+                valid_uuids.append(UUID(u))
             except ValueError:
-                invalid.append(v)
+                invalid_uuids.append(u)
 
-        if not valid:
+        if not valid_uuids:
             return Response({
                 "statusCode": 400,
                 "status": False,
                 "message": "No valid UUIDs provided.",
-                "data": {"invalid_uuids": invalid}
-            }, status=400)
+                "data": {"invalid_uuids": invalid_uuids}
+            }, status=status.HTTP_400_BAD_REQUEST)
 
-        objs = AcademicResult.objects.filter(uuid__in=valid)
+        objs = StudyFactorAcademicResult.objects.filter(uuid__in=valid_uuids)
         count = objs.count()
 
         if count == 0:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "No matching Academic Results found.",
-                "data": {"invalid_uuids": invalid} if invalid else None
-            }, status=404)
+                "message": "No matching Study Factor Academic Results found.",
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+            }, status=status.HTTP_404_NOT_FOUND)
 
         objs.delete()
-
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f"{count} Academic Result(s) permanently deleted.",
-            "data": {"invalid_uuids": invalid} if invalid else None
-        })
+            "message": f"{count} Study Factor Academic Result(s) permanently deleted.",
+            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+        }, status=status.HTTP_200_OK)
+
+
 
 
 class StudyFactorAcademicResultExportAPIView(APIView):
+    """
+    Export Study Factor Academic Result data to CSV or XLSX with custom sorting.
+    """
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
-        fields = request.GET.get('fields')
+        fields = request.GET.get('fields')  # comma-separated fields
         uuids_param = request.GET.get('uuids', '')
+        custom_sort = request.GET.get('customSort')  # e.g., academic_result_group:asc,updated_at:desc
+        search = request.GET.get('search', '').strip()
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
-        # Map model fields to friendly headers
+        # --- Field to header mapping ---
         field_header_map = {
             'uuid': 'UUID',
-            # We will export related names for these fields
             'factor_for': 'Factor For',
             'academic_result_group': 'Academic Result Group',
             'minimum_academic_result_required': 'Minimum Academic Result Required',
             'description': 'Description',
             'is_deleted': 'Deleted',
+            'created_at': 'Created On',
             'updated_at': 'Modified On',
         }
 
+        # --- Determine fields to export ---
         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+        # --- Fetch queryset ---
         queryset = StudyFactorAcademicResult.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
 
+        if search:
+            queryset = queryset.filter(academic_result_group__name__istartswith=search)
+
+        # --- Custom sorting logic ---
+        sort_field_map = {
+            'factor_for': 'factor_for__name',
+            'academic_result_group': 'academic_result_group__name',
+            'minimum_academic_result_required': 'minimum_academic_result_required__name',
+            'description': 'description',
+            'is_deleted': 'is_deleted',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+
+        sort_fields = []
+
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sorting for string fields
+                    if field in ['factor_for', 'academic_result_group', 'minimum_academic_result_required', 'description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+                except ValueError:
+                    continue
+        else:
+            # Default sort by created_at desc
+            sort_order = request.GET.get('sortOrder', 'desc')
+            f = F('created_at')
+            sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # --- Prepare dataset ---
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = 'StudyFactorAcademicResult'
@@ -4132,7 +4256,7 @@ class StudyFactorAcademicResultExportAPIView(APIView):
         for obj in queryset:
             row = []
             for field in field_list:
-                # handle related name fields specially
+                # Handle related fields
                 if field == 'factor_for':
                     value = getattr(obj.factor_for, 'name', '') if obj.factor_for else ''
                 elif field == 'academic_result_group':
@@ -4143,27 +4267,29 @@ class StudyFactorAcademicResultExportAPIView(APIView):
                     value = getattr(obj, field, '')
 
                 if field in ['created_at', 'updated_at'] and value:
-                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                    value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
                     value = int(value)
 
                 row.append(value if value is not None else '')
             dataset.append(row)
 
+        # --- Export data ---
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
-            file_name = 'study_factor_academic_result.csv'
+            file_name = 'StudyFactorAcademicResult.csv'
             response_content = file_data
         else:
             file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'study_factor_academic_result.xlsx'
+            file_name = 'StudyFactorAcademicResult.xlsx'
             response_content = file_data.getvalue()
 
         response = HttpResponse(response_content, content_type=content_type)
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
+
 
 
 class StudyFactorAcademicResultImportAPIView(APIView):
@@ -4174,31 +4300,37 @@ class StudyFactorAcademicResultImportAPIView(APIView):
         sheet_name = request.data.get("sheet_name")
 
         if not file:
-            return Response({"error": "No file uploaded"}, status=400)
+            return Response({"statusCode": 400, "status": False, "message": "No file uploaded"}, status=400)
 
         format_type = file.name.split(".")[-1].lower()
         duplicates = []
         skipped_rows = []
+
         required_headers = {"factor for", "academic result group", "minimum academic result required"}
         optional_headers = {"description"}
 
         try:
             data = []
 
+            # ---------- XLSX Handling ----------
             if format_type == "xlsx":
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
 
                 if not sheet_name:
                     return Response({
-                        "error": "Please provide sheet_name",
-                        "available_sheets": available_sheets,
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "Please provide sheet_name",
+                        "available_sheets": available_sheets
                     }, status=400)
 
                 if sheet_name not in available_sheets:
                     return Response({
-                        "error": f'Sheet "{sheet_name}" not found',
-                        "available_sheets": available_sheets,
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'Sheet "{sheet_name}" not found in uploaded file',
+                        "available_sheets": available_sheets
                     }, status=400)
 
                 ws = wb[sheet_name]
@@ -4210,6 +4342,7 @@ class StudyFactorAcademicResultImportAPIView(APIView):
                     }, status=400)
 
                 headers = [str(cell.value).strip().lower() if cell.value else "" for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+
                 if not required_headers.issubset(set(headers)):
                     return Response({
                         "statusCode": 400,
@@ -4218,37 +4351,42 @@ class StudyFactorAcademicResultImportAPIView(APIView):
                     }, status=400)
 
                 for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
-                    # skip completely empty rows
                     if not any(row):
                         continue
                     row_dict = dict(zip(headers, row))
                     row_dict["_row_number"] = idx
                     data.append(row_dict)
 
+            # ---------- CSV Handling ----------
             elif format_type == "csv":
                 decoded_file = file.read().decode("utf-8")
                 dataset = Dataset()
                 dataset.load(decoded_file, format="csv")
+
                 for idx, row in enumerate(dataset.dict, start=2):
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
                     row_lower["_row_number"] = idx
+
                     if not required_headers.issubset(set(row_lower.keys())):
                         return Response({
                             "statusCode": 400,
                             "status": False,
                             "message": f"Missing required headers. Required: {', '.join(required_headers)}. Found: {', '.join(row_lower.keys())}."
                         }, status=400)
+
                     data.append(row_lower)
+
             else:
                 return Response({
                     "statusCode": 400,
                     "status": False,
-                    "message": "Unsupported file format. Use .xlsx or .csv",
+                    "message": "Unsupported file format. Use .xlsx or .csv"
                 }, status=400)
 
+            # ---------- Import Rows ----------
             imported_count = 0
 
-            # iterate reversed to keep same ordering behavior as reference
+            # Reverse iterate to maintain order
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
 
@@ -4295,14 +4433,13 @@ class StudyFactorAcademicResultImportAPIView(APIView):
                         })
                         continue
                     else:
-                        # restore soft-deleted record and update description
                         existing.description = description
                         existing.is_deleted = False
                         existing.save()
                         imported_count += 1
                         continue
 
-                # create new record
+                # Create new record
                 StudyFactorAcademicResult.objects.create(
                     factor_for=factor_obj,
                     academic_result_group=group_obj,
@@ -4313,8 +4450,13 @@ class StudyFactorAcademicResultImportAPIView(APIView):
                 imported_count += 1
 
         except Exception as e:
-            return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": str(e)
+            }, status=400)
 
+        # ---------- Final Response ----------
         return Response({
             "statusCode": 200,
             "status": True,
@@ -4324,7 +4466,7 @@ class StudyFactorAcademicResultImportAPIView(APIView):
             "skipped_rows": skipped_rows
         }, status=200)
 
-
+# ---------------- LIST ----------------
 
 class StudyFactorBacklogsListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]

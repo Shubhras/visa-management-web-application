@@ -10,6 +10,7 @@ import AddImportAcademicResultTypeModal from './AddImportEducationTypeModal';
 import AddEditAcademicResultTypeModal from './AddEditEducationTypeModal';
 import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 import { useGlobalSearch } from '../../../../components/comman/GlobalSearchContext';
+import ResetButton from '../../../../components/comman/ResetButton';
 const EducationTypeList = () => {
     const dispatch = useDispatch();
     const { globalSearch, setGlobalSearch } = useGlobalSearch();
@@ -549,10 +550,15 @@ const EducationTypeList = () => {
                                             </button>
                                         </>
                                     )}
-                                    <button
+                                    {/* <button
                                         onClick={clearAllFilters}
                                         className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
-                                    >Reset </button>
+                                    >Reset </button> */}
+                                    <ResetButton
+                                        onClick={clearAllFilters}
+                                        tableState={tableState}
+                                        globalSearch={globalSearch}
+                                    />
                                 </div>
                             </div>
 

@@ -2901,6 +2901,12 @@ class StudyFactorAcademicResultSerializer(serializers.ModelSerializer):
     academic_result_group_name = serializers.CharField(source='academic_result_group.name', read_only=True)
     minimum_academic_result_required_name = serializers.CharField(source='minimum_academic_result_required.name', read_only=True)
 
+    # Accept UUID for FK because model uses to_field='uuid'
+    minimum_academic_result_required = serializers.SlugRelatedField(
+        queryset=AcademicResultType.objects.all(),
+        slug_field='uuid'
+    )
+
     class Meta:
         model = StudyFactorAcademicResult
         fields = [
@@ -2909,7 +2915,8 @@ class StudyFactorAcademicResultSerializer(serializers.ModelSerializer):
             'academic_result_group', 'academic_result_group_name',
             'minimum_academic_result_required', 'minimum_academic_result_required_name',
             'description',
-            'is_deleted', 'created_at', 'updated_at',
+            'is_deleted',
+            'created_at', 'updated_at',
         ]
         read_only_fields = ['uuid', 'created_at', 'updated_at']
 

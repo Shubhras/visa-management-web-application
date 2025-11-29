@@ -3,12 +3,12 @@ import { useDispatch } from "react-redux";
 import MasterLayout from "../../../masterLayout/MasterLayout";
 import { Icon } from '@iconify/react/dist/iconify.js';
 import Select from "react-select";
-import BasicDetails from "./components/BasicDetails";
-import PrincipalApplicant from "./components/PrincipalApplicant";
-import AdditionalDetails from "./components/AdditionalDetails";
-import SpouseDetails from "./components/SpouseDetails";
-import QuickAssessment from "./components/QuickAssessment";
-import Documents from "./components/Documents";
+import BasicDetails from "./components/basicDetails/BasicDetails";
+import PrincipalApplicant from "./components/principalApplicant/PrincipalApplicant";
+import AdditionalDetails from "./components/additionalDetails/AdditionalDetails";
+import SpouseDetails from "./components/spouseDetails/SpouseDetails";
+import QuickAssessment from "./components/quickAssessment/QuickAssessment";
+import Documents from "./components/documents/Documents";
 
 const LeadB2CForm = () => {
     const dispatch = useDispatch();
@@ -237,21 +237,19 @@ const LeadB2CForm = () => {
                                     >
                                         Spouse Details
                                     </button>
-
-                                    <button
-                                        type="button"
-                                        className={`${mainTabBtnClass("quick")} me-1`}
-                                        onClick={() => setActiveMainTab("quick")}
-                                    >
-                                        Quick Assessment
-                                    </button>
-
                                     <button
                                         type="button"
                                         className={`${mainTabBtnClass("documents")} me-1`}
                                         onClick={() => setActiveMainTab("documents")}
                                     >
                                         Documents
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className={`${mainTabBtnClass("quick")} me-1`}
+                                        onClick={() => setActiveMainTab("quick")}
+                                    >
+                                        Quick Assessment
                                     </button>
                                 </div>
 

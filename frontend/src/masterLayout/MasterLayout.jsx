@@ -94,7 +94,8 @@ const MasterLayout = ({ children }) => {
     "Institute Department",
     "Bank Account For",
     "When Commission Issue",
-    "Leads B2C"
+    "Leads B2C",
+    "ECA For",
 
 
   ]);

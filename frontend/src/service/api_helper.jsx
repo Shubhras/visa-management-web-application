@@ -1858,7 +1858,7 @@ export const importStudyMajorAreaDataAPI = (payload) => {
 };
 
 export const studyMajorAreaListByMainAreaAPI = (payload) => {
-  const apiUrl = `${url.STUDY_MAJOR_AREA_LIST_BY_MAIN_AREA_API}?main_uuid=${payload.mainarea_id}`;
+  const apiUrl = `${url.STUDY_MAJOR_AREA_LIST_BY_MAIN_AREA_API}?main_uuid=${payload.mainarea_id}&sortBy=${payload?.sortBy}&sortOrder=${payload?.sortOrder}`;
   return get(apiUrl, payload);
 };
 

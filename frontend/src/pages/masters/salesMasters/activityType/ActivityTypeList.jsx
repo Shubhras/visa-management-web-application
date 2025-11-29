@@ -242,6 +242,7 @@ const ActivityTypeList = () => {
     }));
     // Reset Global Search
     setGlobalSearch("");
+    setSelectedRows([]);
   };
   const handleSearchChange = (value) => {
     setTableState((prev) => ({
@@ -588,6 +589,7 @@ const ActivityTypeList = () => {
                     onClick={clearAllFilters}
                     tableState={tableState}
                     globalSearch={globalSearch}
+                    selectedRows={selectedRows}
                   />
                 </div>
               </div>
