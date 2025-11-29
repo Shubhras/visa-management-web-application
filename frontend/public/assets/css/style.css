@@ -15997,6 +15997,29 @@ td.fc-header-center {
   border: 1px solid #658e67;
 }
 
+
+.comman-active-btn-reset {
+ border: 1px solid var(--input-form-light);
+  color: var(--text-primary-light) !important;
+  background-color: var(--white);
+}
+.comman-inactive-btn-reset {
+  background: #5a6c5b;
+  color: #fff !important;
+  border: 1px solid #658e67;
+}
+
+.comman-inactive-btn-reset:hover {
+  background: #5a6c5b;
+  color: #fff !important;
+  border: 1px solid #658e67;
+}
+.comman-active-btn-reset:hover {
+  background: #5a6c5b;
+  color: #fff !important;
+  border: 1px solid #658e67;
+}
+
 /*  popup class start*/
 .common-ctl-popup {
   display: block;
