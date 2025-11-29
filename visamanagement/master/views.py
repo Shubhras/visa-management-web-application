@@ -4119,183 +4119,6 @@ class CityExportAPIView(APIView):
 #             }, status=400)
 
 
-# class CityImportAPIView(APIView):
-#     permission_classes = [IsAuthenticated, IsAdminUser]
-
-#     def post(self, request):
-#         file = request.FILES.get('file')
-#         sheet_name = request.data.get('sheet_name')
-
-#         if not file:
-#             return Response({'error': 'No file uploaded'}, status=400)
-
-#         format_type = file.name.split('.')[-1].lower()
-#         required_headers = {'city name', 'country name'}
-#         optional_headers = {'state name', 'district name', 'description'}
-
-#         try:
-#             # ------------------ Load file ------------------
-#             data = []
-#             if format_type == 'xlsx':
-#                 wb = openpyxl.load_workbook(file, read_only=True)
-#                 if sheet_name not in wb.sheetnames:
-#                     return Response({
-#                         "error": f"Invalid sheet_name. Available sheets: {wb.sheetnames}"
-#                     }, status=400)
-#                 ws = wb[sheet_name]
-#                 headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-#                 for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
-#                     if not any(row):
-#                         continue
-#                     row_dict = dict(zip(headers, row))
-#                     row_dict['_row_number'] = idx
-#                     data.append(row_dict)
-
-#             elif format_type == 'csv':
-#                 decoded = file.read().decode('utf-8')
-#                 reader = csv.DictReader(io.StringIO(decoded))
-#                 for idx, row in enumerate(reader, start=2):
-#                     row_lower = {k.strip().lower(): v for k, v in row.items()}
-#                     row_lower['_row_number'] = idx
-#                     data.append(row_lower)
-#             else:
-#                 return Response({'error': 'Unsupported file type. Use .xlsx or .csv'}, status=400)
-
-#             # ------------------ Preload related data ------------------
-#             countries = {c.name.strip().lower(): c for c in Country.objects.all()}
-#             states = {(s.stateName.strip().lower(), s.countryName.uuid): s for s in State.objects.all() if s.countryName}
-#             districts = {(d.districtName.strip().lower(), d.stateName.uuid, d.countryName.uuid): d for d in District.objects.all() if d.stateName and d.countryName}
-
-#             # ------------------ Preload existing cities ------------------
-#             existing_city_keys = set(
-#                 (
-#                     (c.cityName or "").strip().lower(),
-#                     (c.stateName.stateName.lower() if c.stateName else ""),
-#                     (c.countryName.name.lower() if c.countryName else ""),
-#                     (c.districtName.districtName.lower() if c.districtName else "")
-#                 )
-#                 for c in City.objects.all()
-#             )
-
-#             # ------------------ Process rows ------------------
-#             to_create = []
-#             duplicates = []
-#             skipped_rows = []
-#             existing_in_file = set()
-
-#             for row in data:
-#                 row_number = row.get('_row_number', 'Unknown')
-#                 city_name = (row.get("city name") or "").strip()
-#                 country_name = (row.get("country name") or "").strip()
-#                 state_name = (row.get("state name") or "").strip()
-#                 district_name = (row.get("district name") or "").strip()
-#                 description = (row.get("description") or "").strip()
-
-#                 # ------------------ Skip missing required fields ------------------
-#                 missing_fields = [f for f, v in [('city name', city_name), ('country name', country_name)] if not v]
-#                 if missing_fields:
-#                     skipped_rows.append({
-#                         "Row": row_number,
-#                         "City Name": city_name or "Unknown",
-#                         "State Name": state_name or "",
-#                         "District Name": district_name or "",
-#                         "Country Name": country_name or "Unknown",
-#                         "Reason": f"Missing required fields: {', '.join(missing_fields)}"
-#                     })
-#                     continue
-
-#                 # ------------------ Validate related objects ------------------
-#                 country_obj = countries.get(country_name.lower())
-#                 if not country_obj:
-#                     skipped_rows.append({
-#                         "Row": row_number,
-#                         "City Name": city_name,
-#                         "State Name": state_name or "",
-#                         "District Name": district_name or "",
-#                         "Country Name": country_name or "",
-#                         "Reason": f"Country '{country_name}' not found"
-#                     })
-#                     continue
-
-#                 state_obj = states.get((state_name.lower(), country_obj.uuid)) if state_name else None
-#                 if state_name and not state_obj:
-#                     skipped_rows.append({
-#                         "Row": row_number,
-#                         "City Name": city_name,
-#                         "State Name": state_name or "",
-#                         "District Name": district_name or "",
-#                         "Country Name": country_name or "",
-#                         "Reason": f"State '{state_name}' not found for country '{country_name}'"
-#                     })
-#                     continue
-
-#                 district_obj = districts.get((district_name.lower(), state_obj.uuid, country_obj.uuid)) if district_name and state_obj else None
-#                 if district_name and state_name and not district_obj:
-#                     skipped_rows.append({
-#                         "Row": row_number,
-#                         "City Name": city_name,
-#                         "State Name": state_name or "",
-#                         "District Name": district_name or "",
-#                         "Country Name": country_name or "",
-#                         "Reason": f"District '{district_name}' not found for state '{state_name}'"
-#                     })
-#                     continue
-
-#                 # ------------------ Exact duplicate check (4 fields) ------------------
-#                 key = (
-#                     city_name.lower(),
-#                     state_name.lower() if state_name else "",
-#                     country_name.lower(),
-#                     district_name.lower() if district_name else ""
-#                 )
-
-#                 if key in existing_city_keys or key in existing_in_file:
-#                     duplicates.append({
-#                         "Row": row_number,
-#                         "City Name": city_name,
-#                         "District Name": district_name,
-#                         "State Name": state_name,
-#                         "Country Name": country_name,
-#                         "Reason": "Duplicate city (exact match)"
-#                     })
-#                     continue
-
-#                 existing_in_file.add(key)
-#                 existing_city_keys.add(key)
-
-#                 # ------------------ Prepare city object ------------------
-#                 to_create.append(
-#                     City(
-#                         cityName=city_name,
-#                         districtName=district_obj,
-#                         stateName=state_obj,
-#                         countryName=country_obj,
-#                         description=description,
-#                         is_deleted=False
-#                     )
-#                 )
-
-#             # ------------------ Bulk insert (safe for MySQL) ------------------
-#             with transaction.atomic():
-#                 City.objects.bulk_create(to_create, batch_size=500)
-
-#             return Response({
-#                 "statusCode": 200,
-#                 "status": True,
-#                 "imported_count": len(to_create),
-#                 "duplicates": duplicates,
-#                 "skipped_rows": skipped_rows,
-#                 "message": f"Imported successfully ({len(to_create)} new cities)"
-#             }, status=200)
-
-#         except Exception as e:
-#             return Response({
-#                 "statusCode": 400,
-#                 "status": False,
-#                 "message": str(e)
-#             }, status=400)
-
-
 class CityImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
  
@@ -4369,7 +4192,7 @@ class CityImportAPIView(APIView):
                 state_name = (row.get("state name") or "").strip()
                 district_name = (row.get("district name") or "").strip()
                 description = (row.get("description") or "").strip()
- 
+
                 # ------------------ Skip missing required fields ------------------
                 missing_fields = [f for f, v in [('city name', city_name), ('country name', country_name)] if not v]
                 if missing_fields:
@@ -4382,7 +4205,7 @@ class CityImportAPIView(APIView):
                         "Reason": f"Missing required fields: {', '.join(missing_fields)}"
                     })
                     continue
- 
+
                 # ------------------ Validate related objects ------------------
                 country_obj = countries.get(country_name.lower())
                 if not country_obj:
@@ -4395,42 +4218,39 @@ class CityImportAPIView(APIView):
                         "Reason": f"Country '{country_name}' not found"
                     })
                     continue
- 
+
                 state_obj = states.get((state_name.lower(), country_obj.uuid)) if state_name else None
                 if state_name and not state_obj:
                     skipped_rows.append({
                         "Row": row_number,
                         "City Name": city_name,
-                        "State Name": state_name or "",
-                        "District Name": district_name or "",
-                        "Country Name": country_name or "",
+                        "State Name": state_name,
+                        "District Name": district_name,
+                        "Country Name": country_name,
                         "Reason": f"State '{state_name}' not found for country '{country_name}'"
                     })
                     continue
- 
+
                 district_obj = districts.get((district_name.lower(), state_obj.uuid, country_obj.uuid)) if district_name and state_obj else None
                 if district_name and state_name and not district_obj:
                     skipped_rows.append({
                         "Row": row_number,
                         "City Name": city_name,
-                        "State Name": state_name or "",
-                        "District Name": district_name or "",
-                        "Country Name": country_name or "",
+                        "State Name": state_name,
+                        "District Name": district_name,
+                        "Country Name": country_name,
                         "Reason": f"District '{district_name}' not found for state '{state_name}'"
                     })
                     continue
- 
+
                 # ------------------ Exact duplicate check ------------------
-                # ------------------ Exact duplicate check ------------------
-              # ------------------ Exact duplicate check ------------------
-                # Only consider duplicate if city, state, country, and district all match
                 key = (
                     city_name.lower(),
                     state_name.lower() if state_name else "",
                     country_name.lower(),
                     district_name.lower() if district_name else None
                 )
- 
+
                 if key in existing_city_keys or key in existing_in_file:
                     duplicates.append({
                         "Row": row_number,
@@ -4441,11 +4261,9 @@ class CityImportAPIView(APIView):
                         "Reason": "Duplicate city (exact match)"
                     })
                     continue
- 
+
                 existing_in_file.add(key)
- 
- 
- 
+
                 # ------------------ Prepare city object ------------------
                 to_create.append(
                     City(
@@ -4457,6 +4275,7 @@ class CityImportAPIView(APIView):
                         is_deleted=False
                     )
                 )
+
  
             # ------------------ Bulk insert ------------------
             with transaction.atomic():
@@ -4468,8 +4287,8 @@ class CityImportAPIView(APIView):
                 "imported_count": len(to_create),
                 "duplicates": duplicates,
                 "skipped_rows": skipped_rows,
-                # "duplicates": reversed(duplicates),
-                # "skipped_rows": reversed(skipped_rows),
+                # "duplicates": list(reversed(duplicates)),
+                # "skipped_rows": list(reversed(skipped_rows)),
                 "message": f"Imported successfully ({len(to_create)} new cities)"
             }, status=200)
  
@@ -4479,6 +4298,192 @@ class CityImportAPIView(APIView):
                 "status": False,
                 "message": str(e)
             }, status=400)
+        
+
+
+# class CityImportAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+ 
+#     def post(self, request):
+#         file = request.FILES.get('file')
+#         sheet_name = request.data.get('sheet_name')
+ 
+#         if not file:
+#             return Response({'error': 'No file uploaded'}, status=400)
+ 
+#         format_type = file.name.split('.')[-1].lower()
+#         required_headers = {'city name', 'country name'}
+#         optional_headers = {'state name', 'district name', 'description'}
+ 
+#         try:
+#             # ------------------ Load file ------------------
+#             data = []
+#             if format_type == 'xlsx':
+#                 wb = openpyxl.load_workbook(file, read_only=True)
+#                 if sheet_name not in wb.sheetnames:
+#                     return Response({
+#                         "error": f"Invalid sheet_name. Available sheets: {wb.sheetnames}"
+#                     }, status=400)
+#                 ws = wb[sheet_name]
+#                 headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+#                 for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+#                     if not any(row):
+#                         continue
+#                     row_dict = dict(zip(headers, row))
+#                     row_dict['_row_number'] = idx
+#                     data.append(row_dict)
+ 
+#             elif format_type == 'csv':
+#                 decoded = file.read().decode('utf-8')
+#                 reader = csv.DictReader(io.StringIO(decoded))
+#                 for idx, row in enumerate(reader, start=2):
+#                     row_lower = {k.strip().lower(): v for k, v in row.items()}
+#                     row_lower['_row_number'] = idx
+#                     data.append(row_lower)
+#             else:
+#                 return Response({'error': 'Unsupported file type. Use .xlsx or .csv'}, status=400)
+ 
+#             # ------------------ Preload related data ------------------
+#             countries = {c.name.strip().lower(): c for c in Country.objects.all()}
+#             states = {(s.stateName.strip().lower(), s.countryName.uuid): s for s in State.objects.all() if s.countryName}
+#             districts = {(d.districtName.strip().lower(), d.stateName.uuid, d.countryName.uuid): d for d in District.objects.all() if d.stateName and d.countryName}
+ 
+#             # ------------------ Preload existing cities ------------------
+#             existing_city_keys = set(
+#                 (
+#                     (c.cityName or "").strip().lower(),
+#                     (c.stateName.stateName.lower() if c.stateName else ""),
+#                     (c.countryName.name.lower() if c.countryName else ""),
+#                     (c.districtName.districtName.lower() if c.districtName else None)
+#                 )
+#                 for c in City.objects.all()
+#             )
+ 
+ 
+ 
+#             # ------------------ Process rows ------------------
+#             to_create = []
+#             duplicates = []
+#             skipped_rows = []
+#             existing_in_file = set()
+ 
+#             for row in data:
+#                 row_number = row.get('_row_number', 'Unknown')
+#                 city_name = (row.get("city name") or "").strip()
+#                 country_name = (row.get("country name") or "").strip()
+#                 state_name = (row.get("state name") or "").strip()
+#                 district_name = (row.get("district name") or "").strip()
+#                 description = (row.get("description") or "").strip()
+ 
+#                 # ------------------ Skip missing required fields ------------------
+#                 missing_fields = [f for f, v in [('city name', city_name), ('country name', country_name)] if not v]
+#                 if missing_fields:
+#                     skipped_rows.append({
+#                         "Row": row_number,
+#                         "City Name": city_name or "Unknown",
+#                         "State Name": state_name or "",
+#                         "District Name": district_name or "",
+#                         "Country Name": country_name or "Unknown",
+#                         "Reason": f"Missing required fields: {', '.join(missing_fields)}"
+#                     })
+#                     continue
+ 
+#                 # ------------------ Validate related objects ------------------
+#                 country_obj = countries.get(country_name.lower())
+#                 if not country_obj:
+#                     skipped_rows.append({
+#                         "Row": row_number,
+#                         "City Name": city_name,
+#                         "State Name": state_name or "",
+#                         "District Name": district_name or "",
+#                         "Country Name": country_name or "",
+#                         "Reason": f"Country '{country_name}' not found"
+#                     })
+#                     continue
+ 
+#                 state_obj = states.get((state_name.lower(), country_obj.uuid)) if state_name else None
+#                 if state_name and not state_obj:
+#                     skipped_rows.append({
+#                         "Row": row_number,
+#                         "City Name": city_name,
+#                         "State Name": state_name or "",
+#                         "District Name": district_name or "",
+#                         "Country Name": country_name or "",
+#                         "Reason": f"State '{state_name}' not found for country '{country_name}'"
+#                     })
+#                     continue
+ 
+#                 district_obj = districts.get((district_name.lower(), state_obj.uuid, country_obj.uuid)) if district_name and state_obj else None
+#                 if district_name and state_name and not district_obj:
+#                     skipped_rows.append({
+#                         "Row": row_number,
+#                         "City Name": city_name,
+#                         "State Name": state_name or "",
+#                         "District Name": district_name or "",
+#                         "Country Name": country_name or "",
+#                         "Reason": f"District '{district_name}' not found for state '{state_name}'"
+#                     })
+#                     continue
+ 
+#                 # ------------------ Exact duplicate check ------------------
+#                 # ------------------ Exact duplicate check ------------------
+#               # ------------------ Exact duplicate check ------------------
+#                 # Only consider duplicate if city, state, country, and district all match
+#                 key = (
+#                     city_name.lower(),
+#                     state_name.lower() if state_name else "",
+#                     country_name.lower(),
+#                     district_name.lower() if district_name else None
+#                 )
+ 
+#                 if key in existing_city_keys or key in existing_in_file:
+#                     duplicates.append({
+#                         "Row": row_number,
+#                         "City Name": city_name,
+#                         "District Name": district_name,
+#                         "State Name": state_name,
+#                         "Country Name": country_name,
+#                         "Reason": "Duplicate city (exact match)"
+#                     })
+#                     continue
+ 
+#                 existing_in_file.add(key)
+ 
+ 
+ 
+#                 # ------------------ Prepare city object ------------------
+#                 to_create.append(
+#                     City(
+#                         cityName=city_name,
+#                         districtName=district_obj,
+#                         stateName=state_obj,
+#                         countryName=country_obj,
+#                         description=description,
+#                         is_deleted=False
+#                     )
+#                 )
+ 
+#             # ------------------ Bulk insert ------------------
+#             with transaction.atomic():
+#                 City.objects.bulk_create(to_create, ignore_conflicts=True, batch_size=500)
+ 
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "imported_count": len(to_create),
+#                 "duplicates": duplicates,
+#                 "skipped_rows": skipped_rows,
+#                 # "duplicates": list(reversed(duplicates)),
+#                 # "skipped_rows": list(reversed(skipped_rows)),
+#                 "message": f"Imported successfully ({len(to_create)} new cities)"
+#             }, status=200)
+ 
+#         except Exception as e:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": str(e)
+#             }, status=400)
         
 
 #---------------------------Realtion-----------------------
