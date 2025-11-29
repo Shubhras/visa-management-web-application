@@ -690,12 +690,22 @@ class EducationLevelCodeImportAPIView(APIView):
 
                 
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing education level code"})
+                    skipped_rows.append(
+                        {
+                        "Row": row_number,
+                        "Education Level Code'":name or "",
+                        "Description":description or "",
+                        "Reason": "Missing education level code"
+                            
+                            })
                     continue
 
                 # Check if name is numeric
                 if not str(name).isnumeric():
-                    skipped_rows.append({"Row": row_number, "Education Level Code": name, "Reason": "Education level code must be numeric"})
+                    skipped_rows.append({"Row": row_number,
+                        "Education Level Code'":name or "",
+                        "Description":description or "",
+                        "Reason": "Education level code must be numeric"})
                     continue
 
                 # Convert to int for database (optional if your model field is IntegerField)
@@ -704,7 +714,10 @@ class EducationLevelCodeImportAPIView(APIView):
                 existing = EducationLevelCode.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Education Level Code": name, "Reason": "Already exists in database"})
+                        duplicates.append({"Row": row_number,
+                        "Education Level Code'":name or "",
+                        "Description":description or "",
+                        "Reason": "Already exists in database"})
                         continue
                     else:
                         existing.description = description
@@ -1413,6 +1426,8 @@ class EducationLevelImportAPIView(APIView):
                 if not level_code_value or not education_level_name or not durations:
                     skipped_rows.append({
                         "Row": row_number,
+                        "Education Level Code": level_code_value,
+                        "Education Level Code": level_code_int,
                         "Reason": "Missing education level code, education level, or duration"
                     })
                     continue
@@ -1422,6 +1437,7 @@ class EducationLevelImportAPIView(APIView):
                     skipped_rows.append({
                         "Row": row_number,
                         "Education Level Code": level_code_value,
+                        "Education Level Code": level_code_int,
                         "Reason": "Education level code must be numeric"
                     })
                     continue
@@ -2512,7 +2528,11 @@ class StudymainareaImportAPIView(APIView):
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing study main area"})
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Study Main Area": name or "",
+                        "Reason": "Missing study main area"
+                        })
                     continue
 
                 existing = Studymainarea.objects.filter(name__iexact=name).first()
@@ -3847,19 +3867,40 @@ class StudySpecialisationImportAPIView(APIView):
 
                 # Skip if required fields missing
                 if not specialisation_name or not majorarea_name or not mainarea_name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing required field(s)"})
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Study Specialisation": specialisation_name or "",
+                        "Study Major Area": majorarea_name or "",
+                        "Study Main Area": mainarea_name or "",
+                        "Description": description or "",
+                        "Reason": "Missing required field(s)"
+                    })
                     continue
 
                 # Validate mainarea
                 mainarea_obj = Studymainarea.objects.filter(name__iexact=mainarea_name, is_deleted=False).first()
                 if not mainarea_obj:
-                    skipped_rows.append({"Row": row_number, "Study Main Area": mainarea_name, "Reason": "Invalid study main area"})
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Study Specialisation": specialisation_name or "",
+                        "Study Major Area": majorarea_name or "",
+                        "Study Main Area": mainarea_name or "",
+                        "Description": description or "",
+                        "Reason": "Invalid study main area"
+                    })
                     continue
 
                 # Validate majorarea belongs to mainarea
                 majorarea_obj = Studymajorarea.objects.filter(majorarea__iexact=majorarea_name, mainarea=mainarea_obj, is_deleted=False).first()
                 if not majorarea_obj:
-                    skipped_rows.append({"Row": row_number, "Study Major Area": majorarea_name, "Reason": "Invalid or mismatched study major area"})
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Study Specialisation": specialisation_name or "",
+                        "Study Major Area": majorarea_name or "",
+                        "Study Main Area": mainarea_name or "",
+                        "Description": description or "",
+                        "Reason": "Invalid or mismatched study major area"
+                    })
                     continue
 
                 # Existing check
@@ -3870,7 +3911,14 @@ class StudySpecialisationImportAPIView(APIView):
 
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Study Specialisation": specialisation_name,"Study Main Area": mainarea_name,"Study Major Area": majorarea_name, "Reason": "Already exists"})
+                        duplicates.append({
+                        "Row": row_number,
+                        "Study Specialisation": specialisation_name or "",
+                        "Study Main Area": mainarea_name or "",
+                        "Study Major Area": majorarea_name or "",
+                        "Description": description or "",
+                        "Reason": "Already exists"
+                    })
                         continue
                     else:
                         existing.description = description
@@ -3895,8 +3943,8 @@ class StudySpecialisationImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=200)
 
 
@@ -4681,24 +4729,52 @@ class AcademicResultTypeImportAPIView(APIView):
 
                 # Required fields
                 if not name or not datatype:
-                    skipped_rows.append({"Row": idx, "Reason": "Missing required field: Academic Result Type or Data Type"})
+                    skipped_rows.append({
+                        "Row": idx,
+                        "Academic Result Type": name or "",
+                        "Data Type": datatype or "",
+                        "Description": description or "",
+                        "Reason": "Missing required field: Academic Result Type or Data Type"
+                    })
+
                     continue
 
                 # Validate data type
                 if datatype not in VALID_TYPES:
-                    skipped_rows.append({"Row": idx, "Reason": f"Invalid Data Type '{datatype}'. Expected {VALID_TYPES}"})
+                    skipped_rows.append({
+                    "Row": idx,
+                    "Academic Result Type": name or "",
+                    "Data Type": datatype or "",
+                    "Description": description or "",
+                    "Reason": f"Invalid Data Type '{datatype}'. Expected {VALID_TYPES}"
+                })
+
                     continue
 
                 # Name must not contain numbers
                 if any(char.isdigit() for char in name):
-                    skipped_rows.append({"Row": idx, "Reason": f"Name '{name}' must not contain numbers"})
+                    skipped_rows.append({
+                    "Row": idx,
+                    "Academic Result Type": name or "",
+                    "Data Type": datatype or "",
+                    "Description": description or "",
+                    "Reason": f"Name '{name}' must not contain numbers"
+                })
+
                     continue
 
                 # Duplicate check
                 existing = AcademicResultType.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicate_names.append(name)
+                        duplicate_names.append({
+                        "Row": idx,
+                        "Academic Result Type": name,
+                        "Data Type": datatype,
+                        "Description": description,
+                        "Reason": "Already exists"
+                    })
+
                         continue
                     else:
                         existing.datatype = datatype
@@ -6160,13 +6236,18 @@ class EducationTypeImportAPIView(APIView):
                 perticulars = str(row.get('perticulars')).strip() if row.get('perticulars') else ''
 
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing education type"})
+                    skipped_rows.append({"Row": row_number,
+                                         "Education Type":name or "",
+                                         "Perticulars":perticulars or "",
+                                          "Reason": "Missing education type"
+                                          })
                     continue
 
                 existing = EducationType.objects.filter(educationType__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Education Type": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "Education Type":name or "",
+                                         "Perticulars":perticulars or "","Reason": "Already exists"})
                         continue
                     else:
                         existing.Perticulars = perticulars
