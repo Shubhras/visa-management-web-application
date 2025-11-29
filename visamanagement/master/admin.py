@@ -1333,10 +1333,64 @@ class StudyFactorAcademicResultAdmin(admin.ModelAdmin):
 
 @admin.register(StudyFactorGAP)
 class StudyFactorGAPAdmin(admin.ModelAdmin):
-    list_display = ("factor_for", "gap_group", "maximum_gap_accepted", "is_deleted")
-    search_fields = ("factor_for__name", "gap_group__name")
-    list_filter = ("is_deleted", "created_at")
-    read_only_fields = ('uuid', 'created_at', 'updated_at')
+    list_display = (
+        "factor_for",
+        "study_gap_group",
+        "maximum_gap_accepted",
+        "is_deleted",
+        "created_at",
+        "updated_at",
+    )
+
+    list_filter = (
+        "is_deleted",
+        "factor_for",
+        "study_gap_group",
+        "country_for_admission",
+        "institute_type",
+        "course_level",
+    )
+
+    search_fields = (
+        "factor_for__name",
+        "study_gap_group__name",
+        "description",
+    )
+
+    filter_horizontal = (
+        "country_for_admission",
+        "institute_type",
+        "course_level",
+    )
+
+    readonly_fields = ("uuid", "created_at", "updated_at")
+
+    fieldsets = (
+        ("Main Info", {
+            "fields": (
+                "factor_for",
+                "study_gap_group",
+                "maximum_gap_accepted",
+                "description",
+            )
+        }),
+        ("Related Options", {
+            "fields": (
+                "country_for_admission",
+                "institute_type",
+                "course_level",
+            )
+        }),
+        ("System Fields", {
+            "classes": ("collapse",),
+            "fields": (
+                "uuid",
+                "is_deleted",
+                "created_at",
+                "updated_at",
+            )
+        }),
+    )
     
     
 
