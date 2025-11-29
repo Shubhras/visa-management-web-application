@@ -2,8 +2,8 @@ import React, { useState, useRef } from 'react';
 import { Icon } from '@iconify/react/dist/iconify.js';
 import AddEditEducationModal from './AddEditEducationModal';
 import AddEditWorkExperienceModal from './AddEditWorkExperienceModal';
-// import AddEditLanguageAbilityModal from './AddEditLanguageAbilityModal';
-// import AddEditEntranceTestModal from './AddEditEntranceTestModal';
+import AddEditLanguageAbilityModal from './AddEditLanguageAbilityModal';
+import AddEditEntranceTestModal from './AddEditEntranceTestModal';
 
 const ReusableTable = ({
     title,
@@ -542,7 +542,7 @@ const PrincipalApplicantTables = () => {
                 rowData={workExperienceModal.rowData}
             />
 
-            {/* <AddEditLanguageAbilityModal
+            <AddEditLanguageAbilityModal
                 show={languageAbilityModal.show}
                 handleClose={handleLanguageAbilityClose}
                 mode={languageAbilityModal.mode}
@@ -554,7 +554,7 @@ const PrincipalApplicantTables = () => {
                 handleClose={handleEntranceTestClose}
                 mode={entranceTestModal.mode}
                 rowData={entranceTestModal.rowData}
-            />  */}
+            /> 
         </div>
     );
 };

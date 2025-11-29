@@ -194,6 +194,7 @@ const AddEditWorkExperienceModal = ({ show, handleClose, mode = "add", rowData =
                                                 value={formData.country}
                                                 onChange={handleChange}
                                                 className={`form-control radius-8 ${errors.country ? "is-invalid" : ""}`}
+                                                placeholder="Enter country"
                                             />
                                             {errors.country && <div className="text-danger text-sm">{errors.country}</div>}
                                         </div>
@@ -208,6 +209,7 @@ const AddEditWorkExperienceModal = ({ show, handleClose, mode = "add", rowData =
                                                 value={formData.state}
                                                 onChange={handleChange}
                                                 className={`form-control radius-8 ${errors.state ? "is-invalid" : ""}`}
+                                                placeholder="Enter state"
                                             />
                                             {errors.state && <div className="text-danger text-sm">{errors.state}</div>}
                                         </div>
