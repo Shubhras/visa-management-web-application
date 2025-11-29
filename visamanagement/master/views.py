@@ -4001,7 +4001,7 @@ class DistrictDeleteAPIView(APIView):
 
             # Apply country filter
             if country_uuids:
-                queryset = queryset.filter(countryName__country__uuid__in=country_uuids)
+                queryset = queryset.filter(countryName__uuid__in=country_uuids)
                 applied_filters.append("country")
 
             # Apply state filter
@@ -6669,11 +6669,11 @@ class TimezoneDeleteAPIView(APIView):
             applied_filters = []
 
             if search:
-                queryset = queryset.filter(Q(name__istartswith=search))
+                queryset = queryset.filter(Q(Timezone__istartswith=search))
                 applied_filters.append("search")
 
             if country_uuids:
-                queryset = queryset.filter(country__uuid__in=country_uuids)
+                queryset = queryset.filter(countryName__uuid__in=country_uuids)
                 applied_filters.append("country")
 
             # ---------------------------------------
@@ -7334,7 +7334,7 @@ class CivilIdNameDeleteAPIView(APIView):
             # Delete based on search filter (deleteAll=True)
             # ---------------------------------------
             if delete_all and not ids and search:
-                queryset = CivilIdName.objects.filter(is_deleted=False, name__istartswith=search)
+                queryset = CivilIdName.objects.filter(is_deleted=False, civil_id_name__istartswith=search)
                 count = queryset.count()
                 if count == 0:
                     return Response({
