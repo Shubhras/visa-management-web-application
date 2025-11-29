@@ -1106,11 +1106,11 @@ urlpatterns = [
     path('study-factor-backlogs/import/', StudyFactorBacklogsImportAPIView.as_view(), name="study_factor_backlogs_import"),
 
 
-    path('study-factor-gap/list/', StudyFactorGAPListAPIView.as_view(), name="study_factor_gap_list"),
+    path('study-factor-gap/', StudyFactorGAPListAPIView.as_view(), name="study_factor_gap_list"),
     path('study-factor-gap/create/', StudyFactorGAPCreateAPIView.as_view(), name="study_factor_gap_create"),
     path('study-factor-gap/<uuid:uuid>/', StudyFactorGAPRetrieveAPIView.as_view(), name="study_factor_gap_retrieve"),
-    path('study-factor-gap/update/<uuid:uuid>/', StudyFactorGAPUpdateAPIView.as_view(), name="study_factor_gap_update"),
-    path('study-factor-gap/delete/<uuid:uuid>/', StudyFactorGAPDeleteAPIView.as_view(), name="study_factor_gap_delete"),
+    path('study-factor-gap/<uuid:uuid>/update/', StudyFactorGAPUpdateAPIView.as_view(), name="study_factor_gap_update"),
+    path('study-factor-gap/delete/', StudyFactorGAPDeleteAPIView.as_view(), name="study_factor_gap_delete"),
     path('study-factor-gap/export/', StudyFactorGAPExportAPIView.as_view(), name="study_factor_gap_export"),
     path('study-factor-gap/import/', StudyFactorGAPImportAPIView.as_view(), name="study_factor_gap_import"),
 

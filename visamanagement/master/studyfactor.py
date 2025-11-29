@@ -5066,25 +5066,77 @@ class StudyFactorGAPListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
+        custom_sort = request.GET.get('customSort')
 
-        allowed_sort_fields = ['updated_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        # Allowed sorting fields for this model
+        allowed_sort_fields = ['study_gap_group', 'factor_for', 'created_at', 'updated_at']
 
         queryset = StudyFactorGAP.objects.filter(is_deleted=False)
 
+        # ---------------------------------------
+        # SEARCH — ONLY ON GAP GROUP COLUMN
+        # ---------------------------------------
         if search:
             queryset = queryset.filter(
-                Q(factor_for__name__istartswith=search) |
-                Q(gap_group__name__istartswith=search)
+                Q(study_gap_group__name__istartswith=search)
             )
 
-        queryset = queryset.order_by(sort_by)
+        # Mapping sort fields from request → ORM fields
+        sort_field_map = {
+            'study_gap_group': 'study_gap_group__name',
+            'factor_for': 'factor_for__name',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
 
+        sort_fields = []
+
+        # ---------------------------------------
+        # CUSTOM SORT LOGIC (same as department)
+        # ---------------------------------------
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sorting for string fields
+                    if field in ['study_gap_group', 'factor_for']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+
+                except ValueError:
+                    continue
+
+        else:
+            # ---------------------------------------
+            # FALLBACK SORTING   (sortBy + sortOrder)
+            # ---------------------------------------
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'desc')
+
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+
+            f = F(orm_field)
+
+            sort_fields = [
+                f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)
+            ]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # Pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = StudyFactorGAPSerializer(result_page, many=True)
@@ -5092,24 +5144,44 @@ class StudyFactorGAPListAPIView(APIView):
         return paginator.get_paginated_response(serializer.data)
 
 
+
 class StudyFactorGAPCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
+    @transaction.atomic
     def post(self, request):
         serializer = StudyFactorGAPSerializer(data=request.data)
         if serializer.is_valid():
-            obj = serializer.save()
+            factor_for_obj = serializer.validated_data["factor_for"]
+            gap_group_obj = serializer.validated_data["study_gap_group"]
+
+            # Duplicate check
+            if StudyFactorGAP.objects.filter(
+                factor_for=factor_for_obj,
+                study_gap_group=gap_group_obj,
+                is_deleted=False
+            ).exists():
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Study Factor GAP already exists for this Factor For & GAP Group."
+                }, status=400)
+
+            instance = serializer.save()
             return Response({
                 "statusCode": 200,
                 "status": True,
                 "message": "Study Factor GAP created successfully",
-                "data": StudyFactorGAPSerializer(obj).data
-            })
-        else:
-            messages = []
-            for field, msgs in serializer.errors.items():
-                messages.extend(msgs)
-            return Response({"statusCode": 400, "status": False, "message": " ".join(messages)}, status=400)
+                "data": StudyFactorGAPSerializer(instance).data
+            }, status=200)
+
+        # Handle errors
+        messages = [msg for msgs in serializer.errors.values() for msg in msgs]
+        return Response({
+            "statusCode": 400,
+            "status": False,
+            "message": " ".join(messages)
+        }, status=400)
 
 
 class StudyFactorGAPRetrieveAPIView(APIView):
@@ -5124,14 +5196,17 @@ class StudyFactorGAPRetrieveAPIView(APIView):
                 "status": False,
                 "message": "Study Factor GAP not found",
                 "data": None
-            }, status=404)
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = StudyFactorGAPSerializer(obj)
 
         return Response({
             "statusCode": 200,
             "status": True,
             "message": "Study Factor GAP retrieved successfully",
-            "data": StudyFactorGAPSerializer(obj).data
+            "data": serializer.data
         })
+    
 
 class StudyFactorGAPUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -5140,9 +5215,15 @@ class StudyFactorGAPUpdateAPIView(APIView):
         try:
             obj = StudyFactorGAP.objects.get(uuid=uuid, is_deleted=False)
         except StudyFactorGAP.DoesNotExist:
-            return Response({"statusCode": 404, "status": False, "message": "Not found"}, status=404)
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "Study Factor GAP not found",
+                "data": None
+            }, status=status.HTTP_404_NOT_FOUND)
 
         serializer = StudyFactorGAPSerializer(obj, data=request.data)
+
         if serializer.is_valid():
             serializer.save()
             return Response({
@@ -5151,11 +5232,20 @@ class StudyFactorGAPUpdateAPIView(APIView):
                 "message": "Study Factor GAP updated successfully",
                 "data": serializer.data
             })
-        messages = []
-        for field, msgs in serializer.errors.items():
-            messages.extend(msgs)
-        return Response({"statusCode": 400, "status": False, "message": " ".join(messages)}, status=400)
 
+        # Collect error messages like Department API
+        errors = serializer.errors
+        messages = []
+        for field, msgs in errors.items():
+            messages.extend(msgs)
+
+        return Response({
+            "statusCode": 400,
+            "status": False,
+            "message": " ".join(messages),
+            "data": None
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
 
 class StudyFactorGAPDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -5163,104 +5253,252 @@ class StudyFactorGAPDeleteAPIView(APIView):
     def delete(self, request, uuid=None):
         ids = request.data.get('id', None)
 
+        # ----------------------------------
+        # SINGLE DELETE (via /uuid/)
+        # ----------------------------------
         if uuid:
             try:
                 obj = StudyFactorGAP.objects.get(uuid=uuid)
                 obj.delete()
-                return Response({"statusCode": 204, "status": True, "message": "Deleted"}, status=204)
+                return Response({
+                    "statusCode": 204,
+                    "status": True,
+                    "message": "Study Factor GAP permanently deleted.",
+                    "data": None
+                }, status=status.HTTP_204_NO_CONTENT)
+
             except StudyFactorGAP.DoesNotExist:
-                return Response({"statusCode": 404, "status": False, "message": "Not found"}, status=404)
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "Study Factor GAP not found.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+
+        # ----------------------------------
+        # DELETE ALL RECORDS
+        # ----------------------------------
+        if ids == "all":
+            objs = StudyFactorGAP.objects.all()
+            count = objs.count()
+
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No Study Factor GAP records found to delete.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+
+            objs.delete()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"All {count} Study Factor GAP record(s) permanently deleted.",
+                "data": None
+            }, status=status.HTTP_200_OK)
+
+        # ----------------------------------
+        # VALIDATE BULK UUID LIST
+        # ----------------------------------
+        if not ids or not isinstance(ids, list):
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        valid_uuids = []
+        invalid_uuids = []
+
+        for u in ids:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(u)
+
+        if not valid_uuids:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "No valid UUIDs provided.",
+                "data": {"invalid_uuids": invalid_uuids}
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # ----------------------------------
+        # BULK DELETE
+        # ----------------------------------
+        objs = StudyFactorGAP.objects.filter(uuid__in=valid_uuids)
+        count = objs.count()
+
+        if count == 0:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "No matching Study Factor GAP records found.",
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        objs.delete()
 
         return Response({
-            "statusCode": 400,
-            "status": False,
-            "message": "Bulk delete not implemented yet"
-        }, status=400)
+            "statusCode": 200,
+            "status": True,
+            "message": f"{count} Study Factor GAP record(s) permanently deleted.",
+            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+        }, status=status.HTTP_200_OK)
+    
 
 
 # ---------------- EXPORT ----------------
+
 class StudyFactorGAPExportAPIView(APIView):
+    """
+    Export StudyFactorGAP data to CSV or XLSX with custom sorting.
+    """
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
+        # --- Query params ---
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')
         uuids_param = request.GET.get('uuids', '')
+        custom_sort = request.GET.get('customSort')
+        search = request.GET.get('search', '').strip()
+
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
+        # --- Field → header mapping ---
         field_header_map = {
             'uuid': 'UUID',
             'factor_for': 'Factor For',
-            'gap_group': 'GAP Group',
-            'maximum_gap_accepted': 'Maximum GAP Accepted (Months)',
-            'countries': 'Countries',
-            'institute_types': 'Institute Types',
-            'course_levels': 'Course Levels',
+            'study_gap_group': 'Study GAP Group',
+            'maximum_gap_accepted': 'Maximum GAP Accepted',
+            'country_for_admission': 'Country For Admission',
+            'institute_type': 'Institute Type',
+            'course_level': 'Course Level',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'created_at': 'Created On',
             'updated_at': 'Modified On',
         }
 
+        # --- Determine fields to export ---
         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
+        # --- Fetch queryset ---
         queryset = StudyFactorGAP.objects.filter(is_deleted=False)
+
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
 
+        if search:
+            queryset = queryset.filter(
+                Q(factor_for__name__istartswith=search) |
+                Q(study_gap_group__name__istartswith=search)
+            )
+
+        # --- Custom SORT mapping ---
+        sort_field_map = {
+            'factor_for': 'factor_for__name',
+            'study_gap_group': 'study_gap_group__name',
+            'maximum_gap_accepted': 'maximum_gap_accepted',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+            'is_deleted': 'is_deleted',
+        }
+
+        sort_fields = []
+
+        # --- Custom Sort Logic ---
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    if field in ['factor_for', 'study_gap_group', 'description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+
+                except ValueError:
+                    continue
+        else:
+            sort_order = request.GET.get('sortOrder', 'desc')
+            f = F('created_at')
+            sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # --- Prepare dataset ---
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = "StudyFactorGAP"
 
         for obj in queryset:
             row = []
+
             for field in field_list:
-                value = getattr(obj, field, "")
+                value = getattr(obj, field, '')
 
-                # Handle many-to-many fields
-                if field == "countries":
-                    value = ", ".join(obj.countries.values_list("name", flat=True))
+                # Many-to-many mapping (UPDATED)
+                if field == "country_for_admission":
+                    value = ", ".join(obj.country_for_admission.values_list("full_name", flat=True))
 
-                elif field == "institute_types":
-                    value = ", ".join(obj.institute_types.values_list("name", flat=True))
+                elif field == "institute_type":
+                    value = ", ".join(obj.institute_type.values_list("name", flat=True))
 
-                elif field == "course_levels":
-                    value = ", ".join(obj.course_levels.values_list("name", flat=True))
+                elif field == "course_level":
+                    value = ", ".join(obj.course_level.values_list("name", flat=True))
 
-                # Handle datetime formatting
+                # Date formatting
                 elif field in ["created_at", "updated_at"] and value:
-                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                    value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
 
-                # Booleans → int
+                # Bool → int
                 elif isinstance(value, bool):
                     value = int(value)
 
-                # Foreign keys → string display
-                elif field in ["factor_for", "gap_group"] and value:
+                # FKs
+                elif field in ["factor_for", "study_gap_group"] and value:
                     value = str(value)
 
-                row.append(value if value is not None else "")
+                row.append(value if value is not None else '')
 
             dataset.append(row)
 
-        if format_type == "csv":
-            file_data = dataset.export("csv")
-            content_type = "text/csv"
-            file_name = "study_factor_gap.csv"
+        # --- EXPORT ---
+        if format_type == 'csv':
+            file_data = dataset.export('csv')
+            content_type = 'text/csv'
+            file_name = 'StudyFactorGAP.csv'
+
         else:
-            file_data = io.BytesIO(dataset.export("xlsx"))
-            content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            file_name = "study_factor_gap.xlsx"
+            file_data = io.BytesIO(dataset.export('xlsx'))
+            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_name = 'StudyFactorGAP.xlsx'
 
         response = HttpResponse(
-            file_data if format_type == "csv" else file_data.getvalue(),
+            file_data if format_type == 'csv' else file_data.getvalue(),
             content_type=content_type
         )
-        response["Content-Disposition"] = f'attachment; filename="{file_name}"'
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
+    
 
 # ---------------- IMPORT ----------------
+
 class StudyFactorGAPImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -5269,27 +5507,27 @@ class StudyFactorGAPImportAPIView(APIView):
         sheet_name = request.data.get("sheet_name")
 
         if not file:
-            return Response({"error": "No file uploaded"}, status=400)
+            return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split(".")[-1].lower()
         duplicates = []
         skipped_rows = []
 
+        # headers expected in the file (lowercased)
         required_headers = {
             "factor for",
-            "gap group",
-            "maximum gap accepted (months)",
-            "countries",
-            "institute types",
-            "course levels",
+            "study gap group",                   # UPDATED
+            "maximum gap accepted",
+            "country for admission",             # UPDATED
+            "institute type",                    # UPDATED
+            "course level",                      # UPDATED
         }
-
         optional_headers = {"description"}
 
         try:
             data = []
 
-            # ---------------- XLSX Handling ----------------
+            # ---------- XLSX Handling ----------
             if format_type == "xlsx":
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
@@ -5298,31 +5536,33 @@ class StudyFactorGAPImportAPIView(APIView):
                     return Response({
                         "error": "Please provide sheet_name",
                         "available_sheets": available_sheets,
-                    }, status=400)
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
                 if sheet_name not in available_sheets:
                     return Response({
-                        "error": f'Sheet "{sheet_name}" not found',
+                        "error": f'Sheet "{sheet_name}" not found in uploaded file',
                         "available_sheets": available_sheets,
-                    }, status=400)
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
                 ws = wb[sheet_name]
-
                 if ws.max_row <= 1:
                     return Response({
                         "statusCode": 400,
                         "status": False,
                         "message": f'Sheet "{sheet_name}" is empty.'
-                    }, status=400)
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
-                headers = [str(c.value).strip().lower() if c.value else "" for c in next(ws.iter_rows(min_row=1, max_row=1))]
+                headers = [
+                    str(cell.value).strip().lower() if cell.value else ""
+                    for cell in next(ws.iter_rows(min_row=1, max_row=1))
+                ]
 
                 if not required_headers.issubset(set(headers)):
                     return Response({
                         "statusCode": 400,
                         "status": False,
                         "message": f"Missing required headers. Required: {required_headers}, Found: {set(headers)}"
-                    }, status=400)
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
                 for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     if not any(row):
@@ -5331,111 +5571,138 @@ class StudyFactorGAPImportAPIView(APIView):
                     row_dict["_row_number"] = idx
                     data.append(row_dict)
 
-            # ---------------- CSV Handling ----------------
+            # ---------- CSV Handling ----------
             elif format_type == "csv":
-                decoded = file.read().decode("utf-8")
+                decoded_file = file.read().decode("utf-8")
                 dataset = Dataset()
-                dataset.load(decoded, format="csv")
+                dataset.load(decoded_file, format="csv")
 
                 for idx, row in enumerate(dataset.dict, start=2):
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
                     row_lower["_row_number"] = idx
-                    if not required_headers.issubset(row_lower.keys()):
+
+                    if not required_headers.issubset(set(row_lower.keys())):
                         return Response({
-                            "status": False,
                             "statusCode": 400,
-                            "message": f"Missing required headers. Required: {', '.join(required_headers)}"
-                        }, status=400)
+                            "status": False,
+                            "message": (
+                                f"Missing required headers. Required: {', '.join(required_headers)}. "
+                                f"Found headers in the file: {', '.join(row_lower.keys())}."
+                            )
+                        }, status=status.HTTP_400_BAD_REQUEST)
+
                     data.append(row_lower)
 
             else:
                 return Response({
-                    "status": False,
                     "statusCode": 400,
-                    "message": "Unsupported file type. Use XLSX or CSV"
-                }, status=400)
+                    "status": False,
+                    "error": "Unsupported file format. Use .xlsx or .csv",
+                }, status=status.HTTP_400_BAD_REQUEST)
 
-            # ---------------- Import Logic ----------------
+            # ---------- Import Rows ----------
             imported_count = 0
 
             for row in reversed(data):
-                row_num = row.get("_row_number")
+                row_number = row.get("_row_number", "Unknown")
 
-                # Extract fields
-                factor_for_name = str(row.get("factor for")).strip()
-                gap_group_name = str(row.get("gap group")).strip()
+                factor_for_name = str(row.get("factor for") or "").strip()
+                study_gap_group_name = str(row.get("study gap group") or "").strip()     # UPDATED
                 max_gap = row.get("maximum gap accepted (months)")
                 description = str(row.get("description") or "").strip()
 
-                # Many-To-Many CSV-style inputs
-                country_names = [c.strip() for c in str(row.get("countries") or "").split(",") if c.strip()]
-                institute_type_names = [i.strip() for i in str(row.get("institute types") or "").split(",") if i.strip()]
-                course_level_names = [c.strip() for c in str(row.get("course levels") or "").split(",") if c.strip()]
+                country_names = [
+                    c.strip() for c in str(row.get("country for admission") or "").split(",") if c.strip()
+                ]   # UPDATED
 
-                # Required field missing
-                if not (factor_for_name and gap_group_name and max_gap is not None):
-                    skipped_rows.append({"Row": row_num, "Reason": "Missing required fields"})
-                    continue
+                institute_type_names = [
+                    i.strip() for i in str(row.get("institute type") or "").split(",") if i.strip()
+                ]   # UPDATED
 
-                # Foreign key resolution
-                factor_for = FactorFor.objects.filter(name__iexact=factor_for_name).first()
-                gap_group = GAPGroup.objects.filter(name__iexact=gap_group_name).first()
+                course_level_names = [
+                    c.strip() for c in str(row.get("course level") or "").split(",") if c.strip()
+                ]   # UPDATED
 
-                if not factor_for or not gap_group:
-                    skipped_rows.append({"Row": row_num, "Reason": "Invalid FK values"})
-                    continue
-
-                # Duplicate check
-                existing = StudyFactorGAP.objects.filter(
-                    factor_for=factor_for,
-                    gap_group=gap_group,
-                    maximum_gap_accepted=max_gap,
-                ).first()
-
-                if existing and not existing.is_deleted:
-                    duplicates.append({
-                        "Row": row_num,
-                        "Reason": "Record already exists"
+                if not (factor_for_name and study_gap_group_name and (max_gap is not None)):
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Reason": "Missing required fields"
                     })
                     continue
 
-                if existing and existing.is_deleted:
-                    # Reactivate
-                    obj = existing
-                    obj.is_deleted = False
-                    obj.description = description
-                    obj.save()
+                factor_for_obj = FactorFor.objects.filter(name__iexact=factor_for_name).first()
+                study_gap_group_obj = GAPGroup.objects.filter(name__iexact=study_gap_group_name).first()
+
+                if not factor_for_obj or not study_gap_group_obj:
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Reason": "Invalid FK values"
+                    })
+                    continue
+
+                existing = StudyFactorGAP.objects.filter(
+                    factor_for=factor_for_obj,
+                    study_gap_group=study_gap_group_obj,
+                    maximum_gap_accepted=max_gap
+                ).first()
+
+                if existing:
+                    if not existing.is_deleted:
+                        duplicates.append({
+                            "Row": row_number,
+                            "Reason": "Record already exists"
+                        })
+                        continue
+                    else:
+                        obj = existing
+                        obj.is_deleted = False
+                        obj.description = description
+                        obj.save()
                 else:
-                    # Create new
                     obj = StudyFactorGAP.objects.create(
-                        factor_for=factor_for,
-                        gap_group=gap_group,
+                        factor_for=factor_for_obj,
+                        study_gap_group=study_gap_group_obj,
                         maximum_gap_accepted=max_gap,
                         description=description
                     )
 
-                # Many-to-many mappings
-                obj.countries.set(Country.objects.filter(name__in=country_names))
-                obj.institute_types.set(InstituteType.objects.filter(name__in=institute_type_names))
-                obj.course_levels.set(CourseLevel.objects.filter(name__in=course_level_names))
+                if country_names:
+                    countries = RepresentingCountry.objects.filter(name__in=country_names)
+                    obj.country_for_admission.set(countries)   # UPDATED
+                else:
+                    obj.country_for_admission.clear()
+
+                if institute_type_names:
+                    institutes = InstituteType.objects.filter(name__in=institute_type_names)
+                    obj.institute_type.set(institutes)         # UPDATED
+                else:
+                    obj.institute_type.clear()
+
+                if course_level_names:
+                    courses = CourseLevel.objects.filter(name__in=course_level_names)
+                    obj.course_level.set(courses)              # UPDATED
+                else:
+                    obj.course_level.clear()
 
                 imported_count += 1
 
         except Exception as e:
             return Response({
-                "status": False,
                 "statusCode": 400,
-                "message": str(e)
-            }, status=400)
+                "status": False,
+                "message": str(e),
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({
-            "status": True,
             "statusCode": 200,
+            "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
             "duplicates": duplicates,
             "skipped_rows": skipped_rows,
-        }, status=200)
+        }, status=status.HTTP_200_OK)
+
+
 
 
 #--------------------LanguageAbility----------------------
