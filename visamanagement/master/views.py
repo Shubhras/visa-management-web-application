@@ -3858,7 +3858,7 @@ class DistrictDeleteAPIView(APIView):
             raw_states = request.GET.get("state", "").strip()
 
             # ----------------------------------------------------------
-            # ✅ Parse multiple country UUIDs from params (?country=uuid,uuid)
+            #  Parse multiple country UUIDs from params (?country=uuid,uuid)
             # ----------------------------------------------------------
             country_uuids, invalid_countries = [], []
             if raw_countries:
@@ -3869,7 +3869,7 @@ class DistrictDeleteAPIView(APIView):
                         invalid_countries.append(u)
 
             # ----------------------------------------------------------
-            # ✅ Parse multiple state UUIDs from params (?state=uuid,uuid)
+            #  Parse multiple state UUIDs from params (?state=uuid,uuid)
             # ----------------------------------------------------------
             state_uuids, invalid_states = [], []
             if raw_states:
@@ -3880,7 +3880,7 @@ class DistrictDeleteAPIView(APIView):
                         invalid_states.append(u)
 
             # ----------------------------------------------------------
-            # ✅ CASE 1: deleteAll=false + ID LIST → delete only given UUIDs (ignore country/state/search filter)
+            #  CASE 1: deleteAll=false + ID LIST → delete only given UUIDs (ignore country/state/search filter)
             # ----------------------------------------------------------
             if delete_all is False and isinstance(ids, list):
                 valid_uuids, invalid_uuids = [], []
@@ -3920,7 +3920,7 @@ class DistrictDeleteAPIView(APIView):
                 }, status=200)
 
             # ----------------------------------------------------------
-            # ✅ CASE 2: id="all" + deleteAll=false → delete full district table safely (soft delete checked)
+            #  CASE 2: id="all" + deleteAll=false → delete full district table safely (soft delete checked)
             # ----------------------------------------------------------
             if ids == "all" and delete_all is False:
                 qs_all = District.objects.filter(is_deleted=False)
@@ -3952,7 +3952,7 @@ class DistrictDeleteAPIView(APIView):
                 }, status=200)
 
             # ----------------------------------------------------------
-            # ✅ Filter based deletion only when deleteAll = true
+            #  Filter based deletion only when deleteAll = true
             # ----------------------------------------------------------
             queryset = District.objects.filter(is_deleted=False)
             applied_filters = []
@@ -3972,7 +3972,7 @@ class DistrictDeleteAPIView(APIView):
                 queryset = queryset.filter(state__uuid__in=state_uuids)
                 applied_filters.append("state")
 
-            # ✅ CASES 3,4,5 → filtered delete
+            #  CASES 3,4,5 → filtered delete
             if delete_all and applied_filters:
                 count = queryset.count()
                 if count == 0:
@@ -4002,7 +4002,7 @@ class DistrictDeleteAPIView(APIView):
                 }, status=200)
 
             # ----------------------------------------------------------
-            # ✅ NORMAL BULK DELETE (deleteAll=false but id list not empty)
+            #  NORMAL BULK DELETE (deleteAll=false but id list not empty)
             # ----------------------------------------------------------
             if isinstance(ids, list):
                 valid_uuids, invalid_uuids = [], []
@@ -4726,7 +4726,7 @@ class CityDeleteAPIView(APIView):
             raw_districts = request.GET.get("district", "").strip()
 
             # ----------------------------------------------------------
-            # ✅ Parse multiple country UUIDs (?country=uuid,uuid)
+            #  Parse multiple country UUIDs (?country=uuid,uuid)
             # ----------------------------------------------------------
             country_uuids, invalid_countries = [], []
             if raw_countries:
@@ -4737,7 +4737,7 @@ class CityDeleteAPIView(APIView):
                         invalid_countries.append(u)
 
             # ----------------------------------------------------------
-            # ✅ Parse multiple state UUIDs (?state=uuid,uuid)
+            #  Parse multiple state UUIDs (?state=uuid,uuid)
             # ----------------------------------------------------------
             state_uuids, invalid_states = [], []
             if raw_states:
@@ -4748,7 +4748,7 @@ class CityDeleteAPIView(APIView):
                         invalid_states.append(u)
 
             # ----------------------------------------------------------
-            # ✅ Parse multiple district UUIDs (?district=uuid,uuid)
+            #  Parse multiple district UUIDs (?district=uuid,uuid)
             # ----------------------------------------------------------
             district_uuids, invalid_districts = [], []
             if raw_districts:
@@ -4759,7 +4759,7 @@ class CityDeleteAPIView(APIView):
                         invalid_districts.append(u)
 
             # ----------------------------------------------------------
-            # ✅ CASE 1: deleteAll=false + ID list → Only delete given UUIDs (ignore filters)
+            #  CASE 1: deleteAll=false + ID list → Only delete given UUIDs (ignore filters)
             # ----------------------------------------------------------
             if delete_all is False and isinstance(ids, list):
                 valid_uuids, invalid_uuids = [], []
@@ -4799,7 +4799,7 @@ class CityDeleteAPIView(APIView):
                 }, status=200)
 
             # ----------------------------------------------------------
-            # ✅ CASE 2: id="all" + deleteAll=false → Delete entire City table (skip FK errors)
+            #  CASE 2: id="all" + deleteAll=false → Delete entire City table (skip FK errors)
             # ----------------------------------------------------------
             if ids == "all" and delete_all is False:
                 qs_all = City.objects.filter(is_deleted=False)
@@ -4831,7 +4831,7 @@ class CityDeleteAPIView(APIView):
                 }, status=200)
 
             # ----------------------------------------------------------
-            # ✅ Apply filters only when deleteAll = true
+            #  Apply filters only when deleteAll = true
             # ----------------------------------------------------------
             queryset = City.objects.filter(is_deleted=False)
             applied_filters = []
@@ -4853,7 +4853,7 @@ class CityDeleteAPIView(APIView):
                 applied_filters.append("district")
 
             # ----------------------------------------------------------
-            # ✅ CASE 3/4/5: deleteAll=true + filters → delete filtered data
+            #  CASE 3/4/5: deleteAll=true + filters → delete filtered data
             # ----------------------------------------------------------
             if delete_all and applied_filters:
                 count = queryset.count()
@@ -4886,7 +4886,7 @@ class CityDeleteAPIView(APIView):
                 }, status=200)
 
             # ----------------------------------------------------------
-            # ✅ Normal bulk delete (deleteAll=false but id provided incorrectly)
+            #  Normal bulk delete (deleteAll=false but id provided incorrectly)
             # ----------------------------------------------------------
             if isinstance(ids, list):
                 valid_uuids, invalid_uuids = [], []
@@ -5591,83 +5591,208 @@ class RelationUpdateAPIView(APIView):
         return Response({"statusCode": 400, "status": False, "message": errors}, status=400)
 
 
+# class RelationDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request):
+#         ids = request.data.get('id', None)
+
+#         if not ids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide 'id' field (UUID list or 'all').",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         # Delete all relations
+#         if ids == "all":
+#             relations = Relation.objects.filter(is_deleted=False)
+#             count = relations.count()
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No relations found to delete.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+
+#             relations.delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} relation(s) deleted successfully.",
+#                 "data": None
+#             }, status=status.HTTP_200_OK)
+
+#         # Validate list of UUIDs
+#         if not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         valid_uuids, invalid_uuids = [], []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         if not valid_uuids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "No valid UUIDs provided.",
+#                 "data": {"invalid_uuids": invalid_uuids}
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         relations = Relation.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+#         count = relations.count()
+
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching relations found.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=status.HTTP_404_NOT_FOUND)
+
+#         relations.delete()
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} relation(s) deleted successfully.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         }, status=status.HTTP_200_OK)
+
+
 class RelationDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request):
-        ids = request.data.get('id', None)
+        try:
+            ids = request.data.get('id', None)
+            delete_all = request.data.get("deleteAll", False)
+            search = request.GET.get("search", "").strip()
 
-        if not ids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Please provide 'id' field (UUID list or 'all').",
-                "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
+            # ---------------------------------------
+            # CASE 2: id = "all" → Delete all rows
+            # ---------------------------------------
+            if ids == "all":
+                queryset = Relation.objects.filter(is_deleted=False)
+                count = queryset.count()
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No relations found to delete.",
+                        "data": None
+                    }, status=404)
 
-        # Delete all relations
-        if ids == "all":
-            relations = Relation.objects.filter(is_deleted=False)
-            count = relations.count()
+                with transaction.atomic():
+                    queryset.delete()
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"All {count} relation(s) deleted successfully.",
+                    "data": None
+                }, status=200)
+
+            # ---------------------------------------
+            # CASE 3: deleteAll=true + search filter → Delete filtered rows
+            # ---------------------------------------
+            if delete_all and not ids and search:
+                queryset = Relation.objects.filter(is_deleted=False, name__istartswith=search)
+                count = queryset.count()
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No relation(s) found matching this search filter.",
+                        "data": None
+                    }, status=404)
+
+                with transaction.atomic():
+                    queryset.delete()
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} relation(s) deleted based on search filter.",
+                    "data": None
+                }, status=200)
+
+            # ---------------------------------------
+            # CASE 1: Bulk delete by UUID list
+            # ---------------------------------------
+            if not ids or not isinstance(ids, list):
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Send UUID list in 'id', 'id: all', or 'deleteAll: true' with search.",
+                    "data": None
+                }, status=400)
+
+            valid_uuids, invalid_uuids = [], []
+            for u in ids:
+                try:
+                    valid_uuids.append(UUID(u))
+                except ValueError:
+                    invalid_uuids.append(u)
+
+            if not valid_uuids:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "No valid UUIDs provided.",
+                    "data": {"invalid_uuids": invalid_uuids}
+                }, status=400)
+
+            queryset = Relation.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+            count = queryset.count()
+
             if count == 0:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "No relations found to delete.",
-                    "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
+                    "message": "No matching relation(s) found.",
+                    "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                }, status=404)
 
-            relations.delete()
+            with transaction.atomic():
+                queryset.delete()
+
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} relation(s) deleted successfully.",
-                "data": None
-            }, status=status.HTTP_200_OK)
-
-        # Validate list of UUIDs
-        if not isinstance(ids, list):
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
-                "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        valid_uuids, invalid_uuids = [], []
-        for u in ids:
-            try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
-
-        if not valid_uuids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "No valid UUIDs provided.",
-                "data": {"invalid_uuids": invalid_uuids}
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        relations = Relation.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = relations.count()
-
-        if count == 0:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "No matching relations found.",
+                "message": f"{count} relation(s) deleted successfully.",
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=status.HTTP_404_NOT_FOUND)
+            }, status=200)
 
-        relations.delete()
+        except IntegrityError:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "You can't delete this relation because it is used in one or more related child tables.",
+                "data": None
+            }, status=400)
 
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"{count} relation(s) deleted successfully.",
-            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({
+                "statusCode": 500,
+                "status": False,
+                "message": f"An unexpected error occurred: {str(e)}",
+                "data": None
+            }, status=500)
+
+
+
+
 
 class RelationExportAPIView(APIView):
     """
@@ -6299,83 +6424,268 @@ class TimezoneUpdateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
+# class TimezoneDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request, uuid=None):
+#         ids = request.data.get('id', None)
+
+#         if uuid:
+#             try:
+#                 tz = Timezone.objects.get(uuid=uuid)
+#                 tz.delete()
+#                 return Response({
+#                     "statusCode": 204,
+#                     "status": True,
+#                     "message": "Timezone permanently deleted.",
+#                     "data": None
+#                 }, status=status.HTTP_204_NO_CONTENT)
+#             except Timezone.DoesNotExist:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "Timezone not found.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+
+#         if ids == "all":
+#             tzs = Timezone.objects.all()
+#             count = tzs.count()
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No timezones found to delete.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+#             tzs.delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} timezone(s) permanently deleted.",
+#                 "data": None
+#             }, status=status.HTTP_200_OK)
+
+#         if not ids or not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         valid_uuids = []
+#         invalid_uuids = []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         tzs = Timezone.objects.filter(uuid__in=valid_uuids)
+#         count = tzs.count()
+
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching timezones found.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=status.HTTP_404_NOT_FOUND)
+
+#         tzs.delete()
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} timezone(s) permanently deleted.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         }, status=status.HTTP_200_OK)
+
+
 class TimezoneDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
-    def delete(self, request, uuid=None):
-        ids = request.data.get('id', None)
+    def delete(self, request):
+        try:
+            ids = request.data.get('id', None)
+            delete_all = request.data.get("deleteAll", False)
+            search = request.GET.get("search", "").strip()
+            raw_country = request.GET.get("country", "").strip()
 
-        if uuid:
-            try:
-                tz = Timezone.objects.get(uuid=uuid)
-                tz.delete()
+            # ---------------------------------------
+            #  Parse country UUID list from params
+            # ---------------------------------------
+            country_uuids, invalid_countries = [], []
+            if raw_country:
+                for u in raw_country.split(','):
+                    try:
+                        country_uuids.append(UUID(u.strip()))
+                    except ValueError:
+                        invalid_countries.append(u)
+
+
+            # ---------------------------------------
+            #  CASE 1: deleteAll=false + UUID LIST → only delete given IDs (filters NO error)
+            # ---------------------------------------
+            if delete_all is False and isinstance(ids, list):
+                valid_uuids, invalid_uuids = [], []
+                for u in ids:
+                    try:
+                        valid_uuids.append(UUID(u))
+                    except ValueError:
+                        invalid_uuids.append(u)
+
+                if not valid_uuids:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "No valid UUID(s) provided.",
+                        "data": {"invalid_uuids": invalid_uuids}
+                    }, status=400)
+
+                bulk_qs = Timezone.objects.filter(uuid__in=valid_uuids)
+                count = bulk_qs.count()
+
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No matching timezone(s) found for provided UUID(s).",
+                        "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                    }, status=404)
+
+                with transaction.atomic():
+                    bulk_qs.delete()
+
                 return Response({
-                    "statusCode": 204,
+                    "statusCode": 200,
                     "status": True,
-                    "message": "Timezone permanently deleted.",
-                    "data": None
-                }, status=status.HTTP_204_NO_CONTENT)
-            except Timezone.DoesNotExist:
-                return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "Timezone not found.",
-                    "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
+                    "message": f"{count} timezone(s) permanently deleted.",
+                    "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                }, status=200)
 
-        if ids == "all":
-            tzs = Timezone.objects.all()
-            count = tzs.count()
-            if count == 0:
-                return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "No timezones found to delete.",
-                    "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
-            tzs.delete()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": f"All {count} timezone(s) permanently deleted.",
-                "data": None
-            }, status=status.HTTP_200_OK)
+            # ---------------------------------------
+            #  CASE 2: id="all" + deleteAll=false → full table delete
+            # ---------------------------------------
+            if ids == "all" and delete_all is False:
+                tzs = Timezone.objects.all()
+                count = tzs.count()
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No timezones found to delete.",
+                        "data": None
+                    }, status=404)
 
-        if not ids or not isinstance(ids, list):
+                with transaction.atomic():
+                    tzs.delete()
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"All {count} timezone(s) permanently deleted from the table.",
+                    "data": None
+                }, status=200)
+
+            # ---------------------------------------
+            #  Apply filters ONLY when deleteAll=true
+            # ---------------------------------------
+            queryset = Timezone.objects.all()
+            applied_filters = []
+
+            if search:
+                queryset = queryset.filter(Q(name__istartswith=search))
+                applied_filters.append("search")
+
+            if country_uuids:
+                queryset = queryset.filter(country__uuid__in=country_uuids)
+                applied_filters.append("country")
+
+            # ---------------------------------------
+            #  CASE 3/4/5 → deleteAll=true + filters
+            # ---------------------------------------
+            if delete_all and applied_filters:
+                count = queryset.count()
+                if count == 0:
+                    filter_msg = " + ".join(applied_filters)
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": f"No timezone(s) found matching applied {filter_msg} filter(s).",
+                        "data": {"invalid_country_uuids": invalid_countries} if invalid_countries else None
+                    }, status=404)
+
+                with transaction.atomic():
+                    queryset.delete()
+
+                filter_msg = " + ".join(applied_filters)
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} timezone(s) deleted based on applied {filter_msg} filter(s).",
+                    "data": {"invalid_country_uuids": invalid_countries} if invalid_countries else None
+                }, status=200)
+
+            # ---------------------------------------
+            #  Normal UUID List delete (deleteAll=false but not list)
+            # ---------------------------------------
+            if isinstance(ids, list):
+                valid_uuids, invalid_uuids = [], []
+                for u in ids:
+                    try:
+                        valid_uuids.append(UUID(u))
+                    except:
+                        invalid_uuids.append(u)
+
+                tzs = Timezone.objects.filter(uuid__in=valid_uuids)
+                count = tzs.count()
+
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No matching timezone(s) found to delete.",
+                        "data": None
+                    }, status=404)
+
+                with transaction.atomic():
+                    tzs.delete()
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} timezone(s) deleted successfully.",
+                    "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                }, status=200)
+
+            # ❌ fallback
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+                "message": "Invalid delete request format. Use UUID list or id:'all' or deleteAll:true for filters.",
                 "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=400)
 
-        valid_uuids = []
-        invalid_uuids = []
-        for u in ids:
-            try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
-
-        tzs = Timezone.objects.filter(uuid__in=valid_uuids)
-        count = tzs.count()
-
-        if count == 0:
+        # ---------------------------------------
+        #  FK child constraint friendly message
+        # ---------------------------------------
+        except IntegrityError:
             return Response({
-                "statusCode": 404,
+                "statusCode": 400,
                 "status": False,
-                "message": "No matching timezones found.",
-                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=status.HTTP_404_NOT_FOUND)
+                "message": "You can't delete this timezone because it is being used in one or more child/related tables.",
+                "data": None
+            }, status=400)
 
-        tzs.delete()
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"{count} timezone(s) permanently deleted.",
-            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        }, status=status.HTTP_200_OK)
-
+        except Exception as e:
+            return Response({
+                "statusCode": 500,
+                "status": False,
+                "message": f"Unexpected error: {str(e)}",
+                "data": None
+            }, status=500)
+        
 
 
 class TimezoneExportAPIView(APIView):
@@ -6806,7 +7116,7 @@ class CivilIdNameUpdateAPIView(APIView):
                 "data": None
             }, status=status.HTTP_404_NOT_FOUND)
  
-        serializer = CivilIdNameSerializer(civil, data=request.data, partial=True)   # ✅ FIX HERE
+        serializer = CivilIdNameSerializer(civil, data=request.data, partial=True)   #  FIX HERE
         if serializer.is_valid():
             serializer.save()
             return Response({
@@ -6828,68 +7138,210 @@ class CivilIdNameUpdateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
  
  
+# class CivilIdNameDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+ 
+#     def delete(self, request, uuid=None):
+#         ids = request.data.get("id", None)
+ 
+#         if uuid:
+#             try:
+#                 CivilIdName.objects.get(uuid=uuid).delete()
+#                 return Response({
+#                     "statusCode": 204,
+#                     "status": True,
+#                     "message": "Civil ID deleted successfully",
+#                     "data": None
+#                 }, status=status.HTTP_204_NO_CONTENT)
+ 
+#             except CivilIdName.DoesNotExist:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "Civil ID not found",
+#                     "data": None
+#                 })
+ 
+#         if ids == "all":
+#             count = CivilIdName.objects.count()
+#             CivilIdName.objects.all().delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} Civil ID(s) deleted",
+#                 "data": None
+#             })
+ 
+#         if not ids or not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Provide list of UUIDs in 'id' or use 'all'",
+#                 "data": None
+#             })
+ 
+#         valid = []
+#         invalid = []
+ 
+#         for u in ids:
+#             try:
+#                 valid.append(UUID(u))
+#             except:
+#                 invalid.append(u)
+ 
+#         queryset = CivilIdName.objects.filter(uuid__in=valid)
+#         count = queryset.count()
+#         queryset.delete()
+ 
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} Civil ID(s) deleted",
+#             "data": {"invalid_uuids": invalid} if invalid else None
+#         })
+
+
 class CivilIdNameDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
- 
+
     def delete(self, request, uuid=None):
-        ids = request.data.get("id", None)
- 
-        if uuid:
-            try:
-                CivilIdName.objects.get(uuid=uuid).delete()
+        try:
+            ids = request.data.get("id", None)
+            delete_all = request.data.get("deleteAll", False)
+            search = request.GET.get("search", "").strip()
+
+            # ---------------------------------------
+            # Delete by single UUID (via URL param)
+            # ---------------------------------------
+            if uuid:
+                try:
+                    CivilIdName.objects.get(uuid=uuid).delete()
+                    return Response({
+                        "statusCode": 204,
+                        "status": True,
+                        "message": "Civil ID deleted successfully",
+                        "data": None
+                    }, status=status.HTTP_204_NO_CONTENT)
+                except CivilIdName.DoesNotExist:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "Civil ID not found",
+                        "data": None
+                    }, status=404)
+
+            # ---------------------------------------
+            # Delete all rows
+            # ---------------------------------------
+            if ids == "all":
+                queryset = CivilIdName.objects.filter(is_deleted=False)
+                count = queryset.count()
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No Civil IDs found to delete",
+                        "data": None
+                    }, status=404)
+
+                with transaction.atomic():
+                    queryset.delete()
+
                 return Response({
-                    "statusCode": 204,
+                    "statusCode": 200,
                     "status": True,
-                    "message": "Civil ID deleted successfully",
+                    "message": f"All {count} Civil ID(s) deleted",
                     "data": None
-                }, status=status.HTTP_204_NO_CONTENT)
- 
-            except CivilIdName.DoesNotExist:
+                }, status=200)
+
+            # ---------------------------------------
+            # Delete based on search filter (deleteAll=True)
+            # ---------------------------------------
+            if delete_all and not ids and search:
+                queryset = CivilIdName.objects.filter(is_deleted=False, name__istartswith=search)
+                count = queryset.count()
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No Civil ID(s) found matching search filter",
+                        "data": None
+                    }, status=404)
+
+                with transaction.atomic():
+                    queryset.delete()
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} Civil ID(s) deleted based on search filter",
+                    "data": None
+                }, status=200)
+
+            # ---------------------------------------
+            # Bulk delete by UUID list
+            # ---------------------------------------
+            if not ids or not isinstance(ids, list):
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Provide list of UUIDs in 'id', 'id: all', or use 'deleteAll: true' with search",
+                    "data": None
+                }, status=400)
+
+            valid_uuids, invalid_uuids = [], []
+            for u in ids:
+                try:
+                    valid_uuids.append(UUID(u))
+                except ValueError:
+                    invalid_uuids.append(u)
+
+            if not valid_uuids:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "No valid UUIDs provided",
+                    "data": {"invalid_uuids": invalid_uuids}
+                }, status=400)
+
+            queryset = CivilIdName.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+            count = queryset.count()
+
+            if count == 0:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "Civil ID not found",
-                    "data": None
-                })
- 
-        if ids == "all":
-            count = CivilIdName.objects.count()
-            CivilIdName.objects.all().delete()
+                    "message": "No matching Civil ID(s) found",
+                    "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                }, status=404)
+
+            with transaction.atomic():
+                queryset.delete()
+
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} Civil ID(s) deleted",
-                "data": None
-            })
- 
-        if not ids or not isinstance(ids, list):
+                "message": f"{count} Civil ID(s) deleted successfully",
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+            }, status=200)
+
+        except IntegrityError:
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Provide list of UUIDs in 'id' or use 'all'",
+                "message": "This Civil ID cannot be deleted because it is used in related tables",
                 "data": None
-            })
- 
-        valid = []
-        invalid = []
- 
-        for u in ids:
-            try:
-                valid.append(UUID(u))
-            except:
-                invalid.append(u)
- 
-        queryset = CivilIdName.objects.filter(uuid__in=valid)
-        count = queryset.count()
-        queryset.delete()
- 
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"{count} Civil ID(s) deleted",
-            "data": {"invalid_uuids": invalid} if invalid else None
-        })
+            }, status=400)
 
+        except Exception as e:
+            return Response({
+                "statusCode": 500,
+                "status": False,
+                "message": f"An unexpected error occurred: {str(e)}",
+                "data": None
+            }, status=500)
+
+            
  
 class CivilIdNameExportAPIView(APIView):
     """
@@ -14081,7 +14533,7 @@ class PriorityDeleteAPIView(APIView):
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-        # ✅ Case 2: Delete all
+        #  Case 2: Delete all
         if uuids == "all":
             priorities = Priority.objects.filter(is_deleted=False)
             count = priorities.count()
@@ -14100,7 +14552,7 @@ class PriorityDeleteAPIView(APIView):
                 "data": None
             }, status=status.HTTP_200_OK)
 
-        # ✅ Case 3: Bulk delete via UUIDs list
+        #  Case 3: Bulk delete via UUIDs list
         if not uuids or not isinstance(uuids, list):
             return Response({
                 "statusCode": 400,
@@ -15114,7 +15566,7 @@ class ActivityTypeDeleteAPIView(APIView):
                 "data": None
             }, status=status.HTTP_200_OK)
 
-        # ✅ Case 3: Bulk delete via UUIDs list
+        #  Case 3: Bulk delete via UUIDs list
         if not uuids or not isinstance(uuids, list):
             return Response({
                 "statusCode": 400,
@@ -15597,7 +16049,7 @@ class LostReasonDeleteAPIView(APIView):
     def delete(self, request, uuid=None):
         uuids = request.data.get('id', None)
 
-        # ✅ Case 1: Single delete via URL UUID
+        #  Case 1: Single delete via URL UUID
         if uuid:
             try:
                 reason = LostReason.objects.get(uuid=uuid, is_deleted=False)
@@ -15617,7 +16069,7 @@ class LostReasonDeleteAPIView(APIView):
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-        # ✅ Case 2: Delete all
+        #  Case 2: Delete all
         if uuids == "all":
             reasons = LostReason.objects.filter(is_deleted=False)
             count = reasons.count()
@@ -15636,7 +16088,7 @@ class LostReasonDeleteAPIView(APIView):
                 "data": None
             }, status=status.HTTP_200_OK)
 
-        # ✅ Case 3: Bulk delete via UUIDs list
+        #  Case 3: Bulk delete via UUIDs list
         if not uuids or not isinstance(uuids, list):
             return Response({
                 "statusCode": 400,
@@ -16087,7 +16539,7 @@ class LostReasonB2BDeleteAPIView(APIView):
     def delete(self, request, uuid=None):
         uuids = request.data.get('id', None)
 
-        # ✅ Case 1: Single delete via URL UUID
+        #  Case 1: Single delete via URL UUID
         if uuid:
             try:
                 reason = LostReasonB2B.objects.get(uuid=uuid, is_deleted=False)
@@ -16107,7 +16559,7 @@ class LostReasonB2BDeleteAPIView(APIView):
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-        # ✅ Case 2: Delete all
+        #  Case 2: Delete all
         if uuids == "all":
             reasons = LostReasonB2B.objects.filter(is_deleted=False)
             count = reasons.count()
@@ -16126,7 +16578,7 @@ class LostReasonB2BDeleteAPIView(APIView):
                 "data": None
             }, status=status.HTTP_200_OK)
 
-        # ✅ Case 3: Bulk delete via UUIDs list
+        #  Case 3: Bulk delete via UUIDs list
         if not uuids or not isinstance(uuids, list):
             return Response({
                 "statusCode": 400,
