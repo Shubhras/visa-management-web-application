@@ -4001,12 +4001,12 @@ class DistrictDeleteAPIView(APIView):
 
             # Apply country filter
             if country_uuids:
-                queryset = queryset.filter(state__country__uuid__in=country_uuids)
+                queryset = queryset.filter(countryName__country__uuid__in=country_uuids)
                 applied_filters.append("country")
 
             # Apply state filter
             if state_uuids:
-                queryset = queryset.filter(state__uuid__in=state_uuids)
+                queryset = queryset.filter(stateName__uuid__in=state_uuids)
                 applied_filters.append("state")
 
             #  CASES 3,4,5 → filtered delete
@@ -4878,15 +4878,15 @@ class CityDeleteAPIView(APIView):
                 applied_filters.append("search")
 
             if country_uuids:
-                queryset = queryset.filter(district__state__country__uuid__in=country_uuids)
+                queryset = queryset.filter(countryName__uuid__in=country_uuids)
                 applied_filters.append("country")
 
             if state_uuids:
-                queryset = queryset.filter(district__state__uuid__in=state_uuids)
+                queryset = queryset.filter(stateName__uuid__in=state_uuids)
                 applied_filters.append("state")
 
             if district_uuids:
-                queryset = queryset.filter(district__uuid__in=district_uuids)
+                queryset = queryset.filter(districtName__uuid__in=district_uuids)
                 applied_filters.append("district")
 
             # ----------------------------------------------------------
