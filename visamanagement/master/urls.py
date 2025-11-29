@@ -1086,13 +1086,14 @@ urlpatterns = [
     path('study-factor-age/import/', StudyFactorAgeImportAPIView.as_view(),name='age-import'),
 
 
-    path('academic-result/list/', StudyFactorAcademicResultListAPIView.as_view(), name='academic-result-list'),
+    
+    path('academic-result/', StudyFactorAcademicResultListAPIView.as_view(), name='academic-result-list'),
     path('academic-result/create/', StudyFactorAcademicResultCreateAPIView.as_view(), name='academic-result-create'),
-    path('academic-result/detail/<uuid:uuid>/', StudyFactorAcademicResultRetrieveAPIView.as_view(), name='academic-result-retrieve'),
+    path('academic-result/<uuid:uuid>/', StudyFactorAcademicResultRetrieveAPIView.as_view(), name='academic-result-retrieve'),
     path('academic-result/<uuid:uuid>/update/', StudyFactorAcademicResultUpdateAPIView.as_view(), name='academic-result-update'),
-    path('academic-result/<uuid:uuid>/delete/', StudyFactorAcademicResultDeleteAPIView.as_view(), name='academic-result-delete'),
-    path('academic-result/<uuid:uuid>/export/', StudyFactorAcademicResultExportAPIView.as_view(), name='academic-result-export'),
-    path('academic-result/<uuid:uuid>/import/', StudyFactorAcademicResultImportAPIView.as_view(), name='academic-result-import'),
+    path('academic-result/delete/', StudyFactorAcademicResultDeleteAPIView.as_view(), name='academic-result-delete'),
+    path('academic-result/export/', StudyFactorAcademicResultExportAPIView.as_view(), name='academic-result-export'),
+    path('academic-result/import/', StudyFactorAcademicResultImportAPIView.as_view(), name='academic-result-import'),
     
 
 
