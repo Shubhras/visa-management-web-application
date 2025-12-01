@@ -19756,7 +19756,7 @@ class LostReasonDeleteAPIView(APIView):
                     "data": {"invalid_uuids": invalid_uuids}
                 }, status=400)
 
-            qs_bulk = queryset.filter(uuid__in=valid_uuids, reason__istartswith=search)
+            qs_bulk = queryset.filter(uuid__in=valid_uuids, name__istartswith=search)
             count = qs_bulk.count()
 
             if count == 0:
@@ -20378,7 +20378,7 @@ class LostReasonB2BDeleteAPIView(APIView):
                     "data": {"invalid_uuids": invalid_uuids}
                 }, status=400)
 
-            qs_bulk = queryset.filter(uuid__in=valid_uuids, reason__istartswith=search)
+            qs_bulk = queryset.filter(uuid__in=valid_uuids, name__istartswith=search)
             count = qs_bulk.count()
 
             if count == 0:
