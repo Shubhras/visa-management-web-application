@@ -597,7 +597,7 @@ const AdditionalDetails = () => {
               handleInputChange("hasRelatives", e.target.checked ? "yes" : "no")
             }
           />
-          <h6 className="mb-0 fw-semibold text-dark">
+          <h6 style={{ color: '#5a6c5b' }} className="mb-0 fw-semibold " >
             Have you/spouse's RELATIVE in interested country?
           </h6>
         </div>
@@ -627,7 +627,7 @@ const AdditionalDetails = () => {
               handleInputChange("hasVisited", e.target.checked ? "yes" : "no")
             }
           />
-          <h6 className="mb-0 fw-semibold text-dark">
+          <h6 className="mb-0 fw-semibold "style={{ color: '#5a6c5b' }}>
             Have you/spouse ever VISITED any country?
           </h6>
         </div>
@@ -657,7 +657,7 @@ const AdditionalDetails = () => {
               handleInputChange("hasRefused", e.target.checked ? "yes" : "no")
             }
           />
-          <h6 className="mb-0 fw-semibold text-dark">
+          <h6 className="mb-0 fw-semibold "style={{ color: '#5a6c5b' }}>
             Have you/spouse ever been REFUSED by any country?
           </h6>
         </div>
@@ -690,7 +690,7 @@ const AdditionalDetails = () => {
               )
             }
           />
-          <h6 className="mb-0 fw-semibold text-dark">
+          <h6 className="mb-0 fw-semibold "style={{ color: '#5a6c5b' }}>
             Do you have experience managing a business?
           </h6>
         </div>
@@ -722,25 +722,22 @@ const AdditionalDetails = () => {
             //   )
             // }
           />
-          <h6 className="mb-0 fw-semibold text-dark">
+          <h6 className="mb-0 fw-semibold "style={{ color: '#5a6c5b' }}>
             Your Networth & Investment
           </h6>
         </div>
 
-          <ReusableTable
-            title="Networth & Investment"
-            data={property}
-            setData={setProperty}
-            columns={propertyColumns}
-            visibleColumns={propertyVisible}
-            setVisibleColumns={setPropertyVisible}
-            // onEditClick={handleBusinessEdit}
-            // onAddNew={handleAddNewBusiness}
-          />
+        <ReusableTable
+          title="Networth & Investment"
+          data={property}
+          setData={setProperty}
+          columns={propertyColumns}
+          visibleColumns={propertyVisible}
+          setVisibleColumns={setPropertyVisible}
+          // onEditClick={handleBusinessEdit}
+          // onAddNew={handleAddNewBusiness}
+        />
       </div>
-
-
-
 
       {/* OTHER CHECKBOX QUESTIONS */}
       <div className="card mb-4">
