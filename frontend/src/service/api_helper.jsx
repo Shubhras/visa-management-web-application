@@ -234,10 +234,11 @@ export const editStakeholderCategoryDataAPI = (payload) => {
 };
 
 export const deleteStakeholderCategoryDataAPI = (payload) => {
-  const prepareDATA = {
-    id: payload,
+    const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
   };
-  const apiUrl = `${url.DELETE_STAKEHOLDER_CATEGORY_API}delete/`;
+  const apiUrl = `${url.DELETE_STAKEHOLDER_CATEGORY_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -875,9 +876,10 @@ export const editStakeholderTypeDataAPI = (payload) => {
 
 export const deleteStakeholderTypeDataAPI = (payload) => {
   const prepareDATA = {
-    id: payload,
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
   };
-  const apiUrl = `${url.DELETE_STAKEHOLDER_TYPE_API}delete/`;
+   const apiUrl = `${url.DELETE_STAKEHOLDER_TYPE_API}delete/?search=${payload?.search}&category=${payload?.category}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -946,10 +948,11 @@ export const editOwnershipTypeDataAPI = (payload) => {
 };
 
 export const deleteOwnershipTypeDataAPI = (payload) => {
-  const prepareDATA = {
-    id: payload,
+    const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
   };
-  const apiUrl = `${url.DELETE_OWNERSHIP_TYPE_API}delete/`;
+   const apiUrl = `${url.DELETE_OWNERSHIP_TYPE_API}delete/?search=${payload?.search}&company_type=${payload?.company_type}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 

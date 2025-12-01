@@ -1164,7 +1164,7 @@ class AcademicResultGroupImportAPIView(APIView):
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing name"})
+                    skipped_rows.append({"Row": row_number,"Academic Result": name or "","Description":description, "Reason": "Missing name"})
                     continue
 
                 existing = AcademicResultGroup.objects.filter(name__iexact=name).first()
@@ -1189,8 +1189,8 @@ class AcademicResultGroupImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=200)
 
 

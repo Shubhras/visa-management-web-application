@@ -388,7 +388,8 @@ const GenderList = () => {
             setSelectedRows([]);
             setSelectAllOrNot("");
             setDeleteId(null);
-            fetchDepartmentList();
+            clearAllFilters();
+            // fetchDepartmentList();
           } else {
             toast.error("Something went wrong.");
           }

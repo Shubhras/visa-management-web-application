@@ -5728,6 +5728,197 @@ class AcademicResultComparisonExportAPIView(APIView):
         return response
 
 
+# ------------------- Export API ------------------- #
+class AcademicResultComparisonImportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        file = request.FILES.get('file')
+        sheet_name = request.data.get('sheet_name')
+
+        if not file:
+            return Response({'error': 'No file uploaded'}, status=400)
+
+        format_type = file.name.split('.')[-1].lower()
+
+        required_headers = {
+            'original result type',
+            'original result',
+            'compare result type',
+            'compare result'
+        }
+
+        optional_headers = {'description'}
+
+        data = []
+        duplicates = []
+        skipped_rows = []
+        imported_count = 0
+
+        try:
+            # ============ READ XLSX FILE ============
+            if format_type == 'xlsx':
+                import openpyxl
+                wb = openpyxl.load_workbook(file, read_only=True)
+                sheets = wb.sheetnames
+
+                if not sheet_name:
+                    return Response({
+                        "error": "Please provide sheet_name",
+                        "available_sheets": sheets
+                    }, status=400)
+
+                if sheet_name not in sheets:
+                    return Response({
+                        "error": f"Sheet '{sheet_name}' not found",
+                        "available_sheets": sheets
+                    }, status=400)
+
+                ws = wb[sheet_name]
+                headers = [
+                    (cell.value or "").strip().lower()
+                    for cell in next(ws.iter_rows(min_row=1, max_row=1))
+                ]
+
+                missing = required_headers - set(headers)
+                if missing:
+                    return Response({"error": f"Missing required headers: {missing}"}, status=400)
+
+                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+                    if not any(row):
+                        continue
+                    row_dict = dict(zip(headers, row))
+                    row_dict["_row_number"] = idx
+                    data.append(row_dict)
+
+            # ============ READ CSV FILE ============
+            elif format_type == "csv":
+                import csv, io
+                decoded = file.read().decode('utf-8')
+                reader = csv.DictReader(io.StringIO(decoded))
+
+                headers = {h.strip().lower() for h in reader.fieldnames}
+                missing = required_headers - headers
+                if missing:
+                    return Response({"error": f"Missing required headers: {missing}"}, status=400)
+
+                for idx, row in enumerate(reader, start=2):
+                    row_dict = {k.lower(): (v or "").strip() for k, v in row.items()}
+                    row_dict["_row_number"] = idx
+                    data.append(row_dict)
+
+            else:
+                return Response({"error": "Unsupported file format"}, status=400)
+
+            # ===========================================================
+            #                     PROCESS ROWS
+            # ===========================================================
+            for row in reversed(data):
+                row_no = row.get("_row_number")
+
+                original_type_name = (row.get("original result type") or "").strip()
+                original_result_name = (row.get("original result") or "").strip()
+                compare_type_name = (row.get("compare result type") or "").strip()
+                compare_result_name = (row.get("compare result") or "").strip()
+                description = (row.get("description") or "").strip()
+
+                # ------------------ VALIDATE REQUIRED FIELDS ------------------
+                if not original_type_name or not original_result_name or not compare_type_name or not compare_result_name:
+                    skipped_rows.append({
+                        "Row": row_no,
+                        "Original Result Type": original_type_name,
+                        "Original Result": original_result_name,
+                        "Compare Result Type": compare_type_name,
+                        "Compare Result": compare_result_name,
+                        "Reason": "Missing required fields",
+                    })
+                    continue
+
+                # ------------------ DATABASE LOOKUPS ------------------
+                original_type = AcademicResultType.objects.filter(name__iexact=original_type_name).first()
+                if not original_type:
+                    skipped_rows.append({
+                        "Row": row_no,
+                        "Original Result Type": original_type_name,
+                        "Reason": "Original Result Type not found"
+                    })
+                    continue
+
+                original_result = AcademicResult.objects.filter(result_name__iexact=original_result_name).first()
+                if not original_result:
+                    skipped_rows.append({
+                        "Row": row_no,
+                        "Original Result": original_result_name,
+                        "Reason": "Original Result not found"
+                    })
+                    continue
+
+                compare_type = AcademicResultType.objects.filter(name__iexact=compare_type_name).first()
+                if not compare_type:
+                    skipped_rows.append({
+                        "Row": row_no,
+                        "Compare Result Type": compare_type_name,
+                        "Reason": "Compare Result Type not found"
+                    })
+                    continue
+
+                compare_result = AcademicResult.objects.filter(result_name__iexact=compare_result_name).first()
+                if not compare_result:
+                    skipped_rows.append({
+                        "Row": row_no,
+                        "Compare Result": compare_result_name,
+                        "Reason": "Compare Result not found"
+                    })
+                    continue
+
+                # ------------------ DUPLICATE CHECK ------------------
+                existing = AcademicResultComparison.objects.filter(
+                    original_result_type=original_type,
+                    original_result=original_result,
+                    compare_result_type=compare_type,
+                    compare_result=compare_result
+                ).first()
+
+                if existing:
+                    duplicates.append({
+                        "Row": row_no,
+                        "Original Result Type": original_type_name,
+                        "Original Result": original_result_name,
+                        "Compare Result Type": compare_type_name,
+                        "Compare Result": compare_result_name,
+                        "Reason": "Duplicate combination already exists"
+                    })
+                    continue
+
+                # ------------------ CREATE NEW RECORD ------------------
+                AcademicResultComparison.objects.create(
+                    original_result_type=original_type,
+                    original_result=original_result,
+                    compare_result_type=compare_type,
+                    compare_result=compare_result
+                )
+                imported_count += 1
+
+        except Exception as e:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": str(e)
+            })
+
+        # ===========================================================
+        #                     FINAL RESPONSE
+        # ===========================================================
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": "Import completed",
+            "imported_count": imported_count,
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
+        })
+
+
 # -------------------- EducationType CRUD -------------------- #
 
 # class EducationTypeListAPIView(APIView):
@@ -6751,7 +6942,7 @@ class MediumofEducationImportAPIView(APIView):
             # Preload existing MediumofEducation
             existing_mediums = {m.name.strip().lower(): m for m in MediumofEducation.objects.all()}
 
-            for row in data:
+            for row in reversed(data):
                 row_number = row.get('_row_number', 'Unknown')
                 name = (row.get('medium of education') or '').strip()
                 perticulars = (row.get('perticulars') or '').strip()
@@ -6760,6 +6951,7 @@ class MediumofEducationImportAPIView(APIView):
                     skipped_rows.append({
                         "Row": row_number,
                         "Medium of Education": name or "Unknown",
+                        "perticulars":perticulars or "",
                         "Reason": "Missing required field 'Medium of Education'"
                     })
                     continue
@@ -6772,6 +6964,7 @@ class MediumofEducationImportAPIView(APIView):
                     duplicates.append({
                         "Row": row_number,
                         "Medium of Education": name,
+                        "perticulars":perticulars or "",
                         "Reason": "Duplicate medium of education"
                     })
                     continue
@@ -6779,6 +6972,7 @@ class MediumofEducationImportAPIView(APIView):
                     duplicates.append({
                         "Row": row_number,
                         "Medium of Education": name,
+                        "perticulars":perticulars or "",
                         "Reason": "Duplicate in file"
                     })
                     continue
@@ -7350,13 +7544,13 @@ class ECAForImportAPIView(APIView):
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing ECAFor name"})
+                    skipped_rows.append({"Row": row_number,"Description":description or "", "Reason": "Missing ECAFor name"})
                     continue
 
                 existing = ECAFor.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "ECA For": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "ECA For": name,"Description":description or "", "Reason": "Already exists"})
                         continue
                     existing.description = description
                     existing.is_deleted = False
@@ -7374,8 +7568,8 @@ class ECAForImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=200)
 
 
@@ -7999,19 +8193,39 @@ class ECAAwardingBodyImportAPIView(APIView):
 
                 # Required fields check
                 if not full_name or not country_name or not eca_for_name:
-                    skipped_rows.append({"Row": row_number, "full_name": full_name or 'Unknown', "Reason": "Missing required field(s)"})
+                    skipped_rows.append({
+                        "Row": row_number, 
+                        "Eca Body Full Name": full_name or "",
+                        "Eca Body Short Name":short_name or "",
+                        "Country":country_name or "",
+                        "Eca For":eca_for_name or "",
+                        "Valid Duration Value":eca_valid_period or "",
+                        "Reason": "Missing required field(s)"
+                        })
                     continue
 
                 # Country validation
                 country = Country.objects.filter(name__iexact=country_name).first()
                 if not country:
-                    skipped_rows.append({"Row": row_number, "full_name": full_name, "Reason": f'Country "{country_name}" not found'})
+                    skipped_rows.append({"Row": row_number, 
+                        "Eca Body Full Name": full_name or "",
+                        "Eca Body Short Name":short_name or "",
+                        "Country":country_name or "",
+                        "Eca For":eca_for_name or "",
+                        "Valid Duration Value":eca_valid_period or "",
+                        "Reason": f'Country "{country_name}" not found'})
                     continue
 
                 # ECAFor validation
                 ecafor = ECAFor.objects.filter(name__iexact=eca_for_name).first()
                 if not ecafor:
-                    skipped_rows.append({"Row": row_number, "full_name": full_name, "Reason": f'ECAFor "{eca_for_name}" not found'})
+                    skipped_rows.append({"Row": row_number, 
+                        "Eca Body Full Name": full_name or "",
+                        "Eca Body Short Name":short_name or "",
+                        "Country":country_name or "",
+                        "Eca For":eca_for_name or "",
+                        "Valid Duration Value":eca_valid_period or "",
+                        "Reason": f'ECAFor "{eca_for_name}" not found'})
                     continue
 
       
@@ -8023,7 +8237,13 @@ class ECAAwardingBodyImportAPIView(APIView):
                         if valid_duration_value < 0:
                             raise ValueError
                     except:
-                        skipped_rows.append({"Row": row_number, "full_name": full_name, "Reason": 'Valid duration value must be a positive integer'})
+                        skipped_rows.append({"Row": row_number, 
+                        "Eca Body Full Name": full_name or "",
+                        "Eca Body Short Name":short_name or "",
+                        "Country":country_name or "",
+                        "Eca For":eca_for_name or "",
+                        "Valid Duration Value":eca_valid_period or "",
+                        "Reason": 'Valid duration value must be a positive integer'})
                         continue
 
                 # Duplicate check based on unique_together
@@ -8033,7 +8253,15 @@ class ECAAwardingBodyImportAPIView(APIView):
                     ecafor=ecafor
                 ).first()
                 if existing:
-                    duplicate_names.append(full_name)
+                    # duplicate_names.append(full_name)
+                    duplicate_names.append({"Row": row_number, 
+                        "Eca Body Full Name": full_name or "",
+                        "Eca Body Short Name":short_name or "",
+                        "Country":country_name or "",
+                        "Eca For":eca_for_name or "",
+                        "Valid Duration Value":eca_valid_period or "",
+                        "Reason": "Already exists in database"
+                        })
                     continue
 
                 # Create record
@@ -9707,6 +9935,7 @@ class DegreeAwardedInstituteImportAPIView(APIView):
 
             # ---------- Import Data ----------
             for row in  reversed(data):
+                row_number = row.get("_row_number", "")
                 name = str(row.get('degree awarded institute')).strip() if row.get('degree awarded institute') else None
                 degree_awarded_by_name = str(row.get('degree awarded by')).strip() if row.get('degree awarded by') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
@@ -9715,13 +9944,26 @@ class DegreeAwardedInstituteImportAPIView(APIView):
                 education_level_name = str(row.get('education level')).strip() if row.get('education level') else None
 
                 if not name or not degree_awarded_by_name:
-                    skipped_rows.append({'name': name or 'Unknown', 'Reason': 'Missing required field(s)'})
+                    skipped_rows.append({
+                        'Row': row_number,
+                        'name': name or "",
+                        'Degree Awarded By': degree_awarded_by_name or "",
+                        'Country': country_name or "",
+                        'State': state_name or "",
+                        'Education Level': education_level_name or "",
+                        'Reason': 'Missing required field(s)'})
                     continue
 
                 # Map DegreeAwardedBy
                 degree_awarded_by = DegreeAwardedBy.objects.filter(degree_name__iexact=degree_awarded_by_name).first()
                 if not degree_awarded_by:
-                    skipped_rows.append({'name': name, 'Reason': f'Degree Awarded By "{degree_awarded_by_name}" not found'})
+                    skipped_rows.append({'Row': row_number,
+                        'name': name or "",
+                        'Degree Awarded By': degree_awarded_by_name or "",
+                        'Country': country_name or "",
+                        'State': state_name or "",
+                        'Education Level': education_level_name or "",
+                        'Reason': f'Degree Awarded By "{degree_awarded_by_name}" not found'})
                     continue
 
                 # Map Country, State, Education Level
@@ -9733,6 +9975,7 @@ class DegreeAwardedInstituteImportAPIView(APIView):
                 existing = DegreeAwardedInstitute.objects.filter(name__iexact=name, degree_awarded_by=degree_awarded_by).first()
                 if existing:
                     duplicate_names.append({
+                        'Row': row_number,
                         'name': name,
                         'Degree Awarded By': degree_awarded_by_name,
                         'Country': country_name,
@@ -9759,8 +10002,10 @@ class DegreeAwardedInstituteImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": duplicate_names,  
-            "skipped_rows": skipped_rows,
+            # "duplicates": duplicate_names,  
+            # "skipped_rows": skipped_rows,
+            "duplicates": list(reversed(duplicate_names)),
+            "skipped_rows": list(reversed(skipped_rows)),
             "imported_count": imported_count,
             "message": "Import successful"
         })
