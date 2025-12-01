@@ -22,7 +22,7 @@ from django.db.models.functions import Lower
 from django.http import HttpResponse
 from uuid import UUID
 from datetime import datetime  
-from django.db import IntegrityError,transaction
+from django.db import IntegrityError,transaction, connection
 import csv
 import io
 import pytz
@@ -384,111 +384,128 @@ class GenderUpdateAPIView(APIView):
 #             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
 #         }, status=status.HTTP_200_OK)
 
-
 class GenderDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request):
-        ids = request.data.get('id', None)
-        search = request.GET.get("search", "").strip()
+        try:
+            ids = request.data.get('id', None)
+            delete_all = request.data.get("deleteAll", False)
+            search = request.GET.get("search", "").strip()
 
-        # ---------------------------------------
-        # DELETE FULL TABLE when id == "all"
-        # ---------------------------------------
-        if ids == "all":
-            count = Gender.objects.count()
-            Gender.objects.all().delete()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": f"All {count} gender(s) deleted from the table.",
-                "data": None
-            }, status=200)
+            # ---------------------------------------
+            # CASE 2: id = "all" → Delete all rows
+            # ---------------------------------------
+            if ids == "all":
+                queryset = Gender.objects.filter(is_deleted=False)
+                count = queryset.count()
 
-        # ---------------------------------------
-        # Base queryset (soft delete safety)
-        # ---------------------------------------
-        queryset = Gender.objects.filter(is_deleted=False)
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No gender(s) found to delete.",
+                        "data": None
+                    }, status=404)
 
-        # ---------------------------------------
-        # SEARCH BASED DELETE (ONLY when deleteAll:true)
-        # ---------------------------------------
-        if search:
-            if not request.data.get("deleteAll", False):
+                with transaction.atomic():
+                    queryset.delete()
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"All {count} gender(s) deleted successfully.",
+                    "data": None
+                }, status=200)
+
+            # ---------------------------------------
+            # CASE 3: deleteAll=true + search filter → Delete filtered rows
+            # ---------------------------------------
+            if delete_all and not ids and search:
+                queryset = Gender.objects.filter(is_deleted=False, name__istartswith=search)
+                count = queryset.count()
+
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No gender(s) matched this search filter.",
+                        "data": None
+                    }, status=404)
+
+                with transaction.atomic():
+                    queryset.delete()
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} gender(s) deleted based on search filter.",
+                    "data": None
+                }, status=200)
+
+            # ---------------------------------------
+            # CASE 1: Bulk delete by UUID list
+            # ---------------------------------------
+            if not ids or not isinstance(ids, list):
                 return Response({
                     "statusCode": 400,
                     "status": False,
-                    "message": "To delete based on search, please send → 'deleteAll: true' in request body.",
+                    "message": "Send UUID list in 'id', 'id: all', or 'deleteAll: true' with search.",
                     "data": None
                 }, status=400)
 
-            queryset = queryset.filter(Q(name__istartswith=search))
+            valid_uuids, invalid_uuids = [], []
+
+            for u in ids:
+                try:
+                    valid_uuids.append(UUID(u))
+                except ValueError:
+                    invalid_uuids.append(u)
+
+            if not valid_uuids:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "No valid UUIDs provided.",
+                    "data": {"invalid_uuids": invalid_uuids}
+                }, status=400)
+
+            queryset = Gender.objects.filter(uuid__in=valid_uuids, is_deleted=False)
             count = queryset.count()
 
             if count == 0:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "No matching gender(s) found for this search filter.",
-                    "data": None
+                    "message": "No matching gender(s) found.",
+                    "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
                 }, status=404)
 
-            queryset.delete()
+            with transaction.atomic():
+                queryset.delete()
+
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"{count} gender(s) deleted based on search filter.",
-                "data": None
+                "message": f"{count} gender(s) deleted successfully.",
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
             }, status=200)
 
-        # ---------------------------------------
-        # BULK DELETE via UUID LIST
-        # ---------------------------------------
-        if not ids or not isinstance(ids, list):
+        except IntegrityError:
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Send UUID list in 'id' or send 'id: all'.",
+                "message": "You can't delete this gender because it's used in related child tables.",
                 "data": None
             }, status=400)
 
-        valid_uuids = []
-        invalid_uuids = []
-
-        for u in ids:
-            try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
-
-        if not valid_uuids:
+        except Exception as e:
             return Response({
-                "statusCode": 400,
+                "statusCode": 500,
                 "status": False,
-                "message": "No valid UUIDs provided.",
-                "data": {"invalid_uuids": invalid_uuids}
-            }, status=400)
-
-        bulk_qs = queryset.filter(uuid__in=valid_uuids)
-        count = bulk_qs.count()
-
-        if count == 0:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "No matching gender(s) found to delete.",
-                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=404)
-
-        bulk_qs.delete()
-
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"{count} gender(s) deleted.",
-            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        }, status=200)
-    
+                "message": f"An unexpected error occurred: {str(e)}",
+                "data": None
+            }, status=500)
 
 
 class GenderExportAPIView(APIView):
@@ -2225,7 +2242,7 @@ class CountryDeleteAPIView(APIView):
             search = request.GET.get("search", "").strip()
             raw_continents = request.GET.get("continent", "").strip()
 
-            # ✅ Parse continent UUIDs from params
+            #  Parse continent UUIDs from params
             continent_uuids, invalid_continents = [], []
             if raw_continents:
                 for u in raw_continents.split(','):
@@ -2235,7 +2252,7 @@ class CountryDeleteAPIView(APIView):
                         invalid_continents.append(u)
 
             # ---------------------------------------------------
-            # ✅ CASE 1: deleteAll=false + ID LIST → delete only given UUIDs (ignore filters)
+            #  CASE 1: deleteAll=false + ID LIST → delete only given UUIDs (ignore filters)
             # ---------------------------------------------------
             if delete_all is False and isinstance(ids, list):
                 valid_uuids, invalid_uuids = [], []
@@ -2264,7 +2281,7 @@ class CountryDeleteAPIView(APIView):
                         "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
                     }, status=404)
 
-                # ✅ FK safe delete check
+                #  FK safe delete check
                 with transaction.atomic():
                     bulk_qs.delete()
 
@@ -2276,7 +2293,7 @@ class CountryDeleteAPIView(APIView):
                 }, status=200)
 
             # ---------------------------------------------------
-            # ✅ CASE 2: id="all" + deleteAll=false → full table delete but FK block safe handling
+            #  CASE 2: id="all" + deleteAll=false → full table delete but FK block safe handling
             # ---------------------------------------------------
             if ids == "all" and delete_all is False:
                 qs_all = Country.objects.filter(is_deleted=False)
@@ -2289,7 +2306,7 @@ class CountryDeleteAPIView(APIView):
                         "data": None
                     }, status=404)
 
-                # ✅ FK safe delete	(Only delete if not referenced)
+                #  FK safe delete	(Only delete if not referenced)
                 not_used = []
                 used = []
 
@@ -2315,21 +2332,21 @@ class CountryDeleteAPIView(APIView):
             applied_filters = []
 
             # ---------------------------------------------------
-            # ✅ CASE 3,5: Search filter
+            #  CASE 3,5: Search filter
             # ---------------------------------------------------
             if search:
                 queryset = queryset.filter(Q(name__istartswith=search))
                 applied_filters.append("search")
 
             # ---------------------------------------------------
-            # ✅ CASE 4,5: continent filter
+            #  CASE 4,5: continent filter
             # ---------------------------------------------------
             if continent_uuids:
                 queryset = queryset.filter(continent__uuid__in=continent_uuids)
                 applied_filters.append("continent")
 
             # ---------------------------------------------------
-            # ✅ Filter delete if deleteAll = true (CASES 3,4,5)
+            #  Filter delete if deleteAll = true (CASES 3,4,5)
             # ---------------------------------------------------
             if delete_all and applied_filters:
                 count = queryset.count()
@@ -2360,7 +2377,7 @@ class CountryDeleteAPIView(APIView):
                 }, status=200)
 
             # ---------------------------------------------------
-            # ✅ CASE 1 already handled above | If no filters & deleteAll=false → fallback to ID delete
+            #  CASE 1 already handled above | If no filters & deleteAll=false → fallback to ID delete
             # ---------------------------------------------------
             if not ids:
                 return Response({
@@ -2418,7 +2435,7 @@ class CountryDeleteAPIView(APIView):
             }, status=400)
 
         except IntegrityError:
-            # ✅ FINAL CLEAN FK ERROR
+            #  FINAL CLEAN FK ERROR
             return Response({
                 "statusCode": 400,
                 "status": False,
@@ -3096,7 +3113,7 @@ class StateDeleteAPIView(APIView):
             search = request.GET.get("search", "").strip()
             raw_countries = request.GET.get("country", "").strip()
 
-            # ✅ Parse multiple country UUIDs from params
+            #  Parse multiple country UUIDs from params
             country_uuids = []
             if raw_countries:
                 for u in raw_countries.split(","):
@@ -3105,7 +3122,7 @@ class StateDeleteAPIView(APIView):
                     except ValueError:
                         pass  # silently ignore invalid UUIDs
 
-            # ✅ CASE 2 & 5: Full table delete if id == "all" and deleteAll=false
+            #  CASE 2 & 5: Full table delete if id == "all" and deleteAll=false
             if ids == "all" and delete_all is False:
                 qs_all = State.objects.filter(is_deleted=False)
                 count = qs_all.count()
@@ -3125,7 +3142,7 @@ class StateDeleteAPIView(APIView):
                     "data": None
                 }, status=200)
 
-            # ✅ CASE 1: deleteAll=false + id list → only delete those UUID records, ignore filters
+            #  CASE 1: deleteAll=false + id list → only delete those UUID records, ignore filters
             if delete_all is False and isinstance(ids, list):
                 valid_uuids = []
                 invalid_uuids = []
@@ -3161,7 +3178,7 @@ class StateDeleteAPIView(APIView):
                     "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
                 }, status=200)
 
-            # ✅ CASE 3,4,5: deleteAll=true + filters → filtered delete, id must be empty/None
+            #  CASE 3,4,5: deleteAll=true + filters → filtered delete, id must be empty/None
             if delete_all:
                 queryset = State.objects.filter(is_deleted=False)
                 applied_filters = []
@@ -3210,7 +3227,7 @@ class StateDeleteAPIView(APIView):
             }, status=400)
 
         except IntegrityError:
-            # ✅ Clean FK error response
+            #  Clean FK error response
             return Response({
                 "statusCode": 400,
                 "status": False,
@@ -3219,7 +3236,7 @@ class StateDeleteAPIView(APIView):
             }, status=400)
 
         except Exception as e:
-            # ✅ Generic safe exception message
+            #  Generic safe exception message
             return Response({
                 "statusCode": 500,
                 "status": False,
@@ -4669,87 +4686,6 @@ class CityUpdateAPIView(APIView):
         return Response({"statusCode": 400, "status": False, "message": errors}, status=400)
 
 
-
-# class CityDeleteAPIView(APIView):
-#     permission_classes = [IsAuthenticated, IsAdminUser]
-
-#     def delete(self, request):
-#         ids = request.data.get('id', None)
-
-#         if not ids:
-#             return Response({
-#                 "statusCode": 400,
-#                 "status": False,
-#                 "message": "Please provide 'id' field (UUID list or 'all').",
-#                 "data": None
-#             }, status=status.HTTP_400_BAD_REQUEST)
-
-#         # Delete all cities
-#         if ids == "all":
-#             cities = City.objects.filter(is_deleted=False)
-#             count = cities.count()
-#             if count == 0:
-#                 return Response({
-#                     "statusCode": 404,
-#                     "status": False,
-#                     "message": "No cities found to delete.",
-#                     "data": None
-#                 }, status=status.HTTP_404_NOT_FOUND)
-
-#             cities.delete()
-#             return Response({
-#                 "statusCode": 200,
-#                 "status": True,
-#                 "message": f"All {count} city(s) deleted successfully.",
-#                 "data": None
-#             }, status=status.HTTP_200_OK)
-
-#         # Validate list of UUIDs
-#         if not isinstance(ids, list):
-#             return Response({
-#                 "statusCode": 400,
-#                 "status": False,
-#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
-#                 "data": None
-#             }, status=status.HTTP_400_BAD_REQUEST)
-
-#         valid_uuids, invalid_uuids = [], []
-#         for u in ids:
-#             try:
-#                 valid_uuids.append(UUID(u))
-#             except ValueError:
-#                 invalid_uuids.append(u)
-
-#         if not valid_uuids:
-#             return Response({
-#                 "statusCode": 400,
-#                 "status": False,
-#                 "message": "No valid UUIDs provided.",
-#                 "data": {"invalid_uuids": invalid_uuids}
-#             }, status=status.HTTP_400_BAD_REQUEST)
-
-#         cities = City.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-#         count = cities.count()
-
-#         if count == 0:
-#             return Response({
-#                 "statusCode": 404,
-#                 "status": False,
-#                 "message": "No matching cities found.",
-#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-#             }, status=status.HTTP_404_NOT_FOUND)
-
-#         cities.delete()
-
-#         return Response({
-#             "statusCode": 200,
-#             "status": True,
-#             "message": f"{count} city(s) deleted successfully.",
-#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-#         }, status=status.HTTP_200_OK)
-
-
-
 class CityDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -4838,11 +4774,42 @@ class CityDeleteAPIView(APIView):
             # ----------------------------------------------------------
             #  CASE 2: id="all" + deleteAll=false → Delete entire City table (skip FK errors)
             # ----------------------------------------------------------
-            if ids == "all" and delete_all is False:
-                qs_all = City.objects.filter(is_deleted=False)
-                count = qs_all.count()
+            # if ids == "all" and delete_all is False:
+            #     qs_all = City.objects.filter(is_deleted=False)
+            #     count = qs_all.count()
 
-                if count == 0:
+            #     if count == 0:
+            #         return Response({
+            #             "statusCode": 404,
+            #             "status": False,
+            #             "message": "No cities found to delete.",
+            #             "data": None
+            #         }, status=404)
+
+            #     skipped = []
+            #     deleted = []
+
+            #     for obj in qs_all:
+            #         try:
+            #             obj.delete()
+            #             deleted.append(str(obj.uuid))
+            #         except IntegrityError:
+            #             skipped.append(obj.name)
+
+            #     return Response({
+            #         "statusCode": 200,
+            #         "status": True,
+            #         "message": f"Delete completed. {len(deleted)} city(s) deleted. {len(skipped)} skipped because they are referenced in child tables.",
+            #         "data": {"deleted": deleted, "skipped": skipped} if skipped else None
+            #     }, status=200)
+
+
+            if ids == "all" and delete_all is False:
+                batch_size = 1000
+                qs_all = City.objects.filter(is_deleted=False)
+                total_count = qs_all.count()
+
+                if total_count == 0:
                     return Response({
                         "statusCode": 404,
                         "status": False,
@@ -4850,22 +4817,34 @@ class CityDeleteAPIView(APIView):
                         "data": None
                     }, status=404)
 
-                skipped = []
                 deleted = []
+                skipped = []
 
-                for obj in qs_all:
-                    try:
-                        obj.delete()
-                        deleted.append(str(obj.uuid))
-                    except IntegrityError:
-                        skipped.append(obj.name)
+                while qs_all.exists():
+                    batch = qs_all[:batch_size]
+                    with transaction.atomic():
+                        for city in batch:
+                            try:
+                                city.delete()
+                                deleted.append(str(city.uuid))
+                            except IntegrityError:
+                                skipped.append(city.name)
+                    # Refresh queryset after batch
+                    qs_all = City.objects.filter(is_deleted=False).exclude(uuid__in=deleted)
+
+                message = f"Delete completed. {len(deleted)} city(s) deleted."
+                if skipped:
+                    message += f" {len(skipped)} skipped because they are referenced in child tables."
 
                 return Response({
                     "statusCode": 200,
                     "status": True,
-                    "message": f"Delete completed. {len(deleted)} city(s) deleted. {len(skipped)} skipped because they are referenced in child tables.",
-                    "data": {"deleted": deleted, "skipped": skipped} if skipped else None
+                    "message": message,
+                    "data": {"deleted": deleted, "skipped": skipped} if skipped else {"deleted": deleted}
                 }, status=200)
+
+            
+
 
             # ----------------------------------------------------------
             #  Apply filters only when deleteAll = true
@@ -4982,7 +4961,6 @@ class CityDeleteAPIView(APIView):
                 "data": None
             }, status=500)
 
-            
 
 class CityExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -8343,95 +8321,243 @@ class DepartmentUpdateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
-class DepartmentDeleteAPIView(APIView): 
+# class DepartmentDeleteAPIView(APIView): 
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request, uuid=None):
+#         ids = request.data.get('id', None)
+
+#         # Single delete via URL parameter
+#         if uuid:
+#             try:
+#                 department = Department.objects.get(uuid=uuid)
+#                 department.delete()
+#                 return Response({
+#                     "statusCode": 204,
+#                     "status": True,
+#                     "message": "Department permanently deleted.",
+#                     "data": None
+#                 }, status=status.HTTP_204_NO_CONTENT)
+#             except Department.DoesNotExist:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "Department not found.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+
+#         # Delete all departments
+#         if ids == "all":
+#             departments = Department.objects.all()
+#             count = departments.count()
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No departments found to delete.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+#             departments.delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} department(s) permanently deleted.",
+#                 "data": None
+#             }, status=status.HTTP_200_OK)
+
+#         # Validate bulk UUIDs
+#         if not ids or not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         valid_uuids = []
+#         invalid_uuids = []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         if not valid_uuids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "No valid UUIDs provided.",
+#                 "data": {"invalid_uuids": invalid_uuids}
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         # Bulk delete
+#         departments = Department.objects.filter(uuid__in=valid_uuids)
+#         count = departments.count()
+
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching departments found.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=status.HTTP_404_NOT_FOUND)
+
+#         departments.delete()
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} department(s) permanently deleted.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         }, status=status.HTTP_200_OK)
+
+
+class DepartmentDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
         ids = request.data.get('id', None)
+        search = request.GET.get("search", "").strip()
 
-        # Single delete via URL parameter
-        if uuid:
-            try:
-                department = Department.objects.get(uuid=uuid)
-                department.delete()
+        # ---------------------------------------
+        # BASE QUERYSET
+        # ---------------------------------------
+        queryset = Department.objects.filter(is_deleted=False)
+
+        # ---------------------------------------
+        #  CASE 1: SEARCH BASED DELETE (ONLY when deleteAll = true)
+        # ---------------------------------------
+        if search:
+            if not request.data.get("deleteAll", False):
                 return Response({
-                    "statusCode": 204,
-                    "status": True,
-                    "message": "Department permanently deleted.",
-                    "data": None
-                }, status=status.HTTP_204_NO_CONTENT)
-            except Department.DoesNotExist:
-                return Response({
-                    "statusCode": 404,
+                    "statusCode": 400,
                     "status": False,
-                    "message": "Department not found.",
+                    "message": "To delete based on search filter please send → deleteAll:true in body",
                     "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
+                }, status=400)
 
-        # Delete all departments
-        if ids == "all":
-            departments = Department.objects.all()
-            count = departments.count()
+            qs_search = queryset.filter(Q(name__istartswith=search))
+            count = qs_search.count()
+
             if count == 0:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "No departments found to delete.",
+                    "message": "No departments found matching this search filter",
                     "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
-            departments.delete()
+                }, status=404)
+
+            #  FK Safe delete
+            try:
+                with transaction.atomic():
+                    qs_search.delete()
+            except IntegrityError:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "You can't delete this department because it is being used in child tables",
+                    "data": None
+                }, status=400)
+
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} department(s) permanently deleted.",
+                "message": f"{count} department(s) deleted based on search filter",
                 "data": None
-            }, status=status.HTTP_200_OK)
+            }, status=200)
 
-        # Validate bulk UUIDs
-        if not ids or not isinstance(ids, list):
+
+        # ---------------------------------------
+        #  CASE 2: FULL TABLE DELETE when id == "all" and deleteAll:false
+        # ---------------------------------------
+        if ids == "all" and request.data.get("deleteAll", False) is False:
+            qs_all = queryset
+            count = qs_all.count()
+
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No departments found to delete",
+                    "data": None
+                }, status=404)
+
+            deleted, skipped = [], []
+
+            for d in qs_all:
+                try:
+                    with transaction.atomic():
+                        d.delete()
+                    deleted.append(str(d.uuid))
+                except IntegrityError:
+                    skipped.append(d.name)
+
             return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
-                "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
+                "statusCode": 200,
+                "status": True,
+                "message": f"Delete completed. {len(deleted)} deleted, {len(skipped)} skipped (used in child tables)",
+                "data": {"deleted": deleted, "not_deleted": skipped}
+            }, status=200)
 
-        valid_uuids = []
-        invalid_uuids = []
-        for u in ids:
+        # ---------------------------------------
+        #  CASE 3: BULK DELETE using UUID list (IGNORES search)
+        # ---------------------------------------
+        if isinstance(ids, list) and request.data.get("deleteAll", False) is False:
+            valid_uuids, invalid_uuids = [], []
+
+            for u in ids:
+                try:
+                    valid_uuids.append(UUID(u))
+                except ValueError:
+                    invalid_uuids.append(u)
+
+            if not valid_uuids:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "No valid UUIDs provided",
+                    "data": {"invalid_uuids": invalid_uuids}
+                }, status=400)
+
+            qs_ids = queryset.filter(uuid__in=valid_uuids)
+            count = qs_ids.count()
+
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No matching departments found for given ID list",
+                    "data": None
+                }, status=404)
+
             try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
+                with transaction.atomic():
+                    qs_ids.delete()
+            except IntegrityError:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "One or more department(s) can't be deleted because they are used in child tables",
+                    "data": None
+                }, status=400)
 
-        if not valid_uuids:
             return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "No valid UUIDs provided.",
-                "data": {"invalid_uuids": invalid_uuids}
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        # Bulk delete
-        departments = Department.objects.filter(uuid__in=valid_uuids)
-        count = departments.count()
-
-        if count == 0:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "No matching departments found.",
+                "statusCode": 200,
+                "status": True,
+                "message": f"{count} department(s) deleted successfully",
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=status.HTTP_404_NOT_FOUND)
+            }, status=200)
 
-        departments.delete()
-
+        # ---------------------------------------
+        # ❗ Fallback Invalid Request
+        # ---------------------------------------
         return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"{count} department(s) permanently deleted.",
-            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        }, status=status.HTTP_200_OK)
+            "statusCode": 400,
+            "status": False,
+            "message": "Invalid delete request format",
+            "data": None
+        }, status=400)
+    
 
 
 class DepartmentExportAPIView(APIView):
@@ -8862,97 +8988,229 @@ class EmployeeTypeUpdateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
+# class EmployeeTypeDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request, uuid=None):
+#         uuids = request.data.get('id', None)
+
+#         # Single delete via URL parameter
+#         if uuid:
+#             try:
+#                 emp_type = EmployeeType.objects.get(uuid=uuid, is_deleted=False)
+#                 emp_type.is_deleted = True
+#                 emp_type.save()
+#                 return Response({
+#                     "statusCode": 204,
+#                     "status": True,
+#                     "message": "Employee type deleted successfully",
+#                     "data": None
+#                 }, status=status.HTTP_204_NO_CONTENT)
+#             except EmployeeType.DoesNotExist:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "Employee type not found",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+
+#         # Delete all if "all" is sent
+#         if uuids == "all":
+#             emp_types = EmployeeType.objects.filter(is_deleted=False)
+#             count = emp_types.count()
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No employee types found to delete.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+#             emp_types.delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} employee type(s) deleted successfully.",
+#                 "data": None
+#             }, status=status.HTTP_200_OK)
+
+#         # Validate bulk UUIDs
+#         if not uuids or not isinstance(uuids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         valid_uuids = []
+#         invalid_uuids = []
+#         for u in uuids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         if not valid_uuids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "No valid UUIDs provided.",
+#                 "data": {"invalid_uuids": invalid_uuids}
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         # Bulk delete
+#         emp_types = EmployeeType.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+#         count = emp_types.count()
+
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching employee types found.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=status.HTTP_404_NOT_FOUND)
+
+#         emp_types.delete()
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} employee type(s) deleted successfully.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         }, status=status.HTTP_200_OK)
+    
+
 class EmployeeTypeDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
-    def delete(self, request, uuid=None):
-        uuids = request.data.get('id', None)
+    def delete(self, request):
+        try:
+            ids = request.data.get('id', None)
+            delete_all = request.data.get("deleteAll", False)
+            search = request.GET.get("search", "").strip()
 
-        # Single delete via URL parameter
-        if uuid:
-            try:
-                emp_type = EmployeeType.objects.get(uuid=uuid, is_deleted=False)
-                emp_type.is_deleted = True
-                emp_type.save()
+            # ---------------------------------------
+            # CASE 3: deleteAll=true + search → delete filtered rows (id empty or None)
+            # ---------------------------------------
+            if delete_all and (not ids or ids == "" or ids == []):
+                if not search:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "Search param is required when deleteAll=true & id empty.",
+                        "data": None
+                    }, status=400)
+
+                queryset = EmployeeType.objects.filter(is_deleted=False, name__istartswith=search)
+                count = queryset.count()
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No employee type(s) found matching this search filter.",
+                        "data": None
+                    }, status=404)
+
+                with transaction.atomic():
+                    queryset.delete()
+
                 return Response({
-                    "statusCode": 204,
+                    "statusCode": 200,
                     "status": True,
-                    "message": "Employee type deleted successfully",
+                    "message": f"{count} employee type(s) deleted based on search filter.",
                     "data": None
-                }, status=status.HTTP_204_NO_CONTENT)
-            except EmployeeType.DoesNotExist:
-                return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "Employee type not found",
-                    "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
+                }, status=200)
 
-        # Delete all if "all" is sent
-        if uuids == "all":
-            emp_types = EmployeeType.objects.filter(is_deleted=False)
-            count = emp_types.count()
+
+            # ---------------------------------------
+            # CASE 2: id="all" + deleteAll=false → delete all rows
+            # ---------------------------------------
+            if ids == "all" and not delete_all:
+                queryset = EmployeeType.objects.filter(is_deleted=False)
+                count = queryset.count()
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No employee types found to delete.",
+                        "data": None
+                    }, status=404)
+
+                with transaction.atomic():
+                    queryset.delete()
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"All {count} employee type(s) deleted successfully.",
+                    "data": None
+                }, status=200)
+
+            # ---------------------------------------
+            # CASE 1 (also): Bulk delete via UUID list when deleteAll=false
+            # ---------------------------------------
+            if not ids or not isinstance(ids, list):
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Send UUID list in 'id' or use 'id: all', or 'deleteAll: true' with search.",
+                    "data": None
+                }, status=400)
+
+            valid_uuids, invalid_uuids = [], []
+            for u in ids:
+                try:
+                    valid_uuids.append(UUID(u))
+                except ValueError:
+                    invalid_uuids.append(u)
+
+            if not valid_uuids:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "No valid UUIDs provided.",
+                    "data": {"invalid_uuids": invalid_uuids}
+                }, status=400)
+
+            queryset = EmployeeType.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+            count = queryset.count()
+
             if count == 0:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "No employee types found to delete.",
-                    "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
-            emp_types.delete()
+                    "message": "No matching employee type(s) found.",
+                    "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                }, status=404)
+
+            with transaction.atomic():
+                queryset.delete()
+
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} employee type(s) deleted successfully.",
-                "data": None
-            }, status=status.HTTP_200_OK)
-
-        # Validate bulk UUIDs
-        if not uuids or not isinstance(uuids, list):
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
-                "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        valid_uuids = []
-        invalid_uuids = []
-        for u in uuids:
-            try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
-
-        if not valid_uuids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "No valid UUIDs provided.",
-                "data": {"invalid_uuids": invalid_uuids}
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        # Bulk delete
-        emp_types = EmployeeType.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = emp_types.count()
-
-        if count == 0:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "No matching employee types found.",
+                "message": f"{count} employee type(s) deleted successfully.",
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=status.HTTP_404_NOT_FOUND)
+            }, status=200)
 
-        emp_types.delete()
+        except IntegrityError:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "You can't delete this employee type because it is used in one or more related child tables.",
+                "data": None
+            }, status=400)
 
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"{count} employee type(s) deleted successfully.",
-            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        }, status=status.HTTP_200_OK)
-    
+        except Exception as e:
+            return Response({
+                "statusCode": 500,
+                "status": False,
+                "message": f"An unexpected error occurred: {str(e)}",
+                "data": None
+            }, status=500)
+
+
+
 
 
 class EmployeeTypeExportAPIView(APIView):
@@ -9375,99 +9633,232 @@ class CompanyTypeUpdateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
+# class CompanyTypeDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request, uuid=None):
+#         ids = request.data.get('id', None)
+
+#         #  Case 1: Single delete (UUID passed in URL)
+#         if uuid:
+#             try:
+#                 company_type = CompanyType.objects.get(uuid=uuid, is_deleted=False)
+#                 company_type.is_deleted = True
+#                 company_type.save()
+#                 return Response({
+#                     "statusCode": 204,
+#                     "status": True,
+#                     "message": "Company type deleted successfully",
+#                     "data": None
+#                 }, status=status.HTTP_204_NO_CONTENT)
+#             except CompanyType.DoesNotExist:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "Company type not found",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+
+#         #  Case 2: Delete all
+#         if ids == "all":
+#             company_types = CompanyType.objects.filter(is_deleted=False)
+#             count = company_types.count()
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No company types found to delete.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+#             company_types.delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} company type(s) deleted successfully.",
+#                 "data": None
+#             }, status=status.HTTP_200_OK)
+
+#         #  Case 3: Multiple delete (UUIDs in request body)
+#         if not ids or not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         # Validate UUIDs
+#         valid_uuids = []
+#         invalid_uuids = []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         if not valid_uuids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "No valid UUIDs provided.",
+#                 "data": {"invalid_uuids": invalid_uuids}
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         # Fetch company types that exist and are not deleted
+#         company_types = CompanyType.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+#         count = company_types.count()
+
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching company types found.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=status.HTTP_404_NOT_FOUND)
+
+#         # Soft delete
+#         company_types.delete()
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} company type(s) deleted successfully.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         }, status=status.HTTP_200_OK)
+
+
 class CompanyTypeDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
-        ids = request.data.get('id', None)
+        try:
+            ids = request.data.get('id', None)
+            delete_all = request.data.get("deleteAll", False)
+            search = request.GET.get("search", "").strip()
 
-        #  Case 1: Single delete (UUID passed in URL)
-        if uuid:
-            try:
-                company_type = CompanyType.objects.get(uuid=uuid, is_deleted=False)
-                company_type.is_deleted = True
-                company_type.save()
+            # ---------------------------------------
+            # CASE 3 & 5: deleteAll=true + search → delete filtered rows (id empty)
+            # ---------------------------------------
+            if delete_all and (not ids or ids == "" or ids == []):
+                if not search:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "Search param is required when deleteAll=true & id empty.",
+                        "data": None
+                    }, status=400)
+
+                queryset = CompanyType.objects.filter(is_deleted=False, name__istartswith=search)
+                count = queryset.count()
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No company type(s) found matching this search filter.",
+                        "data": None
+                    }, status=404)
+
+                with transaction.atomic():
+                    queryset.delete()
+
                 return Response({
-                    "statusCode": 204,
+                    "statusCode": 200,
                     "status": True,
-                    "message": "Company type deleted successfully",
+                    "message": f"{count} company type(s) deleted based on search filter.",
                     "data": None
-                }, status=status.HTTP_204_NO_CONTENT)
-            except CompanyType.DoesNotExist:
-                return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "Company type not found",
-                    "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
+                }, status=200)
 
-        #  Case 2: Delete all
-        if ids == "all":
-            company_types = CompanyType.objects.filter(is_deleted=False)
-            count = company_types.count()
+           
+
+            # ---------------------------------------
+            # CASE 2: ids="all" + deleteAll=false → delete all rows
+            # ---------------------------------------
+            if ids == "all" and not delete_all:
+                queryset = CompanyType.objects.filter(is_deleted=False)
+                count = queryset.count()
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No company types found to delete.",
+                        "data": None
+                    }, status=404)
+
+                with transaction.atomic():
+                    queryset.delete()
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"All {count} company type(s) deleted successfully.",
+                    "data": None
+                }, status=200)
+
+            # ---------------------------------------
+            # CASE 1,4,5: Bulk delete via UUID list when deleteAll=false
+            # ---------------------------------------
+            if not ids or not isinstance(ids, list):
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Send UUID list in 'id', 'id: all', or 'deleteAll: true' with search.",
+                    "data": None
+                }, status=400)
+
+            valid_uuids, invalid_uuids = [], []
+            for u in ids:
+                try:
+                    valid_uuids.append(UUID(u))
+                except ValueError:
+                    invalid_uuids.append(u)
+
+            if not valid_uuids:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "No valid UUIDs provided.",
+                    "data": {"invalid_uuids": invalid_uuids}
+                }, status=400)
+
+            queryset = CompanyType.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+            count = queryset.count()
+
             if count == 0:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "No company types found to delete.",
-                    "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
-            company_types.delete()
+                    "message": "No matching company type(s) found.",
+                    "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                }, status=404)
+
+            with transaction.atomic():
+                queryset.delete()
+
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} company type(s) deleted successfully.",
-                "data": None
-            }, status=status.HTTP_200_OK)
-
-        #  Case 3: Multiple delete (UUIDs in request body)
-        if not ids or not isinstance(ids, list):
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
-                "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        # Validate UUIDs
-        valid_uuids = []
-        invalid_uuids = []
-        for u in ids:
-            try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
-
-        if not valid_uuids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "No valid UUIDs provided.",
-                "data": {"invalid_uuids": invalid_uuids}
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        # Fetch company types that exist and are not deleted
-        company_types = CompanyType.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = company_types.count()
-
-        if count == 0:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "No matching company types found.",
+                "message": f"{count} company type(s) deleted successfully.",
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=status.HTTP_404_NOT_FOUND)
+            }, status=200)
 
-        # Soft delete
-        company_types.delete()
+        except IntegrityError:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "You can't delete this company type because it is used in one or more related child tables.",
+                "data": None
+            }, status=400)
 
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"{count} company type(s) deleted successfully.",
-            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        }, status=status.HTTP_200_OK)
-    
+        except Exception as e:
+            return Response({
+                "statusCode": 500,
+                "status": False,
+                "message": f"An unexpected error occurred: {str(e)}",
+                "data": None
+            }, status=500)
+        
+
+
 class CompanyTypeExportAPIView(APIView):
     """
     Export CompanyType data to CSV or XLSX with custom sorting.
@@ -9907,98 +10298,249 @@ class OwnershipTypeUpdateAPIView(APIView):
             "data": None
         }, status=status.HTTP_400_BAD_REQUEST)
 
+# class OwnershipTypeDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request, uuid=None):
+#         ids = request.data.get('id', [])
+
+#         #  Case 1: Single delete (UUID in URL)
+#         if uuid:
+#             try:
+#                 ownership = OwnershipType.objects.get(uuid=uuid, is_deleted=False)
+#                 ownership.delete()
+               
+#                 return Response({
+#                     "statusCode": 204,
+#                     "status": True,
+#                     "message": "Ownership type deleted successfully",
+#                     "data": None
+#                 }, status=status.HTTP_204_NO_CONTENT)
+#             except OwnershipType.DoesNotExist:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "Ownership type not found",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+        
+#         if ids == "all":
+#             ownership = OwnershipType.objects.get(uuid=uuid, is_deleted=False)
+            
+#             count = ownership.count()
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No departments found to delete.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+#             ownership.delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} department(s) permanently deleted.",
+#                 "data": None
+#             }, status=status.HTTP_200_OK)
+
+#         #  Case 2: Multiple delete (UUIDs in request body)
+#         if not ids or not isinstance(ids, list):
+#                 return Response({
+#                     "statusCode": 400,
+#                     "status": False,
+#                     "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+#                     "data": None
+#                 }, status=status.HTTP_400_BAD_REQUEST)
+
+#         # Validate UUIDs
+#         valid_uuids = []
+#         invalid_uuids = []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         if not valid_uuids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "No valid UUIDs provided.",
+#                 "data": {"invalid_uuids": invalid_uuids}
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         # Fetch ownership types that exist and are not deleted
+#         ownerships = OwnershipType.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+#         count = ownerships.count()
+
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching ownership types found.",
+#                 "data": {"invalid_uuids": invalid_uuids}
+#             }, status=status.HTTP_404_NOT_FOUND)
+
+#         # Soft delete
+#         ownerships.delete()
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} ownership type(s) deleted successfully.",
+#             "data": {"invalid_uuids": invalid_uuids}
+#         }, status=status.HTTP_200_OK)
+
+
+
 class OwnershipTypeDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
-    def delete(self, request, uuid=None):
-        ids = request.data.get('id', [])
+    def delete(self, request):
+        try:
+            ids = request.data.get("id", None)
+            delete_all = request.data.get("deleteAll", False)
+            search = request.GET.get("search", "").strip()
+            raw_company_types = request.GET.get("company_type", "").strip()
 
-        #  Case 1: Single delete (UUID in URL)
-        if uuid:
-            try:
-                ownership = OwnershipType.objects.get(uuid=uuid, is_deleted=False)
-                ownership.delete()
-               
+            # Parse company type UUID list from params
+            company_type_uuids, invalid_company_types = [], []
+            if raw_company_types:
+                for u in raw_company_types.split(','):
+                    try:
+                        company_type_uuids.append(UUID(u.strip()))
+                    except:
+                        invalid_company_types.append(u)
+            # ---------------------------------------
+            # CASE 2: ids = "all" + deleteAll = false → delete full table
+            # ---------------------------------------
+            if ids == "all" and not delete_all:
+                queryset = OwnershipType.objects.filter(is_deleted=False)
+                count = queryset.count()
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No ownership type(s) found to delete.",
+                        "data": None
+                    }, status=404)
+
+                with transaction.atomic():
+                    queryset.delete()
+
                 return Response({
-                    "statusCode": 204,
+                    "statusCode": 200,
                     "status": True,
-                    "message": "Ownership type deleted successfully",
+                    "message": f"All {count} ownership type(s) deleted successfully.",
                     "data": None
-                }, status=status.HTTP_204_NO_CONTENT)
-            except OwnershipType.DoesNotExist:
+                }, status=200)
+
+
+            # ---------------------------------------
+            # Base queryset for filtered or bulk delete
+            # ---------------------------------------
+            queryset = OwnershipType.objects.filter(is_deleted=False)
+            applied_filters = []
+
+            # Apply SEARCH filter
+            if search:
+                queryset = queryset.filter(Q(name__istartswith=search))
+                applied_filters.append("search")
+
+            # Apply COMPANY TYPE filter (multiple UUIDs)
+            if company_type_uuids:
+                queryset = queryset.filter(company_type__uuid__in=company_type_uuids)
+                applied_filters.append("company_type")
+
+            # ---------------------------------------
+            # CASE 3,4,5: deleteAll=true + filters + id empty → delete filtered rows
+            # ---------------------------------------
+            if delete_all and applied_filters and (not ids or ids == "" or ids == []):
+                count = queryset.count()
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No ownership type(s) found matching the applied filter(s).",
+                        "data": {"invalid_company_type_uuids": invalid_company_types} if invalid_company_types else None
+                    }, status=404)
+
+                with transaction.atomic():
+                    queryset.delete()
+
                 return Response({
-                    "statusCode": 404,
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} ownership type(s) deleted based on applied search and/or company type filter(s).",
+                    "data": {"invalid_company_type_uuids": invalid_company_types} if invalid_company_types else None
+                }, status=200)
+
+            # ---------------------------------------
+            # CASE 1 & 5: deleteAll=false + ID list → delete only given UUID rows
+            # ---------------------------------------
+            if not ids or not isinstance(ids, list):
+                return Response({
+                    "statusCode": 400,
                     "status": False,
-                    "message": "Ownership type not found",
+                    "message": "Send UUID list in 'id', or use 'id: all', or 'deleteAll: true' with search/continent filter.",
                     "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
-        
-        if ids == "all":
-            ownership = OwnershipType.objects.get(uuid=uuid, is_deleted=False)
-            
-            count = ownership.count()
+                }, status=400)
+
+            valid_uuids, invalid_uuids = [], []
+            for u in ids:
+                try:
+                    valid_uuids.append(UUID(u))
+                except ValueError:
+                    invalid_uuids.append(u)
+
+            if not valid_uuids:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "No valid UUIDs provided.",
+                    "data": {"invalid_uuids": invalid_uuids}
+                }, status=400)
+
+            bulk_qs = OwnershipType.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+            count = bulk_qs.count()
+
             if count == 0:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "No departments found to delete.",
-                    "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
-            ownership.delete()
+                    "message": "No matching ownership type(s) found to delete.",
+                    "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                }, status=404)
+
+            with transaction.atomic():
+                bulk_qs.update(is_deleted=True)
+
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} department(s) permanently deleted.",
-                "data": None
-            }, status=status.HTTP_200_OK)
+                "message": f"{count} ownership type(s) deleted successfully.",
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+            }, status=200)
 
-        #  Case 2: Multiple delete (UUIDs in request body)
-        if not ids or not isinstance(ids, list):
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
-                    "data": None
-                }, status=status.HTTP_400_BAD_REQUEST)
-
-        # Validate UUIDs
-        valid_uuids = []
-        invalid_uuids = []
-        for u in ids:
-            try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
-
-        if not valid_uuids:
+        except IntegrityError:
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "No valid UUIDs provided.",
-                "data": {"invalid_uuids": invalid_uuids}
-            }, status=status.HTTP_400_BAD_REQUEST)
+                "message": "You can't delete this ownership type because it is used in one or more related child tables.",
+                "data": None
+            }, status=400)
 
-        # Fetch ownership types that exist and are not deleted
-        ownerships = OwnershipType.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = ownerships.count()
-
-        if count == 0:
+        except Exception as e:
             return Response({
-                "statusCode": 404,
+                "statusCode": 500,
                 "status": False,
-                "message": "No matching ownership types found.",
-                "data": {"invalid_uuids": invalid_uuids}
-            }, status=status.HTTP_404_NOT_FOUND)
+                "message": f"An unexpected error occurred: {str(e)}",
+                "data": None
+            }, status=500)
+        
 
-        # Soft delete
-        ownerships.delete()
 
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"{count} ownership type(s) deleted successfully.",
-            "data": {"invalid_uuids": invalid_uuids}
-        }, status=status.HTTP_200_OK)
+
 
 class OwnershipTypeExportAPIView(APIView):
     """
@@ -10442,85 +10984,237 @@ class StakeholderCategoryUpdateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
+# class StakeholderCategoryDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request, uuid=None):
+#         ids = request.data.get('id', None)
+
+#         if not ids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide 'id' field (UUID list or 'all').",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+    
+#         if ids == "all":
+#             Stakeholdercategory = StakeholderCategory.objects.filter(is_deleted=False)
+#             count = Stakeholdercategory.count()
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No StakeholderCategory found to delete.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+#             Stakeholdercategory.delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} StakeholderCategory(s) deleted successfully.",
+#                 "data": None
+#             }, status=status.HTTP_200_OK)
+
+#         # Otherwise, treat as list of UUIDs
+#         if not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         # Validate UUIDs
+#         valid_uuids = []
+#         invalid_uuids = []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         if not valid_uuids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "No valid UUIDs provided.",
+#                 "data": {"invalid_uuids": invalid_uuids}
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         # Fetch departments that exist and are not deleted
+#         Stakeholdercategory = StakeholderCategory.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+#         count = Stakeholdercategory.count()
+
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching StakeholderCategory found.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=status.HTTP_404_NOT_FOUND)
+
+#         # Soft delete
+#         Stakeholdercategory.delete()
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} Stakeholder(s) deleted successfully.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         }, status=status.HTTP_200_OK)
+
+
 class StakeholderCategoryDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
-    def delete(self, request, uuid=None):
-        ids = request.data.get('id', None)
+    def delete(self, request):
+        try:
+            ids = request.data.get('id', None)
+            delete_all = request.data.get("deleteAll", False)
+            search = request.GET.get("search", "").strip()
 
-        if not ids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Please provide 'id' field (UUID list or 'all').",
-                "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
-    
-        if ids == "all":
-            Stakeholdercategory = StakeholderCategory.objects.filter(is_deleted=False)
-            count = Stakeholdercategory.count()
+            # ---------------------------------------
+            # CASE 2: ids = "all" + deleteAll = false → Delete full table (soft)
+            # ---------------------------------------
+            if ids == "all" and not delete_all:
+                queryset = StakeholderCategory.objects.filter(is_deleted=False)
+                count = queryset.count()
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No stakeholder categories found to delete.",
+                        "data": None
+                    }, status=404)
+
+                with transaction.atomic():
+                    queryset.update(is_deleted=True)
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"All {count} stakeholder category(s) deleted successfully.",
+                    "data": None
+                }, status=200)
+
+            # ---------------------------------------
+            # Base queryset for filtered or ID delete
+            # ---------------------------------------
+            queryset = StakeholderCategory.objects.filter(is_deleted=False)
+            applied_filters = []
+
+            # ---------------------------------------
+            # CASE 3: deleteAll=true + search filter + id empty → Delete filtered rows (soft)
+            # ---------------------------------------
+            if delete_all and search and (not ids or ids == "" or ids == []):
+                queryset = queryset.filter(Q(name__istartswith=search))
+                applied_filters.append("search")
+                count = queryset.count()
+
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No stakeholder category(s) found matching this search filter.",
+                        "data": None
+                    }, status=404)
+
+                with transaction.atomic():
+                    queryset.update(is_deleted=True)
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} stakeholder category(s) deleted based on search filter.",
+                    "data": None
+                }, status=200)
+
+            # ---------------------------------------
+            # CASE 1 & Case 3: deleteAll=false + ID list → Delete only given UUID rows (soft)
+            # ---------------------------------------
+            if ids == "all":
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Invalid request. To delete all records, send → id: all with deleteAll: false",
+                    "data": None
+                }, status=400)
+
+            # ---------------------------------------
+            # BULK DELETE BY UUID LIST (deleteAll=false)
+            # ---------------------------------------
+            if not ids or not isinstance(ids, list):
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Send UUID list in 'id', or 'id: all', or 'deleteAll: true' with search to delete by filter.",
+                    "data": None
+                }, status=400)
+
+            # Validate UUID list
+            valid_uuids, invalid_uuids = [], []
+            for u in ids:
+                try:
+                    valid_uuids.append(UUID(u))
+                except ValueError:
+                    invalid_uuids.append(u)
+
+            if not valid_uuids:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "No valid UUIDs provided.",
+                    "data": {"invalid_uuids": invalid_uuids}
+                }, status=400)
+
+            bulk_qs = queryset.filter(uuid__in=valid_uuids)
+            count = bulk_qs.count()
+
             if count == 0:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "No StakeholderCategory found to delete.",
-                    "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
-            Stakeholdercategory.delete()
+                    "message": "No matching stakeholder category(s) found to delete.",
+                    "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                }, status=404)
+
+            with transaction.atomic():
+                bulk_qs.update(is_deleted=True)
+
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} StakeholderCategory(s) deleted successfully.",
-                "data": None
-            }, status=status.HTTP_200_OK)
-
-        # Otherwise, treat as list of UUIDs
-        if not isinstance(ids, list):
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
-                "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        # Validate UUIDs
-        valid_uuids = []
-        invalid_uuids = []
-        for u in ids:
-            try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
-
-        if not valid_uuids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "No valid UUIDs provided.",
-                "data": {"invalid_uuids": invalid_uuids}
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        # Fetch departments that exist and are not deleted
-        Stakeholdercategory = StakeholderCategory.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = Stakeholdercategory.count()
-
-        if count == 0:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "No matching StakeholderCategory found.",
+                "message": f"{count} stakeholder category(s) deleted successfully.",
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=status.HTTP_404_NOT_FOUND)
+            }, status=200)
 
-        # Soft delete
-        Stakeholdercategory.delete()
+        # ---------------------------------------
+        # FK BLOCK SAFETY MESSAGE
+        # ---------------------------------------
+        except IntegrityError:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "You can't delete this stakeholder category because it is being used in one or more related child tables.",
+                "data": None
+            }, status=400)
 
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"{count} Stakeholder(s) deleted successfully.",
-            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        }, status=status.HTTP_200_OK)
+        # ---------------------------------------
+        # Generic 500 Error
+        # ---------------------------------------
+        except Exception as e:
+            return Response({
+                "statusCode": 500,
+                "status": False,
+                "message": f"An unexpected error occurred while deleting stakeholder category(s): {str(e)}",
+                "data": None
+            }, status=500)
+
+
+
+
+
 
 class StakeholderCategoryExportAPIView(APIView):
     """
@@ -10960,80 +11654,243 @@ class StakeholderTypeUpdateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 # ----------------- DELETE -----------------
+
+
+# class StakeholderTypeDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request, uuid=None):
+#         ids = request.data.get('id', None)
+
+#         if uuid:
+#             try:
+#                 obj = StakeholderType.objects.get(uuid=uuid)
+#                 obj.delete()
+#                 return Response({
+#                     "statusCode": 204,
+#                     "status": True,
+#                     "message": "StakeholderType permanently deleted.",
+#                     "data": None
+#                 }, status=status.HTTP_204_NO_CONTENT)
+#             except StakeholderType.DoesNotExist:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "StakeholderType not found.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+
+#         if ids == "all":
+#             count = StakeholderType.objects.all().count()
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No StakeholderTypes found to delete.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+#             StakeholderType.objects.all().delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} StakeholderType(s) permanently deleted.",
+#                 "data": None
+#             }, status=status.HTTP_200_OK)
+
+#         if not ids or not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         valid_uuids = []
+#         invalid_uuids = []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         queryset = StakeholderType.objects.filter(uuid__in=valid_uuids)
+#         count = queryset.count()
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching StakeholderTypes found.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=status.HTTP_404_NOT_FOUND)
+
+#         queryset.delete()
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} StakeholderType(s) permanently deleted.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         }, status=status.HTTP_200_OK)
+
+
 class StakeholderTypeDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
-    def delete(self, request, uuid=None):
-        ids = request.data.get('id', None)
+    def delete(self, request):
+        try:
+            ids = request.data.get('id', None)
+            delete_all = request.data.get("deleteAll", False)
 
-        if uuid:
-            try:
-                obj = StakeholderType.objects.get(uuid=uuid)
-                obj.delete()
+            search = request.GET.get("search", "").strip()
+            category_param = request.GET.get("category", "").strip()
+
+            base_qs = StakeholderType.objects.all()
+
+            # ---------------- Parse category filter (comma UUIDs) ----------------
+            valid_categories = []
+            invalid_categories = []
+
+            if category_param:
+                category_list = [c.strip() for c in category_param.split(",") if c.strip()]
+                for cat in category_list:
+                    try:
+                        valid_categories.append(UUID(cat))
+                    except ValueError:
+                        invalid_categories.append(cat)
+
+            # ---------------- CASE 2: Delete ALL when id="all" AND deleteAll=false ----------------
+            if ids == "all" and delete_all is False:
+                count = base_qs.count()
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No StakeholderTypes found to delete.",
+                        "data": None
+                    }, status=404)
+
+                with transaction.atomic():
+                    base_qs.delete()
+
                 return Response({
-                    "statusCode": 204,
+                    "statusCode": 200,
                     "status": True,
-                    "message": "StakeholderType permanently deleted.",
+                    "message": f"All {count} StakeholderType(s) permanently deleted.",
                     "data": None
-                }, status=status.HTTP_204_NO_CONTENT)
-            except StakeholderType.DoesNotExist:
-                return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "StakeholderType not found.",
-                    "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
+                }, status=200)
 
-        if ids == "all":
-            count = StakeholderType.objects.all().count()
-            if count == 0:
-                return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "No StakeholderTypes found to delete.",
-                    "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
-            StakeholderType.objects.all().delete()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": f"All {count} StakeholderType(s) permanently deleted.",
-                "data": None
-            }, status=status.HTTP_200_OK)
+            # ---------------- CASE 3,4,5: deleteAll=true AND id empty → filter based delete ----------------
+            if delete_all and (ids == "" or ids is None or ids == []):
+                if not search and not valid_categories:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "No filter applied. Provide ?search= or ?category=<uuid1,uuid2> to delete using filters.",
+                        "data": None
+                    }, status=400)
 
-        if not ids or not isinstance(ids, list):
+                filter_qs = base_qs
+
+                # CASE 3 → only search delete
+                if search:
+                    filter_qs = filter_qs.filter(Q(name__istartswith=search))
+
+                # CASE 4 → only category delete
+                if valid_categories:
+                    filter_qs = filter_qs.filter(category__uuid__in=valid_categories)
+
+                # CASE 5 → search + category delete
+                count = filter_qs.count()
+
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No StakeholderTypes found matching given filter(s).",
+                        "data": {
+                            "invalid_categories": invalid_categories,
+                        } if invalid_categories else None
+                    }, status=404)
+
+                with transaction.atomic():
+                    filter_qs.delete()
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} StakeholderType(s) permanently deleted based on applied filter(s).",
+                    "data": {
+                        "invalid_categories": invalid_categories
+                    } if invalid_categories else None
+                }, status=200)
+
+            # ---------------- CASE 1 (bulk list delete) when IDs provided ----------------
+            if ids and isinstance(ids, list) and delete_all is False:
+                valid_uuids = []
+                invalid_uuids = []
+
+                for u in ids:
+                    try:
+                        valid_uuids.append(UUID(u))
+                    except ValueError:
+                        invalid_uuids.append(u)
+
+                if not valid_uuids:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "No valid UUIDs provided.",
+                        "data": {"invalid_uuids": invalid_uuids}
+                    }, status=400)
+
+                bulk_qs = base_qs.filter(uuid__in=valid_uuids)
+                count = bulk_qs.count()
+
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No matching StakeholderTypes found.",
+                        "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                    }, status=404)
+
+                with transaction.atomic():
+                    bulk_qs.delete()
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} StakeholderType(s) permanently deleted.",
+                    "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                }, status=200)
+
+            # ---------------- Bad input fallback ----------------
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+                "message": "Invalid request format.",
                 "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=400)
 
-        valid_uuids = []
-        invalid_uuids = []
-        for u in ids:
-            try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
-
-        queryset = StakeholderType.objects.filter(uuid__in=valid_uuids)
-        count = queryset.count()
-        if count == 0:
+        # ---------------- FK Block safety ----------------
+        except IntegrityError:
             return Response({
-                "statusCode": 404,
+                "statusCode": 400,
                 "status": False,
-                "message": "No matching StakeholderTypes found.",
-                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=status.HTTP_404_NOT_FOUND)
+                "message": "You can't delete this stakeholder type because it is being used in one or more related tables.",
+                "data": None
+            }, status=400)
 
-        queryset.delete()
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"{count} StakeholderType(s) permanently deleted.",
-            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        }, status=status.HTTP_200_OK)
+        # ---------------- 500 fallback ----------------
+        except Exception as e:
+            return Response({
+                "statusCode": 500,
+                "status": False,
+                "message": f"Unexpected error: {str(e)}",
+                "data": None
+            }, status=500)
+
+
+
 
 # ----------------- EXPORT -----------------
 
@@ -11465,72 +12322,202 @@ class AccreditationCategoryUpdateAPIView(APIView):
 
 
 # ------------------ Delete API ------------------
+# class AccreditationCategoryDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request, uuid=None):
+#         ids = request.data.get('id', None)
+
+#         # Single delete via URL
+#         if uuid:
+#             try:
+#                 obj = AccreditationCategory.objects.get(uuid=uuid)
+#                 obj.delete()
+#                 return Response({
+#                     "statusCode": 204,
+#                     "status": True,
+#                     "message": "Accreditation category permanently deleted.",
+#                     "data": None
+#                 }, status=status.HTTP_204_NO_CONTENT)
+#             except AccreditationCategory.DoesNotExist:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "Accreditation category not found.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+
+#         # Delete all
+#         if ids == "all":
+#             queryset = AccreditationCategory.objects.all()
+#             count = queryset.count()
+#             queryset.delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} accreditation category(s) permanently deleted.",
+#                 "data": None
+#             }, status=status.HTTP_200_OK)
+
+#         # Bulk delete
+#         if not ids or not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         valid_uuids = []
+#         invalid_uuids = []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         queryset = AccreditationCategory.objects.filter(uuid__in=valid_uuids)
+#         count = queryset.count()
+#         queryset.delete()
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} accreditation category(s) permanently deleted.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         }, status=status.HTTP_200_OK)
+
 class AccreditationCategoryDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
-    def delete(self, request, uuid=None):
-        ids = request.data.get('id', None)
+    def delete(self, request):
+        try:
+            ids = request.data.get('id', None)
+            delete_all_flag = request.data.get("deleteAll", False)
+            search = request.GET.get("search", "").strip()
 
-        # Single delete via URL
-        if uuid:
-            try:
-                obj = AccreditationCategory.objects.get(uuid=uuid)
-                obj.delete()
+            # Base queryset only non soft deleted
+            base_qs = AccreditationCategory.objects.filter(is_deleted=False)
+
+            # ---------- CASE 2: Delete ALL rows when id="all" and deleteAll=false ----------
+            if ids == "all" and delete_all_flag is False:
+                count = base_qs.count()
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No Accreditation Category found to delete.",
+                        "data": None
+                    }, status=404)
+
+                with transaction.atomic():
+                    base_qs.delete()
+
                 return Response({
-                    "statusCode": 204,
+                    "statusCode": 200,
                     "status": True,
-                    "message": "Accreditation category permanently deleted.",
+                    "message": f"All {count} accreditation category(s) permanently deleted",
                     "data": None
-                }, status=status.HTTP_204_NO_CONTENT)
-            except AccreditationCategory.DoesNotExist:
+                }, status=200)
+
+            # ---------- CASE 3: Search based delete when deleteAll=true and ids empty ----------
+            if delete_all_flag and not ids and search:
+                filter_qs = base_qs.filter(Q(name__istartswith=search))
+                count = filter_qs.count()
+
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No accreditation category found matching search filter.",
+                        "data": None
+                    }, status=404)
+
+                with transaction.atomic():
+                    filter_qs.delete()
+
                 return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "Accreditation category not found.",
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} accreditation category(s) permanently deleted based on search filter",
                     "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
+                }, status=200)
 
-        # Delete all
-        if ids == "all":
-            queryset = AccreditationCategory.objects.all()
-            count = queryset.count()
-            queryset.delete()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": f"All {count} accreditation category(s) permanently deleted.",
-                "data": None
-            }, status=status.HTTP_200_OK)
+            # ---------- CASE 4: Bulk delete when ids list provided & deleteAll=false ----------
+            if ids and isinstance(ids, list) and delete_all_flag is False:
+                valid_uuids = []
+                invalid_uuids = []
 
-        # Bulk delete
-        if not ids or not isinstance(ids, list):
+                for u in ids:
+                    try:
+                        valid_uuids.append(UUID(u))
+                    except ValueError:
+                        invalid_uuids.append(u)
+
+                if not valid_uuids:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "No valid UUIDs provided.",
+                        "data": {"invalid_uuids": invalid_uuids}
+                    }, status=400)
+
+                bulk_qs = base_qs.filter(uuid__in=valid_uuids)
+                count = bulk_qs.count()
+
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No matching accreditation category found for given UUIDs.",
+                        "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                    }, status=404)
+
+                with transaction.atomic():
+                    bulk_qs.delete()
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} accreditation category(s) permanently deleted.",
+                    "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                }, status=200)
+
+            # ---------- CASE 5: If id="all" but deleteAll=true + no filter → avoid error ----------
+            if ids == "all" and delete_all_flag:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "deleteAll=true works only with search filter when id empty.",
+                    "data": None
+                }, status=400)
+
+            # Fallback bad request
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+                "message": "Invalid request format.",
                 "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=400)
 
-        valid_uuids = []
-        invalid_uuids = []
-        for u in ids:
-            try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
+        # ---------- FK Safety Block for child table usage ----------
+        except IntegrityError:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "You cannot delete this accreditation category because it is being used in one or more related child tables.",
+                "data": None
+            }, status=400)
 
-        queryset = AccreditationCategory.objects.filter(uuid__in=valid_uuids)
-        count = queryset.count()
-        queryset.delete()
-
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"{count} accreditation category(s) permanently deleted.",
-            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        }, status=status.HTTP_200_OK)
-
-
+        # ---------- 500 Unexpected fallback ----------
+        except Exception as e:
+            return Response({
+                "statusCode": 500,
+                "status": False,
+                "message": f"Unexpected error: {str(e)}",
+                "data": None
+            }, status=500)
+        
 # ------------------ Export API ------------------
 class AccreditationCategoryExportAPIView(APIView):
 
@@ -11912,66 +12899,167 @@ class AccreditationNameUpdateAPIView(APIView):
 
 
 # -------------------- DELETE API --------------------
+
+
 class AccreditationNameDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
-    def delete(self, request, uuid=None):
-        ids = request.data.get('id', None)
+    def delete(self, request):
+        try:
+            ids = request.data.get('id', None)
+            delete_all = request.data.get("deleteAll", False)
 
-        if uuid:
-            try:
-                accred = AccreditationName.objects.get(uuid=uuid)
-                accred.delete()
+            search = request.GET.get("search", "").strip()
+            category_param = request.GET.get("category", "").strip()
+
+            base_qs = AccreditationName.objects.all()
+
+            # ---------------- Parse category filter (comma UUIDs) ----------------
+            valid_categories = []
+            invalid_categories = []
+
+            if category_param:
+                category_list = [c.strip() for c in category_param.split(",") if c.strip()]
+                for cat in category_list:
+                    try:
+                        valid_categories.append(UUID(cat))
+                    except ValueError:
+                        invalid_categories.append(cat)
+
+            # ---------------- CASE 2: Delete ALL when id="all" AND deleteAll=false ----------------
+            if ids == "all" and delete_all is False:
+                count = base_qs.count()
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No AccreditationName found to delete.",
+                        "data": None
+                    }, status=404)
+
+                with transaction.atomic():
+                    base_qs.delete()
+
                 return Response({
-                    "statusCode": 204,
+                    "statusCode": 200,
                     "status": True,
-                    "message": "Accreditation permanently deleted",
+                    "message": f"All {count} AccreditationName(s) permanently deleted.",
                     "data": None
-                }, status=status.HTTP_204_NO_CONTENT)
-            except AccreditationName.DoesNotExist:
+                }, status=200)
+
+            # ---------------- CASE 3,4,5: deleteAll=true AND id empty → filter based delete ----------------
+            if delete_all and (ids == "" or ids is None or ids == []):
+                if not search and not valid_categories:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "No filter applied. Provide ?search= or ?category=<uuid1,uuid2> to delete using filters.",
+                        "data": None
+                    }, status=400)
+
+                filter_qs = base_qs
+
+                # CASE 3 → only search delete
+                if search:
+                    filter_qs = filter_qs.filter(Q(full_name__istartswith=search))
+
+                # CASE 4 → only category delete
+                if valid_categories:
+                    filter_qs = filter_qs.filter(category__uuid__in=valid_categories)
+
+                # CASE 5 → search + category delete
+                count = filter_qs.count()
+
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No AccreditationName found matching given filter(s).",
+                        "data": {
+                            "invalid_categories": invalid_categories,
+                        } if invalid_categories else None
+                    }, status=404)
+
+                with transaction.atomic():
+                    filter_qs.delete()
+
                 return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "Accreditation not found",
-                    "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} AccreditationName(s) permanently deleted based on applied filter(s).",
+                    "data": {
+                        "invalid_categories": invalid_categories
+                    } if invalid_categories else None
+                }, status=200)
 
-        if ids == "all":
-            count = AccreditationName.objects.count()
-            AccreditationName.objects.all().delete()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": f"All {count} accreditation(s) permanently deleted",
-                "data": None
-            })
+            # ---------------- CASE 1 (bulk list delete) when IDs provided ----------------
+            if ids and isinstance(ids, list) and delete_all is False:
+                valid_uuids = []
+                invalid_uuids = []
 
-        if not ids or not isinstance(ids, list):
+                for u in ids:
+                    try:
+                        valid_uuids.append(UUID(u))
+                    except ValueError:
+                        invalid_uuids.append(u)
+
+                if not valid_uuids:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "No valid UUIDs provided.",
+                        "data": {"invalid_uuids": invalid_uuids}
+                    }, status=400)
+
+                bulk_qs = base_qs.filter(uuid__in=valid_uuids)
+                count = bulk_qs.count()
+
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No matching AccreditationName found.",
+                        "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                    }, status=404)
+
+                with transaction.atomic():
+                    bulk_qs.delete()
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} AccreditationName(s) permanently deleted.",
+                    "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                }, status=200)
+
+            # ---------------- Bad input fallback ----------------
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Provide a list of UUIDs in 'id' field or 'all'.",
+                "message": "Invalid request format.",
                 "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=400)
 
-        valid_uuids = []
-        invalid_uuids = []
-        for u in ids:
-            try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
+        # ---------------- FK Block safety ----------------
+        except IntegrityError:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "You can't delete this AccreditationName because it is being used in one or more related tables.",
+                "data": None
+            }, status=400)
 
-        queryset = AccreditationName.objects.filter(uuid__in=valid_uuids)
-        count = queryset.count()
-        queryset.delete()
+        # ---------------- 500 fallback ----------------
+        except Exception as e:
+            return Response({
+                "statusCode": 500,
+                "status": False,
+                "message": f"Unexpected error: {str(e)}",
+                "data": None
+            }, status=500)
 
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"{count} accreditation(s) permanently deleted",
-            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        })
+
+
 
 
 # -------------------- EXPORT API --------------------
