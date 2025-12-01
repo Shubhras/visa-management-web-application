@@ -405,7 +405,8 @@ const RelationList = () => {
             setSelectedRows([]);
             setSelectAllOrNot("");
             setDeleteId(null);
-            fetchRelationList();
+            //fetchRelationList();
+            clearAllFilters();
           } else {
             toast.error("Something went wrong.");
           }

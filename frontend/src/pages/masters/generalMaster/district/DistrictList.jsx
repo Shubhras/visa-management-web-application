@@ -1527,7 +1527,8 @@ const DistrictList = () => {
             setSelectAllOrNot("");
             setDeleteId(null);
             setShowDeleteConfirm(false);
-            fetchDistrictList();
+            //fetchDistrictList();
+            clearAllFilters();
           } else toast.error("Something went wrong.");
         }
       })

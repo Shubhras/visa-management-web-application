@@ -474,7 +474,8 @@ const CivilIDNameList = () => {
             setSelectedRows([]);
             setSelectAllOrNot("");
             setDeleteId(null);
-            fetchCivilIDNameList();
+            //fetchCivilIDNameList();
+            clearAllFilters();
           } else {
             toast.error("Something went wrong.");
           }

@@ -412,8 +412,14 @@ const AccrediationCategoryList = () => {
       toast.error("No accrediation category selected for deletion.");
       return;
     }
+    const deleteAll = selectAllOrNot === "all" && Boolean(tableState.search?.trim());
+    const payloadSend = {
+      deleteAll: deleteAll,
+      id: deleteAll == true ? "" : sendPayload,
+      search: tableState.search || '',
+    };
     dispatch(
-      accreditationCategoryDelete(sendPayload, (response, error) => {
+      accreditationCategoryDelete(payloadSend, (response, error) => {
         if (error) {
           toast.error(error?.response?.data?.message || "server error");
         } else {
@@ -429,7 +435,8 @@ const AccrediationCategoryList = () => {
             setSelectedRows([]);
             setSelectAllOrNot("");
             setDeleteId(null);
-            fetchAccrediationCategoryList();
+            // fetchAccrediationCategoryList();
+            clearAllFilters();
           } else {
             toast.error("Something went wrong.");
           }
@@ -592,26 +599,24 @@ const AccrediationCategoryList = () => {
 
                   {selectedRows?.length > 0 &&
                     selectedRows?.length ===
-                      accrediationCategoryData?.length && (
+                    accrediationCategoryData?.length && (
                       <>
                         <button
                           onClick={() => handleSelectAllOrNot("onlySelected")}
-                          className={`btn btn-sm py-1 fw-medium ${
-                            selectAllOrNot === "onlySelected"
-                              ? "comman-btn-color"
-                              : "comman-inactive-btn"
-                          }`}
+                          className={`btn btn-sm py-1 fw-medium ${selectAllOrNot === "onlySelected"
+                            ? "comman-btn-color"
+                            : "comman-inactive-btn"
+                            }`}
                         >
                           {`Select (${selectedRows.length})`}
                         </button>
 
                         <button
                           onClick={() => handleSelectAllOrNot("all")}
-                          className={`btn btn-sm py-1 fw-medium ${
-                            selectAllOrNot === "all"
-                              ? "comman-btn-color"
-                              : "comman-inactive-btn"
-                          }`}
+                          className={`btn btn-sm py-1 fw-medium ${selectAllOrNot === "all"
+                            ? "comman-btn-color"
+                            : "comman-inactive-btn"
+                            }`}
                         >
                           {`Select All (${tableState.total})`}
                         </button>
@@ -656,9 +661,8 @@ const AccrediationCategoryList = () => {
                         <ul className="pagination mb-0" style={{ gap: "4px" }}>
                           {/* First */}
                           <li
-                            className={`page-item ${
-                              !tableState.hasPrevious ? "disabled" : ""
-                            }`}
+                            className={`page-item ${!tableState.hasPrevious ? "disabled" : ""
+                              }`}
                           >
                             <button
                               className="border-0 bg-transparent"
@@ -681,9 +685,8 @@ const AccrediationCategoryList = () => {
 
                           {/* Prev */}
                           <li
-                            className={`page-item ${
-                              !tableState.hasPrevious ? "disabled" : ""
-                            }`}
+                            className={`page-item ${!tableState.hasPrevious ? "disabled" : ""
+                              }`}
                           >
                             <button
                               className="border-0 bg-transparent"
@@ -750,9 +753,8 @@ const AccrediationCategoryList = () => {
 
                           {/* Next */}
                           <li
-                            className={`page-item ${
-                              !tableState.hasNext ? "disabled" : ""
-                            }`}
+                            className={`page-item ${!tableState.hasNext ? "disabled" : ""
+                              }`}
                           >
                             <button
                               className="border-0 bg-transparent"
@@ -775,9 +777,8 @@ const AccrediationCategoryList = () => {
 
                           {/* Last */}
                           <li
-                            className={`page-item ${
-                              !tableState.hasNext ? "disabled" : ""
-                            }`}
+                            className={`page-item ${!tableState.hasNext ? "disabled" : ""
+                              }`}
                           >
                             <button
                               className="border-0 bg-transparent"

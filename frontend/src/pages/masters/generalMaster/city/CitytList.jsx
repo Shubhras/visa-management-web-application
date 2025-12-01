@@ -739,7 +739,8 @@ const CityList = () => {
               setSelectedRows([]);
               setSelectAllOrNot("");
               setDeleteId(null);
-              fetchCityList();
+              //fetchCityList();
+              clearAllFilters();
             } else {
               toast.error("Something went wrong.");
             }

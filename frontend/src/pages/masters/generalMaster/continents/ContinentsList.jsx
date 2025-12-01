@@ -399,7 +399,8 @@ const ContinentsList = () => {
             setSelectedRows([]);
             setSelectAllOrNot("");
             setDeleteId(null);
-            fetchContinentsList();
+            //fetchContinentsList();
+            clearAllFilters();
           } else {
             toast.error("Something went wrong.");
           }
