@@ -294,10 +294,11 @@ export const editPriorityTypeDataAPI = (payload) => {
 };
 
 export const deletePriorityTypeDataAPI = (payload) => {
-  const prepareDATA = {
-    id: payload,
+    const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
   };
-  const apiUrl = `${url.DELETE_PRIORITY_TYPE_API}delete/`;
+  const apiUrl = `${url.DELETE_PRIORITY_TYPE_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -351,9 +352,10 @@ export const editTagsTypeDataAPI = (payload) => {
 
 export const deleteTagsTypeDataAPI = (payload) => {
   const prepareDATA = {
-    id: payload,
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
   };
-  const apiUrl = `${url.DELETE_TAGS_TYPE_API}delete/`;
+  const apiUrl = `${url.DELETE_TAGS_TYPE_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -407,9 +409,10 @@ export const editActivityTypeDataAPI = (payload) => {
 
 export const deleteActivityTypeDataAPI = (payload) => {
   const prepareDATA = {
-    id: payload,
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
   };
-  const apiUrl = `${url.DELETE_ACTIVITY_TYPE_API}delete/`;
+  const apiUrl = `${url.DELETE_ACTIVITY_TYPE_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -463,9 +466,10 @@ export const editLostReasonB2CDataAPI = (payload) => {
 
 export const deleteLostReasonB2CDataAPI = (payload) => {
   const prepareDATA = {
-    id: payload,
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
   };
-  const apiUrl = `${url.DELETE_LOST_REASON_B2C_API}delete/`;
+  const apiUrl = `${url.DELETE_LOST_REASON_B2C_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -519,9 +523,10 @@ export const editLostReasonB2BDataAPI = (payload) => {
 
 export const deleteLostReasonB2BDataAPI = (payload) => {
   const prepareDATA = {
-    id: payload,
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
   };
-  const apiUrl = `${url.DELETE_LOST_REASON_B2B_API}delete/`;
+  const apiUrl = `${url.DELETE_LOST_REASON_B2B_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -573,10 +578,11 @@ export const editLeadSourceDataAPI = (payload) => {
 };
 
 export const deleteLeadSourceDataAPI = (payload) => {
-  const prepareDATA = {
-    id: payload,
+    const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
   };
-  const apiUrl = `${url.DELETE_LEAD_SOURCE_API}delete/`;
+  const apiUrl = `${url.DELETE_LEAD_SOURCE_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -630,9 +636,10 @@ export const editInterestLevelDataAPI = (payload) => {
 
 export const deleteInterestLevelDataAPI = (payload) => {
   const prepareDATA = {
-    id: payload,
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
   };
-  const apiUrl = `${url.DELETE_INTEREST_LEVEL_API}delete/`;
+  const apiUrl = `${url.DELETE_INTEREST_LEVEL_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -688,10 +695,11 @@ export const editBankAccountTypeDataAPI = (payload) => {
 
 export const deleteBankAccountTypeDataAPI = (payload) => {
   const prepareDATA = {
-    id: payload,
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
   };
-  const apiUrl = `${url.DELETE_BANK_ACCOUNT_TYPE_API}delete/`;
-  return delWithPayload(apiUrl, prepareDATA);
+  const apiUrl = `${url.DELETE_BANK_ACCOUNT_TYPE_API}delete/?search=${payload?.search}`;
+  return delWithPayload(apiUrl, prepareDATA);;
 };
 
 export const exportBankAccountTypeDataAPI = (payload) => {
@@ -1075,9 +1083,10 @@ export const editLicenceNameDataAPI = (payload) => {
 
 export const deleteLicenceNameDataAPI = (payload) => {
   const prepareDATA = {
-    id: payload,
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
   };
-  const apiUrl = `${url.DELETE_LICENCE_NAME_API}delete/`;
+   const apiUrl = `${url.DELETE_LICENCE_NAME_API}delete/?search=${payload?.search}&country=${payload?.country}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -1137,9 +1146,10 @@ export const editAccreditationNameDataAPI = (payload) => {
 
 export const deleteAccreditationNameDataAPI = (payload) => {
   const prepareDATA = {
-    id: payload,
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
   };
-  const apiUrl = `${url.DELETE_ACCREDITATION_NAME_API}delete/`;
+   const apiUrl = `${url.DELETE_ACCREDITATION_NAME_API}delete/?search=${payload?.search}&category=${payload?.category}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -1330,9 +1340,10 @@ export const editStudyMainAreaDataAPI = (payload) => {
 
 export const deleteStudyMainAreaDataAPI = (payload) => {
   const prepareDATA = {
-    id: payload,
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
   };
-  const apiUrl = `${url.DELETE_STUDY_MAIN_AREA_API}delete/`;
+  const apiUrl = `${url.DELETE_STUDY_MAIN_AREA_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 

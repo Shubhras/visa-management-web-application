@@ -371,6 +371,9 @@ const EducationLevelList = () => {
         }));
         // Reset Global Search
         setGlobalSearch('');
+        setColumnFilters({
+            educationLevelCode: [],
+        });
         setSelectedRows([]);
     };
 
@@ -508,7 +511,8 @@ const EducationLevelList = () => {
                     setSelectedRows([]);
                     setSelectAllOrNot('');
                     setDeleteId(null);
-                    fetchBankAccountTypeList();
+                    //fetchBankAccountTypeList();
+                    clearAllFilters();
                 } else {
                     toast.error("Something went wrong.");
                 }
