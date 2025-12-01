@@ -3109,8 +3109,12 @@ export const editJobTypeDataAPI = (payload) => {
 };
 
 export const deleteJobTypeDataAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_JOB_TYPE_API}delete/`;
+  // const prepareDATA = { id: payload };
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+ const apiUrl = `${url.DELETE_JOB_TYPE_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -3140,8 +3144,11 @@ export const editModeOfSalaryDataAPI = (payload) => {
 };
 
 export const deleteModeOfSalaryDataAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_MODE_OF_SALARY_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_MODE_OF_SALARY_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -3172,8 +3179,11 @@ export const editItReturnStatusDataAPI = (payload) => {
 };
 
 export const deleteItReturnStatusDataAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_IT_RETURN_STATUS_API}delete/`;
+   const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_IT_RETURN_STATUS_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -3203,8 +3213,11 @@ export const editOccupationTypeDataAPI = (payload) => {
 };
 
 export const deleteOccupationTypeDataAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_OCCUPATION_TYPE_API}delete/`;
+   const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_OCCUPATION_TYPE_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -3235,8 +3248,11 @@ export const editOccupationProspectDataAPI = (payload) => {
 };
 
 export const deleteOccupationProspectDataAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_OCCUPATION_PROSPECT_API}delete/`;
+   const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_OCCUPATION_PROSPECT_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -3267,8 +3283,13 @@ export const editOccupationCategoryDataAPI = (payload) => {
 };
 
 export const deleteOccupationCategoryDataAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_OCCUPATION_CATEGORY_API}delete/`;
+  // const prepareDATA = { id: payload };
+  // const apiUrl = `${url.DELETE_OCCUPATION_CATEGORY_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+   const apiUrl = `${url.DELETE_OCCUPATION_CATEGORY_API}delete/?search=${payload?.search}&occupationVersion=${payload?.occupationVersion}&representingCountry=${payload?.representingCountry}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -3299,8 +3320,11 @@ export const editOccupationVersionDataAPI = (payload) => {
 };
 
 export const deleteOccupationVersionDataAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_OCCUPATION_VERSION_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+   const apiUrl = `${url.DELETE_OCCUPATION_VERSION_API}delete/?search=${payload?.search}&representingCountry=${payload?.representingCountry}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 

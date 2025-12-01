@@ -5,13 +5,15 @@ import MasterLayout from "../../../../masterLayout/MasterLayout";
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { Link } from 'react-router-dom';
 import { toast } from "react-toastify";
-import {jobTypeList,jobTypeDelete,jobTypeExportData} from "../../../../store/master/occupationMaster/action";
+import { jobTypeList, jobTypeDelete, jobTypeExportData } from "../../../../store/master/occupationMaster/action";
 import AddImportJobTypeModal from './AddImportJobTypeModal';
 import AddEditJobTypeModal from './AddEditJobTypeModal';
 import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
-
+import { useGlobalSearch } from '../../../../components/comman/GlobalSearchContext';
+import ResetButton from '../../../../components/comman/ResetButton';
 const JobTypeList = () => {
   const dispatch = useDispatch();
+  const { globalSearch, setGlobalSearch } = useGlobalSearch();
   const [modalState, setModalState] = useState({
     show: false,
     mode: 'add', // 'add' or 'edit'
@@ -25,15 +27,16 @@ const JobTypeList = () => {
     });
   };
   // For closing modal
-  const handleClose = () => {
+  const handleClose = (shouldRefresh = false) => {
     setModalState({
       show: false,
       mode: 'add',
       rowData: null
     });
-    fetchDepartmentList();
+    if (shouldRefresh) {
+      fetchDepartmentList();
+    }
   }
-
   // const [showEdit, setShowEdit] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [rowSelectData, setRowSelectData] = useState({});
@@ -103,14 +106,20 @@ const JobTypeList = () => {
     limit: 25,
     search: '',
     status: '',
-    sortBy: 'created_at', // Field to sort by
-    sortOrder: 'desc', // 'asc' or 'desc'
+    sortBy: '', // Field to sort by
+    sortOrder: '', // 'asc' or 'desc'
+    sort: [
+      { field: "created_at", order: "desc" }
+    ],
     total: 0,
     totalPages: 0,
     currentPage: 1,
     hasNext: false,
     hasPrevious: false
   });
+  useEffect(() => {
+    setTableState(prev => ({ ...prev, search: globalSearch, page: 1 }));
+  }, [globalSearch]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -124,7 +133,8 @@ const JobTypeList = () => {
 
   useEffect(() => {
     fetchDepartmentList();
-  }, [tableState.page, tableState.limit, tableState.status, tableState.sortBy, tableState.sortOrder]);
+  }, [tableState.page, tableState.limit, tableState.status, tableState.sort]);
+
 
   const fetchDepartmentList = () => {
     setLoading(true);
@@ -134,7 +144,8 @@ const JobTypeList = () => {
       search: tableState.search || '',
       status: tableState.status || '',
       sortBy: tableState.sortBy || '',
-      sortOrder: tableState.sortOrder || ''
+      sortOrder: tableState.sortOrder || '',
+      sort: tableState.sort,
     };
 
     dispatch(jobTypeList(params, (response, error) => {
@@ -175,28 +186,56 @@ const JobTypeList = () => {
   // Handle sorting
   const handleSort = (field) => {
     setTableState(prev => {
-      // If clicking the same field, toggle between asc -> desc -> no sort
-      if (prev.sortBy === field) {
-        if (prev.sortOrder === 'asc') {
-          return { ...prev, sortOrder: 'desc', page: 1 };
-        } else if (prev.sortOrder === 'desc') {
-          return { ...prev, sortBy: '', sortOrder: '', page: 1 };
+      let newSort = [...prev.sort];
+      const existingIndex = newSort.findIndex(s => s.field === field);
+      if (existingIndex === -1) {
+        newSort.push({ field, order: "asc" });
+      }
+      else {
+        const existing = newSort[existingIndex];
+        if (existing.order === "asc") {
+          newSort[existingIndex].order = "desc";
+        }
+        else if (existing.order === "desc") {
+          newSort.splice(existingIndex, 1);
         }
       }
-      // If clicking a new field, start with asc
-      return { ...prev, sortBy: field, sortOrder: 'asc', page: 1 };
+      return { ...prev, sort: newSort, page: 1 };
     });
   };
 
-  // Get sort icon for a column
   const getSortIcon = (field) => {
-    if (tableState.sortBy !== field) {
-      return <Icon icon="ri:sort-desc" className='sorting-th-icone' />;
+    const sortObj = tableState.sort.find(s => s.field === field);
+    if (!sortObj) {
+      return <Icon icon="ri:menu-line" className="sorting-th-icone" />;
     }
-    if (tableState.sortOrder === 'asc') {
-      return <Icon icon="ri:sort-asc" className='sorting-th-icone' />;
+    if (sortObj.order === "asc") {
+      return <Icon icon="ri:sort-asc" className="sorting-th-icone" />;
     }
-    return <Icon icon="ri:sort-desc" className='sorting-th-icone' />;
+    return <Icon icon="ri:sort-desc" className="sorting-th-icone" />;
+  };
+
+  const clearAllFilters = () => {
+    setTableState(prev => ({
+      ...prev,
+      page: 1,
+      limit: 25,
+      search: '',
+      status: '',
+      sortBy: '',
+      sortOrder: '',
+      sort: [
+        { field: "created_at", order: "desc" }   // default sort
+      ],
+      total: 0,
+      totalPages: 0,
+      currentPage: 1,
+      hasNext: false,
+      hasPrevious: false
+    }));
+    // Reset Global Search
+    setGlobalSearch('');
+    setSelectedRows([]);
   };
 
   const handleSearchChange = (value) => {
@@ -323,13 +362,19 @@ const JobTypeList = () => {
   };
 
   const confirmDelete = () => {
-    // const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
-    const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
+    const sendPayload =
+      selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
     if (!sendPayload || sendPayload.length === 0) {
-      toast.error("No job type selected for deletion.");
+      toast.error("No company type selected for deletion.");
       return;
     }
-    dispatch(jobTypeDelete(sendPayload, (response, error) => {
+    const deleteAll = selectAllOrNot === "all" && Boolean(tableState.search?.trim());
+    const payloadSend = {
+      deleteAll: deleteAll,
+      id: deleteAll == true ? "" : sendPayload,
+      search: tableState.search || '',
+    };
+    dispatch(jobTypeDelete(payloadSend, (response, error) => {
       if (error) {
         toast.error(error?.response?.data?.message || "server error");
       } else {
@@ -341,7 +386,8 @@ const JobTypeList = () => {
           setSelectedRows([]);
           setSelectAllOrNot('');
           setDeleteId(null);
-          fetchDepartmentList();
+          // fetchDepartmentList();
+          clearAllFilters();
         } else {
           toast.error("Something went wrong.");
         }
@@ -357,9 +403,11 @@ const JobTypeList = () => {
     setSelectAllOrNot('');
   };
 
-  const handleCloseImport = () => {
+  const handleCloseImport = (shouldRefresh = false) => {
     setShowImport(false);
-    fetchDepartmentList();
+    if (shouldRefresh) {
+      fetchDepartmentList();
+    }
   };
 
   const handleShowImport = () => {
@@ -420,6 +468,9 @@ const JobTypeList = () => {
       file: "xlsx",
       fields: fieldsString,
       uuids: selectAllOrNot === "all" ? [] : selectedRows,
+      search: tableState.search || '', // Add search parameter
+      sort: tableState.sort, // Add sort parameter
+
     };
     setLoadingExport(true);
     dispatch(jobTypeExportData(sendPayload, (response, error) => {
@@ -467,6 +518,10 @@ const JobTypeList = () => {
               <div className="col-xl-6 col-lg-4 col-md-12">
                 <div className="d-flex flex-wrap align-items-center gap-2">
                   <button
+                    className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
+                    onClick={handleShow}
+                  >New</button>
+                  <button
                     className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
                     onClick={handleShowImport}
                   >
@@ -501,9 +556,14 @@ const JobTypeList = () => {
                       </button>
                     </>
                   )}
+                  <ResetButton
+                    onClick={clearAllFilters}
+                    tableState={tableState}
+                    globalSearch={globalSearch}
+                    selectedRows={selectedRows}
+                  />
                 </div>
               </div>
-
               {/* Right Section: Select / Search / +Add New */}
               <div className="col-xl-6 col-lg-8 col-md-12">
                 <div className="d-flex flex-wrap align-items-center justify-content-end gap-2">
@@ -517,44 +577,112 @@ const JobTypeList = () => {
                     <option value={50}>50</option>
                     <option value={100}>100</option>
                   </select>
-                  <div className="position-relative flex-grow-1 search-filter-div">
-                    <Icon
-                      icon="ion:search-outline"
-                      className="position-absolute search-filter-icone"
-                    />
-                    <input
-                      type="text"
-                      className="form-control form-control-sm ps-5 search-filter-input"
-                      placeholder="Search..."
-                      value={tableState.search}
-                      onChange={(e) => handleSearchChange(e.target.value)}
-                    />
-                    {tableState.search && tableState.search.length > 0 && (
-                      <span
-                        className="position-absolute"
-                        style={{
-                          right: '10px',
-                          top: '50%',
-                          transform: 'translateY(-50%)',
-                          cursor: 'pointer',
-                          zIndex: 999,
-                          fontSize: '20px',
-                          color: '#6c757d',
-                          lineHeight: 1
-                        }}
-                        onClick={() => {
-
-                          handleSearchChange('');
-                        }}
-                      >
-                        ×
-                      </span>
-                    )}
-                  </div>
-                  <button
-                    className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
-                    onClick={handleShow}
-                  >New</button>
+                  {tableState.total > 0 && (
+                    <div className="d-flex justify-content-between align-items-center px-4 py-0">
+                      <div className="showing-total-page">
+                        {startIndex + 1}-{" "}
+                        {Math.min(startIndex + tableState.limit, tableState.total)}{" "}
+                        of {tableState.total}
+                      </div>
+                      <nav>
+                        <ul className="pagination mb-0 gap-4px">
+                          <li className={`page-item ${!tableState.hasPrevious ? 'disabled' : ''}`}>
+                            <button
+                              className="border-0 bg-transparent"
+                              onClick={() => goToPage(1)}
+                              disabled={!tableState.hasPrevious}
+                              style={{
+                                padding: '0px 8px',
+                                color: !tableState.hasPrevious ? '#ccc' : '#6c757d',
+                                fontSize: '18px',
+                                cursor: !tableState.hasPrevious ? 'not-allowed' : 'pointer'
+                              }}
+                            >
+                              «
+                            </button>
+                          </li>
+                          <li className={`page-item ${!tableState.hasPrevious ? 'disabled' : ''}`}>
+                            <button
+                              className="border-0 bg-transparent"
+                              onClick={() => goToPage(tableState.currentPage - 1)}
+                              disabled={!tableState.hasPrevious}
+                              style={{
+                                padding: '0px 8px',
+                                color: !tableState.hasPrevious ? '#ccc' : '#6c757d',
+                                fontSize: '18px',
+                                cursor: !tableState.hasPrevious ? 'not-allowed' : 'pointer'
+                              }}
+                            >
+                              ‹
+                            </button>
+                          </li>
+                          {getPaginationNumbers().map((page, idx) => (
+                            <li key={idx} className="page-item">
+                              {page === '...' ? (
+                                <span
+                                  className="border-0 bg-transparent"
+                                  style={{
+                                    padding: '0px 10px',
+                                    color: '#6c757d',
+                                    cursor: 'default'
+                                  }}
+                                >
+                                  ...
+                                </span>
+                              ) : (
+                                <button
+                                  className="border-0"
+                                  onClick={() => goToPage(page)}
+                                  style={{
+                                    padding: '0px 10px',
+                                    minWidth: '30px',
+                                    backgroundColor: page === tableState.currentPage ? '#5a6c5b' : 'transparent',
+                                    color: page === tableState.currentPage ? '#fff' : '#6c757d',
+                                    borderRadius: '4px',
+                                    fontWeight: page === tableState.currentPage ? '500' : '400',
+                                    cursor: 'pointer',
+                                    fontSize: "14px"
+                                  }}
+                                >
+                                  {page}
+                                </button>
+                              )}
+                            </li>
+                          ))}
+                          <li className={`page-item ${!tableState.hasNext ? 'disabled' : ''}`}>
+                            <button
+                              className="border-0 bg-transparent"
+                              onClick={() => goToPage(tableState.currentPage + 1)}
+                              disabled={!tableState.hasNext}
+                              style={{
+                                padding: '0px 8px',
+                                color: !tableState.hasNext ? '#ccc' : '#6c757d',
+                                fontSize: '18px',
+                                cursor: !tableState.hasNext ? 'not-allowed' : 'pointer'
+                              }}
+                            >
+                              ›
+                            </button>
+                          </li>
+                          <li className={`page-item ${!tableState.hasNext ? 'disabled' : ''}`}>
+                            <button
+                              className="border-0 bg-transparent"
+                              onClick={() => goToPage(tableState.totalPages)}
+                              disabled={!tableState.hasNext}
+                              style={{
+                                padding: '0px 8px',
+                                color: !tableState.hasNext ? '#ccc' : '#6c757d',
+                                fontSize: '18px',
+                                cursor: !tableState.hasNext ? 'not-allowed' : 'pointer'
+                              }}
+                            >
+                              »
+                            </button>
+                          </li>
+                        </ul>
+                      </nav>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

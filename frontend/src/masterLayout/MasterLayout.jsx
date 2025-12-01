@@ -126,7 +126,14 @@ const MasterLayout = ({ children }) => {
     "Process Sub Status Name",
     "Process Type",
     "Payment To",
-    "Payment Category"
+    "Payment Category",
+    "Job Type",
+    "Mode of Salary",
+    "IT Return Status",
+    "Occupation Type",
+    "Occupation Prospect",
+    "Occupation Category",
+    "Occupation Version"
 
 
   ]);
