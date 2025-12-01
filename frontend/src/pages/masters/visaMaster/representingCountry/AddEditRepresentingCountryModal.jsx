@@ -404,10 +404,12 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                         />
                     </div>
 
-                    <div className="modal-body">
+                    <div className="modal-body ">
                         <form onSubmit={handleSubmit}>
                             <div className=""  >
-                                <div className="row" style={{ maxHeight: "500px", overflowY: "auto", scrollbarWidth: "none" }}  >
+                                <div className="row modal-scrollable-content" 
+                                // style={{ maxHeight: "500px", overflowY: "auto", scrollbarWidth: "none" }}  
+                                >
                                     {/* Country Name */}
                                     <div className="col-6 mb-20">
                                         <label className="form-label fw-semibold text-sm mb-8">

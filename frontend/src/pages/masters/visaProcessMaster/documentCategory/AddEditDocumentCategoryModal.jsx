@@ -97,7 +97,7 @@ const AddEditDocumentCategoryModal = ({ show, handleClose, mode = 'add', rowData
                     if (response?.statusCode === 200 && response?.status === true) {
                         toast.success(response?.message);
                         resetForm();
-                        handleClose();
+                        handleClose(true);
                     } else {
                         toast.error("Something went wrong.");
                     }
@@ -120,7 +120,7 @@ const AddEditDocumentCategoryModal = ({ show, handleClose, mode = 'add', rowData
     const onClose = () => {
         resetForm();
         setLoading(false);
-        handleClose();
+        handleClose(false);
     };
 
     // Conditional return after all hooks
@@ -151,44 +151,46 @@ const AddEditDocumentCategoryModal = ({ show, handleClose, mode = 'add', rowData
                     <div className="modal-body p-24 pt-10">
                         <form onSubmit={handleSubmit}>
                             <div className="row">
-                                {/* Department Name */}
-                                <div className="col-12 mb-10">
-                                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                                        Document Category <span className="text-danger">*</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="departmentName"
-                                        value={formData.departmentName}
-                                        onChange={handleChange}
-                                        className={`form-control radius-8 ${errors.departmentName ? 'is-invalid' : ''}`}
-                                        placeholder="Enter document category"
-                                    />
-                                    {errors.departmentName && (
-                                        <div className="text-danger text-sm mt-1">
-                                            {errors.departmentName}
-                                        </div>
-                                    )}
-                                </div>
+                                <div className='modal-scrollable-content'>
+                                    {/* Department Name */}
+                                    <div className="col-12 mb-10">
+                                        <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                                            Document Category <span className="text-danger">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            name="departmentName"
+                                            value={formData.departmentName}
+                                            onChange={handleChange}
+                                            className={`form-control radius-8 ${errors.departmentName ? 'is-invalid' : ''}`}
+                                            placeholder="Enter document category"
+                                        />
+                                        {errors.departmentName && (
+                                            <div className="text-danger text-sm mt-1">
+                                                {errors.departmentName}
+                                            </div>
+                                        )}
+                                    </div>
 
-                                {/* Description */}
-                                <div className="col-12 mb-10">
-                                    <label
-                                        htmlFor="desc"
-                                        className="form-label fw-semibold text-primary-light text-sm mb-0"
-                                    >
-                                        Description
-                                    </label>
-                                    <textarea
-                                        className={`form-control ${errors.description ? 'is-invalid' : ''}`}
-                                        id="desc"
-                                        name="description"
-                                        value={formData.description}
-                                        onChange={handleChange}
-                                        rows={4}
-                                        cols={50}
-                                        placeholder="Description"
-                                    />
+                                    {/* Description */}
+                                    <div className="col-12 mb-10">
+                                        <label
+                                            htmlFor="desc"
+                                            className="form-label fw-semibold text-primary-light text-sm mb-0"
+                                        >
+                                            Description
+                                        </label>
+                                        <textarea
+                                            className={`form-control ${errors.description ? 'is-invalid' : ''}`}
+                                            id="desc"
+                                            name="description"
+                                            value={formData.description}
+                                            onChange={handleChange}
+                                            rows={4}
+                                            cols={50}
+                                            placeholder="Description"
+                                        />
+                                    </div>
                                 </div>
 
                                 {/* Buttons */}

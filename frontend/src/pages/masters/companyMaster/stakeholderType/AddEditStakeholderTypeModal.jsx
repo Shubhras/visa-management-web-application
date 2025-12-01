@@ -207,79 +207,81 @@ const AddEditStakeholderTypeModal = ({ show, handleClose, mode = 'add', rowData 
             <form onSubmit={handleSubmit}>
               <div className="row">
                 {/* Stakeholder Category */}
-                <div className="col-12 mb-10">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                    Stakeholder Category <span className="text-danger">*</span>
-                  </label>
-                  <Select
-                    options={stakeholderListData.map((option) => ({
-                      value: option.uuid,
-                      label: option.name,
-                    }))}
-                    value={
-                      formData.category
-                        ? stakeholderListData
-                          .map((option) => ({
-                            value: option.uuid,
-                            label: option.name,
-                          }))
-                          .find((opt) => opt.value === formData.category)
-                        : null
-                    }
-                    onChange={handleSelectChange}
-                    filterOption={customFilterOption}
-                    placeholder="Select Stakeholder Category"
-                    isClearable
-                    isSearchable
-                    className={`custom-select-container ${errors.category ? "is-invalid" : ""
-                      }`}
-                    classNamePrefix="custom-select"
-                  />
-                  {errors.category && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.category}
-                    </div>
-                  )}
-                </div>
+                <div className='modal-scrollable-content'>
+                  <div className="col-12 mb-10">
+                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                      Stakeholder Category <span className="text-danger">*</span>
+                    </label>
+                    <Select
+                      options={stakeholderListData.map((option) => ({
+                        value: option.uuid,
+                        label: option.name,
+                      }))}
+                      value={
+                        formData.category
+                          ? stakeholderListData
+                            .map((option) => ({
+                              value: option.uuid,
+                              label: option.name,
+                            }))
+                            .find((opt) => opt.value === formData.category)
+                          : null
+                      }
+                      onChange={handleSelectChange}
+                      filterOption={customFilterOption}
+                      placeholder="Select Stakeholder Category"
+                      isClearable
+                      isSearchable
+                      className={`custom-select-container ${errors.category ? "is-invalid" : ""
+                        }`}
+                      classNamePrefix="custom-select"
+                    />
+                    {errors.category && (
+                      <div className="text-danger text-sm mt-1">
+                        {errors.category}
+                      </div>
+                    )}
+                  </div>
 
-                {/* Stakeholder Type Name */}
-                <div className="col-12 mb-10">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                    Stakeholder Type <span className="text-danger">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    className={`form-control radius-8 ${errors.name ? 'is-invalid' : ''}`}
-                    placeholder="Enter stakeholder type"
-                  />
-                  {errors.name && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.name}
-                    </div>
-                  )}
-                </div>
+                  {/* Stakeholder Type Name */}
+                  <div className="col-12 mb-10">
+                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                      Stakeholder Type <span className="text-danger">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      className={`form-control radius-8 ${errors.name ? 'is-invalid' : ''}`}
+                      placeholder="Enter stakeholder type"
+                    />
+                    {errors.name && (
+                      <div className="text-danger text-sm mt-1">
+                        {errors.name}
+                      </div>
+                    )}
+                  </div>
 
-                {/* Description */}
-                <div className="col-12 mb-10">
-                  <label
-                    htmlFor="desc"
-                    className="form-label fw-semibold text-primary-light text-sm mb-0"
-                  >
-                    Description
-                  </label>
-                  <textarea
-                    className={`form-control ${errors.description ? 'is-invalid' : ''}`}
-                    id="desc"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    rows={4}
-                    cols={50}
-                    placeholder="Description"
-                  />
+                  {/* Description */}
+                  <div className="col-12 mb-10">
+                    <label
+                      htmlFor="desc"
+                      className="form-label fw-semibold text-primary-light text-sm mb-0"
+                    >
+                      Description
+                    </label>
+                    <textarea
+                      className={`form-control ${errors.description ? 'is-invalid' : ''}`}
+                      id="desc"
+                      name="description"
+                      value={formData.description}
+                      onChange={handleChange}
+                      rows={4}
+                      cols={50}
+                      placeholder="Description"
+                    />
+                  </div>
                 </div>
 
                 {/* Buttons */}

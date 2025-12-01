@@ -104,7 +104,29 @@ const MasterLayout = ({ children }) => {
     "Scholorship Based On",
     "Course Level",
     "Course Duration",
-    "Visa Main Category"
+    "Visa Main Category",
+    "Work Rights",
+    "Work Rights During Study",
+    "Work Rights During Vacation",
+    "Work Rights After Study",
+    "PR Possibility",
+    "Spouse Can Apply with Candidate?",
+    "Spouse Visa Category",
+    "Spouse Work Rights",
+    "Children Can Apply with Candidate?",
+    "Children Visa Category",
+    "Children Study / Work Rights",
+    "Document Category",
+    "Document Name",
+    "Document Type",
+    "Purpose of Visit",
+    "Documents For",
+    "Required Documents (General)",
+    "Process Status Name",
+    "Process Sub Status Name",
+    "Process Type",
+    "Payment To",
+    "Payment Category"
 
 
   ]);

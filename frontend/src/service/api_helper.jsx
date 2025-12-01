@@ -3505,7 +3505,21 @@ export const importJobProspectAPI = (payload) => {
 
 //Representing api
 export const getRepresentingCountryListAPI = (data) => {
-  const apiUrl = `${url.GET_REPRESENTING_COUNTRY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+   let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        // Case 1: Only created_at is present → keep it
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        // Case 2: More fields exist → remove created_at
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        // Map fields into customSort string
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_REPRESENTING_COUNTRY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&country=${data?.country}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -4676,7 +4690,18 @@ export const importChildrenStudyWorkRightsAPI = (payload) => {
 };
 // Visa Main Category
 export const getVisaMainCategoryListAPI = (data) => {
-  const apiUrl = `${url.GET_VISA_MAIN_CATEGORY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_VISA_MAIN_CATEGORY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -4697,7 +4722,18 @@ export const deleteVisaMainCategoryAPI = (payload) => {
 };
 
 export const exportVisaMainCategoryAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_VISA_MAIN_CATEGORY_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_VISA_MAIN_CATEGORY_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -4723,8 +4759,13 @@ export const editDocumentCategoryAPI = (payload) => {
 };
 
 export const deleteDocumentCategoryAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_DOCUMENT_CATEGORY_API}delete/`;
+  // const prepareDATA = { id: payload };
+  // const apiUrl = `${url.DELETE_DOCUMENT_CATEGORY_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_DOCUMENT_CATEGORY_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -5225,7 +5266,21 @@ export const deleteRepresentingCountryAPI = (payload) => {
 };
 
 export const exportRepresentingCountryAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_REPRESENTING_COUNTRY_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+   let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        // Case 1: Only created_at is present → keep it
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        // Case 2: More fields exist → remove created_at
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        // Map fields into customSort string
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_REPRESENTING_COUNTRY_API}??search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&country=${payload?.country}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 

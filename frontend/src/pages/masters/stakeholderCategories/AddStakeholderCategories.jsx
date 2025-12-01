@@ -125,6 +125,7 @@ const AddStakeholderCategories = ({ show, handleClose }) => {
               <form onSubmit={handleSubmit}>
                 <div className="row">
                   {/* Name */}
+                  <div className='modal-scrollable-content'>
                   <div className="col-12 mb-10">
                     <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                       Stakeholder Category <span className="text-danger">*</span>
@@ -162,6 +163,7 @@ const AddStakeholderCategories = ({ show, handleClose }) => {
                       cols={50}
                       placeholder="Description"
                     />
+                  </div>
                   </div>
                   {/* Buttons */}
                   <div className="d-flex align-items-center justify-content-center gap-3 mt-24">
